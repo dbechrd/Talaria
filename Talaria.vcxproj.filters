@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ta_window.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_primitive.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_render.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_shader.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gl3w.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_file.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_log.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_shader_lines.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_timer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_shader_quads.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_barchart.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_ui_scrollview.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_texture.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_mesh.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_buffer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_shader_mesh.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ta_camera.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ta_window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_primitive.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_render.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_log.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_shader_lines.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_timer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_shader_quads.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_barchart.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_ui_scrollview.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_buffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_shader_mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ta_camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cpp.hint" />
+  </ItemGroup>
+</Project>
