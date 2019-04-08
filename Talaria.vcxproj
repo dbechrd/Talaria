@@ -159,42 +159,42 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="gl3w.c" />
-    <ClCompile Include="ta_barchart.c" />
-    <ClCompile Include="ta_buffer.c" />
-    <ClCompile Include="ta_camera.c" />
-    <ClCompile Include="ta_file.c" />
-    <ClCompile Include="ta_log.c" />
-    <ClCompile Include="main.c" />
-    <ClCompile Include="ta_mesh.c" />
-    <ClCompile Include="ta_primitive.c" />
-    <ClCompile Include="ta_render.c" />
-    <ClCompile Include="ta_shader_mesh.c" />
-    <ClCompile Include="ta_texture.c" />
-    <ClCompile Include="ta_ui_scrollview.c" />
-    <ClCompile Include="ta_shader.c" />
-    <ClCompile Include="ta_shader_lines.c" />
-    <ClCompile Include="ta_shader_quads.c" />
-    <ClCompile Include="ta_timer.c" />
-    <ClCompile Include="ta_window.c" />
+    <ClCompile Include="src/gl3w.c" />
+    <ClCompile Include="src/ta_barchart.c" />
+    <ClCompile Include="src/ta_buffer.c" />
+    <ClCompile Include="src/ta_camera.c" />
+    <ClCompile Include="src/ta_file.c" />
+    <ClCompile Include="src/ta_log.c" />
+    <ClCompile Include="src/main.c" />
+    <ClCompile Include="src/ta_mesh.c" />
+    <ClCompile Include="src/ta_primitive.c" />
+    <ClCompile Include="src/ta_render.c" />
+    <ClCompile Include="src/ta_shader_mesh.c" />
+    <ClCompile Include="src/ta_texture.c" />
+    <ClCompile Include="src/ta_ui_scrollview.c" />
+    <ClCompile Include="src/ta_shader.c" />
+    <ClCompile Include="src/ta_shader_lines.c" />
+    <ClCompile Include="src/ta_shader_quads.c" />
+    <ClCompile Include="src/ta_timer.c" />
+    <ClCompile Include="src/ta_window.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ta_barchart.h" />
-    <ClInclude Include="ta_buffer.h" />
-    <ClInclude Include="ta_camera.h" />
-    <ClInclude Include="ta_file.h" />
-    <ClInclude Include="ta_log.h" />
-    <ClInclude Include="ta_mesh.h" />
-    <ClInclude Include="ta_primitive.h" />
-    <ClInclude Include="ta_render.h" />
-    <ClInclude Include="ta_shader_mesh.h" />
-    <ClInclude Include="ta_texture.h" />
-    <ClInclude Include="ta_ui_scrollview.h" />
-    <ClInclude Include="ta_shader.h" />
-    <ClInclude Include="ta_shader_lines.h" />
-    <ClInclude Include="ta_shader_quads.h" />
-    <ClInclude Include="ta_timer.h" />
-    <ClInclude Include="ta_window.h" />
+    <ClInclude Include="src/ta_barchart.h" />
+    <ClInclude Include="src/ta_buffer.h" />
+    <ClInclude Include="src/ta_camera.h" />
+    <ClInclude Include="src/ta_file.h" />
+    <ClInclude Include="src/ta_log.h" />
+    <ClInclude Include="src/ta_mesh.h" />
+    <ClInclude Include="src/ta_primitive.h" />
+    <ClInclude Include="src/ta_render.h" />
+    <ClInclude Include="src/ta_shader_mesh.h" />
+    <ClInclude Include="src/ta_texture.h" />
+    <ClInclude Include="src/ta_ui_scrollview.h" />
+    <ClInclude Include="src/ta_shader.h" />
+    <ClInclude Include="src/ta_shader_lines.h" />
+    <ClInclude Include="src/ta_shader_quads.h" />
+    <ClInclude Include="src/ta_timer.h" />
+    <ClInclude Include="src/ta_window.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
