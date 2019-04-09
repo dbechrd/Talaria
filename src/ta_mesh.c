@@ -22,7 +22,7 @@ static GLuint *gl_ids[TA_MESH_QUEUE_COUNT];
 
 ta_mesh *ta_mesh_init(const char *name, ta_mesh_queue queue, GLuint *arr_index,
 	ta_vec3 *arr_position, ta_vec3 *arr_normal, ta_uv *arr_uv,
-	ta_color4 *arr_color)
+	ta_color *arr_color)
 {
 	const int vertCompLen = 3;
 	const int uvCompLen = 2;
@@ -34,15 +34,15 @@ ta_mesh *ta_mesh_init(const char *name, ta_mesh_queue queue, GLuint *arr_index,
 
 	if (arr_index) {
 		mesh->index_count = dlb_vec_len(arr_index);
-		glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_INDEX]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_INDEX]);
+		glCreateBuffers(1, &mesh->ui_arena[TA_MESH_BUFFER_INDEX]);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->ui_arena[TA_MESH_BUFFER_INDEX]);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->index_count * sizeof(GLuint), arr_index,
 			GL_STATIC_DRAW);
 	}
 	if (arr_position) {
 		mesh->vertex_count = dlb_vec_len(arr_position);
-		glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_POSITION]);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_POSITION]);
+		glCreateBuffers(1, &mesh->ui_arena[TA_MESH_BUFFER_POSITION]);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->ui_arena[TA_MESH_BUFFER_POSITION]);
 		glBufferData(GL_ARRAY_BUFFER, mesh->vertex_count * vertCompLen * sizeof(GLfloat), arr_position,
 			GL_STATIC_DRAW);
 		glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
@@ -51,16 +51,16 @@ ta_mesh *ta_mesh_init(const char *name, ta_mesh_queue queue, GLuint *arr_index,
 	}
 	if (arr_color) {
 		int color_count = dlb_vec_len(arr_color) * 4;
-		glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_COLOR]);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_COLOR]);
+		glCreateBuffers(1, &mesh->ui_arena[TA_MESH_BUFFER_COLOR]);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->ui_arena[TA_MESH_BUFFER_COLOR]);
 		glBufferData(GL_ARRAY_BUFFER, color_count * sizeof(GLfloat), arr_color, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
 		glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 3, GL_FLOAT, false, 0, 0);
 	}
 	if (arr_uv) {
 		int uv_count = dlb_vec_len(arr_uv) * uvCompLen;
-		glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_UV]);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_UV]);
+		glCreateBuffers(1, &mesh->ui_arena[TA_MESH_BUFFER_UV]);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->ui_arena[TA_MESH_BUFFER_UV]);
 		glBufferData(GL_ARRAY_BUFFER, uv_count * sizeof(GLfloat), arr_uv, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(TA_SHADER_ATTR_UV);
 		glVertexAttribPointer(TA_SHADER_ATTR_UV, uvCompLen, GL_FLOAT, false, 0,
@@ -68,8 +68,8 @@ ta_mesh *ta_mesh_init(const char *name, ta_mesh_queue queue, GLuint *arr_index,
 	}
 	if (arr_normal) {
 		int normal_count = dlb_vec_len(arr_normal) * 3;
-		glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_NORMAL]);
-		glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_NORMAL]);
+		glCreateBuffers(1, &mesh->ui_arena[TA_MESH_BUFFER_NORMAL]);
+		glBindBuffer(GL_ARRAY_BUFFER, mesh->ui_arena[TA_MESH_BUFFER_NORMAL]);
 		glBufferData(GL_ARRAY_BUFFER, normal_count * sizeof(GLfloat), arr_normal, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(TA_SHADER_ATTR_NORMAL);
 		glVertexAttribPointer(TA_SHADER_ATTR_NORMAL, 3, GL_FLOAT, false, 0, 0);
@@ -98,7 +98,7 @@ void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename)
 	ta_vec3 *arr_position = 0;
 	ta_vec3 *arr_normal = 0;
 	ta_uv *arr_uv = 0;
-	ta_color4 *arr_color = 0;
+	ta_color *arr_color = 0;
 
 	// Load OBJ file
 	// =========================================================================

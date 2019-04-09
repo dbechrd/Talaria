@@ -15,19 +15,26 @@
 #define DEG_TO_RADF(deg) deg * (float)M_PI / 180.0f
 #define RAD_TO_DEGF(rad) rad * 180.0f / (float)M_PI
 
-const ta_vec3 vec3_up = { 0.0f, 1.0f, 0.0f };
-const ta_mat4 mat4_ident = {
+const ta_vec3 VEC3_UP = { 0.0f, 1.0f, 0.0f };
+const ta_mat4 MAT4_IDENT = {
 	1.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, 1.0f, 0.0f, 0.0f,
 	0.0f, 0.0f, 1.0f, 0.0f,
 	0.0f, 0.0f, 0.0f, 1.0f
 };
-
-static void ta_primitive_push_line(ta_vert_line *line);
-static void ta_primitive_push_quad(ta_vert_quad *quad);
-static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d, ta_color4 *color0, ta_color4 *color1);
-static void ta_primitive_rect_to_quad(ta_vert_quad *quad, ta_rect *rect, ta_color4 *color);
-static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox, ta_color4 *color);
+const ta_color TA_COLOR_INVIS = { 0.0f, 0.0f, 0.0f, 0.0f };
+const ta_color TA_COLOR_RED   = { 0.7f, 0.1f, 0.1f, 1.0f };
+const ta_color TA_COLOR_GREEN = { 0.1f, 0.7f, 0.1f, 1.0f };
+const ta_color TA_COLOR_BLUE  = { 0.1f, 0.1f, 0.7f, 1.0f };
+const ta_color TA_COLOR_GRAY1 = { 0.1f, 0.1f, 0.1f, 1.0f };
+const ta_color TA_COLOR_GRAY2 = { 0.2f, 0.2f, 0.2f, 1.0f };
+const ta_color TA_COLOR_GRAY3 = { 0.3f, 0.3f, 0.3f, 1.0f };
+const ta_color TA_COLOR_GRAY4 = { 0.4f, 0.4f, 0.4f, 1.0f };
+const ta_color TA_COLOR_GRAY5 = { 0.5f, 0.5f, 0.5f, 1.0f };
+const ta_color TA_COLOR_GRAY6 = { 0.6f, 0.6f, 0.6f, 1.0f };
+const ta_color TA_COLOR_GRAY7 = { 0.7f, 0.7f, 0.7f, 1.0f };
+const ta_color TA_COLOR_GRAY8 = { 0.8f, 0.8f, 0.8f, 1.0f };
+const ta_color TA_COLOR_GRAY9 = { 0.9f, 0.9f, 0.9f, 1.0f };
 
 static ta_vert_line *lines_queue;
 static GLuint lines_vao;
@@ -41,31 +48,25 @@ static GLuint quads_buffer;
 static GLint quads_buffer_size;
 static GLuint quads_program;
 
+static void ta_primitive_push_line(ta_vert_line *line);
+static void ta_primitive_push_quad(ta_vert_quad *quad);
+static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d,
+	const ta_color *color0, const ta_color *color1);
+static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
+	const ta_rect *rect, const ta_color *color);
+static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
+	const ta_color *color);
+
 void ta_vec3_print(ta_vec3 *vec)
 {
 	ta_log_write(tg_debug_log, "vec3: %f %f %f\n",
 		vec->x, vec->y, vec->z);
 }
-
 void ta_vec4_print(ta_vec4 *vec)
 {
 	ta_log_write(tg_debug_log, "vec4: %f %f %f %f\n",
 		vec->x, vec->y, vec->z, vec->w);
 }
-
-void ta_mat4_print(ta_mat4 *mat)
-{
-	for (int i = 0; i < 4; i++) {
-		ta_log_write(tg_debug_log, "mat[%d]: %f %f %f %f\n",
-			i,
-			mat->rows.v[i].x,
-			mat->rows.v[i].y,
-			mat->rows.v[i].z,
-			mat->rows.v[i].w
-		);
-	}
-}
-
 ta_vec3 vec3_negate(const ta_vec3 v)
 {
 	ta_vec3 result;
@@ -74,7 +75,6 @@ ta_vec3 vec3_negate(const ta_vec3 v)
 	result.z = -v.z;
 	return result;
 }
-
 ta_vec3 vec3_add(const ta_vec3 a, const ta_vec3 b)
 {
 	ta_vec3 result;
@@ -83,7 +83,6 @@ ta_vec3 vec3_add(const ta_vec3 a, const ta_vec3 b)
 	result.z = a.z + b.z;
 	return result;
 }
-
 ta_vec3 vec3_sub(const ta_vec3 a, const ta_vec3 b)
 {
 	ta_vec3 result;
@@ -92,13 +91,11 @@ ta_vec3 vec3_sub(const ta_vec3 a, const ta_vec3 b)
 	result.z = a.z + b.z;
 	return result;
 }
-
 float vec3_len(const ta_vec3 v)
 {
 	float len = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
 	return len;
 }
-
 ta_vec3 vec3_normalize(const ta_vec3 v)
 {
 	float len = vec3_len(v);
@@ -108,7 +105,6 @@ ta_vec3 vec3_normalize(const ta_vec3 v)
 	result.z /= len;
 	return result;
 }
-
 float vec3_dot(const ta_vec3 a, const ta_vec3 b)
 {
 	float dot = a.x * b.x + a.y * b.y + a.z * b.z;
@@ -117,7 +113,6 @@ float vec3_dot(const ta_vec3 a, const ta_vec3 b)
 	}
 	return dot;
 }
-
 ta_vec3 vec3_cross(const ta_vec3 a, const ta_vec3 b)
 {
 	ta_vec3 result;
@@ -127,19 +122,17 @@ ta_vec3 vec3_cross(const ta_vec3 a, const ta_vec3 b)
 	return result;
 }
 
-ta_mat4 mat4_mul(const ta_mat4 a, const ta_mat4 b)
+void ta_mat4_print(ta_mat4 *mat)
 {
-	ta_mat4 result = { 0 };
-	for (int j = 0; j < 4; ++j) {
-		for (int i = 0; i < 4; ++i) {
-			for (int n = 0; n < 4; ++n) {
-				result.rows.f[j][i] += a.rows.f[j][n] * b.rows.f[n][i];
-			}
-		}
+	for (int i = 0; i < 4; i++) {
+		ta_log_write(tg_debug_log, "mat[%d]: %f %f %f %f\n", i,
+			mat->rows.v[i].x,
+			mat->rows.v[i].y,
+			mat->rows.v[i].z,
+			mat->rows.v[i].w
+		);
 	}
-	return result;
 }
-
 ta_mat4 mat4_init(
 	float m00, float m01, float m02, float m03,
 	float m10, float m11, float m12, float m13,
@@ -165,7 +158,6 @@ ta_mat4 mat4_init(
 	result.rows.f[3][3] = m33;
 	return result;
 }
-
 ta_mat4 mat4_transpose(const ta_mat4 *m)
 {
 	ta_mat4 result = mat4_init(
@@ -176,7 +168,6 @@ ta_mat4 mat4_transpose(const ta_mat4 *m)
 	);
 	return result;
 }
-
 ta_mat4 mat4_translate(const ta_vec3 *v)
 {
 	ta_mat4 result = mat4_init(
@@ -187,7 +178,6 @@ ta_mat4 mat4_translate(const ta_vec3 *v)
 	);
 	return result;
 }
-
 ta_mat4 mat4_scale(const ta_vec3 *s)
 {
 	ta_mat4 result = mat4_init(
@@ -198,7 +188,6 @@ ta_mat4 mat4_scale(const ta_vec3 *s)
 	);
 	return result;
 }
-
 ta_mat4 mat4_scalef(float s)
 {
 	ta_mat4 result = mat4_init(
@@ -209,7 +198,6 @@ ta_mat4 mat4_scalef(float s)
 	);
 	return result;
 }
-
 ta_mat4 mat4_rotate_x(float deg)
 {
 	float rad = DEG_TO_RADF(deg);
@@ -223,7 +211,6 @@ ta_mat4 mat4_rotate_x(float deg)
 	);
 	return result;
 }
-
 ta_mat4 mat4_rotate_y(float deg)
 {
 	float rad = DEG_TO_RADF(deg);
@@ -237,7 +224,6 @@ ta_mat4 mat4_rotate_y(float deg)
 	);
 	return result;
 }
-
 ta_mat4 mat4_rotate_z(float deg)
 {
 	float rad = DEG_TO_RADF(deg);
@@ -251,7 +237,18 @@ ta_mat4 mat4_rotate_z(float deg)
 	);
 	return result;
 }
-
+ta_mat4 mat4_mul(const ta_mat4 a, const ta_mat4 b)
+{
+	ta_mat4 result = { 0 };
+	for (int j = 0; j < 4; ++j) {
+		for (int i = 0; i < 4; ++i) {
+			for (int n = 0; n < 4; ++n) {
+				result.rows.f[j][i] += a.rows.f[j][n] * b.rows.f[n][i];
+			}
+		}
+	}
+	return result;
+}
 ta_mat4 mat4_perspective(float fov_deg, float aspect, float nearz, float farz)
 {
 	float f = 1.0f / tanf(DEG_TO_RADF(fov_deg) / 2.0f);
@@ -264,7 +261,6 @@ ta_mat4 mat4_perspective(float fov_deg, float aspect, float nearz, float farz)
 	result.rows.f[3][2] = (2.0f * farz * nearz) * nf;
 	return result;
 }
-
 ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float nearz)
 {
 	float f = 1.0f / tanf(DEG_TO_RADF(fov_deg) / 2.0f);
@@ -283,7 +279,6 @@ ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float nearz)
 	//result.rows.f[3][2] = -1.0f;
 	//return result;
 }
-
 ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
 	float nearz, float farz)
 {
@@ -341,7 +336,8 @@ static void ta_primitive_push_line(ta_vert_line *line)
 {
 	dlb_vec_push(lines_queue, *line);
 }
-static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d, ta_color4 *color0, ta_color4 *color1)
+static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d,
+	const ta_color *color0, const ta_color *color1)
 {
 	float x0 = X_TO_NDC(line2d->p0.x);
 	float x1 = X_TO_NDC(line2d->p1.x);
@@ -355,7 +351,8 @@ static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d, 
 	line->verts[1].position.y = y1;
 	line->verts[1].color = *color1;
 }
-void ta_primitive_push_line_2d(ta_line_2d *line_2d, ta_color4 *color0, ta_color4 * color1)
+void ta_primitive_push_line_2d(ta_line_2d *line_2d, const ta_color *color0,
+	const ta_color * color1)
 {
 	ta_vert_line line = { 0 };
 	ta_primitive_line2d_to_line(&line, line_2d, color0, color1);
@@ -366,17 +363,18 @@ static void ta_primitive_push_quad(ta_vert_quad *quad)
 {
 	dlb_vec_push(quads_queue, *quad);
 }
-static void ta_primitive_rect_to_quad(ta_vert_quad *quad, ta_rect *rect, ta_color4 *color)
+static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
+	const ta_rect *rect, const ta_color *color)
 {
 	// v3 *----* v2
 	//    |    |
 	// v0 *----* v1
 	// v0, v1, v2, v0, v2, v3
 
-	float x0 = X_TO_NDC(rect->x);
-	float x1 = X_TO_NDC(rect->x + rect->w);
-	float y0 = Y_TO_NDC(rect->y + rect->h);
-	float y1 = Y_TO_NDC(rect->y);
+	float x0 = X_TO_NDC(x + rect->x);
+	float x1 = X_TO_NDC(x + rect->x + rect->w);
+	float y0 = Y_TO_NDC(y + rect->y + rect->h);
+	float y1 = Y_TO_NDC(y + rect->y);
 
 	quad->verts[0].position.x = x0;  // v0 (0,0)
 	quad->verts[0].position.y = y0;
@@ -407,14 +405,15 @@ static void ta_primitive_rect_to_quad(ta_vert_quad *quad, ta_rect *rect, ta_colo
 		quad->verts[i].color = *color;
 	}
 }
-void ta_primitive_push_rect(ta_rect *rect, ta_color4 *color)
+void ta_primitive_push_rect(int x, int y, ta_rect *rect, const ta_color *color)
 {
 	ta_vert_quad quad = { 0 };
-	ta_primitive_rect_to_quad(&quad, rect, color);
+	ta_primitive_rect_to_quad(&quad, x, y, rect, color);
 	ta_primitive_push_quad(&quad);
 }
 
-static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox, ta_color4 *color)
+static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
+	const ta_color *color)
 {
 	// v3 *----* v2
 	//    |    |
@@ -506,7 +505,6 @@ void ta_primitive_render()
 	ta_primitive_render_lines();
 	ta_primitive_render_quads();
 }
-
 void ta_primitive_clear()
 {
 	dlb_vec_clear(lines_queue);

@@ -26,6 +26,7 @@ typedef struct {
 	int width;
 	int height;
 } ta_window;
+
 extern ta_window tg_window;
 
 void ta_window_init(int x, int y, bool fullscreen);

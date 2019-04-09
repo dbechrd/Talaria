@@ -30,12 +30,20 @@ typedef struct {
 	} rows;
 } ta_mat4;
 
+#if 0
+typedef struct {
+	float r;
+	float g;
+	float b;
+} ta_rgb;
+#endif
+
 typedef struct {
     float r;
     float g;
     float b;
     float a;
-} ta_color4;
+} ta_color;
 
 typedef struct {
 	int x;
@@ -69,8 +77,21 @@ typedef struct {
     ta_vec3 half_axes;
 } ta_bbox_3d;
 
-extern const ta_vec3 vec3_up;
-extern const ta_mat4 mat4_ident;
+extern const ta_vec3 VEC3_UP;
+extern const ta_mat4 MAT4_IDENT;
+extern const ta_color TA_COLOR_INVIS;
+extern const ta_color TA_COLOR_RED;
+extern const ta_color TA_COLOR_GREEN;
+extern const ta_color TA_COLOR_BLUE;
+extern const ta_color TA_COLOR_GRAY1;
+extern const ta_color TA_COLOR_GRAY2;
+extern const ta_color TA_COLOR_GRAY3;
+extern const ta_color TA_COLOR_GRAY4;
+extern const ta_color TA_COLOR_GRAY5;
+extern const ta_color TA_COLOR_GRAY6;
+extern const ta_color TA_COLOR_GRAY7;
+extern const ta_color TA_COLOR_GRAY8;
+extern const ta_color TA_COLOR_GRAY9;
 
 void ta_vec3_print(ta_vec3 *vec);
 void ta_vec4_print(ta_vec4 *vec);
@@ -103,7 +124,8 @@ ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
 	float nearz, float farz);
 
 void ta_primitive_init();
-void ta_primitive_push_line_2d(ta_line_2d *line_2d, ta_color4 *color0, ta_color4 *color1);
-void ta_primitive_push_rect(ta_rect *rect, ta_color4 *color);
+void ta_primitive_push_line_2d(ta_line_2d *line_2d, const ta_color *color0,
+	const ta_color *color1);
+void ta_primitive_push_rect(int x, int y, ta_rect *rect, const ta_color *color);
 void ta_primitive_render();
 void ta_primitive_clear();

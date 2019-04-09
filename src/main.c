@@ -11,6 +11,7 @@
 #include "ta_texture.h"
 #include "ta_mesh.h"
 #include "ta_camera.h"
+#include "ta_viewport.h"
 #include "dlb_types.h"
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb_vector.h"
@@ -27,7 +28,7 @@ DLB_ASSERT_HANDLER(handle_assert)
 		filename, line, expr);
 	exit(-1);
 }
-DLB_assert_handler_def *DLB_assert_handler = handle_assert;
+dlb_assert_handler_def *dlb_assert_handler = handle_assert;
 #endif
 
 int main(int argc, char *argv[])
@@ -44,10 +45,10 @@ int main(int argc, char *argv[])
     ta_render_init();
     ta_primitive_init();
 
-	glViewport(0, 0, tg_window.width, tg_window.height);
+	const ta_color mesh_selector_bg = { 0.1f, 0.1f, 0.2f, 1.0f };
+	ta_viewport mesh_selector = ta_viewport_init(10, 50, 400, 400, mesh_selector_bg);
 
-	float aspect = (float)tg_window.width / tg_window.height;
-	UNUSED(aspect);
+	float aspect = (float)mesh_selector.rect.w / mesh_selector.rect.h;
 	//ta_mat4 project = mat4_perspective(65.0f, aspect, 0.1f, 1000.0f);
 	ta_mat4 project = mat4_perspective_inf(65.0f, aspect, 0.1f);
 	//float oo = 30.0f;
@@ -58,7 +59,7 @@ int main(int argc, char *argv[])
 	ta_vec3 c_pos = { 0.0f, 1.8f, 3.0f };
 	ta_vec3 c_target = { 0.0f, 0.0f, 0.0f };
 	ta_camera cam = { 0 };
-	ta_mat4 look_at = ta_camera_lookat(&cam, &c_pos, &c_target, &vec3_up);
+	ta_mat4 look_at = ta_camera_lookat(&cam, &c_pos, &c_target, &VEC3_UP);
 
 	float model_deg = 0.0f;
 
@@ -74,13 +75,16 @@ int main(int argc, char *argv[])
 	ta_shader_mesh_bind();
 	ta_shader_mesh_set_projection(&project);
 	ta_shader_mesh_set_view(&look_at);
-	//ta_shader_mesh_set_view(&mat4_ident);
 	ta_shader_mesh_set_texture(0, tex_test->gl_id);
 	ta_shader_mesh_unbind();
 
-	ta_ui_base content = { 0 };
-	content.rect = (ta_rect) { 0, 0, 512, 512 };
-	ta_ui_scrollview *view = ta_ui_scrollview_init(20, 100, 800, 400, &content);
+	// TODO: Remove x,y coords from init() methods and only store size. Pass x,y
+	//       at render time (make sure to update viewport correctly).
+	ta_ui_image *ui_image = ta_ui_image_init(0, 0, 0, 0, tex_test);
+	ta_ui_scrollview *view = ta_ui_scrollview_init(420, 50, 800, 300,
+		(ta_ui_base *)ui_image);
+
+	ta_barchart chart = ta_barchart_init(10, 10, tg_window.width - 20, 30, 525);
 
     SDL_Event event;
     bool quit = false;
@@ -139,29 +143,32 @@ int main(int argc, char *argv[])
 			ta_debug_push_quad(&quad);
 		}*/
 
+		glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Update models
-		//ta_mat4 rotate = mat4_rotate_y(model_deg);
-		//ta_vec3 trans = { 0.0f, 0.0f, 0.0f };
-		//ta_mat4 translate = mat4_translate(&trans);
-		//ta_mat4 model = mat4_mul(translate, rotate);
-		ta_mat4 model = mat4_rotate_y(model_deg);
-		model_deg += 1.0f;
-		if (model_deg >= 360.0f) model_deg = 0.0f;
+		ta_viewport_bind(&mesh_selector, true);
+		{
+			// Update models
+			//ta_mat4 rotate = mat4_rotate_y(model_deg);
+			//ta_vec3 trans = { 0.0f, 0.0f, 0.0f };
+			//ta_mat4 translate = mat4_translate(&trans);
+			//ta_mat4 model = mat4_mul(translate, rotate);
+			ta_mat4 model = mat4_rotate_y(model_deg);
+			model_deg += 1.0f;
+			if (model_deg >= 360.0f) model_deg = 0.0f;
 		
-		// Draw models
-		ta_shader_mesh_bind();
-		ta_shader_mesh_set_model(&model);
-		ta_shader_mesh_prerender();
-		ta_shader_mesh_render(mesh_cube);
-		ta_shader_mesh_unbind();
-
-		glClear(GL_DEPTH_BUFFER_BIT);
+			// Draw models
+			ta_shader_mesh_bind();
+			ta_shader_mesh_set_model(&model);
+			ta_shader_mesh_prerender();
+			ta_shader_mesh_render(mesh_cube);
+			ta_shader_mesh_unbind();
+		}
+		ta_viewport_unbind(&mesh_selector);
 
 		// Draw UI
-		ta_ui_scrollview_draw(view);
-		ta_barchart_draw();
+		ta_ui_scrollview_draw(0, 0, view);
+		ta_barchart_draw(0, 0, &chart);
 
 		// Render UI
         ta_primitive_render();

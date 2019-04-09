@@ -1,3 +1,4 @@
+#pragma once
 #include "misc/gl3w.h"
 
 typedef enum {

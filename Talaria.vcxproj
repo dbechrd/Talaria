@@ -177,6 +177,7 @@
     <ClCompile Include="src/ta_shader_quads.c" />
     <ClCompile Include="src/ta_timer.c" />
     <ClCompile Include="src/ta_window.c" />
+    <ClCompile Include="src\ta_viewport.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src/ta_barchart.h" />
@@ -195,6 +196,7 @@
     <ClInclude Include="src/ta_shader_quads.h" />
     <ClInclude Include="src/ta_timer.h" />
     <ClInclude Include="src/ta_window.h" />
+    <ClInclude Include="src\ta_viewport.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

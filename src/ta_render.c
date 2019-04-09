@@ -141,7 +141,8 @@ static void ta_render_init_gl()
     // Gamma correction
     //glEnable(GL_FRAMEBUFFER_SRGB);
 
-    glClearColor(0.1f, 0.1f, 0.2f, 1.0f);
+    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void ta_render_init()
