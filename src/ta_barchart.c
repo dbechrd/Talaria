@@ -6,18 +6,19 @@
 #include <time.h>
 #include <stdlib.h>
 
-#define x_inc 3
+#define x_inc 2
 static float alpha = 0.8f;
+static const ta_rgbf color = { 1.0f, 0.0f, 0.0f };
 
-ta_barchart ta_barchart_init(int x, int y, int w, int h, int sample_count)
+ta_barchart ta_barchart_init(int x, int y, int w, int h)
 {
 	ta_barchart barchart = { 0 };
 	barchart.rect.x = x;
 	barchart.rect.y = y;
 	barchart.rect.w = w;
 	barchart.rect.h = h;
-	barchart.sample_count = sample_count;
-	barchart.samples = calloc(sample_count, sizeof(*barchart.samples));
+	barchart.sample_count = w / x_inc;
+	barchart.samples = calloc(barchart.sample_count, sizeof(*barchart.samples));
 	barchart.next_index = 0;
 	barchart.smooth_val = barchart.rect.y / 2;
 	return barchart;
@@ -55,6 +56,21 @@ void ta_barchart_draw(int x, int y, ta_barchart *chart)
 		line.p1.x += x + chart->rect.x;
 		line.p0.y += y + chart->rect.y;
 		line.p1.y += y + chart->rect.y;
+
+		//ta_rgbf cc = mat3_mul_rgbf(mat3_hue_rotation((float)(i % 120)), color);
+		ta_rgbf cc = mat3_mul_rgbf(mat3_hue_rotation((float)i), color);
+		float lum = color.r + color.g + color.b;
+		float lum2 = cc.r + cc.g + cc.b;
+		ta_vec3 res = *(ta_vec3 *)&cc;
+		res = vec3_scalef(res, 1.0f + lum / lum2);
+		cc = *(ta_rgbf *)&res;
+		
+		color0.r = cc.r;
+		color0.g = cc.g;
+		color0.b = cc.b;
+		color1.r = cc.r;
+		color1.g = cc.g;
+		color1.b = cc.b;
 		ta_primitive_push_line_2d(&line, &color0, &color1);
 	}
 

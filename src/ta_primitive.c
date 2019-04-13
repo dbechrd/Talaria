@@ -57,15 +57,21 @@ static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
 static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
 	const ta_color *color);
 
+float clampf(float f, float min, float max)
+{
+	if (f <= min) {
+		return min;
+	} else if (f >= max) {
+		return max;
+	} else {
+		return f;
+	}
+}
+
 void ta_vec3_print(ta_vec3 *vec)
 {
 	ta_log_write(tg_debug_log, "vec3: %f %f %f\n",
 		vec->x, vec->y, vec->z);
-}
-void ta_vec4_print(ta_vec4 *vec)
-{
-	ta_log_write(tg_debug_log, "vec4: %f %f %f %f\n",
-		vec->x, vec->y, vec->z, vec->w);
 }
 ta_vec3 vec3_negate(const ta_vec3 v)
 {
@@ -89,6 +95,14 @@ ta_vec3 vec3_sub(const ta_vec3 a, const ta_vec3 b)
 	result.x = a.x + b.x;
 	result.y = a.y + b.y;
 	result.z = a.z + b.z;
+	return result;
+}
+ta_vec3 vec3_scalef(const ta_vec3 a, float s)
+{
+	ta_vec3 result;
+	result.x = a.x * s;
+	result.y = a.y * s;
+	result.z = a.z * s;
 	return result;
 }
 float vec3_len(const ta_vec3 v)
@@ -120,6 +134,101 @@ ta_vec3 vec3_cross(const ta_vec3 a, const ta_vec3 b)
 	result.y = a.z * b.x - a.x * b.z;
 	result.z = a.x * b.y - a.y * b.x;
 	return result;
+}
+
+void ta_vec4_print(ta_vec4 *vec)
+{
+	ta_log_write(tg_debug_log, "vec4: %f %f %f %f\n",
+		vec->x, vec->y, vec->z, vec->w);
+}
+
+void ta_mat3_print(ta_mat3 *mat)
+{
+	for (int i = 0; i < 3; i++) {
+		ta_log_write(tg_debug_log, "mat[%d]: %f %f %f\n", i,
+			mat->rows.v[i].x,
+			mat->rows.v[i].y,
+			mat->rows.v[i].z
+		);
+	}
+}
+ta_vec3 mat3_mul_vec3(const ta_mat3 m, const ta_vec3 v)
+{
+	ta_vec3 result;
+	result.x =
+		m.rows.f[0][0] * v.x +
+		m.rows.f[0][1] * v.y +
+		m.rows.f[0][2] * v.z;
+	result.y =
+		m.rows.f[1][0] * v.x +
+		m.rows.f[1][1] * v.y +
+		m.rows.f[1][2] * v.z;
+	result.z =
+		m.rows.f[2][0] * v.x +
+		m.rows.f[2][1] * v.y +
+		m.rows.f[2][2] * v.z;
+
+	if (fabsf(result.x) < TA_EPSILON) result.x = 0.0f;
+	if (fabsf(result.y) < TA_EPSILON) result.y = 0.0f;
+	if (fabsf(result.z) < TA_EPSILON) result.z = 0.0f;
+
+	return result;
+}
+ta_rgbf mat3_mul_rgbf(const ta_mat3 m, const ta_rgbf v)
+{
+	ta_rgbf result;
+	result.r =
+		m.rows.f[0][0] * v.r +
+		m.rows.f[0][1] * v.g +
+		m.rows.f[0][2] * v.b;
+	result.g =
+		m.rows.f[1][0] * v.r +
+		m.rows.f[1][1] * v.g +
+		m.rows.f[1][2] * v.b;
+	result.b =
+		m.rows.f[2][0] * v.r +
+		m.rows.f[2][1] * v.g +
+		m.rows.f[2][2] * v.b;
+	
+	if (result.r < TA_EPSILON) {
+		result.r = 0.0f;
+	} else if (result.r > 1.0f) {
+		result.r = 1.0f;
+	}
+
+	if (result.g < TA_EPSILON) {
+		result.g = 0.0f;
+	} else if (result.g > 1.0f) {
+		result.g = 1.0f;
+	}
+
+	if (result.b < TA_EPSILON) {
+		result.b = 0.0f;
+	} else if (result.b > 1.0f) {
+		result.b = 1.0f;
+	}
+
+	return result;
+}
+ta_mat3 mat3_hue_rotation(float degrees)
+{
+	// Note: This doesn't preserve luminance. Eventually, do this instead:
+	//       http://www.graficaobscura.com/matrix/index.html
+	float cosa = cosf(DEG_TO_RADF(degrees));
+	float sina = sinf(DEG_TO_RADF(degrees));
+	float onecos = 1.0f - cosa;
+	float sqthird = sqrtf(1.0f / 3.0f);
+	ta_mat3 m;
+	m.rows.f[0][0] = cosa + onecos / 3.0f;
+	m.rows.f[0][1] = onecos / 3.0f - sqthird * sina;
+	m.rows.f[0][2] = onecos / 3.0f + sqthird * sina;
+	m.rows.f[1][0] = m.rows.f[0][2];
+	m.rows.f[1][1] = m.rows.f[0][0];
+	m.rows.f[1][2] = m.rows.f[0][1];
+	m.rows.f[2][0] = m.rows.f[0][1];
+	m.rows.f[2][1] = m.rows.f[0][2];
+	m.rows.f[2][2] = m.rows.f[0][0];
+	return m;
 }
 
 void ta_mat4_print(ta_mat4 *mat)
@@ -257,8 +366,8 @@ ta_mat4 mat4_perspective(float fov_deg, float aspect, float nearz, float farz)
 	result.rows.f[0][0] = f / aspect;
 	result.rows.f[1][1] = f;
 	result.rows.f[2][2] = (farz + nearz) * nf;
-	result.rows.f[2][3] = -1.0f;
-	result.rows.f[3][2] = (2.0f * farz * nearz) * nf;
+	result.rows.f[2][3] = (2.0f * farz * nearz) * nf;
+	result.rows.f[3][2] = -1.0f;
 	return result;
 }
 ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float nearz)
@@ -270,14 +379,6 @@ ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float nearz)
 	result.rows.f[2][3] = -nearz;
 	result.rows.f[3][2] = -1.0f;
 	return result;
-
-	//float f = tanf(DEG_TO_RADF(fov_deg) / 2.0f);
-	//ta_mat4 result = { 0 };
-	//result.rows.f[0][0] = 1.0f / (aspect * f);
-	//result.rows.f[1][1] = 1.0f / f;
-	//result.rows.f[2][3] = -nearz;
-	//result.rows.f[3][2] = -1.0f;
-	//return result;
 }
 ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
 	float nearz, float farz)
@@ -294,7 +395,7 @@ ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
 	result.rows.f[3][2] = (farz + nearz) * nf;
 	result.rows.f[3][3] = 1.0f;
 	return result;
-};
+}
 
 static void ta_primitive_init_lines()
 {
@@ -510,3 +611,42 @@ void ta_primitive_clear()
 	dlb_vec_clear(lines_queue);
 	dlb_vec_clear(quads_queue);
 }
+
+#if 0
+float hue_to_rgb(float p, float q, float t) {
+	if (t < 0.0f) t += 1.0f;
+	if (t > 1.0f) t -= 1.0f;
+	if (t < 1.0f / 6.0f) return p + (q - p) * 6.0f * t;
+	if (t < 1.0f / 2.0f) return q;
+	if (t < 2.0f / 3.0f) return p + (q - p) * 6.0f * (2.0f / 3.0f - t);
+	return p;
+}
+
+// All components are in range 0.0f - 1.0f
+// ta_rgb rgb = hsl_to_rbg((ta_hsl) { 115.f / 360.f, .83f, .38f });
+ta_rgb hsl_to_rbg(ta_hsl hsl)
+{
+	float r, g, b;
+	if (hsl.s == 0.0f) {
+		r = hsl.l;
+		g = hsl.l;
+		b = hsl.l;
+	} else {
+		float q;
+		if (hsl.l < 0.5f) {
+			q = hsl.l * (1.0f + hsl.s);
+		} else {
+			q = hsl.l + hsl.s - hsl.l * hsl.s;
+		}
+		float p = 2 * hsl.l - q;
+		r = hue_to_rgb(p, q, hsl.h + 1.0f / 3.0f);
+		g = hue_to_rgb(p, q, hsl.h);
+		b = hue_to_rgb(p, q, hsl.h - 1.0f / 3.0f);
+	}
+	ta_rgb rgb;
+	rgb.r = (int)roundf(255.f * r);
+	rgb.g = (int)roundf(255.f * g);
+	rgb.b = (int)roundf(255.f * b);
+	return rgb;
+}
+#endif

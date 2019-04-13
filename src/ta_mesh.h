@@ -26,10 +26,10 @@ typedef struct {
 	GLuint vao;
 	int vertex_count;
 	int index_count;
-	GLuint ui_arena[TA_MESH_BUFFER_COUNT];
+	GLuint buffers[TA_MESH_BUFFER_COUNT];
 } ta_mesh;
 
-dlb_hash tg_mesh_table;
+extern dlb_hash tg_mesh_table;
 
 ta_mesh *ta_mesh_init(const char *name, ta_mesh_queue queue, GLuint *arr_index,
 	ta_vec3 *arr_position, ta_vec3 *arr_normal, ta_uv *arr_uv,

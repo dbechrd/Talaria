@@ -25,18 +25,35 @@ typedef struct {
 
 typedef struct {
 	union {
+		ta_vec3 v[3];
+		float f[3][3];
+	} rows;
+} ta_mat3;
+
+typedef struct {
+	union {
 		ta_vec4 v[4];
 		float f[4][4];
 	} rows;
 } ta_mat4;
 
-#if 0
+typedef struct {
+	float h;
+	float s;
+	float l;
+} ta_hsl;
+
+typedef struct {
+	int r;
+	int g;
+	int b;
+} ta_rgb;
+
 typedef struct {
 	float r;
 	float g;
 	float b;
-} ta_rgb;
-#endif
+} ta_rgbf;
 
 typedef struct {
     float r;
@@ -93,18 +110,26 @@ extern const ta_color TA_COLOR_GRAY7;
 extern const ta_color TA_COLOR_GRAY8;
 extern const ta_color TA_COLOR_GRAY9;
 
-void ta_vec3_print(ta_vec3 *vec);
-void ta_vec4_print(ta_vec4 *vec);
-void ta_mat4_print(ta_mat4 *mat);
+float clampf(float f, float min, float max);
 
+void ta_vec3_print(ta_vec3 *vec);
 ta_vec3 vec3_negate(const ta_vec3 v);
 ta_vec3 vec3_add(const ta_vec3 a, const ta_vec3 b);
 ta_vec3 vec3_sub(const ta_vec3 a, const ta_vec3 b);
+ta_vec3 vec3_scalef(const ta_vec3 a, float s);
 float vec3_len(const ta_vec3 v);
 ta_vec3 vec3_normalize(const ta_vec3 v);
 float vec3_dot(const ta_vec3 a, const ta_vec3 b);
 ta_vec3 vec3_cross(const ta_vec3 a, const ta_vec3 b);
 
+void ta_vec4_print(ta_vec4 *vec);
+
+void ta_mat3_print(ta_mat3 *mat);
+ta_vec3 mat3_mul_vec3(const ta_mat3 m, const ta_vec3 v);
+ta_rgbf mat3_mul_rgbf(const ta_mat3 m, const ta_rgbf v);
+ta_mat3 mat3_hue_rotation(float degrees);
+
+void ta_mat4_print(ta_mat4 *mat);
 ta_mat4 mat4_mul(const ta_mat4 a, const ta_mat4 b);
 ta_mat4 mat4_init(
 	float m00, float m01, float m02, float m03,
