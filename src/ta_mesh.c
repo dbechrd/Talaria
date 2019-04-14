@@ -86,7 +86,7 @@ ta_mesh *ta_mesh_init(const char *name, ta_mesh_queue queue, GLuint *arr_index,
 	memcpy(mesh->name.data, name, mesh->name.length);
 
 	if (!tg_mesh_table.size) {
-		dlb_hash_init(&tg_mesh_table, "tg_mesh_table", 128);
+		dlb_hash_init(&tg_mesh_table, DLB_HASH_STRING, "tg_mesh_table", 128);
 		if (!tg_mesh_table.size) {
 			DLB_ASSERT(!"Failed to initialize mesh hash table");
 		}

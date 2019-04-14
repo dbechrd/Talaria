@@ -3,13 +3,20 @@
 #include "misc/gl3w.h"
 
 ta_viewport ta_viewport_init(int left, int top, int width, int height,
-	ta_color background)
+	float fov, float nearz, ta_color background)
 {
 	ta_viewport view;
 	view.rect.x = left;
 	view.rect.y = tg_window.height - (top + height);
 	view.rect.w = width;
 	view.rect.h = height;
+	view.fov = fov;
+	view.nearz = nearz;
+	view.projection = mat4_perspective_inf(
+		fov,
+		(float)view.rect.w / view.rect.h,
+		nearz
+	);
 	view.background = background;
 	return view;
 }

@@ -1,5 +1,13 @@
 #pragma once
 
+#define TA_EPSILON 0.0001f
+#define M_PI 3.14159265358979323846264338327950288
+#define M_2PI 6.28318530717958647692528676655900576
+#define DEG_TO_RAD(deg) deg * M_PI / 180.0
+#define RAD_TO_DEG(rad) rad * 180.0 / M_PI
+#define DEG_TO_RADF(deg) deg * (float)M_PI / 180.0f
+#define RAD_TO_DEGF(rad) rad * 180.0f / (float)M_PI
+
 typedef struct {
     float x;
     float y;
@@ -110,6 +118,7 @@ extern const ta_color TA_COLOR_GRAY7;
 extern const ta_color TA_COLOR_GRAY8;
 extern const ta_color TA_COLOR_GRAY9;
 
+//int clamp(int d, int min, int max);
 float clampf(float f, float min, float max);
 
 void ta_vec3_print(ta_vec3 *vec);

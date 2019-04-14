@@ -71,6 +71,8 @@ ta_ui_scrollview *ta_ui_scrollview_init(int x, int y, int w, int h,
 		border + view->rect.y,
 		-border*2 + view->rect.w,
 		-border*2 + view->rect.h,
+		65.0f,
+		0.1f,
 		TA_COLOR_GREEN
 	);
 	view->content = content;

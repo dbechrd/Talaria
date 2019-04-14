@@ -7,14 +7,6 @@
 #include "misc/gl3w.h"
 #include <math.h>
 
-#define TA_EPSILON 0.0001f
-#define M_PI 3.14159265358979323846264338327950288
-#define M_2PI 6.28318530717958647692528676655900576
-#define DEG_TO_RAD(deg) deg * M_PI / 180.0
-#define RAD_TO_DEG(rad) rad * 180.0 / M_PI
-#define DEG_TO_RADF(deg) deg * (float)M_PI / 180.0f
-#define RAD_TO_DEGF(rad) rad * 180.0f / (float)M_PI
-
 const ta_vec3 VEC3_UP = { 0.0f, 1.0f, 0.0f };
 const ta_mat4 MAT4_IDENT = {
 	1.0f, 0.0f, 0.0f, 0.0f,
@@ -57,6 +49,18 @@ static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
 static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
 	const ta_color *color);
 
+#if 0
+int clamp(int d, int min, int max)
+{
+	if (d <= min) {
+		return min;
+	} else if (d >= max) {
+		return max;
+	} else {
+		return d;
+	}
+}
+#endif
 float clampf(float f, float min, float max)
 {
 	if (f <= min) {
@@ -92,9 +96,9 @@ ta_vec3 vec3_add(const ta_vec3 a, const ta_vec3 b)
 ta_vec3 vec3_sub(const ta_vec3 a, const ta_vec3 b)
 {
 	ta_vec3 result;
-	result.x = a.x + b.x;
-	result.y = a.y + b.y;
-	result.z = a.z + b.z;
+	result.x = a.x - b.x;
+	result.y = a.y - b.y;
+	result.z = a.z - b.z;
 	return result;
 }
 ta_vec3 vec3_scalef(const ta_vec3 a, float s)
