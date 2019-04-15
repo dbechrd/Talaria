@@ -1,14 +1,14 @@
 #include "ta_camera.h"
 #include "ta_log.h"
 
-ta_mat4 ta_camera_lookat(ta_camera *camera, const ta_vec3 *position,
-	const ta_vec3 *target, const ta_vec3 *up)
+ta_mat4 ta_camera_lookat(ta_camera *camera, ta_vec3 position, ta_vec3 target,
+	ta_vec3 up)
 {
-	ta_vec3 direction = vec3_normalize(vec3_sub(*position, *target));
+	ta_vec3 direction = vec3_normalize(vec3_sub(position, target));
 
-	camera->position = *position;
+	camera->position = position;
 	camera->front = vec3_negate(direction);
-	camera->right = vec3_normalize(vec3_cross(*up, direction));
+	camera->right = vec3_normalize(vec3_cross(up, direction));
 	camera->up = vec3_cross(direction, camera->right);
 
 	// [ rx, ry, rz, 0 ]

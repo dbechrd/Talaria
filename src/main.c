@@ -20,11 +20,183 @@
 #include "misc/gl3w.h"
 #include "SDL/SDL.h"
 
-#define TA_INT_KEY(key) (void *)(key), sizeof(key)
-#define TA_IS_KEYDOWN(key) dlb_hash_search(&tg_key_states, TA_INT_KEY(key))
-#define TA_KEYDOWN(key) dlb_hash_insert(&tg_key_states, TA_INT_KEY(key), (void *)1)
-#define TA_KEYUP(key) dlb_hash_insert(&tg_key_states, TA_INT_KEY(key), (void *)0)
-dlb_hash tg_key_states;
+// pitch: -89.0f - 89.0f deg
+// yaw: 0.0f - 360.0f deg
+ta_vec3 cam_target(ta_vec3 pos, float pitch, float yaw)
+{
+    DLB_ASSERT(pitch > -90.0f);
+    DLB_ASSERT(pitch < 90.0f);
+    DLB_ASSERT(yaw >= 0.0f);
+    DLB_ASSERT(yaw < 360.0f);
+    ta_vec3 result = { 0 };
+    ta_vec3 dir = { 0 };
+    float pitch_rads = DEG_TO_RADF(pitch);
+    float yaw_rads = DEG_TO_RADF(yaw);
+    dir.x = cosf(yaw_rads);
+    dir.y = sinf(pitch_rads);
+    dir.z = -sinf(yaw_rads);
+    result = vec3_add(pos, dir);
+    return result;
+}
+
+typedef enum {
+    TA_EVENT_QUEUE_GLOBAL,
+    TA_EVENT_QUEUE_CAMERA,
+    TA_EVENT_QUEUE_COUNT
+} ta_event_queue_type;
+
+#define TA_EVENT_TYPE_BITS 7
+#define TA_EVENT_TYPE_QUEUE(type) ((type) >> TA_EVENT_TYPE_BITS)
+#define TA_EVENT_TYPE_FIRST(queue) ((queue) << TA_EVENT_TYPE_BITS)
+
+typedef enum {
+    // Global events
+    TA_EVENT_GLOBAL_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GLOBAL),
+
+    // Camera events
+    TA_EVENT_CAMERA_MOVE_FORWARD = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_CAMERA),
+    TA_EVENT_CAMERA_MOVE_BACKWARD,
+    TA_EVENT_CAMERA_MOVE_LEFT,
+    TA_EVENT_CAMERA_MOVE_RIGHT,
+    TA_EVENT_CAMERA_MOVE_UP,
+    TA_EVENT_CAMERA_MOVE_DOWN
+} ta_event_type;
+
+typedef struct {
+    ta_event_type type;
+} ta_event;
+
+typedef struct {
+    ta_event_queue_type type;
+	u32 head;  // oldest item
+	u32 count;
+	u32 capacity;
+	ta_event *buffer;
+} ta_event_queue;
+ta_event_queue tg_event_queues[TA_EVENT_QUEUE_COUNT];
+
+void ta_event_push(ta_event *event)
+{
+    ta_event_queue *queue = &tg_event_queues[TA_EVENT_TYPE_QUEUE(event->type)];
+    if (queue->count == queue->capacity) {
+        u32 old_size = dlb_vec_size(queue->buffer);
+        u32 new_cap = MAX(16, queue->capacity * 2);
+        dlb_vec_reserve(queue->buffer, new_cap);
+        if (old_size) {
+            // Before resize: [D, A, B, C]
+            // After resize : [-, A, B, C, D, -, -, -]
+            if (queue->head > 0) {
+                int bytes = queue->head * sizeof(queue->buffer[0]);
+                memcpy(&queue->buffer[queue->head + queue->count],
+                    queue->buffer, bytes);
+#if _DEBUG
+                memset(queue->buffer, 0, bytes);
+#endif
+            }
+        }
+        queue->capacity = new_cap;
+    }
+    int next = (queue->head + queue->count) % queue->capacity;
+    queue->buffer[next] = *event;
+    queue->count++;
+}
+
+bool ta_event_pop(ta_event *event, ta_event_queue_type queue_type)
+{
+    ta_event_queue *queue = &tg_event_queues[queue_type];
+    if (queue->count) {
+        *event = queue->buffer[queue->head];
+        queue->head = (queue->head + 1) % queue->capacity;
+        queue->count--;
+        return true;
+    } else {
+        return false;
+    }
+}
+
+bool ta_event_peek(ta_event *event, ta_event_queue_type queue_type)
+{
+    ta_event_queue *queue = &tg_event_queues[queue_type];
+    if (queue->count) {
+        *event = queue->buffer[queue->head];
+        return true;
+    } else {
+        return false;
+    }
+}
+
+typedef enum {
+    TA_STATE_INIT,
+    TA_STATE_PLAY,
+    TA_STATE_COUNT
+} ta_state;
+ta_state tg_state = TA_STATE_INIT;
+
+typedef struct {
+	bool down;
+} ta_key_state;
+ta_key_state tg_key_states[SDL_NUM_SCANCODES];
+
+typedef SDL_Scancode ta_key;
+typedef struct {
+    ta_key keys[3];
+} ta_keychord;
+
+typedef struct {
+    ta_event_type event_type;
+    ta_keychord chord;
+} ta_keybind;
+ta_keybind *tg_keybinds[TA_STATE_COUNT];
+
+void ta_keybind_bind(ta_state state_type, ta_event_type event_type,
+    ta_keychord *chord)
+{
+    ta_keybind *bind = dlb_vec_alloc(tg_keybinds[state_type]);
+    bind->event_type = event_type;
+    bind->chord.keys[0] = chord->keys[0];
+    bind->chord.keys[1] = chord->keys[1];
+    bind->chord.keys[2] = chord->keys[2];
+}
+
+void ta_keybind_bind1(ta_state state_type, ta_event_type event_type,
+    ta_key key1)
+{
+    ta_keybind *bind = dlb_vec_alloc(tg_keybinds[state_type]);
+    bind->event_type = event_type;
+    bind->chord.keys[0] = key1;
+}
+
+void ta_keybind_bind2(ta_state state_type, ta_event_type event_type,
+    ta_key key1, ta_key key2)
+{
+    ta_keybind *bind = dlb_vec_alloc(tg_keybinds[state_type]);
+    bind->event_type = event_type;
+    bind->chord.keys[0] = key1;
+    bind->chord.keys[1] = key2;
+}
+
+void ta_keybind_bind3(ta_state state_type, ta_event_type event_type,
+    ta_key key1, ta_key key2, ta_key key3)
+{
+    ta_keybind *bind = dlb_vec_alloc(tg_keybinds[state_type]);
+    bind->event_type = event_type;
+    bind->chord.keys[0] = key1;
+    bind->chord.keys[1] = key2;
+    bind->chord.keys[2] = key3;
+}
+
+bool ta_keychord_down(ta_keychord *chord) {
+    bool down =
+        (!chord->keys[0] || tg_key_states[chord->keys[0]].down) &&
+        (!chord->keys[1] || tg_key_states[chord->keys[1]].down) &&
+        (!chord->keys[2] || tg_key_states[chord->keys[2]].down);
+    return down;
+}
+
+// press key -> add event
+
+//SDL_Scancode tg_keybinds[TA_KEYBIND_COUNT];
+//ta_event_type tg_key_events[TA_KEYBIND_COUNT];
 
 #if _DEBUG
 DLB_ASSERT_HANDLER(handle_assert)
@@ -36,56 +208,41 @@ DLB_ASSERT_HANDLER(handle_assert)
 dlb_assert_handler_def *dlb_assert_handler = handle_assert;
 #endif
 
-// pitch: -89.0f - 89.0f deg
-// yaw: 0.0f - 360.0f deg
-ta_vec3 cam_target(ta_vec3 pos, float pitch, float yaw)
-{
-	DLB_ASSERT(pitch > -90.0f);
-	DLB_ASSERT(pitch < 90.0f);
-	DLB_ASSERT(yaw >= 0.0f);
-	DLB_ASSERT(yaw < 360.0f);
-	ta_vec3 result = { 0 };
-	ta_vec3 dir = { 0 };
-	float pitch_rads = DEG_TO_RADF(pitch);
-	float yaw_rads = DEG_TO_RADF(yaw);
-	dir.x = cosf(yaw_rads);
-	dir.y = sinf(pitch_rads);
-	dir.z = -sinf(yaw_rads);
-	result = vec3_add(pos, dir);
-	return result;
-}
-
 int main(int argc, char *argv[])
 {
     UNUSED(argc);
     UNUSED(argv);
-
 	ta_timer_init();
 	srand((u32)ta_timer_now_ms());
+
+    tg_state = TA_STATE_PLAY;
 	ta_log debug_log;
 	tg_debug_log = &debug_log;
     ta_log_init(tg_debug_log, "log.txt", true);
 
+    // Keyboard setup
+    {
+        // TODO: Read keybinds from file
+        //dlb_vec_reserve(tg_keybinds, 16);
+        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_QUIT,           SDL_SCANCODE_ESCAPE);
+        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_FORWARD,   SDL_SCANCODE_W);
+        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_BACKWARD,  SDL_SCANCODE_S);
+        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_LEFT,      SDL_SCANCODE_A);
+        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_RIGHT,     SDL_SCANCODE_D);
+        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_UP,        SDL_SCANCODE_SPACE);
+        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_DOWN,      SDL_SCANCODE_LSHIFT);
+    }
+
+    // Mouse setup
+    int mouse_x, mouse_y;
+    int mouse_dx, mouse_dy;
+    mouse_dx = 0;
+    mouse_dy = 0;
+
 	// Window setup
     ta_window_init(1600, 900, 65.0f, 0.1f, false);
-
-	// Mouse setup
 	SDL_SetRelativeMouseMode(true);
-	int mouse_x, mouse_y;
-	int mouse_dx, mouse_dy;
 	SDL_GetMouseState(&mouse_x, &mouse_y);
-	mouse_dx = 0;
-	mouse_dy = 0;
-
-	// Keyboard setup
-	dlb_hash_init(&tg_key_states, DLB_HASH_INT, "key_states", 16);
-	SDL_Keycode key_quit = SDLK_ESCAPE;
-	SDL_Keycode key_move_forward = SDLK_w;
-	SDL_Keycode key_move_backward = SDLK_s;
-	SDL_Keycode key_move_left = SDLK_a;
-	SDL_Keycode key_move_right = SDLK_d;
-	SDL_Keycode key_move_up = SDLK_SPACE;
-	SDL_Keycode key_move_down = SDLK_LSHIFT;
 
 	// OpenGL setup
     ta_render_init();
@@ -95,7 +252,7 @@ int main(int argc, char *argv[])
 
 	// Mesh setup
 	const ta_color mesh_selector_bg = { 0.1f, 0.1f, 0.2f, 1.0f };
-	ta_viewport mesh_selector = ta_viewport_init(10, 50, 400, 400, 65.0f, 0.1f,
+	ta_viewport mesh_selector = ta_viewport_init(10, 50, 200, 200, 90.0f, 0.1f,
 		mesh_selector_bg);
 
 	ta_texture_2d *tex_test = ta_texture_init(TA_TEXTURE_QUEUE_STATIC,
@@ -121,7 +278,13 @@ int main(int argc, char *argv[])
 	ta_vec3 c_pos = { 0.0f, 1.7f, 24.0f };
 	float c_pos_speed = 0.2f;
 	ta_vec3 c_target = cam_target(c_pos, 0.0f, c_yaw);
-	ta_mat4 look_at = ta_camera_lookat(&cam, &c_pos, &c_target, &VEC3_UP);
+	ta_mat4 look_at = ta_camera_lookat(&cam, c_pos, c_target, VEC3_UP);
+	ta_mat4 look_at_map = ta_camera_lookat(
+		&cam,
+		(ta_vec3) { 0.0f, 10.0f, 30.0f },
+		(ta_vec3) { 0.0f, 0.0f, 0.0f },
+		VEC3_UP
+	);
 
 	float model_deg = 0.0f;
 
@@ -139,7 +302,13 @@ int main(int argc, char *argv[])
 
 	ta_barchart chart = ta_barchart_init(10, 10, tg_window.width - 20, 30);
 
-	SDL_Event event;
+    // TODO: What other startup states would be useful (e.g. LOADING_MESHES)?
+    //       Could use this for a progress bar during load and better logging.
+    //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
+    //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
+    tg_state = TA_STATE_PLAY;
+
+	SDL_Event sdl_event;
     bool quit = false;
     while (!quit) {
 		bool camera_dirty = false;
@@ -163,70 +332,109 @@ int main(int argc, char *argv[])
 			}
 		}
 
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-            case SDL_QUIT:
-                quit = true;
-                break;
-            case SDL_WINDOWEVENT:
-				break;
-			case SDL_KEYDOWN:
-				TA_KEYDOWN(event.key.keysym.sym);
-                break;
-            case SDL_KEYUP:
-				TA_KEYUP(event.key.keysym.sym);
-				break;
-			case SDL_MOUSEBUTTONDOWN:
-				break;
-			case SDL_MOUSEBUTTONUP:
-				break;
-            case SDL_MOUSEWHEEL:
-				ta_ui_scrollview_scroll(view, -event.wheel.y);
-				break;
-            case SDL_MOUSEMOTION:
-				break;
-			case SDL_TEXTEDITING:
-                break;
-            default:
-                ta_log_write(tg_debug_log, "Unhandled event type: %d\n", event.type);
+        while (SDL_PollEvent(&sdl_event)) {
+            switch (sdl_event.type) {
+                case SDL_QUIT: {
+                    ta_event event = { 0 };
+                    event.type = TA_EVENT_GLOBAL_QUIT;
+                    ta_event_push(&event);
+                    break;
+                } case SDL_WINDOWEVENT: {
+				    break;
+                } case SDL_KEYDOWN: {
+				    tg_key_states[sdl_event.key.keysym.scancode].down = true;
+                    break;
+                } case SDL_KEYUP: {
+				    tg_key_states[sdl_event.key.keysym.scancode].down = false;
+				    break;
+                } case SDL_MOUSEBUTTONDOWN: {
+				    break;
+                } case SDL_MOUSEBUTTONUP: {
+				    break;
+                } case SDL_MOUSEWHEEL: {
+				    ta_ui_scrollview_scroll(view, -sdl_event.wheel.y);
+				    break;
+                } case SDL_MOUSEMOTION: {
+				    break;
+                } case SDL_TEXTEDITING: {
+                    break;
+                } default: {
+                    ta_log_write(tg_debug_log, "Unhandled event type: %d\n", sdl_event.type);
+                }
             }
         }
 
-		if (TA_IS_KEYDOWN(key_quit)) {
-			quit = true;
-		}
+        // Check keybinds
+        {
+            for (ta_keybind *bind = tg_keybinds[tg_state];
+                bind != dlb_vec_end(tg_keybinds[tg_state]); bind++) {
+                if (ta_keychord_down(&bind->chord)) {
+                    ta_event event = { 0 };
+                    event.type = bind->event_type;
+                    ta_event_push(&event);
+                }
+            }
+        }
 
-		// TODO: Normalize to prevent fast diagonal movement
-		if (TA_IS_KEYDOWN(key_move_forward)) {
-			c_pos = vec3_add(c_pos, vec3_scalef(cam.front, c_pos_speed));
-			camera_dirty = true;
-		}
-		if (TA_IS_KEYDOWN(key_move_backward)) {
-			c_pos = vec3_sub(c_pos, vec3_scalef(cam.front, c_pos_speed));
-			camera_dirty = true;
-		}
-		if (TA_IS_KEYDOWN(key_move_left)) {
-			c_pos = vec3_sub(c_pos, vec3_scalef(cam.right, c_pos_speed));
-			camera_dirty = true;
-		}
-		if (TA_IS_KEYDOWN(key_move_right)) {
-			c_pos = vec3_add(c_pos, vec3_scalef(cam.right, c_pos_speed));
-			camera_dirty = true;
-		}
-		if (TA_IS_KEYDOWN(key_move_up)) {
-			c_pos = vec3_add(c_pos, vec3_scalef(cam.up, c_pos_speed));
-			camera_dirty = true;
-		}
-		if (TA_IS_KEYDOWN(key_move_down)) {
-			c_pos = vec3_sub(c_pos, vec3_scalef(cam.up, c_pos_speed));
-			camera_dirty = true;
-		}
+        // Handle events
+        {
+            ta_event event;
+
+            // Global events
+            while (ta_event_pop(&event, TA_EVENT_QUEUE_GLOBAL)) {
+                switch (event.type) {
+                    case TA_EVENT_GLOBAL_QUIT: {
+                        quit = true;
+                        break;
+                    } default: {
+                        DLB_ASSERT(!"Unhandled event type");
+                    }
+                }
+            }
+
+            // Camera events
+            // TODO: Normalize to prevent fast diagonal movement
+            while (ta_event_pop(&event, TA_EVENT_QUEUE_CAMERA)) {
+                switch (event.type) {
+                    case TA_EVENT_CAMERA_MOVE_FORWARD: {
+                        ta_vec3 delta = vec3_scalef(cam.front, c_pos_speed);
+                        delta.y = 0.0f;
+                        c_pos = vec3_add(c_pos, delta);
+                        camera_dirty = true;
+                        break;
+                    } case TA_EVENT_CAMERA_MOVE_BACKWARD: {
+                        ta_vec3 delta = vec3_scalef(cam.front, c_pos_speed);
+                        delta.y = 0.0f;
+                        c_pos = vec3_sub(c_pos, delta);
+                        camera_dirty = true;
+                        break;
+                    } case TA_EVENT_CAMERA_MOVE_LEFT: {
+                        c_pos = vec3_sub(c_pos, vec3_scalef(cam.right, c_pos_speed));
+                        camera_dirty = true;
+                        break;
+                    } case TA_EVENT_CAMERA_MOVE_RIGHT: {
+                        c_pos = vec3_add(c_pos, vec3_scalef(cam.right, c_pos_speed));
+                        camera_dirty = true;
+                        break;
+                    } case TA_EVENT_CAMERA_MOVE_UP: {
+                        c_pos = vec3_add(c_pos, vec3_scalef(cam.up, c_pos_speed));
+                        camera_dirty = true;
+                        break;
+                    } case TA_EVENT_CAMERA_MOVE_DOWN: {
+                        c_pos = vec3_sub(c_pos, vec3_scalef(cam.up, c_pos_speed));
+                        camera_dirty = true;
+                        break;
+                    } default: {
+                        DLB_ASSERT(!"Unhandled event type");
+                    }
+                }
+            }
+        }
 
 		// Update camera
 		if (camera_dirty) {
 			c_target = cam_target(c_pos, c_pitch, c_yaw);
-			look_at = ta_camera_lookat(&cam, &c_pos, &c_target, &VEC3_UP);
-			ta_shader_mesh_set_view(&look_at);
+			look_at = ta_camera_lookat(&cam, c_pos, c_target, VEC3_UP);
 		}
 
 		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
@@ -236,6 +444,7 @@ int main(int argc, char *argv[])
 		glDisable(GL_CULL_FACE);
 		ta_shader_mesh_bind();
 		ta_shader_mesh_set_projection(&tg_window.projection);
+		ta_shader_mesh_set_view(&look_at);
 		ta_shader_mesh_set_model(&MAT4_IDENT);
 		ta_shader_mesh_prerender();
 		ta_shader_mesh_render(mesh_cube);
@@ -253,6 +462,7 @@ int main(int argc, char *argv[])
 			// Draw models
 			ta_shader_mesh_bind();
 			ta_shader_mesh_set_projection(&mesh_selector.projection);
+			ta_shader_mesh_set_view(&look_at_map);
 			ta_shader_mesh_set_model(&model);
 			ta_shader_mesh_prerender();
 			ta_shader_mesh_render(mesh_cube);
