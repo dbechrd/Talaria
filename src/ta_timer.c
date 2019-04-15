@@ -37,7 +37,8 @@ double ta_timer_elapsed_sec()
 	return elapsed_sec;
 }
 
-u64 ta_timer_now_ms()
+// Number of milliseconds since last second (modulo)
+u64 ta_timer_only_ms()
 {
 	u64 now_ms = ta_timer_elapsed_ms() % 1000;
 	return now_ms;

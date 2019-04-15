@@ -5,4 +5,4 @@ void ta_timer_init();
 u64 ta_timer_elapsed_ticks();
 u64 ta_timer_elapsed_ms();
 double ta_timer_elapsed_sec();
-u64 ta_timer_now_ms();
+u64 ta_timer_only_ms();

@@ -71,19 +71,19 @@ typedef struct {
 } ta_color;
 
 typedef struct {
-	int x;
-	int y;
-} ta_position;
-
-typedef struct {
 	int w;
 	int h;
 } ta_size;
 
 typedef struct {
-	ta_position p0;
-	ta_position p1;
+	ta_vec2 p0;
+	ta_vec2 p1;
 } ta_line_2d;
+
+typedef struct {
+    ta_vec3 p0;
+    ta_vec3 p1;
+} ta_line_3d;
 
 typedef struct {
 	int x;
@@ -160,6 +160,8 @@ ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
 void ta_primitive_init();
 void ta_primitive_push_line_2d(ta_line_2d *line_2d, const ta_color *color0,
 	const ta_color *color1);
+void ta_primitive_push_line_3d(ta_line_3d *line_3d, const ta_color *color0,
+    const ta_color *color1);
 void ta_primitive_push_rect(int x, int y, ta_rect *rect, const ta_color *color);
 void ta_primitive_render();
 void ta_primitive_clear();

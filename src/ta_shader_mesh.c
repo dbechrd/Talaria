@@ -1,6 +1,7 @@
 #include "ta_shader_mesh.h"
 #include "ta_shader.h"
 #include "ta_log.h"
+#include "dlb_vector.h"
 
 static GLuint program;
 
@@ -53,10 +54,10 @@ void ta_shader_mesh_init()
 	//GLint attr_color = ta_shader_attribute_location(program, "attr_color");
 	//GLint attr_uv = ta_shader_attribute_location(program, "attr_uv");
 	//GLint attr_normal = ta_shader_attribute_location(program, "attr_normal");
-	//DLB_ASSERT(attr_position == ATTR_POSITION);
-	//DLB_ASSERT(attr_color == ATTR_COLOR);
-	//DLB_ASSERT(attr_uv == ATTR_UV);
-	//DLB_ASSERT(attr_normal == ATTR_NORMAL);
+	//DLB_ASSERT(attr_position == TA_SHADER_ATTR_POSITION);
+	//DLB_ASSERT(attr_color == TA_SHADER_ATTR_COLOR);
+	//DLB_ASSERT(attr_uv == TA_SHADER_ATTR_UV);
+	//DLB_ASSERT(attr_normal == TA_SHADER_ATTR_NORMAL);
 
 	glDetachShader(program, vshader);
 	glDetachShader(program, fshader);
@@ -122,10 +123,12 @@ void ta_shader_mesh_prerender()
 void ta_shader_mesh_render(ta_mesh *mesh)
 {
 	glBindVertexArray(mesh->vao);
-	if (mesh->index_count) {
-		glDrawElements(GL_TRIANGLES, mesh->index_count, GL_UNSIGNED_INT, 0);
+    int index_count = dlb_vec_len(mesh->indexes);
+	if (index_count) {
+		glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
 	} else {
-		glDrawArrays(GL_TRIANGLES, 0, mesh->vertex_count);
+        int vertex_count = dlb_vec_len(mesh->positions);
+        glDrawArrays(GL_TRIANGLES, 0, vertex_count);
 	}
 	glBindVertexArray(0);
 }

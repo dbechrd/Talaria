@@ -23,16 +23,20 @@ typedef enum {
 typedef struct {
 	const char *filename;
 	ta_buffer name;
+
+    GLuint *indexes;
+    ta_vec3 *positions;
+    ta_vec3 *normals;
+    ta_uv *uvs;
+    ta_color *colors;
+
 	GLuint vao;
-	int vertex_count;
-	int index_count;
 	GLuint buffers[TA_MESH_BUFFER_COUNT];
 } ta_mesh;
 
 extern dlb_hash tg_mesh_table;
 
-ta_mesh *ta_mesh_init(const char *name, ta_mesh_queue queue, GLuint *arr_index,
-	ta_vec3 *arr_position, ta_vec3 *arr_normal, ta_uv *arr_uv,
-	ta_color *arr_color);
 void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename);
+void ta_mesh_push_normals(ta_mesh *mesh);
+void ta_mesh_free(ta_mesh *mesh);
 void ta_mesh_clear(ta_mesh_queue queue);

@@ -41,12 +41,13 @@ ta_mat4 ta_camera_lookat(ta_camera *camera, ta_vec3 position, ta_vec3 target,
 	translate.rows.v[3].w = 1.0f;
 
 	ta_mat4 look_at = mat4_mul(transform, translate);
+#if 0
 	ta_log_write(tg_debug_log, "transform:\n");
 	ta_mat4_print(&transform);
 	ta_log_write(tg_debug_log, "translate:\n");
 	ta_mat4_print(&translate);
 	ta_log_write(tg_debug_log, "look_at:\n");
 	ta_mat4_print(&look_at);
-
+#endif
 	return look_at;
 }

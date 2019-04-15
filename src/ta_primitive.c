@@ -32,7 +32,6 @@ static ta_vert_line *lines_queue;
 static GLuint lines_vao;
 static GLuint lines_buffer;
 static GLint lines_buffer_size;
-static GLuint lines_program;
 
 static ta_vert_quad *quads_queue;
 static GLuint quads_vao;
@@ -193,7 +192,7 @@ ta_rgbf mat3_mul_rgbf(const ta_mat3 m, const ta_rgbf v)
 		m.rows.f[2][0] * v.r +
 		m.rows.f[2][1] * v.g +
 		m.rows.f[2][2] * v.b;
-	
+
 	if (result.r < TA_EPSILON) {
 		result.r = 0.0f;
 	} else if (result.r > 1.0f) {
@@ -403,7 +402,7 @@ ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
 
 static void ta_primitive_init_lines()
 {
-	lines_program = ta_shader_lines_init();
+	ta_shader_lines_init();
 
 	glCreateVertexArrays(1, &lines_vao);
 	glCreateBuffers(1, &lines_buffer);
@@ -456,12 +455,27 @@ static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d,
 	line->verts[1].position.y = y1;
 	line->verts[1].color = *color1;
 }
+static void ta_primitive_line3d_to_line(ta_vert_line *line, ta_line_3d *line3d,
+    const ta_color *color0, const ta_color *color1)
+{
+    line->verts[0].position = line3d->p0;
+    line->verts[0].color = *color0;
+    line->verts[1].position = line3d->p1;
+    line->verts[1].color = *color1;
+}
 void ta_primitive_push_line_2d(ta_line_2d *line_2d, const ta_color *color0,
 	const ta_color * color1)
 {
 	ta_vert_line line = { 0 };
 	ta_primitive_line2d_to_line(&line, line_2d, color0, color1);
 	ta_primitive_push_line(&line);
+}
+void ta_primitive_push_line_3d(ta_line_3d *line_3d, const ta_color *color0,
+    const ta_color * color1)
+{
+    ta_vert_line line = { 0 };
+    ta_primitive_line3d_to_line(&line, line_3d, color0, color1);
+    ta_primitive_push_line(&line);
 }
 
 static void ta_primitive_push_quad(ta_vert_quad *quad)
@@ -555,8 +569,10 @@ void ta_primitive_render_lines()
 		return;
 	}
 
-	glUseProgram(lines_program);
-	glBindVertexArray(lines_vao);
+	ta_shader_lines_bind();
+    ta_shader_lines_prerender();
+
+    glBindVertexArray(lines_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
 
 	// Update buffer (resize if necessary)
@@ -569,11 +585,11 @@ void ta_primitive_render_lines()
 	}
 
 	// Draw lines
-	glDrawArrays(GL_LINES, 0, 2 * queue_len);
+    ta_shader_lines_render(lines_queue);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glUseProgram(0);
+    ta_shader_lines_unbind();
 }
 void ta_primitive_render_quads()
 {

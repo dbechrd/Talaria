@@ -36,21 +36,21 @@ void ta_barchart_draw(int x, int y, ta_barchart *chart)
 	ta_color color1 = { 0 };
 	for (int i = 0; i < chart->sample_count; i++) {
 		int pos_x = x_inc * i;
-		line.p0.x = pos_x;
-		line.p0.y = chart->rect.h;
-		line.p1.x = pos_x;
+		line.p0.x = (float)pos_x;
+		line.p0.y = (float)chart->rect.h;
+		line.p1.x = (float)pos_x;
 		if (i == chart->next_index) {
 			color0.r = 1;
 			color0.g = 0;
 			color1.r = 1;
 			color1.g = 0;
-			line.p1.y = chart->rect.y;
+			line.p1.y = (float)chart->rect.y;
 		} else {
 			color0.r = 0;
 			color0.g = 0.6f;
 			color1.r = 1.0f * (chart->samples[i] / (float)chart->rect.h);
 			color1.g = 0.6f;
-			line.p1.y = chart->rect.h - chart->samples[i];
+			line.p1.y = (float)(chart->rect.h - chart->samples[i]);
 		}
 		line.p0.x += x + chart->rect.x;
 		line.p1.x += x + chart->rect.x;
@@ -64,7 +64,7 @@ void ta_barchart_draw(int x, int y, ta_barchart *chart)
 		ta_vec3 res = *(ta_vec3 *)&cc;
 		res = vec3_scalef(res, 1.0f + lum / lum2);
 		cc = *(ta_rgbf *)&res;
-		
+
 		color0.r = cc.r;
 		color0.g = cc.g;
 		color0.b = cc.b;

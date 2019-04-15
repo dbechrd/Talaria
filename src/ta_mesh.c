@@ -16,93 +16,71 @@
 #include "misc/tinyobj_loader_c.h"
 
 dlb_hash tg_mesh_table;
-
 static ta_mesh *meshes[TA_MESH_QUEUE_COUNT];
-static GLuint *gl_ids[TA_MESH_QUEUE_COUNT];
 
-ta_mesh *ta_mesh_init(const char *name, ta_mesh_queue queue, GLuint *arr_index,
-	ta_vec3 *arr_position, ta_vec3 *arr_normal, ta_uv *arr_uv,
-	ta_color *arr_color)
+static void ta_mesh_init_gl(ta_mesh *mesh)
 {
 	const int vertCompLen = 3;
 	const int uvCompLen = 2;
 
-	// Create mesh
-	ta_mesh *mesh = dlb_vec_alloc(meshes[queue]);
 	glCreateVertexArrays(1, &mesh->vao);
 	glBindVertexArray(mesh->vao);
 
-	if (arr_index) {
-		mesh->index_count = dlb_vec_len(arr_index);
+	if (mesh->indexes) {
+		int index_count = dlb_vec_len(mesh->indexes);
 		glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_INDEX]);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_INDEX]);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->index_count * sizeof(GLuint), arr_index,
-			GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(GLuint),
+            mesh->indexes, GL_STATIC_DRAW);
 	}
-	if (arr_position) {
-		mesh->vertex_count = dlb_vec_len(arr_position);
+	if (mesh->positions) {
+		int vertex_count = dlb_vec_len(mesh->positions);
 		glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_POSITION]);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_POSITION]);
-		glBufferData(GL_ARRAY_BUFFER, mesh->vertex_count * vertCompLen * sizeof(GLfloat), arr_position,
-			GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, vertex_count * vertCompLen * sizeof(GLfloat),
+            mesh->positions, GL_STATIC_DRAW);
 		glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
 		glVertexAttribPointer(TA_SHADER_ATTR_POSITION, vertCompLen, GL_FLOAT,
 			false, 0, 0);
 	}
-	if (arr_color) {
-		int color_count = dlb_vec_len(arr_color) * 4;
+	if (mesh->colors) {
+		int color_count = dlb_vec_len(mesh->colors) * 4;
 		glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_COLOR]);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_COLOR]);
-		glBufferData(GL_ARRAY_BUFFER, color_count * sizeof(GLfloat), arr_color, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, color_count * sizeof(GLfloat), mesh->colors,
+            GL_STATIC_DRAW);
 		glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
 		glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 3, GL_FLOAT, false, 0, 0);
 	}
-	if (arr_uv) {
-		int uv_count = dlb_vec_len(arr_uv) * uvCompLen;
+	if (mesh->uvs) {
+		int uv_count = dlb_vec_len(mesh->uvs) * uvCompLen;
 		glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_UV]);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_UV]);
-		glBufferData(GL_ARRAY_BUFFER, uv_count * sizeof(GLfloat), arr_uv, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, uv_count * sizeof(GLfloat), mesh->uvs,
+            GL_STATIC_DRAW);
 		glEnableVertexAttribArray(TA_SHADER_ATTR_UV);
 		glVertexAttribPointer(TA_SHADER_ATTR_UV, uvCompLen, GL_FLOAT, false, 0,
 			0);
 	}
-	if (arr_normal) {
-		int normal_count = dlb_vec_len(arr_normal) * 3;
+	if (mesh->normals) {
+		int normal_count = dlb_vec_len(mesh->normals) * 3;
 		glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_NORMAL]);
 		glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_NORMAL]);
-		glBufferData(GL_ARRAY_BUFFER, normal_count * sizeof(GLfloat), arr_normal, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, normal_count * sizeof(GLfloat), mesh->normals,
+            GL_STATIC_DRAW);
 		glEnableVertexAttribArray(TA_SHADER_ATTR_NORMAL);
 		glVertexAttribPointer(TA_SHADER_ATTR_NORMAL, 3, GL_FLOAT, false, 0, 0);
 	}
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	if (arr_index) {
+	if (mesh->indexes) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
-
-	mesh->name.length = (u32)strlen(name);
-	mesh->name.data = dlb_malloc(mesh->name.length);
-	memcpy(mesh->name.data, name, mesh->name.length);
-
-	if (!tg_mesh_table.size) {
-		dlb_hash_init(&tg_mesh_table, DLB_HASH_STRING, "tg_mesh_table", 128);
-		if (!tg_mesh_table.size) {
-			DLB_ASSERT(!"Failed to initialize mesh hash table");
-		}
-	}
-	dlb_hash_insert(&tg_mesh_table, mesh->name.data, mesh->name.length, mesh);
-	return mesh;
 }
 
 void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename)
 {
-	GLuint *arr_index = 0;
-	ta_vec3 *arr_position = 0;
-	ta_vec3 *arr_normal = 0;
-	ta_uv *arr_uv = 0;
-	ta_color *arr_color = 0;
-
 	// Load OBJ file
 	// =========================================================================
 
@@ -129,22 +107,25 @@ void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename)
 	// Each object in file
 	for (size_t i = 0; i < num_shapes; i++) {
 		tinyobj_shape_t shape = shapes[i];
-		// Each face in object
 		size_t offset = 0;
+
+        ta_mesh *mesh = dlb_vec_alloc(meshes[queue]);
+
+		// Each face in object
 		for (size_t fn = shape.face_offset; fn < shape.length; fn++) {
 			int face_verts = attrib.face_num_verts[fn];
 			DLB_ASSERT(face_verts == 3);
 			for (int f = 0; f < face_verts; f++) {
 				tinyobj_vertex_index_t face = attrib.faces[shape.face_offset + offset];
-				ta_vec3 *pos = dlb_vec_alloc(arr_position);
+				ta_vec3 *pos = dlb_vec_alloc(mesh->positions);
 				pos->x = attrib.vertices[face.v_idx * 3];
 				pos->y = attrib.vertices[face.v_idx * 3 + 1];
 				pos->z = attrib.vertices[face.v_idx * 3 + 2];
-				ta_vec3 *norm = dlb_vec_alloc(arr_normal);
+				ta_vec3 *norm = dlb_vec_alloc(mesh->normals);
 				norm->x = attrib.normals[face.vn_idx];
 				norm->y = attrib.normals[face.vn_idx * 3 + 1];
 				norm->z = attrib.normals[face.vn_idx * 3 + 2];
-				ta_uv *uv = dlb_vec_alloc(arr_uv);
+				ta_uv *uv = dlb_vec_alloc(mesh->uvs);
 				uv->u = attrib.texcoords[face.vt_idx * 2];
 				uv->v = attrib.texcoords[face.vt_idx * 2 + 1];
 				// TODO: Handle attrib.material_ids possibly for color data?
@@ -152,15 +133,19 @@ void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename)
 			}
 		}
 
-		u32 pos_len = dlb_vec_len(arr_position);
-		u32 normal_len = dlb_vec_len(arr_normal);
-		u32 uv_len = dlb_vec_len(arr_uv);
-		UNUSED(pos_len);
-		UNUSED(normal_len);
-		UNUSED(uv_len);
+		ta_mesh_init_gl(mesh);
 
-		ta_mesh_init(shapes[i].name, queue, arr_index, arr_position, arr_normal,
-			arr_uv, arr_color);
+        mesh->name.length = (u32)strlen(shapes[i].name);
+        mesh->name.data = dlb_malloc(mesh->name.length);
+        memcpy(mesh->name.data, shapes[i].name, mesh->name.length);
+
+        if (!tg_mesh_table.size) {
+            dlb_hash_init(&tg_mesh_table, DLB_HASH_STRING, "tg_mesh_table", 128);
+            if (!tg_mesh_table.size) {
+                DLB_ASSERT(!"Failed to initialize mesh hash table");
+            }
+        }
+        dlb_hash_insert(&tg_mesh_table, mesh->name.data, mesh->name.length, mesh);
 	}
 
 	tinyobj_attrib_free(&attrib);
@@ -169,15 +154,40 @@ void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename)
 	ta_buffer_free(buf);
 }
 
+void ta_mesh_push_normals(ta_mesh *mesh)
+{
+    u32 normal_count = dlb_vec_len(mesh->normals);
+    DLB_ASSERT(normal_count == dlb_vec_len(mesh->positions));
+    for (u32 i = 0; i < normal_count; i++) {
+        ta_line_3d line = { 0 };
+        line.p0 = mesh->positions[i];
+        line.p1 = vec3_add(mesh->positions[i], mesh->normals[i]);
+        //ta_primitive_push_line_3d(&line, &TA_COLOR_RED, &TA_COLOR_GREEN);
+        ta_primitive_push_line_3d(&line, &TA_COLOR_BLUE, &TA_COLOR_BLUE);
+    }
+}
+
+void ta_mesh_free(ta_mesh *mesh)
+{
+    dlb_hash_delete(&tg_mesh_table, mesh->name.data, mesh->name.length);
+    ta_buffer_free(&mesh->name);
+    dlb_vec_free(mesh->indexes);
+    dlb_vec_free(mesh->positions);
+    dlb_vec_free(mesh->normals);
+    dlb_vec_free(mesh->uvs);
+    dlb_vec_free(mesh->colors);
+    glDeleteVertexArrays(1, &mesh->vao);
+    // TODO: This is probably going to break, need to either use gl_ids like
+    //       ta_texture_clear() or individually check if each buffer exists.
+    glDeleteBuffers(TA_MESH_BUFFER_COUNT, mesh->buffers);
+}
+
 void ta_mesh_clear(ta_mesh_queue queue)
 {
-	glDeleteTextures(dlb_vec_len(gl_ids[queue]), gl_ids[queue]);
 	ta_mesh *mesh = meshes[queue];
 	while (mesh != dlb_vec_end(meshes[queue])) {
-		dlb_hash_delete(&tg_mesh_table, mesh->name.data, mesh->name.length);
-		ta_buffer_free(&mesh->name);
+		ta_mesh_free(mesh);
 		mesh++;
 	}
 	dlb_vec_clear(meshes[queue]);
-	dlb_vec_clear(gl_ids[queue]);
 }
