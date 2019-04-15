@@ -52,6 +52,7 @@ typedef enum {
 typedef enum {
     // Global events
     TA_EVENT_GLOBAL_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GLOBAL),
+    TA_EVENT_GLOBAL_MOUSE_MOVE,
 
     // Camera events
     TA_EVENT_CAMERA_MOVE_FORWARD = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_CAMERA),
@@ -59,11 +60,28 @@ typedef enum {
     TA_EVENT_CAMERA_MOVE_LEFT,
     TA_EVENT_CAMERA_MOVE_RIGHT,
     TA_EVENT_CAMERA_MOVE_UP,
-    TA_EVENT_CAMERA_MOVE_DOWN
+    TA_EVENT_CAMERA_MOVE_DOWN,
+    TA_EVENT_CAMERA_ROTATE,
 } ta_event_type;
 
 typedef struct {
     ta_event_type type;
+    int dx;
+    int dy;
+} ta_event_mouse_move;
+
+typedef struct {
+    ta_event_type type;
+    float delta_pitch;
+    float delta_yaw;
+} ta_event_camera_rotate;
+
+typedef struct {
+    ta_event_type type;
+    union {
+        ta_event_mouse_move mouse_move;
+        ta_event_camera_rotate camera_rotate;
+    } data;
 } ta_event;
 
 typedef struct {
@@ -131,6 +149,13 @@ typedef enum {
     TA_STATE_COUNT
 } ta_state;
 ta_state tg_state = TA_STATE_INIT;
+
+#if 0
+enum {
+    TA_SCANCODE_MOUSE_MOVE = SDL_NUM_SCANCODES,
+    TA_SCANCODE_COUNT,
+};
+#endif
 
 typedef struct {
 	bool down;
@@ -235,9 +260,6 @@ int main(int argc, char *argv[])
 
     // Mouse setup
     int mouse_x, mouse_y;
-    int mouse_dx, mouse_dy;
-    mouse_dx = 0;
-    mouse_dy = 0;
 
 	// Window setup
     ta_window_init(1600, 900, 65.0f, 0.1f, false);
@@ -272,9 +294,9 @@ int main(int argc, char *argv[])
 
 	ta_camera cam = { 0 };
 	float c_pitch = 0.0f;
-	float c_pitch_speed = 0.1f;
+	float mouse_sensitivity_y = 0.1f;
 	float c_yaw = 90.0f;
-	float c_yaw_speed = 0.1f;
+	float mouse_sensitivity_x = 0.1f;
 	ta_vec3 c_pos = { 0.0f, 1.7f, 24.0f };
 	float c_pos_speed = 0.2f;
 	ta_vec3 c_target = cam_target(c_pos, 0.0f, c_yaw);
@@ -313,25 +335,6 @@ int main(int argc, char *argv[])
     while (!quit) {
 		bool camera_dirty = false;
 
-		// Update mouse
-		{
-			SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
-			mouse_x += mouse_dx;
-			mouse_y += mouse_dy;
-
-			if (mouse_dx) {
-				c_yaw -= c_yaw_speed * mouse_dx;
-				while (c_yaw < 0.0f) { c_yaw += 360.0f; }
-				while (c_yaw >= 360.0f) { c_yaw -= 360.0f; }
-				camera_dirty = true;
-			}
-			if (mouse_dy) {
-				c_pitch -= c_pitch_speed * mouse_dy;
-				c_pitch = clampf(c_pitch, -89.0f, 89.0f);
-				camera_dirty = true;
-			}
-		}
-
         while (SDL_PollEvent(&sdl_event)) {
             switch (sdl_event.type) {
                 case SDL_QUIT: {
@@ -340,22 +343,22 @@ int main(int argc, char *argv[])
                     ta_event_push(&event);
                     break;
                 } case SDL_WINDOWEVENT: {
-				    break;
+                    break;
                 } case SDL_KEYDOWN: {
-				    tg_key_states[sdl_event.key.keysym.scancode].down = true;
+                    tg_key_states[sdl_event.key.keysym.scancode].down = true;
                     break;
                 } case SDL_KEYUP: {
-				    tg_key_states[sdl_event.key.keysym.scancode].down = false;
-				    break;
+                    tg_key_states[sdl_event.key.keysym.scancode].down = false;
+                    break;
                 } case SDL_MOUSEBUTTONDOWN: {
-				    break;
+                    break;
                 } case SDL_MOUSEBUTTONUP: {
-				    break;
+                    break;
                 } case SDL_MOUSEWHEEL: {
-				    ta_ui_scrollview_scroll(view, -sdl_event.wheel.y);
-				    break;
+                    ta_ui_scrollview_scroll(view, -sdl_event.wheel.y);
+                    break;
                 } case SDL_MOUSEMOTION: {
-				    break;
+                    break;
                 } case SDL_TEXTEDITING: {
                     break;
                 } default: {
@@ -364,7 +367,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        // Check keybinds
+        // Generate keybind events
         {
             for (ta_keybind *bind = tg_keybinds[tg_state];
                 bind != dlb_vec_end(tg_keybinds[tg_state]); bind++) {
@@ -376,6 +379,23 @@ int main(int argc, char *argv[])
             }
         }
 
+		// Generate mouse events
+		{
+            int mouse_dx, mouse_dy;
+			SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
+
+            if (mouse_dx || mouse_dy) {
+			    mouse_x += mouse_dx;
+			    mouse_y += mouse_dy;
+
+                ta_event mouse_move_evt = { 0 };
+                mouse_move_evt.type = TA_EVENT_GLOBAL_MOUSE_MOVE;
+                mouse_move_evt.data.mouse_move.dx = mouse_dx;
+                mouse_move_evt.data.mouse_move.dy = mouse_dy;
+                ta_event_push(&mouse_move_evt);
+            }
+		}
+
         // Handle events
         {
             ta_event event;
@@ -385,6 +405,26 @@ int main(int argc, char *argv[])
                 switch (event.type) {
                     case TA_EVENT_GLOBAL_QUIT: {
                         quit = true;
+                        break;
+                    } case TA_EVENT_GLOBAL_MOUSE_MOVE: {
+                        switch (tg_state) {
+                            case TA_STATE_PLAY: {
+                                ta_event cam_rotate_evt = { 0 };
+                                cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
+                                if (event.data.mouse_move.dx) {
+                                    cam_rotate_evt.data.camera_rotate.delta_yaw =
+                                        -mouse_sensitivity_x * event.data.mouse_move.dx;
+                                }
+                                if (event.data.mouse_move.dy) {
+                                    cam_rotate_evt.data.camera_rotate.delta_pitch =
+                                        -mouse_sensitivity_y * event.data.mouse_move.dy;
+                                }
+                                ta_event_push(&cam_rotate_evt);
+                                break;
+                            } default: {
+                                DLB_ASSERT(!"Unhandled state");
+                            }
+                        }
                         break;
                     } default: {
                         DLB_ASSERT(!"Unhandled event type");
@@ -423,6 +463,19 @@ int main(int argc, char *argv[])
                     } case TA_EVENT_CAMERA_MOVE_DOWN: {
                         c_pos = vec3_sub(c_pos, vec3_scalef(cam.up, c_pos_speed));
                         camera_dirty = true;
+                        break;
+                    } case TA_EVENT_CAMERA_ROTATE: {
+                        if (event.data.camera_rotate.delta_yaw) {
+                            c_yaw += event.data.camera_rotate.delta_yaw;
+                            while (c_yaw < 0.0f) { c_yaw += 360.0f; }
+                            while (c_yaw >= 360.0f) { c_yaw -= 360.0f; }
+                            camera_dirty = true;
+                        }
+                        if (event.data.camera_rotate.delta_pitch) {
+                            c_pitch += event.data.camera_rotate.delta_pitch;
+                            c_pitch = clampf(c_pitch, -89.0f, 89.0f);
+                            camera_dirty = true;
+                        }
                         break;
                     } default: {
                         DLB_ASSERT(!"Unhandled event type");
