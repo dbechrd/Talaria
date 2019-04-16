@@ -316,6 +316,7 @@ int main(int argc, char *argv[])
 	UNUSED(tex_test);
 
 	//ta_mesh_load_obj_file(TA_MESH_QUEUE_STATIC, "data/mesh/prim_cube.obj");
+    //ta_mesh *mesh_cube = dlb_hash_search(&tg_mesh_table, CSTR("prim_cube"));
 	ta_mesh_load_obj_file(TA_MESH_QUEUE_STATIC, "data/models/Chamber0001.obj");
 	ta_mesh *mesh_cube = dlb_hash_search(&tg_mesh_table, CSTR("chamber0001_base"));
 	if (!mesh_cube) {
@@ -334,13 +335,23 @@ int main(int argc, char *argv[])
 	ta_vec3 c_pos = { 0.0f, 1.7f, 24.0f };
 	float c_pos_speed = 0.2f;
 	ta_vec3 c_target = cam_target(c_pos, 0.0f, c_yaw);
-	ta_mat4 look_at = ta_camera_lookat(&cam, c_pos, c_target, VEC3_UP);
+	ta_mat4 look_at = ta_camera_lookat(&cam, c_pos, c_target, VEC3_Y);
 	ta_mat4 look_at_map = ta_camera_lookat(
 		&cam,
 		(ta_vec3) { 0.0f, 10.0f, 30.0f },
 		(ta_vec3) { 0.0f, 0.0f, 0.0f },
-		VEC3_UP
+		VEC3_Y
 	);
+
+    GLfloat lineWidthRange[2];
+    glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, lineWidthRange);
+    glLineWidth(10.0f);
+    ta_line_3d X_AXIS = { 0 };
+    ta_line_3d Y_AXIS = { 0 };
+    ta_line_3d Z_AXIS = { 0 };
+    X_AXIS.p1 = vec3_scalef(VEC3_X, 5.0f);
+    Y_AXIS.p1 = vec3_scalef(VEC3_Y, 5.0f);
+    Z_AXIS.p1 = vec3_scalef(VEC3_Z, 5.0f);
 
 	float model_deg = 0.0f;
 
@@ -514,11 +525,11 @@ int main(int argc, char *argv[])
                         camera_dirty = true;
                         break;
                     } case TA_EVENT_CAMERA_MOVE_UP: {
-                        c_pos = vec3_add(c_pos, vec3_scalef(VEC3_UP, c_pos_speed));
+                        c_pos = vec3_add(c_pos, vec3_scalef(VEC3_Y, c_pos_speed));
                         camera_dirty = true;
                         break;
                     } case TA_EVENT_CAMERA_MOVE_DOWN: {
-                        c_pos = vec3_sub(c_pos, vec3_scalef(VEC3_UP, c_pos_speed));
+                        c_pos = vec3_sub(c_pos, vec3_scalef(VEC3_Y, c_pos_speed));
                         camera_dirty = true;
                         break;
                     } case TA_EVENT_CAMERA_ROTATE: {
@@ -544,10 +555,10 @@ int main(int argc, char *argv[])
 		// Update camera
 		if (camera_dirty) {
 			c_target = cam_target(c_pos, c_pitch, c_yaw);
-			look_at = ta_camera_lookat(&cam, c_pos, c_target, VEC3_UP);
+			look_at = ta_camera_lookat(&cam, c_pos, c_target, VEC3_Y);
 		}
 
-		glClearColor(0.3f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw models
@@ -564,11 +575,12 @@ int main(int argc, char *argv[])
         ta_shader_lines_set_view(&look_at);
         ta_shader_lines_set_model(&MAT4_IDENT);
 
+        ta_primitive_push_line_3d(&X_AXIS, &TA_COLOR_RED,   &TA_COLOR_RED);
+        ta_primitive_push_line_3d(&Y_AXIS, &TA_COLOR_GREEN, &TA_COLOR_GREEN);
+        ta_primitive_push_line_3d(&Z_AXIS, &TA_COLOR_BLUE,  &TA_COLOR_BLUE);
+
         //////////////////////////////////////////
         ta_mesh_push_normals(mesh_cube);
-        //ta_line_3d line = { 0 };
-        //line.p1 = VEC3_UP;
-        //ta_primitive_push_line_3d(&line, &TA_COLOR_BLUE, &TA_COLOR_BLUE);
         ta_primitive_render();
         ta_primitive_clear();
         //////////////////////////////////////////

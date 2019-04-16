@@ -122,7 +122,7 @@ void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename)
 				pos->y = attrib.vertices[face.v_idx * 3 + 1];
 				pos->z = attrib.vertices[face.v_idx * 3 + 2];
 				ta_vec3 *norm = dlb_vec_alloc(mesh->normals);
-				norm->x = attrib.normals[face.vn_idx];
+				norm->x = attrib.normals[face.vn_idx * 3];
 				norm->y = attrib.normals[face.vn_idx * 3 + 1];
 				norm->z = attrib.normals[face.vn_idx * 3 + 2];
 				ta_uv *uv = dlb_vec_alloc(mesh->uvs);
@@ -164,6 +164,20 @@ void ta_mesh_push_normals(ta_mesh *mesh)
         line.p1 = vec3_add(mesh->positions[i], mesh->normals[i]);
         //ta_primitive_push_line_3d(&line, &TA_COLOR_RED, &TA_COLOR_GREEN);
         ta_primitive_push_line_3d(&line, &TA_COLOR_BLUE, &TA_COLOR_BLUE);
+    }
+}
+
+void debug_mesh_log_normals(ta_mesh *mesh)
+{
+    ta_log_write(tg_debug_log, "Normals:\n");
+    u32 normal_count = dlb_vec_len(mesh->normals);
+    DLB_ASSERT(normal_count == dlb_vec_len(mesh->positions));
+    for (u32 i = 0; i < normal_count; i++) {
+        ta_line_3d line = { 0 };
+        line.p0 = mesh->positions[i];
+        line.p1 = vec3_add(mesh->positions[i], mesh->normals[i]);
+        ta_log_write(tg_debug_log, "[%d] { %f, %f, %f } -> { %f, %f, %f }\n", i,
+            line.p0.x, line.p0.y, line.p0.z, line.p1.x, line.p1.y, line.p1.z);
     }
 }
 

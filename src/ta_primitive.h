@@ -102,7 +102,10 @@ typedef struct {
     ta_vec3 half_axes;
 } ta_bbox_3d;
 
-extern const ta_vec3 VEC3_UP;
+extern const ta_vec3 VEC3_ZERO;
+extern const ta_vec3 VEC3_X;
+extern const ta_vec3 VEC3_Y;
+extern const ta_vec3 VEC3_Z;
 extern const ta_mat4 MAT4_IDENT;
 extern const ta_color TA_COLOR_INVIS;
 extern const ta_color TA_COLOR_RED;

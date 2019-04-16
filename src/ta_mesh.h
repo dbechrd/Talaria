@@ -38,5 +38,6 @@ extern dlb_hash tg_mesh_table;
 
 void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename);
 void ta_mesh_push_normals(ta_mesh *mesh);
+void debug_mesh_log_normals(ta_mesh *mesh);
 void ta_mesh_free(ta_mesh *mesh);
 void ta_mesh_clear(ta_mesh_queue queue);
