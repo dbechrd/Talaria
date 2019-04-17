@@ -154,16 +154,62 @@ void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename)
 	ta_buffer_free(buf);
 }
 
+void ta_mesh_init_vertex_normals(ta_mesh *mesh, float scale)
+{
+    DLB_ASSERT(!mesh->vertex_normals);
+
+    u32 normal_count = dlb_vec_len(mesh->normals);
+    DLB_ASSERT(normal_count > 0);
+    DLB_ASSERT(normal_count == dlb_vec_len(mesh->positions));
+
+    dlb_vec_reserve(mesh->vertex_normals, normal_count);
+    for (u32 i = 0; i < normal_count; i++) {
+        ta_line_3d *line = dlb_vec_alloc(mesh->vertex_normals);
+        ta_vec3 vertex_normal = vec3_scalef(mesh->normals[i], scale);
+        line->p0 = mesh->positions[i];
+        line->p1 = vec3_add(mesh->positions[i], vertex_normal);
+    }
+}
+
+void ta_mesh_init_face_normals(ta_mesh *mesh, float scale)
+{
+    DLB_ASSERT(!mesh->face_normals);
+
+    u32 normal_count = dlb_vec_len(mesh->normals);
+    DLB_ASSERT(normal_count > 0);
+    DLB_ASSERT(normal_count == dlb_vec_len(mesh->positions));
+
+    u32 face_count = normal_count / 3;
+    dlb_vec_reserve(mesh->face_normals, face_count);
+    for (u32 i = 0; i < face_count; i++) {
+        ta_line_3d *line = dlb_vec_alloc(mesh->face_normals);
+        ta_vec3 v0 = mesh->positions[i * 3];
+        ta_vec3 v1 = mesh->positions[i * 3 + 1];
+        ta_vec3 v2 = mesh->positions[i * 3 + 2];
+        ta_vec3 edge0 = vec3_sub(v1, v0);
+        ta_vec3 edge1 = vec3_sub(v2, v1);
+        ta_vec3 face_normal = vec3_scalef(vec3_normalize(vec3_cross(edge0, edge1)), scale);
+        ta_vec3 face_center = vec3_scalef(vec3_add(vec3_add(v0, v1), v2), 1.0f / 3.0f);
+        line->p0 = face_center;
+        line->p1 = vec3_add(face_center, face_normal);
+    }
+}
+
 void ta_mesh_push_normals(ta_mesh *mesh)
 {
-    u32 normal_count = dlb_vec_len(mesh->normals);
-    DLB_ASSERT(normal_count == dlb_vec_len(mesh->positions));
-    for (u32 i = 0; i < normal_count; i++) {
-        ta_line_3d line = { 0 };
-        line.p0 = mesh->positions[i];
-        line.p1 = vec3_add(mesh->positions[i], mesh->normals[i]);
+    DLB_ASSERT(mesh->vertex_normals);
+    DLB_ASSERT(mesh->face_normals);
+    for (ta_line_3d *line = mesh->vertex_normals;
+        line != dlb_vec_end(mesh->vertex_normals); line++)
+    {
         //ta_primitive_push_line_3d(&line, &TA_COLOR_RED, &TA_COLOR_GREEN);
-        ta_primitive_push_line_3d(&line, &TA_COLOR_BLUE, &TA_COLOR_BLUE);
+        ta_primitive_push_line_3d(line, &TA_COLOR_MAGENTA, &TA_COLOR_MAGENTA);
+    }
+    for (ta_line_3d *line = mesh->face_normals;
+        line != dlb_vec_end(mesh->face_normals); line++)
+    {
+        //ta_primitive_push_line_3d(&line, &TA_COLOR_RED, &TA_COLOR_GREEN);
+        ta_primitive_push_line_3d(line, &TA_COLOR_CYAN, &TA_COLOR_CYAN);
     }
 }
 

@@ -30,6 +30,9 @@ typedef struct {
     ta_uv *uvs;
     ta_color *colors;
 
+    ta_line_3d *vertex_normals;
+    ta_line_3d *face_normals;
+
 	GLuint vao;
 	GLuint buffers[TA_MESH_BUFFER_COUNT];
 } ta_mesh;
@@ -37,6 +40,8 @@ typedef struct {
 extern dlb_hash tg_mesh_table;
 
 void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename);
+void ta_mesh_init_vertex_normals(ta_mesh *mesh, float scale);
+void ta_mesh_init_face_normals(ta_mesh *mesh, float scale);
 void ta_mesh_push_normals(ta_mesh *mesh);
 void debug_mesh_log_normals(ta_mesh *mesh);
 void ta_mesh_free(ta_mesh *mesh);

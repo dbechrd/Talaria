@@ -21,25 +21,7 @@
 #include "misc/gl3w.h"
 #include "SDL/SDL.h"
 
-// pitch: -89.0f - 89.0f deg
-// yaw: 0.0f - 360.0f deg
-ta_vec3 cam_target(ta_vec3 pos, float pitch, float yaw)
-{
-    DLB_ASSERT(pitch > -90.0f);
-    DLB_ASSERT(pitch < 90.0f);
-    DLB_ASSERT(yaw >= 0.0f);
-    DLB_ASSERT(yaw < 360.0f);
-    ta_vec3 result = { 0 };
-    ta_vec3 dir = { 0 };
-    float pitch_rads = DEG_TO_RADF(pitch);
-    float yaw_rads = DEG_TO_RADF(yaw);
-    dir.y = sinf(pitch_rads);
-    dir.x = (1.0f - fabsf(dir.y)) * cosf(yaw_rads);
-    dir.z = (1.0f - fabsf(dir.y)) * -sinf(yaw_rads);
-    dir = vec3_normalize(dir);
-    result = vec3_add(pos, dir);
-    return result;
-}
+static bool debug_a = false;
 
 typedef enum {
     TA_EVENT_QUEUE_GLOBAL,
@@ -56,12 +38,14 @@ typedef enum {
     TA_EVENT_GLOBAL_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GLOBAL),
     TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK,
     TA_EVENT_GLOBAL_MOUSE_MOVE,
+    TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,
+    TA_EVENT_GLOBAL_TOGGLE_DEBUG_A,
 
     // Camera events
     TA_EVENT_CAMERA_MOVE_FORWARD = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_CAMERA),
     TA_EVENT_CAMERA_MOVE_BACKWARD,
-    TA_EVENT_CAMERA_MOVE_LEFT,
     TA_EVENT_CAMERA_MOVE_RIGHT,
+    TA_EVENT_CAMERA_MOVE_LEFT,
     TA_EVENT_CAMERA_MOVE_UP,
     TA_EVENT_CAMERA_MOVE_DOWN,
     TA_EVENT_CAMERA_ROTATE,
@@ -283,10 +267,12 @@ int main(int argc, char *argv[])
         //dlb_vec_reserve(tg_keybinds, 16);
         ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_QUIT,              TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_ESCAPE);
         ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK, TA_KEYBIND_TRIGGER_PRESSED, SDL_SCANCODE_M);
+        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,  TA_KEYBIND_TRIGGER_PRESSED, SDL_SCANCODE_Z);
+        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_DEBUG_A,    TA_KEYBIND_TRIGGER_PRESSED, SDL_SCANCODE_SEMICOLON);
         ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_FORWARD,      TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_W);
         ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_BACKWARD,     TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_S);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_LEFT,         TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_A);
         ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_RIGHT,        TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_D);
+        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_LEFT,         TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_A);
         ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_UP,           TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_SPACE);
         ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_DOWN,         TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_LSHIFT);
     }
@@ -294,6 +280,7 @@ int main(int argc, char *argv[])
     // Mouse setup
     bool mouse_lock = true;
     int mouse_x, mouse_y;
+    bool wireframe = false;
 
 	// Window setup
     ta_window_init(1600, 900, 80.0f, 0.1f, false);
@@ -312,40 +299,38 @@ int main(int argc, char *argv[])
 		mesh_selector_bg);
 
 	ta_texture_2d *tex_test = ta_texture_init(TA_TEXTURE_QUEUE_STATIC,
-		"data/texture/wall_512_512.png");
+		"data/texture/genesis_1024_1024.png");
 	UNUSED(tex_test);
 
-	//ta_mesh_load_obj_file(TA_MESH_QUEUE_STATIC, "data/mesh/prim_cube.obj");
-    //ta_mesh *mesh_cube = dlb_hash_search(&tg_mesh_table, CSTR("prim_cube"));
+#if 0
+	ta_mesh_load_obj_file(TA_MESH_QUEUE_STATIC, "data/mesh/prim_cube.obj");
+    ta_mesh *mesh_cube = dlb_hash_search(&tg_mesh_table, CSTR("prim_cube"));
+#else
 	ta_mesh_load_obj_file(TA_MESH_QUEUE_STATIC, "data/models/Chamber0001.obj");
 	ta_mesh *mesh_cube = dlb_hash_search(&tg_mesh_table, CSTR("chamber0001_base"));
+#endif
 	if (!mesh_cube) {
 		DLB_ASSERT(!"Failed to load or find mesh");
 	}
+    ta_mesh_init_vertex_normals(mesh_cube, 0.5f);
+    ta_mesh_init_face_normals(mesh_cube, 0.5f);
 
 	//ta_mat4 project = mat4_perspective(65.0f, aspect, 0.1f, 100.0f);
 	//float oo = 0.5f;
 	//ta_mat4 project = mat4_ortho(-oo, oo, -oo, oo, 0.1f, 10.0f);
 
-	ta_camera cam = { 0 };
-	float c_pitch = 0.0f;
-	float mouse_sensitivity_y = 0.1f;
-	float c_yaw = 90.0f;
-	float mouse_sensitivity_x = 0.1f;
-	ta_vec3 c_pos = { 0.0f, 1.7f, 24.0f };
-	float c_pos_speed = 0.2f;
-	ta_vec3 c_target = cam_target(c_pos, 0.0f, c_yaw);
-	ta_mat4 look_at = ta_camera_lookat(&cam, c_pos, c_target, VEC3_Y);
+    tg_camera.position = (ta_vec3) { 0.0f, 1.7f, 24.0f };
+    tg_camera.velocity = 0.1f;
+    tg_camera.accel_yaw = 0.1f;
+    tg_camera.accel_pitch = 0.1f;
+    tg_camera.yaw = 90.0f;
+    ta_camera_update(&tg_camera);
 	ta_mat4 look_at_map = ta_camera_lookat(
-		&cam,
 		(ta_vec3) { 0.0f, 10.0f, 30.0f },
 		(ta_vec3) { 0.0f, 0.0f, 0.0f },
 		VEC3_Y
 	);
 
-    GLfloat lineWidthRange[2];
-    glGetFloatv(GL_ALIASED_LINE_WIDTH_RANGE, lineWidthRange);
-    glLineWidth(10.0f);
     ta_line_3d X_AXIS = { 0 };
     ta_line_3d Y_AXIS = { 0 };
     ta_line_3d Z_AXIS = { 0 };
@@ -357,7 +342,7 @@ int main(int argc, char *argv[])
 
 	ta_shader_mesh_init();
 	ta_shader_mesh_bind();
-	ta_shader_mesh_set_view(&look_at);
+	ta_shader_mesh_set_view(&tg_camera.look_at);
 	ta_shader_mesh_set_texture(0, tex_test->gl_id);
 	ta_shader_mesh_unbind();
 
@@ -378,8 +363,6 @@ int main(int argc, char *argv[])
 	SDL_Event sdl_event;
     bool quit = false;
     while (!quit) {
-		bool camera_dirty = false;
-
         while (SDL_PollEvent(&sdl_event)) {
             switch (sdl_event.type) {
                 case SDL_QUIT: {
@@ -462,6 +445,14 @@ int main(int argc, char *argv[])
                         mouse_lock = !mouse_lock;
                         SDL_SetRelativeMouseMode(mouse_lock);
                         break;
+                    } case TA_EVENT_GLOBAL_TOGGLE_WIREFRAME: {
+                        wireframe = !wireframe;
+                        glPolygonMode(GL_FRONT_AND_BACK,
+                            wireframe ? GL_LINE : GL_FILL);
+                        break;
+                    } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_A: {
+                        debug_a = !debug_a;
+                        break;
                     } case TA_EVENT_GLOBAL_MOUSE_MOVE: {
                         switch (tg_state) {
                             case TA_STATE_PLAY: {
@@ -469,11 +460,11 @@ int main(int argc, char *argv[])
                                 cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
                                 if (event.data.mouse_move.dx) {
                                     cam_rotate_evt.data.camera_rotate.delta_yaw =
-                                        -mouse_sensitivity_x * event.data.mouse_move.dx;
+                                        -event.data.mouse_move.dx * tg_camera.accel_yaw;
                                 }
                                 if (event.data.mouse_move.dy) {
                                     cam_rotate_evt.data.camera_rotate.delta_pitch =
-                                        -mouse_sensitivity_y * event.data.mouse_move.dy;
+                                        -event.data.mouse_move.dy * tg_camera.accel_pitch;
                                 }
                                 ta_event_push(&cam_rotate_evt);
                                 break;
@@ -493,56 +484,34 @@ int main(int argc, char *argv[])
             while (ta_event_pop(&event, TA_EVENT_QUEUE_CAMERA)) {
                 switch (event.type) {
                     case TA_EVENT_CAMERA_MOVE_FORWARD: {
-                        ta_vec3 dir = cam.front;
-                        dir.y = 0.0f;
-                        dir = vec3_normalize(dir);
-                        dir = vec3_scalef(dir, c_pos_speed);
-                        c_pos = vec3_add(c_pos, dir);
-                        camera_dirty = true;
+                        ta_camera_move(&tg_camera, TA_CAMERA_FORWARD);
                         break;
                     } case TA_EVENT_CAMERA_MOVE_BACKWARD: {
-                        ta_vec3 dir = cam.front;
-                        dir.y = 0.0f;
-                        dir = vec3_normalize(dir);
-                        dir = vec3_scalef(dir, c_pos_speed);
-                        c_pos = vec3_sub(c_pos, dir);
-                        camera_dirty = true;
-                        break;
-                    } case TA_EVENT_CAMERA_MOVE_LEFT: {
-                        ta_vec3 dir = cam.right;
-                        dir.y = 0.0f;
-                        dir = vec3_normalize(dir);
-                        dir = vec3_scalef(dir, c_pos_speed);
-                        c_pos = vec3_sub(c_pos, dir);
-                        camera_dirty = true;
+                        ta_camera_move(&tg_camera, TA_CAMERA_BACKWARD);
                         break;
                     } case TA_EVENT_CAMERA_MOVE_RIGHT: {
-                        ta_vec3 dir = cam.right;
-                        dir.y = 0.0f;
-                        dir = vec3_normalize(dir);
-                        dir = vec3_scalef(dir, c_pos_speed);
-                        c_pos = vec3_add(c_pos, dir);
-                        camera_dirty = true;
+                        ta_camera_move(&tg_camera, TA_CAMERA_RIGHT);
+                        break;
+                    } case TA_EVENT_CAMERA_MOVE_LEFT: {
+                        ta_camera_move(&tg_camera, TA_CAMERA_LEFT);
                         break;
                     } case TA_EVENT_CAMERA_MOVE_UP: {
-                        c_pos = vec3_add(c_pos, vec3_scalef(VEC3_Y, c_pos_speed));
-                        camera_dirty = true;
+                        ta_camera_move(&tg_camera, TA_CAMERA_UP);
                         break;
                     } case TA_EVENT_CAMERA_MOVE_DOWN: {
-                        c_pos = vec3_sub(c_pos, vec3_scalef(VEC3_Y, c_pos_speed));
-                        camera_dirty = true;
+                        ta_camera_move(&tg_camera, TA_CAMERA_DOWN);
                         break;
                     } case TA_EVENT_CAMERA_ROTATE: {
                         if (event.data.camera_rotate.delta_yaw) {
-                            c_yaw += event.data.camera_rotate.delta_yaw;
-                            while (c_yaw < 0.0f) { c_yaw += 360.0f; }
-                            while (c_yaw >= 360.0f) { c_yaw -= 360.0f; }
-                            camera_dirty = true;
+                            tg_camera.yaw += event.data.camera_rotate.delta_yaw;
+                            while (tg_camera.yaw < 0.0f) { tg_camera.yaw += 360.0f; }
+                            while (tg_camera.yaw >= 360.0f) { tg_camera.yaw -= 360.0f; }
+                            tg_camera.dirty = true;
                         }
                         if (event.data.camera_rotate.delta_pitch) {
-                            c_pitch += event.data.camera_rotate.delta_pitch;
-                            c_pitch = clampf(c_pitch, -75.0f, 75.0f);
-                            camera_dirty = true;
+                            tg_camera.pitch += event.data.camera_rotate.delta_pitch;
+                            tg_camera.pitch = clampf(tg_camera.pitch, -75.0f, 75.0f);
+                            tg_camera.dirty = true;
                         }
                         break;
                     } default: {
@@ -553,18 +522,17 @@ int main(int argc, char *argv[])
         }
 
 		// Update camera
-		if (camera_dirty) {
-			c_target = cam_target(c_pos, c_pitch, c_yaw);
-			look_at = ta_camera_lookat(&cam, c_pos, c_target, VEC3_Y);
+		if (tg_camera.dirty) {
+            ta_camera_update(&tg_camera);
 		}
 
-		glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+		glClearColor(0.5f, 0.8f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw models
 		glDisable(GL_CULL_FACE);
 		ta_shader_mesh_set_projection(&tg_window.projection);
-		ta_shader_mesh_set_view(&look_at);
+		ta_shader_mesh_set_view(&tg_camera.look_at);
 		ta_shader_mesh_set_model(&MAT4_IDENT);
         ta_shader_mesh_bind();
         ta_shader_mesh_prerender();
@@ -572,12 +540,12 @@ int main(int argc, char *argv[])
 		ta_shader_mesh_unbind();
 
         ta_shader_lines_set_projection(&tg_window.projection);
-        ta_shader_lines_set_view(&look_at);
+        ta_shader_lines_set_view(&tg_camera.look_at);
         ta_shader_lines_set_model(&MAT4_IDENT);
 
-        ta_primitive_push_line_3d(&X_AXIS, &TA_COLOR_RED,   &TA_COLOR_RED);
-        ta_primitive_push_line_3d(&Y_AXIS, &TA_COLOR_GREEN, &TA_COLOR_GREEN);
-        ta_primitive_push_line_3d(&Z_AXIS, &TA_COLOR_BLUE,  &TA_COLOR_BLUE);
+        //ta_primitive_push_line_3d(&X_AXIS, &TA_COLOR_RED,   &TA_COLOR_RED);
+        //ta_primitive_push_line_3d(&Y_AXIS, &TA_COLOR_GREEN, &TA_COLOR_GREEN);
+        //ta_primitive_push_line_3d(&Z_AXIS, &TA_COLOR_BLUE,  &TA_COLOR_BLUE);
 
         //////////////////////////////////////////
         ta_mesh_push_normals(mesh_cube);

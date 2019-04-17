@@ -17,19 +17,22 @@ const ta_mat4 MAT4_IDENT = {
 	0.0f, 0.0f, 1.0f, 0.0f,
 	0.0f, 0.0f, 0.0f, 1.0f
 };
-const ta_color TA_COLOR_INVIS = { 0.0f, 0.0f, 0.0f, 0.0f };
-const ta_color TA_COLOR_RED   = { 1.0f, 0.1f, 0.1f, 1.0f };
-const ta_color TA_COLOR_GREEN = { 0.1f, 1.0f, 0.1f, 1.0f };
-const ta_color TA_COLOR_BLUE  = { 0.1f, 0.1f, 1.0f, 1.0f };
-const ta_color TA_COLOR_GRAY1 = { 0.1f, 0.1f, 0.1f, 1.0f };
-const ta_color TA_COLOR_GRAY2 = { 0.2f, 0.2f, 0.2f, 1.0f };
-const ta_color TA_COLOR_GRAY3 = { 0.3f, 0.3f, 0.3f, 1.0f };
-const ta_color TA_COLOR_GRAY4 = { 0.4f, 0.4f, 0.4f, 1.0f };
-const ta_color TA_COLOR_GRAY5 = { 0.5f, 0.5f, 0.5f, 1.0f };
-const ta_color TA_COLOR_GRAY6 = { 0.6f, 0.6f, 0.6f, 1.0f };
-const ta_color TA_COLOR_GRAY7 = { 0.7f, 0.7f, 0.7f, 1.0f };
-const ta_color TA_COLOR_GRAY8 = { 0.8f, 0.8f, 0.8f, 1.0f };
-const ta_color TA_COLOR_GRAY9 = { 0.9f, 0.9f, 0.9f, 1.0f };
+const ta_color TA_COLOR_INVIS   = { 0.0f, 0.0f, 0.0f, 0.0f };
+const ta_color TA_COLOR_RED     = { 1.0f, 0.1f, 0.1f, 1.0f };
+const ta_color TA_COLOR_GREEN   = { 0.1f, 1.0f, 0.1f, 1.0f };
+const ta_color TA_COLOR_BLUE    = { 0.1f, 0.1f, 1.0f, 1.0f };
+const ta_color TA_COLOR_YELLOW  = { 1.0f, 1.0f, 0.1f, 1.0f };
+const ta_color TA_COLOR_MAGENTA = { 1.0f, 0.1f, 1.0f, 1.0f };
+const ta_color TA_COLOR_CYAN    = { 0.1f, 1.0f, 1.0f, 1.0f };
+const ta_color TA_COLOR_GRAY1   = { 0.1f, 0.1f, 0.1f, 1.0f };
+const ta_color TA_COLOR_GRAY2   = { 0.2f, 0.2f, 0.2f, 1.0f };
+const ta_color TA_COLOR_GRAY3   = { 0.3f, 0.3f, 0.3f, 1.0f };
+const ta_color TA_COLOR_GRAY4   = { 0.4f, 0.4f, 0.4f, 1.0f };
+const ta_color TA_COLOR_GRAY5   = { 0.5f, 0.5f, 0.5f, 1.0f };
+const ta_color TA_COLOR_GRAY6   = { 0.6f, 0.6f, 0.6f, 1.0f };
+const ta_color TA_COLOR_GRAY7   = { 0.7f, 0.7f, 0.7f, 1.0f };
+const ta_color TA_COLOR_GRAY8   = { 0.8f, 0.8f, 0.8f, 1.0f };
+const ta_color TA_COLOR_GRAY9   = { 0.9f, 0.9f, 0.9f, 1.0f };
 
 static ta_vert_line *lines_queue;
 static GLuint lines_vao;
