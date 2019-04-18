@@ -32,6 +32,7 @@ typedef struct {
     float accel_yaw;
     float accel_pitch;
 
+    bool wireframe;
     bool dirty;
 } ta_camera;
 

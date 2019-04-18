@@ -13,6 +13,9 @@
 #include "ta_mesh.h"
 #include "ta_camera.h"
 #include "ta_viewport.h"
+#include "ta_event.h"
+#include "ta_game.h"
+#include "ta_keyboard.h"
 #include "dlb_types.h"
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb_vector.h"
@@ -22,222 +25,6 @@
 #include "SDL/SDL.h"
 
 static bool debug_a = false;
-
-typedef enum {
-    TA_EVENT_QUEUE_GLOBAL,
-    TA_EVENT_QUEUE_CAMERA,
-    TA_EVENT_QUEUE_COUNT
-} ta_event_queue_type;
-
-#define TA_EVENT_TYPE_BITS 7
-#define TA_EVENT_TYPE_QUEUE(type) ((type) >> TA_EVENT_TYPE_BITS)
-#define TA_EVENT_TYPE_FIRST(queue) ((queue) << TA_EVENT_TYPE_BITS)
-
-typedef enum {
-    // Global events
-    TA_EVENT_GLOBAL_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GLOBAL),
-    TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK,
-    TA_EVENT_GLOBAL_MOUSE_MOVE,
-    TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,
-    TA_EVENT_GLOBAL_TOGGLE_DEBUG_A,
-
-    // Camera events
-    TA_EVENT_CAMERA_MOVE_FORWARD = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_CAMERA),
-    TA_EVENT_CAMERA_MOVE_BACKWARD,
-    TA_EVENT_CAMERA_MOVE_RIGHT,
-    TA_EVENT_CAMERA_MOVE_LEFT,
-    TA_EVENT_CAMERA_MOVE_UP,
-    TA_EVENT_CAMERA_MOVE_DOWN,
-    TA_EVENT_CAMERA_ROTATE,
-} ta_event_type;
-
-typedef struct {
-    ta_event_type type;
-    int dx;
-    int dy;
-} ta_event_mouse_move;
-
-typedef struct {
-    ta_event_type type;
-    float delta_pitch;
-    float delta_yaw;
-} ta_event_camera_rotate;
-
-typedef struct {
-    ta_event_type type;
-    union {
-        ta_event_mouse_move mouse_move;
-        ta_event_camera_rotate camera_rotate;
-    } data;
-} ta_event;
-
-typedef struct {
-    ta_event_queue_type type;
-	u32 head;  // oldest item
-	u32 count;
-	u32 capacity;
-	ta_event *buffer;
-} ta_event_queue;
-ta_event_queue tg_event_queues[TA_EVENT_QUEUE_COUNT];
-
-void ta_event_push(ta_event *event)
-{
-    ta_event_queue *queue = &tg_event_queues[TA_EVENT_TYPE_QUEUE(event->type)];
-    if (queue->count == queue->capacity) {
-        u32 old_size = dlb_vec_size(queue->buffer);
-        u32 new_cap = MAX(16, queue->capacity * 2);
-        dlb_vec_reserve(queue->buffer, new_cap);
-        if (old_size) {
-            // Before resize: [D, A, B, C]
-            // After resize : [-, A, B, C, D, -, -, -]
-            if (queue->head > 0) {
-                int bytes = queue->head * sizeof(queue->buffer[0]);
-                memcpy(&queue->buffer[queue->head + queue->count],
-                    queue->buffer, bytes);
-#if _DEBUG
-                memset(queue->buffer, 0, bytes);
-#endif
-            }
-        }
-        queue->capacity = new_cap;
-    }
-    int next = (queue->head + queue->count) % queue->capacity;
-    queue->buffer[next] = *event;
-    queue->count++;
-}
-
-bool ta_event_pop(ta_event *event, ta_event_queue_type queue_type)
-{
-    ta_event_queue *queue = &tg_event_queues[queue_type];
-    if (queue->count) {
-        *event = queue->buffer[queue->head];
-        queue->head = (queue->head + 1) % queue->capacity;
-        queue->count--;
-        return true;
-    } else {
-        return false;
-    }
-}
-
-bool ta_event_peek(ta_event *event, ta_event_queue_type queue_type)
-{
-    ta_event_queue *queue = &tg_event_queues[queue_type];
-    if (queue->count) {
-        *event = queue->buffer[queue->head];
-        return true;
-    } else {
-        return false;
-    }
-}
-
-typedef enum {
-    TA_STATE_INIT,
-    TA_STATE_PLAY,
-    TA_STATE_COUNT
-} ta_state;
-ta_state tg_state = TA_STATE_INIT;
-
-#if 0
-enum {
-    TA_SCANCODE_MOUSE_MOVE = SDL_NUM_SCANCODES,
-    TA_SCANCODE_COUNT,
-};
-#endif
-
-typedef struct {
-    bool down;
-    bool changed;
-} ta_key_state;
-ta_key_state tg_key_states[SDL_NUM_SCANCODES];
-
-enum {
-    TA_KEYBIND_TRIGGER_DOWN     = 1 << 0,
-    TA_KEYBIND_TRIGGER_PRESSED  = 1 << 1,
-    TA_KEYBIND_TRIGGER_RELEASED = 1 << 2,
-};
-
-typedef SDL_Scancode ta_key;
-
-typedef struct {
-    ta_event_type event_type;
-    u32 triggers;
-    ta_key keys[3];
-    bool down;           // all keys are currently down
-    bool changed;        // state changed since last frame
-    u64 last_change_ms;  // time of last state change in milliseconds
-} ta_keybind;
-ta_keybind *tg_keybinds[TA_STATE_COUNT];
-
-void ta_keybind_bind1(ta_state state_type, ta_event_type event_type,
-    u32 triggers, ta_key key1)
-{
-    ta_keybind *bind = dlb_vec_alloc(tg_keybinds[state_type]);
-    bind->event_type = event_type;
-    bind->triggers = triggers;
-    bind->keys[0] = key1;
-}
-
-void ta_keybind_bind2(ta_state state_type, ta_event_type event_type,
-    u32 triggers, ta_key key1, ta_key key2)
-{
-    ta_keybind *bind = dlb_vec_alloc(tg_keybinds[state_type]);
-    bind->event_type = event_type;
-    bind->triggers = triggers;
-    bind->keys[0] = key1;
-    bind->keys[1] = key2;
-}
-
-void ta_keybind_bind3(ta_state state_type, ta_event_type event_type,
-    u32 triggers, ta_key key1, ta_key key2, ta_key key3)
-{
-    ta_keybind *bind = dlb_vec_alloc(tg_keybinds[state_type]);
-    bind->event_type = event_type;
-    bind->triggers = triggers;
-    bind->keys[0] = key1;
-    bind->keys[1] = key2;
-    bind->keys[2] = key3;
-}
-
-void ta_keybind_update(ta_keybind *keybind) {
-    bool old_down = keybind->down;
-    keybind->down =
-        (!keybind->keys[0] || tg_key_states[keybind->keys[0]].down) &&
-        (!keybind->keys[1] || tg_key_states[keybind->keys[1]].down) &&
-        (!keybind->keys[2] || tg_key_states[keybind->keys[2]].down);
-    keybind->changed = keybind->down != old_down;
-    if (keybind->changed) {
-        keybind->last_change_ms = ta_timer_elapsed_ms();
-    }
-}
-
-bool ta_keybind_down(ta_keybind *keybind) {
-    return keybind->down;
-}
-
-bool ta_keybind_pressed(ta_keybind *keybind) {
-    return keybind->down && keybind->changed;
-}
-
-bool ta_keybind_released(ta_keybind *keybind) {
-    return !keybind->down && keybind->changed;
-}
-
-bool ta_keybind_triggered(ta_keybind *keybind) {
-    bool triggered =
-        (!keybind->triggers) ||
-        ((keybind->triggers & TA_KEYBIND_TRIGGER_DOWN) &&
-            ta_keybind_down(keybind)) ||
-        ((keybind->triggers & TA_KEYBIND_TRIGGER_PRESSED) &&
-            ta_keybind_pressed(keybind)) ||
-        ((keybind->triggers & TA_KEYBIND_TRIGGER_RELEASED) &&
-            ta_keybind_released(keybind));
-    return triggered;
-}
-
-// press key -> add event
-
-//SDL_Scancode tg_keybinds[TA_KEYBIND_COUNT];
-//ta_event_type tg_key_events[TA_KEYBIND_COUNT];
 
 #if _DEBUG
 DLB_ASSERT_HANDLER(handle_assert)
@@ -256,7 +43,7 @@ int main(int argc, char *argv[])
 	ta_timer_init();
 	srand((u32)ta_timer_only_ms());
 
-    tg_state = TA_STATE_PLAY;
+    tg_game.state = TA_STATE_INIT;
 	ta_log debug_log;
 	tg_debug_log = &debug_log;
     ta_log_init(tg_debug_log, "log.txt", true);
@@ -278,13 +65,12 @@ int main(int argc, char *argv[])
     }
 
     // Mouse setup
-    bool mouse_lock = true;
+    bool mouse_capture = true;
     int mouse_x, mouse_y;
-    bool wireframe = false;
 
 	// Window setup
     ta_window_init(1600, 900, 80.0f, 0.1f, false);
-	SDL_SetRelativeMouseMode(mouse_lock);
+	SDL_SetRelativeMouseMode(mouse_capture);
 	SDL_GetMouseState(&mouse_x, &mouse_y);
 
 	// OpenGL setup
@@ -358,7 +144,7 @@ int main(int argc, char *argv[])
     //       Could use this for a progress bar during load and better logging.
     //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
-    tg_state = TA_STATE_PLAY;
+    tg_game.state = TA_STATE_PLAY;
 
 	SDL_Event sdl_event;
     bool quit = false;
@@ -403,8 +189,8 @@ int main(int argc, char *argv[])
 
         // Generate keybind events
         {
-            for (ta_keybind *bind = tg_keybinds[tg_state];
-                bind != dlb_vec_end(tg_keybinds[tg_state]); bind++) {
+            for (ta_keybind *bind = tg_keybinds[tg_game.state];
+                bind != dlb_vec_end(tg_keybinds[tg_game.state]); bind++) {
                 ta_keybind_update(bind);
                 if (ta_keybind_triggered(bind)) {
                     ta_event event = { 0 };
@@ -423,11 +209,13 @@ int main(int argc, char *argv[])
 			    mouse_x += mouse_dx;
 			    mouse_y += mouse_dy;
 
-                ta_event mouse_move_evt = { 0 };
-                mouse_move_evt.type = TA_EVENT_GLOBAL_MOUSE_MOVE;
-                mouse_move_evt.data.mouse_move.dx = mouse_dx;
-                mouse_move_evt.data.mouse_move.dy = mouse_dy;
-                ta_event_push(&mouse_move_evt);
+                if (mouse_capture) {
+                    ta_event mouse_move_evt = { 0 };
+                    mouse_move_evt.type = TA_EVENT_GLOBAL_MOUSE_MOVE;
+                    mouse_move_evt.data.mouse_move.dx = mouse_dx;
+                    mouse_move_evt.data.mouse_move.dy = mouse_dy;
+                    ta_event_push(&mouse_move_evt);
+                }
             }
 		}
 
@@ -442,19 +230,19 @@ int main(int argc, char *argv[])
                         quit = true;
                         break;
                     } case TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK: {
-                        mouse_lock = !mouse_lock;
-                        SDL_SetRelativeMouseMode(mouse_lock);
+                        mouse_capture = !mouse_capture;
+                        SDL_SetRelativeMouseMode(mouse_capture);
                         break;
                     } case TA_EVENT_GLOBAL_TOGGLE_WIREFRAME: {
-                        wireframe = !wireframe;
+                        tg_camera.wireframe = !tg_camera.wireframe;
                         glPolygonMode(GL_FRONT_AND_BACK,
-                            wireframe ? GL_LINE : GL_FILL);
+                            tg_camera.wireframe ? GL_LINE : GL_FILL);
                         break;
                     } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_A: {
                         debug_a = !debug_a;
                         break;
                     } case TA_EVENT_GLOBAL_MOUSE_MOVE: {
-                        switch (tg_state) {
+                        switch (tg_game.state) {
                             case TA_STATE_PLAY: {
                                 ta_event cam_rotate_evt = { 0 };
                                 cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
