@@ -1,5 +1,8 @@
 #include "ta_event.h"
+#include "ta_keyboard.h"
+#include "ta_log.h"
 #include "dlb_vector.h"
+#include "SDL/SDL.h"
 #include <string.h>
 
 void ta_event_push(ta_event *event)
@@ -49,5 +52,34 @@ bool ta_event_peek(ta_event *event, ta_event_queue_type queue_type)
         return true;
     } else {
         return false;
+    }
+}
+
+void ta_event_update()
+{
+    SDL_Event sdl_event;
+    while (SDL_PollEvent(&sdl_event)) {
+        switch (sdl_event.type) {
+            case SDL_QUIT: {
+                ta_event event = { 0 };
+                event.type = TA_EVENT_GLOBAL_QUIT;
+                ta_event_push(&event);
+                break;
+            } case SDL_WINDOWEVENT: {
+                break;
+            } case SDL_MOUSEWHEEL: {
+                ta_event event = { 0 };
+                event.type = TA_EVENT_GLOBAL_MOUSE_SCROLL;
+                event.data.mouse_scroll.x = sdl_event.wheel.x;
+                event.data.mouse_scroll.y = sdl_event.wheel.y;
+                event.data.mouse_scroll.flipped = (u8)sdl_event.wheel.direction;
+                ta_event_push(&event);
+                break;
+            } case SDL_TEXTEDITING: {
+                break;
+            } case SDL_TEXTINPUT: {
+                break;
+            }
+        }
     }
 }

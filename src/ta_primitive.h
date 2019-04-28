@@ -52,23 +52,17 @@ typedef struct {
 } ta_hsl;
 
 typedef struct {
-	int r;
-	int g;
-	int b;
-} ta_rgb;
-
-typedef struct {
 	float r;
 	float g;
 	float b;
-} ta_rgbf;
+} ta_rgb;
 
 typedef struct {
     float r;
     float g;
     float b;
     float a;
-} ta_color;
+} ta_rgba;
 
 typedef struct {
 	int w;
@@ -107,22 +101,22 @@ extern const ta_vec3 VEC3_X;
 extern const ta_vec3 VEC3_Y;
 extern const ta_vec3 VEC3_Z;
 extern const ta_mat4 MAT4_IDENT;
-extern const ta_color TA_COLOR_INVIS;
-extern const ta_color TA_COLOR_RED;
-extern const ta_color TA_COLOR_GREEN;
-extern const ta_color TA_COLOR_BLUE;
-extern const ta_color TA_COLOR_CYAN;
-extern const ta_color TA_COLOR_MAGENTA;
-extern const ta_color TA_COLOR_YELLOW;
-extern const ta_color TA_COLOR_GRAY1;
-extern const ta_color TA_COLOR_GRAY2;
-extern const ta_color TA_COLOR_GRAY3;
-extern const ta_color TA_COLOR_GRAY4;
-extern const ta_color TA_COLOR_GRAY5;
-extern const ta_color TA_COLOR_GRAY6;
-extern const ta_color TA_COLOR_GRAY7;
-extern const ta_color TA_COLOR_GRAY8;
-extern const ta_color TA_COLOR_GRAY9;
+extern const ta_rgba TA_COLOR_INVIS;
+extern const ta_rgba TA_COLOR_RED;
+extern const ta_rgba TA_COLOR_GREEN;
+extern const ta_rgba TA_COLOR_BLUE;
+extern const ta_rgba TA_COLOR_CYAN;
+extern const ta_rgba TA_COLOR_MAGENTA;
+extern const ta_rgba TA_COLOR_YELLOW;
+extern const ta_rgba TA_COLOR_GRAY1;
+extern const ta_rgba TA_COLOR_GRAY2;
+extern const ta_rgba TA_COLOR_GRAY3;
+extern const ta_rgba TA_COLOR_GRAY4;
+extern const ta_rgba TA_COLOR_GRAY5;
+extern const ta_rgba TA_COLOR_GRAY6;
+extern const ta_rgba TA_COLOR_GRAY7;
+extern const ta_rgba TA_COLOR_GRAY8;
+extern const ta_rgba TA_COLOR_GRAY9;
 
 //int clamp(int d, int min, int max);
 float clampf(float f, float min, float max);
@@ -141,7 +135,7 @@ void ta_vec4_print(ta_vec4 *vec);
 
 void ta_mat3_print(ta_mat3 *mat);
 ta_vec3 mat3_mul_vec3(const ta_mat3 m, const ta_vec3 v);
-ta_rgbf mat3_mul_rgbf(const ta_mat3 m, const ta_rgbf v);
+ta_rgb mat3_mul_rgb(const ta_mat3 m, const ta_rgb v);
 ta_mat3 mat3_hue_rotation(float degrees);
 
 void ta_mat4_print(ta_mat4 *mat);
@@ -164,10 +158,10 @@ ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
 	float nearz, float farz);
 
 void ta_primitive_init();
-void ta_primitive_push_line_2d(ta_line_2d *line_2d, const ta_color *color0,
-	const ta_color *color1);
-void ta_primitive_push_line_3d(ta_line_3d *line_3d, const ta_color *color0,
-    const ta_color *color1);
-void ta_primitive_push_rect(int x, int y, ta_rect *rect, const ta_color *color);
+void ta_primitive_push_line_2d(ta_line_2d *line_2d, const ta_rgba *color0,
+	const ta_rgba *color1);
+void ta_primitive_push_line_3d(ta_line_3d *line_3d, const ta_rgba *color0,
+    const ta_rgba *color1);
+void ta_primitive_push_rect(int x, int y, ta_rect *rect, const ta_rgba *color);
 void ta_primitive_render();
 void ta_primitive_clear();

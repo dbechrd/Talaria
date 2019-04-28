@@ -3,6 +3,7 @@
 typedef enum {
     TA_STATE_INIT,
     TA_STATE_PLAY,
+    TA_STATE_QUIT,
     TA_STATE_COUNT
 } ta_game_state;
 

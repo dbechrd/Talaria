@@ -8,7 +8,7 @@
 
 #define x_inc 2
 static float alpha = 0.8f;
-static const ta_rgbf color = { 1.0f, 0.0f, 0.0f };
+static const ta_rgb color = { 1.0f, 0.0f, 0.0f };
 
 ta_barchart ta_barchart_init(int x, int y, int w, int h)
 {
@@ -32,8 +32,8 @@ void ta_barchart_free(ta_barchart *chart)
 void ta_barchart_draw(int x, int y, ta_barchart *chart)
 {
 	ta_line_2d line = { 0 };
-	ta_color color0 = { 0 };
-	ta_color color1 = { 0 };
+	ta_rgba color0 = { 0 };
+	ta_rgba color1 = { 0 };
 	for (int i = 0; i < chart->sample_count; i++) {
 		int pos_x = x_inc * i;
 		line.p0.x = (float)pos_x;
@@ -58,12 +58,12 @@ void ta_barchart_draw(int x, int y, ta_barchart *chart)
 		line.p1.y += y + chart->rect.y;
 
 		//ta_rgbf cc = mat3_mul_rgbf(mat3_hue_rotation((float)(i % 120)), color);
-		ta_rgbf cc = mat3_mul_rgbf(mat3_hue_rotation((float)i), color);
+		ta_rgb cc = mat3_mul_rgb(mat3_hue_rotation((float)i), color);
 		float lum = color.r + color.g + color.b;
 		float lum2 = cc.r + cc.g + cc.b;
 		ta_vec3 res = *(ta_vec3 *)&cc;
 		res = vec3_scalef(res, 1.0f + lum / lum2);
-		cc = *(ta_rgbf *)&res;
+		cc = *(ta_rgb *)&res;
 
 		color0.r = cc.r;
 		color0.g = cc.g;

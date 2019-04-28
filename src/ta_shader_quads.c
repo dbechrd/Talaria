@@ -76,7 +76,7 @@ void ta_shader_quads_attribs()
     glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 4, GL_FLOAT, GL_FALSE,
         sizeof(ta_shader_quads_vertex), (void *)sizeof(ta_vec3));
 	glVertexAttribPointer(TA_SHADER_ATTR_UV, 2, GL_FLOAT, GL_FALSE,
-		sizeof(ta_shader_quads_vertex), (void *)(sizeof(ta_vec3) + sizeof(ta_color)));
+		sizeof(ta_shader_quads_vertex), (void *)(sizeof(ta_vec3) + sizeof(ta_rgba)));
 }
 
 void ta_shader_quads_set_projection(const ta_mat4 *mat)

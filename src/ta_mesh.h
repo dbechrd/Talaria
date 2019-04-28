@@ -28,7 +28,7 @@ typedef struct {
     ta_vec3 *positions;
     ta_vec3 *normals;
     ta_uv *uvs;
-    ta_color *colors;
+    ta_rgba *colors;
 
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;

@@ -16,6 +16,7 @@
 #include "ta_event.h"
 #include "ta_game.h"
 #include "ta_keyboard.h"
+#include "ta_mouse.h"
 #include "dlb_types.h"
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb_vector.h"
@@ -48,30 +49,10 @@ int main(int argc, char *argv[])
 	tg_debug_log = &debug_log;
     ta_log_init(tg_debug_log, "log.txt", true);
 
-    // Keyboard setup
-    {
-        // TODO: Read keybinds from file
-        //dlb_vec_reserve(tg_keybinds, 16);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_QUIT,              TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_ESCAPE);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK, TA_KEYBIND_TRIGGER_PRESSED, SDL_SCANCODE_M);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,  TA_KEYBIND_TRIGGER_PRESSED, SDL_SCANCODE_Z);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_DEBUG_A,    TA_KEYBIND_TRIGGER_PRESSED, SDL_SCANCODE_SEMICOLON);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_FORWARD,      TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_W);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_BACKWARD,     TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_S);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_RIGHT,        TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_D);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_LEFT,         TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_A);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_UP,           TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_SPACE);
-        ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_DOWN,         TA_KEYBIND_TRIGGER_DOWN, SDL_SCANCODE_LSHIFT);
-    }
-
-    // Mouse setup
-    bool mouse_capture = true;
-    int mouse_x, mouse_y;
-
 	// Window setup
     ta_window_init(1600, 900, 80.0f, 0.1f, false);
-	SDL_SetRelativeMouseMode(mouse_capture);
-	SDL_GetMouseState(&mouse_x, &mouse_y);
+    ta_mouse_init();
+    ta_keyboard_init();
 
 	// OpenGL setup
     ta_render_init();
@@ -80,7 +61,7 @@ int main(int argc, char *argv[])
     ta_primitive_init();
 
 	// Mesh setup
-	const ta_color mesh_selector_bg = { 0.1f, 0.1f, 0.2f, 1.0f };
+	const ta_rgba mesh_selector_bg = { 0.1f, 0.1f, 0.2f, 1.0f };
 	ta_viewport mesh_selector = ta_viewport_init(10, 50, 200, 200, 90.0f, 0.1f,
 		mesh_selector_bg);
 
@@ -145,79 +126,12 @@ int main(int argc, char *argv[])
     //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
     tg_game.state = TA_STATE_PLAY;
-
-	SDL_Event sdl_event;
-    bool quit = false;
-    while (!quit) {
-        while (SDL_PollEvent(&sdl_event)) {
-            switch (sdl_event.type) {
-                case SDL_QUIT: {
-                    ta_event event = { 0 };
-                    event.type = TA_EVENT_GLOBAL_QUIT;
-                    ta_event_push(&event);
-                    break;
-                } case SDL_WINDOWEVENT: {
-                    break;
-                } case SDL_KEYDOWN: {
-                    tg_key_states[sdl_event.key.keysym.scancode].changed =
-                        !tg_key_states[sdl_event.key.keysym.scancode].down;
-                    tg_key_states[sdl_event.key.keysym.scancode].down = true;
-                    break;
-                } case SDL_KEYUP: {
-                    tg_key_states[sdl_event.key.keysym.scancode].changed =
-                        tg_key_states[sdl_event.key.keysym.scancode].down;
-                    tg_key_states[sdl_event.key.keysym.scancode].down = false;
-                    break;
-                } case SDL_MOUSEBUTTONDOWN: {
-                    break;
-                } case SDL_MOUSEBUTTONUP: {
-                    break;
-                } case SDL_MOUSEWHEEL: {
-                    ta_ui_scrollview_scroll(view, -sdl_event.wheel.y);
-                    break;
-                } case SDL_MOUSEMOTION: {
-                    break;
-                } case SDL_TEXTEDITING: {
-                    break;
-                } case SDL_TEXTINPUT: {
-                    break;
-                } default: {
-                    ta_log_write(tg_debug_log, "Unhandled event type: %d\n", sdl_event.type);
-                }
-            }
-        }
-
-        // Generate keybind events
-        {
-            for (ta_keybind *bind = tg_keybinds[tg_game.state];
-                bind != dlb_vec_end(tg_keybinds[tg_game.state]); bind++) {
-                ta_keybind_update(bind);
-                if (ta_keybind_triggered(bind)) {
-                    ta_event event = { 0 };
-                    event.type = bind->event_type;
-                    ta_event_push(&event);
-                }
-            }
-        }
-
-		// Generate mouse events
-		{
-            int mouse_dx, mouse_dy;
-			SDL_GetRelativeMouseState(&mouse_dx, &mouse_dy);
-
-            if (mouse_dx || mouse_dy) {
-			    mouse_x += mouse_dx;
-			    mouse_y += mouse_dy;
-
-                if (mouse_capture) {
-                    ta_event mouse_move_evt = { 0 };
-                    mouse_move_evt.type = TA_EVENT_GLOBAL_MOUSE_MOVE;
-                    mouse_move_evt.data.mouse_move.dx = mouse_dx;
-                    mouse_move_evt.data.mouse_move.dy = mouse_dy;
-                    ta_event_push(&mouse_move_evt);
-                }
-            }
-		}
+    u64 frame_num = 0;
+    while (tg_game.state != TA_STATE_QUIT) {
+        frame_num++;
+        ta_event_update();
+		ta_mouse_update();
+        ta_keyboard_update();
 
         // Handle events
         {
@@ -227,21 +141,11 @@ int main(int argc, char *argv[])
             while (ta_event_pop(&event, TA_EVENT_QUEUE_GLOBAL)) {
                 switch (event.type) {
                     case TA_EVENT_GLOBAL_QUIT: {
-                        quit = true;
-                        break;
-                    } case TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK: {
-                        mouse_capture = !mouse_capture;
-                        SDL_SetRelativeMouseMode(mouse_capture);
-                        break;
-                    } case TA_EVENT_GLOBAL_TOGGLE_WIREFRAME: {
-                        tg_camera.wireframe = !tg_camera.wireframe;
-                        glPolygonMode(GL_FRONT_AND_BACK,
-                            tg_camera.wireframe ? GL_LINE : GL_FILL);
-                        break;
-                    } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_A: {
-                        debug_a = !debug_a;
+                        tg_game.state = TA_STATE_QUIT;
                         break;
                     } case TA_EVENT_GLOBAL_MOUSE_MOVE: {
+                        if (!tg_mouse.captured) break;
+
                         switch (tg_game.state) {
                             case TA_STATE_PLAY: {
                                 ta_event cam_rotate_evt = { 0 };
@@ -260,6 +164,23 @@ int main(int argc, char *argv[])
                                 DLB_ASSERT(!"Unhandled state");
                             }
                         }
+                        break;
+                    } case TA_EVENT_GLOBAL_MOUSE_CLICK: {
+                        break;
+                    } case TA_EVENT_GLOBAL_MOUSE_SCROLL: {
+                        ta_ui_scrollview_scroll(view, event.data.mouse_scroll.y *
+                            -event.data.mouse_scroll.flipped);
+                        break;
+                    } case TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK: {
+                        ta_mouse_toggle_capture();
+                        break;
+                    } case TA_EVENT_GLOBAL_TOGGLE_WIREFRAME: {
+                        tg_camera.wireframe = !tg_camera.wireframe;
+                        glPolygonMode(GL_FRONT_AND_BACK,
+                            tg_camera.wireframe ? GL_LINE : GL_FILL);
+                        break;
+                    } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_A: {
+                        debug_a = !debug_a;
                         break;
                     } default: {
                         DLB_ASSERT(!"Unhandled event type");
@@ -336,9 +257,11 @@ int main(int argc, char *argv[])
         //ta_primitive_push_line_3d(&Z_AXIS, &TA_COLOR_BLUE,  &TA_COLOR_BLUE);
 
         //////////////////////////////////////////
-        ta_mesh_push_normals(mesh_cube);
-        ta_primitive_render();
-        ta_primitive_clear();
+        if (debug_a) {
+            ta_mesh_push_normals(mesh_cube);
+            ta_primitive_render();
+            ta_primitive_clear();
+        }
         //////////////////////////////////////////
 
 		ta_viewport_bind(&mesh_selector, true);

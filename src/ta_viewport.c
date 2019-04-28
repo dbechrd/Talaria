@@ -3,7 +3,7 @@
 #include "misc/gl3w.h"
 
 ta_viewport ta_viewport_init(int left, int top, int width, int height,
-	float fov, float nearz, ta_color background)
+	float fov, float nearz, ta_rgba background)
 {
 	ta_viewport view;
 	view.rect.x = left;

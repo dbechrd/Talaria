@@ -136,13 +136,13 @@ void ta_ui_scrollview_draw(int x, int y, ta_ui_scrollview *view)
 
 	if (view->scrollbar_y.visible) {
 		// Scrollbar background
-		static ta_color scrollbar_color = { 0.5f, 0.5f, 0.5f, 0.5f };
+		static ta_rgba scrollbar_color = { 0.5f, 0.5f, 0.5f, 0.5f };
 		ta_primitive_push_rect(x, y, &view->scrollbar_y.rect, &scrollbar_color);
 
 		// Scrollbar widget
 		int wx = x + view->scrollbar_y.rect.x;
 		int wy = y + view->scrollbar_y.rect.y;
-		static ta_color wcolor = { 0.2f, 0.2f, 0.2f, 0.5f };
+		static ta_rgba wcolor = { 0.2f, 0.2f, 0.2f, 0.5f };
 		ta_primitive_push_rect(wx, wy, &view->scrollbar_y.widget.rect, &wcolor);
 	}
 }

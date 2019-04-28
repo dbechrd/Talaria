@@ -1,26 +1,13 @@
-#pragma once
+ #pragma once
 #include "ta_event.h"
 #include "ta_game.h"
 #include "dlb_types.h"
 #include "SDL/SDL.h"
 
-#if 0
 enum {
-    TA_SCANCODE_MOUSE_MOVE = SDL_NUM_SCANCODES,
-    TA_SCANCODE_COUNT,
-};
-#endif
-
-typedef struct {
-    bool down;
-    bool changed;
-} ta_key_state;
-ta_key_state tg_key_states[SDL_NUM_SCANCODES];
-
-enum {
-    TA_KEYBIND_TRIGGER_DOWN     = 1 << 0,
-    TA_KEYBIND_TRIGGER_PRESSED  = 1 << 1,
-    TA_KEYBIND_TRIGGER_RELEASED = 1 << 2,
+    TA_KEY_PRESS   = 1 << 0,  // once when key pressed
+    TA_KEY_HOLD    = 1 << 1,  // while key is held down
+    TA_KEY_RELEASE = 1 << 2,  // once when key released
 };
 
 typedef SDL_Scancode ta_key;
@@ -34,8 +21,16 @@ typedef struct {
     u64 last_change_ms;  // time of last state change in milliseconds
 } ta_keybind;
 
-extern ta_keybind *tg_keybinds[TA_STATE_COUNT];
+#if 0
+typedef struct {
+    ta_key_state key_states[SDL_NUM_SCANCODES];
+    ta_keybind *keybinds[TA_STATE_COUNT];
+} ta_keyboard;
 
+extern ta_keyboard tg_keyboard;
+#endif
+
+void ta_keyboard_init();
 void ta_keybind_bind1(ta_game_state state_type, ta_event_type event_type,
     u32 triggers, ta_key key1);
 void ta_keybind_bind2(ta_game_state state_type, ta_event_type event_type,
@@ -47,3 +42,4 @@ bool ta_keybind_down(ta_keybind *keybind);
 bool ta_keybind_pressed(ta_keybind *keybind);
 bool ta_keybind_released(ta_keybind *keybind);
 bool ta_keybind_triggered(ta_keybind *keybind);
+void ta_keyboard_update();

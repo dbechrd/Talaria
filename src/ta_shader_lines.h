@@ -4,7 +4,7 @@
 
 typedef struct {
     ta_vec3 position;
-    ta_color color;
+    ta_rgba color;
 } ta_shader_lines_vertex;
 
 typedef struct {

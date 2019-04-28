@@ -17,22 +17,22 @@ const ta_mat4 MAT4_IDENT = {
 	0.0f, 0.0f, 1.0f, 0.0f,
 	0.0f, 0.0f, 0.0f, 1.0f
 };
-const ta_color TA_COLOR_INVIS   = { 0.0f, 0.0f, 0.0f, 0.0f };
-const ta_color TA_COLOR_RED     = { 1.0f, 0.1f, 0.1f, 1.0f };
-const ta_color TA_COLOR_GREEN   = { 0.1f, 1.0f, 0.1f, 1.0f };
-const ta_color TA_COLOR_BLUE    = { 0.1f, 0.1f, 1.0f, 1.0f };
-const ta_color TA_COLOR_YELLOW  = { 1.0f, 1.0f, 0.1f, 1.0f };
-const ta_color TA_COLOR_MAGENTA = { 1.0f, 0.1f, 1.0f, 1.0f };
-const ta_color TA_COLOR_CYAN    = { 0.1f, 1.0f, 1.0f, 1.0f };
-const ta_color TA_COLOR_GRAY1   = { 0.1f, 0.1f, 0.1f, 1.0f };
-const ta_color TA_COLOR_GRAY2   = { 0.2f, 0.2f, 0.2f, 1.0f };
-const ta_color TA_COLOR_GRAY3   = { 0.3f, 0.3f, 0.3f, 1.0f };
-const ta_color TA_COLOR_GRAY4   = { 0.4f, 0.4f, 0.4f, 1.0f };
-const ta_color TA_COLOR_GRAY5   = { 0.5f, 0.5f, 0.5f, 1.0f };
-const ta_color TA_COLOR_GRAY6   = { 0.6f, 0.6f, 0.6f, 1.0f };
-const ta_color TA_COLOR_GRAY7   = { 0.7f, 0.7f, 0.7f, 1.0f };
-const ta_color TA_COLOR_GRAY8   = { 0.8f, 0.8f, 0.8f, 1.0f };
-const ta_color TA_COLOR_GRAY9   = { 0.9f, 0.9f, 0.9f, 1.0f };
+const ta_rgba TA_COLOR_INVIS   = { 0.0f, 0.0f, 0.0f, 0.0f };
+const ta_rgba TA_COLOR_RED     = { 1.0f, 0.1f, 0.1f, 1.0f };
+const ta_rgba TA_COLOR_GREEN   = { 0.1f, 1.0f, 0.1f, 1.0f };
+const ta_rgba TA_COLOR_BLUE    = { 0.1f, 0.1f, 1.0f, 1.0f };
+const ta_rgba TA_COLOR_YELLOW  = { 1.0f, 1.0f, 0.1f, 1.0f };
+const ta_rgba TA_COLOR_MAGENTA = { 1.0f, 0.1f, 1.0f, 1.0f };
+const ta_rgba TA_COLOR_CYAN    = { 0.1f, 1.0f, 1.0f, 1.0f };
+const ta_rgba TA_COLOR_GRAY1   = { 0.1f, 0.1f, 0.1f, 1.0f };
+const ta_rgba TA_COLOR_GRAY2   = { 0.2f, 0.2f, 0.2f, 1.0f };
+const ta_rgba TA_COLOR_GRAY3   = { 0.3f, 0.3f, 0.3f, 1.0f };
+const ta_rgba TA_COLOR_GRAY4   = { 0.4f, 0.4f, 0.4f, 1.0f };
+const ta_rgba TA_COLOR_GRAY5   = { 0.5f, 0.5f, 0.5f, 1.0f };
+const ta_rgba TA_COLOR_GRAY6   = { 0.6f, 0.6f, 0.6f, 1.0f };
+const ta_rgba TA_COLOR_GRAY7   = { 0.7f, 0.7f, 0.7f, 1.0f };
+const ta_rgba TA_COLOR_GRAY8   = { 0.8f, 0.8f, 0.8f, 1.0f };
+const ta_rgba TA_COLOR_GRAY9   = { 0.9f, 0.9f, 0.9f, 1.0f };
 
 static ta_vert_line *lines_queue;
 static GLuint lines_vao;
@@ -48,11 +48,11 @@ static GLuint quads_program;
 static void ta_primitive_push_line(ta_vert_line *line);
 static void ta_primitive_push_quad(ta_vert_quad *quad);
 static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d,
-	const ta_color *color0, const ta_color *color1);
+	const ta_rgba *color0, const ta_rgba *color1);
 static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
-	const ta_rect *rect, const ta_color *color);
+	const ta_rect *rect, const ta_rgba *color);
 static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
-	const ta_color *color);
+	const ta_rgba *color);
 
 #if 0
 int clamp(int d, int min, int max)
@@ -183,9 +183,9 @@ ta_vec3 mat3_mul_vec3(const ta_mat3 m, const ta_vec3 v)
 
 	return result;
 }
-ta_rgbf mat3_mul_rgbf(const ta_mat3 m, const ta_rgbf v)
+ta_rgb mat3_mul_rgb(const ta_mat3 m, const ta_rgb v)
 {
-	ta_rgbf result;
+	ta_rgb result;
 	result.r =
 		m.rows.f[0][0] * v.r +
 		m.rows.f[0][1] * v.g +
@@ -447,7 +447,7 @@ static void ta_primitive_push_line(ta_vert_line *line)
 	dlb_vec_push(lines_queue, *line);
 }
 static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d,
-	const ta_color *color0, const ta_color *color1)
+	const ta_rgba *color0, const ta_rgba *color1)
 {
 	float x0 = X_TO_NDC(line2d->p0.x);
 	float x1 = X_TO_NDC(line2d->p1.x);
@@ -462,22 +462,22 @@ static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d,
 	line->verts[1].color = *color1;
 }
 static void ta_primitive_line3d_to_line(ta_vert_line *line, ta_line_3d *line3d,
-    const ta_color *color0, const ta_color *color1)
+    const ta_rgba *color0, const ta_rgba *color1)
 {
     line->verts[0].position = line3d->p0;
     line->verts[0].color = *color0;
     line->verts[1].position = line3d->p1;
     line->verts[1].color = *color1;
 }
-void ta_primitive_push_line_2d(ta_line_2d *line_2d, const ta_color *color0,
-	const ta_color * color1)
+void ta_primitive_push_line_2d(ta_line_2d *line_2d, const ta_rgba *color0,
+	const ta_rgba * color1)
 {
 	ta_vert_line line = { 0 };
 	ta_primitive_line2d_to_line(&line, line_2d, color0, color1);
 	ta_primitive_push_line(&line);
 }
-void ta_primitive_push_line_3d(ta_line_3d *line_3d, const ta_color *color0,
-    const ta_color * color1)
+void ta_primitive_push_line_3d(ta_line_3d *line_3d, const ta_rgba *color0,
+    const ta_rgba * color1)
 {
     ta_vert_line line = { 0 };
     ta_primitive_line3d_to_line(&line, line_3d, color0, color1);
@@ -489,7 +489,7 @@ static void ta_primitive_push_quad(ta_vert_quad *quad)
 	dlb_vec_push(quads_queue, *quad);
 }
 static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
-	const ta_rect *rect, const ta_color *color)
+	const ta_rect *rect, const ta_rgba *color)
 {
 	// v3 *----* v2
 	//    |    |
@@ -530,7 +530,7 @@ static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
 		quad->verts[i].color = *color;
 	}
 }
-void ta_primitive_push_rect(int x, int y, ta_rect *rect, const ta_color *color)
+void ta_primitive_push_rect(int x, int y, ta_rect *rect, const ta_rgba *color)
 {
 	ta_vert_quad quad = { 0 };
 	ta_primitive_rect_to_quad(&quad, x, y, rect, color);
@@ -538,7 +538,7 @@ void ta_primitive_push_rect(int x, int y, ta_rect *rect, const ta_color *color)
 }
 
 static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
-	const ta_color *color)
+	const ta_rgba *color)
 {
 	// v3 *----* v2
 	//    |    |
