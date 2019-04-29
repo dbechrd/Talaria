@@ -1,6 +1,7 @@
 #pragma once
 #include "ta_buffer.h"
 #include "ta_primitive.h"
+#include "ta_scene.h"
 #include "dlb_hash.h"
 #include "misc/gl3w.h"
 
@@ -20,8 +21,11 @@ typedef enum {
 	TA_MESH_BUFFER_COUNT
 } ta_mesh_buffer;
 
-typedef struct {
-	const char *filename;
+typedef struct ta_scene_s ta_scene;
+
+typedef struct ta_mesh_s {
+    ta_scene *scene;
+    const char *path;
 	ta_buffer name;
 
     GLuint *indexes;

@@ -1,0 +1,37 @@
+#pragma once
+#include "dlb_memory.h"
+
+#define CSTR(s) (s), sizeof(s) - 1
+#define INTERN(s) ta_symbol_intern(CSTR(s))
+
+#define dlb_symbol__hdr(s) ((dlb_symbol__hdr *)((char *)s - sizeof(dlb_symbol__hdr)))
+
+#define dlb_symbol_len(s) ((s) ? dlb_symbol__hdr(s)->len : 0)
+//#define dlb_symbol_end(s) ((s) + dlb_symbol_len(s))
+//#define dlb_symbol_last(s) (&(s)[dlb_symbol__hdr(s)->len-1])
+//#define dlb_symbol_cstr(s) (dlb_symbol__alloc((s), sizeof(s)))
+#define dlb_symbol_alloc(s, len) (dlb_symbol__alloc((s), (len)))
+#define dlb_symbol_free(s) ((s) ? (dlb_free(dlb_symbol__hdr(s)), (s) = NULL) : 0)
+
+typedef struct dlb_symbol__hdr {
+    u32 len;
+} dlb_symbol__hdr;
+
+// TODO: Use arena allocator for symbols (see dlb_string.h)
+static inline char *dlb_symbol__alloc(const char *buf, u32 len) {
+    u32 new_size = sizeof(dlb_symbol__hdr) + len + 1;
+    dlb_symbol__hdr *sym = dlb_malloc(new_size);
+    sym->len = len;
+    char *str = (char *)sym + sizeof(dlb_symbol__hdr);
+    dlb_memcpy(str, buf, len);
+    str[len] = 0;
+    return str;
+}
+
+extern const char *sym_ident_name;
+extern const char *sym_kw_null;
+extern const char *sym_kw_true;
+extern const char *sym_kw_false;
+
+const char *ta_symbol_intern(const char *s, u32 len);
+void ta_symbol_init();

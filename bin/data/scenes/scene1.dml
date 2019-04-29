@@ -1,0 +1,50 @@
+ta_entity:
+  name: "entity_1"
+  material: "material_1"
+  transform:
+    position: { x: 1.0, y: 2.0, z: 3.0 }
+    rotation: { x: 1.0, y: 2.0, z: 3.0, w: 4.0 }
+    scale:    { x: 1.0, y: 1.0, z: 1.0 }
+ta_material:
+  name: "material_1"
+ta_mesh:
+  name: "mesh_1"
+  path: "mesh_1_path"
+ta_shader:
+  name: "shader_1"
+  path: "shader_1_path"
+ta_texture:
+  name: "texture_1"
+  path: "texture_1_path"
+ta_sun_light:
+  name: "sun"
+  direction: { x: 1.0, y: 2.0, z: 3.0 }
+  color:     { r: 1.0, g: 2.0, b: 3.0 }
+ta_point_light:
+  name: "point_light_1"
+  position: { x: 1.0, y: 2.0, z: 3.0 }
+  color:    { r: 1.0, g: 2.0, b: 3.0 }
+#ta_texture:
+#  name: "texture_example"
+#  test: "First\\\"hi\"\\Second"
+#  path: "texture/example.tga"
+#ta_entity:
+#  name: "Timmy"  # This is entity #1's name
+#  age: 42
+#  zero: 0
+#  negative: -1
+#  active: true
+#  inactive: false
+#  empty: null
+#  weight: 0x42f60000(123)
+#  latitude: 321.000000
+#  city: "San Francisco"
+#  numbers: []
+#  position: {}
+#  #_bad_ident: "asdf"
+#  #bad_string: "asdfsdf"aa"
+#  #numbers: [
+#  #  92492, 27745, 37710, 348, 28714, 68388, 18949, 4572, 568654, 654568, 213115
+#  #]
+#  #position: { x: 1.001, y: 2.002, z: 3.003 }
+#  #escape_chars: "foo \"'\\\t\r\n\0 bar"

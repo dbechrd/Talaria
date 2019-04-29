@@ -8,7 +8,7 @@
 #include "ta_shader_quads.h"
 #include "ta_shader_mesh.h"
 #include "ta_ui_scrollview.h"
-#include "ta_barchart.h"
+#include "ta_ui_barchart.h"
 #include "ta_texture.h"
 #include "ta_mesh.h"
 #include "ta_camera.h"
@@ -17,10 +17,16 @@
 #include "ta_game.h"
 #include "ta_keyboard.h"
 #include "ta_mouse.h"
+#include "ta_entity.h"
+#include "ta_schema.h"
+#include "ta_parse.h"
+#include "ta_scene.h"
+#include "ta_symbol.h"
 #include "dlb_types.h"
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb_vector.h"
 #define DLB_HASH_IMPLEMENTATION
+#define DLB_HASH_TEST
 #include "dlb_hash.h"
 #include "misc/gl3w.h"
 #include "SDL/SDL.h"
@@ -30,32 +36,94 @@ static bool debug_a = false;
 #if _DEBUG
 DLB_ASSERT_HANDLER(handle_assert)
 {
-    ta_log_write(tg_debug_log, "ASSERT FAILED:\nfile: %s:%d \nmessage: %s\n",
+    ta_log_write(tg_debug_log,
+        "\n---[DLB_ASSERT_HANDLER]---------------------------------------------------------\n"
+        "Source file: %s:%d\n\n"
+        "%s\n"
+        "--------------------------------------------------------------------------------\n",
 		filename, line, expr);
-	exit(-1);
+    UNUSED(getchar());
+    exit(-1);
 }
 dlb_assert_handler_def *dlb_assert_handler = handle_assert;
 #endif
+
+void debug_tests() {
+#if _DEBUG
+    parse_tests();
+    dlb_hash_test();
+#endif
+}
+
+ta_entity *entity_create(ta_scene *scn, const char *name) {
+    ta_entity *e = ta_scene_obj_init(scn, F_TA_ENTITY);
+    e->type = ENTITY_DEFAULT;
+    e->name = name;
+    e->transform.position.x = 1.1f;
+    e->transform.position.y = 1.2f;
+    e->transform.position.z = 1.3f;
+    e->transform.rotation.x = 2.1f;
+    e->transform.rotation.y = 2.2f;
+    e->transform.rotation.z = 2.3f;
+    e->transform.rotation.w = 2.4f;
+    e->transform.scale.x = 3.1f;
+    e->transform.scale.y = 3.2f;
+    e->transform.scale.z = 3.3f;
+    return e;
+}
+
+void write_scene(const char *filename) {
+    ta_scene *scene = ta_scene_init("test scene");
+    entity_create(scene, "Timmy");
+    entity_create(scene, "Bobby");
+
+    printf("[WRITE: %s]\n", filename);
+    ta_scene_print(scene, stdout);
+    printf("\n");
+
+    ta_file *data_file = ta_file_open(filename, FILE_WRITE);
+    ta_scene_print(scene, data_file->hnd);
+    ta_file_close(data_file);
+    ta_scene_free(scene);
+}
+
+void read_scene(const char *filename) {
+    ta_log_write(tg_debug_log, "[Scene] Loading %s\n", filename);
+    ta_file *data_file = ta_file_open(filename, FILE_READ);
+    ta_scene *scene = ta_scene_load(data_file);
+    ta_file_close(data_file);
+
+    ta_log_write(tg_debug_log, "[Scene] Scene loaded successfully:\n");
+    ta_scene_print(scene, tg_debug_log->stream);
+    ta_scene_free(scene);
+}
 
 int main(int argc, char *argv[])
 {
     UNUSED(argc);
     UNUSED(argv);
-	ta_timer_init();
-	srand((u32)ta_timer_only_ms());
-
     tg_game.state = TA_STATE_INIT;
+    ta_timer_init();
+	srand((u32)ta_timer_only_ms());
+    debug_tests();
+
 	ta_log debug_log;
 	tg_debug_log = &debug_log;
     ta_log_init(tg_debug_log, "log.txt", true);
 
+    ta_symbol_init();
+    ta_schema_register();
+
 	// Window setup
     ta_window_init(1600, 900, 80.0f, 0.1f, false);
+
+    // OpenGL setup
+    ta_render_init();
+
     ta_mouse_init();
     ta_keyboard_init();
 
-	// OpenGL setup
-    ta_render_init();
+    read_scene("data/scenes/scene1.dml");
 
 	// Shader setup
     ta_primitive_init();
@@ -119,7 +187,7 @@ int main(int argc, char *argv[])
 	ta_ui_scrollview *view = ta_ui_scrollview_init(420, 50, 800, 300,
 		(ta_ui_base *)ui_image);
 
-	ta_barchart chart = ta_barchart_init(10, 10, tg_window.width - 20, 30);
+	ta_ui_barchart chart = ta_ui_barchart_init(10, 10, tg_window.width - 20, 30);
 
     // TODO: What other startup states would be useful (e.g. LOADING_MESHES)?
     //       Could use this for a progress bar during load and better logging.
@@ -289,7 +357,7 @@ int main(int argc, char *argv[])
         ta_shader_lines_set_projection(&MAT4_IDENT);
         ta_shader_lines_set_view(&MAT4_IDENT);
         ta_shader_lines_set_model(&MAT4_IDENT);
-        ta_barchart_draw(0, 0, &chart);
+        ta_ui_barchart_draw(0, 0, &chart);
         ta_primitive_render();
         ta_primitive_clear();
 

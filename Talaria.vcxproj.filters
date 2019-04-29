@@ -44,9 +44,6 @@
     <ClCompile Include="src/ta_shader_quads.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src/ta_barchart.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src/ta_ui_scrollview.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -80,6 +77,27 @@
     <ClCompile Include="src\ta_mouse.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ta_math.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ta_ui_barchart.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ta_symbol.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ta_parse.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ta_schema.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ta_entity.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ta_scene.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src/ta_window.h">
@@ -107,9 +125,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src/ta_shader_quads.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src/ta_barchart.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src/ta_ui_scrollview.h">
@@ -143,6 +158,27 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_mouse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_math.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_ui_barchart.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_symbol.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_parse.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_schema.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_entity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_scene.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

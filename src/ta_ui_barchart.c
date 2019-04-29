@@ -1,8 +1,8 @@
-#include "ta_barchart.h"
-#include "ta_primitive.h"
-#include "ta_window.h"
+#include "ta_ui_barchart.h"
+#include "ta_math.h"
 #include "ta_shader_lines.h"
 #include "dlb_types.h"
+#include "dlb_memory.h"
 #include <time.h>
 #include <stdlib.h>
 
@@ -10,26 +10,26 @@
 static float alpha = 0.8f;
 static const ta_rgb color = { 1.0f, 0.0f, 0.0f };
 
-ta_barchart ta_barchart_init(int x, int y, int w, int h)
+ta_ui_barchart ta_ui_barchart_init(int x, int y, int w, int h)
 {
-	ta_barchart barchart = { 0 };
+	ta_ui_barchart barchart = { 0 };
 	barchart.rect.x = x;
 	barchart.rect.y = y;
 	barchart.rect.w = w;
 	barchart.rect.h = h;
 	barchart.sample_count = w / x_inc;
-	barchart.samples = calloc(barchart.sample_count, sizeof(*barchart.samples));
+	barchart.samples = dlb_calloc(barchart.sample_count, sizeof(*barchart.samples));
 	barchart.next_index = 0;
 	barchart.smooth_val = barchart.rect.y / 2;
 	return barchart;
 }
 
-void ta_barchart_free(ta_barchart *chart)
+void ta_ui_barchart_free(ta_ui_barchart *chart)
 {
-	free(chart->samples);
+	dlb_free(chart->samples);
 }
 
-void ta_barchart_draw(int x, int y, ta_barchart *chart)
+void ta_ui_barchart_draw(int x, int y, ta_ui_barchart *chart)
 {
 	ta_line_2d line = { 0 };
 	ta_rgba color0 = { 0 };

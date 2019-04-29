@@ -13,20 +13,19 @@ static void sdl_gl_attrib(SDL_GLattr attr, int value)
     int sdl_err = SDL_GL_SetAttribute(attr, value);
     if (sdl_err < 0)
     {
-        ta_log_write(tg_debug_log, "SDL_GL_SetAttribute %d error: %s\n", attr, SDL_GetError());
+        ta_log_write(tg_debug_log, "[Window] SDL_GL_SetAttribute %d error: %s\n", attr, SDL_GetError());
         DLB_ASSERT(!"sdl_gl_attrib: error");
     }
 }
 
 static void ta_init_sdl(int *w, int *h, bool fullscreen)
 {
-	ta_log_write(tg_debug_log, "Initializing SDL...\n");
+	ta_log_write(tg_debug_log, "[Window] Initializing SDL\n");
     int sdl_err = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);  // SDL_INIT_TIMER
     if (sdl_err < 0) {
-        ta_log_write(tg_debug_log, "SDL_Init error: %s\n", SDL_GetError());
+        ta_log_write(tg_debug_log, "[Window] SDL_Init error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_Init failed");
     }
-	ta_log_write(tg_debug_log, "SDL initialized\n");
 
     sdl_gl_attrib(SDL_GL_RED_SIZE, 8);
     sdl_gl_attrib(SDL_GL_GREEN_SIZE, 8);
@@ -50,7 +49,7 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
     sdl_gl_attrib(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     sdl_gl_attrib(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 
-	ta_log_write(tg_debug_log, "SDL GL attributes intialized\n");
+	ta_log_write(tg_debug_log, "[Window] SDL GL attributes intialized\n");
 
     // Create window
     u32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
@@ -62,18 +61,18 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
 			SDL_WINDOWPOS_CENTERED, *w, *h, flags | SDL_WINDOW_RESIZABLE);
 	}
     if (window == NULL) {
-        ta_log_write(tg_debug_log, "SDL_CreateWindow error: %s\n", SDL_GetError());
+        ta_log_write(tg_debug_log, "[Window] SDL_CreateWindow error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_CreateWindow failed");
     }
-	ta_log_write(tg_debug_log, "SDL window created\n");
+	ta_log_write(tg_debug_log, "[Window] SDL window created\n");
 
     // Create GL context
     gl_context = SDL_GL_CreateContext(window);
     if (gl_context == NULL) {
-        ta_log_write(tg_debug_log, "SDL_GL_CreateContext error: %s\n", SDL_GetError());
+        ta_log_write(tg_debug_log, "[Window] SDL_GL_CreateContext error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_GL_CreateContext failed");
     }
-	ta_log_write(tg_debug_log, "SDL GL context created\n");
+	ta_log_write(tg_debug_log, "[Window] SDL GL context created\n");
 
     // Get actual window size
     if (fullscreen && w && h) {
@@ -83,12 +82,14 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
     // Log default VSync state
 	//SDL_GL_SetSwapInterval(0);
     int swap = SDL_GL_GetSwapInterval();
-    ta_log_write(tg_debug_log, "vsync: %s\n", (swap) ? "enabled" : "disabled");
+    ta_log_write(tg_debug_log, "[Window] vsync: %s\n", (swap) ? "enabled" : "disabled");
+    ta_log_write(tg_debug_log, "[Window] SDL initialized\n");
 }
 
 void ta_window_init(int w, int h, float fov, float nearz, bool fullscreen)
 {
-	tg_window.width = w;
+    ta_log_write(tg_debug_log, "[Window] Initializing window\n");
+    tg_window.width = w;
 	tg_window.height = h;
     ta_init_sdl(&tg_window.width, &tg_window.height, fullscreen);
 	DLB_ASSERT(fullscreen || (tg_window.width == w && tg_window.height == h));
@@ -100,6 +101,7 @@ void ta_window_init(int w, int h, float fov, float nearz, bool fullscreen)
 		(float)tg_window.width / tg_window.height,
 		tg_window.nearz
 	);
+    ta_log_write(tg_debug_log, "[Window] Window initialized\n");
 }
 
 void ta_window_swap()

@@ -559,7 +559,7 @@ static void initMaterial(tinyobj_material_t * material)
 
 /* Implementation of string to int hashtable */
 
-#define HASH_TABLE_ERROR 1 
+#define HASH_TABLE_ERROR 1
 #define HASH_TABLE_SUCCESS 0
 
 #define HASH_TABLE_DEFAULT_SIZE 10
@@ -794,7 +794,7 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t * *materials_out,
 			/* set new mtl name */
 			token += 7;
 #ifdef _MSC_VER
-			sscanf_s(token, "%s", namebuf, (unsigned)_countof(namebuf));
+			sscanf_s(token, "%s", namebuf, (unsigned)ARRAY_COUNT(namebuf));
 #else
 			sscanf(token, "%s", namebuf);
 #endif

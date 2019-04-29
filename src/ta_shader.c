@@ -13,14 +13,14 @@ static void show_info_log(GLuint shader, PFNGLGETSHADERIVPROC glGet__iv,
     buf.data = dlb_malloc(buf.length);
     glGet__InfoLog(shader, buf.length, NULL, buf.data);
     ta_log_write(tg_debug_log, "OpenGL info log:\n%s\n", buf.data);
-    free(buf.data);
+    dlb_free(buf.data);
     DLB_ASSERT(!"show_info_log: GL error occurred");
 };
 
 GLuint ta_shader_compile(GLenum type, ta_buffer *buf)
 {
     GLuint shader = glCreateShader(type);
-    
+
     // Read shader source
     glShaderSource(shader, 1, &buf->data, (GLint *)&buf->length);
 

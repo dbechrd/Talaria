@@ -1,6 +1,7 @@
 #include "ta_keyboard.h"
 #include "ta_mouse.h"
 #include "ta_timer.h"
+#include "ta_log.h"
 #include "dlb_vector.h"
 #include <string.h>
 
@@ -9,19 +10,21 @@ static ta_keybind *keybinds[TA_STATE_COUNT];
 
 void ta_keyboard_init()
 {
+    ta_log_write(tg_debug_log, "[Keyboard] Initializing keyboard\n");
+    ta_log_write(tg_debug_log, "[Keyboard] Initializing key binds\n");
     // TODO: Read keybinds from file
     //dlb_vec_reserve(tg_keybinds, 16);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_QUIT,              TA_KEY_PRESS, SDL_SCANCODE_ESCAPE);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK, TA_KEY_PRESS, SDL_SCANCODE_M);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,  TA_KEY_PRESS, SDL_SCANCODE_Z);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,  TA_KEY_PRESS, TA_SCANCODE_MOUSE_LEFT);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_DEBUG_A,    TA_KEY_PRESS, SDL_SCANCODE_SEMICOLON);
+    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_DEBUG_A,    TA_KEY_PRESS, SDL_SCANCODE_1);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_FORWARD,      TA_KEY_HOLD, SDL_SCANCODE_W);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_BACKWARD,     TA_KEY_HOLD, SDL_SCANCODE_S);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_RIGHT,        TA_KEY_HOLD, SDL_SCANCODE_D);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_LEFT,         TA_KEY_HOLD, SDL_SCANCODE_A);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_UP,           TA_KEY_HOLD, SDL_SCANCODE_SPACE);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_DOWN,         TA_KEY_HOLD, SDL_SCANCODE_LSHIFT);
+    ta_log_write(tg_debug_log, "[Keyboard] Keyboard initialized\n");
 }
 
 void ta_keybind_bind1(ta_game_state state_type, ta_event_type event_type,

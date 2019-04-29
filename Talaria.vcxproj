@@ -162,7 +162,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src/gl3w.c" />
-    <ClCompile Include="src/ta_barchart.c" />
+    <ClCompile Include="src\ta_entity.c" />
+    <ClCompile Include="src\ta_parse.c" />
+    <ClCompile Include="src\ta_scene.c" />
+    <ClCompile Include="src\ta_schema.c" />
+    <ClCompile Include="src\ta_symbol.c" />
+    <ClCompile Include="src\ta_ui_barchart.c" />
     <ClCompile Include="src/ta_buffer.c" />
     <ClCompile Include="src/ta_camera.c" />
     <ClCompile Include="src/ta_file.c" />
@@ -182,11 +187,17 @@
     <ClCompile Include="src\ta_event.c" />
     <ClCompile Include="src\ta_game.c" />
     <ClCompile Include="src\ta_keyboard.c" />
+    <ClCompile Include="src\ta_math.c" />
     <ClCompile Include="src\ta_mouse.c" />
     <ClCompile Include="src\ta_viewport.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src/ta_barchart.h" />
+    <ClInclude Include="src\ta_entity.h" />
+    <ClInclude Include="src\ta_parse.h" />
+    <ClInclude Include="src\ta_scene.h" />
+    <ClInclude Include="src\ta_schema.h" />
+    <ClInclude Include="src\ta_symbol.h" />
+    <ClInclude Include="src\ta_ui_barchart.h" />
     <ClInclude Include="src/ta_buffer.h" />
     <ClInclude Include="src/ta_camera.h" />
     <ClInclude Include="src/ta_file.h" />
@@ -205,6 +216,7 @@
     <ClInclude Include="src\ta_event.h" />
     <ClInclude Include="src\ta_game.h" />
     <ClInclude Include="src\ta_keyboard.h" />
+    <ClInclude Include="src\ta_math.h" />
     <ClInclude Include="src\ta_mouse.h" />
     <ClInclude Include="src\ta_viewport.h" />
   </ItemGroup>
