@@ -381,6 +381,54 @@ ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
     return result;
 }
 
+ta_mat4 mat4_lookat(ta_vec3 position, ta_vec3 target, ta_vec3 world_up)
+{
+    ta_vec3 dir = vec3_normalize(vec3_sub(position, target));
+    ta_vec3 front = vec3_negate(dir);
+    ta_vec3 right = vec3_normalize(vec3_cross(world_up, dir));
+    ta_vec3 up = vec3_cross(dir, right);
+
+    // [ rx, ry, rz, 0 ]
+    // [ ux, uy, uz, 0 ]
+    // [ dx, dy, dz, 0 ]
+    // [  0,  0,  0, 1 ]
+    ta_mat4 transform = { 0 };
+    transform.rows.v[0].x = right.x;
+    transform.rows.v[0].y = right.y;
+    transform.rows.v[0].z = right.z;
+    transform.rows.v[1].x = up.x;
+    transform.rows.v[1].y = up.y;
+    transform.rows.v[1].z = up.z;
+    transform.rows.v[2].x = dir.x;
+    transform.rows.v[2].y = dir.y;
+    transform.rows.v[2].z = dir.z;
+    transform.rows.v[3].w = 1.0f;
+
+    // [ 1, 0, 0, -px ]
+    // [ 0, 1, 0, -py ]
+    // [ 0, 0, 1, -pz ]
+    // [ 0, 0, 0,   1 ]
+    ta_mat4 translate = { 0 };
+    translate.rows.v[0].x = 1.0f;
+    translate.rows.v[0].w = -position.x;
+    translate.rows.v[1].y = 1.0f;
+    translate.rows.v[1].w = -position.y;
+    translate.rows.v[2].z = 1.0f;
+    translate.rows.v[2].w = -position.z;
+    translate.rows.v[3].w = 1.0f;
+
+    ta_mat4 look_at = mat4_mul(transform, translate);
+#if 0
+    ta_log_write(tg_debug_log, "transform:\n");
+    ta_mat4_print(&transform);
+    ta_log_write(tg_debug_log, "translate:\n");
+    ta_mat4_print(&translate);
+    ta_log_write(tg_debug_log, "look_at:\n");
+    ta_mat4_print(&look_at);
+#endif
+    return look_at;
+}
+
 #if 0
 float hue_to_rgb(float p, float q, float t) {
     if (t < 0.0f) t += 1.0f;

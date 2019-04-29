@@ -31,8 +31,6 @@
 #include "misc/gl3w.h"
 #include "SDL/SDL.h"
 
-static bool debug_a = false;
-
 #if _DEBUG
 DLB_ASSERT_HANDLER(handle_assert)
 {
@@ -114,12 +112,8 @@ int main(int argc, char *argv[])
     ta_symbol_init();
     ta_schema_register();
 
-	// Window setup
     ta_window_init(1600, 900, 80.0f, 0.1f, false);
-
-    // OpenGL setup
     ta_render_init();
-
     ta_mouse_init();
     ta_keyboard_init();
 
@@ -137,18 +131,17 @@ int main(int argc, char *argv[])
 		"data/texture/genesis_1024_1024.png");
 	UNUSED(tex_test);
 
-#if 0
 	ta_mesh_load_obj_file(TA_MESH_QUEUE_STATIC, "data/mesh/prim_cube.obj");
     ta_mesh *mesh_cube = dlb_hash_search(&tg_mesh_table, CSTR("prim_cube"));
-#else
-	ta_mesh_load_obj_file(TA_MESH_QUEUE_STATIC, "data/models/Chamber0001.obj");
-	ta_mesh *mesh_cube = dlb_hash_search(&tg_mesh_table, CSTR("chamber0001_base"));
-#endif
-	if (!mesh_cube) {
+    UNUSED(mesh_cube);
+
+	ta_mesh_load_obj_file(TA_MESH_QUEUE_LEVEL, "data/models/Chamber0001.obj");
+	ta_mesh *mesh_chamber = dlb_hash_search(&tg_mesh_table, CSTR("chamber0001_base"));
+	if (!mesh_chamber) {
 		DLB_ASSERT(!"Failed to load or find mesh");
 	}
-    ta_mesh_init_vertex_normals(mesh_cube, 0.5f);
-    ta_mesh_init_face_normals(mesh_cube, 0.5f);
+    ta_mesh_init_vertex_normals(mesh_chamber, 0.5f);
+    ta_mesh_init_face_normals(mesh_chamber, 0.5f);
 
 	//ta_mat4 project = mat4_perspective(65.0f, aspect, 0.1f, 100.0f);
 	//float oo = 0.5f;
@@ -156,11 +149,16 @@ int main(int argc, char *argv[])
 
     tg_camera.position = (ta_vec3) { 0.0f, 1.7f, 24.0f };
     tg_camera.velocity = 0.1f;
-    tg_camera.accel_yaw = 0.1f;
-    tg_camera.accel_pitch = 0.1f;
     tg_camera.yaw = 90.0f;
+    tg_camera.yaw_accel = 0.1f;
+    tg_camera.pitch = 0.0f;
+    tg_camera.pitch_min = -75.0f;
+    tg_camera.pitch_max = 75.0f;
+    tg_camera.pitch_accel = 0.1f;
+    tg_camera.dirty = true;
     ta_camera_update(&tg_camera);
-	ta_mat4 look_at_map = ta_camera_lookat(
+
+	ta_mat4 look_at_map = mat4_lookat(
 		(ta_vec3) { 0.0f, 10.0f, 30.0f },
 		(ta_vec3) { 0.0f, 0.0f, 0.0f },
 		VEC3_Y
@@ -197,111 +195,11 @@ int main(int argc, char *argv[])
     u64 frame_num = 0;
     while (tg_game.state != TA_STATE_QUIT) {
         frame_num++;
-        ta_event_update();
-		ta_mouse_update();
+        ta_event_sdl_poll();
+        ta_mouse_update();
         ta_keyboard_update();
-
-        // Handle events
-        {
-            ta_event event;
-
-            // Global events
-            while (ta_event_pop(&event, TA_EVENT_QUEUE_GLOBAL)) {
-                switch (event.type) {
-                    case TA_EVENT_GLOBAL_QUIT: {
-                        tg_game.state = TA_STATE_QUIT;
-                        break;
-                    } case TA_EVENT_GLOBAL_MOUSE_MOVE: {
-                        if (!tg_mouse.captured) break;
-
-                        switch (tg_game.state) {
-                            case TA_STATE_PLAY: {
-                                ta_event cam_rotate_evt = { 0 };
-                                cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
-                                if (event.data.mouse_move.dx) {
-                                    cam_rotate_evt.data.camera_rotate.delta_yaw =
-                                        -event.data.mouse_move.dx * tg_camera.accel_yaw;
-                                }
-                                if (event.data.mouse_move.dy) {
-                                    cam_rotate_evt.data.camera_rotate.delta_pitch =
-                                        -event.data.mouse_move.dy * tg_camera.accel_pitch;
-                                }
-                                ta_event_push(&cam_rotate_evt);
-                                break;
-                            } default: {
-                                DLB_ASSERT(!"Unhandled state");
-                            }
-                        }
-                        break;
-                    } case TA_EVENT_GLOBAL_MOUSE_CLICK: {
-                        break;
-                    } case TA_EVENT_GLOBAL_MOUSE_SCROLL: {
-                        ta_ui_scrollview_scroll(view, event.data.mouse_scroll.y *
-                            -event.data.mouse_scroll.flipped);
-                        break;
-                    } case TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK: {
-                        ta_mouse_toggle_capture();
-                        break;
-                    } case TA_EVENT_GLOBAL_TOGGLE_WIREFRAME: {
-                        tg_camera.wireframe = !tg_camera.wireframe;
-                        glPolygonMode(GL_FRONT_AND_BACK,
-                            tg_camera.wireframe ? GL_LINE : GL_FILL);
-                        break;
-                    } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_A: {
-                        debug_a = !debug_a;
-                        break;
-                    } default: {
-                        DLB_ASSERT(!"Unhandled event type");
-                    }
-                }
-            }
-
-            // Camera events
-            // TODO: Normalize to prevent fast diagonal movement
-            while (ta_event_pop(&event, TA_EVENT_QUEUE_CAMERA)) {
-                switch (event.type) {
-                    case TA_EVENT_CAMERA_MOVE_FORWARD: {
-                        ta_camera_move(&tg_camera, TA_CAMERA_FORWARD);
-                        break;
-                    } case TA_EVENT_CAMERA_MOVE_BACKWARD: {
-                        ta_camera_move(&tg_camera, TA_CAMERA_BACKWARD);
-                        break;
-                    } case TA_EVENT_CAMERA_MOVE_RIGHT: {
-                        ta_camera_move(&tg_camera, TA_CAMERA_RIGHT);
-                        break;
-                    } case TA_EVENT_CAMERA_MOVE_LEFT: {
-                        ta_camera_move(&tg_camera, TA_CAMERA_LEFT);
-                        break;
-                    } case TA_EVENT_CAMERA_MOVE_UP: {
-                        ta_camera_move(&tg_camera, TA_CAMERA_UP);
-                        break;
-                    } case TA_EVENT_CAMERA_MOVE_DOWN: {
-                        ta_camera_move(&tg_camera, TA_CAMERA_DOWN);
-                        break;
-                    } case TA_EVENT_CAMERA_ROTATE: {
-                        if (event.data.camera_rotate.delta_yaw) {
-                            tg_camera.yaw += event.data.camera_rotate.delta_yaw;
-                            while (tg_camera.yaw < 0.0f) { tg_camera.yaw += 360.0f; }
-                            while (tg_camera.yaw >= 360.0f) { tg_camera.yaw -= 360.0f; }
-                            tg_camera.dirty = true;
-                        }
-                        if (event.data.camera_rotate.delta_pitch) {
-                            tg_camera.pitch += event.data.camera_rotate.delta_pitch;
-                            tg_camera.pitch = clampf(tg_camera.pitch, -75.0f, 75.0f);
-                            tg_camera.dirty = true;
-                        }
-                        break;
-                    } default: {
-                        DLB_ASSERT(!"Unhandled event type");
-                    }
-                }
-            }
-        }
-
-		// Update camera
-		if (tg_camera.dirty) {
-            ta_camera_update(&tg_camera);
-		}
+        ta_event_update();
+        ta_camera_update(&tg_camera);
 
 		glClearColor(0.5f, 0.8f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -313,7 +211,7 @@ int main(int argc, char *argv[])
 		ta_shader_mesh_set_model(&MAT4_IDENT);
         ta_shader_mesh_bind();
         ta_shader_mesh_prerender();
-		ta_shader_mesh_render(mesh_cube);
+		ta_shader_mesh_render(mesh_chamber);
 		ta_shader_mesh_unbind();
 
         ta_shader_lines_set_projection(&tg_window.projection);
@@ -325,8 +223,8 @@ int main(int argc, char *argv[])
         //ta_primitive_push_line_3d(&Z_AXIS, &TA_COLOR_BLUE,  &TA_COLOR_BLUE);
 
         //////////////////////////////////////////
-        if (debug_a) {
-            ta_mesh_push_normals(mesh_cube);
+        if (tg_debug_a) {
+            ta_mesh_push_normals(mesh_chamber);
             ta_primitive_render();
             ta_primitive_clear();
         }
@@ -347,7 +245,7 @@ int main(int argc, char *argv[])
 			ta_shader_mesh_set_model(&model);
             ta_shader_mesh_bind();
             ta_shader_mesh_prerender();
-			ta_shader_mesh_render(mesh_cube);
+			ta_shader_mesh_render(mesh_chamber);
 			ta_shader_mesh_unbind();
 		}
 		ta_viewport_unbind(&mesh_selector);

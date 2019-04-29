@@ -1,9 +1,12 @@
 #include "ta_event.h"
 #include "ta_keyboard.h"
 #include "ta_log.h"
+#include "ta_mouse.h"
 #include "dlb_vector.h"
 #include "SDL/SDL.h"
 #include <string.h>
+
+bool tg_debug_a = false;
 
 void ta_event_push(ta_event *event)
 {
@@ -55,7 +58,7 @@ bool ta_event_peek(ta_event *event, ta_event_queue_type queue_type)
     }
 }
 
-void ta_event_update()
+void ta_event_sdl_poll()
 {
     SDL_Event sdl_event;
     while (SDL_PollEvent(&sdl_event)) {
@@ -79,6 +82,60 @@ void ta_event_update()
                 break;
             } case SDL_TEXTINPUT: {
                 break;
+            }
+        }
+    }
+}
+
+void ta_event_update()
+{
+    ta_event event;
+    while (ta_event_pop(&event, TA_EVENT_QUEUE_GLOBAL)) {
+        switch (event.type) {
+            case TA_EVENT_GLOBAL_QUIT: {
+                tg_game.state = TA_STATE_QUIT;
+                break;
+            } case TA_EVENT_GLOBAL_MOUSE_MOVE: {
+                if (!tg_mouse.captured) break;
+
+                switch (tg_game.state) {
+                    case TA_STATE_PLAY: {
+                        ta_event cam_rotate_evt = { 0 };
+                        cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
+                        if (event.data.mouse_move.dx) {
+                            cam_rotate_evt.data.camera_rotate.delta_yaw =
+                                -event.data.mouse_move.dx * tg_camera.yaw_accel;
+                        }
+                        if (event.data.mouse_move.dy) {
+                            cam_rotate_evt.data.camera_rotate.delta_pitch =
+                                -event.data.mouse_move.dy * tg_camera.pitch_accel;
+                        }
+                        ta_event_push(&cam_rotate_evt);
+                        break;
+                    } default: {
+                        DLB_ASSERT(!"Unhandled state");
+                    }
+                }
+                break;
+            } case TA_EVENT_GLOBAL_MOUSE_CLICK: {
+                break;
+            } case TA_EVENT_GLOBAL_MOUSE_SCROLL: {
+                // TODO: Scroll active element being hovered, if not
+                //       handled, bubble up
+                //ta_ui_scrollview_scroll(view, event.data.mouse_scroll.y *
+                //    -event.data.mouse_scroll.flipped);
+                break;
+            } case TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK: {
+                ta_mouse_toggle_capture();
+                break;
+            } case TA_EVENT_GLOBAL_TOGGLE_WIREFRAME: {
+                ta_camera_toggle_wireframe(&tg_camera);
+                break;
+            } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_A: {
+                tg_debug_a = !tg_debug_a;
+                break;
+            } default: {
+                DLB_ASSERT(!"Unhandled event type");
             }
         }
     }

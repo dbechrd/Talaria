@@ -28,9 +28,12 @@ typedef struct {
     ta_mat4 look_at;
 
     float yaw;
+    float yaw_accel;
+
     float pitch;
-    float accel_yaw;
-    float accel_pitch;
+    float pitch_min;
+    float pitch_max;
+    float pitch_accel;
 
     bool wireframe;
     bool dirty;
@@ -38,12 +41,8 @@ typedef struct {
 
 extern ta_camera tg_camera;
 
-#if 0
-void ta_camera_set_position(ta_camera *camera, float x, float y, float z);
-void ta_camera_set_rotation(ta_camera *camera, float yaw, float pitch);
-void ta_camera_set_rotate_accel(ta_camera *camera, float accel_yaw,
-    float accel_pitch);
-#endif
+void ta_camera_toggle_wireframe(ta_camera *camera);
 void ta_camera_move(ta_camera *camera, ta_camera_direction direction);
+void ta_camera_yaw(ta_camera *camera, float delta);
+void ta_camera_pitch(ta_camera *camera, float delta);
 void ta_camera_update(ta_camera *camera);
-ta_mat4 ta_camera_lookat(ta_vec3 position, ta_vec3 target, ta_vec3 world_up);

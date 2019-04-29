@@ -1,5 +1,6 @@
 #pragma once
 #include "dlb_types.h"
+#include "ta_camera.h"
 
 typedef enum {
     TA_EVENT_QUEUE_GLOBAL,
@@ -72,7 +73,10 @@ typedef struct {
 } ta_event_queue;
 ta_event_queue tg_event_queues[TA_EVENT_QUEUE_COUNT];
 
+extern bool tg_debug_a;
+
 void ta_event_push(ta_event *event);
 bool ta_event_pop(ta_event *event, ta_event_queue_type queue_type);
 bool ta_event_peek(ta_event *event, ta_event_queue_type queue_type);
+void ta_event_sdl_poll();
 void ta_event_update();
