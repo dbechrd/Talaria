@@ -12,52 +12,56 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "misc/stb_image.h"
 
-static ta_texture_2d *tex[TA_TEXTURE_QUEUE_COUNT];
-//static ta_texture_3d *cubemaps[TA_TEXTURE_QUEUE_COUNT];
-static GLuint *gl_ids[TA_TEXTURE_QUEUE_COUNT];
-
-ta_texture_2d *ta_texture_init(ta_texture_queue queue, const char *filename)
+void ta_texture_init(ta_texture_2d *texture, const char *name, const char *path)
 {
-	// Load pixel data from file
-	int w, h, channels;
-	stbi_set_flip_vertically_on_load(true);
-	stbi_uc *pixels = stbi_load(filename, &w, &h, &channels, 4);
-	if (!pixels) {
-		const char *reason = stbi_failure_reason();
-		ta_log_write(tg_debug_log, "Failed to load texture: %s\nSTBI Reason: %s\n",
-			filename, reason);
-		DLB_ASSERT(!"ta_texture_init: Failed to load texture");
-	}
-
-	// Create texture
-	ta_texture_2d *texture = dlb_vec_alloc(tex[queue]);
-	texture->filename = filename;
-	texture->width = w;
-	texture->height = h;
-	texture->channels = channels;
-	glCreateTextures(GL_TEXTURE_2D, 1, &texture->gl_id);
-	glBindTexture(GL_TEXTURE_2D, texture->gl_id);
-	{
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->width, texture->height,
-			0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-		glGenerateMipmap(GL_TEXTURE_2D);
-	}
-	glBindTexture(GL_TEXTURE_2D, 0);
-	stbi_image_free(pixels);
-
-	GLuint *gl_id = dlb_vec_alloc(gl_ids[queue]);
-	*gl_id = texture->gl_id;
-
-	return texture;
+    texture->name = name;
+    texture->path = path;
 }
 
-void ta_texture_clear(ta_texture_queue queue)
+void ta_texture_create(ta_texture_2d *texture)
 {
-	glDeleteTextures(dlb_vec_len(gl_ids[queue]), gl_ids[queue]);
-	dlb_vec_clear(tex[queue]);
-	dlb_vec_clear(gl_ids[queue]);
+    DLB_ASSERT(texture->name);
+    DLB_ASSERT(texture->path);
+
+    // Load pixel data from file
+    int w, h, channels;
+    stbi_set_flip_vertically_on_load(true);
+    stbi_uc *pixels = stbi_load(texture->path, &w, &h, &channels, 4);
+    if (!pixels) {
+        const char *reason = stbi_failure_reason();
+        ta_log_write(tg_debug_log, "Failed to load texture: %s\nSTBI Reason: %s\n",
+            texture->path, reason);
+        DLB_ASSERT(!"ta_texture_init: Failed to load texture");
+    }
+
+    // Create texture
+    texture->width = w;
+    texture->height = h;
+    texture->channels = channels;
+    glCreateTextures(GL_TEXTURE_2D, 1, &texture->gl_id);
+    glBindTexture(GL_TEXTURE_2D, texture->gl_id);
+    {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->width, texture->height,
+            0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    glBindTexture(GL_TEXTURE_2D, 0);
+    stbi_image_free(pixels);
+
+    //GLuint *gl_id = dlb_vec_alloc(gl_ids[queue]);
+    //*gl_id = texture->gl_id;
+}
+
+void ta_texture_free(ta_texture_2d *texture)
+{
+    glDeleteTextures(1, &texture->gl_id);
+    // TODO(perf): Delete all textures in a single GL call by aggregating gl_ids
+    //             during texture initialization.
+	//glDeleteTextures(dlb_vec_len(gl_ids[queue]), gl_ids[queue]);
+	//dlb_vec_clear(tex[queue]);
+	//dlb_vec_clear(gl_ids[queue]);
 }

@@ -4,8 +4,6 @@
 #include "misc/gl3w.h"
 #include <math.h>
 
-ta_camera tg_camera;
-
 void ta_camera_toggle_wireframe(ta_camera *camera)
 {
     camera->wireframe = !camera->wireframe;

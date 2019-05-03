@@ -104,11 +104,11 @@ void ta_event_update()
                         cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
                         if (event.data.mouse_move.dx) {
                             cam_rotate_evt.data.camera_rotate.delta_yaw =
-                                -event.data.mouse_move.dx * tg_camera.yaw_accel;
+                                -event.data.mouse_move.dx * tg_game.scene->cameras->yaw_accel;
                         }
                         if (event.data.mouse_move.dy) {
                             cam_rotate_evt.data.camera_rotate.delta_pitch =
-                                -event.data.mouse_move.dy * tg_camera.pitch_accel;
+                                -event.data.mouse_move.dy * tg_game.scene->cameras->pitch_accel;
                         }
                         ta_event_push(&cam_rotate_evt);
                         break;
@@ -129,7 +129,7 @@ void ta_event_update()
                 ta_mouse_toggle_capture();
                 break;
             } case TA_EVENT_GLOBAL_TOGGLE_WIREFRAME: {
-                ta_camera_toggle_wireframe(&tg_camera);
+                ta_camera_toggle_wireframe(tg_game.scene->cameras);
                 break;
             } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_A: {
                 tg_debug_a = !tg_debug_a;

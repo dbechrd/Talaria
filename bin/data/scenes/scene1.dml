@@ -1,3 +1,12 @@
+ta_camera:
+  position: { x: 0.0, y: 1.7, z: 24.0 }
+  velocity: 0.1
+  yaw: 90.0
+  yaw_accel: 0.1
+  pitch: 0.0
+  pitch_min: -75.0
+  pitch_max: 75.0
+  pitch_accel: 0.1
 ta_entity:
   name: "entity_1"
   material: "material_1"
@@ -13,9 +22,9 @@ ta_mesh:
 ta_shader:
   name: "shader_1"
   path: "shader_1_path"
-ta_texture:
+ta_texture_2d:
   name: "texture_1"
-  path: "texture_1_path"
+  path: "data/texture/genesis_1024_1024.png"
 ta_sun_light:
   name: "sun"
   direction: { x: 1.0, y: 2.0, z: 3.0 }

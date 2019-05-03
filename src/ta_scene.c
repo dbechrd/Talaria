@@ -62,30 +62,6 @@ static const char *token_type_str(token_type type)
     }
 };
 
-ta_scene *ta_scene_init(const char *name)
-{
-    ta_scene *scene = dlb_calloc(1, sizeof(*scene));
-    scene->name = name;
-    dlb_hash_init(&scene->refs_by_name, DLB_HASH_STRING, name, 32);
-    //dlb_vec_reserve(scn->entities, 2);
-    return scene;
-}
-
-void ta_scene_free(ta_scene *scene)
-{
-    // TODO: Call free on each object individually
-    //for (ta_entity *e = scn->entities; e != dlb_vec_end(scn->entities); e++) {
-    //    entity_free(e);
-    //}
-    dlb_hash_free(&scene->refs_by_name);
-    dlb_vec_free(scene->entities);
-    dlb_vec_free(scene->materials);
-    dlb_vec_free(scene->meshes);
-    dlb_vec_free(scene->shaders);
-    dlb_vec_free(scene->textures);
-    dlb_free(scene);
-}
-
 static token *token_read(ta_file *f, token **tokens)
 {
     token *token = dlb_vec_alloc(*tokens);
@@ -398,53 +374,7 @@ static void tokens_print_debug(token *tokens)
     printf("\n");
 }
 
-void *ta_scene_obj_init(ta_scene *scene, ta_schema_field_type type)
-{
-    void *obj = 0;
-    switch (type) {
-        case F_TA_SUN_LIGHT: {
-            ta_sun_light *light = dlb_vec_alloc(scene->sun_lights);
-            light->scene = scene;
-            obj = light;
-            break;
-        } case F_TA_POINT_LIGHT: {
-            ta_point_light *light = dlb_vec_alloc(scene->point_lights);
-            light->scene = scene;
-            obj = light;
-            break;
-        } case F_TA_MATERIAL: {
-            ta_material *material = dlb_vec_alloc(scene->materials);
-            material->scene = scene;
-            obj = material;
-            break;
-        } case F_TA_MESH: {
-            ta_mesh *mesh = dlb_vec_alloc(scene->meshes);
-            mesh->scene = scene;
-            obj = mesh;
-            break;
-        } case F_TA_SHADER: {
-            ta_shader *shader = dlb_vec_alloc(scene->shaders);
-            shader->scene = scene;
-            obj = shader;
-            break;
-        } case F_TA_TEXTURE: {
-            ta_texture *texture = dlb_vec_alloc(scene->textures);
-            texture->scene = scene;
-            obj = texture;
-            break;
-        } case F_TA_ENTITY: {
-            ta_entity *entity = dlb_vec_alloc(scene->entities);
-            entity->scene = scene;
-            obj = entity;
-            break;
-        } default: {
-            DLB_ASSERT(!"Cannot initialize this type as a standalone object");
-        }
-    }
-    return obj;
-}
-
-void ta_scene_parse(ta_scene *scene, token *tokens)
+static void tokens_parse(ta_scene *scene, token *tokens)
 {
     struct {
         ta_schema_field_type type;
@@ -489,7 +419,7 @@ void ta_scene_parse(ta_scene *scene, token *tokens)
                 }
 
                 if (level) {
-                    ta_schema_field *field = ta_schema_field_find( stack[sp-1].type,
+                    ta_schema_field *field = ta_schema_field_find(stack[sp-1].type,
                         tok->value.string);
                     if (!field) {
                         PANIC("Unexpected field '%s' on %s '%s'\n",
@@ -509,7 +439,7 @@ void ta_scene_parse(ta_scene *scene, token *tokens)
                     DLB_ASSERT(schema->name == tok->value.string);
                     stack[sp].type = schema->type;
                     stack[sp].name = tok->value.string;
-                    stack[sp].ptr = ta_scene_obj_init(scene, schema->type);
+                    stack[sp].ptr = ta_scene_obj_alloc(scene, schema->type);
                 }
                 if (!braces && stack[sp].type > F_ATOM_END) {
                     level++;
@@ -540,7 +470,7 @@ void ta_scene_parse(ta_scene *scene, token *tokens)
                     scene_ref *ref = dlb_vec_alloc(scene->refs);
                     ref->type = stack[sp-1].type;
                     ref->ptr = stack[sp-1].ptr;
-                    dlb_hash_insert(&scene->refs_by_name, tok->value.string, tok->length, ref);
+                    dlb_hash_insert(&scene->refs_by_name, tok->value.string, tok->length, ref->ptr);
                 }
                 break;
             } case TOKEN_OBJECT_START: {
@@ -563,29 +493,85 @@ void ta_scene_parse(ta_scene *scene, token *tokens)
     }
 }
 
+ta_scene *ta_scene_init(const char *name)
+{
+    ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
+    scene->name = name;
+    return scene;
+}
+
 ta_scene *ta_scene_load(ta_file *f)
 {
     ta_scene *scene = ta_scene_init(f->filename);
+
+    // TODO: Reserve the correct amount for this scene, or implement resize at
+    //       least.
+    dlb_hash_init(&scene->refs_by_name, DLB_HASH_STRING, scene->name, 32);
+    //dlb_vec_reserve(scn->entities, 2);
+
     token *tokens = tokenize(f);
     //tokens_print(tokens);
     //tokens_print_debug(tokens);
-    ta_scene_parse(scene, tokens);
+    tokens_parse(scene, tokens);
     dlb_vec_free(tokens);
+
     return scene;
+}
+
+void ta_scene_free(ta_scene *scene)
+{
+    // TODO: Call free on each object individually
+    //for (ta_entity *e = scn->entities; e != dlb_vec_end(scn->entities); e++) {
+    //    entity_free(e);
+    //}
+    dlb_hash_free(&scene->refs_by_name);
+    for (ta_camera *o = scene->cameras; o != dlb_vec_end(scene->cameras); o++) {
+        // TODO: Free cameras
+    }
+    dlb_vec_free(scene->cameras);
+    for (ta_sun_light *o = scene->sun_lights; o != dlb_vec_end(scene->sun_lights); o++) {
+        // TODO: Free sun lights
+    }
+    dlb_vec_free(scene->sun_lights);
+    for (ta_point_light *o = scene->point_lights; o != dlb_vec_end(scene->point_lights); o++) {
+        // TODO: Free point lights
+    }
+    dlb_vec_free(scene->point_lights);
+    for (ta_material *o = scene->materials; o != dlb_vec_end(scene->materials); o++) {
+        // TODO: Free materials
+    }
+    dlb_vec_free(scene->materials);
+    for (ta_mesh *o = scene->meshes; o != dlb_vec_end(scene->meshes); o++) {
+        ta_mesh_free(o);
+    }
+    dlb_vec_free(scene->meshes);
+    for (ta_shader *o = scene->shaders; o != dlb_vec_end(scene->shaders); o++) {
+        // TODO: Free shaders
+    }
+    dlb_vec_free(scene->shaders);
+    for (ta_texture_2d *o = scene->textures; o != dlb_vec_end(scene->textures); o++) {
+        ta_texture_free(o);
+    }
+    dlb_vec_free(scene->textures);
+    for (ta_entity *o = scene->entities; o != dlb_vec_end(scene->entities); o++) {
+        // TODO: Free entities
+    }
+    dlb_vec_free(scene->entities);
+    dlb_free(scene);
 }
 
 void ta_scene_print(ta_scene *scene, FILE *hnd)
 {
     // TODO: Register scene as a schema that has OBJ_ARRAY of entities
     printf("Scene name: %s\n", scene->name);
+    for (ta_camera *o = scene->cameras; o != dlb_vec_end(scene->cameras); o++) {
+        ta_schema_print(hnd, F_TA_CAMERA, (void *)o, 0);
+    }
     for (ta_sun_light *o = scene->sun_lights; o != dlb_vec_end(scene->sun_lights); o++) {
         ta_schema_print(hnd, F_TA_SUN_LIGHT, (void *)o, 0);
     }
     for (ta_point_light *o = scene->point_lights; o != dlb_vec_end(scene->point_lights); o++) {
         ta_schema_print(hnd, F_TA_POINT_LIGHT, (void *)o, 0);
-    }
-    for (ta_entity *o = scene->entities; o != dlb_vec_end(scene->entities); o++) {
-        ta_schema_print(hnd, F_TA_ENTITY, (void *)o, 0);
     }
     for (ta_material *o = scene->materials; o != dlb_vec_end(scene->materials); o++) {
         ta_schema_print(hnd, F_TA_MATERIAL, (void *)o, 0);
@@ -596,8 +582,85 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
     for (ta_shader *o = scene->shaders; o != dlb_vec_end(scene->shaders); o++) {
         ta_schema_print(hnd, F_TA_SHADER, (void *)o, 0);
     }
-    for (ta_texture *o = scene->textures; o != dlb_vec_end(scene->textures); o++) {
+    for (ta_texture_2d *o = scene->textures; o != dlb_vec_end(scene->textures); o++) {
         ta_schema_print(hnd, F_TA_TEXTURE, (void *)o, 0);
     }
+    for (ta_entity *o = scene->entities; o != dlb_vec_end(scene->entities); o++) {
+        ta_schema_print(hnd, F_TA_ENTITY, (void *)o, 0);
+    }
     fflush(hnd);
+}
+
+
+void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type)
+{
+    void *obj = 0;
+    switch (type) {
+        case F_TA_CAMERA: {
+            ta_camera *camera = dlb_vec_alloc(scene->cameras);
+            camera->scene = scene;
+            obj = camera;
+            break;
+        } case F_TA_SUN_LIGHT: {
+            ta_sun_light *light = dlb_vec_alloc(scene->sun_lights);
+            light->scene = scene;
+            obj = light;
+            break;
+        } case F_TA_POINT_LIGHT: {
+            ta_point_light *light = dlb_vec_alloc(scene->point_lights);
+            light->scene = scene;
+            obj = light;
+            break;
+        } case F_TA_MATERIAL: {
+            ta_material *material = dlb_vec_alloc(scene->materials);
+            material->scene = scene;
+            obj = material;
+            break;
+        } case F_TA_MESH: {
+            ta_mesh *mesh = dlb_vec_alloc(scene->meshes);
+            mesh->scene = scene;
+            obj = mesh;
+            break;
+        } case F_TA_SHADER: {
+            ta_shader *shader = dlb_vec_alloc(scene->shaders);
+            shader->scene = scene;
+            obj = shader;
+            break;
+        } case F_TA_TEXTURE: {
+            ta_texture_2d *texture = dlb_vec_alloc(scene->textures);
+            texture->scene = scene;
+            obj = texture;
+            break;
+        } case F_TA_ENTITY: {
+            ta_entity *entity = dlb_vec_alloc(scene->entities);
+            entity->scene = scene;
+            obj = entity;
+            break;
+        } default: {
+            DLB_ASSERT(!"Cannot initialize this type as a standalone object");
+        }
+    }
+    return obj;
+}
+
+void ta_scene_obj_init(ta_scene *scene)
+{
+    for (ta_camera *o = scene->cameras; o != dlb_vec_end(scene->cameras); o++) {
+        o->dirty = true;
+    }
+    for (ta_sun_light *o = scene->sun_lights; o != dlb_vec_end(scene->sun_lights); o++) {
+    }
+    for (ta_point_light *o = scene->point_lights; o != dlb_vec_end(scene->point_lights); o++) {
+    }
+    for (ta_material *o = scene->materials; o != dlb_vec_end(scene->materials); o++) {
+    }
+    for (ta_mesh *o = scene->meshes; o != dlb_vec_end(scene->meshes); o++) {
+    }
+    for (ta_shader *o = scene->shaders; o != dlb_vec_end(scene->shaders); o++) {
+    }
+    for (ta_texture_2d *o = scene->textures; o != dlb_vec_end(scene->textures); o++) {
+        ta_texture_create(o);
+    }
+    for (ta_entity *o = scene->entities; o != dlb_vec_end(scene->entities); o++) {
+    }
 }

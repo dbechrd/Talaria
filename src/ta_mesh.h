@@ -1,7 +1,6 @@
 #pragma once
 #include "ta_buffer.h"
 #include "ta_primitive.h"
-#include "ta_scene.h"
 #include "dlb_hash.h"
 #include "misc/gl3w.h"
 

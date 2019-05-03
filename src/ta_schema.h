@@ -14,10 +14,11 @@ typedef enum {
 
     // Object types
     F_TA_VEC3,
-    F_TA_RGB,
     F_TA_VEC4,
+    F_TA_RGB,
     F_TA_RGBA,
     F_TA_TRANSFORM,
+    F_TA_CAMERA,
     F_TA_SUN_LIGHT,
     F_TA_POINT_LIGHT,
     F_TA_MATERIAL,

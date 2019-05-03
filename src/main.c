@@ -54,7 +54,7 @@ void debug_tests() {
 }
 
 ta_entity *entity_create(ta_scene *scn, const char *name) {
-    ta_entity *e = ta_scene_obj_init(scn, F_TA_ENTITY);
+    ta_entity *e = ta_scene_obj_alloc(scn, F_TA_ENTITY);
     e->type = ENTITY_DEFAULT;
     e->name = name;
     e->transform.position.x = 1.1f;
@@ -71,29 +71,30 @@ ta_entity *entity_create(ta_scene *scn, const char *name) {
 }
 
 void write_scene(const char *filename) {
-    ta_scene *scene = ta_scene_init("test scene");
-    entity_create(scene, "Timmy");
-    entity_create(scene, "Bobby");
+    tg_game.scene = ta_scene_init("test scene");
+    entity_create(tg_game.scene, "Timmy");
+    entity_create(tg_game.scene, "Bobby");
 
     printf("[WRITE: %s]\n", filename);
-    ta_scene_print(scene, stdout);
+    ta_scene_print(tg_game.scene, stdout);
     printf("\n");
 
     ta_file *data_file = ta_file_open(filename, FILE_WRITE);
-    ta_scene_print(scene, data_file->hnd);
+    ta_scene_print(tg_game.scene, data_file->hnd);
     ta_file_close(data_file);
-    ta_scene_free(scene);
+    ta_scene_free(tg_game.scene);
 }
 
 void read_scene(const char *filename) {
     ta_log_write(tg_debug_log, "[Scene] Loading %s\n", filename);
     ta_file *data_file = ta_file_open(filename, FILE_READ);
-    ta_scene *scene = ta_scene_load(data_file);
+    tg_game.scene = ta_scene_load(data_file);
     ta_file_close(data_file);
 
+    ta_scene_obj_init(tg_game.scene);
     ta_log_write(tg_debug_log, "[Scene] Scene loaded successfully:\n");
-    ta_scene_print(scene, tg_debug_log->stream);
-    ta_scene_free(scene);
+    ta_scene_print(tg_game.scene, tg_debug_log->stream);
+    //ta_scene_free(tg_game.scene);
 }
 
 int main(int argc, char *argv[])
@@ -118,18 +119,19 @@ int main(int argc, char *argv[])
     ta_keyboard_init();
 
     read_scene("data/scenes/scene1.dml");
+    DLB_ASSERT(tg_game.scene->cameras->dirty);  // Ensure we have a valid camera
 
 	// Shader setup
     ta_primitive_init();
 
-	// Mesh setup
+	// UI
 	const ta_rgba mesh_selector_bg = { 0.1f, 0.1f, 0.2f, 1.0f };
 	ta_viewport mesh_selector = ta_viewport_init(10, 50, 200, 200, 90.0f, 0.1f,
 		mesh_selector_bg);
 
-	ta_texture_2d *tex_test = ta_texture_init(TA_TEXTURE_QUEUE_STATIC,
-		"data/texture/genesis_1024_1024.png");
-	UNUSED(tex_test);
+    // Chamber 0001
+	ta_texture_2d *tex_test = dlb_hash_search(&tg_game.scene->refs_by_name
+        CSTR("texture_1"));
 
 	ta_mesh_load_obj_file(TA_MESH_QUEUE_STATIC, "data/mesh/prim_cube.obj");
     ta_mesh *mesh_cube = dlb_hash_search(&tg_mesh_table, CSTR("prim_cube"));
@@ -147,16 +149,7 @@ int main(int argc, char *argv[])
 	//float oo = 0.5f;
 	//ta_mat4 project = mat4_ortho(-oo, oo, -oo, oo, 0.1f, 10.0f);
 
-    tg_camera.position = (ta_vec3) { 0.0f, 1.7f, 24.0f };
-    tg_camera.velocity = 0.1f;
-    tg_camera.yaw = 90.0f;
-    tg_camera.yaw_accel = 0.1f;
-    tg_camera.pitch = 0.0f;
-    tg_camera.pitch_min = -75.0f;
-    tg_camera.pitch_max = 75.0f;
-    tg_camera.pitch_accel = 0.1f;
-    tg_camera.dirty = true;
-    ta_camera_update(&tg_camera);
+    ta_camera_update(tg_game.scene->cameras);
 
 	ta_mat4 look_at_map = mat4_lookat(
 		(ta_vec3) { 0.0f, 10.0f, 30.0f },
@@ -175,7 +168,7 @@ int main(int argc, char *argv[])
 
 	ta_shader_mesh_init();
 	ta_shader_mesh_bind();
-	ta_shader_mesh_set_view(&tg_camera.look_at);
+	ta_shader_mesh_set_view(&tg_game.scene->cameras->look_at);
 	ta_shader_mesh_set_texture(0, tex_test->gl_id);
 	ta_shader_mesh_unbind();
 
@@ -199,7 +192,7 @@ int main(int argc, char *argv[])
         ta_mouse_update();
         ta_keyboard_update();
         ta_event_update();
-        ta_camera_update(&tg_camera);
+        ta_camera_update(tg_game.scene->cameras);
 
 		glClearColor(0.5f, 0.8f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -207,7 +200,7 @@ int main(int argc, char *argv[])
 		// Draw models
 		glDisable(GL_CULL_FACE);
 		ta_shader_mesh_set_projection(&tg_window.projection);
-		ta_shader_mesh_set_view(&tg_camera.look_at);
+		ta_shader_mesh_set_view(&tg_game.scene->cameras->look_at);
 		ta_shader_mesh_set_model(&MAT4_IDENT);
         ta_shader_mesh_bind();
         ta_shader_mesh_prerender();
@@ -215,7 +208,7 @@ int main(int argc, char *argv[])
 		ta_shader_mesh_unbind();
 
         ta_shader_lines_set_projection(&tg_window.projection);
-        ta_shader_lines_set_view(&tg_camera.look_at);
+        ta_shader_lines_set_view(&tg_game.scene->cameras->look_at);
         ta_shader_lines_set_model(&MAT4_IDENT);
 
         //ta_primitive_push_line_3d(&X_AXIS, &TA_COLOR_RED,   &TA_COLOR_RED);

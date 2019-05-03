@@ -29,12 +29,6 @@ typedef struct ta_shader_s {
     const char *path;
 } ta_shader;
 
-typedef struct ta_texture_s {
-    ta_scene *scene;
-    const char *name;
-    const char *path;
-} ta_texture;
-
 typedef enum {
     ENTITY_DEFAULT
 } ta_entity_type;

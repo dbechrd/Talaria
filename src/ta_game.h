@@ -1,4 +1,5 @@
 #pragma once
+#include "ta_scene.h"
 
 typedef enum {
     TA_STATE_INIT,
@@ -9,6 +10,7 @@ typedef enum {
 
 typedef struct {
     ta_game_state state;
+    ta_scene *scene;
 } ta_game;
 
 extern ta_game tg_game;

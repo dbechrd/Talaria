@@ -15,7 +15,10 @@ typedef enum {
     TA_CAMERA_DOWN
 } ta_camera_direction;
 
+typedef struct ta_scene_s ta_scene;
+
 typedef struct {
+    ta_scene *scene;
 	ta_vec3 position;
     float velocity;
 
@@ -38,8 +41,6 @@ typedef struct {
     bool wireframe;
     bool dirty;
 } ta_camera;
-
-extern ta_camera tg_camera;
 
 void ta_camera_toggle_wireframe(ta_camera *camera);
 void ta_camera_move(ta_camera *camera, ta_camera_direction direction);

@@ -1,9 +1,11 @@
 #include "ta_schema.h"
 #include "ta_symbol.h"
 #include "ta_math.h"
-#include "ta_entity.h"
-#include "ta_mesh.h"
 #include "ta_file.h"
+#include "ta_camera.h"
+#include "ta_mesh.h"
+#include "ta_texture.h"
+#include "ta_entity.h"
 #include "dlb_types.h"
 #include "dlb_vector.h"
 #include "dlb_hash.h"
@@ -19,10 +21,11 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
         case F_ATOM_FLOAT:     return "ATOM_FLOAT";
         case F_ATOM_STRING:    return "ATOM_STRING";
         case F_TA_VEC3:        return "TA_VEC3";
-        case F_TA_RGB:         return "TA_COLOR3";
         case F_TA_VEC4:        return "TA_VEC4";
+        case F_TA_RGB:         return "TA_COLOR3";
         case F_TA_RGBA:        return "TA_COLOR4";
         case F_TA_TRANSFORM:   return "TA_TRANSFORM";
+        case F_TA_CAMERA:      return "TA_CAMERA";
         case F_TA_SUN_LIGHT:   return "TA_SUN_LIGHT";
         case F_TA_POINT_LIGHT: return "TA_POINT_LIGHT";
         case F_TA_MATERIAL:    return "TA_MATERIAL";
@@ -44,126 +47,127 @@ static void obj_field_add(ta_schema *obj, ta_schema_field_type type, const char 
     field->alias = alias;
 }
 
+#define OBJ_START(_type, field_type) \
+    obj = &tg_schemas[field_type]; \
+    obj->type = field_type; \
+    obj->name = INTERN(STRING(_type));
+
+#define OBJ_FIELD(type, field, field_type) \
+    obj_field_add(obj, field_type, INTERN(#field), OFFSETOF(type, field), 0)
+
+#define OBJ_END(type) \
+    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(type)), obj);
+
 void ta_schema_register()
 {
     DLB_ASSERT(!tg_schemas_by_name.size);
-    dlb_hash_init(&tg_schemas_by_name, DLB_HASH_STRING, "[schema_register]", 16);
+    dlb_hash_init(&tg_schemas_by_name, DLB_HASH_STRING, "[schema_register]", 32);
     ta_schema *obj;
 
     // Atomic types
-    obj = &tg_schemas[F_ATOM_INT];
-    obj->type = F_ATOM_INT;
-    obj->name = INTERN(STRING(int));
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(int)), obj);
+    OBJ_START(int, F_ATOM_INT);
+    OBJ_END(int);
 
-    obj = &tg_schemas[F_ATOM_FLOAT];
-    obj->type = F_ATOM_FLOAT;
-    obj->name = INTERN(STRING(float));
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(float)), obj);
+    OBJ_START(unsigned int, F_ATOM_UINT);
+    OBJ_END(unsigned int);
 
-    obj = &tg_schemas[F_ATOM_STRING];
-    obj->type = F_ATOM_STRING;
-    obj->name = INTERN(STRING(const char *));
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(const char *)), obj);
+    OBJ_START(float, F_ATOM_FLOAT);
+    OBJ_END(float);
+
+    OBJ_START(const char *, F_ATOM_STRING);
+    OBJ_END(const char *);
 
     // Compound types
-    obj = &tg_schemas[F_TA_VEC3];
-    obj->type = F_TA_VEC3;
-    obj->name = INTERN(STRING(ta_vec3));
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("x"), OFFSETOF(ta_vec3, x), 0);
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("y"), OFFSETOF(ta_vec3, y), 0);
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("z"), OFFSETOF(ta_vec3, z), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_vec3)), obj);
+    OBJ_START(ta_vec3, F_TA_VEC3);
+    OBJ_FIELD(ta_vec3, x, F_ATOM_FLOAT);
+    OBJ_FIELD(ta_vec3, y, F_ATOM_FLOAT);
+    OBJ_FIELD(ta_vec3, z, F_ATOM_FLOAT);
+    OBJ_END(ta_vec3);
 
-    obj = &tg_schemas[F_TA_RGB];
-    obj->type = F_TA_RGB;
-    obj->name = INTERN(STRING(ta_rgb));
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("r"), OFFSETOF(ta_rgb, r), 0);
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("g"), OFFSETOF(ta_rgb, g), 0);
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("b"), OFFSETOF(ta_rgb, b), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_rgb)), obj);
+    OBJ_START(ta_vec4, F_TA_VEC4);
+    OBJ_FIELD(ta_vec4, x, F_ATOM_FLOAT);
+    OBJ_FIELD(ta_vec4, y, F_ATOM_FLOAT);
+    OBJ_FIELD(ta_vec4, z, F_ATOM_FLOAT);
+    OBJ_FIELD(ta_vec4, w, F_ATOM_FLOAT);
+    OBJ_END(ta_vec4);
 
-    obj = &tg_schemas[F_TA_VEC4];
-    obj->type = F_TA_VEC4;
-    obj->name = INTERN(STRING(ta_vec4));
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("x"), OFFSETOF(ta_vec4, x), 0);
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("y"), OFFSETOF(ta_vec4, y), 0);
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("z"), OFFSETOF(ta_vec4, z), 0);
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("w"), OFFSETOF(ta_vec4, w), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_vec4)), obj);
+    OBJ_START(ta_rgb, F_TA_RGB);
+    OBJ_FIELD(ta_rgb, r, F_ATOM_FLOAT);
+    OBJ_FIELD(ta_rgb, g, F_ATOM_FLOAT);
+    OBJ_FIELD(ta_rgb, b, F_ATOM_FLOAT);
+    OBJ_END(ta_rgb);
 
-    obj = &tg_schemas[F_TA_RGBA];
-    obj->type = F_TA_RGBA;
-    obj->name = INTERN(STRING(ta_rgba));
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("r"), OFFSETOF(ta_rgba, r), 0);
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("g"), OFFSETOF(ta_rgba, g), 0);
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("b"), OFFSETOF(ta_rgba, b), 0);
-    obj_field_add(obj, F_ATOM_FLOAT, INTERN("a"), OFFSETOF(ta_rgba, a), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_rgba)), obj);
+    OBJ_START(ta_rgba, F_TA_RGBA);
+    OBJ_FIELD(ta_rgba, r, F_ATOM_FLOAT);
+    OBJ_FIELD(ta_rgba, g, F_ATOM_FLOAT);
+    OBJ_FIELD(ta_rgba, b, F_ATOM_FLOAT);
+    OBJ_FIELD(ta_rgba, a, F_ATOM_FLOAT);
+    OBJ_END(ta_rgba);
 
-    obj = &tg_schemas[F_TA_TRANSFORM];
-    obj->type = F_TA_TRANSFORM;
-    obj->name = INTERN(STRING(ta_transform));
-    obj_field_add(obj, F_TA_VEC3, INTERN("position"), OFFSETOF(ta_transform, position), 0);
-    obj_field_add(obj, F_TA_VEC4, INTERN("rotation"), OFFSETOF(ta_transform, rotation), 0);
-    obj_field_add(obj, F_TA_VEC3, INTERN("scale"),    OFFSETOF(ta_transform, scale), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_transform)), obj);
+    OBJ_START(ta_transform, F_TA_TRANSFORM);
+    OBJ_FIELD(ta_transform, position, F_TA_VEC3);
+    OBJ_FIELD(ta_transform, rotation, F_TA_VEC4);
+    OBJ_FIELD(ta_transform, scale,    F_TA_VEC3);
+    OBJ_END(ta_transform);
 
     // Scene-level object types
-    obj = &tg_schemas[F_TA_SUN_LIGHT];
-    obj->type = F_TA_SUN_LIGHT;
-    obj->name = INTERN(STRING(ta_sun_light));
-    obj_field_add(obj, F_ATOM_STRING, INTERN("name"),      OFFSETOF(ta_sun_light, name), 0);
-    obj_field_add(obj, F_TA_VEC3,     INTERN("direction"), OFFSETOF(ta_sun_light, direction), 0);
-    obj_field_add(obj, F_TA_RGB,      INTERN("color"),     OFFSETOF(ta_sun_light, color), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_sun_light)), obj);
+    OBJ_START(ta_camera, F_TA_CAMERA);
+    OBJ_FIELD(ta_camera, position,    F_TA_VEC3);
+    OBJ_FIELD(ta_camera, velocity,    F_ATOM_FLOAT);
+    OBJ_FIELD(ta_camera, mode,        F_ATOM_INT);
+    OBJ_FIELD(ta_camera, target,      F_TA_VEC3);
+    OBJ_FIELD(ta_camera, yaw,         F_ATOM_FLOAT);
+    OBJ_FIELD(ta_camera, yaw_accel,   F_ATOM_FLOAT);
+    OBJ_FIELD(ta_camera, pitch,       F_ATOM_FLOAT);
+    OBJ_FIELD(ta_camera, pitch_min,   F_ATOM_FLOAT);
+    OBJ_FIELD(ta_camera, pitch_max,   F_ATOM_FLOAT);
+    OBJ_FIELD(ta_camera, pitch_accel, F_ATOM_FLOAT);
+    OBJ_END(ta_camera);
 
-    obj = &tg_schemas[F_TA_POINT_LIGHT];
-    obj->type = F_TA_POINT_LIGHT;
-    obj->name = INTERN(STRING(ta_point_light));
-    obj_field_add(obj, F_ATOM_STRING, INTERN("name"),     OFFSETOF(ta_point_light, name), 0);
-    obj_field_add(obj, F_TA_VEC3,     INTERN("position"), OFFSETOF(ta_point_light, position), 0);
-    obj_field_add(obj, F_TA_RGB,      INTERN("color"),    OFFSETOF(ta_point_light, color), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_point_light)), obj);
+    OBJ_START(ta_sun_light, F_TA_SUN_LIGHT);
+    OBJ_FIELD(ta_sun_light, name,      F_ATOM_STRING);
+    OBJ_FIELD(ta_sun_light, direction, F_TA_VEC3);
+    OBJ_FIELD(ta_sun_light, color,     F_TA_RGB);
+    OBJ_END(ta_sun_light);
 
-    obj = &tg_schemas[F_TA_MATERIAL];
-    obj->type = F_TA_MATERIAL;
-    obj->name = INTERN(STRING(ta_material));
-    obj_field_add(obj, F_ATOM_STRING, INTERN("name"), OFFSETOF(ta_material, name), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_material)), obj);
+    OBJ_START(ta_point_light, F_TA_POINT_LIGHT);
+    OBJ_FIELD(ta_point_light, name,     F_ATOM_STRING);
+    OBJ_FIELD(ta_point_light, position, F_TA_VEC3);
+    OBJ_FIELD(ta_point_light, color,    F_TA_RGB);
+    OBJ_END(ta_point_light);
 
-    obj = &tg_schemas[F_TA_MESH];
-    obj->type = F_TA_MESH;
-    obj->name = INTERN(STRING(ta_mesh));
-    obj_field_add(obj, F_ATOM_STRING, INTERN("name"), OFFSETOF(ta_mesh, name), 0);
-    obj_field_add(obj, F_ATOM_STRING, INTERN("path"), OFFSETOF(ta_mesh, path), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_mesh)), obj);
+    OBJ_START(ta_material, F_TA_MATERIAL);
+    OBJ_FIELD(ta_material, name, F_ATOM_STRING);
+    OBJ_END(ta_material);
 
-    obj = &tg_schemas[F_TA_SHADER];
-    obj->type = F_TA_SHADER;
-    obj->name = INTERN(STRING(ta_shader));
-    obj_field_add(obj, F_ATOM_STRING, INTERN("name"), OFFSETOF(ta_shader, name), 0);
-    obj_field_add(obj, F_ATOM_STRING, INTERN("path"), OFFSETOF(ta_shader, path), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_shader)), obj);
+    OBJ_START(ta_mesh, F_TA_MESH);
+    OBJ_FIELD(ta_mesh, name, F_ATOM_STRING);
+    OBJ_FIELD(ta_mesh, path, F_ATOM_STRING);
+    OBJ_END(ta_mesh);
 
-    obj = &tg_schemas[F_TA_TEXTURE];
-    obj->type = F_TA_TEXTURE;
-    obj->name = INTERN(STRING(ta_texture));
-    obj_field_add(obj, F_ATOM_STRING, INTERN("name"), OFFSETOF(ta_texture, name), 0);
-    obj_field_add(obj, F_ATOM_STRING, INTERN("path"), OFFSETOF(ta_texture, path), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_texture)), obj);
+    OBJ_START(ta_shader, F_TA_SHADER);
+    OBJ_FIELD(ta_shader, name, F_ATOM_STRING);
+    OBJ_FIELD(ta_shader, path, F_ATOM_STRING);
+    OBJ_END(ta_shader);
 
-    obj = &tg_schemas[F_TA_ENTITY];
-    obj->type = F_TA_ENTITY;
-    obj->name = INTERN(STRING(ta_entity));
-    obj_field_add(obj, F_ATOM_STRING,   INTERN("name"),      OFFSETOF(ta_entity, name), 0);
-    obj_field_add(obj, F_ATOM_STRING,   INTERN("material"),  OFFSETOF(ta_entity, material), 0);
-    obj_field_add(obj, F_ATOM_STRING,   INTERN("mesh"),      OFFSETOF(ta_entity, mesh), 0);
-    obj_field_add(obj, F_ATOM_STRING,   INTERN("shader"),    OFFSETOF(ta_entity, shader), 0);
-    obj_field_add(obj, F_ATOM_STRING,   INTERN("texture"),   OFFSETOF(ta_entity, texture), 0);
-    obj_field_add(obj, F_TA_TRANSFORM,  INTERN("transform"), OFFSETOF(ta_entity, transform), 0);
-    dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(ta_entity)), obj);
+    OBJ_START(ta_texture_2d, F_TA_TEXTURE);
+    OBJ_FIELD(ta_texture_2d, name, F_ATOM_STRING);
+    OBJ_FIELD(ta_texture_2d, path, F_ATOM_STRING);
+    OBJ_END(ta_texture_2d);
+
+    OBJ_START(ta_entity, F_TA_ENTITY);
+    OBJ_FIELD(ta_entity, name,      F_ATOM_STRING);
+    OBJ_FIELD(ta_entity, material,  F_ATOM_STRING);
+    OBJ_FIELD(ta_entity, mesh,      F_ATOM_STRING);
+    OBJ_FIELD(ta_entity, shader,    F_ATOM_STRING);
+    OBJ_FIELD(ta_entity, texture,   F_ATOM_STRING);
+    OBJ_FIELD(ta_entity, transform, F_TA_TRANSFORM);
+    OBJ_END(ta_entity);
 }
+
+#undef OBJ_START
+#undef OBJ_FIELD
+#undef OBJ_END
 
 ta_schema *ta_schema_find(const char *name, int len)
 {
