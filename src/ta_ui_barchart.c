@@ -1,6 +1,6 @@
 #include "ta_ui_barchart.h"
 #include "ta_math.h"
-#include "ta_shader_lines.h"
+#include "ta_primitive.h"
 #include "dlb_types.h"
 #include "dlb_memory.h"
 #include <time.h>

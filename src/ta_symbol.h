@@ -1,9 +1,6 @@
 #pragma once
 #include "dlb_memory.h"
 
-#define CSTR(s) (s), sizeof(s) - 1
-#define INTERN(s) ta_symbol_intern(CSTR(s))
-
 #define dlb_symbol__hdr(s) ((dlb_symbol__hdr *)((char *)s - sizeof(dlb_symbol__hdr)))
 
 #define dlb_symbol_len(s) ((s) ? dlb_symbol__hdr(s)->len : 0)
@@ -28,10 +25,24 @@ static inline char *dlb_symbol__alloc(const char *buf, u32 len) {
     return str;
 }
 
-extern const char *sym_ident_name;
+#define CSTR(s) (s), sizeof(s) - 1
+#define SYM(s) (s), dlb_symbol_len(s)
+#define INTERN(s) ta_symbol_intern(CSTR(s))
+
+// Special identifiers
+extern const char *sym_ident_uid;
+
+// DML keywords
 extern const char *sym_kw_null;
 extern const char *sym_kw_true;
 extern const char *sym_kw_false;
+
+// GLSL variable types
+extern const char *sym_glsl_vec2;
+extern const char *sym_glsl_vec3;
+extern const char *sym_glsl_vec4;
+extern const char *sym_glsl_mat4;
+extern const char *sym_glsl_sampler2d;
 
 const char *ta_symbol_intern(const char *s, u32 len);
 void ta_symbol_init();

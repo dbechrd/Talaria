@@ -3,16 +3,17 @@
 
 typedef struct ta_scene_s ta_scene;
 
-typedef struct ta_texture_2d_s {
+typedef struct ta_texture_s {
     ta_scene *scene;
-    const char *name;
+    const char *uid;
     const char *path;
 	int width;
 	int height;
 	int channels;
 	GLuint gl_id;
-} ta_texture_2d;
+} ta_texture;
 
-void ta_texture_init(ta_texture_2d *texture, const char *name, const char *path);
-void ta_texture_create(ta_texture_2d *texture);
-void ta_texture_free(ta_texture_2d *texture);
+void ta_texture_init(ta_texture *texture, const char *name, const char *path);
+void ta_texture_create(ta_texture *texture);
+void ta_texture_delete(ta_texture *texture);
+void ta_texture_free(ta_texture *texture);

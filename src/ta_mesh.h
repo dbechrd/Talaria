@@ -24,8 +24,8 @@ typedef struct ta_scene_s ta_scene;
 
 typedef struct ta_mesh_s {
     ta_scene *scene;
+    const char *uid;
     const char *path;
-	ta_buffer name;
 
     GLuint *indexes;
     ta_vec3 *positions;
@@ -46,6 +46,7 @@ void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename);
 void ta_mesh_init_vertex_normals(ta_mesh *mesh, float scale);
 void ta_mesh_init_face_normals(ta_mesh *mesh, float scale);
 void ta_mesh_push_normals(ta_mesh *mesh);
-void debug_mesh_log_normals(ta_mesh *mesh);
+void ta_mesh_log_normals_dbg(ta_mesh *mesh);
+void ta_mesh_render(ta_mesh *mesh);
 void ta_mesh_free(ta_mesh *mesh);
 void ta_mesh_clear(ta_mesh_queue queue);

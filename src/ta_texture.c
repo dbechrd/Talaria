@@ -12,15 +12,15 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "misc/stb_image.h"
 
-void ta_texture_init(ta_texture_2d *texture, const char *name, const char *path)
+void ta_texture_init(ta_texture *texture, const char *name, const char *path)
 {
-    texture->name = name;
+    texture->uid = name;
     texture->path = path;
 }
 
-void ta_texture_create(ta_texture_2d *texture)
+void ta_texture_create(ta_texture *texture)
 {
-    DLB_ASSERT(texture->name);
+    DLB_ASSERT(texture->uid);
     DLB_ASSERT(texture->path);
 
     // Load pixel data from file
@@ -56,11 +56,20 @@ void ta_texture_create(ta_texture_2d *texture)
     //*gl_id = texture->gl_id;
 }
 
-void ta_texture_free(ta_texture_2d *texture)
+void ta_texture_delete(ta_texture *texture)
 {
-    glDeleteTextures(1, &texture->gl_id);
-    // TODO(perf): Delete all textures in a single GL call by aggregating gl_ids
-    //             during texture initialization.
+    if (texture->gl_id) {
+        glDeleteTextures(1, &texture->gl_id);
+    }
+    texture->gl_id = 0;
+}
+
+void ta_texture_free(ta_texture *texture)
+{
+    ta_texture_delete(texture);
+
+    // TODO(perf): Delete all scene textures in a single GL call by aggregating
+    //             gl_ids during texture initialization.
 	//glDeleteTextures(dlb_vec_len(gl_ids[queue]), gl_ids[queue]);
 	//dlb_vec_clear(tex[queue]);
 	//dlb_vec_clear(gl_ids[queue]);

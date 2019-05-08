@@ -38,13 +38,13 @@ typedef struct {
 typedef struct {
 	ta_ui_type type;
 	ta_rect rect;
-	ta_texture_2d *tex;
+	ta_texture *tex;
 } ta_ui_image;
 
 void ta_ui_draw(int x, int y, ta_ui_base *ui);
 void ta_ui_clear();
 
-ta_ui_image *ta_ui_image_init(int x, int y, int w, int h, ta_texture_2d *tex);
+ta_ui_image *ta_ui_image_init(int x, int y, int w, int h, ta_texture *tex);
 void ta_ui_image_draw(int x, int y, ta_ui_image *image);
 
 ta_ui_scrollview *ta_ui_scrollview_init(int x, int y, int w, int h,

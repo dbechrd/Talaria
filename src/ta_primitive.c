@@ -1,8 +1,7 @@
 #include "ta_primitive.h"
 #include "ta_log.h"
 #include "ta_window.h"
-#include "ta_shader_lines.h"
-#include "ta_shader_quads.h"
+#include "ta_shader.h"
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
 
@@ -15,7 +14,6 @@ static ta_vert_quad *quads_queue;
 static GLuint quads_vao;
 static GLuint quads_buffer;
 static GLint quads_buffer_size;
-static GLuint quads_program;
 
 static void ta_primitive_push_line(ta_vert_line *line);
 static void ta_primitive_push_quad(ta_vert_quad *quad);
@@ -28,7 +26,7 @@ static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
 
 static void ta_primitive_init_lines()
 {
-	ta_shader_lines_init();
+	//ta_shader_lines_init();
 
 	glCreateVertexArrays(1, &lines_vao);
 	glCreateBuffers(1, &lines_buffer);
@@ -36,14 +34,24 @@ static void ta_primitive_init_lines()
 
 	glBindVertexArray(lines_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
+#if 0
 	ta_shader_lines_attribs();
+#else
+    glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
+    glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
+
+    glVertexAttribPointer(TA_SHADER_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE,
+        sizeof(ta_shader_lines_vertex), 0);
+    glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 4, GL_FLOAT, GL_FALSE,
+        sizeof(ta_shader_lines_vertex), (void *)sizeof(ta_vec3));
+#endif
 	glBindVertexArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 static void ta_primitive_init_quads()
 {
-	quads_program = ta_shader_quads_init();
+	//quads_program = ta_shader_quads_init();
 
 	glCreateVertexArrays(1, &quads_vao);
 	glCreateBuffers(1, &quads_buffer);
@@ -51,7 +59,20 @@ static void ta_primitive_init_quads()
 
 	glBindVertexArray(quads_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, quads_buffer);
+#if 0
 	ta_shader_quads_attribs();
+#else
+    glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
+    glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
+    glEnableVertexAttribArray(TA_SHADER_ATTR_UV);
+
+    glVertexAttribPointer(TA_SHADER_ATTR_POSITION, 3, GL_FLOAT, GL_FALSE,
+        sizeof(ta_shader_quads_vertex), 0);
+    glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 4, GL_FLOAT, GL_FALSE,
+        sizeof(ta_shader_quads_vertex), (void *)sizeof(ta_vec3));
+    glVertexAttribPointer(TA_SHADER_ATTR_UV, 2, GL_FLOAT, GL_FALSE,
+        sizeof(ta_shader_quads_vertex), (void *)(sizeof(ta_vec3) + sizeof(ta_rgba)));
+#endif
 	glBindVertexArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -195,8 +216,8 @@ void ta_primitive_render_lines()
 		return;
 	}
 
-	ta_shader_lines_bind();
-    ta_shader_lines_prerender();
+	ta_shader_bind(tg_shader_lines);
+    ta_shader_prerender(tg_shader_lines);
 
     glBindVertexArray(lines_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
@@ -211,11 +232,15 @@ void ta_primitive_render_lines()
 	}
 
 	// Draw lines
+#if 0
     ta_shader_lines_render(lines_queue);
-
+#else
+    int line_count = dlb_vec_len(lines_queue);
+    glDrawArrays(GL_LINES, 0, 2 * line_count);
+#endif
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-    ta_shader_lines_unbind();
+    ta_shader_unbind(tg_shader_lines);
 }
 void ta_primitive_render_quads()
 {
@@ -224,9 +249,8 @@ void ta_primitive_render_quads()
 		return;
 	}
 
-	glUseProgram(quads_program);
-
-	ta_shader_quads_prerender();
+    ta_shader_bind(tg_shader_quads);
+	ta_shader_prerender(tg_shader_quads);
 
 	glBindVertexArray(quads_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, quads_buffer);
@@ -245,7 +269,7 @@ void ta_primitive_render_quads()
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
-	glUseProgram(0);
+    ta_shader_unbind(tg_shader_quads);
 }
 void ta_primitive_render()
 {

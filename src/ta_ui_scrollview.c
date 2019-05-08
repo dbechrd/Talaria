@@ -1,7 +1,8 @@
 #include "ta_ui_scrollview.h"
 #include "ta_primitive.h"
 #include "ta_window.h"
-#include "ta_shader_quads.h"
+#include "ta_shader.h"
+#include "ta_symbol.h"
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
 
@@ -35,7 +36,7 @@ void ta_ui_clear()
 	dlb_vec_clear(ui_arena.scrollviews);
 }
 
-ta_ui_image *ta_ui_image_init(int x, int y, int w, int h, ta_texture_2d *tex)
+ta_ui_image *ta_ui_image_init(int x, int y, int w, int h, ta_texture *tex)
 {
 	ta_ui_image *image = dlb_vec_alloc(ui_arena.images);
 	image->type = TA_UI_IMAGE;
@@ -49,11 +50,11 @@ ta_ui_image *ta_ui_image_init(int x, int y, int w, int h, ta_texture_2d *tex)
 
 void ta_ui_image_draw(int x, int y, ta_ui_image *image)
 {
-	ta_shader_quads_set_texture(0, 1);
+    ta_shader_set_sampler2d(tg_shader_quads, INTERN("u_tex0"), image->tex->gl_id);
 	ta_primitive_push_rect(x, y, &image->rect, &TA_COLOR_INVIS);
 	ta_primitive_render();
-	ta_shader_quads_set_texture(0, 0);
-	ta_primitive_clear();
+    ta_shader_set_sampler2d(tg_shader_quads, INTERN("u_tex0"), 0);
+    ta_primitive_clear();
 }
 
 ta_ui_scrollview *ta_ui_scrollview_init(int x, int y, int w, int h,
@@ -95,7 +96,7 @@ ta_ui_scrollview *ta_ui_scrollview_init(int x, int y, int w, int h,
 		bar->widget.rect.h = bar->rect.h*2 - view->content->rect.h - WIDGET_PAD*2;
 		bar->visible = true;
 	}
-	
+
 	return view;
 }
 

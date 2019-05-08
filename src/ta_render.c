@@ -1,6 +1,6 @@
 #include "ta_render.h"
 #include "ta_log.h"
-#include "ta_shader_lines.h"
+//#include "ta_shader_lines.h"
 #include "misc/gl3w.h"
 
 static void ta_render_init_gl3w(int major, int minor)

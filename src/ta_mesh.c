@@ -2,6 +2,7 @@
 #include "ta_log.h"
 #include "ta_primitive.h"
 #include "ta_shader.h"
+#include "ta_symbol.h"
 #include "dlb_types.h"
 #include "dlb_memory.h"
 #include "dlb_vector.h"
@@ -135,9 +136,8 @@ void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename)
 
 		ta_mesh_init_gl(mesh);
 
-        mesh->name.length = (u32)strlen(shapes[i].name);
-        mesh->name.data = dlb_malloc(mesh->name.length);
-        memcpy(mesh->name.data, shapes[i].name, mesh->name.length);
+        u32 name_len = (u32)strlen(shapes[i].name);
+        mesh->uid = ta_symbol_intern(shapes[i].name, name_len);
 
         if (!tg_mesh_table.size) {
             dlb_hash_init(&tg_mesh_table, DLB_HASH_STRING, "tg_mesh_table", 128);
@@ -145,7 +145,7 @@ void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename)
                 DLB_ASSERT(!"Failed to initialize mesh hash table");
             }
         }
-        dlb_hash_insert(&tg_mesh_table, mesh->name.data, mesh->name.length, mesh);
+        dlb_hash_insert(&tg_mesh_table, SYM(mesh->uid), mesh);
 	}
 
 	tinyobj_attrib_free(&attrib);
@@ -213,7 +213,7 @@ void ta_mesh_push_normals(ta_mesh *mesh)
     }
 }
 
-void debug_mesh_log_normals(ta_mesh *mesh)
+void ta_mesh_log_normals_dbg(ta_mesh *mesh)
 {
     ta_log_write(tg_debug_log, "Normals:\n");
     u32 normal_count = dlb_vec_len(mesh->normals);
@@ -227,10 +227,22 @@ void debug_mesh_log_normals(ta_mesh *mesh)
     }
 }
 
+void ta_mesh_render(ta_mesh *mesh)
+{
+    glBindVertexArray(mesh->vao);
+    int index_count = dlb_vec_len(mesh->indexes);
+    if (index_count) {
+        glDrawElements(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0);
+    } else {
+        int vertex_count = dlb_vec_len(mesh->positions);
+        glDrawArrays(GL_TRIANGLES, 0, vertex_count);
+    }
+    glBindVertexArray(0);
+}
+
 void ta_mesh_free(ta_mesh *mesh)
 {
-    dlb_hash_delete(&tg_mesh_table, mesh->name.data, mesh->name.length);
-    ta_buffer_free(&mesh->name);
+    dlb_hash_delete(&tg_mesh_table, SYM(mesh->uid));
     dlb_vec_free(mesh->indexes);
     dlb_vec_free(mesh->positions);
     dlb_vec_free(mesh->normals);

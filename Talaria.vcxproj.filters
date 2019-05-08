@@ -35,13 +35,7 @@
     <ClCompile Include="src/ta_log.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src/ta_shader_lines.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src/ta_timer.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src/ta_shader_quads.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src/ta_ui_scrollview.c">
@@ -54,9 +48,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src/ta_buffer.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src/ta_shader_mesh.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src/ta_camera.c">
@@ -118,13 +109,7 @@
     <ClInclude Include="src/ta_log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src/ta_shader_lines.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src/ta_timer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src/ta_shader_quads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src/ta_ui_scrollview.h">
@@ -137,9 +122,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src/ta_buffer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src/ta_shader_mesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src/ta_camera.h">

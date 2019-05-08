@@ -28,13 +28,13 @@
 
 #define C_IDENT             C__ALPHA_LOWER C__DIGIT "_"
 #define C_IDENT_END         ":"
-#define IDENT_NAME          "name"
+#define IDENT_UID           "uid"
 #define KEYWORD_NULL        "null"
 #define KEYWORD_TRUE        "true"
 #define KEYWORD_FALSE       "false"
 
 #define C_NUMBER_HEX        C__DIGIT "abcdefABCDEF"
-#define C_NUMBER_BINARY    "01"
+#define C_NUMBER_BINARY     "01"
 #define C_NUMBER_SIGN       C__SIGN
 #define C_NUMBER_INT        C__DIGIT
 #define C_NUMBER_FLOAT      C__DIGIT "."

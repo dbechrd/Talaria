@@ -19,6 +19,7 @@ typedef struct ta_scene_s ta_scene;
 
 typedef struct {
     ta_scene *scene;
+    const char *uid;
 	ta_vec3 position;
     float velocity;
 

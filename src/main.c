@@ -4,9 +4,9 @@
 #include "ta_render.h"
 #include "ta_file.h"
 #include "ta_shader.h"
-#include "ta_shader_lines.h"
-#include "ta_shader_quads.h"
-#include "ta_shader_mesh.h"
+//#include "ta_shader_lines.h"
+//#include "ta_shader_quads.h"
+//#include "ta_shader_mesh.h"
 #include "ta_ui_scrollview.h"
 #include "ta_ui_barchart.h"
 #include "ta_texture.h"
@@ -56,7 +56,7 @@ void debug_tests() {
 ta_entity *entity_create(ta_scene *scn, const char *name) {
     ta_entity *e = ta_scene_obj_alloc(scn, F_TA_ENTITY);
     e->type = ENTITY_DEFAULT;
-    e->name = name;
+    e->uid = name;
     e->transform.position.x = 1.1f;
     e->transform.position.y = 1.2f;
     e->transform.position.z = 1.3f;
@@ -118,32 +118,59 @@ int main(int argc, char *argv[])
     ta_mouse_init();
     ta_keyboard_init();
 
-    read_scene("data/scenes/scene1.dml");
-    DLB_ASSERT(tg_game.scene->cameras->dirty);  // Ensure we have a valid camera
-
-	// Shader setup
-    ta_primitive_init();
-
-	// UI
-	const ta_rgba mesh_selector_bg = { 0.1f, 0.1f, 0.2f, 1.0f };
-	ta_viewport mesh_selector = ta_viewport_init(10, 50, 200, 200, 90.0f, 0.1f,
-		mesh_selector_bg);
-
-    // Chamber 0001
-	ta_texture_2d *tex_test = dlb_hash_search(&tg_game.scene->refs_by_name
-        CSTR("texture_1"));
-
-	ta_mesh_load_obj_file(TA_MESH_QUEUE_STATIC, "data/mesh/prim_cube.obj");
+    // Fallback resources
+    ta_mesh_load_obj_file(TA_MESH_QUEUE_STATIC, "data/mesh/prim_cube.obj");
     ta_mesh *mesh_cube = dlb_hash_search(&tg_mesh_table, CSTR("prim_cube"));
     UNUSED(mesh_cube);
 
-	ta_mesh_load_obj_file(TA_MESH_QUEUE_LEVEL, "data/models/Chamber0001.obj");
-	ta_mesh *mesh_chamber = dlb_hash_search(&tg_mesh_table, CSTR("chamber0001_base"));
-	if (!mesh_chamber) {
-		DLB_ASSERT(!"Failed to load or find mesh");
-	}
+    // Intro scene
+    read_scene("data/scenes/scene1.dml");
+    DLB_ASSERT(tg_game.scene->cameras->dirty);  // Ensure we have a valid camera
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Shaders
+    ////////////////////////////////////////////////////////////////////////////
+    tg_shader_lines = ta_scene_find(tg_game.scene, F_TA_SHADER,
+        INTERN("shader_lines"));
+    DLB_ASSERT(tg_shader_lines && "Failed to load or find shader_lines");
+
+    tg_shader_quads = ta_scene_find(tg_game.scene, F_TA_SHADER,
+        INTERN("shader_quads"));
+    DLB_ASSERT(tg_shader_quads && "Failed to load or find shader_quads");
+
+    tg_shader_mesh = ta_scene_find(tg_game.scene, F_TA_SHADER,
+        INTERN("shader_mesh"));
+    DLB_ASSERT(tg_shader_mesh && "Failed to load or find shader_mesh");
+
+    // TODO: Figure out a better way to initialize attribs
+    ta_primitive_init();
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Textures
+    ////////////////////////////////////////////////////////////////////////////
+    ta_texture *tex_test = ta_scene_find(tg_game.scene, F_TA_TEXTURE,
+        INTERN("texture_1"));
+    DLB_ASSERT(tex_test && tex_test->gl_id && "Failed to load or find texture_1");
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Meshes
+    ////////////////////////////////////////////////////////////////////////////
+    // TODO: Move this to DML and use ta_scene_find
+    ta_mesh_load_obj_file(TA_MESH_QUEUE_LEVEL, "data/models/Chamber0001.obj");
+    ta_mesh *mesh_chamber = dlb_hash_search(&tg_mesh_table, CSTR("chamber0001_base"));
+    if (!mesh_chamber) {
+        DLB_ASSERT(!"Failed to load or find mesh_chamber");
+    }
     ta_mesh_init_vertex_normals(mesh_chamber, 0.5f);
     ta_mesh_init_face_normals(mesh_chamber, 0.5f);
+
+    ////////////////////////////////////////////////////////////////////////////
+    // UI
+    ////////////////////////////////////////////////////////////////////////////
+    // TODO: Move this to DML (e.g. editor.dml)
+	const ta_rgba mesh_selector_bg = { 0.1f, 0.1f, 0.2f, 1.0f };
+	ta_viewport mesh_selector = ta_viewport_init(10, 50, 200, 200, 90.0f, 0.1f,
+		mesh_selector_bg);
 
 	//ta_mat4 project = mat4_perspective(65.0f, aspect, 0.1f, 100.0f);
 	//float oo = 0.5f;
@@ -166,12 +193,6 @@ int main(int argc, char *argv[])
 
 	float model_deg = 0.0f;
 
-	ta_shader_mesh_init();
-	ta_shader_mesh_bind();
-	ta_shader_mesh_set_view(&tg_game.scene->cameras->look_at);
-	ta_shader_mesh_set_texture(0, tex_test->gl_id);
-	ta_shader_mesh_unbind();
-
 	// TODO: Remove x,y coords from init() methods and only store size. Pass x,y
 	//       at render time (make sure to update viewport correctly).
 	ta_ui_image *ui_image = ta_ui_image_init(0, 0, 0, 0, tex_test);
@@ -180,11 +201,17 @@ int main(int argc, char *argv[])
 
 	ta_ui_barchart chart = ta_ui_barchart_init(10, 10, tg_window.width - 20, 30);
 
+    ta_shader_set_sampler2d(tg_shader_mesh, INTERN("u_tex0"), tex_test->gl_id);
+
     // TODO: What other startup states would be useful (e.g. LOADING_MESHES)?
     //       Could use this for a progress bar during load and better logging.
     //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
     tg_game.state = TA_STATE_PLAY;
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Main loop
+    ////////////////////////////////////////////////////////////////////////////
     u64 frame_num = 0;
     while (tg_game.state != TA_STATE_QUIT) {
         frame_num++;
@@ -199,17 +226,18 @@ int main(int argc, char *argv[])
 
 		// Draw models
 		glDisable(GL_CULL_FACE);
-		ta_shader_mesh_set_projection(&tg_window.projection);
-		ta_shader_mesh_set_view(&tg_game.scene->cameras->look_at);
-		ta_shader_mesh_set_model(&MAT4_IDENT);
-        ta_shader_mesh_bind();
-        ta_shader_mesh_prerender();
-		ta_shader_mesh_render(mesh_chamber);
-		ta_shader_mesh_unbind();
+        ta_shader_set_mat4(tg_shader_mesh, INTERN("u_proj"), &tg_window.projection);
+		ta_shader_set_mat4(tg_shader_mesh, INTERN("u_view"), &tg_game.scene->cameras->look_at);
+		ta_shader_set_mat4(tg_shader_mesh, INTERN("u_model"), &MAT4_IDENT);
+        ta_shader_bind(tg_shader_mesh);
+        ta_shader_prerender(tg_shader_mesh);
+		ta_mesh_render(mesh_chamber);
+		ta_shader_unbind(tg_shader_mesh);
 
-        ta_shader_lines_set_projection(&tg_window.projection);
-        ta_shader_lines_set_view(&tg_game.scene->cameras->look_at);
-        ta_shader_lines_set_model(&MAT4_IDENT);
+#if 0
+        ta_shader_set_mat4(tg_shader_lines, INTERN("u_proj"), &tg_window.projection);
+        ta_shader_set_mat4(tg_shader_lines, INTERN("u_view"), &tg_game.scene->cameras->look_at);
+        ta_shader_set_mat4(tg_shader_lines, INTERN("u_model"), &MAT4_IDENT);
 
         //ta_primitive_push_line_3d(&X_AXIS, &TA_COLOR_RED,   &TA_COLOR_RED);
         //ta_primitive_push_line_3d(&Y_AXIS, &TA_COLOR_GREEN, &TA_COLOR_GREEN);
@@ -233,24 +261,25 @@ int main(int argc, char *argv[])
 			}
 
 			// Draw models
-			ta_shader_mesh_set_projection(&mesh_selector.projection);
-			ta_shader_mesh_set_view(&look_at_map);
-			ta_shader_mesh_set_model(&model);
-            ta_shader_mesh_bind();
-            ta_shader_mesh_prerender();
-			ta_shader_mesh_render(mesh_chamber);
-			ta_shader_mesh_unbind();
+            ta_shader_set_mat4(tg_shader_mesh, INTERN("u_proj"), &mesh_selector.projection);
+            ta_shader_set_mat4(tg_shader_mesh, INTERN("u_view"), &look_at_map);
+            ta_shader_set_mat4(tg_shader_mesh, INTERN("u_model"), &model);
+            ta_shader_bind(tg_shader_mesh);
+            ta_shader_prerender(tg_shader_mesh);
+            ta_mesh_render(mesh_chamber);
+            ta_shader_unbind(tg_shader_mesh);
 		}
 		ta_viewport_unbind(&mesh_selector);
 		glEnable(GL_CULL_FACE);
 
 		// Draw UI
-        ta_shader_lines_set_projection(&MAT4_IDENT);
-        ta_shader_lines_set_view(&MAT4_IDENT);
-        ta_shader_lines_set_model(&MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_lines, INTERN("u_proj"), &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_lines, INTERN("u_view"), &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_lines, INTERN("u_model"), &MAT4_IDENT);
         ta_ui_barchart_draw(0, 0, &chart);
         ta_primitive_render();
         ta_primitive_clear();
+#endif
 
 #if 0
 		ta_ui_scrollview_draw(0, 0, view);

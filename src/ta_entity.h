@@ -5,29 +5,23 @@ typedef struct ta_scene_s ta_scene;
 
 typedef struct ta_sun_light_s {
     ta_scene *scene;
-    const char *name;
+    const char *uid;
     ta_vec3 direction;
     ta_vec3 color;
 } ta_sun_light;
 
 typedef struct ta_point_light_s {
     ta_scene *scene;
-    const char *name;
+    const char *uid;
     ta_vec3 position;
     ta_vec3 color;
 } ta_point_light;
 
 typedef struct ta_material_s {
     ta_scene *scene;
-    const char *name;
+    const char *uid;
     //ta_texture *texture;  // TODO: Use file id?
 } ta_material;
-
-typedef struct ta_shader_s {
-    ta_scene *scene;
-    const char *name;
-    const char *path;
-} ta_shader;
 
 typedef enum {
     ENTITY_DEFAULT
@@ -36,7 +30,7 @@ typedef enum {
 typedef struct ta_entity_s ta_entity;
 typedef struct ta_entity_s {
     ta_scene *scene;
-    const char *name;
+    const char *uid;
     ta_entity_type type;
     const char *material;
     const char *mesh;
