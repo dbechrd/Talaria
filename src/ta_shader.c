@@ -71,26 +71,26 @@ static void ta_shader_program_link(GLuint program)
     }
 }
 
-static GLint ta_shader_attribute_location(GLuint program, const char *name)
+static GLint ta_shader_attribute_location(ta_shader *shader, const char *name)
 {
-    GLint location = glGetAttribLocation(program, name);
+    GLint location = glGetAttribLocation(shader->program_id, name);
     if (location < 0)
     {
         ta_log_write(tg_debug_log,
-            "[Program %d] Failed to locate attribute by name '%s'. "
-            "Possibly optimized out.\n", program, name);
+            "[Shader] Failed to locate attribute by '%s' in '%s'. "
+            "Possibly optimized out.\n", name, shader->uid);
     }
     return location;
 }
 
-static GLint ta_shader_uniform_location(GLuint program, const char *name)
+static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
 {
-    GLint location = glGetUniformLocation(program, name);
+    GLint location = glGetUniformLocation(shader->program_id, name);
     if (location < 0)
     {
         ta_log_write(tg_debug_log,
-            "[Program %d] Failed to locate uniform by name '%s'. "
-            "Possibly optimized out.\n", program, name);
+            "[Shader] Failed to locate uniform '%s' in '%s'. "
+            "Possibly optimized out.\n", name, shader->uid);
     }
     return location;
 }
@@ -173,7 +173,7 @@ void ta_shader_create(ta_shader *shader)
     for (ta_shader_attribute *attr = shader->attributes;
         attr != dlb_vec_end(shader->attributes); attr++)
     {
-        attr->location = ta_shader_attribute_location(program_id, attr->name);
+        attr->location = ta_shader_attribute_location(shader, attr->name);
     }
 
     // Ensure vertex attributes are at the correct locations
@@ -194,7 +194,7 @@ void ta_shader_create(ta_shader *shader)
     for (ta_shader_uniform *u = shader->uniforms;
         u != dlb_vec_end(shader->uniforms); u++)
     {
-        u->location = ta_shader_uniform_location(program_id, u->name);
+        u->location = ta_shader_uniform_location(shader, u->name);
     }
 
     glDetachShader(program_id, vshader);
@@ -250,7 +250,7 @@ void ta_shader_prerender(ta_shader *shader)
     for (ta_shader_uniform *u = shader->uniforms;
         u != dlb_vec_end(shader->uniforms); u++)
     {
-        if (!u->location) {
+        if (u->location < 0) {
             continue;
         }
 

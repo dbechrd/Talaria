@@ -1,18 +1,18 @@
 #version 330 core
 
-out vs_out {
-    vec3 position;
-    vec4 color;
-	vec2 uv;
-} vertex;
+layout(location = 0) in vec3 attr_position;
+layout(location = 1) in vec4 attr_color;
+layout(location = 2) in vec2 attr_uv;
 
 uniform mat4 u_proj;
 uniform mat4 u_view;
 uniform mat4 u_model;
 
-layout(location = 0) in vec3 attr_position;
-layout(location = 1) in vec4 attr_color;
-layout(location = 2) in vec2 attr_uv;
+out vs_out {
+    vec3 position;
+    vec4 color;
+	vec2 uv;
+} vertex;
 
 void main()
 {

@@ -91,9 +91,11 @@ void read_scene(const char *filename) {
     tg_game.scene = ta_scene_load(data_file);
     ta_file_close(data_file);
 
+    ta_log_write(tg_debug_log, "[Scene] Initializing objects\n", filename);
     ta_scene_obj_init(tg_game.scene);
-    ta_log_write(tg_debug_log, "[Scene] Scene loaded successfully:\n");
-    ta_scene_print(tg_game.scene, tg_debug_log->stream);
+
+    ta_log_write(tg_debug_log, "[Scene] Loaded successfully\n");
+    //ta_scene_print(tg_game.scene, tg_debug_log->stream);
     //ta_scene_free(tg_game.scene);
 }
 
@@ -228,13 +230,13 @@ int main(int argc, char *argv[])
 		glDisable(GL_CULL_FACE);
         ta_shader_set_mat4(tg_shader_mesh, INTERN("u_proj"), &tg_window.projection);
 		ta_shader_set_mat4(tg_shader_mesh, INTERN("u_view"), &tg_game.scene->cameras->look_at);
-		ta_shader_set_mat4(tg_shader_mesh, INTERN("u_model"), &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_mesh, INTERN("u_model"), &MAT4_IDENT);
         ta_shader_bind(tg_shader_mesh);
         ta_shader_prerender(tg_shader_mesh);
-		ta_mesh_render(mesh_chamber);
+        ta_mesh_render(mesh_chamber);
+        //ta_mesh_render(mesh_cube);
 		ta_shader_unbind(tg_shader_mesh);
 
-#if 0
         ta_shader_set_mat4(tg_shader_lines, INTERN("u_proj"), &tg_window.projection);
         ta_shader_set_mat4(tg_shader_lines, INTERN("u_view"), &tg_game.scene->cameras->look_at);
         ta_shader_set_mat4(tg_shader_lines, INTERN("u_model"), &MAT4_IDENT);
@@ -279,7 +281,6 @@ int main(int argc, char *argv[])
         ta_ui_barchart_draw(0, 0, &chart);
         ta_primitive_render();
         ta_primitive_clear();
-#endif
 
 #if 0
 		ta_ui_scrollview_draw(0, 0, view);

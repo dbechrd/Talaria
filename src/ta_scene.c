@@ -599,7 +599,7 @@ ta_scene *ta_scene_load(ta_file *f)
 
     token *tokens = tokenize(f);
     //tokens_print(tokens);
-    tokens_print_debug(tokens);
+    //tokens_print_debug(tokens);
     tokens_parse(scene, tokens);
     dlb_vec_free(tokens);
 

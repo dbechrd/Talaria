@@ -1,10 +1,16 @@
-ta_entity:
-  uid: "entity_1"
-  material: "material_1"
-  transform:
-    position: { x: 1.0, y: 2.0, z: 3.0 }
-    rotation: { x: 1.0, y: 2.0, z: 3.0, w: 4.0 }
-    scale:    { x: 1.0, y: 1.0, z: 1.0 }
+ta_camera:
+  uid: "main_camera"
+  position: { x: 0.0, y: 1.7, z: 24.0 }
+  velocity: 0.1
+  yaw: 90.0
+  yaw_accel: 0.1
+  pitch: 0.0
+  pitch_min: -75.0
+  pitch_max: 75.0
+  pitch_accel: 0.1
+ta_texture:
+  uid: "texture_1"
+  path: "data/texture/genesis_1024_1024.png"
 ta_shader:
   uid: "shader_lines"
   path_vert: "data/shader/lines_v.glsl"
@@ -52,24 +58,11 @@ ta_shader:
     { name: "u_model", type: "mat4" },
     { name: "u_tex0",  type: "sampler2D" },
   ]
-ta_camera:
-  uid: "main_camera"
-  position: { x: 0.0, y: 1.7, z: 24.0 }
-  velocity: 0.1
-  yaw: 90.0
-  yaw_accel: 0.1
-  pitch: 0.0
-  pitch_min: -75.0
-  pitch_max: 75.0
-  pitch_accel: 0.1
 ta_material:
   uid: "material_1"
 ta_mesh:
   uid: "mesh_1"
   path: "mesh_1_path"
-ta_texture:
-  uid: "texture_1"
-  path: "data/texture/genesis_1024_1024.png"
 ta_sun_light:
   uid: "sun"
   direction: { x: 1.0, y: 2.0, z: 3.0 }
@@ -78,6 +71,13 @@ ta_point_light:
   uid: "point_light_1"
   position: { x: 1.0, y: 2.0, z: 3.0 }
   color:    { r: 1.0, g: 2.0, b: 3.0 }
+ta_entity:
+  uid: "entity_1"
+  material: "material_1"
+  transform:
+    position: { x: 1.0, y: 2.0, z: 3.0 }
+    rotation: { x: 1.0, y: 2.0, z: 3.0, w: 4.0 }
+    scale:    { x: 1.0, y: 1.0, z: 1.0 }
 
 #ta_texture:
 #  name: "texture_example"

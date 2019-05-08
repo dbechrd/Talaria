@@ -26,17 +26,13 @@ static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
 
 static void ta_primitive_init_lines()
 {
-	//ta_shader_lines_init();
-
 	glCreateVertexArrays(1, &lines_vao);
 	glCreateBuffers(1, &lines_buffer);
 	lines_buffer_size = 0;
 
 	glBindVertexArray(lines_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
-#if 0
-	ta_shader_lines_attribs();
-#else
+
     glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
     glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
 
@@ -44,24 +40,19 @@ static void ta_primitive_init_lines()
         sizeof(ta_shader_lines_vertex), 0);
     glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 4, GL_FLOAT, GL_FALSE,
         sizeof(ta_shader_lines_vertex), (void *)sizeof(ta_vec3));
-#endif
-	glBindVertexArray(0);
 
+	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 static void ta_primitive_init_quads()
 {
-	//quads_program = ta_shader_quads_init();
-
 	glCreateVertexArrays(1, &quads_vao);
 	glCreateBuffers(1, &quads_buffer);
 	quads_buffer_size = 0;
 
 	glBindVertexArray(quads_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, quads_buffer);
-#if 0
-	ta_shader_quads_attribs();
-#else
+
     glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
     glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
     glEnableVertexAttribArray(TA_SHADER_ATTR_UV);
@@ -72,9 +63,8 @@ static void ta_primitive_init_quads()
         sizeof(ta_shader_quads_vertex), (void *)sizeof(ta_vec3));
     glVertexAttribPointer(TA_SHADER_ATTR_UV, 2, GL_FLOAT, GL_FALSE,
         sizeof(ta_shader_quads_vertex), (void *)(sizeof(ta_vec3) + sizeof(ta_rgba)));
-#endif
-	glBindVertexArray(0);
 
+    glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 void ta_primitive_init()
@@ -218,7 +208,6 @@ void ta_primitive_render_lines()
 
 	ta_shader_bind(tg_shader_lines);
     ta_shader_prerender(tg_shader_lines);
-
     glBindVertexArray(lines_vao);
 	glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
 
@@ -232,13 +221,9 @@ void ta_primitive_render_lines()
 	}
 
 	// Draw lines
-#if 0
-    ta_shader_lines_render(lines_queue);
-#else
-    int line_count = dlb_vec_len(lines_queue);
-    glDrawArrays(GL_LINES, 0, 2 * line_count);
-#endif
-	glBindVertexArray(0);
+    glDrawArrays(GL_LINES, 0, 2 * queue_len);
+
+    glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     ta_shader_unbind(tg_shader_lines);
 }
