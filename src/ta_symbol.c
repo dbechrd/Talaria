@@ -7,19 +7,31 @@
 #define TA_SYMBOL_MAX_LEN 256
 
 // Special identifiers
-const char *sym_ident_uid;
+const char *SYM_UID;
 
 // DML keywords
-const char *sym_kw_null;
-const char *sym_kw_true;
-const char *sym_kw_false;
+const char *SYM_NULL;
+const char *SYM_TRUE;
+const char *SYM_FALSE;
 
-// GLSL variable types
-const char *sym_glsl_vec2;
-const char *sym_glsl_vec3;
-const char *sym_glsl_vec4;
-const char *sym_glsl_mat4;
-const char *sym_glsl_sampler2d;
+// GLSL types
+const char *SYM_VEC2;
+const char *SYM_VEC3;
+const char *SYM_VEC4;
+const char *SYM_MAT4;
+const char *SYM_SAMPLER2D;
+
+// Shader attributes
+const char *SYM_ATTR_POSITION;
+const char *SYM_ATTR_COLOR;
+const char *SYM_ATTR_UV;
+const char *SYM_ATTR_NORMAL;
+
+// Shader uniforms
+const char *SYM_U_PROJ;
+const char *SYM_U_VIEW;
+const char *SYM_U_MODEL;
+const char *SYM_U_TEX0;
 
 // TODO: It may be useful to have multiple symbol tables to allow freeing
 //       symbols that are no longer in use (e.g. table per scene file). This
@@ -29,17 +41,27 @@ static dlb_hash symbol_table;
 void ta_symbol_init() {
     dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 256);
 
-    sym_ident_uid     = INTERN(IDENT_UID);
+    SYM_UID = INTERN(IDENT_UID);
 
-    sym_kw_null        = INTERN(KEYWORD_NULL);
-    sym_kw_true        = INTERN(KEYWORD_TRUE);
-    sym_kw_false       = INTERN(KEYWORD_FALSE);
+    SYM_NULL  = INTERN(KEYWORD_NULL);
+    SYM_TRUE  = INTERN(KEYWORD_TRUE);
+    SYM_FALSE = INTERN(KEYWORD_FALSE);
 
-    sym_glsl_vec2      = INTERN("vec2");
-    sym_glsl_vec3      = INTERN("vec3");
-    sym_glsl_vec4      = INTERN("vec4");
-    sym_glsl_mat4      = INTERN("mat4");
-    sym_glsl_sampler2d = INTERN("sampler2D");
+    SYM_VEC2      = INTERN("vec2");
+    SYM_VEC3      = INTERN("vec3");
+    SYM_VEC4      = INTERN("vec4");
+    SYM_MAT4      = INTERN("mat4");
+    SYM_SAMPLER2D = INTERN("sampler2D");
+
+    SYM_U_PROJ    = INTERN("u_proj");
+    SYM_U_VIEW    = INTERN("u_view");
+    SYM_U_MODEL   = INTERN("u_model");
+    SYM_U_TEX0    = INTERN("u_tex0");
+
+    SYM_ATTR_POSITION = INTERN("attr_position");
+    SYM_ATTR_COLOR    = INTERN("attr_color");
+    SYM_ATTR_UV       = INTERN("attr_uv");
+    SYM_ATTR_NORMAL   = INTERN("attr_normal");
 }
 
 const char *ta_symbol_intern(const char *s, u32 len) {

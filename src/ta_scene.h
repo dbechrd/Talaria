@@ -19,7 +19,7 @@ typedef struct ta_scene_s {
     ta_sun_light *sun_lights;
     ta_point_light *point_lights;
     ta_material *materials;
-    ta_mesh *meshes;
+    ta_mesh_group *mesh_groups;
     ta_shader *shaders;
     ta_texture *textures;
     ta_entity *entities;

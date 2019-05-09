@@ -20,7 +20,8 @@ typedef struct ta_point_light_s {
 typedef struct ta_material_s {
     ta_scene *scene;
     const char *uid;
-    //ta_texture *texture;  // TODO: Use file id?
+    const char *shader_uid;
+    const char *texture_uid;
 } ta_material;
 
 typedef enum {
@@ -32,10 +33,10 @@ typedef struct ta_entity_s {
     ta_scene *scene;
     const char *uid;
     ta_entity_type type;
-    const char *material;
-    const char *mesh;
-    const char *shader;
-    const char *texture;
+    const char *material_uid;
+    const char *mesh_uid;
+    const char *shader_uid;
+    const char *texture_uid;
     ta_transform transform;
     ta_entity *parent;
     //ta_entity *next;  // TODO: Is a sibling linked list useful?

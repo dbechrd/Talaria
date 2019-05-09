@@ -60,9 +60,11 @@ ta_shader:
   ]
 ta_material:
   uid: "material_1"
-ta_mesh:
-  uid: "mesh_1"
-  path: "mesh_1_path"
+  shader_uid: "shader_mesh"
+  texture_uid: "texture_1"
+ta_mesh_group:
+  uid: "mesh_group_Chamber0001"
+  path: "data/models/Chamber0001.obj"
 ta_sun_light:
   uid: "sun"
   direction: { x: 1.0, y: 2.0, z: 3.0 }
@@ -73,7 +75,7 @@ ta_point_light:
   color:    { r: 1.0, g: 2.0, b: 3.0 }
 ta_entity:
   uid: "entity_1"
-  material: "material_1"
+  material_uid: "material_1"
   transform:
     position: { x: 1.0, y: 2.0, z: 3.0 }
     rotation: { x: 1.0, y: 2.0, z: 3.0, w: 4.0 }

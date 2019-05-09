@@ -50,10 +50,10 @@ ta_ui_image *ta_ui_image_init(int x, int y, int w, int h, ta_texture *tex)
 
 void ta_ui_image_draw(int x, int y, ta_ui_image *image)
 {
-    ta_shader_set_sampler2d(tg_shader_quads, INTERN("u_tex0"), image->tex->gl_id);
+    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX0, image->tex->gl_id);
 	ta_primitive_push_rect(x, y, &image->rect, &TA_COLOR_INVIS);
 	ta_primitive_render();
-    ta_shader_set_sampler2d(tg_shader_quads, INTERN("u_tex0"), 0);
+    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX0, 0);
     ta_primitive_clear();
 }
 

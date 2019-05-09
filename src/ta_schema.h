@@ -15,7 +15,7 @@ typedef enum {
     F_TA_SUN_LIGHT,
     F_TA_POINT_LIGHT,
     F_TA_MATERIAL,
-    F_TA_MESH,
+    F_TA_MESH_GROUP,
     F_TA_SHADER,
     F_TA_SHADER_ATTRIBUTE,
     F_TA_SHADER_UNIFORM,

@@ -1,31 +1,22 @@
 #pragma once
-#include "ta_buffer.h"
+#include "ta_mesh_group.h"
 #include "ta_primitive.h"
-#include "dlb_hash.h"
 #include "misc/gl3w.h"
 
-typedef enum {
-	TA_MESH_QUEUE_STATIC,
-	TA_MESH_QUEUE_LEVEL,
-	TA_MESH_QUEUE_FRAME,
-	TA_MESH_QUEUE_COUNT
-} ta_mesh_queue;
-
-typedef enum {
-	TA_MESH_BUFFER_POSITION,
-	TA_MESH_BUFFER_COLOR,
-	TA_MESH_BUFFER_UV,
-	TA_MESH_BUFFER_NORMAL,
-	TA_MESH_BUFFER_INDEX,
-	TA_MESH_BUFFER_COUNT
-} ta_mesh_buffer;
+enum {
+    TA_MESH_BUFFER_POSITION,
+    TA_MESH_BUFFER_COLOR,
+    TA_MESH_BUFFER_UV,
+    TA_MESH_BUFFER_NORMAL,
+    TA_MESH_BUFFER_INDEX,
+    TA_MESH_BUFFER_COUNT
+};
 
 typedef struct ta_scene_s ta_scene;
 
 typedef struct ta_mesh_s {
-    ta_scene *scene;
-    const char *uid;
-    const char *path;
+    ta_mesh_group *group;
+    const char *name;
 
     GLuint *indexes;
     ta_vec3 *positions;
@@ -40,13 +31,10 @@ typedef struct ta_mesh_s {
 	GLuint buffers[TA_MESH_BUFFER_COUNT];
 } ta_mesh;
 
-extern dlb_hash tg_mesh_table;
-
-void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename);
+void ta_mesh_create(ta_mesh *mesh);
 void ta_mesh_init_vertex_normals(ta_mesh *mesh, float scale);
 void ta_mesh_init_face_normals(ta_mesh *mesh, float scale);
 void ta_mesh_push_normals(ta_mesh *mesh);
 void ta_mesh_log_normals_dbg(ta_mesh *mesh);
 void ta_mesh_render(ta_mesh *mesh);
 void ta_mesh_free(ta_mesh *mesh);
-void ta_mesh_clear(ta_mesh_queue queue);

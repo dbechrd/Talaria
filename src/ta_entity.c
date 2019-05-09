@@ -7,6 +7,7 @@
 
 ta_material *entity_material(ta_entity *e)
 {
-    ta_material *mat = ta_scene_find(e->scene, F_TA_MATERIAL, e->material);
+    // NOTE: This could cache in e->material if we want to save the hash lookup
+    ta_material *mat = ta_scene_find(e->scene, F_TA_MATERIAL, e->material_uid);
     return mat;
 }

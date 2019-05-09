@@ -29,7 +29,7 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
         case F_TA_SUN_LIGHT:   return "TA_SUN_LIGHT";
         case F_TA_POINT_LIGHT: return "TA_POINT_LIGHT";
         case F_TA_MATERIAL:    return "TA_MATERIAL";
-        case F_TA_MESH:        return "TA_MESH";
+        case F_TA_MESH_GROUP:        return "TA_MESH";
         case F_TA_SHADER:      return "TA_SHADER";
         case F_TA_TEXTURE:     return "TA_TEXTURE";
         case F_TA_ENTITY:      return "TA_ENTITY";
@@ -156,13 +156,15 @@ void ta_schema_register()
     TYPE_END(ta_point_light);
 
     TYPE_START(ta_material, F_TA_MATERIAL);
-    TYPE_FIELD(ta_material, uid,  F_ATOM_STRING);
+    TYPE_FIELD(ta_material, uid,         F_ATOM_STRING);
+    TYPE_FIELD(ta_material, shader_uid,  F_ATOM_STRING);
+    TYPE_FIELD(ta_material, texture_uid, F_ATOM_STRING);
     TYPE_END(ta_material);
 
-    TYPE_START(ta_mesh, F_TA_MESH);
-    TYPE_FIELD(ta_mesh, uid,  F_ATOM_STRING);
-    TYPE_FIELD(ta_mesh, path, F_ATOM_STRING);
-    TYPE_END(ta_mesh);
+    TYPE_START(ta_mesh_group, F_TA_MESH_GROUP);
+    TYPE_FIELD(ta_mesh_group, uid,  F_ATOM_STRING);
+    TYPE_FIELD(ta_mesh_group, path, F_ATOM_STRING);
+    TYPE_END(ta_mesh_group);
 
     TYPE_START(ta_shader, F_TA_SHADER);
     TYPE_FIELD(ta_shader, uid,        F_ATOM_STRING);
@@ -188,12 +190,12 @@ void ta_schema_register()
     TYPE_END(ta_texture);
 
     TYPE_START(ta_entity, F_TA_ENTITY);
-    TYPE_FIELD(ta_entity, uid,       F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, material,  F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, mesh,      F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, shader,    F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, texture,   F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, transform, F_TA_TRANSFORM);
+    TYPE_FIELD(ta_entity, uid,          F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, material_uid, F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, mesh_uid,     F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, shader_uid,   F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, texture_uid,  F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, transform,    F_TA_TRANSFORM);
     TYPE_END(ta_entity);
 }
 

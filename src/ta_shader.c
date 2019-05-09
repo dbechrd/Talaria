@@ -178,13 +178,13 @@ void ta_shader_create(ta_shader *shader)
 
     // Ensure vertex attributes are at the correct locations
     ta_shader_attribute *attr_pos =
-        find_attribute_by_name(shader, INTERN("attr_position"), sym_glsl_vec3);
+        find_attribute_by_name(shader, SYM_ATTR_POSITION, SYM_VEC3);
     ta_shader_attribute *attr_col =
-        find_attribute_by_name(shader, INTERN("attr_color"),    sym_glsl_vec4);
+        find_attribute_by_name(shader, SYM_ATTR_COLOR,    SYM_VEC4);
     ta_shader_attribute *attr_uv =
-        find_attribute_by_name(shader, INTERN("attr_uv"),       sym_glsl_vec2);
+        find_attribute_by_name(shader, SYM_ATTR_UV,       SYM_VEC2);
     ta_shader_attribute *attr_norm =
-        find_attribute_by_name(shader, INTERN("attr_normal"),   sym_glsl_vec3);
+        find_attribute_by_name(shader, SYM_ATTR_NORMAL,   SYM_VEC3);
 
     DLB_ASSERT(!attr_pos  || attr_pos->location  < 0 || attr_pos->location  == TA_SHADER_ATTR_POSITION);
     DLB_ASSERT(!attr_col  || attr_col->location  < 0 || attr_col->location  == TA_SHADER_ATTR_COLOR);
@@ -233,14 +233,14 @@ void ta_shader_unbind(ta_shader *shader)
 void ta_shader_set_mat4(ta_shader *shader, const char *name,
     const ta_mat4 *matrix)
 {
-    ta_shader_uniform *u = find_uniform_by_name(shader, name, sym_glsl_mat4);
+    ta_shader_uniform *u = find_uniform_by_name(shader, name, SYM_MAT4);
     u->value.mat4.matrix = *matrix;
 }
 
 void ta_shader_set_sampler2d(ta_shader *shader, const char *name,
     GLuint texture_id)
 {
-    ta_shader_uniform *u = find_uniform_by_name(shader, name, sym_glsl_sampler2d);
+    ta_shader_uniform *u = find_uniform_by_name(shader, name, SYM_SAMPLER2D);
     u->value.sampler2d.texture_id = texture_id;
 }
 
@@ -254,10 +254,10 @@ void ta_shader_prerender(ta_shader *shader)
             continue;
         }
 
-        if (u->type == sym_glsl_mat4) {
+        if (u->type == SYM_MAT4) {
             glUniformMatrix4fv(u->location, 1, GL_TRUE,
                 (GLfloat *)&u->value.mat4.matrix);
-        } else if (u->type == sym_glsl_sampler2d) {
+        } else if (u->type == SYM_SAMPLER2D) {
             GLuint tex_id = u->value.sampler2d.texture_id;
             if (tex_id >= 0) {
                 glActiveTexture(GL_TEXTURE0 + tex_count);

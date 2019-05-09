@@ -1,25 +1,10 @@
 #include "ta_mesh.h"
 #include "ta_log.h"
-#include "ta_primitive.h"
 #include "ta_shader.h"
 #include "ta_symbol.h"
-#include "dlb_types.h"
-#include "dlb_memory.h"
 #include "dlb_vector.h"
-#include "dlb_hash.h"
-#include "misc/gl3w.h"
 
-#define TINYOBJ_MALLOC dlb_malloc
-#define TINYOBJ_CALLOC dlb_calloc
-#define TINYOBJ_REALLOC dlb_realloc
-#define TINYOBJ_FREE dlb_free
-#define TINYOBJ_LOADER_C_IMPLEMENTATION
-#include "misc/tinyobj_loader_c.h"
-
-dlb_hash tg_mesh_table;
-static ta_mesh *meshes[TA_MESH_QUEUE_COUNT];
-
-static void ta_mesh_init_gl(ta_mesh *mesh)
+void ta_mesh_create(ta_mesh *mesh)
 {
 	const int vertCompLen = 3;
 	const int uvCompLen = 2;
@@ -78,80 +63,6 @@ static void ta_mesh_init_gl(ta_mesh *mesh)
 	if (mesh->indexes) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
-}
-
-void ta_mesh_load_obj_file(ta_mesh_queue queue, const char *filename)
-{
-	// Load OBJ file
-	// =========================================================================
-
-	ta_buffer *buf = ta_file_read_all(filename);
-	if (!buf) {
-		DLB_ASSERT(!"ta_mesh_init: Failed to read obj file");
-	}
-
-	tinyobj_attrib_t attrib = { 0 };
-	tinyobj_shape_t *shapes = NULL;
-	size_t num_shapes = 0;
-	tinyobj_material_t *materials = NULL;
-	size_t num_materials = 0;
-
-	unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-	int ret = tinyobj_parse_obj(&attrib, &shapes, &num_shapes, &materials,
-		&num_materials, buf->data, buf->length, flags);
-	if (ret != TINYOBJ_SUCCESS) {
-		DLB_ASSERT(!"ta_mesh_init: Failed to parse obj file");
-	}
-
-	// =========================================================================
-
-	// Each object in file
-	for (size_t i = 0; i < num_shapes; i++) {
-		tinyobj_shape_t shape = shapes[i];
-		size_t offset = 0;
-
-        ta_mesh *mesh = dlb_vec_alloc(meshes[queue]);
-
-		// Each face in object
-		for (size_t fn = shape.face_offset; fn < shape.length; fn++) {
-			int face_verts = attrib.face_num_verts[fn];
-			DLB_ASSERT(face_verts == 3);
-			for (int f = 0; f < face_verts; f++) {
-				tinyobj_vertex_index_t face = attrib.faces[shape.face_offset + offset];
-				ta_vec3 *pos = dlb_vec_alloc(mesh->positions);
-				pos->x = attrib.vertices[face.v_idx * 3];
-				pos->y = attrib.vertices[face.v_idx * 3 + 1];
-				pos->z = attrib.vertices[face.v_idx * 3 + 2];
-				ta_vec3 *norm = dlb_vec_alloc(mesh->normals);
-				norm->x = attrib.normals[face.vn_idx * 3];
-				norm->y = attrib.normals[face.vn_idx * 3 + 1];
-				norm->z = attrib.normals[face.vn_idx * 3 + 2];
-				ta_uv *uv = dlb_vec_alloc(mesh->uvs);
-				uv->u = attrib.texcoords[face.vt_idx * 2];
-				uv->v = attrib.texcoords[face.vt_idx * 2 + 1];
-				// TODO: Handle attrib.material_ids possibly for color data?
-				offset++;
-			}
-		}
-
-		ta_mesh_init_gl(mesh);
-
-        u32 name_len = (u32)strlen(shapes[i].name);
-        mesh->uid = ta_symbol_intern(shapes[i].name, name_len);
-
-        if (!tg_mesh_table.size) {
-            dlb_hash_init(&tg_mesh_table, DLB_HASH_STRING, "tg_mesh_table", 128);
-            if (!tg_mesh_table.size) {
-                DLB_ASSERT(!"Failed to initialize mesh hash table");
-            }
-        }
-        dlb_hash_insert(&tg_mesh_table, SYM(mesh->uid), mesh);
-	}
-
-	tinyobj_attrib_free(&attrib);
-	tinyobj_shapes_free(shapes, num_shapes);
-	tinyobj_materials_free(materials, num_materials);
-	ta_buffer_free(buf);
 }
 
 void ta_mesh_init_vertex_normals(ta_mesh *mesh, float scale)
@@ -242,7 +153,7 @@ void ta_mesh_render(ta_mesh *mesh)
 
 void ta_mesh_free(ta_mesh *mesh)
 {
-    dlb_hash_delete(&tg_mesh_table, SYM(mesh->uid));
+    //dlb_hash_delete(&mesh->group->meshes_by_name, SYM(mesh->name));
     dlb_vec_free(mesh->indexes);
     dlb_vec_free(mesh->positions);
     dlb_vec_free(mesh->normals);
@@ -252,14 +163,4 @@ void ta_mesh_free(ta_mesh *mesh)
     // TODO: This is probably going to break, need to either use gl_ids like
     //       ta_texture_clear() or individually check if each buffer exists.
     glDeleteBuffers(TA_MESH_BUFFER_COUNT, mesh->buffers);
-}
-
-void ta_mesh_clear(ta_mesh_queue queue)
-{
-	ta_mesh *mesh = meshes[queue];
-	while (mesh != dlb_vec_end(meshes[queue])) {
-		ta_mesh_free(mesh);
-		mesh++;
-	}
-	dlb_vec_clear(meshes[queue]);
 }

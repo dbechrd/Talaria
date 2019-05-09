@@ -163,6 +163,7 @@
   <ItemGroup>
     <ClCompile Include="src/gl3w.c" />
     <ClCompile Include="src\ta_entity.c" />
+    <ClCompile Include="src\ta_mesh_group.c" />
     <ClCompile Include="src\ta_parse.c" />
     <ClCompile Include="src\ta_scene.c" />
     <ClCompile Include="src\ta_schema.c" />
@@ -190,6 +191,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\ta_entity.h" />
+    <ClInclude Include="src\ta_mesh_group.h" />
     <ClInclude Include="src\ta_parse.h" />
     <ClInclude Include="src\ta_scene.h" />
     <ClInclude Include="src\ta_schema.h" />

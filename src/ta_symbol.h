@@ -30,19 +30,31 @@ static inline char *dlb_symbol__alloc(const char *buf, u32 len) {
 #define INTERN(s) ta_symbol_intern(CSTR(s))
 
 // Special identifiers
-extern const char *sym_ident_uid;
+extern const char *SYM_UID;
 
 // DML keywords
-extern const char *sym_kw_null;
-extern const char *sym_kw_true;
-extern const char *sym_kw_false;
+extern const char *SYM_NULL;
+extern const char *SYM_TRUE;
+extern const char *SYM_FALSE;
 
-// GLSL variable types
-extern const char *sym_glsl_vec2;
-extern const char *sym_glsl_vec3;
-extern const char *sym_glsl_vec4;
-extern const char *sym_glsl_mat4;
-extern const char *sym_glsl_sampler2d;
+// GLSL types
+extern const char *SYM_VEC2;
+extern const char *SYM_VEC3;
+extern const char *SYM_VEC4;
+extern const char *SYM_MAT4;
+extern const char *SYM_SAMPLER2D;
+
+// Shader attributes
+extern const char *SYM_ATTR_POSITION;
+extern const char *SYM_ATTR_COLOR;
+extern const char *SYM_ATTR_UV;
+extern const char *SYM_ATTR_NORMAL;
+
+// Shader uniforms
+extern const char *SYM_U_PROJ;
+extern const char *SYM_U_VIEW;
+extern const char *SYM_U_MODEL;
+extern const char *SYM_U_TEX0;
 
 const char *ta_symbol_intern(const char *s, u32 len);
 void ta_symbol_init();

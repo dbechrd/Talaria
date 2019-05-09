@@ -125,11 +125,11 @@ static token *token_read(ta_file *f, token **tokens)
             token->value.string = ta_symbol_intern(buf, len);
             if (ta_file_allow_char(f, C_IDENT_END, 1)) {
                 token->type = TOKEN_IDENTIFIER;
-            } else if (token->value.string == sym_kw_null) {
+            } else if (token->value.string == SYM_NULL) {
                 token->type = TOKEN_KW_NULL;
-            } else if (token->value.string == sym_kw_true) {
+            } else if (token->value.string == SYM_TRUE) {
                 token->type = TOKEN_KW_TRUE;
-            } else if (token->value.string == sym_kw_false) {
+            } else if (token->value.string == SYM_FALSE) {
                 token->type = TOKEN_KW_FALSE;
             } else {
                 PANIC_FILE(f, "Expected : after identifier '%s'\n", token->value.string);
@@ -521,7 +521,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 DLB_ASSERT(stack[sp].type == F_ATOM_STRING);
                 const char **fp = stack[sp].ptr;
                 *fp = tok->value.string;
-                if (stack[sp].name == sym_ident_uid) {
+                if (stack[sp].name == SYM_UID) {
                     ta_schema_ref *ref = dlb_vec_alloc(scene->refs);
                     ref->type = stack[sp-1].type;
                     ref->ptr = stack[sp-1].ptr;
@@ -629,10 +629,10 @@ void ta_scene_free(ta_scene *scene)
         // TODO: Free materials
     }
     dlb_vec_free(scene->materials);
-    for (ta_mesh *o = scene->meshes; o != dlb_vec_end(scene->meshes); o++) {
-        ta_mesh_free(o);
+    for (ta_mesh_group *o = scene->mesh_groups; o != dlb_vec_end(scene->mesh_groups); o++) {
+        ta_mesh_group_free(o);
     }
-    dlb_vec_free(scene->meshes);
+    dlb_vec_free(scene->mesh_groups);
     for (ta_shader *o = scene->shaders; o != dlb_vec_end(scene->shaders); o++) {
         // TODO: Free shaders
     }
@@ -664,8 +664,8 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
     for (ta_material *o = scene->materials; o != dlb_vec_end(scene->materials); o++) {
         ta_schema_print(hnd, F_TA_MATERIAL, (void *)o, 0, 0);
     }
-    for (ta_mesh *o = scene->meshes; o != dlb_vec_end(scene->meshes); o++) {
-        ta_schema_print(hnd, F_TA_MESH, (void *)o, 0, 0);
+    for (ta_mesh_group *o = scene->mesh_groups; o != dlb_vec_end(scene->mesh_groups); o++) {
+        ta_schema_print(hnd, F_TA_MESH_GROUP, (void *)o, 0, 0);
     }
     for (ta_shader *o = scene->shaders; o != dlb_vec_end(scene->shaders); o++) {
         ta_schema_print(hnd, F_TA_SHADER, (void *)o, 0, 0);
@@ -704,10 +704,10 @@ void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type)
             material->scene = scene;
             obj = material;
             break;
-        } case F_TA_MESH: {
-            ta_mesh *mesh = dlb_vec_alloc(scene->meshes);
-            mesh->scene = scene;
-            obj = mesh;
+        } case F_TA_MESH_GROUP: {
+            ta_mesh_group *group = dlb_vec_alloc(scene->mesh_groups);
+            group->scene = scene;
+            obj = group;
             break;
         } case F_TA_SHADER: {
             ta_shader *shader = dlb_vec_alloc(scene->shaders);
@@ -742,7 +742,8 @@ void ta_scene_obj_init(ta_scene *scene)
     }
     for (ta_material *o = scene->materials; o != dlb_vec_end(scene->materials); o++) {
     }
-    for (ta_mesh *o = scene->meshes; o != dlb_vec_end(scene->meshes); o++) {
+    for (ta_mesh_group *o = scene->mesh_groups; o != dlb_vec_end(scene->mesh_groups); o++) {
+        ta_mesh_group_load(o);
     }
     for (ta_shader *o = scene->shaders; o != dlb_vec_end(scene->shaders); o++) {
         ta_shader_create(o);
