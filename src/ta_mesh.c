@@ -113,14 +113,14 @@ void ta_mesh_push_normals(ta_mesh *mesh)
     for (ta_line_3d *line = mesh->vertex_normals;
         line != dlb_vec_end(mesh->vertex_normals); line++)
     {
-        //ta_primitive_push_line_3d(&line, &TA_COLOR_RED, &TA_COLOR_GREEN);
-        ta_primitive_push_line_3d(line, &TA_COLOR_MAGENTA, &TA_COLOR_MAGENTA);
+        //ta_primitive_push_line_3d(&line, TA_COLOR_RED, TA_COLOR_GREEN);
+        ta_primitive_push_line_3d(*line, TA_COLOR_MAGENTA, TA_COLOR_MAGENTA);
     }
     for (ta_line_3d *line = mesh->face_normals;
         line != dlb_vec_end(mesh->face_normals); line++)
     {
-        //ta_primitive_push_line_3d(&line, &TA_COLOR_RED, &TA_COLOR_GREEN);
-        ta_primitive_push_line_3d(line, &TA_COLOR_CYAN, &TA_COLOR_CYAN);
+        //ta_primitive_push_line_3d(&line, TA_COLOR_RED, TA_COLOR_GREEN);
+        ta_primitive_push_line_3d(*line, TA_COLOR_CYAN, TA_COLOR_CYAN);
     }
 }
 

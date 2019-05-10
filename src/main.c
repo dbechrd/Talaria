@@ -116,9 +116,10 @@ int main(int argc, char *argv[])
     ta_schema_register();
 
     ta_window_init(1600, 900, 80.0f, 0.1f, false);
-    ta_render_init();
     ta_mouse_init();
     ta_keyboard_init();
+    ta_render_init();
+    ta_primitive_init();
 
     // Fallback resources
     ta_mesh_group prim_cube = { 0 };
@@ -129,6 +130,7 @@ int main(int argc, char *argv[])
     // Intro scene
     read_scene("data/scenes/scene1.dml");
     DLB_ASSERT(tg_game.scene->cameras->dirty);  // Ensure we have a valid camera
+    ta_camera_update(tg_game.scene->cameras);
 
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
@@ -145,8 +147,6 @@ int main(int argc, char *argv[])
         INTERN("shader_mesh"));
     DLB_ASSERT(tg_shader_mesh && "Could not find shader_mesh");
 
-    // TODO: Figure out a better way to initialize attribs
-    ta_primitive_init();
 
     ////////////////////////////////////////////////////////////////////////////
     // Textures
@@ -166,18 +166,15 @@ int main(int argc, char *argv[])
     // UI
     ////////////////////////////////////////////////////////////////////////////
     // TODO: Move this to DML (e.g. editor.dml)
-	const ta_rgba mesh_selector_bg = { 0.1f, 0.1f, 0.2f, 1.0f };
-	ta_viewport mesh_selector = ta_viewport_init(10, 50, 200, 200, 90.0f, 0.1f,
-		mesh_selector_bg);
+	ta_viewport minimap_viewport = ta_viewport_init(10, 50, 200, 200, 90.0f,
+        0.1f, (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f });
 
 	//ta_mat4 project = mat4_perspective(65.0f, aspect, 0.1f, 100.0f);
 	//float oo = 0.5f;
 	//ta_mat4 project = mat4_ortho(-oo, oo, -oo, oo, 0.1f, 10.0f);
 
-    ta_camera_update(tg_game.scene->cameras);
-
 	ta_mat4 look_at_map = mat4_lookat(
-		(ta_vec3) { 0.0f, 10.0f, 30.0f },
+		(ta_vec3) { 0.0f, 40.0f, 50.0f },
 		(ta_vec3) { 0.0f, 0.0f, 0.0f },
 		VEC3_Y
 	);
@@ -185,9 +182,9 @@ int main(int argc, char *argv[])
     ta_line_3d X_AXIS = { 0 };
     ta_line_3d Y_AXIS = { 0 };
     ta_line_3d Z_AXIS = { 0 };
-    X_AXIS.p1 = vec3_scalef(VEC3_X, 5.0f);
-    Y_AXIS.p1 = vec3_scalef(VEC3_Y, 5.0f);
-    Z_AXIS.p1 = vec3_scalef(VEC3_Z, 5.0f);
+    X_AXIS.p1 = vec3_scalef(VEC3_X, 2.0f);
+    Y_AXIS.p1 = vec3_scalef(VEC3_Y, 2.0f);
+    Z_AXIS.p1 = vec3_scalef(VEC3_Z, 2.0f);
 
 	float model_deg = 0.0f;
 
@@ -223,7 +220,7 @@ int main(int argc, char *argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw models
-		glDisable(GL_CULL_FACE);
+		//glDisable(GL_CULL_FACE);
         ta_shader_set_mat4(tg_shader_mesh, SYM_U_PROJ, &tg_window.projection);
 		ta_shader_set_mat4(tg_shader_mesh, SYM_U_VIEW, &tg_game.scene->cameras->look_at);
         ta_shader_set_mat4(tg_shader_mesh, SYM_U_MODEL, &MAT4_IDENT);
@@ -233,42 +230,61 @@ int main(int argc, char *argv[])
         ta_mesh_group_render(mesh_group_prim_cube);
 		ta_shader_unbind(tg_shader_mesh);
 
+        //////////////////////////////////////////
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_window.projection);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.scene->cameras->look_at);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
 
-        //ta_primitive_push_line_3d(&X_AXIS, &TA_COLOR_RED,   &TA_COLOR_RED);
-        //ta_primitive_push_line_3d(&Y_AXIS, &TA_COLOR_GREEN, &TA_COLOR_GREEN);
-        //ta_primitive_push_line_3d(&Z_AXIS, &TA_COLOR_BLUE,  &TA_COLOR_BLUE);
+        ta_primitive_push_line_3d(X_AXIS, TA_COLOR_RED,   TA_COLOR_RED);
+        ta_primitive_push_line_3d(Y_AXIS, TA_COLOR_GREEN, TA_COLOR_GREEN);
+        ta_primitive_push_line_3d(Z_AXIS, TA_COLOR_BLUE,  TA_COLOR_BLUE);
 
-        //////////////////////////////////////////
         if (tg_debug_a) {
             ta_mesh_group_push_normals(mesh_group_chamber);
             ta_mesh_group_push_normals(mesh_group_prim_cube);
-            ta_primitive_render();
-            ta_primitive_clear();
         }
+
+        ta_primitive_render();
+        ta_primitive_clear();
         //////////////////////////////////////////
 
-		ta_viewport_bind(&mesh_selector, true);
+		ta_viewport_bind(&minimap_viewport, true);
 		{
-			// Update models
-			ta_mat4 model = mat4_rotate_y(model_deg);
-			model_deg += 1.0f;
-			if (model_deg >= 360.0f) {
-				model_deg = 0.0f;
-			}
+			// TODO: Mesh selector, highlight and rotate mesh while mouse hover
+			//ta_mat4 model = mat4_rotate_y(model_deg);
+			//model_deg += 1.0f;
+			//if (model_deg >= 360.0f) {
+			//	model_deg = 0.0f;
+			//}
+
+            ta_mat4 model;
+            model = mat4_rotate_y(180.0f);
+
+            ta_vec3 map_pos = vec3_negate(tg_game.scene->cameras->position);
+            map_pos.y = 50.0f;
+            map_pos.z += TA_EPSILON;
+            ta_vec3 map_target = map_pos;
+            map_target.y = 0.0f;
+            map_target.z += TA_EPSILON;
+            ta_mat4 map_lookat = mat4_lookat(map_pos, map_target, VEC3_Y);
 
 			// Draw models
-            ta_shader_set_mat4(tg_shader_mesh, SYM_U_PROJ, &mesh_selector.projection);
-            ta_shader_set_mat4(tg_shader_mesh, SYM_U_VIEW, &look_at_map);
+            ta_shader_set_mat4(tg_shader_mesh, SYM_U_PROJ, &minimap_viewport.projection);
+            ta_shader_set_mat4(tg_shader_mesh, SYM_U_VIEW, &map_lookat);
             ta_shader_set_mat4(tg_shader_mesh, SYM_U_MODEL, &model);
             ta_shader_bind(tg_shader_mesh);
             ta_shader_prerender(tg_shader_mesh);
             ta_mesh_group_render(mesh_group_chamber);
             ta_shader_unbind(tg_shader_mesh);
+
+            ta_primitive_push_rect(
+                minimap_viewport.rect.x + minimap_viewport.rect.w / 2 - 2,
+                minimap_viewport.rect.y + minimap_viewport.rect.h / 2 - 2,
+                (ta_rect) { 0, 0, 4, 4 },
+                TA_COLOR_RED
+            );
 		}
-		ta_viewport_unbind(&mesh_selector);
+		ta_viewport_unbind(&minimap_viewport);
 		glEnable(GL_CULL_FACE);
 
 		// Draw UI

@@ -7,16 +7,29 @@ ta_viewport ta_viewport_init(int left, int top, int width, int height,
 {
 	ta_viewport view;
 	view.rect.x = left;
-	view.rect.y = tg_window.height - (top + height);
+	view.rect.y = top;
 	view.rect.w = width;
 	view.rect.h = height;
 	view.fov = fov;
 	view.nearz = nearz;
-	view.projection = mat4_perspective_inf(
-		fov,
-		(float)view.rect.w / view.rect.h,
-		nearz
-	);
+
+    float oo = 0.5f;
+    view.projection = mat4_ortho(-oo, oo, -oo, oo, 0.1f, 10.0f);
+
+    //view.projection = mat4_ortho(
+    //    (float)view.rect.x,
+    //    (float)view.rect.x + view.rect.w,
+    //    (float)view.rect.y + view.rect.h,
+    //    (float)view.rect.y,
+    //    nearz,
+    //    100.0f
+    //);
+
+	//view.projection = mat4_perspective_inf(
+    //    fov,
+    //    (float)view.rect.w / view.rect.h,
+    //    nearz
+    //);
 	view.background = background;
 	return view;
 }
@@ -25,11 +38,12 @@ ta_viewport ta_viewport_init(int left, int top, int width, int height,
 //       viewports.
 void ta_viewport_bind(ta_viewport *view, bool aspect)
 {
+    int inv_y = tg_window.height - (view->rect.y + view->rect.h);
 	if (aspect) {
-		glViewport(view->rect.x, view->rect.y, view->rect.w, view->rect.h);
+		glViewport(view->rect.x, inv_y, view->rect.w, view->rect.h);
 	}
 	glEnable(GL_SCISSOR_TEST);
-	glScissor(view->rect.x, view->rect.y, view->rect.w, view->rect.h);
+	glScissor(view->rect.x, inv_y, view->rect.w, view->rect.h);
 	glClearColor(view->background.r, view->background.g, view->background.b,
 		view->background.a);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

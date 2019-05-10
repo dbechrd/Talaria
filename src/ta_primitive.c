@@ -17,12 +17,12 @@ static GLint quads_buffer_size;
 
 static void ta_primitive_push_line(ta_vert_line *line);
 static void ta_primitive_push_quad(ta_vert_quad *quad);
-static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d,
-	const ta_rgba *color0, const ta_rgba *color1);
+static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d line2d,
+	ta_rgba color0, ta_rgba color1);
 static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
-	const ta_rect *rect, const ta_rgba *color);
-static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
-	const ta_rgba *color);
+	ta_rect rect, ta_rgba color);
+static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d bbox,
+	ta_rgba color);
 
 static void ta_primitive_init_lines()
 {
@@ -77,38 +77,38 @@ static void ta_primitive_push_line(ta_vert_line *line)
 {
 	dlb_vec_push(lines_queue, *line);
 }
-static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d *line2d,
-	const ta_rgba *color0, const ta_rgba *color1)
+static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d line2d,
+	ta_rgba color0, ta_rgba color1)
 {
-	float x0 = X_TO_NDC(line2d->p0.x);
-	float x1 = X_TO_NDC(line2d->p1.x);
-	float y0 = Y_TO_NDC(line2d->p0.y);
-	float y1 = Y_TO_NDC(line2d->p1.y);
+	float x0 = X_TO_NDC(line2d.p0.x);
+	float x1 = X_TO_NDC(line2d.p1.x);
+	float y0 = Y_TO_NDC(line2d.p0.y);
+	float y1 = Y_TO_NDC(line2d.p1.y);
 
 	line->verts[0].position.x = x0;
 	line->verts[0].position.y = y0;
-	line->verts[0].color = *color0;
+	line->verts[0].color = color0;
 	line->verts[1].position.x = x1;
 	line->verts[1].position.y = y1;
-	line->verts[1].color = *color1;
+	line->verts[1].color = color1;
 }
-static void ta_primitive_line3d_to_line(ta_vert_line *line, ta_line_3d *line3d,
-    const ta_rgba *color0, const ta_rgba *color1)
+static void ta_primitive_line3d_to_line(ta_vert_line *line, ta_line_3d line3d,
+    ta_rgba color0, ta_rgba color1)
 {
-    line->verts[0].position = line3d->p0;
-    line->verts[0].color = *color0;
-    line->verts[1].position = line3d->p1;
-    line->verts[1].color = *color1;
+    line->verts[0].position = line3d.p0;
+    line->verts[0].color = color0;
+    line->verts[1].position = line3d.p1;
+    line->verts[1].color = color1;
 }
-void ta_primitive_push_line_2d(ta_line_2d *line_2d, const ta_rgba *color0,
-	const ta_rgba * color1)
+void ta_primitive_push_line_2d(ta_line_2d line_2d, ta_rgba color0,
+	ta_rgba color1)
 {
 	ta_vert_line line = { 0 };
 	ta_primitive_line2d_to_line(&line, line_2d, color0, color1);
 	ta_primitive_push_line(&line);
 }
-void ta_primitive_push_line_3d(ta_line_3d *line_3d, const ta_rgba *color0,
-    const ta_rgba * color1)
+void ta_primitive_push_line_3d(ta_line_3d line_3d, ta_rgba color0,
+    ta_rgba color1)
 {
     ta_vert_line line = { 0 };
     ta_primitive_line3d_to_line(&line, line_3d, color0, color1);
@@ -120,17 +120,17 @@ static void ta_primitive_push_quad(ta_vert_quad *quad)
 	dlb_vec_push(quads_queue, *quad);
 }
 static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
-	const ta_rect *rect, const ta_rgba *color)
+	ta_rect rect, ta_rgba color)
 {
 	// v3 *----* v2
 	//    |    |
 	// v0 *----* v1
 	// v0, v1, v2, v0, v2, v3
 
-	float x0 = X_TO_NDC(x + rect->x);
-	float x1 = X_TO_NDC(x + rect->x + rect->w);
-	float y0 = Y_TO_NDC(y + rect->y + rect->h);
-	float y1 = Y_TO_NDC(y + rect->y);
+	float x0 = X_TO_NDC(x + rect.x);
+	float x1 = X_TO_NDC(x + rect.x + rect.w);
+	float y0 = Y_TO_NDC(y + rect.y + rect.h);
+	float y1 = Y_TO_NDC(y + rect.y);
 
 	quad->verts[0].position.x = x0;  // v0 (0,0)
 	quad->verts[0].position.y = y0;
@@ -158,28 +158,28 @@ static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
 	quad->verts[5].uv.v = 1.0f;
 	for (int i = 0; i < 6; i++) {
 		quad->verts[i].position.z = 0.1f;
-		quad->verts[i].color = *color;
+		quad->verts[i].color = color;
 	}
 }
-void ta_primitive_push_rect(int x, int y, ta_rect *rect, const ta_rgba *color)
+void ta_primitive_push_rect(int x, int y, ta_rect rect, ta_rgba color)
 {
 	ta_vert_quad quad = { 0 };
 	ta_primitive_rect_to_quad(&quad, x, y, rect, color);
 	ta_primitive_push_quad(&quad);
 }
 
-static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
-	const ta_rgba *color)
+static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d bbox,
+	ta_rgba color)
 {
 	// v3 *----* v2
 	//    |    |
 	// v0 *----* v1
 	// v0, v1, v2, v0, v2, v3
 
-	float x0 = bbox->center.x - bbox->half_axes.x;
-	float x1 = bbox->center.x + bbox->half_axes.x;
-	float y0 = bbox->center.y - bbox->half_axes.y;
-	float y1 = bbox->center.y + bbox->half_axes.y;
+	float x0 = bbox.center.x - bbox.half_axes.x;
+	float x1 = bbox.center.x + bbox.half_axes.x;
+	float y0 = bbox.center.y - bbox.half_axes.y;
+	float y1 = bbox.center.y + bbox.half_axes.y;
 
 	quad->verts[0].position.x = x0;  // v0 (0,0)
 	quad->verts[0].position.y = y0;
@@ -195,7 +195,7 @@ static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d *bbox,
 	quad->verts[5].position.y = y1;
 	for (int i = 0; i < 6; i++) {
 		quad->verts[i].position.z = 0.1f;
-		quad->verts[i].color = *color;
+		quad->verts[i].color = color;
 	}
 }
 
