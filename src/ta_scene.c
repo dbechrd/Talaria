@@ -394,6 +394,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
         const char *name;
         void *ptr;
         u32 size;
+        bool is_union_type;
         bool is_union;
         int union_type;
     } stack[8] = { 0 };
@@ -456,6 +457,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                             stack[sp-1].array_elem++;
                         }
                         stack[sp].size = stack[sp-1].size;
+                        stack[sp].is_union_type = false;
                         stack[sp].is_union = false;
                         stack[sp].union_type = 0;
                         sp++;
@@ -493,6 +495,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     stack[sp].name = field->name;
                     stack[sp].ptr = ((u8 *)stack[sp-1].ptr + field->offset);
                     stack[sp].size = field->size;
+                    stack[sp].is_union_type = field->is_union_type;
                     stack[sp].is_union = false;
                     stack[sp].union_type = 0;
                 } else {
@@ -508,8 +511,9 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     stack[sp].name = tok->value.string;
                     stack[sp].ptr = ta_scene_obj_alloc(scene, schema->type);
                     stack[sp].size = schema->size;
+                    stack[sp].is_union_type = false;
                     stack[sp].is_union = false;
-                    stack[sp].union_type = INT_MIN;
+                    stack[sp].union_type = 0;
                 }
 
                 if (stack[sp].array_len) {
@@ -533,14 +537,12 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     PANIC("Expected array start, line %d column %d\n",
                         tok->file_pos.line, tok->file_pos.column);
                 }
-                DLB_ASSERT(
-                    stack[sp].type == F_ATOM_INT ||
-                    stack[sp].type == F_ATOM_UINT ||
-                    stack[sp].type == F_ATOM_UNION_TYPE
-                );
+                DLB_ASSERT(stack[sp].type == F_ATOM_INT ||
+                           stack[sp].type == F_ATOM_UINT ||
+                           stack[sp].type == F_ATOM_ENUM);
                 int *fp = stack[sp].ptr;
                 *fp = tok->value.as_int;
-                if (stack[sp].type == F_ATOM_UNION_TYPE) {
+                if (stack[sp].is_union_type) {
                     stack[sp-1].is_union = true;
                     stack[sp-1].union_type = *fp;
                 }

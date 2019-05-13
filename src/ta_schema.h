@@ -32,7 +32,7 @@ typedef enum {
     F_ATOM_UINT,
     F_ATOM_FLOAT,
     F_ATOM_STRING,
-    F_ATOM_UNION_TYPE,
+    F_ATOM_ENUM,
 } ta_schema_field_type;
 
 typedef struct scene_ref_s {
@@ -49,10 +49,10 @@ typedef struct {
     u32 size;
     u32 array_len;  // Note: 0 = not array, 1 = vector, >1 = fixed array size
     bool is_alias;
+    enum_to_str *enum_converter;
+    bool is_union_type;
     bool in_union;
     int union_type;
-    bool is_enum;
-    enum_to_str *enum_converter;
 } ta_schema_field;
 
 typedef struct {
