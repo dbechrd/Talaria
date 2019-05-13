@@ -1,5 +1,5 @@
 #pragma once
-#include "ta_mesh_group.h"
+#include "ta_scene.h"
 #include "ta_primitive.h"
 #include "misc/gl3w.h"
 
@@ -12,7 +12,7 @@ enum {
     TA_MESH_BUFFER_COUNT
 };
 
-typedef struct ta_scene_s ta_scene;
+typedef struct ta_mesh_group_s ta_mesh_group;
 
 typedef struct ta_mesh_s {
     ta_mesh_group *group;

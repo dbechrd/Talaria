@@ -103,21 +103,21 @@ void ta_mesh_group_load(ta_mesh_group *group)
 
 void ta_mesh_group_push_normals(ta_mesh_group *group)
 {
-    for (ta_mesh *dlb_vec_iter(group->meshes, mesh)) {
+    dlb_vec_each(ta_mesh *, mesh, group->meshes) {
         ta_mesh_push_normals(mesh);
     }
 }
 
 void ta_mesh_group_render(ta_mesh_group *group)
 {
-    for (ta_mesh *dlb_vec_iter(group->meshes, mesh)) {
+    dlb_vec_each(ta_mesh *, mesh, group->meshes) {
         ta_mesh_render(mesh);
     }
 }
 
 void ta_mesh_group_free(ta_mesh_group *group)
 {
-    for (ta_mesh *dlb_vec_iter(group->meshes, mesh)) {
+    dlb_vec_each(ta_mesh *, mesh, group->meshes) {
         ta_mesh_free(mesh);
     }
     dlb_vec_free(group->meshes);

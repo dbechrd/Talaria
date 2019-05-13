@@ -1,5 +1,6 @@
 #pragma once
 #include "ta_math.h"
+#include "ta_primitive.h"
 #include "dlb_types.h"
 
 typedef struct {

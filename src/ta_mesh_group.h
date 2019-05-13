@@ -1,8 +1,7 @@
 #pragma once
+#include "ta_scene.h"
+#include "ta_mesh.h"
 #include "dlb_hash.h"
-
-typedef struct ta_scene_s ta_scene;
-typedef struct ta_mesh_s ta_mesh;
 
 typedef struct ta_mesh_group_s {
     ta_scene *scene;

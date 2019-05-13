@@ -1,13 +1,19 @@
 #pragma once
 #include "ta_schema.h"
-#include "ta_camera.h"
-#include "ta_mesh.h"
-#include "ta_shader.h"
-#include "ta_texture.h"
-#include "ta_entity.h"
 #include "ta_file.h"
+#include "ta_math.h"
 #include "dlb_types.h"
 #include "dlb_hash.h"
+
+typedef struct ta_camera_s      ta_camera;
+typedef struct ta_sun_light_s   ta_sun_light;
+typedef struct ta_point_light_s ta_point_light;
+typedef struct ta_material_s    ta_material;
+typedef struct ta_mesh_group_s  ta_mesh_group;
+typedef struct ta_shader_s      ta_shader;
+typedef struct ta_texture_s     ta_texture;
+typedef struct ta_rigid_body_s  ta_rigid_body;
+typedef struct ta_entity_s      ta_entity;
 
 typedef struct ta_scene_s {
     const char *name;
@@ -22,6 +28,7 @@ typedef struct ta_scene_s {
     ta_mesh_group *mesh_groups;
     ta_shader *shaders;
     ta_texture *textures;
+    ta_rigid_body *rigid_bodies;
     ta_entity *entities;
 } ta_scene;
 
@@ -32,11 +39,4 @@ void ta_scene_print(ta_scene *scn, FILE *hnd);
 void *ta_scene_obj_alloc(ta_scene *scn, ta_schema_field_type type);
 void ta_scene_obj_init(ta_scene *scn);
 void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid);
-#if 0
-void *ta_scene_find(ta_scene *scene, const char *name, int len, ta_schema_field_type type);
-ta_material *ta_scene_find_material_by_name(ta_scene *scene, const char *name, int len);
-ta_mesh *ta_scene_find_mesh_by_name(ta_scene *scene, const char *name, int len);
-ta_shader *ta_scene_find_shader_by_name(ta_scene *scene, const char *name, int len);
-ta_texture *ta_scene_find_texure_by_name(ta_scene *scene, const char *name, int len);
-ta_entity *ta_scene_find_entity_by_name(ta_scene *scene, const char *name, int len);
-#endif
+void ta_scene_render(ta_scene *scene, ta_mat4 *proj, ta_mat4 *view);

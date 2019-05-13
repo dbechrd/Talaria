@@ -1,0 +1,14 @@
+#pragma once
+#include "ta_scene.h"
+#include "ta_shader.h"
+#include "ta_texture.h"
+
+typedef struct ta_material_s {
+    ta_scene *scene;
+    const char *uid;
+    const char *shader_uid;
+    const char *texture_uid;
+} ta_material;
+
+ta_shader *ta_material_shader(ta_material *m);
+ta_texture *ta_material_texture(ta_material *m);

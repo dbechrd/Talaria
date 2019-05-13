@@ -1,7 +1,8 @@
 #pragma once
+#include "ta_scene.h"
 #include "ta_math.h"
-
-typedef struct ta_scene_s ta_scene;
+#include "ta_material.h"
+#include "ta_mesh_group.h"
 
 typedef struct ta_sun_light_s {
     ta_scene *scene;
@@ -17,15 +18,8 @@ typedef struct ta_point_light_s {
     ta_vec3 color;
 } ta_point_light;
 
-typedef struct ta_material_s {
-    ta_scene *scene;
-    const char *uid;
-    const char *shader_uid;
-    const char *texture_uid;
-} ta_material;
-
 typedef enum {
-    ENTITY_DEFAULT
+    ENTITY_MESH_GROUP = 0,
 } ta_entity_type;
 
 typedef struct ta_entity_s ta_entity;
@@ -33,14 +27,15 @@ typedef struct ta_entity_s {
     ta_scene *scene;
     const char *uid;
     ta_entity_type type;
-    const char *material_uid;
-    const char *mesh_uid;
-    const char *shader_uid;
-    const char *texture_uid;
     ta_transform transform;
-    ta_entity *parent;
+    const char *rigid_body_uid;
+    const char *material_uid;
+    const char *mesh_group_uid;
+    const char *parent_uid;
     //ta_entity *next;  // TODO: Is a sibling linked list useful?
-    ta_entity **children;
+    //ta_entity **children;
 } ta_entity;
 
-ta_material *entity_material(ta_entity *e);
+ta_material *ta_entity_material(ta_entity *e);
+ta_mesh_group *ta_entity_mesh_group(ta_entity *e);
+void ta_entity_render(ta_entity *e, ta_mat4 *proj, ta_mat4 *view);

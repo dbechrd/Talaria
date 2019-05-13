@@ -3,6 +3,7 @@
 #include "ta_window.h"
 #include "ta_render.h"
 #include "ta_file.h"
+#include "ta_scene.h"
 #include "ta_shader.h"
 //#include "ta_shader_lines.h"
 //#include "ta_shader_quads.h"
@@ -20,7 +21,6 @@
 #include "ta_entity.h"
 #include "ta_schema.h"
 #include "ta_parse.h"
-#include "ta_scene.h"
 #include "ta_symbol.h"
 #include "dlb_types.h"
 #define DLB_VECTOR_IMPLEMENTATION
@@ -55,7 +55,7 @@ void debug_tests() {
 
 ta_entity *entity_create(ta_scene *scn, const char *name) {
     ta_entity *e = ta_scene_obj_alloc(scn, F_TA_ENTITY);
-    e->type = ENTITY_DEFAULT;
+    e->type = 0;
     e->uid = name;
     e->transform.position.x = 1.1f;
     e->transform.position.y = 1.2f;
@@ -95,7 +95,7 @@ void read_scene(const char *filename) {
     ta_scene_obj_init(tg_game.scene);
 
     ta_log_write(tg_debug_log, "[Scene] Loaded successfully\n");
-    //ta_scene_print(tg_game.scene, tg_debug_log->stream);
+    ta_scene_print(tg_game.scene, tg_debug_log->stream);
     //ta_scene_free(tg_game.scene);
 }
 
@@ -143,25 +143,6 @@ int main(int argc, char *argv[])
         INTERN("shader_quads"));
     DLB_ASSERT(tg_shader_quads && "Could not find shader_quads");
 
-    tg_shader_mesh = ta_scene_find(tg_game.scene, F_TA_SHADER,
-        INTERN("shader_mesh"));
-    DLB_ASSERT(tg_shader_mesh && "Could not find shader_mesh");
-
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Textures
-    ////////////////////////////////////////////////////////////////////////////
-    ta_texture *tex_test = ta_scene_find(tg_game.scene, F_TA_TEXTURE,
-        INTERN("texture_1"));
-    DLB_ASSERT(tex_test && tex_test->gl_id && "Could not find texture_1");
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Meshes
-    ////////////////////////////////////////////////////////////////////////////
-    ta_mesh_group *mesh_group_chamber = ta_scene_find(tg_game.scene,
-        F_TA_MESH_GROUP, INTERN("mesh_group_Chamber0001"));
-    DLB_ASSERT(mesh_group_chamber && "Could not find mesh_group_Chamber0001");
-
     ////////////////////////////////////////////////////////////////////////////
     // UI
     ////////////////////////////////////////////////////////////////////////////
@@ -179,14 +160,11 @@ int main(int argc, char *argv[])
 		VEC3_Y
 	);
 
-    ta_line_3d X_AXIS = { 0 };
-    ta_line_3d Y_AXIS = { 0 };
-    ta_line_3d Z_AXIS = { 0 };
-    X_AXIS.p1 = vec3_scalef(VEC3_X, 2.0f);
-    Y_AXIS.p1 = vec3_scalef(VEC3_Y, 2.0f);
-    Z_AXIS.p1 = vec3_scalef(VEC3_Z, 2.0f);
-
 	float model_deg = 0.0f;
+
+    ta_texture *tex_test = ta_scene_find(tg_game.scene, F_TA_TEXTURE,
+        INTERN("texture_1"));
+    DLB_ASSERT(tex_test && tex_test->gl_id && "Could not find texture_1");
 
 	// TODO: Remove x,y coords from init() methods and only store size. Pass x,y
 	//       at render time (make sure to update viewport correctly).
@@ -196,7 +174,7 @@ int main(int argc, char *argv[])
 
 	ta_ui_barchart chart = ta_ui_barchart_init(10, 10, tg_window.width - 20, 30);
 
-    ta_shader_set_sampler2d(tg_shader_mesh, SYM_U_TEX0, tex_test->gl_id);
+    //ta_shader_set_sampler2d(tg_shader_mesh, SYM_U_TEX0, tex_test->gl_id);
 
     // TODO: What other startup states would be useful (e.g. LOADING_MESHES)?
     //       Could use this for a progress bar during load and better logging.
@@ -221,33 +199,24 @@ int main(int argc, char *argv[])
 
 		// Draw models
 		//glDisable(GL_CULL_FACE);
-        ta_shader_set_mat4(tg_shader_mesh, SYM_U_PROJ, &tg_window.projection);
-		ta_shader_set_mat4(tg_shader_mesh, SYM_U_VIEW, &tg_game.scene->cameras->look_at);
-        ta_shader_set_mat4(tg_shader_mesh, SYM_U_MODEL, &MAT4_IDENT);
-        ta_shader_bind(tg_shader_mesh);
-        ta_shader_prerender(tg_shader_mesh);
-        ta_mesh_group_render(mesh_group_chamber);
-        ta_mesh_group_render(mesh_group_prim_cube);
-		ta_shader_unbind(tg_shader_mesh);
+        ta_scene_render(tg_game.scene, &tg_window.projection,
+            &tg_game.scene->cameras->look_at);
 
-        //////////////////////////////////////////
+        // World axes
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_window.projection);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.scene->cameras->look_at);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-
-        ta_primitive_push_line_3d(X_AXIS, TA_COLOR_RED,   TA_COLOR_RED);
-        ta_primitive_push_line_3d(Y_AXIS, TA_COLOR_GREEN, TA_COLOR_GREEN);
-        ta_primitive_push_line_3d(Z_AXIS, TA_COLOR_BLUE,  TA_COLOR_BLUE);
-
+        ta_primitive_push_axes(2.0f);
         if (tg_debug_a) {
-            ta_mesh_group_push_normals(mesh_group_chamber);
-            ta_mesh_group_push_normals(mesh_group_prim_cube);
+            // TODO: This should take entity transform into account
+            dlb_vec_each(ta_mesh_group *, group, tg_game.scene->mesh_groups) {
+                ta_mesh_group_push_normals(group);
+            }
         }
-
         ta_primitive_render();
         ta_primitive_clear();
-        //////////////////////////////////////////
 
+        // Minimap
 		ta_viewport_bind(&minimap_viewport, true);
 		{
 			// TODO: Mesh selector, highlight and rotate mesh while mouse hover
@@ -269,14 +238,10 @@ int main(int argc, char *argv[])
             ta_mat4 map_lookat = mat4_lookat(map_pos, map_target, VEC3_Y);
 
 			// Draw models
-            ta_shader_set_mat4(tg_shader_mesh, SYM_U_PROJ, &minimap_viewport.projection);
-            ta_shader_set_mat4(tg_shader_mesh, SYM_U_VIEW, &map_lookat);
-            ta_shader_set_mat4(tg_shader_mesh, SYM_U_MODEL, &model);
-            ta_shader_bind(tg_shader_mesh);
-            ta_shader_prerender(tg_shader_mesh);
-            ta_mesh_group_render(mesh_group_chamber);
-            ta_shader_unbind(tg_shader_mesh);
+            ta_scene_render(tg_game.scene, &minimap_viewport.projection,
+                &map_lookat);
 
+            // Red dot on map
             ta_primitive_push_rect(
                 minimap_viewport.rect.x + minimap_viewport.rect.w / 2 - 2,
                 minimap_viewport.rect.y + minimap_viewport.rect.h / 2 - 2,
@@ -287,7 +252,7 @@ int main(int argc, char *argv[])
 		ta_viewport_unbind(&minimap_viewport);
 		glEnable(GL_CULL_FACE);
 
-		// Draw UI
+		// Barchart
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
@@ -296,6 +261,7 @@ int main(int argc, char *argv[])
         ta_primitive_clear();
 
 #if 0
+        // Scroll view
 		ta_ui_scrollview_draw(0, 0, view);
         ta_primitive_render();
         ta_primitive_clear();

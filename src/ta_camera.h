@@ -1,4 +1,5 @@
 #pragma once
+#include "ta_scene.h"
 #include "ta_primitive.h"
 #include "dlb_types.h"
 
@@ -15,9 +16,7 @@ typedef enum {
     TA_CAMERA_DOWN
 } ta_camera_direction;
 
-typedef struct ta_scene_s ta_scene;
-
-typedef struct {
+typedef struct ta_camera_s {
     ta_scene *scene;
     const char *uid;
 	ta_vec3 position;

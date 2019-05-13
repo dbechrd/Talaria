@@ -21,6 +21,10 @@ typedef enum {
     F_TA_SHADER_UNIFORM,
     F_TA_TEXTURE,
     F_TA_ENTITY,
+    F_TA_AABB,
+    F_TA_OBB,
+    F_TA_COLLIDER,
+    F_TA_RIGID_BODY,
     F_TA_COUNT,
 
     // Atomic types
@@ -28,6 +32,7 @@ typedef enum {
     F_ATOM_UINT,
     F_ATOM_FLOAT,
     F_ATOM_STRING,
+    F_ATOM_UNION_TYPE,
 } ta_schema_field_type;
 
 typedef struct scene_ref_s {
@@ -40,8 +45,10 @@ typedef struct {
     const char *name;
     u32 offset;
     u32 size;
-    bool array;
-    bool alias;
+    u32 array;  // Note: 0 = not array, 1 = vector, >1 = fixed array size
+    bool is_alias;
+    bool in_union;
+    int union_type;
 } ta_schema_field;
 
 typedef struct {

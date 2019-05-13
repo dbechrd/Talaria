@@ -2,6 +2,7 @@
 #include "ta_log.h"
 #include "ta_window.h"
 #include "ta_shader.h"
+#include "ta_symbol.h"
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
 
@@ -21,8 +22,8 @@ static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d line2d,
 	ta_rgba color0, ta_rgba color1);
 static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
 	ta_rect rect, ta_rgba color);
-static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d bbox,
-	ta_rgba color);
+//static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d bbox,
+//	ta_rgba color);
 
 static void ta_primitive_init_lines()
 {
@@ -168,6 +169,21 @@ void ta_primitive_push_rect(int x, int y, ta_rect rect, ta_rgba color)
 	ta_primitive_push_quad(&quad);
 }
 
+void ta_primitive_push_axes(float scale)
+{
+    ta_line_3d X_AXIS = { 0 };
+    ta_line_3d Y_AXIS = { 0 };
+    ta_line_3d Z_AXIS = { 0 };
+    X_AXIS.p1 = vec3_scalef(VEC3_X, scale);
+    Y_AXIS.p1 = vec3_scalef(VEC3_Y, scale);
+    Z_AXIS.p1 = vec3_scalef(VEC3_Z, scale);
+
+    ta_primitive_push_line_3d(X_AXIS, TA_COLOR_RED,   TA_COLOR_RED);
+    ta_primitive_push_line_3d(Y_AXIS, TA_COLOR_GREEN, TA_COLOR_GREEN);
+    ta_primitive_push_line_3d(Z_AXIS, TA_COLOR_BLUE,  TA_COLOR_BLUE);
+}
+
+#if 0
 static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d bbox,
 	ta_rgba color)
 {
@@ -198,6 +214,7 @@ static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d bbox,
 		quad->verts[i].color = color;
 	}
 }
+#endif
 
 void ta_primitive_render_lines()
 {

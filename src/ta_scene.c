@@ -1,6 +1,14 @@
 #include "ta_scene.h"
 #include "ta_parse.h"
 #include "ta_symbol.h"
+#include "ta_camera.h"
+#include "ta_material.h"
+#include "ta_mesh_group.h"
+#include "ta_shader.h"
+#include "ta_texture.h"
+#include "ta_entity.h"
+#include "ta_collide.h"
+#include "ta_log.h"
 #include "dlb_vector.h"
 #include <stdlib.h>
 
@@ -257,74 +265,74 @@ static token *tokenize(ta_file *f)
     return tokens;
 }
 
-static void tokens_print(token *tokens)
+static void tokens_print(FILE *f, token *tokens)
 {
     for (token *tok = tokens; tok != dlb_vec_end(tokens); tok++) {
         switch (tok->type) {
             case TOKEN_EOF: {
                 break;
             } case TOKEN_WHITESPACE: {
-                printf(" ");
+                fprintf(f, " ");
                 break;
             } case TOKEN_NEWLINE: {
-                printf("\n");
+                fprintf(f, "\n");
                 break;
             } case TOKEN_INDENT: {
-                printf("  ");
+                fprintf(f, "  ");
                 break;
             }
             case TOKEN_COMMENT: case TOKEN_IDENTIFIER: case TOKEN_STRING:
             case TOKEN_KW_NULL: case TOKEN_KW_TRUE: case TOKEN_KW_FALSE:
             {
                 if (tok->type == TOKEN_COMMENT) {
-                    printf("#");
+                    fprintf(f, "#");
                 } else if (tok->type == TOKEN_STRING) {
-                    printf("\"");
+                    fprintf(f, "\"");
                 }
 
                 if (tok->length && tok->value.string) {
-                    printf("%.*s", tok->length, tok->value.string);
+                    fprintf(f, "%.*s", tok->length, tok->value.string);
                 }
 
                 if (tok->type == TOKEN_IDENTIFIER) {
-                    printf(":");
+                    fprintf(f, ":");
                 } else if (tok->type == TOKEN_STRING) {
-                    printf("\"");
+                    fprintf(f, "\"");
                 }
                 break;
             } case TOKEN_INT: {
-                printf("%d", tok->value.as_int);
+                fprintf(f, "%d", tok->value.as_int);
                 break;
             } case TOKEN_FLOAT: {
-                printf("%f", tok->value.as_float);
+                fprintf(f, "%f", tok->value.as_float);
                 break;
             } case TOKEN_ARRAY_START: {
-                printf("[");
+                fprintf(f, "[");
                 break;
             } case TOKEN_ARRAY_END: {
-                printf("]");
+                fprintf(f, "]");
                 break;
             } case TOKEN_OBJECT_START: {
-                printf("{");
+                fprintf(f, "{");
                 break;
             } case TOKEN_OBJECT_END: {
-                printf("}");
+                fprintf(f, "}");
                 break;
             } case TOKEN_LIST_SEPARATOR: {
-                printf(",");
+                fprintf(f, ",");
                 break;
             } default: {
                 DLB_ASSERT(!"Unexpected token type, don't know how to print");
             }
         }
     }
-    printf("\n");
+    fprintf(f, "\n");
 }
 
-static void tokens_print_debug(token *tokens)
+static void tokens_print_debug(FILE *f, token *tokens)
 {
     for (token *tok = tokens; tok != dlb_vec_end(tokens); tok++) {
-        printf("%-16s", token_type_str(tok->type));
+        fprintf(f, "%-16s", token_type_str(tok->type));
         switch (tok->type) {
             case TOKEN_EOF:
             {
@@ -340,26 +348,26 @@ static void tokens_print_debug(token *tokens)
             case TOKEN_KW_NULL: case TOKEN_KW_TRUE: case TOKEN_KW_FALSE:
             {
                 if (tok->type == TOKEN_COMMENT) {
-                    printf("#");
+                    fprintf(f, "#");
                 } else if (tok->type == TOKEN_STRING) {
-                    printf("\"");
+                    fprintf(f, "\"");
                 }
 
                 if (tok->length && tok->value.string) {
-                    printf("%.*s", tok->length, tok->value.string);
+                    fprintf(f, "%.*s", tok->length, tok->value.string);
                 }
 
                 if (tok->type == TOKEN_IDENTIFIER) {
-                    printf(":");
+                    fprintf(f, ":");
                 } else if (tok->type == TOKEN_STRING) {
-                    printf("\"");
+                    fprintf(f, "\"");
                 }
                 break;
             } case TOKEN_INT: {
-                printf("%d", tok->value.as_int);
+                fprintf(f, "%d", tok->value.as_int);
                 break;
             } case TOKEN_FLOAT: {
-                printf("%f", tok->value.as_float);
+                fprintf(f, "%f", tok->value.as_float);
                 break;
             }
             case TOKEN_ARRAY_START: case TOKEN_ARRAY_END:
@@ -371,9 +379,9 @@ static void tokens_print_debug(token *tokens)
                 DLB_ASSERT(!"Unexpected token type, don't know how to print");
             }
         }
-        printf("\n");
+        fprintf(f, "\n");
     }
-    printf("\n");
+    fprintf(f, "\n");
 }
 
 static void tokens_parse(ta_scene *scene, token *tokens)
@@ -381,26 +389,26 @@ static void tokens_parse(ta_scene *scene, token *tokens)
     struct {
         int indent;
         ta_schema_field_type type;
-        bool array;
+        u32 array;
+        u32 array_elem;
         const char *name;
         void *ptr;
         u32 size;
+        bool is_union;
+        int union_type;
     } stack[8] = { 0 };
 
     int indent = 0;  // Current line indent counter
     bool expect_array_start = false;
 
     //int level = 0;   // Current level of indentation
-    int sp = 0;      // "Stack pointer" index into stack
-    int braces = 0;  // Current level of curly braces
-    int array = 0;   // Current level of square brackets
+    int sp = 0;          // "Stack pointer" index into stack
+    int braces = 0;      // Current level of curly braces
+    int array = 0;       // Current level of square brackets
+    int array_elem = 0;  // Current element of array we're writing to
 
     token *prev = tokens;
     for (token *tok = tokens; tok != dlb_vec_end(tokens); tok++) {
-        //if (tok->type != TOKEN_INDENT && prev->type == TOKEN_INDENT) {
-        //    level
-        //}
-
         switch (tok->type) {
             case TOKEN_EOF: {
                 break;
@@ -436,14 +444,21 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 if (array) {
                     // NOTE: Commas allowed but not required when reading in objects
                     if (stack[sp-1].array) {
-                        DLB_ASSERT(stack[sp-1].array);
                         void **arr = stack[sp-1].ptr;
 
                         stack[sp].type = stack[sp-1].type;
                         stack[sp].array = 0;
+                        stack[sp].array_elem = 0;
                         stack[sp].name = "[ARRAY_ELEMENT]";
-                        stack[sp].ptr = dlb_vec_alloc_size(*arr, stack[sp-1].size);
+                        if (stack[sp-1].array == 1) {
+                            stack[sp].ptr = dlb_vec_alloc_size(*arr, stack[sp-1].size);
+                        } else {
+                            stack[sp].ptr = (u8 *)arr + (stack[sp-1].array_elem * stack[sp-1].size);
+                            stack[sp-1].array_elem++;
+                        }
                         stack[sp].size = stack[sp-1].size;
+                        stack[sp].is_union = false;
+                        stack[sp].union_type = 0;
                         sp++;
                     }
                 }
@@ -453,15 +468,34 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                         tok->value.string);
                     if (!field) {
                         PANIC("Unexpected field '%s' on %s '%s'\n",
-                            tok->value.string, ta_schema_field_type_str(stack[sp-1].type),
+                            tok->value.string,
+                            ta_schema_field_type_str(stack[sp-1].type),
                             stack[sp-1].name);
+                    }
+                    if (field->in_union) {
+                        if (!stack[sp-1].is_union) {
+                            PANIC("Unexpected union field '%s' before union type field found in %s '%s'\n",
+                                tok->value.string,
+                                ta_schema_field_type_str(stack[sp-1].type),
+                                stack[sp-1].name);
+                        }
+                        if (field->union_type != stack[sp-1].union_type) {
+                            PANIC("Unexpected union field '%s' in %s '%s' with union_type = %d\n",
+                                tok->value.string,
+                                ta_schema_field_type_str(stack[sp-1].type),
+                                stack[sp-1].name,
+                                stack[sp-1].union_type);
+                        }
                     }
                     DLB_ASSERT(field->type);
                     stack[sp].type = field->type;
                     stack[sp].array = field->array;
+                    stack[sp].array_elem = 0;
                     stack[sp].name = field->name;
                     stack[sp].ptr = ((u8 *)stack[sp-1].ptr + field->offset);
                     stack[sp].size = field->size;
+                    stack[sp].is_union = false;
+                    stack[sp].union_type = 0;
                 } else {
                     ta_schema *schema = ta_schema_find(tok->value.string, tok->length);
                     if (!schema) {
@@ -471,9 +505,12 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     DLB_ASSERT(schema->name == tok->value.string);
                     stack[sp].type = schema->type;
                     stack[sp].array = 0;
+                    stack[sp].array_elem = 0;
                     stack[sp].name = tok->value.string;
                     stack[sp].ptr = ta_scene_obj_alloc(scene, schema->type);
                     stack[sp].size = schema->size;
+                    stack[sp].is_union = false;
+                    stack[sp].union_type = INT_MIN;
                 }
 
                 if (stack[sp].array) {
@@ -499,10 +536,15 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 }
                 DLB_ASSERT(
                     stack[sp].type == F_ATOM_INT ||
-                    stack[sp].type == F_ATOM_UINT
+                    stack[sp].type == F_ATOM_UINT ||
+                    stack[sp].type == F_ATOM_UNION_TYPE
                 );
                 int *fp = stack[sp].ptr;
                 *fp = tok->value.as_int;
+                if (stack[sp].type == F_ATOM_UNION_TYPE) {
+                    stack[sp-1].is_union = true;
+                    stack[sp-1].union_type = *fp;
+                }
                 break;
             } case TOKEN_FLOAT: {
                 if (expect_array_start) {
@@ -598,8 +640,8 @@ ta_scene *ta_scene_load(ta_file *f)
     //dlb_vec_reserve(scn->entities, 2);
 
     token *tokens = tokenize(f);
-    //tokens_print(tokens);
-    //tokens_print_debug(tokens);
+    //tokens_print(tg_debug_log->stream, tokens);
+    //tokens_print_debug(tg_debug_log->stream, tokens);
     tokens_parse(scene, tokens);
     dlb_vec_free(tokens);
 
@@ -641,6 +683,10 @@ void ta_scene_free(ta_scene *scene)
         ta_texture_free(o);
     }
     dlb_vec_free(scene->textures);
+    for (ta_rigid_body *o = scene->rigid_bodies; o != dlb_vec_end(scene->rigid_bodies); o++) {
+        // TODO: Free rigid bodies
+    }
+    dlb_vec_free(scene->rigid_bodies);
     for (ta_entity *o = scene->entities; o != dlb_vec_end(scene->entities); o++) {
         // TODO: Free entities
     }
@@ -672,6 +718,9 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
     }
     for (ta_texture *o = scene->textures; o != dlb_vec_end(scene->textures); o++) {
         ta_schema_print(hnd, F_TA_TEXTURE, (void *)o, 0, 0);
+    }
+    for (ta_rigid_body *o = scene->rigid_bodies; o != dlb_vec_end(scene->rigid_bodies); o++) {
+        ta_schema_print(hnd, F_TA_RIGID_BODY, (void *)o, 0, 0);
     }
     for (ta_entity *o = scene->entities; o != dlb_vec_end(scene->entities); o++) {
         ta_schema_print(hnd, F_TA_ENTITY, (void *)o, 0, 0);
@@ -719,6 +768,11 @@ void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type)
             texture->scene = scene;
             obj = texture;
             break;
+        } case F_TA_RIGID_BODY: {
+            ta_rigid_body *rigid_body = dlb_vec_alloc(scene->rigid_bodies);
+            rigid_body->scene = scene;
+            obj = rigid_body;
+            break;
         } case F_TA_ENTITY: {
             ta_entity *entity = dlb_vec_alloc(scene->entities);
             entity->scene = scene;
@@ -733,25 +787,27 @@ void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type)
 
 void ta_scene_obj_init(ta_scene *scene)
 {
-    for (ta_camera *o = scene->cameras; o != dlb_vec_end(scene->cameras); o++) {
-        o->dirty = true;
+    dlb_vec_each(ta_camera *, cam, scene->cameras) {
+        cam->dirty = true;
     }
-    for (ta_sun_light *o = scene->sun_lights; o != dlb_vec_end(scene->sun_lights); o++) {
+    dlb_vec_each(ta_sun_light *, light, scene->sun_lights) {
     }
-    for (ta_point_light *o = scene->point_lights; o != dlb_vec_end(scene->point_lights); o++) {
+    dlb_vec_each(ta_point_light *, light, scene->point_lights) {
     }
-    for (ta_material *o = scene->materials; o != dlb_vec_end(scene->materials); o++) {
+    dlb_vec_each(ta_material *, mat, scene->materials) {
     }
-    for (ta_mesh_group *o = scene->mesh_groups; o != dlb_vec_end(scene->mesh_groups); o++) {
-        ta_mesh_group_load(o);
+    dlb_vec_each(ta_mesh_group *, group, scene->mesh_groups) {
+        ta_mesh_group_load(group);
     }
-    for (ta_shader *o = scene->shaders; o != dlb_vec_end(scene->shaders); o++) {
-        ta_shader_create(o);
+    dlb_vec_each(ta_shader *, shader, scene->shaders) {
+        ta_shader_create(shader);
     }
-    for (ta_texture *o = scene->textures; o != dlb_vec_end(scene->textures); o++) {
-        ta_texture_create(o);
+    dlb_vec_each(ta_texture *, tex, scene->textures) {
+        ta_texture_create(tex);
     }
-    for (ta_entity *o = scene->entities; o != dlb_vec_end(scene->entities); o++) {
+    dlb_vec_each(ta_rigid_body *, rigid_body, scene->rigid_bodies) {
+    }
+    dlb_vec_each(ta_entity *, entity, scene->entities) {
     }
 }
 
@@ -764,29 +820,10 @@ void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
     return ref->ptr;
 }
 
-#if 0
-ta_material *ta_scene_find_material_by_name(ta_scene *scene, const char *name, int len)
+void ta_scene_render(ta_scene *scene, ta_mat4 *proj, ta_mat4 *view)
 {
-    return ta_scene_find(scene, name, len, F_TA_MATERIAL);
+    // TODO: Group by shader / material to minimize redundant uniform calls
+    dlb_vec_each(ta_entity *, entity, scene->entities) {
+        ta_entity_render(entity, proj, view);
+    }
 }
-
-ta_mesh *ta_scene_find_mesh_by_name(ta_scene *scene, const char *name, int len)
-{
-    return ta_scene_find(scene, name, len, F_TA_MESH);
-}
-
-ta_shader *ta_scene_find_shader_by_name(ta_scene *scene, const char *name, int len)
-{
-    return ta_scene_find(scene, name, len, F_TA_SHADER);
-}
-
-ta_texture *ta_scene_find_texure_by_name(ta_scene *scene, const char *name, int len)
-{
-    return ta_scene_find(scene, name, len, F_TA_TEXTURE);
-}
-
-ta_entity *ta_scene_find_entity_by_name(ta_scene *scene, const char *name, int len)
-{
-    return ta_scene_find(scene, name, len, F_TA_ENTITY);
-}
-#endif

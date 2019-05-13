@@ -8,7 +8,6 @@
 
 ta_shader *tg_shader_lines;
 ta_shader *tg_shader_quads;
-ta_shader *tg_shader_mesh;
 
 static void show_info_log(GLuint shader, PFNGLGETSHADERIVPROC glGet__iv,
     PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)

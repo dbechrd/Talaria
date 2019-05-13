@@ -7,6 +7,7 @@
 #include "ta_texture.h"
 #include "ta_shader.h"
 #include "ta_entity.h"
+#include "ta_collide.h"
 #include "dlb_types.h"
 #include "dlb_vector.h"
 #include "dlb_hash.h"
@@ -17,35 +18,43 @@ static dlb_hash tg_schemas_by_name;
 
 const char *ta_schema_field_type_str(ta_schema_field_type type) {
     switch(type) {
-        case F_TA_NULL:        return "NULL";
+        case F_TA_NULL:         return "NULL";
 
         // Compound types
-        case F_TA_VEC3:        return "TA_VEC3";
-        case F_TA_VEC4:        return "TA_VEC4";
-        case F_TA_RGB:         return "TA_COLOR3";
-        case F_TA_RGBA:        return "TA_COLOR4";
-        case F_TA_TRANSFORM:   return "TA_TRANSFORM";
-        case F_TA_CAMERA:      return "TA_CAMERA";
-        case F_TA_SUN_LIGHT:   return "TA_SUN_LIGHT";
-        case F_TA_POINT_LIGHT: return "TA_POINT_LIGHT";
-        case F_TA_MATERIAL:    return "TA_MATERIAL";
-        case F_TA_MESH_GROUP:        return "TA_MESH";
-        case F_TA_SHADER:      return "TA_SHADER";
-        case F_TA_TEXTURE:     return "TA_TEXTURE";
-        case F_TA_ENTITY:      return "TA_ENTITY";
+        case F_TA_VEC3:         return "TA_VEC3";
+        case F_TA_VEC4:         return "TA_VEC4";
+        case F_TA_RGB:          return "TA_COLOR3";
+        case F_TA_RGBA:         return "TA_COLOR4";
+        case F_TA_TRANSFORM:    return "TA_TRANSFORM";
+        case F_TA_CAMERA:       return "TA_CAMERA";
+        case F_TA_SUN_LIGHT:    return "TA_SUN_LIGHT";
+        case F_TA_POINT_LIGHT:  return "TA_POINT_LIGHT";
+        case F_TA_MATERIAL:     return "TA_MATERIAL";
+        case F_TA_MESH_GROUP:   return "TA_MESH";
+        case F_TA_SHADER:       return "TA_SHADER";
+        case F_TA_TEXTURE:      return "TA_TEXTURE";
+        case F_TA_ENTITY:       return "TA_ENTITY";
+        case F_TA_AABB:         return "TA_AABB";
+        case F_TA_OBB:          return "TA_OBB";
+        case F_TA_COLLIDER:     return "TA_COLLIDER";
+        case F_TA_RIGID_BODY:   return "TA_RIGID_BODY";
 
         // Atomic types
-        case F_ATOM_INT:       return "ATOM_INT";
-        case F_ATOM_UINT:      return "ATOM_UINT";
-        case F_ATOM_FLOAT:     return "ATOM_FLOAT";
-        case F_ATOM_STRING:    return "ATOM_STRING";
+        case F_ATOM_INT:        return "ATOM_INT";
+        case F_ATOM_UINT:       return "ATOM_UINT";
+        case F_ATOM_FLOAT:      return "ATOM_FLOAT";
+        case F_ATOM_STRING:     return "ATOM_STRING";
+        case F_ATOM_UNION_TYPE: return "ATOM_UNION_TYPE";
 
-        default: return "<UNKNOWN_TA_FIELD_TYPE>";
+        default:
+            DLB_ASSERT(!"<UNKNOWN_TA_FIELD_TYPE>");
+            return 0;
     }
 };
 
 static void type_field_add(ta_schema *schema, ta_schema_field_type type,
-    const char *name, u32 offset, u32 size, bool array, bool alias)
+    const char *name, u32 offset, u32 size, u32 array, bool is_alias,
+    bool in_union, int union_type)
 {
     ta_schema_field *field = dlb_vec_alloc(schema->fields);
     field->type = type;
@@ -53,7 +62,9 @@ static void type_field_add(ta_schema *schema, ta_schema_field_type type,
     field->offset = offset;
     field->size = size;
     field->array = array;
-    field->alias = alias;
+    field->is_alias = is_alias;
+    field->in_union = in_union;
+    field->union_type = union_type;
 }
 
 #define TYPE_START(_type, field_type) \
@@ -63,13 +74,20 @@ static void type_field_add(ta_schema *schema, ta_schema_field_type type,
     schema->size = sizeof(_type);
 
 #define TYPE_FIELD(type, field, field_type) \
-    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), SIZEOF_MEMBER(type, field), 0, 0)
+    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
+    SIZEOF_MEMBER(type, field), 0, false, false, 0)
 
-#define TYPE_ARRAY(type, field, field_type) \
-    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), SIZEOF_MEMBER_ARRAY(type, field), 1, 0)
+#define TYPE_UNION(type, field, field_type, union_name, union_type) \
+    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, union_name.field), \
+    SIZEOF_MEMBER(type, union_name.field), 0, false, true, union_type)
 
-//#define TYPE_FIELD_ALIAS(type, field, field_type, array) \
-//    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), array, 1)
+#define TYPE_ARRAY(type, field, field_type, size) \
+    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
+    SIZEOF_MEMBER_ARRAY(type, field), size, false, false, 0)
+
+#define TYPE_VECTOR(type, field, field_type) \
+    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
+    SIZEOF_MEMBER_ARRAY(type, field), 1, false, false, 0)
 
 #define TYPE_END(type) \
     dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(type)), schema);
@@ -170,8 +188,8 @@ void ta_schema_register()
     TYPE_FIELD(ta_shader, uid,        F_ATOM_STRING);
     TYPE_FIELD(ta_shader, path_vert,  F_ATOM_STRING);
     TYPE_FIELD(ta_shader, path_frag,  F_ATOM_STRING);
-    TYPE_ARRAY(ta_shader, attributes, F_TA_SHADER_ATTRIBUTE);
-    TYPE_ARRAY(ta_shader, uniforms,   F_TA_SHADER_UNIFORM);
+    TYPE_VECTOR(ta_shader, attributes, F_TA_SHADER_ATTRIBUTE);
+    TYPE_VECTOR(ta_shader, uniforms,   F_TA_SHADER_UNIFORM);
     TYPE_END(ta_shader);
 
     TYPE_START(ta_shader_attribute, F_TA_SHADER_ATTRIBUTE);
@@ -190,13 +208,37 @@ void ta_schema_register()
     TYPE_END(ta_texture);
 
     TYPE_START(ta_entity, F_TA_ENTITY);
-    TYPE_FIELD(ta_entity, uid,          F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, material_uid, F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, mesh_uid,     F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, shader_uid,   F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, texture_uid,  F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, transform,    F_TA_TRANSFORM);
+    TYPE_FIELD(ta_entity, uid,            F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, type,           F_ATOM_INT);
+    TYPE_FIELD(ta_entity, transform,      F_TA_TRANSFORM);
+    TYPE_FIELD(ta_entity, material_uid,   F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, mesh_group_uid, F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, rigid_body_uid, F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, parent_uid,     F_ATOM_STRING);
     TYPE_END(ta_entity);
+
+    TYPE_START(ta_aabb, F_TA_AABB);
+    TYPE_FIELD(ta_aabb, center,  F_TA_VEC3);
+    TYPE_FIELD(ta_aabb, extents, F_TA_VEC3);
+    TYPE_END(ta_aabb);
+
+    TYPE_START(ta_obb, F_TA_OBB);
+    TYPE_FIELD(ta_obb, center,  F_TA_VEC3);
+    TYPE_FIELD(ta_obb, extents, F_TA_VEC3);
+    TYPE_ARRAY(ta_obb, axes,    F_TA_VEC3, 3);
+    TYPE_END(ta_obb);
+
+    TYPE_START(ta_collider, F_TA_COLLIDER);
+    TYPE_FIELD(ta_collider, type, F_ATOM_UNION_TYPE);
+    TYPE_UNION(ta_collider, aabb, F_TA_AABB, data, TA_COLLIDER_AABB);
+    TYPE_UNION(ta_collider, obb,  F_TA_OBB,  data, TA_COLLIDER_OBB);
+    TYPE_END(ta_collider);
+
+    TYPE_START(ta_rigid_body, F_TA_RIGID_BODY);
+    TYPE_FIELD(ta_rigid_body, uid,           F_ATOM_STRING);
+    TYPE_FIELD(ta_rigid_body, transform,     F_TA_TRANSFORM);
+    TYPE_FIELD(ta_rigid_body, collider,      F_TA_COLLIDER);
+    TYPE_END(ta_rigid_body);
 }
 
 #undef TYPE_START
@@ -244,6 +286,10 @@ void ta_schema_print_atom(FILE *f, ta_schema_field *field, void *ptr)
             //fprintf(f, "\"%s\"  # %08X\n", IFNULL(*val, ""), (u32)*val);
             fprintf(f, "\"%s\"", IFNULL(*val, ""));
             break;
+        } case F_ATOM_UNION_TYPE: {
+            int *val = ptr;
+            fprintf(f, "%d", *val);
+            break;
         } default: {
             PANIC("Unexpected field type, don't know how to print");
         }
@@ -257,7 +303,8 @@ static inline void indent(FILE *f, int count)
     }
 }
 
-void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level, bool in_array)
+void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
+    bool in_array)
 {
     ta_schema *schema = &tg_schemas[type];
     if (!in_array) {
@@ -266,9 +313,15 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level, boo
         }
     }
 
-    for (ta_schema_field *field = schema->fields; field != dlb_vec_end(schema->fields); field++)
-    {
-        if (field->alias) {
+    // NOTE: Defaults to a value unlikely to be used in any legitimate enum to
+    //       detect errors more easily.
+    int union_type = INT_MIN;
+
+    dlb_vec_each(ta_schema_field *, field, schema->fields) {
+        if (field->is_alias) {
+            continue;
+        }
+        if (field->in_union && field->union_type != union_type) {
             continue;
         }
 
@@ -277,8 +330,12 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level, boo
             indent(f, level + 1);
             fprintf(f, "%s: [\n", field->name);
 
-            u8 *arr = *(void **)(ptr + field->offset);
-            u32 arr_len = dlb_vec_len(arr);
+            u8 *arr = (ptr + field->offset);
+            u32 arr_len = field->array;
+            if (arr_len == 1) {
+                arr = *(void **)(ptr + field->offset);
+                arr_len = dlb_vec_len(arr);
+            }
             u8 *arr_end = arr + (arr_len * field->size);
             for (u8 *p = arr; p != arr_end; p += field->size) {
                 if (field->type < F_TA_COUNT) {
@@ -299,13 +356,19 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level, boo
             if (field->type < F_TA_COUNT) {
                 fprintf(f, "%s:\n", field->name);
                 ta_schema_print(f, field->type, ptr + field->offset, level + 1, 0);
+                if (in_array) {
+                    fprintf(f, ",");
+                }
             } else {
+                if (field->type == F_ATOM_UNION_TYPE) {
+                    union_type = *(int *)(ptr + field->offset);
+                }
                 ta_schema_print_atom(f, field, ptr + field->offset);
+                if (in_array) {
+                    fprintf(f, ",");
+                }
+                fprintf(f, "\n");
             }
-            if (in_array) {
-                fprintf(f, ",");
-            }
-            fprintf(f, "\n");
         }
     }
 }

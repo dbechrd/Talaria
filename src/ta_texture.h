@@ -1,7 +1,6 @@
 #pragma once
+#include "ta_scene.h"
 #include "misc/gl3w.h"
-
-typedef struct ta_scene_s ta_scene;
 
 typedef struct ta_texture_s {
     ta_scene *scene;

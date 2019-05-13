@@ -75,33 +75,6 @@ typedef struct {
     int h;
 } ta_size;
 
-typedef struct {
-    ta_vec2 p0;
-    ta_vec2 p1;
-} ta_line_2d;
-
-typedef struct {
-    ta_vec3 p0;
-    ta_vec3 p1;
-} ta_line_3d;
-
-typedef struct {
-    int x;
-    int y;
-    int w;
-    int h;
-} ta_rect;
-
-typedef struct {
-    ta_vec2 center;
-    ta_vec2 half_axes;
-} ta_bbox_2d;
-
-typedef struct {
-    ta_vec3 center;
-    ta_vec3 half_axes;
-} ta_bbox_3d;
-
 extern const ta_vec3 VEC3_ZERO;
 extern const ta_vec3 VEC3_X;
 extern const ta_vec3 VEC3_Y;

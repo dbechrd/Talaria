@@ -1,5 +1,5 @@
 ta_camera:
-  uid: "main_camera"
+  uid: "camera_main"
   position: { x: 0.0, y: 1.7, z: 24.0 }
   velocity: 0.1
   yaw: 90.0
@@ -18,12 +18,12 @@ ta_shader:
   attributes:
   [
     { name: "attr_position", type: "vec3" },
-    { name: "attr_color",    type: "vec4" },
+    { name: "attr_color",    type: "vec4" }
   ]
   uniforms: [
     { name: "u_proj",  type: "mat4" },
     { name: "u_view",  type: "mat4" },
-    { name: "u_model", type: "mat4" },
+    { name: "u_model", type: "mat4" }
   ]
 ta_shader:
   uid: "shader_quads"
@@ -33,13 +33,13 @@ ta_shader:
   [
     { name: "attr_position", type: "vec3" },
     { name: "attr_color",    type: "vec4" },
-    { name: "attr_uv",       type: "vec2" },
+    { name: "attr_uv",       type: "vec2" }
   ]
   uniforms: [
     { name: "u_proj",  type: "mat4" },
     { name: "u_view",  type: "mat4" },
     { name: "u_model", type: "mat4" },
-    { name: "u_tex0",  type: "sampler2D" },
+    { name: "u_tex0",  type: "sampler2D" }
   ]
 ta_shader:
   uid: "shader_mesh"
@@ -50,36 +50,65 @@ ta_shader:
     { name: "attr_position", type: "vec3" },
     { name: "attr_color",    type: "vec4" },
     { name: "attr_uv",       type: "vec2" },
-    { name: "attr_normal",   type: "vec3" },
+    { name: "attr_normal",   type: "vec3" }
   ]
   uniforms: [
     { name: "u_proj",  type: "mat4" },
     { name: "u_view",  type: "mat4" },
     { name: "u_model", type: "mat4" },
-    { name: "u_tex0",  type: "sampler2D" },
+    { name: "u_tex0",  type: "sampler2D" }
   ]
 ta_material:
   uid: "material_1"
   shader_uid: "shader_mesh"
   texture_uid: "texture_1"
 ta_mesh_group:
-  uid: "mesh_group_Chamber0001"
+  uid: "mesh_group_chamber_0001"
   path: "data/models/Chamber0001.obj"
 ta_sun_light:
-  uid: "sun"
+  uid: "light_sun"
   direction: { x: 1.0, y: 2.0, z: 3.0 }
   color:     { r: 1.0, g: 2.0, b: 3.0 }
 ta_point_light:
-  uid: "point_light_1"
+  uid: "light_1"
   position: { x: 1.0, y: 2.0, z: 3.0 }
   color:    { r: 1.0, g: 2.0, b: 3.0 }
 ta_entity:
-  uid: "entity_1"
+  uid: "entity_chamber_0001"
   material_uid: "material_1"
+  mesh_group_uid: "mesh_group_chamber_0001"
   transform:
     position: { x: 1.0, y: 2.0, z: 3.0 }
     rotation: { x: 1.0, y: 2.0, z: 3.0, w: 4.0 }
     scale:    { x: 1.0, y: 1.0, z: 1.0 }
+ta_rigid_body:
+  uid: "entity_chamber_0001_aabb"
+  transform:
+    position: { x: 1.0, y: 2.0, z: 3.0 }
+    rotation: { x: 1.0, y: 2.0, z: 3.0, w: 4.0 }
+    scale:    { x: 1.0, y: 1.0, z: 1.0 }
+  collider:
+    type: 0  # TA_COLLIDER_AABB
+    aabb:
+      center:  { x: 1.0, y: 1.0, z: 1.0 }
+      extents: { x: 2.0, y: 2.0, z: 2.0 }
+ta_rigid_body:
+  uid: "entity_chamber_0001_obb"
+  transform:
+    position: { x: 1.0, y: 2.0, z: 3.0 }
+    rotation: { x: 1.0, y: 2.0, z: 3.0, w: 4.0 }
+    scale:    { x: 1.0, y: 1.0, z: 1.0 }
+  collider:
+    type: 1  # TA_COLLIDER_OBB
+    obb:
+      center:  { x: 1.0, y: 1.0, z: 1.0 }
+      extents: { x: 2.0, y: 2.0, z: 2.0 }
+      axes: [
+        { x: 1.0, y: 2.0, z: 3.0 },
+        { x: 4.0, y: 5.0, z: 6.0 },
+        { x: 7.0, y: 8.0, z: 9.0 }
+      ]
+
 
 #ta_texture:
 #  name: "texture_example"

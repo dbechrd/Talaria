@@ -1,4 +1,5 @@
 #include "ta_mesh.h"
+#include "ta_mesh_group.h"
 #include "ta_log.h"
 #include "ta_shader.h"
 #include "ta_symbol.h"
