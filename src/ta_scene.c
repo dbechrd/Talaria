@@ -389,8 +389,8 @@ static void tokens_parse(ta_scene *scene, token *tokens)
     struct {
         int indent;
         ta_schema_field_type type;
-        u32 array;
-        u32 array_elem;
+        u32 array_len;   // 0 = not array, 1 = vector, >1 = fixed array size
+        u32 array_elem;  // Current element of array we're writing to
         const char *name;
         void *ptr;
         u32 size;
@@ -405,7 +405,6 @@ static void tokens_parse(ta_scene *scene, token *tokens)
     int sp = 0;          // "Stack pointer" index into stack
     int braces = 0;      // Current level of curly braces
     int array = 0;       // Current level of square brackets
-    int array_elem = 0;  // Current element of array we're writing to
 
     token *prev = tokens;
     for (token *tok = tokens; tok != dlb_vec_end(tokens); tok++) {
@@ -443,14 +442,14 @@ static void tokens_parse(ta_scene *scene, token *tokens)
 
                 if (array) {
                     // NOTE: Commas allowed but not required when reading in objects
-                    if (stack[sp-1].array) {
+                    if (stack[sp-1].array_len) {
                         void **arr = stack[sp-1].ptr;
 
                         stack[sp].type = stack[sp-1].type;
-                        stack[sp].array = 0;
+                        stack[sp].array_len = 0;
                         stack[sp].array_elem = 0;
                         stack[sp].name = "[ARRAY_ELEMENT]";
-                        if (stack[sp-1].array == 1) {
+                        if (stack[sp-1].array_len == 1) {
                             stack[sp].ptr = dlb_vec_alloc_size(*arr, stack[sp-1].size);
                         } else {
                             stack[sp].ptr = (u8 *)arr + (stack[sp-1].array_elem * stack[sp-1].size);
@@ -489,7 +488,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     }
                     DLB_ASSERT(field->type);
                     stack[sp].type = field->type;
-                    stack[sp].array = field->array;
+                    stack[sp].array_len = field->array_len;
                     stack[sp].array_elem = 0;
                     stack[sp].name = field->name;
                     stack[sp].ptr = ((u8 *)stack[sp-1].ptr + field->offset);
@@ -504,7 +503,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     DLB_ASSERT(schema->type);
                     DLB_ASSERT(schema->name == tok->value.string);
                     stack[sp].type = schema->type;
-                    stack[sp].array = 0;
+                    stack[sp].array_len = 0;
                     stack[sp].array_elem = 0;
                     stack[sp].name = tok->value.string;
                     stack[sp].ptr = ta_scene_obj_alloc(scene, schema->type);
@@ -513,7 +512,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     stack[sp].union_type = INT_MIN;
                 }
 
-                if (stack[sp].array) {
+                if (stack[sp].array_len) {
                     array++;
                     expect_array_start = true;
                 }

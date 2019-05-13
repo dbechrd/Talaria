@@ -108,27 +108,3 @@ ta_rigid_body:
         { x: 4.0, y: 5.0, z: 6.0 },
         { x: 7.0, y: 8.0, z: 9.0 }
       ]
-
-
-#ta_texture:
-#  name: "texture_example"
-#  test: "First\\\"hi\"\\Second"
-#  path: "texture/example.tga"
-#ta_entity:
-#  name: "Timmy"  # This is entity #1's name
-#  age: 42
-#  zero: 0
-#  negative: -1
-#  active: true
-#  inactive: false
-#  empty: null
-#  weight: 0x42f60000(123)
-#  latitude: 321.000000
-#  city: "San Francisco"
-#  numbers: []
-#  position: {}
-#  #numbers: [
-#  #  92492, 27745, 37710, 348, 28714, 68388, 18949, 4572, 568654, 654568, 213115
-#  #]
-#  #position: { x: 1.001, y: 2.002, z: 3.003 }
-#  #escape_chars: "foo \"'\\\t\r\n\0 bar"

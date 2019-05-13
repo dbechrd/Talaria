@@ -32,3 +32,5 @@ typedef struct ta_rigid_body_s {
     ta_transform transform;
     ta_collider collider;
 } ta_rigid_body;
+
+const char *ta_collider_type_str(int type);

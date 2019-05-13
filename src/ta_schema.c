@@ -53,18 +53,20 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
 };
 
 static void type_field_add(ta_schema *schema, ta_schema_field_type type,
-    const char *name, u32 offset, u32 size, u32 array, bool is_alias,
-    bool in_union, int union_type)
+    const char *name, u32 offset, u32 size, u32 array_len, bool is_alias,
+    bool in_union, int union_type, bool is_enum, enum_to_str *enum_converter)
 {
     ta_schema_field *field = dlb_vec_alloc(schema->fields);
     field->type = type;
     field->name = name;
     field->offset = offset;
     field->size = size;
-    field->array = array;
+    field->array_len = array_len;
     field->is_alias = is_alias;
     field->in_union = in_union;
     field->union_type = union_type;
+    field->is_enum = is_enum;
+    field->enum_converter = enum_converter;
 }
 
 #define TYPE_START(_type, field_type) \
@@ -75,19 +77,24 @@ static void type_field_add(ta_schema *schema, ta_schema_field_type type,
 
 #define TYPE_FIELD(type, field, field_type) \
     type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
-    SIZEOF_MEMBER(type, field), 0, false, false, 0)
+    SIZEOF_MEMBER(type, field), 0, false, false, 0, false, 0)
+
+#define TYPE_ENUM(type, field, field_type, converter) \
+    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
+    SIZEOF_MEMBER(type, field), 0, false, false, 0, true, converter)
 
 #define TYPE_UNION(type, field, field_type, union_name, union_type) \
-    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, union_name.field), \
-    SIZEOF_MEMBER(type, union_name.field), 0, false, true, union_type)
+    type_field_add(schema, field_type, INTERN(#field), \
+    OFFSETOF(type, union_name.field), SIZEOF_MEMBER(type, union_name.field), \
+    0, false, true, union_type, false, 0)
 
 #define TYPE_ARRAY(type, field, field_type, size) \
     type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
-    SIZEOF_MEMBER_ARRAY(type, field), size, false, false, 0)
+    SIZEOF_MEMBER_ARRAY(type, field), size, false, false, 0, false, 0)
 
 #define TYPE_VECTOR(type, field, field_type) \
     type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
-    SIZEOF_MEMBER_ARRAY(type, field), 1, false, false, 0)
+    SIZEOF_MEMBER_ARRAY(type, field), 1, false, false, 0, false, 0)
 
 #define TYPE_END(type) \
     dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(type)), schema);
@@ -229,7 +236,7 @@ void ta_schema_register()
     TYPE_END(ta_obb);
 
     TYPE_START(ta_collider, F_TA_COLLIDER);
-    TYPE_FIELD(ta_collider, type, F_ATOM_UNION_TYPE);
+    TYPE_ENUM(ta_collider,  type, F_ATOM_UNION_TYPE, ta_collider_type_str);
     TYPE_UNION(ta_collider, aabb, F_TA_AABB, data, TA_COLLIDER_AABB);
     TYPE_UNION(ta_collider, obb,  F_TA_OBB,  data, TA_COLLIDER_OBB);
     TYPE_END(ta_collider);
@@ -325,13 +332,13 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
             continue;
         }
 
-        if (field->array) {
+        if (field->array_len) {
             DLB_ASSERT(!in_array && "Don't know how to print nested arrays");
             indent(f, level + 1);
             fprintf(f, "%s: [\n", field->name);
 
             u8 *arr = (ptr + field->offset);
-            u32 arr_len = field->array;
+            u32 arr_len = field->array_len;
             if (arr_len == 1) {
                 arr = *(void **)(ptr + field->offset);
                 arr_len = dlb_vec_len(arr);
@@ -360,12 +367,16 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
                     fprintf(f, ",");
                 }
             } else {
-                if (field->type == F_ATOM_UNION_TYPE) {
-                    union_type = *(int *)(ptr + field->offset);
-                }
                 ta_schema_print_atom(f, field, ptr + field->offset);
                 if (in_array) {
                     fprintf(f, ",");
+                }
+                if (field->type == F_ATOM_UNION_TYPE) {
+                    union_type = *(int *)(ptr + field->offset);
+                }
+                if (field->is_enum) {
+                    const char *enum_str = field->enum_converter(union_type);
+                    fprintf(f, "  # %s", enum_str);
                 }
                 fprintf(f, "\n");
             }

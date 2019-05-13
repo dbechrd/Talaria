@@ -40,15 +40,19 @@ typedef struct scene_ref_s {
     void *ptr;
 } ta_schema_ref;
 
+typedef const char *(enum_to_str)(int);
+
 typedef struct {
     ta_schema_field_type type;
     const char *name;
     u32 offset;
     u32 size;
-    u32 array;  // Note: 0 = not array, 1 = vector, >1 = fixed array size
+    u32 array_len;  // Note: 0 = not array, 1 = vector, >1 = fixed array size
     bool is_alias;
     bool in_union;
     int union_type;
+    bool is_enum;
+    enum_to_str *enum_converter;
 } ta_schema_field;
 
 typedef struct {
