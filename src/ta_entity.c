@@ -4,6 +4,15 @@
 #include "ta_symbol.h"
 #include "ta_window.h"
 #include "ta_game.h"
+#include "dlb_vector.h"
+
+void ta_entity_init(ta_entity *e)
+{
+    if (!e->aabb.extents.x) {
+        ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
+        e->aabb = ta_mesh_group_aabb(mesh_group);
+    }
+}
 
 ta_material *ta_entity_material(ta_entity *e)
 {
@@ -18,6 +27,18 @@ ta_mesh_group *ta_entity_mesh_group(ta_entity *e)
     ta_mesh_group *mesh_group = ta_scene_find(e->scene, F_TA_MESH_GROUP,
         e->mesh_group_uid);
     return mesh_group;
+}
+
+void ta_entity_push_aabb(ta_entity *e, ta_rgba color)
+{
+    ta_primitive_push_aabb(e->aabb, color);
+}
+
+void ta_entity_push_normals(ta_entity *e)
+{
+    ta_mesh_group *mesh_group = ta_scene_find(e->scene, F_TA_MESH_GROUP,
+        e->mesh_group_uid);
+    ta_mesh_group_push_normals(mesh_group);
 }
 
 void ta_entity_render(ta_entity *e, ta_mat4 *proj, ta_mat4 *view)

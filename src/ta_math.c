@@ -1,11 +1,14 @@
 #include "ta_math.h"
 #include "ta_log.h"
 #include <math.h>
+#include <float.h>
 
 const ta_vec3 VEC3_ZERO = { 0.0f, 0.0f, 0.0f };
 const ta_vec3 VEC3_X = { 1.0f, 0.0f, 0.0f };
 const ta_vec3 VEC3_Y = { 0.0f, 1.0f, 0.0f };
 const ta_vec3 VEC3_Z = { 0.0f, 0.0f, 1.0f };
+const ta_vec3 VEC3_MIN = { FLT_MIN, FLT_MIN, FLT_MIN };
+const ta_vec3 VEC3_MAX = { FLT_MAX, FLT_MAX, FLT_MAX };
 const ta_mat4 MAT4_IDENT = {
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,

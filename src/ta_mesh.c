@@ -107,6 +107,26 @@ void ta_mesh_init_face_normals(ta_mesh *mesh, float scale)
     }
 }
 
+ta_aabb ta_mesh_aabb(ta_mesh *mesh)
+{
+    ta_vec3 min = VEC3_MAX;
+    ta_vec3 max = VEC3_MIN;
+
+    dlb_vec_each(ta_vec3 *, pos, mesh->positions) {
+        min.x = MIN(min.x, pos->x);
+        min.y = MIN(min.y, pos->y);
+        min.z = MIN(min.z, pos->z);
+        max.x = MAX(max.x, pos->x);
+        max.y = MAX(max.y, pos->y);
+        max.z = MAX(max.z, pos->z);
+    }
+
+    ta_aabb aabb = { 0 };
+    aabb.extents = vec3_scalef(vec3_sub(max, min), 0.5f);
+    aabb.center = vec3_add(min, aabb.extents);
+    return aabb;
+}
+
 void ta_mesh_push_normals(ta_mesh *mesh)
 {
     DLB_ASSERT(mesh->vertex_normals);

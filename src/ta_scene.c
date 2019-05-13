@@ -809,6 +809,7 @@ void ta_scene_obj_init(ta_scene *scene)
     dlb_vec_each(ta_rigid_body *, rigid_body, scene->rigid_bodies) {
     }
     dlb_vec_each(ta_entity *, entity, scene->entities) {
+        ta_entity_init(entity);
     }
 }
 

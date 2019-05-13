@@ -183,6 +183,42 @@ void ta_primitive_push_axes(float scale)
     ta_primitive_push_line_3d(Z_AXIS, TA_COLOR_BLUE,  TA_COLOR_BLUE);
 }
 
+void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
+{
+    ta_line_3d line = { 0 };
+
+    ta_vec3 min = vec3_sub(aabb.center, aabb.extents);
+    ta_vec3 size = vec3_scalef(aabb.extents, 2.0f);
+
+    ta_vec3 p0, p1, p2, p3, p4, p5, p6, p7;
+
+#define VEC3(vec, a, b, c) vec.x = a; vec.y = b; vec.z = c;
+    VEC3(p0, min.x         , min.y         , min.z         );
+    VEC3(p1, min.x         , min.y         , min.z + size.z);
+    VEC3(p2, min.x         , min.y + size.y, min.z         );
+    VEC3(p3, min.x         , min.y + size.y, min.z + size.z);
+    VEC3(p4, min.x + size.x, min.y         , min.z         );
+    VEC3(p5, min.x + size.x, min.y         , min.z + size.z);
+    VEC3(p6, min.x + size.x, min.y + size.y, min.z         );
+    VEC3(p7, min.x + size.x, min.y + size.y, min.z + size.z);
+#undef VEC3
+
+#define PUSH_LINE(a, b) line.p0 = a; line.p1 = b; ta_primitive_push_line_3d(line, color, color);
+    PUSH_LINE(p0, p1);
+    PUSH_LINE(p0, p2);
+    PUSH_LINE(p0, p4);
+    PUSH_LINE(p1, p3);
+    PUSH_LINE(p1, p5);
+    PUSH_LINE(p2, p3);
+    PUSH_LINE(p2, p6);
+    PUSH_LINE(p3, p7);
+    PUSH_LINE(p4, p5);
+    PUSH_LINE(p4, p6);
+    PUSH_LINE(p5, p7);
+    PUSH_LINE(p6, p7);
+#undef PUSH_LINE
+}
+
 #if 0
 static void ta_primitive_bbox_to_quad(ta_vert_quad *quad, ta_bbox_2d bbox,
 	ta_rgba color)

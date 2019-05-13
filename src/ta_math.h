@@ -79,6 +79,8 @@ extern const ta_vec3 VEC3_ZERO;
 extern const ta_vec3 VEC3_X;
 extern const ta_vec3 VEC3_Y;
 extern const ta_vec3 VEC3_Z;
+extern const ta_vec3 VEC3_MIN;
+extern const ta_vec3 VEC3_MAX;
 extern const ta_mat4 MAT4_IDENT;
 extern const ta_rgba TA_COLOR_INVIS;
 extern const ta_rgba TA_COLOR_RED;

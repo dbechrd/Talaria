@@ -101,6 +101,33 @@ void ta_mesh_group_load(ta_mesh_group *group)
     ta_buffer_free(buf);
 }
 
+ta_aabb ta_mesh_group_aabb(ta_mesh_group *group)
+{
+    ta_vec3 min = { 0 };
+    ta_vec3 max = { 0 };
+    ta_aabb mesh_aabb = { 0 };
+    ta_vec3 mesh_min = { 0 };
+    ta_vec3 mesh_max = { 0 };
+
+    dlb_vec_each(ta_mesh *, mesh, group->meshes) {
+        mesh_aabb = ta_mesh_aabb(mesh);
+        mesh_min = vec3_sub(mesh_aabb.center, mesh_aabb.extents);
+        mesh_max = vec3_add(mesh_aabb.center, mesh_aabb.extents);
+
+        min.x = MIN(min.x, mesh_min.x);
+        min.y = MIN(min.y, mesh_min.y);
+        min.z = MIN(min.z, mesh_min.z);
+        max.x = MAX(max.x, mesh_max.x);
+        max.y = MAX(max.y, mesh_max.y);
+        max.z = MAX(max.z, mesh_max.z);
+    }
+
+    ta_aabb aabb = { 0 };
+    aabb.extents = vec3_scalef(vec3_sub(max, min), 0.5f);
+    aabb.center = vec3_add(min, aabb.extents);
+    return aabb;
+}
+
 void ta_mesh_group_push_normals(ta_mesh_group *group)
 {
     dlb_vec_each(ta_mesh *, mesh, group->meshes) {

@@ -209,8 +209,9 @@ int main(int argc, char *argv[])
         ta_primitive_push_axes(2.0f);
         if (tg_debug_a) {
             // TODO: This should take entity transform into account
-            dlb_vec_each(ta_mesh_group *, group, tg_game.scene->mesh_groups) {
-                ta_mesh_group_push_normals(group);
+            dlb_vec_each(ta_entity *, entity, tg_game.scene->entities) {
+                ta_entity_push_normals(entity);
+                ta_entity_push_aabb(entity, TA_COLOR_GREEN);
             }
         }
         ta_primitive_render();

@@ -3,6 +3,7 @@
 #include "ta_math.h"
 #include "ta_material.h"
 #include "ta_mesh_group.h"
+#include "ta_collide.h"
 
 typedef struct ta_sun_light_s {
     ta_scene *scene;
@@ -32,10 +33,14 @@ typedef struct ta_entity_s {
     const char *material_uid;
     const char *mesh_group_uid;
     const char *parent_uid;
+    ta_aabb aabb;
     //ta_entity *next;  // TODO: Is a sibling linked list useful?
     //ta_entity **children;
 } ta_entity;
 
+void ta_entity_init(ta_entity *e);
 ta_material *ta_entity_material(ta_entity *e);
 ta_mesh_group *ta_entity_mesh_group(ta_entity *e);
+void ta_entity_push_aabb(ta_entity *e, ta_rgba color);
+void ta_entity_push_normals(ta_entity *e);
 void ta_entity_render(ta_entity *e, ta_mat4 *proj, ta_mat4 *view);
