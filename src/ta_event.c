@@ -6,7 +6,8 @@
 #include "SDL/SDL.h"
 #include <string.h>
 
-bool tg_debug_a = false;
+bool tg_debug_1 = false;
+bool tg_debug_2 = false;
 
 void ta_event_push(ta_event *event)
 {
@@ -131,8 +132,11 @@ void ta_event_update()
             } case TA_EVENT_GLOBAL_TOGGLE_WIREFRAME: {
                 ta_camera_toggle_wireframe(tg_game.scene->cameras);
                 break;
-            } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_A: {
-                tg_debug_a = !tg_debug_a;
+            } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_1: {
+                tg_debug_1 = !tg_debug_1;
+                break;
+            } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_2: {
+                tg_debug_2 = !tg_debug_2;
                 break;
             } default: {
                 DLB_ASSERT(!"Unhandled event type");

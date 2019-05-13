@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
         ta_event_update();
         ta_camera_update(tg_game.scene->cameras);
 
-		glClearColor(0.5f, 0.8f, 1.0f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw models
@@ -207,11 +207,15 @@ int main(int argc, char *argv[])
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.scene->cameras->look_at);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_primitive_push_axes(2.0f);
-        if (tg_debug_a) {
+        if (tg_debug_1 || tg_debug_2) {
             // TODO: This should take entity transform into account
             dlb_vec_each(ta_entity *, entity, tg_game.scene->entities) {
-                ta_entity_push_normals(entity);
-                ta_entity_push_aabb(entity, TA_COLOR_GREEN);
+                if (tg_debug_1) {
+                    ta_entity_push_normals(entity);
+                }
+                if (tg_debug_2) {
+                    ta_entity_push_aabb(entity, TA_COLOR_RED);
+                }
             }
         }
         ta_primitive_render();
@@ -238,9 +242,11 @@ int main(int argc, char *argv[])
             map_target.z += TA_EPSILON;
             ta_mat4 map_lookat = mat4_lookat(map_pos, map_target, VEC3_Y);
 
+            model = mat4_mul(map_lookat, model);
+
 			// Draw models
             ta_scene_render(tg_game.scene, &minimap_viewport.projection,
-                &map_lookat);
+                &model);
 
             // Red dot on map
             ta_primitive_push_rect(

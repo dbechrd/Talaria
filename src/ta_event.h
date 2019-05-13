@@ -20,7 +20,8 @@ typedef enum {
     TA_EVENT_GLOBAL_MOUSE_SCROLL,
     TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK,
     TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,
-    TA_EVENT_GLOBAL_TOGGLE_DEBUG_A,
+    TA_EVENT_GLOBAL_TOGGLE_DEBUG_1,
+    TA_EVENT_GLOBAL_TOGGLE_DEBUG_2,
 
     // Camera events
     TA_EVENT_CAMERA_MOVE_FORWARD = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_CAMERA),
@@ -73,7 +74,8 @@ typedef struct {
 } ta_event_queue;
 ta_event_queue tg_event_queues[TA_EVENT_QUEUE_COUNT];
 
-extern bool tg_debug_a;
+extern bool tg_debug_1;
+extern bool tg_debug_2;
 
 void ta_event_push(ta_event *event);
 bool ta_event_pop(ta_event *event, ta_event_queue_type queue_type);
