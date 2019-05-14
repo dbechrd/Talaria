@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     UNUSED(argv);
     tg_game.state = TA_STATE_INIT;
     ta_timer_init();
-	srand((u32)ta_timer_only_ms());
+	srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
     debug_tests();
 
 	ta_log debug_log;
@@ -130,7 +130,6 @@ int main(int argc, char *argv[])
     // Intro scene
     read_scene("data/scenes/scene1.dml");
     DLB_ASSERT(tg_game.scene->cameras->dirty);  // Ensure we have a valid camera
-    ta_camera_update(tg_game.scene->cameras);
 
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
@@ -186,19 +185,41 @@ int main(int argc, char *argv[])
     // Main loop
     ////////////////////////////////////////////////////////////////////////////
     u64 frame_num = 0;
+
+    u64 ms_sim_t = 0;                          // current simulation time
+    const u64 ms_sim_dt = 50;                  // fixed dt milliseconds
+    const double sim_dt = ms_sim_dt / 1000.0;  // fixed dt seconds
+
+    u64 ms_frame_prev = ta_timer_elapsed_ms();
+    u64 ms_frame_accum = 0;
+
     while (tg_game.state != TA_STATE_QUIT) {
-        frame_num++;
+        u64 ms_frame_start = ta_timer_elapsed_ms();
+        u64 ms_frame_delta = ms_frame_start - ms_frame_prev;
+        ms_frame_prev = ms_frame_start;
+
         ta_event_sdl_poll();
         ta_mouse_update();
         ta_keyboard_update();
         ta_event_update();
-        ta_camera_update(tg_game.scene->cameras);
+        ta_camera_update(tg_game.scene->cameras, sim_dt);
+
+        ms_frame_accum += ms_frame_delta;
+        while (ms_frame_accum >= ms_sim_dt) {
+
+            ms_sim_t += ms_sim_dt;
+            ms_frame_accum -= ms_sim_dt;
+        }
+
+        const double sim_alpha = (double)ms_frame_accum / ms_sim_dt;
+        // TODO: state = state_current * sim_alpha + state_prev (1.0 - sim_alpha);
+        // TODO: render(sim_alpha)
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw models
-		//glDisable(GL_CULL_FACE);
+		glDisable(GL_CULL_FACE);
         ta_scene_render(tg_game.scene, &tg_window.projection,
             &tg_game.scene->cameras->look_at);
 
@@ -277,7 +298,7 @@ int main(int argc, char *argv[])
         ta_ui_clear();
 
         ta_window_swap();
-		// TODO: Save ticks immediately after swap for physics/vsync
+        frame_num++;
     }
 
     ta_window_free();

@@ -114,6 +114,13 @@ void ta_keyboard_update()
             ta_event event = { 0 };
             event.type = bind->event_type;
             ta_event_push(&event);
+            if (event.type == TA_EVENT_CAMERA_MOVE_FORWARD) {
+                ta_event_push(&event);
+                ta_event_push(&event);
+                ta_event_push(&event);
+                ta_event_push(&event);
+
+            }
         }
     }
 }

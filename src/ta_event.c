@@ -11,9 +11,10 @@ bool tg_debug_2 = false;
 
 void ta_event_push(ta_event *event)
 {
-    ta_event_queue *queue = &tg_event_queues[TA_EVENT_TYPE_QUEUE(event->type)];
+    int event_type_queue = TA_EVENT_TYPE_QUEUE(event->type);
+    ta_event_queue *queue = &tg_event_queues[event_type_queue];
     if (queue->count == queue->capacity) {
-        u32 old_size = dlb_vec_size(queue->buffer);
+        u32 old_size = queue->capacity;
         u32 new_cap = MAX(16, queue->capacity * 2);
         dlb_vec_reserve(queue->buffer, new_cap);
         if (old_size) {
@@ -21,7 +22,7 @@ void ta_event_push(ta_event *event)
             // After resize : [-, A, B, C, D, -, -, -]
             if (queue->head > 0) {
                 int bytes = queue->head * sizeof(queue->buffer[0]);
-                memcpy(&queue->buffer[queue->head + queue->count],
+                memcpy(&queue->buffer[queue->count],
                     queue->buffer, bytes);
 #if _DEBUG
                 memset(queue->buffer, 0, bytes);
@@ -105,11 +106,11 @@ void ta_event_update()
                         cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
                         if (event.data.mouse_move.dx) {
                             cam_rotate_evt.data.camera_rotate.delta_yaw =
-                                -event.data.mouse_move.dx * tg_game.scene->cameras->yaw_accel;
+                                (float)-event.data.mouse_move.dx;
                         }
                         if (event.data.mouse_move.dy) {
                             cam_rotate_evt.data.camera_rotate.delta_pitch =
-                                -event.data.mouse_move.dy * tg_game.scene->cameras->pitch_accel;
+                                (float)-event.data.mouse_move.dy;
                         }
                         ta_event_push(&cam_rotate_evt);
                         break;

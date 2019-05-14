@@ -788,14 +788,14 @@ void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type)
 
 void ta_scene_obj_init(ta_scene *scene)
 {
-    dlb_vec_each(ta_camera *, cam, scene->cameras) {
-        cam->dirty = true;
+    dlb_vec_each(ta_camera *, camera, scene->cameras) {
+        ta_camera_init(camera);
     }
     dlb_vec_each(ta_sun_light *, light, scene->sun_lights) {
     }
     dlb_vec_each(ta_point_light *, light, scene->point_lights) {
     }
-    dlb_vec_each(ta_material *, mat, scene->materials) {
+    dlb_vec_each(ta_material *, material, scene->materials) {
     }
     dlb_vec_each(ta_mesh_group *, group, scene->mesh_groups) {
         ta_mesh_group_load(group);
@@ -803,8 +803,8 @@ void ta_scene_obj_init(ta_scene *scene)
     dlb_vec_each(ta_shader *, shader, scene->shaders) {
         ta_shader_create(shader);
     }
-    dlb_vec_each(ta_texture *, tex, scene->textures) {
-        ta_texture_create(tex);
+    dlb_vec_each(ta_texture *, texture, scene->textures) {
+        ta_texture_create(texture);
     }
     dlb_vec_each(ta_rigid_body *, rigid_body, scene->rigid_bodies) {
     }

@@ -384,13 +384,9 @@ ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
     return result;
 }
 
-ta_mat4 mat4_lookat(ta_vec3 position, ta_vec3 target, ta_vec3 world_up)
+ta_mat4 mat4_lookat_fru(ta_vec3 position, ta_vec3 front, ta_vec3 right,
+    ta_vec3 up)
 {
-    ta_vec3 dir = vec3_normalize(vec3_sub(position, target));
-    ta_vec3 front = vec3_negate(dir);
-    ta_vec3 right = vec3_normalize(vec3_cross(world_up, dir));
-    ta_vec3 up = vec3_cross(dir, right);
-
     // [ rx, ry, rz, 0 ]
     // [ ux, uy, uz, 0 ]
     // [ dx, dy, dz, 0 ]
@@ -402,9 +398,9 @@ ta_mat4 mat4_lookat(ta_vec3 position, ta_vec3 target, ta_vec3 world_up)
     transform.rows.v[1].x = up.x;
     transform.rows.v[1].y = up.y;
     transform.rows.v[1].z = up.z;
-    transform.rows.v[2].x = dir.x;
-    transform.rows.v[2].y = dir.y;
-    transform.rows.v[2].z = dir.z;
+    transform.rows.v[2].x = -front.x;
+    transform.rows.v[2].y = -front.y;
+    transform.rows.v[2].z = -front.z;
     transform.rows.v[3].w = 1.0f;
 
     // [ 1, 0, 0, -px ]
@@ -421,14 +417,16 @@ ta_mat4 mat4_lookat(ta_vec3 position, ta_vec3 target, ta_vec3 world_up)
     translate.rows.v[3].w = 1.0f;
 
     ta_mat4 look_at = mat4_mul(transform, translate);
-#if 0
-    ta_log_write(tg_debug_log, "transform:\n");
-    ta_mat4_print(&transform);
-    ta_log_write(tg_debug_log, "translate:\n");
-    ta_mat4_print(&translate);
-    ta_log_write(tg_debug_log, "look_at:\n");
-    ta_mat4_print(&look_at);
-#endif
+    return look_at;
+}
+
+ta_mat4 mat4_lookat(ta_vec3 position, ta_vec3 target, ta_vec3 world_up)
+{
+    ta_vec3 front = vec3_normalize(vec3_sub(target, position));
+    ta_vec3 right = vec3_normalize(vec3_cross(front, world_up));
+    ta_vec3 up = vec3_cross(right, front);
+
+    ta_mat4 look_at = mat4_lookat_fru(position, front, right, up);
     return look_at;
 }
 

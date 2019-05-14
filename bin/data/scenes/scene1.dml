@@ -1,13 +1,14 @@
 ta_camera:
   uid: "camera_main"
   position: { x: 0.0, y: 1.7, z: 24.0 }
-  velocity: 0.1
+  target_vel: 0.1
+  target_smooth: 0.1
   yaw: 90.0
-  yaw_accel: 0.1
+  yaw_smooth: 0.7
   pitch: 0.0
   pitch_min: -75.0
   pitch_max: 75.0
-  pitch_accel: 0.1
+  pitch_smooth: 0.7
 ta_texture:
   uid: "texture_1"
   path: "data/texture/genesis_1024_1024.png"

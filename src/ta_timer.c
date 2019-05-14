@@ -19,8 +19,8 @@ void ta_timer_init()
 u64 ta_timer_elapsed_ticks()
 {
 	u64 now = SDL_GetPerformanceCounter();
-	u64 elapsed_ms = (now - perf_epoch);
-	return elapsed_ms;
+	u64 elapsed_ticks = now - perf_epoch;
+	return elapsed_ticks;
 }
 
 u64 ta_timer_elapsed_ms()
