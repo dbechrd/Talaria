@@ -73,22 +73,18 @@ static void camera_events(ta_camera *camera)
             case TA_EVENT_CAMERA_MOVE_FORWARD: {
                 dir.x += camera->front.x;
                 dir.z += camera->front.z;
-                dir = vec3_normalize(dir);
                 break;
             } case TA_EVENT_CAMERA_MOVE_BACKWARD: {
                 dir.x -= camera->front.x;
                 dir.z -= camera->front.z;
-                dir = vec3_normalize(dir);
                 break;
             } case TA_EVENT_CAMERA_MOVE_RIGHT: {
                 dir.x += camera->right.x;
                 dir.z += camera->right.z;
-                dir = vec3_normalize(dir);
                 break;
             } case TA_EVENT_CAMERA_MOVE_LEFT: {
                 dir.x -= camera->right.x;
                 dir.z -= camera->right.z;
-                dir = vec3_normalize(dir);
                 break;
             } case TA_EVENT_CAMERA_MOVE_UP: {
                 dir.y += 1.0f;
@@ -110,9 +106,9 @@ static void camera_events(ta_camera *camera)
         }
     }
     if (vec3_len(dir)) {
+        dir = vec3_normalize(dir);
         ta_camera_move_target(camera, dir);
     }
-
 }
 
 // pitch: -89.0f - 89.0f deg

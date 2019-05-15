@@ -101,9 +101,13 @@ ta_vec3 vec3_normalize(const ta_vec3 v)
 {
     float len = vec3_len(v);
     ta_vec3 result = v;
-    result.x /= len;
-    result.y /= len;
-    result.z /= len;
+    if (len) {
+        result.x /= len;
+        result.y /= len;
+        result.z /= len;
+    } else {
+        result = VEC3_ZERO;
+    }
     return result;
 }
 float vec3_dot(const ta_vec3 a, const ta_vec3 b)
