@@ -67,7 +67,7 @@ void ta_event_sdl_poll()
         switch (sdl_event.type) {
             case SDL_QUIT: {
                 ta_event event = { 0 };
-                event.type = TA_EVENT_GLOBAL_QUIT;
+                event.type = TA_EVENT_GLOBAL_STATE_QUIT;
                 ta_event_push(&event);
                 break;
             } case SDL_WINDOWEVENT: {
@@ -94,14 +94,23 @@ void ta_event_update()
     ta_event event;
     while (ta_event_pop(&event, TA_EVENT_QUEUE_GLOBAL)) {
         switch (event.type) {
-            case TA_EVENT_GLOBAL_QUIT: {
+            case TA_EVENT_GLOBAL_STATE_PLAY: {
+                tg_game.state = TA_STATE_PLAY;
+                ta_camera_set_target_pos_absolute(tg_game.camera,
+                    tg_game.player->transform.position);
+                break;
+            } case TA_EVENT_GLOBAL_STATE_FREE_CAM: {
+                tg_game.state = TA_STATE_FREE_CAM;
+                break;
+            } case TA_EVENT_GLOBAL_STATE_QUIT: {
                 tg_game.state = TA_STATE_QUIT;
                 break;
             } case TA_EVENT_GLOBAL_MOUSE_MOVE: {
                 if (!tg_mouse.captured) break;
 
                 switch (tg_game.state) {
-                    case TA_STATE_PLAY: {
+                    case TA_STATE_PLAY: // Intentional fall-through
+                    case TA_STATE_FREE_CAM: {
                         ta_event cam_rotate_evt = { 0 };
                         cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
                         if (event.data.mouse_move.dx) {

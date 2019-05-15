@@ -14,17 +14,28 @@ void ta_keyboard_init()
     ta_log_write(tg_debug_log, "[Keyboard] Initializing key binds\n");
     // TODO: Read keybinds from file
     //dlb_vec_reserve(tg_keybinds, 16);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_QUIT,              TA_KEY_PRESS, SDL_SCANCODE_ESCAPE);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK, TA_KEY_PRESS, SDL_SCANCODE_M);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,  TA_KEY_PRESS, SDL_SCANCODE_Z);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_DEBUG_1,    TA_KEY_PRESS, SDL_SCANCODE_1);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_TOGGLE_DEBUG_2,    TA_KEY_PRESS, SDL_SCANCODE_2);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_FORWARD,      TA_KEY_HOLD, SDL_SCANCODE_W);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_BACKWARD,     TA_KEY_HOLD, SDL_SCANCODE_S);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_RIGHT,        TA_KEY_HOLD, SDL_SCANCODE_D);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_LEFT,         TA_KEY_HOLD, SDL_SCANCODE_A);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_UP,           TA_KEY_HOLD, SDL_SCANCODE_SPACE);
-    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_CAMERA_MOVE_DOWN,         TA_KEY_HOLD, SDL_SCANCODE_LSHIFT);
+
+    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_STATE_QUIT,            TA_KEY_RELEASE, SDL_SCANCODE_ESCAPE);
+    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_STATE_FREE_CAM,        TA_KEY_RELEASE, SDL_SCANCODE_X);
+    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_PLAYER_MOVE_FORWARD,          TA_KEY_HOLD, SDL_SCANCODE_W);
+    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_PLAYER_MOVE_BACKWARD,         TA_KEY_HOLD, SDL_SCANCODE_S);
+    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_PLAYER_MOVE_RIGHT,            TA_KEY_HOLD, SDL_SCANCODE_D);
+    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_PLAYER_MOVE_LEFT,             TA_KEY_HOLD, SDL_SCANCODE_A);
+    ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_PLAYER_MOVE_JUMP,             TA_KEY_HOLD, SDL_SCANCODE_SPACE);
+
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_STATE_PLAY,        TA_KEY_RELEASE, SDL_SCANCODE_ESCAPE);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK, TA_KEY_PRESS, SDL_SCANCODE_M);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,  TA_KEY_PRESS, SDL_SCANCODE_Z);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG_1,    TA_KEY_PRESS, SDL_SCANCODE_1);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG_2,    TA_KEY_PRESS, SDL_SCANCODE_2);
+
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_FORWARD,      TA_KEY_HOLD, SDL_SCANCODE_W);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_BACKWARD,     TA_KEY_HOLD, SDL_SCANCODE_S);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_RIGHT,        TA_KEY_HOLD, SDL_SCANCODE_D);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_LEFT,         TA_KEY_HOLD, SDL_SCANCODE_A);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_UP,           TA_KEY_HOLD, SDL_SCANCODE_SPACE);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_DOWN,         TA_KEY_HOLD, SDL_SCANCODE_LSHIFT);
+
     ta_log_write(tg_debug_log, "[Keyboard] Keyboard initialized\n");
 }
 
@@ -109,6 +120,12 @@ void ta_keyboard_update()
         bind != dlb_vec_end(keybinds[tg_game.state]);
         bind++)
     {
+        if (keys[SDL_SCANCODE_ESCAPE]) {
+            DLB_ASSERT(1);
+            if (tg_game.state == TA_STATE_PLAY) {
+                DLB_ASSERT(1);
+            }
+        }
         ta_keybind_update(bind);
         if (ta_keybind_triggered(bind)) {
             ta_event event = { 0 };

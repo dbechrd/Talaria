@@ -1,5 +1,5 @@
 ta_camera:
-  uid: "camera_main"
+  uid: "camera_player"
   position: { x: 0.0, y: 1.7, z: 24.0 }
   target_vel: 0.2
   target_smooth: 0.1
@@ -75,18 +75,20 @@ ta_point_light:
   position: { x: 1.0, y: 2.0, z: 3.0 }
   color:    { r: 1.0, g: 2.0, b: 3.0 }
 ta_entity:
+  uid: "entity_player"
+ta_entity:
   uid: "entity_chamber_0001"
   material_uid: "material_1"
   mesh_group_uid: "mesh_group_chamber_0001"
   transform:
-    position: { x: 1.0, y: 2.0, z: 3.0 }
-    rotation: { x: 1.0, y: 2.0, z: 3.0, w: 4.0 }
+    position: { x: 0.0, y: 0.0, z: 0.0 }
+    rotation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
     scale:    { x: 1.0, y: 1.0, z: 1.0 }
 ta_rigid_body:
   uid: "entity_chamber_0001_aabb"
   transform:
-    position: { x: 1.0, y: 2.0, z: 3.0 }
-    rotation: { x: 1.0, y: 2.0, z: 3.0, w: 4.0 }
+    position: { x: 0.0, y: 0.0, z: 0.0 }
+    rotation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
     scale:    { x: 1.0, y: 1.0, z: 1.0 }
   collider:
     type: 0  # TA_COLLIDER_AABB
@@ -96,8 +98,8 @@ ta_rigid_body:
 ta_rigid_body:
   uid: "entity_chamber_0001_obb"
   transform:
-    position: { x: 1.0, y: 2.0, z: 3.0 }
-    rotation: { x: 1.0, y: 2.0, z: 3.0, w: 4.0 }
+    position: { x: 0.0, y: 0.0, z: 0.0 }
+    rotation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
     scale:    { x: 1.0, y: 1.0, z: 1.0 }
   collider:
     type: 1  # TA_COLLIDER_OBB

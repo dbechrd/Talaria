@@ -12,6 +12,9 @@
 #include "dlb_vector.h"
 #include <stdlib.h>
 
+static void scene_add_ref(ta_scene *scene, ta_schema_field_type type, void *ptr,
+    const char *uid);
+
 typedef enum token_type {
     TOKEN_UNKNOWN,
     TOKEN_EOF,
@@ -565,11 +568,8 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 const char **fp = stack[sp].ptr;
                 *fp = tok->value.string;
                 if (stack[sp].name == SYM_UID) {
-                    ta_schema_ref *ref = dlb_vec_alloc(scene->refs);
-                    ref->type = stack[sp-1].type;
-                    ref->ptr = stack[sp-1].ptr;
-                    dlb_hash_insert(&scene->refs_by_uid, tok->value.string,
-                        tok->length, ref);
+                    scene_add_ref(scene, stack[sp-1].type, stack[sp-1].ptr,
+                        tok->value.string);
                 }
                 break;
             } case TOKEN_ARRAY_START: {
@@ -624,9 +624,41 @@ static void tokens_parse(ta_scene *scene, token *tokens)
     }
 }
 
+static void scene_add_ref(ta_scene *scene, ta_schema_field_type type, void *ptr,
+    const char *uid)
+{
+    ta_schema_ref *ref = dlb_vec_alloc(scene->refs);
+    ref->type = type;
+    ref->ptr = ptr;
+    dlb_hash_insert(&scene->refs_by_uid, SYM(uid), ref);
+}
+
+static void scene_load_placeholders(ta_scene *scene)
+{
+    // Fallback resources
+    ta_texture *texture = ta_scene_obj_alloc(scene, F_TA_TEXTURE);
+    texture->uid = INTERN("TEXTURE_DEFAULT");
+    texture->path = INTERN("data/texture/default_1024_1024.png");
+    scene_add_ref(scene, F_TA_TEXTURE, texture, texture->uid);
+
+    ta_mesh_group *mesh_group = ta_scene_obj_alloc(scene, F_TA_MESH_GROUP);
+    mesh_group->uid = INTERN("MESH_GROUP_DEFAULT");
+    mesh_group->path = INTERN("data/mesh/default.obj");
+    scene_add_ref(scene, F_TA_MESH_GROUP, mesh_group, mesh_group->uid);
+
+    ta_material *material = ta_scene_obj_alloc(scene, F_TA_MATERIAL);
+    material->uid = INTERN("MATERIAL_DEFAULT");
+    // TODO: Hard-code default shader instead of hoping it's in the scene file
+    material->shader_uid = INTERN("shader_mesh");
+    material->texture_uid = texture->uid;
+    scene_add_ref(scene, F_TA_MATERIAL, material, material->uid);
+}
+
 ta_scene *ta_scene_init(const char *name)
 {
     ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
+    dlb_hash_init(&scene->refs_by_uid, DLB_HASH_STRING, scene->name, 32);
+    scene_load_placeholders(scene);
     scene->name = name;
     return scene;
 }
@@ -635,9 +667,7 @@ ta_scene *ta_scene_load(ta_file *f)
 {
     ta_scene *scene = ta_scene_init(f->filename);
 
-    // TODO: Reserve the correct amount for this scene, or implement resize at
-    //       least.
-    dlb_hash_init(&scene->refs_by_uid, DLB_HASH_STRING, scene->name, 32);
+    // TODO: Reserve arrays based on scene header (which doesn't exist yet)
     //dlb_vec_reserve(scn->entities, 2);
 
     token *tokens = tokenize(f);

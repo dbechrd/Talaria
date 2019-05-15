@@ -76,12 +76,17 @@ typedef struct {
 } ta_size;
 
 extern const ta_vec3 VEC3_ZERO;
+extern const ta_vec3 VEC3_ONE;
 extern const ta_vec3 VEC3_X;
 extern const ta_vec3 VEC3_Y;
 extern const ta_vec3 VEC3_Z;
 extern const ta_vec3 VEC3_MIN;
 extern const ta_vec3 VEC3_MAX;
+
+extern const ta_vec4 QUAT_IDENT;
+
 extern const ta_mat4 MAT4_IDENT;
+
 extern const ta_rgba TA_COLOR_INVIS;
 extern const ta_rgba TA_COLOR_RED;
 extern const ta_rgba TA_COLOR_GREEN;
@@ -103,6 +108,7 @@ extern const ta_rgba TA_COLOR_GRAY9;
 float clampf(float f, float min, float max);
 
 void ta_vec3_print(ta_vec3 *vec);
+int vec3_zero(const ta_vec3 v);
 ta_vec3 vec3_negate(const ta_vec3 v);
 ta_vec3 vec3_add(const ta_vec3 a, const ta_vec3 b);
 ta_vec3 vec3_sub(const ta_vec3 a, const ta_vec3 b);
@@ -113,6 +119,7 @@ float vec3_dot(const ta_vec3 a, const ta_vec3 b);
 ta_vec3 vec3_cross(const ta_vec3 a, const ta_vec3 b);
 
 void ta_vec4_print(ta_vec4 *vec);
+int vec4_zero(const ta_vec4 v);
 
 void ta_mat3_print(ta_mat3 *mat);
 ta_vec3 mat3_mul_vec3(const ta_mat3 m, const ta_vec3 v);

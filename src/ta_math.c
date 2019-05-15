@@ -4,17 +4,22 @@
 #include <float.h>
 
 const ta_vec3 VEC3_ZERO = { 0.0f, 0.0f, 0.0f };
+const ta_vec3 VEC3_ONE = { 1.0f, 1.0f, 1.0f };
 const ta_vec3 VEC3_X = { 1.0f, 0.0f, 0.0f };
 const ta_vec3 VEC3_Y = { 0.0f, 1.0f, 0.0f };
 const ta_vec3 VEC3_Z = { 0.0f, 0.0f, 1.0f };
 const ta_vec3 VEC3_MIN = { FLT_MIN, FLT_MIN, FLT_MIN };
 const ta_vec3 VEC3_MAX = { FLT_MAX, FLT_MAX, FLT_MAX };
+
+const ta_vec4 QUAT_IDENT = { 0.0f, 0.0f, 0.0f, 1.0f };
+
 const ta_mat4 MAT4_IDENT = {
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 1.0f, 0.0f,
     0.0f, 0.0f, 0.0f, 1.0f
 };
+
 const ta_rgba TA_COLOR_INVIS   = { 0.0f, 0.0f, 0.0f, 0.0f };
 const ta_rgba TA_COLOR_RED     = { 1.0f, 0.1f, 0.1f, 1.0f };
 const ta_rgba TA_COLOR_GREEN   = { 0.1f, 1.0f, 0.1f, 1.0f };
@@ -59,6 +64,10 @@ void ta_vec3_print(ta_vec3 *vec)
 {
     ta_log_write(tg_debug_log, "vec3: %f %f %f\n",
         vec->x, vec->y, vec->z);
+}
+int vec3_zero(const ta_vec3 v)
+{
+    return v.x == 0.0f && v.y == 0.0f && v.z == 0.0f;
 }
 ta_vec3 vec3_negate(const ta_vec3 v)
 {
@@ -106,6 +115,7 @@ ta_vec3 vec3_normalize(const ta_vec3 v)
         result.y /= len;
         result.z /= len;
     } else {
+        ta_log_write(tg_debug_log, "[WARNING] Normalizing zero vector\n");
         result = VEC3_ZERO;
     }
     return result;
@@ -131,6 +141,10 @@ void ta_vec4_print(ta_vec4 *vec)
 {
     ta_log_write(tg_debug_log, "vec4: %f %f %f %f\n",
         vec->x, vec->y, vec->z, vec->w);
+}
+int vec4_zero(const ta_vec4 v)
+{
+    return v.x == 0.0f && v.y == 0.0f && v.z == 0.0f && v.w == 0.0f;
 }
 
 void ta_mat3_print(ta_mat3 *mat)

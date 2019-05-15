@@ -41,7 +41,13 @@ void ta_camera_set_rotate_accel(ta_camera *camera, float yaw_accel,
 }
 #endif
 
-void ta_camera_move_target(ta_camera *camera, ta_vec3 delta)
+void ta_camera_set_target_pos_absolute(ta_camera *camera, ta_vec3 target_pos)
+{
+    camera->target_pos = target_pos;
+    camera->dirty = true;
+}
+
+void ta_camera_set_target_pos_relative(ta_camera *camera, ta_vec3 delta)
 {
     ta_vec3 offset = vec3_scalef(delta, camera->target_vel);
     camera->target_pos = vec3_add(camera->target_pos, offset);
@@ -105,9 +111,9 @@ static void camera_events(ta_camera *camera)
             }
         }
     }
-    if (vec3_len(dir)) {
+    if (!vec3_zero(dir)) {
         dir = vec3_normalize(dir);
-        ta_camera_move_target(camera, dir);
+        ta_camera_set_target_pos_relative(camera, dir);
     }
 }
 

@@ -8,6 +8,18 @@
 
 void ta_entity_init(ta_entity *e)
 {
+    if (!e->material_uid) {
+        e->material_uid = e->scene->materials->uid;
+    }
+    if (!e->mesh_group_uid) {
+        e->mesh_group_uid = e->scene->mesh_groups->uid;
+    }
+    if (vec4_zero(e->transform.rotation)) {
+        e->transform.rotation = QUAT_IDENT;
+    }
+    if (vec3_zero(e->transform.scale)) {
+        e->transform.scale = VEC3_ONE;
+    }
     if (!e->aabb.extents.x) {
         ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
         e->aabb = ta_mesh_group_aabb(mesh_group);

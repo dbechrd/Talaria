@@ -121,15 +121,12 @@ int main(int argc, char *argv[])
     ta_render_init();
     ta_primitive_init();
 
-    // Fallback resources
-    ta_mesh_group prim_cube = { 0 };
-    ta_mesh_group *mesh_group_prim_cube = &prim_cube;
-    ta_mesh_group_init(mesh_group_prim_cube, "mesh_prim_cube", "data/mesh/prim_cube.obj");
-    ta_mesh_group_load(mesh_group_prim_cube);
-
     // Intro scene
     read_scene("data/scenes/scene1.dml");
-    DLB_ASSERT(tg_game.scene->cameras->dirty);  // Ensure we have a valid camera
+    tg_game.camera = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_player"));
+    tg_game.player = ta_scene_find(tg_game.scene, F_TA_ENTITY, INTERN("entity_player"));
+    DLB_ASSERT(tg_game.camera);  // Ensure we have a valid camera
+    DLB_ASSERT(tg_game.player);  // Ensure we have a valid player
 
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
