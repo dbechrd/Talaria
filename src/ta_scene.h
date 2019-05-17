@@ -39,4 +39,5 @@ void ta_scene_print(ta_scene *scn, FILE *hnd);
 void *ta_scene_obj_alloc(ta_scene *scn, ta_schema_field_type type);
 void ta_scene_obj_init(ta_scene *scn);
 void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid);
+void ta_scene_update(ta_scene *scene, double dt);
 void ta_scene_render(ta_scene *scene, ta_mat4 *proj, ta_mat4 *view);

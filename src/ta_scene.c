@@ -852,6 +852,16 @@ void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
     return ref->ptr;
 }
 
+void ta_scene_update(ta_scene *scene, double dt)
+{
+    dlb_vec_each(ta_rigid_body *, rigid_body, scene->rigid_bodies) {
+        ta_rigid_body_update(rigid_body, dt);
+    }
+    dlb_vec_each(ta_entity *, entity, scene->entities) {
+        ta_entity_update(entity, dt);
+    }
+}
+
 void ta_scene_render(ta_scene *scene, ta_mat4 *proj, ta_mat4 *view)
 {
     // TODO: Group by shader / material to minimize redundant uniform calls

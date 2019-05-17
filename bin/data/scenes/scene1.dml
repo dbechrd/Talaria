@@ -76,6 +76,7 @@ ta_point_light:
   color:    { r: 1.0, g: 2.0, b: 3.0 }
 ta_entity:
   uid: "entity_player"
+  rigid_body_uid: "entity_player_aabb"
 ta_entity:
   uid: "entity_chamber_0001"
   material_uid: "material_1"
@@ -85,7 +86,7 @@ ta_entity:
     rotation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
     scale:    { x: 1.0, y: 1.0, z: 1.0 }
 ta_rigid_body:
-  uid: "entity_chamber_0001_aabb"
+  uid: "entity_player_aabb"
   transform:
     position: { x: 0.0, y: 0.0, z: 0.0 }
     rotation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
@@ -93,10 +94,10 @@ ta_rigid_body:
   collider:
     type: 0  # TA_COLLIDER_AABB
     aabb:
-      center:  { x: 1.0, y: 1.0, z: 1.0 }
-      extents: { x: 2.0, y: 2.0, z: 2.0 }
+      center:  { x: 0.0, y: 0.0, z: 0.0 }
+      extents: { x: 1.0, y: 1.0, z: 1.0 }
 ta_rigid_body:
-  uid: "entity_chamber_0001_obb"
+  uid: "entity_player_obb"
   transform:
     position: { x: 0.0, y: 0.0, z: 0.0 }
     rotation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
@@ -104,10 +105,10 @@ ta_rigid_body:
   collider:
     type: 1  # TA_COLLIDER_OBB
     obb:
-      center:  { x: 1.0, y: 1.0, z: 1.0 }
-      extents: { x: 2.0, y: 2.0, z: 2.0 }
+      center:  { x: 0.0, y: 0.0, z: 0.0 }
+      extents: { x: 1.0, y: 1.0, z: 1.0 }
       axes: [
-        { x: 1.0, y: 2.0, z: 3.0 },
-        { x: 4.0, y: 5.0, z: 6.0 },
-        { x: 7.0, y: 8.0, z: 9.0 }
+        { x: 1.0, y: 0.0, z: 0.0 },
+        { x: 0.0, y: 1.0, z: 0.0 },
+        { x: 0.0, y: 0.0, z: 1.0 }
       ]

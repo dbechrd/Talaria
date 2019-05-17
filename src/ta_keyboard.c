@@ -26,8 +26,15 @@ void ta_keyboard_init()
     ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_STATE_PLAY,        TA_KEY_RELEASE, SDL_SCANCODE_ESCAPE);
     ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK, TA_KEY_PRESS, SDL_SCANCODE_M);
     ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,  TA_KEY_PRESS, SDL_SCANCODE_Z);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG_1,    TA_KEY_PRESS, SDL_SCANCODE_1);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG_2,    TA_KEY_PRESS, SDL_SCANCODE_2);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_1);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_2);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_3);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_4);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_5);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_6);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_7);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_8);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_9);
 
     ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_FORWARD,      TA_KEY_HOLD, SDL_SCANCODE_W);
     ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_BACKWARD,     TA_KEY_HOLD, SDL_SCANCODE_S);
@@ -120,16 +127,17 @@ void ta_keyboard_update()
         bind != dlb_vec_end(keybinds[tg_game.state]);
         bind++)
     {
-        if (keys[SDL_SCANCODE_ESCAPE]) {
-            DLB_ASSERT(1);
-            if (tg_game.state == TA_STATE_PLAY) {
-                DLB_ASSERT(1);
-            }
-        }
         ta_keybind_update(bind);
         if (ta_keybind_triggered(bind)) {
             ta_event event = { 0 };
             event.type = bind->event_type;
+            if (event.type == TA_EVENT_GLOBAL_TOGGLE_DEBUG) {
+                if (bind->keys[0] == SDL_SCANCODE_0) {
+                    event.data.toggle_debug.n = 0;
+                } else {
+                    event.data.toggle_debug.n = 1 + bind->keys[0] - SDL_SCANCODE_1;
+                }
+            }
             ta_event_push(&event);
         }
     }

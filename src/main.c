@@ -184,7 +184,7 @@ int main(int argc, char *argv[])
     u64 frame_num = 0;
 
     u64 ms_sim_t = 0;                          // current simulation time
-    const u64 ms_sim_dt = 50;                  // fixed dt milliseconds
+    const u64 ms_sim_dt = 10;                  // fixed dt milliseconds
     const double sim_dt = ms_sim_dt / 1000.0;  // fixed dt seconds
 
     u64 ms_frame_prev = ta_timer_elapsed_ms();
@@ -201,8 +201,15 @@ int main(int argc, char *argv[])
         ta_event_update();
         ta_camera_update(tg_game.scene->cameras, sim_dt);
 
+        if (tg_debug[3]) {
+            ta_rigid_body *rb = ta_entity_rigid_body(tg_game.player);
+            rb->transform.position.y += 2.0f;
+            tg_debug[3] = false;
+        }
+
         ms_frame_accum += ms_frame_delta;
         while (ms_frame_accum >= ms_sim_dt) {
+            ta_scene_update(tg_game.scene, sim_dt);
 
             ms_sim_t += ms_sim_dt;
             ms_frame_accum -= ms_sim_dt;
@@ -225,13 +232,13 @@ int main(int argc, char *argv[])
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.scene->cameras->look_at);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_primitive_push_axes(2.0f);
-        if (tg_debug_1 || tg_debug_2) {
+        if (tg_debug[1] || tg_debug[2]) {
             // TODO: This should take entity transform into account
             dlb_vec_each(ta_entity *, entity, tg_game.scene->entities) {
-                if (tg_debug_1) {
+                if (tg_debug[1]) {
                     ta_entity_push_normals(entity);
                 }
-                if (tg_debug_2) {
+                if (tg_debug[2]) {
                     ta_entity_push_aabb(entity, TA_COLOR_RED);
                 }
             }

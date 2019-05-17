@@ -34,3 +34,4 @@ typedef struct ta_rigid_body_s {
 } ta_rigid_body;
 
 const char *ta_collider_type_str(int type);
+void ta_rigid_body_update(ta_rigid_body *rigid_body, double dt);

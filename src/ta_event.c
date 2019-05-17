@@ -6,8 +6,7 @@
 #include "SDL/SDL.h"
 #include <string.h>
 
-bool tg_debug_1 = false;
-bool tg_debug_2 = false;
+bool tg_debug[9];
 
 void ta_event_push(ta_event *event)
 {
@@ -89,6 +88,7 @@ void ta_event_sdl_poll()
     }
 }
 
+// TODO: Move this to ta_game_update() and rename queue to TA_EVENT_GAME
 void ta_event_update()
 {
     ta_event event;
@@ -96,8 +96,9 @@ void ta_event_update()
         switch (event.type) {
             case TA_EVENT_GLOBAL_STATE_PLAY: {
                 tg_game.state = TA_STATE_PLAY;
-                ta_camera_set_target_pos_absolute(tg_game.camera,
-                    tg_game.player->transform.position);
+                ta_vec3 target_pos = vec3_add(tg_game.player->transform.position,
+                    (ta_vec3) { 0.0, 1.0f, 3.0f });
+                ta_camera_set_target_pos_absolute(tg_game.camera, target_pos);
                 break;
             } case TA_EVENT_GLOBAL_STATE_FREE_CAM: {
                 tg_game.state = TA_STATE_FREE_CAM;
@@ -142,11 +143,9 @@ void ta_event_update()
             } case TA_EVENT_GLOBAL_TOGGLE_WIREFRAME: {
                 ta_camera_toggle_wireframe(tg_game.scene->cameras);
                 break;
-            } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_1: {
-                tg_debug_1 = !tg_debug_1;
-                break;
-            } case TA_EVENT_GLOBAL_TOGGLE_DEBUG_2: {
-                tg_debug_2 = !tg_debug_2;
+            } case TA_EVENT_GLOBAL_TOGGLE_DEBUG: {
+                tg_debug[event.data.toggle_debug.n] =
+                    !tg_debug[event.data.toggle_debug.n];
                 break;
             } default: {
                 DLB_ASSERT(!"Unhandled event type");
