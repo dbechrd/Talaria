@@ -99,64 +99,12 @@ void read_scene(const char *filename) {
     //ta_scene_free(tg_game.scene);
 }
 
-// Dumb placeholder; use real crypt
-char *crypt(char *pass) {
-    return pass;
-}
-
-void crack(char *buf, int buf_len, char *hash) {
-#if _DEBUG
-    // DEBUG: Timer for progress updates
-    u64 start = ta_timer_elapsed_ms();
-#endif
-
-    const int num_passwords = 52*52*52*52*52;
-    for (int i = 0; i < num_passwords; i++) {
-#if _DEBUG
-        // DEBUG: Print progress updates
-        printf("[%-06.llu ms] %-5s %09.d/%09.d (%3.f %%) of passwords tried\n", ta_timer_elapsed_ms() - start, buf, i, num_passwords, (float)i / num_passwords * 100.0f);
-        if (i % (52*52*52*52) == 0) {
-            printf("[%-06.llu ms] %-5s %09.d/%09.d (%3.f %%) of passwords tried\n", ta_timer_elapsed_ms() - start, buf, i, num_passwords, (float)i / num_passwords * 100.0f);
-            fflush(stdout);
-        }
-#endif
-
-        if (!strcmp(crypt(buf), hash)) {
-            printf("[%-06.llu ms] %-5s %09.d/%09.d (%3.f %%) of passwords tried\n", ta_timer_elapsed_ms() - start, buf, i, num_passwords, (float)i / num_passwords * 100.0f);
-            printf("[%-06.llu ms] Password found: '%s'\n", ta_timer_elapsed_ms() - start, buf);
-            fflush(stdout);
-            return;
-        }
-
-        for (int j = 0; j < buf_len; j++) {
-            switch (buf[j]) {
-                case 0:
-                    buf[j] = 'A';
-                    break;
-                case 'Z':
-                    buf[j] = 'a';
-                    break;
-                case 'z':
-                    buf[j] = 'A';
-                    continue;  // Carry
-                default:
-                    buf[j]++;
-            }
-            break;
-        }
-    }
-}
-
 int main(int argc, char *argv[])
 {
     UNUSED(argc);
     UNUSED(argv);
     tg_game.state = TA_STATE_INIT;
     ta_timer_init();
-
-    char *hash = "50cI2vYkF0YU2";
-    char buf[6] = "A";
-    crack(buf, 5, hash);
 
 	srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
     debug_tests();
