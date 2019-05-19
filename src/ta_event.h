@@ -22,9 +22,14 @@ typedef enum {
     TA_EVENT_GLOBAL_MOUSE_MOVE,
     TA_EVENT_GLOBAL_MOUSE_CLICK,
     TA_EVENT_GLOBAL_MOUSE_SCROLL,
-    TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK,
-    TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,
-    TA_EVENT_GLOBAL_TOGGLE_DEBUG,
+
+    // Global events for debugging
+    TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,
+    TA_EVENT_DEBUG_TOGGLE_WIREFRAME,
+    TA_EVENT_DEBUG_TOGGLE_NORMALS,
+    TA_EVENT_DEBUG_TOGGLE_BBOX,
+    TA_EVENT_DEBUG_BOOST_PINKY,
+    TA_EVENT_DEBUG_FOCUS_PINKY,
 
     // Camera events
     TA_EVENT_CAMERA_MOVE_FORWARD = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_CAMERA),
@@ -61,10 +66,6 @@ typedef struct {
 } ta_event_mouse_scroll;
 
 typedef struct {
-    int n;
-} ta_event_toggle_debug;
-
-typedef struct {
     float delta_pitch;
     float delta_yaw;
 } ta_event_camera_rotate;
@@ -75,7 +76,6 @@ typedef struct {
         ta_event_mouse_move mouse_move;
         ta_event_mouse_click mouse_click;
         ta_event_mouse_scroll mouse_scroll;
-        ta_event_toggle_debug toggle_debug;
         ta_event_camera_rotate camera_rotate;
     } data;
 } ta_event;
@@ -89,7 +89,9 @@ typedef struct {
 } ta_event_queue;
 ta_event_queue tg_event_queues[TA_EVENT_QUEUE_COUNT];
 
-extern bool tg_debug[9];
+extern bool tg_debug_render_normals;
+extern bool tg_debug_render_bounding_boxes;
+extern bool tg_debug_follow_pinky;
 
 void ta_event_push(ta_event *event);
 bool ta_event_pop(ta_event *event, ta_event_queue_type queue_type);

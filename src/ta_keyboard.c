@@ -15,27 +15,31 @@ void ta_keyboard_init()
     // TODO: Read keybinds from file
     //dlb_vec_reserve(tg_keybinds, 16);
 
+    //--------------------------------------------------------------------------
+    // PLAY
+    //--------------------------------------------------------------------------
+    // State changes
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_STATE_QUIT,            TA_KEY_RELEASE, SDL_SCANCODE_ESCAPE);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_GLOBAL_STATE_FREE_CAM,        TA_KEY_RELEASE, SDL_SCANCODE_X);
+    // Player movement
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_PLAYER_MOVE_FORWARD,          TA_KEY_HOLD, SDL_SCANCODE_W);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_PLAYER_MOVE_BACKWARD,         TA_KEY_HOLD, SDL_SCANCODE_S);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_PLAYER_MOVE_RIGHT,            TA_KEY_HOLD, SDL_SCANCODE_D);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_PLAYER_MOVE_LEFT,             TA_KEY_HOLD, SDL_SCANCODE_A);
     ta_keybind_bind1(TA_STATE_PLAY, TA_EVENT_PLAYER_MOVE_JUMP,             TA_KEY_HOLD, SDL_SCANCODE_SPACE);
-
+    //--------------------------------------------------------------------------
+    // FREE_CAM
+    //--------------------------------------------------------------------------
+    // State changes
     ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_STATE_PLAY,        TA_KEY_RELEASE, SDL_SCANCODE_ESCAPE);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK, TA_KEY_PRESS, SDL_SCANCODE_M);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_WIREFRAME,  TA_KEY_PRESS, SDL_SCANCODE_Z);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_1);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_2);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_3);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_4);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_5);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_6);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_7);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_8);
-    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_GLOBAL_TOGGLE_DEBUG,      TA_KEY_PRESS, SDL_SCANCODE_9);
-
+    // Debug keys
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,  TA_KEY_PRESS, SDL_SCANCODE_M);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,   TA_KEY_PRESS, SDL_SCANCODE_Z);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_DEBUG_TOGGLE_BBOX,        TA_KEY_PRESS, SDL_SCANCODE_1);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_DEBUG_TOGGLE_NORMALS,     TA_KEY_PRESS, SDL_SCANCODE_2);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_DEBUG_BOOST_PINKY,        TA_KEY_HOLD, SDL_SCANCODE_3);
+    ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_DEBUG_FOCUS_PINKY,        TA_KEY_PRESS, SDL_SCANCODE_4);
+    // Camera movement
     ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_FORWARD,      TA_KEY_HOLD, SDL_SCANCODE_W);
     ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_BACKWARD,     TA_KEY_HOLD, SDL_SCANCODE_S);
     ta_keybind_bind1(TA_STATE_FREE_CAM, TA_EVENT_CAMERA_MOVE_RIGHT,        TA_KEY_HOLD, SDL_SCANCODE_D);
@@ -131,13 +135,6 @@ void ta_keyboard_update()
         if (ta_keybind_triggered(bind)) {
             ta_event event = { 0 };
             event.type = bind->event_type;
-            if (event.type == TA_EVENT_GLOBAL_TOGGLE_DEBUG) {
-                if (bind->keys[0] == SDL_SCANCODE_0) {
-                    event.data.toggle_debug.n = 0;
-                } else {
-                    event.data.toggle_debug.n = 1 + bind->keys[0] - SDL_SCANCODE_1;
-                }
-            }
             ta_event_push(&event);
         }
     }

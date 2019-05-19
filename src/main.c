@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
     //       Could use this for a progress bar during load and better logging.
     //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
-    tg_game.state = TA_STATE_PLAY;
+    tg_game.state = TA_STATE_FREE_CAM;
 
     ////////////////////////////////////////////////////////////////////////////
     // Main loop
@@ -202,10 +202,10 @@ int main(int argc, char *argv[])
         ta_event_update();
         ta_camera_update(tg_game.scene->cameras, sim_dt);
 
-        if (tg_debug[3]) {
-            ta_rigid_body *rb = ta_entity_rigid_body(tg_game.player);
-            rb->transform.position.y += 2.0f;
-            tg_debug[3] = false;
+        if (tg_debug_follow_pinky) {
+            ta_vec3 target_pos = vec3_add(tg_game.player->transform.position,
+                (ta_vec3) { 0.0, 1.0f, 3.0f });
+            ta_camera_set_target_pos_absolute(tg_game.camera, target_pos);
         }
 
         ms_frame_accum += ms_frame_delta;
@@ -233,13 +233,13 @@ int main(int argc, char *argv[])
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.scene->cameras->look_at);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_primitive_push_axes(2.0f);
-        if (tg_debug[1] || tg_debug[2]) {
+        if (tg_debug_render_normals || tg_debug_render_bounding_boxes) {
             // TODO: This should take entity transform into account
             dlb_vec_each(ta_entity *, entity, tg_game.scene->entities) {
-                if (tg_debug[1]) {
+                if (tg_debug_render_normals) {
                     ta_entity_push_normals(entity);
                 }
-                if (tg_debug[2]) {
+                if (tg_debug_render_bounding_boxes) {
                     ta_entity_push_aabb(entity, TA_COLOR_RED);
                 }
             }

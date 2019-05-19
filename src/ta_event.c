@@ -6,7 +6,9 @@
 #include "SDL/SDL.h"
 #include <string.h>
 
-bool tg_debug[9];
+bool tg_debug_render_normals = false;
+bool tg_debug_render_bounding_boxes = false;
+bool tg_debug_follow_pinky = false;
 
 void ta_event_push(ta_event *event)
 {
@@ -96,9 +98,6 @@ void ta_event_update()
         switch (event.type) {
             case TA_EVENT_GLOBAL_STATE_PLAY: {
                 tg_game.state = TA_STATE_PLAY;
-                ta_vec3 target_pos = vec3_add(tg_game.player->transform.position,
-                    (ta_vec3) { 0.0, 1.0f, 3.0f });
-                ta_camera_set_target_pos_absolute(tg_game.camera, target_pos);
                 break;
             } case TA_EVENT_GLOBAL_STATE_FREE_CAM: {
                 tg_game.state = TA_STATE_FREE_CAM;
@@ -137,15 +136,24 @@ void ta_event_update()
                 //ta_ui_scrollview_scroll(view, event.data.mouse_scroll.y *
                 //    -event.data.mouse_scroll.flipped);
                 break;
-            } case TA_EVENT_GLOBAL_TOGGLE_MOUSE_LOCK: {
+            } case TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK: {
                 ta_mouse_toggle_capture();
                 break;
-            } case TA_EVENT_GLOBAL_TOGGLE_WIREFRAME: {
+            } case TA_EVENT_DEBUG_TOGGLE_WIREFRAME: {
                 ta_camera_toggle_wireframe(tg_game.scene->cameras);
                 break;
-            } case TA_EVENT_GLOBAL_TOGGLE_DEBUG: {
-                tg_debug[event.data.toggle_debug.n] =
-                    !tg_debug[event.data.toggle_debug.n];
+            } case TA_EVENT_DEBUG_TOGGLE_NORMALS: {
+                tg_debug_render_normals = true;
+                break;
+            } case TA_EVENT_DEBUG_TOGGLE_BBOX: {
+                tg_debug_render_bounding_boxes = true;
+                break;
+            } case TA_EVENT_DEBUG_BOOST_PINKY: {
+                ta_rigid_body *rb = ta_entity_rigid_body(tg_game.player);
+                rb->transform.position.y += 0.1f;
+                break;
+            } case TA_EVENT_DEBUG_FOCUS_PINKY: {
+                tg_debug_follow_pinky = !tg_debug_follow_pinky;
                 break;
             } default: {
                 DLB_ASSERT(!"Unhandled event type");
