@@ -19,3 +19,5 @@ typedef struct {
 } ta_game;
 
 extern ta_game tg_game;
+
+void ta_game_update();

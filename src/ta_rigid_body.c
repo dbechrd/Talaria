@@ -1,4 +1,4 @@
-#include "ta_collide.h"
+#include "ta_rigid_body.h"
 #include <math.h>
 
 const char *ta_collider_type_str(int type) {

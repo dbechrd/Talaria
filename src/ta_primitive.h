@@ -1,6 +1,6 @@
 #pragma once
 #include "ta_math.h"
-#include "ta_collide.h"
+#include "ta_rigid_body.h"
 
 typedef struct {
     ta_vec2 p0;

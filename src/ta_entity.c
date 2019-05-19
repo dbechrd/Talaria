@@ -74,6 +74,7 @@ ta_rigid_body *ta_entity_rigid_body(ta_entity *e)
 
 void ta_entity_update(ta_entity *e, double dt)
 {
+    UNUSED(dt);
     ta_rigid_body *rigid_body = ta_entity_rigid_body(e);
     if (rigid_body) {
         e->transform.position = rigid_body->transform.position;

@@ -1,7 +1,7 @@
 #pragma once
 #include "ta_scene.h"
 #include "ta_mesh.h"
-#include "ta_collide.h"
+#include "ta_rigid_body.h"
 #include "dlb_hash.h"
 
 typedef struct ta_mesh_group_s {

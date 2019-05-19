@@ -68,7 +68,7 @@ void ta_event_sdl_poll()
         switch (sdl_event.type) {
             case SDL_QUIT: {
                 ta_event event = { 0 };
-                event.type = TA_EVENT_GLOBAL_STATE_QUIT;
+                event.type = TA_EVENT_GLOBAL_QUIT;
                 ta_event_push(&event);
                 break;
             } case SDL_WINDOWEVENT: {
@@ -96,64 +96,28 @@ void ta_event_update()
     ta_event event;
     while (ta_event_pop(&event, TA_EVENT_QUEUE_GLOBAL)) {
         switch (event.type) {
-            case TA_EVENT_GLOBAL_STATE_PLAY: {
-                tg_game.state = TA_STATE_PLAY;
-                break;
-            } case TA_EVENT_GLOBAL_STATE_FREE_CAM: {
-                tg_game.state = TA_STATE_FREE_CAM;
-                break;
-            } case TA_EVENT_GLOBAL_STATE_QUIT: {
-                tg_game.state = TA_STATE_QUIT;
+            case TA_EVENT_GLOBAL_QUIT: {
+                ta_event e = { 0 };
+                e.type = TA_EVENT_GAME_STATE_QUIT;
+                ta_event_push(&e);
                 break;
             } case TA_EVENT_GLOBAL_MOUSE_MOVE: {
-                if (!tg_mouse.captured) break;
-
-                switch (tg_game.state) {
-                    case TA_STATE_PLAY: // Intentional fall-through
-                    case TA_STATE_FREE_CAM: {
-                        ta_event cam_rotate_evt = { 0 };
-                        cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
-                        if (event.data.mouse_move.dx) {
-                            cam_rotate_evt.data.camera_rotate.delta_yaw =
-                                (float)-event.data.mouse_move.dx;
-                        }
-                        if (event.data.mouse_move.dy) {
-                            cam_rotate_evt.data.camera_rotate.delta_pitch =
-                                (float)-event.data.mouse_move.dy;
-                        }
-                        ta_event_push(&cam_rotate_evt);
-                        break;
-                    } default: {
-                        DLB_ASSERT(!"Unhandled state");
-                    }
-                }
+                ta_event e = { 0 };
+                e.type = TA_EVENT_GAME_MOUSE_MOVE;
+                e.data.mouse_move = event.data.mouse_move;
+                ta_event_push(&e);
                 break;
             } case TA_EVENT_GLOBAL_MOUSE_CLICK: {
+                ta_event e = { 0 };
+                e.type = TA_EVENT_GAME_MOUSE_CLICK;
+                e.data.mouse_click = event.data.mouse_click;
+                ta_event_push(&e);
                 break;
             } case TA_EVENT_GLOBAL_MOUSE_SCROLL: {
-                // TODO: Scroll active element being hovered, if not
-                //       handled, bubble up
-                //ta_ui_scrollview_scroll(view, event.data.mouse_scroll.y *
-                //    -event.data.mouse_scroll.flipped);
-                break;
-            } case TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK: {
-                ta_mouse_toggle_capture();
-                break;
-            } case TA_EVENT_DEBUG_TOGGLE_WIREFRAME: {
-                ta_camera_toggle_wireframe(tg_game.scene->cameras);
-                break;
-            } case TA_EVENT_DEBUG_TOGGLE_NORMALS: {
-                tg_debug_render_normals = true;
-                break;
-            } case TA_EVENT_DEBUG_TOGGLE_BBOX: {
-                tg_debug_render_bounding_boxes = true;
-                break;
-            } case TA_EVENT_DEBUG_BOOST_PINKY: {
-                ta_rigid_body *rb = ta_entity_rigid_body(tg_game.player);
-                rb->transform.position.y += 0.1f;
-                break;
-            } case TA_EVENT_DEBUG_FOCUS_PINKY: {
-                tg_debug_follow_pinky = !tg_debug_follow_pinky;
+                ta_event e = { 0 };
+                e.type = TA_EVENT_GAME_MOUSE_SCROLL;
+                e.data.mouse_scroll = event.data.mouse_scroll;
+                ta_event_push(&e);
                 break;
             } default: {
                 DLB_ASSERT(!"Unhandled event type");

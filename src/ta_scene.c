@@ -7,7 +7,8 @@
 #include "ta_shader.h"
 #include "ta_texture.h"
 #include "ta_entity.h"
-#include "ta_collide.h"
+#include "ta_rigid_body.h"
+#include "ta_light.h"
 #include "ta_log.h"
 #include "dlb_vector.h"
 #include <stdlib.h>

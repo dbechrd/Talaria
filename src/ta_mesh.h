@@ -1,7 +1,7 @@
 #pragma once
 #include "ta_scene.h"
 #include "ta_primitive.h"
-#include "ta_collide.h"
+#include "ta_rigid_body.h"
 #include "misc/gl3w.h"
 
 enum {

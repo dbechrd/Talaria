@@ -4,6 +4,7 @@
 
 typedef enum {
     TA_EVENT_QUEUE_GLOBAL,
+    TA_EVENT_QUEUE_GAME,
     TA_EVENT_QUEUE_CAMERA,
     TA_EVENT_QUEUE_PLAYER,
     TA_EVENT_QUEUE_COUNT
@@ -15,15 +16,21 @@ typedef enum {
 
 typedef enum {
     // Global events
-    TA_EVENT_GLOBAL_STATE_INIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GLOBAL),
-    TA_EVENT_GLOBAL_STATE_FREE_CAM,
-    TA_EVENT_GLOBAL_STATE_PLAY,
-    TA_EVENT_GLOBAL_STATE_QUIT,
+    TA_EVENT_GLOBAL_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GLOBAL),
     TA_EVENT_GLOBAL_MOUSE_MOVE,
     TA_EVENT_GLOBAL_MOUSE_CLICK,
     TA_EVENT_GLOBAL_MOUSE_SCROLL,
 
-    // Global events for debugging
+    // Game events
+    TA_EVENT_GAME_STATE_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GAME),
+    TA_EVENT_GAME_STATE_INIT,
+    TA_EVENT_GAME_STATE_FREE_CAM,
+    TA_EVENT_GAME_STATE_PLAY,
+    TA_EVENT_GAME_MOUSE_MOVE,
+    TA_EVENT_GAME_MOUSE_CLICK,
+    TA_EVENT_GAME_MOUSE_SCROLL,
+
+    // Game events for debugging
     TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,
     TA_EVENT_DEBUG_TOGGLE_WIREFRAME,
     TA_EVENT_DEBUG_TOGGLE_NORMALS,
@@ -81,7 +88,6 @@ typedef struct {
 } ta_event;
 
 typedef struct {
-    ta_event_queue_type type;
     u32 head;  // oldest item
     u32 count;
     u32 capacity;

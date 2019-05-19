@@ -200,13 +200,8 @@ int main(int argc, char *argv[])
         ta_mouse_update();
         ta_keyboard_update();
         ta_event_update();
+        ta_game_update();
         ta_camera_update(tg_game.scene->cameras, sim_dt);
-
-        if (tg_debug_follow_pinky) {
-            ta_vec3 target_pos = vec3_add(tg_game.player->transform.position,
-                (ta_vec3) { 0.0, 1.0f, 3.0f });
-            ta_camera_set_target_pos_absolute(tg_game.camera, target_pos);
-        }
 
         ms_frame_accum += ms_frame_delta;
         while (ms_frame_accum >= ms_sim_dt) {
@@ -214,6 +209,12 @@ int main(int argc, char *argv[])
 
             ms_sim_t += ms_sim_dt;
             ms_frame_accum -= ms_sim_dt;
+        }
+
+        if (tg_debug_follow_pinky) {
+            ta_vec3 target_pos = vec3_add(tg_game.player->transform.position,
+                (ta_vec3) { 0.0, 1.0f, 3.0f });
+            ta_camera_set_target_pos_absolute(tg_game.camera, target_pos);
         }
 
         const double sim_alpha = (double)ms_frame_accum / ms_sim_dt;

@@ -162,7 +162,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src/gl3w.c" />
-    <ClCompile Include="src\ta_collide.c" />
+    <ClCompile Include="src\ta_light.c" />
+    <ClCompile Include="src\ta_rigid_body.c" />
     <ClCompile Include="src\ta_entity.c" />
     <ClCompile Include="src\ta_material.c" />
     <ClCompile Include="src\ta_mesh_group.c" />
@@ -192,7 +193,8 @@
     <ClCompile Include="src\ta_viewport.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\ta_collide.h" />
+    <ClInclude Include="src\ta_light.h" />
+    <ClInclude Include="src\ta_rigid_body.h" />
     <ClInclude Include="src\ta_entity.h" />
     <ClInclude Include="src\ta_material.h" />
     <ClInclude Include="src\ta_mesh_group.h" />
