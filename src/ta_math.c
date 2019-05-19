@@ -60,9 +60,9 @@ float clampf(float f, float min, float max)
     }
 }
 
-void ta_vec3_print(ta_vec3 *vec)
+void ta_vec3_print(FILE *file, ta_vec3 *vec)
 {
-    ta_log_write(tg_debug_log, "vec3: %f %f %f\n",
+    fprintf(file, "vec3: %f %f %f\n",
         vec->x, vec->y, vec->z);
 }
 int vec3_zero(const ta_vec3 v)
@@ -137,9 +137,9 @@ ta_vec3 vec3_cross(const ta_vec3 a, const ta_vec3 b)
     return result;
 }
 
-void ta_vec4_print(ta_vec4 *vec)
+void ta_vec4_print(FILE *file, ta_vec4 *vec)
 {
-    ta_log_write(tg_debug_log, "vec4: %f %f %f %f\n",
+    fprintf(file, "vec4: %f %f %f %f\n",
         vec->x, vec->y, vec->z, vec->w);
 }
 int vec4_zero(const ta_vec4 v)
@@ -147,15 +147,50 @@ int vec4_zero(const ta_vec4 v)
     return v.x == 0.0f && v.y == 0.0f && v.z == 0.0f && v.w == 0.0f;
 }
 
-void ta_mat3_print(ta_mat3 *mat)
+void ta_mat3_print(FILE *file, ta_mat3 *mat)
 {
     for (int i = 0; i < 3; i++) {
-        ta_log_write(tg_debug_log, "mat[%d]: %f %f %f\n", i,
+        fprintf(file, "mat[%d]: %f %f %f\n", i,
             mat->rows.v[i].x,
             mat->rows.v[i].y,
             mat->rows.v[i].z
         );
     }
+}
+ta_mat3 mat3_init(
+    float m00, float m01, float m02,
+    float m10, float m11, float m12,
+    float m20, float m21, float m22)
+{
+    ta_mat3 result;
+    result.rows.f[0][0] = m00;
+    result.rows.f[0][1] = m01;
+    result.rows.f[0][2] = m02;
+    result.rows.f[1][0] = m10;
+    result.rows.f[1][1] = m11;
+    result.rows.f[1][2] = m12;
+    result.rows.f[2][0] = m20;
+    result.rows.f[2][1] = m21;
+    result.rows.f[2][2] = m22;
+    return result;
+}
+float mat3_deter(const ta_mat3 mat)
+{
+    float a = mat.rows.f[0][0];
+    float b = mat.rows.f[0][1];
+    float c = mat.rows.f[0][2];
+    float d = mat.rows.f[1][0];
+    float e = mat.rows.f[1][1];
+    float f = mat.rows.f[1][2];
+    float g = mat.rows.f[2][0];
+    float h = mat.rows.f[2][1];
+    float i = mat.rows.f[2][2];
+
+    float result =
+        a * (e*i - f*h) +
+        b * (f*g - d*i) +
+        c * (d*h - e*g);
+    return result;
 }
 ta_vec3 mat3_mul_vec3(const ta_mat3 m, const ta_vec3 v)
 {
@@ -236,10 +271,10 @@ ta_mat3 mat3_hue_rotation(float degrees)
     return m;
 }
 
-void ta_mat4_print(ta_mat4 *mat)
+void ta_mat4_print(FILE *file, ta_mat4 *mat)
 {
     for (int i = 0; i < 4; i++) {
-        ta_log_write(tg_debug_log, "mat[%d]: %f %f %f %f\n", i,
+        fprintf(file, "mat[%d]: %f %f %f %f\n", i,
             mat->rows.v[i].x,
             mat->rows.v[i].y,
             mat->rows.v[i].z,
@@ -362,6 +397,211 @@ ta_mat4 mat4_mul(const ta_mat4 a, const ta_mat4 b)
         }
     }
     return result;
+}
+float mat4_det(const ta_mat4 mat)
+{
+    float a = mat.rows.f[0][0];
+    float b = mat.rows.f[0][1];
+    float c = mat.rows.f[0][2];
+    float d = mat.rows.f[0][3];
+    float e = mat.rows.f[1][0];
+    float f = mat.rows.f[1][1];
+    float g = mat.rows.f[1][2];
+    float h = mat.rows.f[1][3];
+    float i = mat.rows.f[2][0];
+    float j = mat.rows.f[2][1];
+    float k = mat.rows.f[2][2];
+    float l = mat.rows.f[2][3];
+    float m = mat.rows.f[3][0];
+    float n = mat.rows.f[3][1];
+    float o = mat.rows.f[3][2];
+    float p = mat.rows.f[3][3];
+
+    float kp = k*p;
+    float lo = l*o;
+    float ln = l*n;
+    float jp = j*p;
+    float jo = j*o;
+    float kn = k*n;
+    float lm = l*m;
+    float ip = i*p;
+    float io = i*o;
+    float km = k*m;
+    float in = i*n;
+    float jm = j*m;
+
+    float result =
+        a * (f * (kp - lo) + g * (ln - jp) + h * (jo - kn)) -
+        b * (e * (kp - lo) + g * (lm - ip) + h * (io - km)) +
+        c * (e * (jp - ln) + f * (lm - ip) + h * (in - jm)) -
+        d * (e * (jo - kn) + f * (km - io) + g * (in - jm));
+    return result;
+}
+// from gluInvertMatrix:
+//     https://stackoverflow.com/a/1148405/770230
+// see also:
+//     http://www-graphics.stanford.edu/courses/cs248-98-fall/Final/q4.html
+int mat4_inverse(ta_mat4 m, ta_mat4 *result)
+{
+#define m0  m.rows.f[0][0]
+#define m1  m.rows.f[0][1]
+#define m2  m.rows.f[0][2]
+#define m3  m.rows.f[0][3]
+#define m4  m.rows.f[1][0]
+#define m5  m.rows.f[1][1]
+#define m6  m.rows.f[1][2]
+#define m7  m.rows.f[1][3]
+#define m8  m.rows.f[2][0]
+#define m9  m.rows.f[2][1]
+#define m10 m.rows.f[2][2]
+#define m11 m.rows.f[2][3]
+#define m12 m.rows.f[3][0]
+#define m13 m.rows.f[3][1]
+#define m14 m.rows.f[3][2]
+#define m15 m.rows.f[3][3]
+
+    float inv[16];
+    inv[0] =
+        m5  * m10 * m15 -
+        m5  * m11 * m14 -
+        m9  * m6  * m15 +
+        m9  * m7  * m14 +
+        m13 * m6  * m11 -
+        m13 * m7  * m10;
+    inv[4] =
+       -m4  * m10 * m15 +
+        m4  * m11 * m14 +
+        m8  * m6  * m15 -
+        m8  * m7  * m14 -
+        m12 * m6  * m11 +
+        m12 * m7  * m10;
+    inv[8] =
+        m4  * m9  * m15 -
+        m4  * m11 * m13 -
+        m8  * m5  * m15 +
+        m8  * m7  * m13 +
+        m12 * m5  * m11 -
+        m12 * m7  * m9;
+    inv[12] =
+       -m4  * m9  * m14 +
+        m4  * m10 * m13 +
+        m8  * m5  * m14 -
+        m8  * m6  * m13 -
+        m12 * m5  * m10 +
+        m12 * m6  * m9;
+
+    float det = m0 * inv[0] + m1 * inv[4] + m2 * inv[8] + m3 * inv[12];
+    if (fabsf(det) < TA_EPSILON) {
+        return false;
+    }
+
+    inv[1] =
+       -m1  * m10 * m15 +
+        m1  * m11 * m14 +
+        m9  * m2  * m15 -
+        m9  * m3  * m14 -
+        m13 * m2  * m11 +
+        m13 * m3  * m10;
+    inv[5] =
+        m0  * m10 * m15 -
+        m0  * m11 * m14 -
+        m8  * m2  * m15 +
+        m8  * m3  * m14 +
+        m12 * m2  * m11 -
+        m12 * m3  * m10;
+    inv[9] =
+       -m0  * m9  * m15 +
+        m0  * m11 * m13 +
+        m8  * m1  * m15 -
+        m8  * m3  * m13 -
+        m12 * m1  * m11 +
+        m12 * m3  * m9;
+    inv[13] =
+        m0  * m9  * m14 -
+        m0  * m10 * m13 -
+        m8  * m1  * m14 +
+        m8  * m2  * m13 +
+        m12 * m1  * m10 -
+        m12 * m2  * m9;
+    inv[2] =
+        m1  * m6 * m15 -
+        m1  * m7 * m14 -
+        m5  * m2 * m15 +
+        m5  * m3 * m14 +
+        m13 * m2 * m7 -
+        m13 * m3 * m6;
+    inv[6] =
+       -m0  * m6 * m15 +
+        m0  * m7 * m14 +
+        m4  * m2 * m15 -
+        m4  * m3 * m14 -
+        m12 * m2 * m7 +
+        m12 * m3 * m6;
+    inv[10] =
+        m0  * m5 * m15 -
+        m0  * m7 * m13 -
+        m4  * m1 * m15 +
+        m4  * m3 * m13 +
+        m12 * m1 * m7 -
+        m12 * m3 * m5;
+    inv[14] =
+       -m0  * m5 * m14 +
+        m0  * m6 * m13 +
+        m4  * m1 * m14 -
+        m4  * m2 * m13 -
+        m12 * m1 * m6 +
+        m12 * m2 * m5;
+    inv[3] =
+       -m1 * m6 * m11 +
+        m1 * m7 * m10 +
+        m5 * m2 * m11 -
+        m5 * m3 * m10 -
+        m9 * m2 * m7 +
+        m9 * m3 * m6;
+    inv[7] =
+        m0 * m6 * m11 -
+        m0 * m7 * m10 -
+        m4 * m2 * m11 +
+        m4 * m3 * m10 +
+        m8 * m2 * m7 -
+        m8 * m3 * m6;
+    inv[11] =
+       -m0 * m5 * m11 +
+        m0 * m7 * m9 +
+        m4 * m1 * m11 -
+        m4 * m3 * m9 -
+        m8 * m1 * m7 +
+        m8 * m3 * m5;
+    inv[15] =
+        m0 * m5 * m10 -
+        m0 * m6 * m9 -
+        m4 * m1 * m10 +
+        m4 * m2 * m9 +
+        m8 * m1 * m6 -
+        m8 * m2 * m5;
+
+#undef m0
+#undef m1
+#undef m2
+#undef m3
+#undef m4
+#undef m5
+#undef m6
+#undef m7
+#undef m8
+#undef m9
+#undef m10
+#undef m11
+#undef m12
+#undef m13
+#undef m14
+#undef m15
+
+    det = 1.0f / det;
+    for (int i = 0; i < 16; i++) {
+        ((float *)result)[i] = inv[i] * det;
+    }
+    return true;
 }
 ta_mat4 mat4_perspective(float fov_deg, float aspect, float nearz, float farz)
 {

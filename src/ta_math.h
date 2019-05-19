@@ -1,4 +1,5 @@
 #pragma once
+#include <stdio.h>
 
 #define TA_EPSILON 0.0001f
 #define M_PI 3.14159265358979323846264338327950288
@@ -30,6 +31,13 @@ typedef struct {
     float z;
     float w;
 } ta_vec4;
+
+typedef struct {
+    float x;
+    float y;
+    float z;
+    float w;
+} ta_quat;
 
 typedef struct {
     union {
@@ -107,7 +115,7 @@ extern const ta_rgba TA_COLOR_GRAY9;
 //int clamp(int d, int min, int max);
 float clampf(float f, float min, float max);
 
-void ta_vec3_print(ta_vec3 *vec);
+void ta_vec3_print(FILE *file, ta_vec3 *vec);
 int vec3_zero(const ta_vec3 v);
 ta_vec3 vec3_negate(const ta_vec3 v);
 ta_vec3 vec3_add(const ta_vec3 a, const ta_vec3 b);
@@ -118,15 +126,20 @@ ta_vec3 vec3_normalize(const ta_vec3 v);
 float vec3_dot(const ta_vec3 a, const ta_vec3 b);
 ta_vec3 vec3_cross(const ta_vec3 a, const ta_vec3 b);
 
-void ta_vec4_print(ta_vec4 *vec);
+void ta_vec4_print(FILE *file, ta_vec4 *vec);
 int vec4_zero(const ta_vec4 v);
 
-void ta_mat3_print(ta_mat3 *mat);
+void ta_mat3_print(FILE *file, ta_mat3 *mat);
+ta_mat3 mat3_init(
+    float m00, float m01, float m02,
+    float m10, float m11, float m12,
+    float m20, float m21, float m22);
+float mat3_deter(const ta_mat3 mat);
 ta_vec3 mat3_mul_vec3(const ta_mat3 m, const ta_vec3 v);
 ta_rgb mat3_mul_rgb(const ta_mat3 m, const ta_rgb v);
 ta_mat3 mat3_hue_rotation(float degrees);
 
-void ta_mat4_print(ta_mat4 *mat);
+void ta_mat4_print(FILE *file, ta_mat4 *mat);
 ta_mat4 mat4_mul(const ta_mat4 a, const ta_mat4 b);
 ta_mat4 mat4_init(
     float m00, float m01, float m02, float m03,
@@ -140,6 +153,8 @@ ta_mat4 mat4_scalef(float s);
 ta_mat4 mat4_rotate_x(float deg);
 ta_mat4 mat4_rotate_y(float deg);
 ta_mat4 mat4_rotate_z(float deg);
+float mat4_det(const ta_mat4 mat);
+int mat4_inverse(ta_mat4 m, ta_mat4 *result);
 ta_mat4 mat4_perspective(float fov_deg, float aspect, float nearz, float farz);
 ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float nearz);
 ta_mat4 mat4_ortho(float left, float right, float bottom, float top,

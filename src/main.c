@@ -95,7 +95,7 @@ void read_scene(const char *filename) {
     ta_scene_obj_init(tg_game.scene);
 
     ta_log_write(tg_debug_log, "[Scene] Loaded successfully\n");
-    ta_scene_print(tg_game.scene, tg_debug_log->stream);
+    //ta_scene_print(tg_game.scene, tg_debug_log->stream);
     //ta_scene_free(tg_game.scene);
 }
 
@@ -103,13 +103,11 @@ int main(int argc, char *argv[])
 {
     UNUSED(argc);
     UNUSED(argv);
-    tg_game.state = TA_STATE_INIT;
     ta_timer_init();
-
 	srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
     debug_tests();
 
-	ta_log debug_log;
+    ta_log debug_log;
 	tg_debug_log = &debug_log;
     ta_log_init(tg_debug_log, "log.txt", true);
 
@@ -121,6 +119,8 @@ int main(int argc, char *argv[])
     ta_keyboard_init();
     ta_render_init();
     ta_primitive_init();
+
+    tg_game.state = TA_STATE_INIT;
 
     // Intro scene
     read_scene("data/scenes/scene1.dml");
@@ -184,16 +184,16 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     u64 frame_num = 0;
 
-    u64 ms_sim_t = 0;                          // current simulation time
-    const u64 ms_sim_dt = 10;                  // fixed dt milliseconds
-    const double sim_dt = ms_sim_dt / 1000.0;  // fixed dt seconds
+    double ms_sim_t = 0;                     // current simulation time
+    const double ms_sim_dt = 10;             // fixed dt milliseconds
+    const double sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
 
-    u64 ms_frame_prev = ta_timer_elapsed_ms();
-    u64 ms_frame_accum = 0;
+    double ms_frame_prev = ta_timer_elapsed_ms();
+    double ms_frame_accum = 0;
 
     while (tg_game.state != TA_STATE_QUIT) {
-        u64 ms_frame_start = ta_timer_elapsed_ms();
-        u64 ms_frame_delta = ms_frame_start - ms_frame_prev;
+        double ms_frame_start = ta_timer_elapsed_ms();
+        double ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
 
         ta_event_sdl_poll();
@@ -302,6 +302,10 @@ int main(int argc, char *argv[])
 #endif
 
         ta_ui_clear();
+
+        // TODO: Print frame time on the screen once we have text rendering
+        //double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
+        //printf("Frame %5llu took %f ms.\n", frame_num, ms_frame_time);
 
         ta_window_swap();
         frame_num++;
