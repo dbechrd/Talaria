@@ -136,10 +136,13 @@ ta_mat3 mat3_init(
     float m00, float m01, float m02,
     float m10, float m11, float m12,
     float m20, float m21, float m22);
-float mat3_deter(const ta_mat3 mat);
+ta_mat3 mat3_rotate_x(float deg);
+ta_mat3 mat3_rotate_y(float deg);
+ta_mat3 mat3_rotate_z(float deg);
 ta_vec3 mat3_mul_vec3(const ta_mat3 m, const ta_vec3 v);
 ta_rgb mat3_mul_rgb(const ta_mat3 m, const ta_rgb v);
 ta_mat3 mat3_hue_rotation(float degrees);
+float mat3_deter(const ta_mat3 mat);
 
 void ta_mat4_print(FILE *file, ta_mat4 *mat);
 ta_mat4 mat4_mul(const ta_mat4 a, const ta_mat4 b);

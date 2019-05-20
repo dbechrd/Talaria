@@ -30,7 +30,11 @@ void main()
 	//final_color = vec4(vertex.uv, 0.0, 1.0);
 	//final_color = final_color + 0.0000001 * (tex_color);
 
-    // Normal colors
+    // Render faces as the color of their normal
     //final_color = vec4(abs(vertex.normal), 1.0);
-	final_color = tex_color * vec4(vec3(0.1), 1.0);
+
+    float strength = dot(-u_sun.direction, vertex.normal);
+    final_color = vec4(tex_color.rgb * clamp(strength, 0.2, 0.6), tex_color.a);
+
+	//final_color = tex_color * vec4(vec3(0.1), 1.0);
 }

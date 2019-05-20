@@ -79,6 +79,9 @@ void ta_entity_update(ta_entity *e, double dt)
     if (rigid_body) {
         e->transform.position = rigid_body->transform.position;
     }
+
+    // TODO: Calculate this via mat4_mul(parent, transform)
+    e->model = mat4_translate(&e->transform.position);
 }
 
 void ta_entity_push_aabb(ta_entity *e, ta_rgba color)
@@ -107,12 +110,10 @@ void ta_entity_render(ta_entity *e, ta_mat4 *proj, ta_mat4 *view)
     DLB_ASSERT(texture);
     DLB_ASSERT(mesh_group);
 
-    // TODO: Calculate this in entity_update via mat4_mul(parent, transform)
-    ta_mat4 model = mat4_translate(&e->transform.position);
-
     ta_shader_set_mat4(shader, SYM_U_PROJ, proj);
     ta_shader_set_mat4(shader, SYM_U_VIEW, view);
-    ta_shader_set_mat4(shader, SYM_U_MODEL, &model);
+    ta_shader_set_mat4(shader, SYM_U_MODEL, &e->model);
+    ta_shader_set_light(shader, SYM_U_SUN, tg_game.sun);
     ta_shader_set_sampler2d(shader, SYM_U_TEX0, texture->gl_id);
     ta_shader_bind(shader);
     ta_shader_prerender(shader);

@@ -19,6 +19,7 @@
 #include "ta_keyboard.h"
 #include "ta_mouse.h"
 #include "ta_entity.h"
+#include "ta_light.h"
 #include "ta_schema.h"
 #include "ta_parse.h"
 #include "ta_symbol.h"
@@ -123,7 +124,7 @@ int main(int argc, char *argv[])
     tg_game.state = TA_STATE_INIT;
 
     // Intro scene
-    read_scene("data/scenes/scene1.dml");
+    read_scene("data/scene/scene1.dml");
     tg_game.sun = ta_scene_find(tg_game.scene, F_TA_LIGHT, INTERN("light_sun"));
     tg_game.camera = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_player"));
     tg_game.player = ta_scene_find(tg_game.scene, F_TA_ENTITY, INTERN("entity_player"));
@@ -158,8 +159,6 @@ int main(int argc, char *argv[])
 		(ta_vec3) { 0.0f, 0.0f, 0.0f },
 		VEC3_Y
 	);
-
-	float model_deg = 0.0f;
 
     ta_texture *tex_test = ta_scene_find(tg_game.scene, F_TA_TEXTURE,
         INTERN("texture_1"));
@@ -223,19 +222,27 @@ int main(int argc, char *argv[])
         // TODO: state = state_current * sim_alpha + state_prev (1.0 - sim_alpha);
         // TODO: render(sim_alpha)
 
+        ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
+        tg_game.sun->data.sun.direction =
+            mat3_mul_vec3(rotate_sun, tg_game.sun->data.sun.direction);
+
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw models
-		glDisable(GL_CULL_FACE);
+		//glDisable(GL_CULL_FACE);
         ta_scene_render(tg_game.scene, &tg_window.projection,
             &tg_game.camera->look_at);
 
-        // World axes
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_window.projection);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
+
+        // World axes
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_primitive_push_axes(2.0f);
+        ta_primitive_render();
+        ta_primitive_clear();
+
         if (tg_debug_render_normals || tg_debug_render_bounding_boxes) {
             // TODO: This should take entity transform into account
             dlb_vec_each(ta_entity *, entity, tg_game.scene->entities) {
@@ -245,10 +252,11 @@ int main(int argc, char *argv[])
                 if (tg_debug_render_bounding_boxes) {
                     ta_entity_push_aabb(entity, TA_COLOR_RED);
                 }
+                ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &entity->model);
+                ta_primitive_render();
+                ta_primitive_clear();
             }
         }
-        ta_primitive_render();
-        ta_primitive_clear();
 
         // Minimap
 		ta_viewport_bind(&minimap_viewport, true);

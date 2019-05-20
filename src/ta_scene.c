@@ -667,7 +667,13 @@ static void scene_load_placeholders(ta_scene *scene)
 ta_scene *ta_scene_init(const char *name)
 {
     ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
-    dlb_hash_init(&scene->refs_by_uid, DLB_HASH_STRING, scene->name, 32);
+    // TODO: Read ref count from file
+    int ref_count = 32;
+    // NOTE: If this resizes it will invalidate the pointers stored in the hash
+    //       table. I just made it fixed size for now. Might be fun to have an
+    //       optional "resized" callback on dlb_vec.
+    dlb_vec_reserve_fixed(scene->refs, ref_count);
+    dlb_hash_init(&scene->refs_by_uid, DLB_HASH_STRING, scene->name, ref_count);
     scene_load_placeholders(scene);
     scene->name = name;
     return scene;
@@ -695,6 +701,7 @@ void ta_scene_free(ta_scene *scene)
     //for (ta_entity *e = scn->entities; e != dlb_vec_end(scn->entities); e++) {
     //    entity_free(e);
     //}
+    dlb_vec_free(scene->refs);
     dlb_hash_free(&scene->refs_by_uid);
     for (ta_camera *o = scene->cameras; o != dlb_vec_end(scene->cameras); o++) {
         // TODO: Free cameras

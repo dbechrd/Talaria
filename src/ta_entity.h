@@ -20,6 +20,7 @@ typedef struct ta_entity_s {
     const char *rigid_body_uid;
     const char *parent_uid;
     ta_aabb aabb;
+    ta_mat4 model;
     //ta_entity *next;  // TODO: Is a sibling linked list useful?
     //ta_entity **children;
 } ta_entity;

@@ -54,6 +54,8 @@ typedef struct ta_shader_s {
     const char *uid;
     const char *path_vert;
     const char *path_frag;
+    GLint max_attrib_name_len;
+    GLint max_uniform_name_len;
     ta_shader_attribute *attributes;
     ta_shader_uniform *uniforms;
     GLuint program_id;
@@ -97,4 +99,6 @@ void ta_shader_set_mat4(ta_shader *shader, const char *name,
     const ta_mat4 *matrix);
 void ta_shader_set_sampler2d(ta_shader *shader, const char *name,
     GLuint texture_id);
+void ta_shader_set_light(ta_shader *shader, const char *name,
+    ta_light *light);
 void ta_shader_prerender(ta_shader *shader);

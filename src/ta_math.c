@@ -174,22 +174,40 @@ ta_mat3 mat3_init(
     result.data.f[2][2] = m22;
     return result;
 }
-float mat3_deter(const ta_mat3 mat)
+ta_mat3 mat3_rotate_x(float deg)
 {
-    float a = mat.data.f[0][0];
-    float b = mat.data.f[0][1];
-    float c = mat.data.f[0][2];
-    float d = mat.data.f[1][0];
-    float e = mat.data.f[1][1];
-    float f = mat.data.f[1][2];
-    float g = mat.data.f[2][0];
-    float h = mat.data.f[2][1];
-    float i = mat.data.f[2][2];
-
-    float result =
-        a * (e*i - f*h) +
-        b * (f*g - d*i) +
-        c * (d*h - e*g);
+    float rad = DEG_TO_RADF(deg);
+    float s = sinf(rad);
+    float c = cosf(rad);
+    ta_mat3 result = mat3_init(
+        1, 0, 0,
+        0, c,-s,
+        0, s, c
+    );
+    return result;
+}
+ta_mat3 mat3_rotate_y(float deg)
+{
+    float rad = DEG_TO_RADF(deg);
+    float s = sinf(rad);
+    float c = cosf(rad);
+    ta_mat3 result = mat3_init(
+        c, 0, s,
+        0, 1, 0,
+       -s, 0, c
+    );
+    return result;
+}
+ta_mat3 mat3_rotate_z(float deg)
+{
+    float rad = DEG_TO_RADF(deg);
+    float s = sinf(rad);
+    float c = cosf(rad);
+    ta_mat3 result = mat3_init(
+        c,-s, 0,
+        s, c, 0,
+        0, 0, 1
+    );
     return result;
 }
 ta_vec3 mat3_mul_vec3(const ta_mat3 m, const ta_vec3 v)
@@ -269,6 +287,24 @@ ta_mat3 mat3_hue_rotation(float degrees)
     m.data.f[2][1] = m.data.f[0][2];
     m.data.f[2][2] = m.data.f[0][0];
     return m;
+}
+float mat3_deter(const ta_mat3 mat)
+{
+    float a = mat.data.f[0][0];
+    float b = mat.data.f[0][1];
+    float c = mat.data.f[0][2];
+    float d = mat.data.f[1][0];
+    float e = mat.data.f[1][1];
+    float f = mat.data.f[1][2];
+    float g = mat.data.f[2][0];
+    float h = mat.data.f[2][1];
+    float i = mat.data.f[2][2];
+
+    float result =
+        a * (e*i - f*h) +
+        b * (f*g - d*i) +
+        c * (d*h - e*g);
+    return result;
 }
 
 void ta_mat4_print(FILE *file, ta_mat4 *mat)

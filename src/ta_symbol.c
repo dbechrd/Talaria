@@ -35,6 +35,7 @@ const char *SYM_ATTR_NORMAL;
 const char *SYM_U_PROJ;
 const char *SYM_U_VIEW;
 const char *SYM_U_MODEL;
+const char *SYM_U_SUN;
 const char *SYM_U_TEX0;
 
 // TODO: It may be useful to have multiple symbol tables to allow freeing
@@ -64,6 +65,7 @@ void ta_symbol_init() {
     SYM_U_PROJ    = INTERN("u_proj");
     SYM_U_VIEW    = INTERN("u_view");
     SYM_U_MODEL   = INTERN("u_model");
+    SYM_U_SUN     = INTERN("u_sun");
     SYM_U_TEX0    = INTERN("u_tex0");
 
     SYM_ATTR_POSITION = INTERN("attr_position");

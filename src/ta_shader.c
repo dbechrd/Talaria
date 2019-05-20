@@ -144,8 +144,7 @@ static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms,
             break;
         }
     }
-    DLB_ASSERT(result);
-    DLB_ASSERT(result->type == type);
+    DLB_ASSERT(!result || result->type == type);
     return result;
 }
 
@@ -163,10 +162,43 @@ void ta_shader_init(ta_shader *shader, const char *path_vert,
     shader->path_frag = path_frag;
 }
 
+static void shader_print_uniforms(ta_shader *shader)
+{
+    GLint count;
+    glGetProgramiv(shader->program_id, GL_ACTIVE_UNIFORMS, &count);
+    ta_log_write(tg_debug_log, "[Shader]  Active uniforms: %d\n", count);
+
+    GLsizei length;
+    GLint size; // size of the variable
+    GLenum type; // type of the variable (float, vec3 or mat4, etc)
+    GLchar *name = dlb_malloc(shader->max_uniform_name_len);
+    for (GLint i = 0; i < count; i++)
+    {
+        glGetActiveUniform(shader->program_id, (GLuint)i,
+            shader->max_uniform_name_len, &length, &size, &type, name);
+        ta_log_write(tg_debug_log, "[Shader]    Uniform #%d Name: %s Type: %u\n",
+            i, name, type);
+    }
+    dlb_free(name);
+}
+
+static void shader_locate_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
+{
+    for (ta_shader_uniform *u = uniforms; u != dlb_vec_end(uniforms); u++)
+    {
+        u->location = ta_shader_uniform_location(shader, u->name);
+        if (u->type == TA_GLSL_STRUCT) {
+            shader_locate_uniforms(shader, u->value.properties);
+        }
+    }
+}
+
 void ta_shader_create(ta_shader *shader)
 {
     DLB_ASSERT(shader->path_vert);
     DLB_ASSERT(shader->path_frag);
+
+    ta_log_write(tg_debug_log, "[Shader] Creating shader %s\n", shader->uid);
 
     // Compile shaders
     GLuint vshader = ta_shader_compile_file(GL_VERTEX_SHADER, shader->path_vert);
@@ -212,30 +244,18 @@ void ta_shader_create(ta_shader *shader)
     DLB_ASSERT(!attr_uv   || attr_uv->location   < 0 || attr_uv->location   == TA_SHADER_ATTR_UV);
     DLB_ASSERT(!attr_norm || attr_norm->location < 0 || attr_norm->location == TA_SHADER_ATTR_NORMAL);
 
-    char struct_buf[64] = { 0 };
-    int struct_buf_idx = 0;
-    for (ta_shader_uniform *u = shader->uniforms;
-        u != dlb_vec_end(shader->uniforms); u++)
-    {
-        u->location = ta_shader_uniform_location(shader, u->name);
-        if (u->type == TA_GLSL_STRUCT) {
-            //for (char *c = u->name; *c; c++) {
-            //    struct_buf[struct_buf_idx++] = *c;
-            //}
-            //struct_buf[struct_buf_idx++] = '.';
-            //int prop_start_idx = struct_buf_idx;
-            //
-            //for (int i = 0; i < ARRAY_COUNT(light_props); i++) {
-            //    u->value.light.location_type = ta_shader_uniform_location(shader, "u_sun.type");
-            //}
-        }
-    }
+    glGetProgramiv(shader->program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
+        &shader->max_attrib_name_len);
+    glGetProgramiv(shader->program_id, GL_ACTIVE_UNIFORM_MAX_LENGTH,
+        &shader->max_uniform_name_len);
+
+    shader_print_uniforms(shader);
+    shader_locate_uniforms(shader, shader->uniforms);
 
     glDetachShader(program_id, vshader);
     glDetachShader(program_id, fshader);
     delete_shader(vshader);
     delete_shader(fshader);
-
 }
 
 void ta_shader_delete(ta_shader *shader)
@@ -289,18 +309,20 @@ void ta_shader_set_light(ta_shader *shader, const char *name,
     ta_shader_uniform *u_color = 0;
 
     // TODO: Add these to symbol file
-    u_type      = find_uniform_by_name(shader->uniforms, INTERN("type"),      TA_GLSL_GLINT);
-    u_position  = find_uniform_by_name(shader->uniforms, INTERN("position"),  TA_GLSL_VEC3);
-    u_direction = find_uniform_by_name(shader->uniforms, INTERN("direction"), TA_GLSL_VEC3);
-    u_color     = find_uniform_by_name(shader->uniforms, INTERN("color"),     TA_GLSL_VEC3);
+    u_type      = find_uniform_by_name(u->value.properties, INTERN("u_sun.type"),      TA_GLSL_GLINT);
+    u_position  = find_uniform_by_name(u->value.properties, INTERN("u_sun.position"),  TA_GLSL_VEC3);
+    u_direction = find_uniform_by_name(u->value.properties, INTERN("u_sun.direction"), TA_GLSL_VEC3);
+    u_color     = find_uniform_by_name(u->value.properties, INTERN("u_sun.color"),     TA_GLSL_VEC3);
 
     switch (light->type) {
         case TA_LIGHT_SUN:
+            u_type->value.glint     = light->type;
             u_position->value.vec3  = VEC3_ZERO;
             u_direction->value.vec3 = light->data.sun.direction;
             u_color->value.vec3     = *(ta_vec3 *)&light->data.sun.color;
             break;
         case TA_LIGHT_POINT:
+            u_type->value.glint     = light->type;
             u_position->value.vec3  = light->data.point.position;
             u_direction->value.vec3 = VEC3_ZERO;
             u_color->value.vec3     = *(ta_vec3 *)&light->data.point.color;
@@ -314,7 +336,7 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
 {
     for (ta_shader_uniform *u = uniforms; u != dlb_vec_end(uniforms); u++)
     {
-        if (u->location < 0) {
+        if (u->location < 0 && u->type != TA_GLSL_STRUCT) {
             continue;
         }
 
