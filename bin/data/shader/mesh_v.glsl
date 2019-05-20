@@ -8,12 +8,14 @@ layout(location = 3) in vec3 attr_normal;
 uniform mat4 u_proj;
 uniform mat4 u_view;
 uniform mat4 u_model;
+uniform mat4 u_sun_view;
 
 out vs_out {
     vec3 position;
     vec4 color;
 	vec2 uv;
 	vec3 normal;
+    vec4 position_sun; // Position with respect to sunlight
 } vertex;
 
 void main()
@@ -22,6 +24,7 @@ void main()
     vertex.position = pos.xyz;
 	vertex.color = attr_color;
 	vertex.uv = attr_uv;
-	vertex.normal = attr_normal;
+    vertex.normal = normalize(mat3(u_model) * attr_normal);
+    vertex.position_sun = u_sun_view * pos;
 	gl_Position = u_proj * u_view * pos;
 }

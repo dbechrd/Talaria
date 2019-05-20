@@ -19,33 +19,39 @@ static dlb_hash tg_schemas_by_name;
 
 const char *ta_schema_field_type_str(ta_schema_field_type type) {
     switch(type) {
-        case F_TA_NULL:         return "NULL";
+        case F_TA_NULL:             return "NULL";
 
         // Compound types
-        case F_TA_VEC3:         return "TA_VEC3";
-        case F_TA_VEC4:         return "TA_VEC4";
-        case F_TA_RGB:          return "TA_COLOR3";
-        case F_TA_RGBA:         return "TA_COLOR4";
-        case F_TA_TRANSFORM:    return "TA_TRANSFORM";
-        case F_TA_CAMERA:       return "TA_CAMERA";
-        case F_TA_SUN_LIGHT:    return "TA_SUN_LIGHT";
-        case F_TA_POINT_LIGHT:  return "TA_POINT_LIGHT";
-        case F_TA_MATERIAL:     return "TA_MATERIAL";
-        case F_TA_MESH_GROUP:   return "TA_MESH";
-        case F_TA_SHADER:       return "TA_SHADER";
-        case F_TA_TEXTURE:      return "TA_TEXTURE";
-        case F_TA_ENTITY:       return "TA_ENTITY";
-        case F_TA_AABB:         return "TA_AABB";
-        case F_TA_OBB:          return "TA_OBB";
-        case F_TA_COLLIDER:     return "TA_COLLIDER";
-        case F_TA_RIGID_BODY:   return "TA_RIGID_BODY";
+        case F_TA_VEC2:             return "TA_VEC2";
+        case F_TA_VEC3:             return "TA_VEC3";
+        case F_TA_VEC4:             return "TA_VEC4";
+        case F_TA_MAT3:             return "TA_MAT3";
+        case F_TA_MAT4:             return "TA_MAT4";
+        case F_TA_RGB:              return "TA_COLOR3";
+        case F_TA_RGBA:             return "TA_COLOR4";
+        case F_TA_TRANSFORM:        return "TA_TRANSFORM";
+        case F_TA_CAMERA:           return "TA_CAMERA";
+        case F_TA_LIGHT:            return "TA_LIGHT";
+        case F_TA_SUN_LIGHT:        return "TA_SUN_LIGHT";
+        case F_TA_POINT_LIGHT:      return "TA_POINT_LIGHT";
+        case F_TA_MATERIAL:         return "TA_MATERIAL";
+        case F_TA_MESH_GROUP:       return "TA_MESH_GROUP";
+        case F_TA_SHADER:           return "TA_SHADER";
+        case F_TA_SHADER_ATTRIBUTE: return "TA_SHADER_ATTRIBUTE";
+        case F_TA_SHADER_UNIFORM:   return "TA_SHADER_UNIFORM";
+        case F_TA_TEXTURE:          return "TA_TEXTURE";
+        case F_TA_ENTITY:           return "TA_ENTITY";
+        case F_TA_AABB:             return "TA_AABB";
+        case F_TA_OBB:              return "TA_OBB";
+        case F_TA_COLLIDER:         return "TA_COLLIDER";
+        case F_TA_RIGID_BODY:       return "TA_RIGID_BODY";
 
         // Atomic types
-        case F_ATOM_INT:        return "ATOM_INT";
-        case F_ATOM_UINT:       return "ATOM_UINT";
-        case F_ATOM_FLOAT:      return "ATOM_FLOAT";
-        case F_ATOM_STRING:     return "ATOM_STRING";
-        case F_ATOM_ENUM:       return "ATOM_ENUM";
+        case F_ATOM_INT:            return "ATOM_INT";
+        case F_ATOM_UINT:           return "ATOM_UINT";
+        case F_ATOM_FLOAT:          return "ATOM_FLOAT";
+        case F_ATOM_STRING:         return "ATOM_STRING";
+        case F_ATOM_ENUM:           return "ATOM_ENUM";
         default:
             DLB_ASSERT(!"<UNKNOWN_TA_FIELD_TYPE>");
             return 0;
@@ -77,29 +83,44 @@ static void type_field_add(ta_schema *schema, ta_schema_field_type type,
     schema->size = sizeof(_type);
 
 #define TYPE_FIELD(type, field, field_type) \
-    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
-    SIZEOF_MEMBER(type, field), 0, false, 0, false, false, 0)
+    type_field_add(schema, field_type, INTERN(#field), \
+    OFFSETOF(type, field), SIZEOF_MEMBER(type, field), \
+    0, false, 0, false, false, 0)
 
 #define TYPE_ENUM(type, field, field_type, converter) \
-    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
-    SIZEOF_MEMBER(type, field), 0, false, converter, false, false, 0)
+    type_field_add(schema, field_type, INTERN(#field), \
+    OFFSETOF(type, field), SIZEOF_MEMBER(type, field), \
+    0, false, converter, false, false, 0)
+
+#define TYPE_ARRAY(type, field, field_type, size) \
+    type_field_add(schema, field_type, INTERN(#field), \
+    OFFSETOF(type, field), SIZEOF_MEMBER_ARRAY(type, field), \
+    size, false, 0, false, false, 0)
+
+#define TYPE_VECTOR(type, field, field_type) \
+    type_field_add(schema, field_type, INTERN(#field), \
+    OFFSETOF(type, field), SIZEOF_MEMBER_ARRAY(type, field), \
+    1, false, 0, false, false, 0)
 
 #define TYPE_UNION_TYPE(type, field, field_type, converter) \
-    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
-    SIZEOF_MEMBER(type, field), 0, false, converter, true, false, 0)
+    type_field_add(schema, field_type, INTERN(#field), \
+    OFFSETOF(type, field), SIZEOF_MEMBER(type, field), \
+    0, false, converter, true, false, 0)
 
-#define TYPE_UNION(type, field, field_type, union_name, union_type) \
+#define TYPE_UNION_FIELD(type, field, field_type, union_name, union_type) \
     type_field_add(schema, field_type, INTERN(#field), \
     OFFSETOF(type, union_name.field), SIZEOF_MEMBER(type, union_name.field), \
     0, false, 0, false, true, union_type)
 
-#define TYPE_ARRAY(type, field, field_type, size) \
-    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
-    SIZEOF_MEMBER_ARRAY(type, field), size, false, 0, false, false, 0)
+#define TYPE_UNION_ARRAY(type, field, field_type, size, union_name, union_type) \
+    type_field_add(schema, field_type, INTERN(#field), \
+    OFFSETOF(type, union_name.field), SIZEOF_MEMBER_ARRAY(type, union_name.field), \
+    size, false, 0, false, true, union_type)
 
-#define TYPE_VECTOR(type, field, field_type) \
-    type_field_add(schema, field_type, INTERN(#field), OFFSETOF(type, field), \
-    SIZEOF_MEMBER_ARRAY(type, field), 1, false, 0, false, false, 0)
+#define TYPE_UNION_VECTOR(type, field, field_type, union_name, union_type) \
+    type_field_add(schema, field_type, INTERN(#field), \
+    OFFSETOF(type, union_name.field), SIZEOF_MEMBER_ARRAY(type, union_name.field), \
+    1, false, 0, false, true, union_type)
 
 #define TYPE_END(type) \
     dlb_hash_insert(&tg_schemas_by_name, CSTR(STRING(type)), schema);
@@ -126,6 +147,11 @@ void ta_schema_register()
 #endif
 
     // Compound types
+    TYPE_START(ta_vec2, F_TA_VEC2);
+    TYPE_FIELD(ta_vec2, x, F_ATOM_FLOAT);
+    TYPE_FIELD(ta_vec2, y, F_ATOM_FLOAT);
+    TYPE_END(ta_vec2);
+
     TYPE_START(ta_vec3, F_TA_VEC3);
     TYPE_FIELD(ta_vec3, x, F_ATOM_FLOAT);
     TYPE_FIELD(ta_vec3, y, F_ATOM_FLOAT);
@@ -138,6 +164,16 @@ void ta_schema_register()
     TYPE_FIELD(ta_vec4, z, F_ATOM_FLOAT);
     TYPE_FIELD(ta_vec4, w, F_ATOM_FLOAT);
     TYPE_END(ta_vec4);
+
+    TYPE_START(ta_mat3, F_TA_MAT3);
+    TYPE_UNION_TYPE(ta_mat3, data, F_ATOM_ENUM, 0);
+    TYPE_UNION_ARRAY(ta_mat3, arr, F_ATOM_FLOAT, 9, data, 0);
+    TYPE_END(ta_mat3);
+
+    TYPE_START(ta_mat4, F_TA_MAT4);
+    TYPE_UNION_TYPE(ta_mat4, data, F_ATOM_ENUM, 0);
+    TYPE_UNION_ARRAY(ta_mat4, arr, F_ATOM_FLOAT, 16, data, 0);
+    TYPE_END(ta_mat4);
 
     TYPE_START(ta_rgb, F_TA_RGB);
     TYPE_FIELD(ta_rgb, r, F_ATOM_FLOAT);
@@ -175,16 +211,21 @@ void ta_schema_register()
     TYPE_END(ta_camera);
 
     TYPE_START(ta_sun_light, F_TA_SUN_LIGHT);
-    TYPE_FIELD(ta_sun_light, uid,       F_ATOM_STRING);
     TYPE_FIELD(ta_sun_light, direction, F_TA_VEC3);
     TYPE_FIELD(ta_sun_light, color,     F_TA_RGB);
     TYPE_END(ta_sun_light);
 
     TYPE_START(ta_point_light, F_TA_POINT_LIGHT);
-    TYPE_FIELD(ta_point_light, uid,      F_ATOM_STRING);
     TYPE_FIELD(ta_point_light, position, F_TA_VEC3);
     TYPE_FIELD(ta_point_light, color,    F_TA_RGB);
     TYPE_END(ta_point_light);
+
+    TYPE_START(ta_light, F_TA_LIGHT);
+    TYPE_FIELD(ta_light, uid, F_ATOM_STRING);
+    TYPE_UNION_TYPE(ta_light,  type,  F_ATOM_ENUM, ta_light_type_str);
+    TYPE_UNION_FIELD(ta_light, sun,   F_TA_SUN_LIGHT,   data, TA_LIGHT_SUN);
+    TYPE_UNION_FIELD(ta_light, point, F_TA_POINT_LIGHT, data, TA_LIGHT_POINT);
+    TYPE_END(ta_light);
 
     TYPE_START(ta_material, F_TA_MATERIAL);
     TYPE_FIELD(ta_material, uid,         F_ATOM_STRING);
@@ -197,6 +238,25 @@ void ta_schema_register()
     TYPE_FIELD(ta_mesh_group, path, F_ATOM_STRING);
     TYPE_END(ta_mesh_group);
 
+    TYPE_START(ta_shader_attribute, F_TA_SHADER_ATTRIBUTE);
+    TYPE_FIELD(ta_shader_attribute, name, F_ATOM_STRING);
+    TYPE_UNION_TYPE(ta_shader_attribute, type, F_ATOM_ENUM, ta_glsl_type_str);
+    TYPE_END(ta_shader_attribute);
+
+    TYPE_START(ta_shader_uniform, F_TA_SHADER_UNIFORM);
+    TYPE_FIELD(ta_shader_uniform, name, F_ATOM_STRING);
+    TYPE_UNION_TYPE(ta_shader_uniform,   type,       F_ATOM_ENUM, ta_glsl_type_str);
+    TYPE_UNION_FIELD(ta_shader_uniform,  glint,      F_ATOM_INT,          value, TA_GLSL_GLINT);
+    TYPE_UNION_FIELD(ta_shader_uniform,  gluint,     F_ATOM_UINT,         value, TA_GLSL_GLUINT);
+    TYPE_UNION_FIELD(ta_shader_uniform,  sampler2d,  F_ATOM_UINT,         value, TA_GLSL_SAMPLER2D);
+    TYPE_UNION_FIELD(ta_shader_uniform,  vec2,       F_TA_VEC2,           value, TA_GLSL_VEC2);
+    TYPE_UNION_FIELD(ta_shader_uniform,  vec3,       F_TA_VEC3,           value, TA_GLSL_VEC3);
+    TYPE_UNION_FIELD(ta_shader_uniform,  vec4,       F_TA_VEC4,           value, TA_GLSL_VEC4);
+    TYPE_UNION_FIELD(ta_shader_uniform,  mat3,       F_TA_MAT3,           value, TA_GLSL_MAT3);
+    TYPE_UNION_FIELD(ta_shader_uniform,  mat4,       F_TA_MAT4,           value, TA_GLSL_MAT4);
+    TYPE_UNION_VECTOR(ta_shader_uniform, properties, F_TA_SHADER_UNIFORM, value, TA_GLSL_STRUCT);
+    TYPE_END(ta_shader_uniform);
+
     TYPE_START(ta_shader, F_TA_SHADER);
     TYPE_FIELD(ta_shader, uid,        F_ATOM_STRING);
     TYPE_FIELD(ta_shader, path_vert,  F_ATOM_STRING);
@@ -204,16 +264,6 @@ void ta_schema_register()
     TYPE_VECTOR(ta_shader, attributes, F_TA_SHADER_ATTRIBUTE);
     TYPE_VECTOR(ta_shader, uniforms,   F_TA_SHADER_UNIFORM);
     TYPE_END(ta_shader);
-
-    TYPE_START(ta_shader_attribute, F_TA_SHADER_ATTRIBUTE);
-    TYPE_FIELD(ta_shader_attribute, name, F_ATOM_STRING);
-    TYPE_FIELD(ta_shader_attribute, type, F_ATOM_STRING);
-    TYPE_END(ta_shader_attribute);
-
-    TYPE_START(ta_shader_uniform, F_TA_SHADER_UNIFORM);
-    TYPE_FIELD(ta_shader_uniform, name, F_ATOM_STRING);
-    TYPE_FIELD(ta_shader_uniform, type, F_ATOM_STRING);
-    TYPE_END(ta_shader_uniform);
 
     TYPE_START(ta_texture, F_TA_TEXTURE);
     TYPE_FIELD(ta_texture, uid,  F_ATOM_STRING);
@@ -243,8 +293,8 @@ void ta_schema_register()
 
     TYPE_START(ta_collider, F_TA_COLLIDER);
     TYPE_UNION_TYPE(ta_collider,  type, F_ATOM_ENUM, ta_collider_type_str);
-    TYPE_UNION(ta_collider, aabb, F_TA_AABB, data, TA_COLLIDER_AABB);
-    TYPE_UNION(ta_collider, obb,  F_TA_OBB,  data, TA_COLLIDER_OBB);
+    TYPE_UNION_FIELD(ta_collider, aabb, F_TA_AABB, data, TA_COLLIDER_AABB);
+    TYPE_UNION_FIELD(ta_collider, obb,  F_TA_OBB,  data, TA_COLLIDER_OBB);
     TYPE_END(ta_collider);
 
     TYPE_START(ta_rigid_body, F_TA_RIGID_BODY);

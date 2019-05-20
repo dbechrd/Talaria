@@ -15,11 +15,15 @@ const char *SYM_TRUE;
 const char *SYM_FALSE;
 
 // GLSL types
+const char *SYM_GLINT;
+const char *SYM_GLUINT;
+const char *SYM_SAMPLER2D;
 const char *SYM_VEC2;
 const char *SYM_VEC3;
 const char *SYM_VEC4;
+const char *SYM_MAT3;
 const char *SYM_MAT4;
-const char *SYM_SAMPLER2D;
+const char *SYM_STRUCT;
 
 // Shader attributes
 const char *SYM_ATTR_POSITION;
@@ -47,11 +51,15 @@ void ta_symbol_init() {
     SYM_TRUE  = INTERN(KEYWORD_TRUE);
     SYM_FALSE = INTERN(KEYWORD_FALSE);
 
+    SYM_GLINT     = INTERN("glint");
+    SYM_GLUINT    = INTERN("gluint");
+    SYM_SAMPLER2D = INTERN("sampler2D");
     SYM_VEC2      = INTERN("vec2");
     SYM_VEC3      = INTERN("vec3");
     SYM_VEC4      = INTERN("vec4");
+    SYM_MAT4      = INTERN("mat3");
     SYM_MAT4      = INTERN("mat4");
-    SYM_SAMPLER2D = INTERN("sampler2D");
+    SYM_STRUCT    = INTERN("struct");
 
     SYM_U_PROJ    = INTERN("u_proj");
     SYM_U_VIEW    = INTERN("u_view");

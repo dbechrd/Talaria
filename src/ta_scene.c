@@ -453,10 +453,11 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                         stack[sp].type = stack[sp-1].type;
                         stack[sp].array_len = 0;
                         stack[sp].array_elem = 0;
-                        stack[sp].name = "[ARRAY_ELEMENT]";
                         if (stack[sp-1].array_len == 1) {
+                            stack[sp].name = "[VECTOR_ELEMENT]";
                             stack[sp].ptr = dlb_vec_alloc_size(*arr, stack[sp-1].size);
                         } else {
+                            stack[sp].name = "[ARRAY_ELEMENT]";
                             stack[sp].ptr = (u8 *)arr + (stack[sp-1].array_elem * stack[sp-1].size);
                             stack[sp-1].array_elem++;
                         }
@@ -556,7 +557,11 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     PANIC("Expected array start, line %d column %d\n",
                         tok->file_pos.line, tok->file_pos.column);
                 }
-                DLB_ASSERT(stack[sp].type == F_ATOM_FLOAT);
+                if (stack[sp].type != F_ATOM_FLOAT) {
+                    PANIC("Unexpected float token, expected %s, line %d column %d\n",
+                        ta_schema_field_type_str(stack[sp].type),
+                        tok->file_pos.line, tok->file_pos.column);
+                }
                 float *fp = stack[sp].ptr;
                 *fp = tok->value.as_float;
                 break;
@@ -565,7 +570,11 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     PANIC("Expected array start, line %d column %d\n",
                         tok->file_pos.line, tok->file_pos.column);
                 }
-                DLB_ASSERT(stack[sp].type == F_ATOM_STRING);
+                if (stack[sp].type != F_ATOM_STRING) {
+                    PANIC("Unexpected string token, expected %s, line %d column %d\n",
+                        ta_schema_field_type_str(stack[sp].type),
+                        tok->file_pos.line, tok->file_pos.column);
+                }
                 const char **fp = stack[sp].ptr;
                 *fp = tok->value.string;
                 if (stack[sp].name == SYM_UID) {
@@ -691,14 +700,10 @@ void ta_scene_free(ta_scene *scene)
         // TODO: Free cameras
     }
     dlb_vec_free(scene->cameras);
-    for (ta_sun_light *o = scene->sun_lights; o != dlb_vec_end(scene->sun_lights); o++) {
-        // TODO: Free sun lights
+    for (ta_light *o = scene->lights; o != dlb_vec_end(scene->lights); o++) {
+        // TODO: Free lights
     }
-    dlb_vec_free(scene->sun_lights);
-    for (ta_point_light *o = scene->point_lights; o != dlb_vec_end(scene->point_lights); o++) {
-        // TODO: Free point lights
-    }
-    dlb_vec_free(scene->point_lights);
+    dlb_vec_free(scene->lights);
     for (ta_material *o = scene->materials; o != dlb_vec_end(scene->materials); o++) {
         // TODO: Free materials
     }
@@ -733,11 +738,8 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
     for (ta_camera *o = scene->cameras; o != dlb_vec_end(scene->cameras); o++) {
         ta_schema_print(hnd, F_TA_CAMERA, (void *)o, 0, 0);
     }
-    for (ta_sun_light *o = scene->sun_lights; o != dlb_vec_end(scene->sun_lights); o++) {
-        ta_schema_print(hnd, F_TA_SUN_LIGHT, (void *)o, 0, 0);
-    }
-    for (ta_point_light *o = scene->point_lights; o != dlb_vec_end(scene->point_lights); o++) {
-        ta_schema_print(hnd, F_TA_POINT_LIGHT, (void *)o, 0, 0);
+    for (ta_light *o = scene->lights; o != dlb_vec_end(scene->lights); o++) {
+        ta_schema_print(hnd, F_TA_LIGHT, (void *)o, 0, 0);
     }
     for (ta_material *o = scene->materials; o != dlb_vec_end(scene->materials); o++) {
         ta_schema_print(hnd, F_TA_MATERIAL, (void *)o, 0, 0);
@@ -770,13 +772,8 @@ void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type)
             camera->scene = scene;
             obj = camera;
             break;
-        } case F_TA_SUN_LIGHT: {
-            ta_sun_light *light = dlb_vec_alloc(scene->sun_lights);
-            light->scene = scene;
-            obj = light;
-            break;
-        } case F_TA_POINT_LIGHT: {
-            ta_point_light *light = dlb_vec_alloc(scene->point_lights);
+        } case F_TA_LIGHT: {
+            ta_light *light = dlb_vec_alloc(scene->lights);
             light->scene = scene;
             obj = light;
             break;
@@ -822,9 +819,8 @@ void ta_scene_obj_init(ta_scene *scene)
     dlb_vec_each(ta_camera *, camera, scene->cameras) {
         ta_camera_init(camera);
     }
-    dlb_vec_each(ta_sun_light *, light, scene->sun_lights) {
-    }
-    dlb_vec_each(ta_point_light *, light, scene->point_lights) {
+    dlb_vec_each(ta_light *, light, scene->lights) {
+        ta_light_init(light);
     }
     dlb_vec_each(ta_material *, material, scene->materials) {
     }

@@ -2,12 +2,30 @@
 #include "ta_log.h"
 #include "ta_file.h"
 #include "ta_symbol.h"
+#include "ta_light.h"
 #include "dlb_memory.h"
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
 
 ta_shader *tg_shader_lines;
 ta_shader *tg_shader_quads;
+
+const char *ta_glsl_type_str(int type) {
+    switch(type) {
+        case TA_GLSL_GLINT:     return "TA_GLSL_GLINT";
+        case TA_GLSL_GLUINT:    return "TA_GLSL_GLUINT";
+        case TA_GLSL_VEC2:      return "TA_GLSL_VEC2";
+        case TA_GLSL_VEC3:      return "TA_GLSL_VEC3";
+        case TA_GLSL_VEC4:      return "TA_GLSL_VEC4";
+        case TA_GLSL_MAT3:      return "TA_GLSL_MAT3";
+        case TA_GLSL_MAT4:      return "TA_GLSL_MAT4";
+        case TA_GLSL_SAMPLER2D: return "TA_GLSL_SAMPLER2D";
+        case TA_GLSL_STRUCT:    return "TA_GLSL_STRUCT";
+        default:
+            DLB_ASSERT(!"<UNKNOWN_TA_GLSL_TYPE>");
+            return 0;
+    }
+};
 
 static void show_info_log(GLuint shader, PFNGLGETSHADERIVPROC glGet__iv,
     PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
@@ -17,7 +35,9 @@ static void show_info_log(GLuint shader, PFNGLGETSHADERIVPROC glGet__iv,
     glGet__iv(shader, GL_INFO_LOG_LENGTH, (GLint *)&buf.length);
     buf.data = dlb_malloc(buf.length);
     glGet__InfoLog(shader, buf.length, NULL, buf.data);
-    ta_log_write(tg_debug_log, "OpenGL info log:\n%s\n", buf.data);
+    ta_log_write(tg_debug_log,
+        "\n---[OpenGL Info Log]------------------------------------------------------------\n"
+        "%s\n", buf.data);
     dlb_free(buf.data);
     DLB_ASSERT(!"show_info_log: GL error occurred");
 };
@@ -94,8 +114,9 @@ static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
     return location;
 }
 
+// Return attribute if found, else null
 static ta_shader_attribute *find_attribute_by_name(ta_shader *shader,
-    const char *name, const char *type)
+    const char *name, ta_glsl_type type)
 {
     ta_shader_attribute *result = 0;
     for (ta_shader_attribute *attr = shader->attributes;
@@ -106,16 +127,17 @@ static ta_shader_attribute *find_attribute_by_name(ta_shader *shader,
             break;
         }
     }
-    DLB_ASSERT(!type || !result || result->type == type);
+    DLB_ASSERT(!result || result->type == type);
     return result;
 }
 
-static ta_shader_uniform *find_uniform_by_name(ta_shader *shader,
-    const char *name, const char *type)
+// Return attribute if found, else assert
+static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms,
+    const char *name, ta_glsl_type type)
 {
     ta_shader_uniform *result = 0;
-    for (ta_shader_uniform *u = shader->uniforms;
-        u != dlb_vec_end(shader->uniforms); u++)
+    for (ta_shader_uniform *u = uniforms;
+        u != dlb_vec_end(uniforms); u++)
     {
         if (u->name == name) {
             result = u;
@@ -123,7 +145,7 @@ static ta_shader_uniform *find_uniform_by_name(ta_shader *shader,
         }
     }
     DLB_ASSERT(result);
-    DLB_ASSERT(!type || result->type == type);
+    DLB_ASSERT(result->type == type);
     return result;
 }
 
@@ -177,23 +199,36 @@ void ta_shader_create(ta_shader *shader)
 
     // Ensure vertex attributes are at the correct locations
     ta_shader_attribute *attr_pos =
-        find_attribute_by_name(shader, SYM_ATTR_POSITION, SYM_VEC3);
+        find_attribute_by_name(shader, SYM_ATTR_POSITION, TA_GLSL_VEC3);
     ta_shader_attribute *attr_col =
-        find_attribute_by_name(shader, SYM_ATTR_COLOR,    SYM_VEC4);
+        find_attribute_by_name(shader, SYM_ATTR_COLOR,    TA_GLSL_VEC4);
     ta_shader_attribute *attr_uv =
-        find_attribute_by_name(shader, SYM_ATTR_UV,       SYM_VEC2);
+        find_attribute_by_name(shader, SYM_ATTR_UV,       TA_GLSL_VEC2);
     ta_shader_attribute *attr_norm =
-        find_attribute_by_name(shader, SYM_ATTR_NORMAL,   SYM_VEC3);
+        find_attribute_by_name(shader, SYM_ATTR_NORMAL,   TA_GLSL_VEC3);
 
     DLB_ASSERT(!attr_pos  || attr_pos->location  < 0 || attr_pos->location  == TA_SHADER_ATTR_POSITION);
     DLB_ASSERT(!attr_col  || attr_col->location  < 0 || attr_col->location  == TA_SHADER_ATTR_COLOR);
     DLB_ASSERT(!attr_uv   || attr_uv->location   < 0 || attr_uv->location   == TA_SHADER_ATTR_UV);
     DLB_ASSERT(!attr_norm || attr_norm->location < 0 || attr_norm->location == TA_SHADER_ATTR_NORMAL);
 
+    char struct_buf[64] = { 0 };
+    int struct_buf_idx = 0;
     for (ta_shader_uniform *u = shader->uniforms;
         u != dlb_vec_end(shader->uniforms); u++)
     {
         u->location = ta_shader_uniform_location(shader, u->name);
+        if (u->type == TA_GLSL_STRUCT) {
+            //for (char *c = u->name; *c; c++) {
+            //    struct_buf[struct_buf_idx++] = *c;
+            //}
+            //struct_buf[struct_buf_idx++] = '.';
+            //int prop_start_idx = struct_buf_idx;
+            //
+            //for (int i = 0; i < ARRAY_COUNT(light_props); i++) {
+            //    u->value.light.location_type = ta_shader_uniform_location(shader, "u_sun.type");
+            //}
+        }
     }
 
     glDetachShader(program_id, vshader);
@@ -232,39 +267,99 @@ void ta_shader_unbind(ta_shader *shader)
 void ta_shader_set_mat4(ta_shader *shader, const char *name,
     const ta_mat4 *matrix)
 {
-    ta_shader_uniform *u = find_uniform_by_name(shader, name, SYM_MAT4);
-    u->value.mat4.matrix = *matrix;
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT4);
+    u->value.mat4 = *matrix;
 }
 
 void ta_shader_set_sampler2d(ta_shader *shader, const char *name,
     GLuint texture_id)
 {
-    ta_shader_uniform *u = find_uniform_by_name(shader, name, SYM_SAMPLER2D);
-    u->value.sampler2d.texture_id = texture_id;
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D);
+    u->value.gluint = texture_id;
 }
 
-void ta_shader_prerender(ta_shader *shader)
+void ta_shader_set_light(ta_shader *shader, const char *name,
+    ta_light *light)
 {
-    int tex_count = 0;
-    for (ta_shader_uniform *u = shader->uniforms;
-        u != dlb_vec_end(shader->uniforms); u++)
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
+
+    ta_shader_uniform *u_type = 0;
+    ta_shader_uniform *u_position = 0;
+    ta_shader_uniform *u_direction = 0;
+    ta_shader_uniform *u_color = 0;
+
+    // TODO: Add these to symbol file
+    u_type      = find_uniform_by_name(shader->uniforms, INTERN("type"),      TA_GLSL_GLINT);
+    u_position  = find_uniform_by_name(shader->uniforms, INTERN("position"),  TA_GLSL_VEC3);
+    u_direction = find_uniform_by_name(shader->uniforms, INTERN("direction"), TA_GLSL_VEC3);
+    u_color     = find_uniform_by_name(shader->uniforms, INTERN("color"),     TA_GLSL_VEC3);
+
+    switch (light->type) {
+        case TA_LIGHT_SUN:
+            u_position->value.vec3  = VEC3_ZERO;
+            u_direction->value.vec3 = light->data.sun.direction;
+            u_color->value.vec3     = *(ta_vec3 *)&light->data.sun.color;
+            break;
+        case TA_LIGHT_POINT:
+            u_position->value.vec3  = light->data.point.position;
+            u_direction->value.vec3 = VEC3_ZERO;
+            u_color->value.vec3     = *(ta_vec3 *)&light->data.point.color;
+            break;
+        default:
+            DLB_ASSERT(!"Don't know how to initialize this type of light");
+    }
+}
+
+static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
+{
+    for (ta_shader_uniform *u = uniforms; u != dlb_vec_end(uniforms); u++)
     {
         if (u->location < 0) {
             continue;
         }
 
-        if (u->type == SYM_MAT4) {
-            glUniformMatrix4fv(u->location, 1, GL_TRUE,
-                (GLfloat *)&u->value.mat4.matrix);
-        } else if (u->type == SYM_SAMPLER2D) {
-            GLuint tex_id = u->value.sampler2d.texture_id;
-            if (tex_id >= 0) {
-                glActiveTexture(GL_TEXTURE0 + tex_count);
-                glBindTexture(GL_TEXTURE_2D, tex_id);
-                glUniform1i(u->location, 0);
+        switch (u->type) {
+            case TA_GLSL_GLINT: {
+                glUniform1i(u->location, u->value.glint);
+                break;
+            } case TA_GLSL_GLUINT: {
+                glUniform1ui(u->location, u->value.gluint);
+                break;
+            } case TA_GLSL_SAMPLER2D: {
+                GLuint tex_id = u->value.gluint;
+                if (tex_id >= 0) {
+                    glActiveTexture(GL_TEXTURE0 + *tex_count);
+                    glBindTexture(GL_TEXTURE_2D, tex_id);
+                    glUniform1i(u->location, 0);
+                }
+                break;
+            } case TA_GLSL_VEC2: {
+                glUniform2fv(u->location, 1, (GLfloat *)&u->value.vec2);
+                break;
+            } case TA_GLSL_VEC3: {
+                glUniform3fv(u->location, 1, (GLfloat *)&u->value.vec3);
+                break;
+            } case TA_GLSL_VEC4: {
+                glUniform4fv(u->location, 1, (GLfloat *)&u->value.vec4);
+                break;
+            } case TA_GLSL_MAT3: {
+                glUniformMatrix3fv(u->location, 1, GL_TRUE, (GLfloat *)&u->value.mat3);
+                break;
+            } case TA_GLSL_MAT4: {
+                glUniformMatrix4fv(u->location, 1, GL_TRUE, (GLfloat *)&u->value.mat4);
+                break;
+            } case TA_GLSL_STRUCT: {
+                shader_bind_uniforms(u->value.properties, tex_count);
+                break;
+            } default: {
+                DLB_ASSERT(!"Unexpected GLSL type");
             }
-        } else {
-            DLB_ASSERT(!"TODO: Handle other uniform types");
         }
     }
+}
+
+void ta_shader_prerender(ta_shader *shader)
+{
+    int tex_count = 0;
+    shader_bind_uniforms(shader->uniforms, &tex_count);
 }

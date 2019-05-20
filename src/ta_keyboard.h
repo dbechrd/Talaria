@@ -16,9 +16,9 @@ typedef struct {
     ta_event_type event_type;
     u32 triggers;
     ta_key keys[3];
-    bool down;           // all keys are currently down
-    bool changed;        // state changed since last frame
-    u64 last_change_ms;  // time of last state change in milliseconds
+    bool down;              // all keys are currently down
+    bool changed;           // state changed since last frame
+    double last_change_ms;  // time of last state change in milliseconds
 } ta_keybind;
 
 #if 0

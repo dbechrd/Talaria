@@ -5,15 +5,14 @@
 #include "dlb_types.h"
 #include "dlb_hash.h"
 
-typedef struct ta_camera_s      ta_camera;
-typedef struct ta_sun_light_s   ta_sun_light;
-typedef struct ta_point_light_s ta_point_light;
-typedef struct ta_material_s    ta_material;
-typedef struct ta_mesh_group_s  ta_mesh_group;
-typedef struct ta_shader_s      ta_shader;
-typedef struct ta_texture_s     ta_texture;
-typedef struct ta_rigid_body_s  ta_rigid_body;
-typedef struct ta_entity_s      ta_entity;
+typedef struct ta_camera_s     ta_camera;
+typedef struct ta_light_s      ta_light;
+typedef struct ta_material_s   ta_material;
+typedef struct ta_mesh_group_s ta_mesh_group;
+typedef struct ta_shader_s     ta_shader;
+typedef struct ta_texture_s    ta_texture;
+typedef struct ta_rigid_body_s ta_rigid_body;
+typedef struct ta_entity_s     ta_entity;
 
 typedef struct ta_scene_s {
     const char *name;
@@ -22,8 +21,7 @@ typedef struct ta_scene_s {
     dlb_hash refs_by_uid;
 
     ta_camera *cameras;
-    ta_sun_light *sun_lights;
-    ta_point_light *point_lights;
+    ta_light *lights;
     ta_material *materials;
     ta_mesh_group *mesh_groups;
     ta_shader *shaders;

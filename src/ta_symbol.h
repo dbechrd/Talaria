@@ -38,11 +38,15 @@ extern const char *SYM_TRUE;
 extern const char *SYM_FALSE;
 
 // GLSL types
+extern const char *SYM_GLINT;
+extern const char *SYM_GLUINT;
+extern const char *SYM_SAMPLER2D;
 extern const char *SYM_VEC2;
 extern const char *SYM_VEC3;
 extern const char *SYM_VEC4;
+extern const char *SYM_MAT3;
 extern const char *SYM_MAT4;
-extern const char *SYM_SAMPLER2D;
+extern const char *SYM_STRUCT;
 
 // Shader attributes
 extern const char *SYM_ATTR_POSITION;

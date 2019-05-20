@@ -43,14 +43,16 @@ typedef struct {
     union {
         ta_vec3 v[3];
         float f[3][3];
-    } rows;
+        float arr[9];
+    } data;
 } ta_mat3;
 
 typedef struct {
     union {
         ta_vec4 v[4];
         float f[4][4];
-    } rows;
+        float arr[16];
+    } data;
 } ta_mat4;
 
 typedef struct {

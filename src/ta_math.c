@@ -151,9 +151,9 @@ void ta_mat3_print(FILE *file, ta_mat3 *mat)
 {
     for (int i = 0; i < 3; i++) {
         fprintf(file, "mat[%d]: %f %f %f\n", i,
-            mat->rows.v[i].x,
-            mat->rows.v[i].y,
-            mat->rows.v[i].z
+            mat->data.v[i].x,
+            mat->data.v[i].y,
+            mat->data.v[i].z
         );
     }
 }
@@ -163,28 +163,28 @@ ta_mat3 mat3_init(
     float m20, float m21, float m22)
 {
     ta_mat3 result;
-    result.rows.f[0][0] = m00;
-    result.rows.f[0][1] = m01;
-    result.rows.f[0][2] = m02;
-    result.rows.f[1][0] = m10;
-    result.rows.f[1][1] = m11;
-    result.rows.f[1][2] = m12;
-    result.rows.f[2][0] = m20;
-    result.rows.f[2][1] = m21;
-    result.rows.f[2][2] = m22;
+    result.data.f[0][0] = m00;
+    result.data.f[0][1] = m01;
+    result.data.f[0][2] = m02;
+    result.data.f[1][0] = m10;
+    result.data.f[1][1] = m11;
+    result.data.f[1][2] = m12;
+    result.data.f[2][0] = m20;
+    result.data.f[2][1] = m21;
+    result.data.f[2][2] = m22;
     return result;
 }
 float mat3_deter(const ta_mat3 mat)
 {
-    float a = mat.rows.f[0][0];
-    float b = mat.rows.f[0][1];
-    float c = mat.rows.f[0][2];
-    float d = mat.rows.f[1][0];
-    float e = mat.rows.f[1][1];
-    float f = mat.rows.f[1][2];
-    float g = mat.rows.f[2][0];
-    float h = mat.rows.f[2][1];
-    float i = mat.rows.f[2][2];
+    float a = mat.data.f[0][0];
+    float b = mat.data.f[0][1];
+    float c = mat.data.f[0][2];
+    float d = mat.data.f[1][0];
+    float e = mat.data.f[1][1];
+    float f = mat.data.f[1][2];
+    float g = mat.data.f[2][0];
+    float h = mat.data.f[2][1];
+    float i = mat.data.f[2][2];
 
     float result =
         a * (e*i - f*h) +
@@ -196,17 +196,17 @@ ta_vec3 mat3_mul_vec3(const ta_mat3 m, const ta_vec3 v)
 {
     ta_vec3 result;
     result.x =
-        m.rows.f[0][0] * v.x +
-        m.rows.f[0][1] * v.y +
-        m.rows.f[0][2] * v.z;
+        m.data.f[0][0] * v.x +
+        m.data.f[0][1] * v.y +
+        m.data.f[0][2] * v.z;
     result.y =
-        m.rows.f[1][0] * v.x +
-        m.rows.f[1][1] * v.y +
-        m.rows.f[1][2] * v.z;
+        m.data.f[1][0] * v.x +
+        m.data.f[1][1] * v.y +
+        m.data.f[1][2] * v.z;
     result.z =
-        m.rows.f[2][0] * v.x +
-        m.rows.f[2][1] * v.y +
-        m.rows.f[2][2] * v.z;
+        m.data.f[2][0] * v.x +
+        m.data.f[2][1] * v.y +
+        m.data.f[2][2] * v.z;
 
     if (fabsf(result.x) < TA_EPSILON) result.x = 0.0f;
     if (fabsf(result.y) < TA_EPSILON) result.y = 0.0f;
@@ -218,17 +218,17 @@ ta_rgb mat3_mul_rgb(const ta_mat3 m, const ta_rgb v)
 {
     ta_rgb result;
     result.r =
-        m.rows.f[0][0] * v.r +
-        m.rows.f[0][1] * v.g +
-        m.rows.f[0][2] * v.b;
+        m.data.f[0][0] * v.r +
+        m.data.f[0][1] * v.g +
+        m.data.f[0][2] * v.b;
     result.g =
-        m.rows.f[1][0] * v.r +
-        m.rows.f[1][1] * v.g +
-        m.rows.f[1][2] * v.b;
+        m.data.f[1][0] * v.r +
+        m.data.f[1][1] * v.g +
+        m.data.f[1][2] * v.b;
     result.b =
-        m.rows.f[2][0] * v.r +
-        m.rows.f[2][1] * v.g +
-        m.rows.f[2][2] * v.b;
+        m.data.f[2][0] * v.r +
+        m.data.f[2][1] * v.g +
+        m.data.f[2][2] * v.b;
 
     if (result.r < TA_EPSILON) {
         result.r = 0.0f;
@@ -259,15 +259,15 @@ ta_mat3 mat3_hue_rotation(float degrees)
     float onecos = 1.0f - cosa;
     float sqthird = sqrtf(1.0f / 3.0f);
     ta_mat3 m;
-    m.rows.f[0][0] = cosa + onecos / 3.0f;
-    m.rows.f[0][1] = onecos / 3.0f - sqthird * sina;
-    m.rows.f[0][2] = onecos / 3.0f + sqthird * sina;
-    m.rows.f[1][0] = m.rows.f[0][2];
-    m.rows.f[1][1] = m.rows.f[0][0];
-    m.rows.f[1][2] = m.rows.f[0][1];
-    m.rows.f[2][0] = m.rows.f[0][1];
-    m.rows.f[2][1] = m.rows.f[0][2];
-    m.rows.f[2][2] = m.rows.f[0][0];
+    m.data.f[0][0] = cosa + onecos / 3.0f;
+    m.data.f[0][1] = onecos / 3.0f - sqthird * sina;
+    m.data.f[0][2] = onecos / 3.0f + sqthird * sina;
+    m.data.f[1][0] = m.data.f[0][2];
+    m.data.f[1][1] = m.data.f[0][0];
+    m.data.f[1][2] = m.data.f[0][1];
+    m.data.f[2][0] = m.data.f[0][1];
+    m.data.f[2][1] = m.data.f[0][2];
+    m.data.f[2][2] = m.data.f[0][0];
     return m;
 }
 
@@ -275,10 +275,10 @@ void ta_mat4_print(FILE *file, ta_mat4 *mat)
 {
     for (int i = 0; i < 4; i++) {
         fprintf(file, "mat[%d]: %f %f %f %f\n", i,
-            mat->rows.v[i].x,
-            mat->rows.v[i].y,
-            mat->rows.v[i].z,
-            mat->rows.v[i].w
+            mat->data.v[i].x,
+            mat->data.v[i].y,
+            mat->data.v[i].z,
+            mat->data.v[i].w
         );
     }
 }
@@ -289,31 +289,31 @@ ta_mat4 mat4_init(
     float m30, float m31, float m32, float m33)
 {
     ta_mat4 result;
-    result.rows.f[0][0] = m00;
-    result.rows.f[0][1] = m01;
-    result.rows.f[0][2] = m02;
-    result.rows.f[0][3] = m03;
-    result.rows.f[1][0] = m10;
-    result.rows.f[1][1] = m11;
-    result.rows.f[1][2] = m12;
-    result.rows.f[1][3] = m13;
-    result.rows.f[2][0] = m20;
-    result.rows.f[2][1] = m21;
-    result.rows.f[2][2] = m22;
-    result.rows.f[2][3] = m23;
-    result.rows.f[3][0] = m30;
-    result.rows.f[3][1] = m31;
-    result.rows.f[3][2] = m32;
-    result.rows.f[3][3] = m33;
+    result.data.f[0][0] = m00;
+    result.data.f[0][1] = m01;
+    result.data.f[0][2] = m02;
+    result.data.f[0][3] = m03;
+    result.data.f[1][0] = m10;
+    result.data.f[1][1] = m11;
+    result.data.f[1][2] = m12;
+    result.data.f[1][3] = m13;
+    result.data.f[2][0] = m20;
+    result.data.f[2][1] = m21;
+    result.data.f[2][2] = m22;
+    result.data.f[2][3] = m23;
+    result.data.f[3][0] = m30;
+    result.data.f[3][1] = m31;
+    result.data.f[3][2] = m32;
+    result.data.f[3][3] = m33;
     return result;
 }
 ta_mat4 mat4_transpose(const ta_mat4 *m)
 {
     ta_mat4 result = mat4_init(
-        m->rows.f[0][0], m->rows.f[1][0], m->rows.f[2][0], m->rows.f[3][0],
-        m->rows.f[0][1], m->rows.f[1][1], m->rows.f[2][1], m->rows.f[3][1],
-        m->rows.f[0][2], m->rows.f[1][2], m->rows.f[2][2], m->rows.f[3][2],
-        m->rows.f[0][3], m->rows.f[1][3], m->rows.f[2][3], m->rows.f[3][3]
+        m->data.f[0][0], m->data.f[1][0], m->data.f[2][0], m->data.f[3][0],
+        m->data.f[0][1], m->data.f[1][1], m->data.f[2][1], m->data.f[3][1],
+        m->data.f[0][2], m->data.f[1][2], m->data.f[2][2], m->data.f[3][2],
+        m->data.f[0][3], m->data.f[1][3], m->data.f[2][3], m->data.f[3][3]
     );
     return result;
 }
@@ -392,7 +392,7 @@ ta_mat4 mat4_mul(const ta_mat4 a, const ta_mat4 b)
     for (int j = 0; j < 4; ++j) {
         for (int i = 0; i < 4; ++i) {
             for (int n = 0; n < 4; ++n) {
-                result.rows.f[j][i] += a.rows.f[j][n] * b.rows.f[n][i];
+                result.data.f[j][i] += a.data.f[j][n] * b.data.f[n][i];
             }
         }
     }
@@ -400,22 +400,22 @@ ta_mat4 mat4_mul(const ta_mat4 a, const ta_mat4 b)
 }
 float mat4_det(const ta_mat4 mat)
 {
-    float a = mat.rows.f[0][0];
-    float b = mat.rows.f[0][1];
-    float c = mat.rows.f[0][2];
-    float d = mat.rows.f[0][3];
-    float e = mat.rows.f[1][0];
-    float f = mat.rows.f[1][1];
-    float g = mat.rows.f[1][2];
-    float h = mat.rows.f[1][3];
-    float i = mat.rows.f[2][0];
-    float j = mat.rows.f[2][1];
-    float k = mat.rows.f[2][2];
-    float l = mat.rows.f[2][3];
-    float m = mat.rows.f[3][0];
-    float n = mat.rows.f[3][1];
-    float o = mat.rows.f[3][2];
-    float p = mat.rows.f[3][3];
+    float a = mat.data.f[0][0];
+    float b = mat.data.f[0][1];
+    float c = mat.data.f[0][2];
+    float d = mat.data.f[0][3];
+    float e = mat.data.f[1][0];
+    float f = mat.data.f[1][1];
+    float g = mat.data.f[1][2];
+    float h = mat.data.f[1][3];
+    float i = mat.data.f[2][0];
+    float j = mat.data.f[2][1];
+    float k = mat.data.f[2][2];
+    float l = mat.data.f[2][3];
+    float m = mat.data.f[3][0];
+    float n = mat.data.f[3][1];
+    float o = mat.data.f[3][2];
+    float p = mat.data.f[3][3];
 
     float kp = k*p;
     float lo = l*o;
@@ -443,22 +443,22 @@ float mat4_det(const ta_mat4 mat)
 //     http://www-graphics.stanford.edu/courses/cs248-98-fall/Final/q4.html
 int mat4_inverse(ta_mat4 m, ta_mat4 *result)
 {
-#define m0  m.rows.f[0][0]
-#define m1  m.rows.f[0][1]
-#define m2  m.rows.f[0][2]
-#define m3  m.rows.f[0][3]
-#define m4  m.rows.f[1][0]
-#define m5  m.rows.f[1][1]
-#define m6  m.rows.f[1][2]
-#define m7  m.rows.f[1][3]
-#define m8  m.rows.f[2][0]
-#define m9  m.rows.f[2][1]
-#define m10 m.rows.f[2][2]
-#define m11 m.rows.f[2][3]
-#define m12 m.rows.f[3][0]
-#define m13 m.rows.f[3][1]
-#define m14 m.rows.f[3][2]
-#define m15 m.rows.f[3][3]
+#define m0  m.data.f[0][0]
+#define m1  m.data.f[0][1]
+#define m2  m.data.f[0][2]
+#define m3  m.data.f[0][3]
+#define m4  m.data.f[1][0]
+#define m5  m.data.f[1][1]
+#define m6  m.data.f[1][2]
+#define m7  m.data.f[1][3]
+#define m8  m.data.f[2][0]
+#define m9  m.data.f[2][1]
+#define m10 m.data.f[2][2]
+#define m11 m.data.f[2][3]
+#define m12 m.data.f[3][0]
+#define m13 m.data.f[3][1]
+#define m14 m.data.f[3][2]
+#define m15 m.data.f[3][3]
 
     float inv[16];
     inv[0] =
@@ -608,21 +608,21 @@ ta_mat4 mat4_perspective(float fov_deg, float aspect, float nearz, float farz)
     float f = 1.0f / tanf(DEG_TO_RADF(fov_deg) / 2.0f);
     float nf = 1.0f / (nearz - farz);
     ta_mat4 result = { 0 };
-    result.rows.f[0][0] = f / aspect;
-    result.rows.f[1][1] = f;
-    result.rows.f[2][2] = (farz + nearz) * nf;
-    result.rows.f[2][3] = (2.0f * farz * nearz) * nf;
-    result.rows.f[3][2] = -1.0f;
+    result.data.f[0][0] = f / aspect;
+    result.data.f[1][1] = f;
+    result.data.f[2][2] = (farz + nearz) * nf;
+    result.data.f[2][3] = (2.0f * farz * nearz) * nf;
+    result.data.f[3][2] = -1.0f;
     return result;
 }
 ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float nearz)
 {
     float f = 1.0f / tanf(DEG_TO_RADF(fov_deg) / 2.0f);
     ta_mat4 result = { 0 };
-    result.rows.f[0][0] = f / aspect;
-    result.rows.f[1][1] = f;
-    result.rows.f[2][3] = -nearz;
-    result.rows.f[3][2] = -1.0f;
+    result.data.f[0][0] = f / aspect;
+    result.data.f[1][1] = f;
+    result.data.f[2][3] = -nearz;
+    result.data.f[3][2] = -1.0f;
     return result;
 }
 ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
@@ -632,13 +632,13 @@ ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
     float bt = 1.0f / (bottom - top);
     float nf = 1.0f / (nearz - farz);
     ta_mat4 result = { 0 };
-    result.rows.f[0][0] = -2.0f * lr;
-    result.rows.f[1][1] = -2.0f * bt;
-    result.rows.f[2][2] = 2.0f * nf;
-    result.rows.f[3][0] = (left + right) * lr;
-    result.rows.f[3][1] = (top + bottom) * bt;
-    result.rows.f[3][2] = (farz + nearz) * nf;
-    result.rows.f[3][3] = 1.0f;
+    result.data.f[0][0] = -2.0f * lr;
+    result.data.f[1][1] = -2.0f * bt;
+    result.data.f[2][2] = 2.0f * nf;
+    result.data.f[3][0] = (left + right) * lr;
+    result.data.f[3][1] = (top + bottom) * bt;
+    result.data.f[3][2] = (farz + nearz) * nf;
+    result.data.f[3][3] = 1.0f;
     return result;
 }
 
@@ -650,29 +650,29 @@ ta_mat4 mat4_lookat_fru(ta_vec3 position, ta_vec3 front, ta_vec3 right,
     // [ dx, dy, dz, 0 ]
     // [  0,  0,  0, 1 ]
     ta_mat4 transform = { 0 };
-    transform.rows.v[0].x = right.x;
-    transform.rows.v[0].y = right.y;
-    transform.rows.v[0].z = right.z;
-    transform.rows.v[1].x = up.x;
-    transform.rows.v[1].y = up.y;
-    transform.rows.v[1].z = up.z;
-    transform.rows.v[2].x = -front.x;
-    transform.rows.v[2].y = -front.y;
-    transform.rows.v[2].z = -front.z;
-    transform.rows.v[3].w = 1.0f;
+    transform.data.v[0].x = right.x;
+    transform.data.v[0].y = right.y;
+    transform.data.v[0].z = right.z;
+    transform.data.v[1].x = up.x;
+    transform.data.v[1].y = up.y;
+    transform.data.v[1].z = up.z;
+    transform.data.v[2].x = -front.x;
+    transform.data.v[2].y = -front.y;
+    transform.data.v[2].z = -front.z;
+    transform.data.v[3].w = 1.0f;
 
     // [ 1, 0, 0, -px ]
     // [ 0, 1, 0, -py ]
     // [ 0, 0, 1, -pz ]
     // [ 0, 0, 0,   1 ]
     ta_mat4 translate = { 0 };
-    translate.rows.v[0].x = 1.0f;
-    translate.rows.v[0].w = -position.x;
-    translate.rows.v[1].y = 1.0f;
-    translate.rows.v[1].w = -position.y;
-    translate.rows.v[2].z = 1.0f;
-    translate.rows.v[2].w = -position.z;
-    translate.rows.v[3].w = 1.0f;
+    translate.data.v[0].x = 1.0f;
+    translate.data.v[0].w = -position.x;
+    translate.data.v[1].y = 1.0f;
+    translate.data.v[1].w = -position.y;
+    translate.data.v[2].z = 1.0f;
+    translate.data.v[2].w = -position.z;
+    translate.data.v[3].w = 1.0f;
 
     ta_mat4 look_at = mat4_mul(transform, translate);
     return look_at;

@@ -124,8 +124,10 @@ int main(int argc, char *argv[])
 
     // Intro scene
     read_scene("data/scenes/scene1.dml");
+    tg_game.sun = ta_scene_find(tg_game.scene, F_TA_LIGHT, INTERN("light_sun"));
     tg_game.camera = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_player"));
     tg_game.player = ta_scene_find(tg_game.scene, F_TA_ENTITY, INTERN("entity_player"));
+    DLB_ASSERT(tg_game.sun);     // Ensure we have a valid sun light
     DLB_ASSERT(tg_game.camera);  // Ensure we have a valid camera
     DLB_ASSERT(tg_game.player);  // Ensure we have a valid player
 
@@ -201,7 +203,7 @@ int main(int argc, char *argv[])
         ta_keyboard_update();
         ta_event_update();
         ta_game_update();
-        ta_camera_update(tg_game.scene->cameras, sim_dt);
+        ta_camera_update(tg_game.camera, sim_dt);
 
         ms_frame_accum += ms_frame_delta;
         while (ms_frame_accum >= ms_sim_dt) {
@@ -227,11 +229,11 @@ int main(int argc, char *argv[])
 		// Draw models
 		glDisable(GL_CULL_FACE);
         ta_scene_render(tg_game.scene, &tg_window.projection,
-            &tg_game.scene->cameras->look_at);
+            &tg_game.camera->look_at);
 
         // World axes
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_window.projection);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.scene->cameras->look_at);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_primitive_push_axes(2.0f);
         if (tg_debug_render_normals || tg_debug_render_bounding_boxes) {
@@ -261,7 +263,7 @@ int main(int argc, char *argv[])
             ta_mat4 model;
             model = mat4_rotate_y(180.0f);
 
-            ta_vec3 map_pos = vec3_negate(tg_game.scene->cameras->position);
+            ta_vec3 map_pos = vec3_negate(tg_game.camera->position);
             map_pos.y = 50.0f;
             map_pos.z += TA_EPSILON;
             ta_vec3 map_target = map_pos;

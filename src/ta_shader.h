@@ -12,37 +12,41 @@ typedef enum {
 	TA_SHADER_ATTR_COUNT
 } ta_shader_attr;
 
-// TODO: Map DML string to enum at runtime to use switch instead of if/else?
-#if 0
+// TODO: Map DML string to enum to avoid confusing int values in DML
 typedef enum {
-    TA_SHADER_UNIFORM_UINT,
-    TA_SHADER_UNIFORM_MAT4,
-    TA_SHADER_UNIFORM_TEXTURE,
-} ta_shader_variable_type;
-#endif
+    TA_GLSL_GLINT     = 0,
+    TA_GLSL_GLUINT    = 1,
+    TA_GLSL_SAMPLER2D = 2,
+    TA_GLSL_VEC2      = 3,
+    TA_GLSL_VEC3      = 4,
+    TA_GLSL_VEC4      = 5,
+    TA_GLSL_MAT3      = 6,
+    TA_GLSL_MAT4      = 7,
+    TA_GLSL_STRUCT    = 8,
+} ta_glsl_type;
 
 typedef struct ta_shader_attribute_s {
     const char *name;
-    int location;
-    const char *type;
+    ta_glsl_type type;
+    GLint location;
 } ta_shader_attribute;
 
-typedef struct ta_shader_uniform_mat4_s {
-    ta_mat4 matrix;
-} ta_shader_uniform_mat4;
-
-typedef struct ta_shader_uniform_sampler2d_s {
-    GLuint texture_id;
-} ta_shader_uniform_sampler2d;
-
+typedef struct ta_shader_uniform_s ta_shader_uniform;
 typedef struct ta_shader_uniform_s {
     const char *name;
-    GLint location;
-    const char *type;
+    ta_glsl_type type;
     union {
-        ta_shader_uniform_mat4 mat4;
-        ta_shader_uniform_sampler2d sampler2d;
+        GLint glint;
+        GLuint gluint;
+        ta_vec2 vec2;
+        ta_vec3 vec3;
+        ta_vec4 vec4;
+        ta_mat3 mat3;
+        ta_mat4 mat4;
+        GLuint sampler2d;
+        ta_shader_uniform *properties;  // for structs
     } value;
+    GLint location;
 } ta_shader_uniform;
 
 typedef struct ta_shader_s {
@@ -81,6 +85,7 @@ typedef struct {
 extern ta_shader *tg_shader_lines;
 extern ta_shader *tg_shader_quads;
 
+const char *ta_glsl_type_str(int type);
 void ta_shader_init(ta_shader *shader, const char *path_vert,
     const char *path_frag);
 void ta_shader_create(ta_shader *shader);

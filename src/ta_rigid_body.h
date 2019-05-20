@@ -13,9 +13,9 @@ typedef struct {
     ta_vec3 axes[3];
 } ta_obb;
 
-typedef enum ta_rigid_body_type {
-    TA_COLLIDER_AABB,
-    TA_COLLIDER_OBB,
+typedef enum {
+    TA_COLLIDER_AABB = 0,
+    TA_COLLIDER_OBB  = 1,
 } ta_collider_type;
 
 typedef struct {

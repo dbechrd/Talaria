@@ -14,6 +14,7 @@ typedef enum {
 typedef struct {
     ta_game_state state;
     ta_scene *scene;
+    ta_light *sun;
     ta_camera *camera;
     ta_entity *player;
 } ta_game;
