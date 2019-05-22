@@ -25,13 +25,11 @@
 typedef struct {
 	int width;
 	int height;
-	float fov;
-	float nearz;
-	ta_mat4 projection;
+    float aspect;
 } ta_window;
 
 extern ta_window tg_window;
 
-void ta_window_init(int w, int h, float fov, float nearz, bool fullscreen);
+void ta_window_init(int w, int h, bool fullscreen);
 void ta_window_swap();
 void ta_window_free();

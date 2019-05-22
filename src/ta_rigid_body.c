@@ -1,7 +1,8 @@
 #include "ta_rigid_body.h"
 #include <math.h>
 
-const char *ta_collider_type_str(int type) {
+const char *ta_collider_type_str(int type)
+{
     switch(type) {
         case TA_COLLIDER_AABB: return "TA_COLLIDER_AABB";
         case TA_COLLIDER_OBB:  return "TA_COLLIDER_OBB";
@@ -9,7 +10,7 @@ const char *ta_collider_type_str(int type) {
             DLB_ASSERT(!"<UNKNOWN_TA_COLLIDER_TYPE>");
             return 0;
     }
-};
+}
 
 void ta_rigid_body_update(ta_rigid_body *rigid_body, double dt)
 {

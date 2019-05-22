@@ -668,7 +668,7 @@ ta_scene *ta_scene_init(const char *name)
 {
     ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
     // TODO: Read ref count from file
-    int ref_count = 32;
+    const u32 ref_count = 32;
     // NOTE: If this resizes it will invalidate the pointers stored in the hash
     //       table. I just made it fixed size for now. Might be fun to have an
     //       optional "resized" callback on dlb_vec.

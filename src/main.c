@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
     ta_symbol_init();
     ta_schema_register();
 
-    ta_window_init(1600, 900, 80.0f, 0.1f, false);
+    ta_window_init(1600, 900, false);
     ta_mouse_init();
     ta_keyboard_init();
     ta_render_init();
@@ -132,6 +132,34 @@ int main(int argc, char *argv[])
     DLB_ASSERT(tg_game.camera);  // Ensure we have a valid camera
     DLB_ASSERT(tg_game.player);  // Ensure we have a valid player
 
+    /*
+    tg_window.fov = fov;
+    tg_window.nearz = nearz;
+    tg_window.projection = mat4_perspective_inf(
+        tg_window.fov,
+        (float)tg_window.width / tg_window.height,
+        tg_window.nearz
+    );
+
+    float oo = 0.5f;
+    view.projection = mat4_ortho(-oo, oo, -oo, oo, 0.1f, 10.0f);
+
+    //view.projection = mat4_ortho(
+    //    (float)view.rect.x,
+    //    (float)view.rect.x + view.rect.w,
+    //    (float)view.rect.y + view.rect.h,
+    //    (float)view.rect.y,
+    //    nearz,
+    //    100.0f
+    //);
+
+    //view.projection = mat4_perspective_inf(
+    //    fov,
+    //    (float)view.rect.w / view.rect.h,
+    //    nearz
+    //);
+    */
+
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
     ////////////////////////////////////////////////////////////////////////////
@@ -147,8 +175,13 @@ int main(int argc, char *argv[])
     // UI
     ////////////////////////////////////////////////////////////////////////////
     // TODO: Move this to DML (e.g. editor.dml)
-	ta_viewport minimap_viewport = ta_viewport_init(10, 50, 200, 200, 90.0f,
-        0.1f, (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f });
+    ta_camera minimap_camera = { 0 };
+    minimap_camera.mode = TA_CAMERA_ORBIT;
+    minimap_camera.fov = 45.0f;
+    minimap_camera.up = VEC3_NZ;
+    ta_camera_init(&minimap_camera);
+	ta_viewport minimap_viewport = ta_viewport_init(10, 50, 200, 200,
+        (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f }, &minimap_camera);
 
 	//ta_mat4 project = mat4_perspective(65.0f, aspect, 0.1f, 100.0f);
 	//float oo = 0.5f;
@@ -198,14 +231,25 @@ int main(int argc, char *argv[])
         ms_frame_prev = ms_frame_start;
 
         ta_event_sdl_poll();
-        ta_mouse_update();
+        ta_mouse_update();  // TODO: Rename these "ta_mouse_events" or similar
         ta_keyboard_update();
         ta_event_update();
         ta_game_update();
-        ta_camera_update(tg_game.camera, sim_dt);
 
         ms_frame_accum += ms_frame_delta;
         while (ms_frame_accum >= ms_sim_dt) {
+            // Update main camera
+            ta_camera_update(tg_game.camera, sim_dt);
+
+            // Update minimap camera
+            ta_vec3 minimap_camera_target_pos = tg_game.camera->position;
+            minimap_camera_target_pos.y += 20.0f;
+            minimap_camera.focal_point = tg_game.camera->position;
+            ta_camera_set_target_pos_absolute(&minimap_camera,
+                minimap_camera_target_pos);
+            ta_camera_update(&minimap_camera, sim_dt);
+
+            // Update scene
             ta_scene_update(tg_game.scene, sim_dt);
 
             ms_sim_t += ms_sim_dt;
@@ -213,9 +257,9 @@ int main(int argc, char *argv[])
         }
 
         if (tg_debug_follow_pinky) {
-            ta_vec3 target_pos = vec3_add(tg_game.player->transform.position,
+            ta_vec3 position_target = vec3_add(tg_game.player->transform.position,
                 (ta_vec3) { 0.0, 1.0f, 3.0f });
-            ta_camera_set_target_pos_absolute(tg_game.camera, target_pos);
+            ta_camera_set_target_pos_absolute(tg_game.camera, position_target);
         }
 
         const double sim_alpha = (double)ms_frame_accum / ms_sim_dt;
@@ -231,10 +275,10 @@ int main(int argc, char *argv[])
 
 		// Draw models
 		//glDisable(GL_CULL_FACE);
-        ta_scene_render(tg_game.scene, &tg_window.projection,
+        ta_scene_render(tg_game.scene, &tg_game.camera->projection,
             &tg_game.camera->look_at);
 
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_window.projection);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
 
         // World axes
@@ -268,22 +312,9 @@ int main(int argc, char *argv[])
 			//	model_deg = 0.0f;
 			//}
 
-            ta_mat4 model;
-            model = mat4_rotate_y(180.0f);
-
-            ta_vec3 map_pos = vec3_negate(tg_game.camera->position);
-            map_pos.y = 50.0f;
-            map_pos.z += TA_EPSILON;
-            ta_vec3 map_target = map_pos;
-            map_target.y = 0.0f;
-            map_target.z += TA_EPSILON;
-            ta_mat4 map_lookat = mat4_lookat(map_pos, map_target, VEC3_Y);
-
-            model = mat4_mul(map_lookat, model);
-
 			// Draw models
-            ta_scene_render(tg_game.scene, &minimap_viewport.projection,
-                &model);
+            ta_scene_render(tg_game.scene, &minimap_viewport.camera->projection,
+                &minimap_viewport.camera->look_at);
 
             // Red dot on map
             ta_primitive_push_rect(

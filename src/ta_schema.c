@@ -196,18 +196,20 @@ void ta_schema_register()
 
     // Scene-level object types
     TYPE_START(ta_camera, F_TA_CAMERA);
-    TYPE_FIELD(ta_camera, uid,          F_ATOM_STRING);
-    TYPE_FIELD(ta_camera, position,     F_TA_VEC3);
-    TYPE_FIELD(ta_camera, target_vel,   F_ATOM_FLOAT);
-    TYPE_FIELD(ta_camera, target_smooth,F_ATOM_FLOAT);
-    TYPE_FIELD(ta_camera, mode,         F_ATOM_INT);
-    TYPE_FIELD(ta_camera, look_target,  F_TA_VEC3);
-    TYPE_FIELD(ta_camera, yaw,          F_ATOM_FLOAT);
-    TYPE_FIELD(ta_camera, yaw_smooth,   F_ATOM_FLOAT);
-    TYPE_FIELD(ta_camera, pitch,        F_ATOM_FLOAT);
-    TYPE_FIELD(ta_camera, pitch_min,    F_ATOM_FLOAT);
-    TYPE_FIELD(ta_camera, pitch_max,    F_ATOM_FLOAT);
-    TYPE_FIELD(ta_camera, pitch_smooth, F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, uid, F_ATOM_STRING);
+    TYPE_UNION_TYPE(ta_camera, mode, F_ATOM_ENUM, ta_camera_mode_str);
+    TYPE_FIELD(ta_camera, position,            F_TA_VEC3);
+    TYPE_FIELD(ta_camera, position_smooth,     F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, position_target_vel, F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, yaw,                 F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, yaw_smooth,          F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, pitch,               F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, pitch_smooth,        F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, pitch_min,           F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, pitch_max,           F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, fov,                 F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, nearz,               F_ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, up,                  F_TA_VEC3);
     TYPE_END(ta_camera);
 
     TYPE_START(ta_sun_light, F_TA_SUN_LIGHT);

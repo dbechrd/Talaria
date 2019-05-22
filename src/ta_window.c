@@ -86,21 +86,14 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
     ta_log_write(tg_debug_log, "[Window] SDL initialized\n");
 }
 
-void ta_window_init(int w, int h, float fov, float nearz, bool fullscreen)
+void ta_window_init(int w, int h, bool fullscreen)
 {
     ta_log_write(tg_debug_log, "[Window] Initializing window\n");
     tg_window.width = w;
 	tg_window.height = h;
     ta_init_sdl(&tg_window.width, &tg_window.height, fullscreen);
 	DLB_ASSERT(fullscreen || (tg_window.width == w && tg_window.height == h));
-
-	tg_window.fov = fov;
-	tg_window.nearz = nearz;
-	tg_window.projection = mat4_perspective_inf(
-		tg_window.fov,
-		(float)tg_window.width / tg_window.height,
-		tg_window.nearz
-	);
+    tg_window.aspect = (float)tg_window.width / tg_window.height;
     ta_log_write(tg_debug_log, "[Window] Window initialized\n");
 }
 

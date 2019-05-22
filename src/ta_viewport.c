@@ -3,34 +3,15 @@
 #include "misc/gl3w.h"
 
 ta_viewport ta_viewport_init(int left, int top, int width, int height,
-	float fov, float nearz, ta_rgba background)
+	ta_rgba background, ta_camera *camera)
 {
 	ta_viewport view;
 	view.rect.x = left;
 	view.rect.y = top;
 	view.rect.w = width;
 	view.rect.h = height;
-	view.fov = fov;
-	view.nearz = nearz;
-
-    float oo = 0.5f;
-    view.projection = mat4_ortho(-oo, oo, -oo, oo, 0.1f, 10.0f);
-
-    //view.projection = mat4_ortho(
-    //    (float)view.rect.x,
-    //    (float)view.rect.x + view.rect.w,
-    //    (float)view.rect.y + view.rect.h,
-    //    (float)view.rect.y,
-    //    nearz,
-    //    100.0f
-    //);
-
-	//view.projection = mat4_perspective_inf(
-    //    fov,
-    //    (float)view.rect.w / view.rect.h,
-    //    nearz
-    //);
 	view.background = background;
+    view.camera = camera;
 	return view;
 }
 

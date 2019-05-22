@@ -90,6 +90,9 @@ extern const ta_vec3 VEC3_ONE;
 extern const ta_vec3 VEC3_X;
 extern const ta_vec3 VEC3_Y;
 extern const ta_vec3 VEC3_Z;
+extern const ta_vec3 VEC3_NX;
+extern const ta_vec3 VEC3_NY;
+extern const ta_vec3 VEC3_NZ;
 extern const ta_vec3 VEC3_MIN;
 extern const ta_vec3 VEC3_MAX;
 

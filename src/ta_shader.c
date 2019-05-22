@@ -10,7 +10,8 @@
 ta_shader *tg_shader_lines;
 ta_shader *tg_shader_quads;
 
-const char *ta_glsl_type_str(int type) {
+const char *ta_glsl_type_str(int type)
+{
     switch(type) {
         case TA_GLSL_GLINT:     return "TA_GLSL_GLINT";
         case TA_GLSL_GLUINT:    return "TA_GLSL_GLUINT";
@@ -25,7 +26,7 @@ const char *ta_glsl_type_str(int type) {
             DLB_ASSERT(!"<UNKNOWN_TA_GLSL_TYPE>");
             return 0;
     }
-};
+}
 
 static void show_info_log(GLuint shader, PFNGLGETSHADERIVPROC glGet__iv,
     PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
