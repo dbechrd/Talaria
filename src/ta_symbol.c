@@ -36,6 +36,7 @@ const char *SYM_U_PROJ;
 const char *SYM_U_VIEW;
 const char *SYM_U_MODEL;
 const char *SYM_U_SUN;
+const char *SYM_U_CAMERA_POS;
 const char *SYM_U_TEX0;
 
 // TODO: It may be useful to have multiple symbol tables to allow freeing
@@ -46,27 +47,28 @@ static dlb_hash symbol_table;
 void ta_symbol_init() {
     dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 256);
 
-    SYM_UID = INTERN(IDENT_UID);
+    SYM_UID           = INTERN(IDENT_UID);
 
-    SYM_NULL  = INTERN(KEYWORD_NULL);
-    SYM_TRUE  = INTERN(KEYWORD_TRUE);
-    SYM_FALSE = INTERN(KEYWORD_FALSE);
+    SYM_NULL          = INTERN(KEYWORD_NULL);
+    SYM_TRUE          = INTERN(KEYWORD_TRUE);
+    SYM_FALSE         = INTERN(KEYWORD_FALSE);
 
-    SYM_GLINT     = INTERN("glint");
-    SYM_GLUINT    = INTERN("gluint");
-    SYM_SAMPLER2D = INTERN("sampler2D");
-    SYM_VEC2      = INTERN("vec2");
-    SYM_VEC3      = INTERN("vec3");
-    SYM_VEC4      = INTERN("vec4");
-    SYM_MAT4      = INTERN("mat3");
-    SYM_MAT4      = INTERN("mat4");
-    SYM_STRUCT    = INTERN("struct");
+    SYM_GLINT         = INTERN("glint");
+    SYM_GLUINT        = INTERN("gluint");
+    SYM_SAMPLER2D     = INTERN("sampler2D");
+    SYM_VEC2          = INTERN("vec2");
+    SYM_VEC3          = INTERN("vec3");
+    SYM_VEC4          = INTERN("vec4");
+    SYM_MAT4          = INTERN("mat3");
+    SYM_MAT4          = INTERN("mat4");
+    SYM_STRUCT        = INTERN("struct");
 
-    SYM_U_PROJ    = INTERN("u_proj");
-    SYM_U_VIEW    = INTERN("u_view");
-    SYM_U_MODEL   = INTERN("u_model");
-    SYM_U_SUN     = INTERN("u_sun");
-    SYM_U_TEX0    = INTERN("u_tex0");
+    SYM_U_PROJ        = INTERN("u_proj");
+    SYM_U_VIEW        = INTERN("u_view");
+    SYM_U_MODEL       = INTERN("u_model");
+    SYM_U_SUN         = INTERN("u_sun");
+    SYM_U_CAMERA_POS  = INTERN("u_camera_pos");
+    SYM_U_TEX0        = INTERN("u_tex0");
 
     SYM_ATTR_POSITION = INTERN("attr_position");
     SYM_ATTR_COLOR    = INTERN("attr_color");

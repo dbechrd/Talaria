@@ -59,6 +59,7 @@ extern const char *SYM_U_PROJ;
 extern const char *SYM_U_VIEW;
 extern const char *SYM_U_MODEL;
 extern const char *SYM_U_SUN;
+extern const char *SYM_U_CAMERA_POS;
 extern const char *SYM_U_TEX0;
 
 const char *ta_symbol_intern(const char *s, u32 len);

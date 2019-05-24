@@ -275,8 +275,7 @@ int main(int argc, char *argv[])
 
 		// Draw models
 		//glDisable(GL_CULL_FACE);
-        ta_scene_render(tg_game.scene, &tg_game.camera->projection,
-            &tg_game.camera->look_at);
+        ta_scene_render(tg_game.scene, tg_game.camera);
 
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
@@ -313,8 +312,7 @@ int main(int argc, char *argv[])
 			//}
 
 			// Draw models
-            ta_scene_render(tg_game.scene, &minimap_viewport.camera->projection,
-                &minimap_viewport.camera->look_at);
+            ta_scene_render(tg_game.scene, minimap_viewport.camera);
 
             // Red dot on map
             ta_primitive_push_rect(

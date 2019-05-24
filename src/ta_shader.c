@@ -285,22 +285,31 @@ void ta_shader_unbind(ta_shader *shader)
     glUseProgram(0);
 }
 
-void ta_shader_set_mat4(ta_shader *shader, const char *name,
-    const ta_mat4 *matrix)
+void ta_shader_set_vec3(ta_shader *shader, const char *name, const ta_vec3 *v)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC3);
+    u->value.vec3 = *v;
+}
+
+void ta_shader_set_vec4(ta_shader *shader, const char *name, const ta_vec4 *v)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC4);
+    u->value.vec4 = *v;
+}
+
+void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT4);
-    u->value.mat4 = *matrix;
+    u->value.mat4 = *m;
 }
 
-void ta_shader_set_sampler2d(ta_shader *shader, const char *name,
-    GLuint texture_id)
+void ta_shader_set_sampler2d(ta_shader *shader, const char *name, GLuint tex_id)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D);
-    u->value.gluint = texture_id;
+    u->value.gluint = tex_id;
 }
 
-void ta_shader_set_light(ta_shader *shader, const char *name,
-    ta_light *light)
+void ta_shader_set_light(ta_shader *shader, const char *name, ta_light *light)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
 

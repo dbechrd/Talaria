@@ -32,4 +32,4 @@ ta_rigid_body *ta_entity_rigid_body(ta_entity *e);
 void ta_entity_update(ta_entity *e, double dt);
 void ta_entity_push_aabb(ta_entity *e, ta_rgba color);
 void ta_entity_push_normals(ta_entity *e);
-void ta_entity_render(ta_entity *e, ta_mat4 *proj, ta_mat4 *view);
+void ta_entity_render(ta_entity *e, ta_camera *camera);

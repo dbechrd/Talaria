@@ -95,10 +95,9 @@ void ta_shader_delete(ta_shader *shader);
 void ta_shader_free(ta_shader *shader);
 void ta_shader_bind(ta_shader *shader);
 void ta_shader_unbind(ta_shader *shader);
-void ta_shader_set_mat4(ta_shader *shader, const char *name,
-    const ta_mat4 *matrix);
-void ta_shader_set_sampler2d(ta_shader *shader, const char *name,
-    GLuint texture_id);
-void ta_shader_set_light(ta_shader *shader, const char *name,
-    ta_light *light);
+void ta_shader_set_vec3(ta_shader *shader, const char *name, const ta_vec3 *v);
+void ta_shader_set_vec4(ta_shader *shader, const char *name, const ta_vec4 *v);
+void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m);
+void ta_shader_set_sampler2d(ta_shader *shader, const char *name, GLuint tex_id);
+void ta_shader_set_light(ta_shader *shader, const char *name, ta_light *light);
 void ta_shader_prerender(ta_shader *shader);

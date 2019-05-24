@@ -866,10 +866,10 @@ void ta_scene_update(ta_scene *scene, double dt)
     }
 }
 
-void ta_scene_render(ta_scene *scene, ta_mat4 *proj, ta_mat4 *view)
+void ta_scene_render(ta_scene *scene, ta_camera *camera)
 {
     // TODO: Group by shader / material to minimize redundant uniform calls
     dlb_vec_each(ta_entity *, entity, scene->entities) {
-        ta_entity_render(entity, proj, view);
+        ta_entity_render(entity, camera);
     }
 }

@@ -97,7 +97,7 @@ void ta_entity_push_normals(ta_entity *e)
     }
 }
 
-void ta_entity_render(ta_entity *e, ta_mat4 *proj, ta_mat4 *view)
+void ta_entity_render(ta_entity *e, ta_camera *camera)
 {
     ta_material *mat = ta_entity_material(e);
     ta_shader *shader = ta_material_shader(mat);
@@ -110,10 +110,11 @@ void ta_entity_render(ta_entity *e, ta_mat4 *proj, ta_mat4 *view)
     DLB_ASSERT(texture);
     DLB_ASSERT(mesh_group);
 
-    ta_shader_set_mat4(shader, SYM_U_PROJ, proj);
-    ta_shader_set_mat4(shader, SYM_U_VIEW, view);
+    ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
+    ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(shader, SYM_U_MODEL, &e->model);
     ta_shader_set_light(shader, SYM_U_SUN, tg_game.sun);
+    ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
     ta_shader_set_sampler2d(shader, SYM_U_TEX0, texture->gl_id);
     ta_shader_bind(shader);
     ta_shader_prerender(shader);
