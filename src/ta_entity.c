@@ -21,6 +21,10 @@ void ta_entity_init(ta_entity *e)
     if (vec3_zero(e->transform.scale)) {
         e->transform.scale = VEC3_ONE;
     }
+    if (!e->sphere.radius) {
+        ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
+        e->sphere = mesh_group->sphere;
+    }
     if (!e->aabb.extents.x) {
         bool use_mesh_aabb = false;
         ta_rigid_body *rigid_body = ta_entity_rigid_body(e);
@@ -38,7 +42,7 @@ void ta_entity_init(ta_entity *e)
         }
         if (use_mesh_aabb) {
             ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
-            e->aabb = ta_mesh_group_aabb(mesh_group);
+            e->aabb = mesh_group->aabb;
         }
     }
 }
@@ -84,6 +88,11 @@ void ta_entity_update(ta_entity *e, double dt)
     e->model = mat4_translate(&e->transform.position);
 }
 
+void ta_entity_push_sphere(ta_entity *e, ta_rgba color)
+{
+    ta_primitive_push_sphere(e->sphere, color);
+}
+
 void ta_entity_push_aabb(ta_entity *e, ta_rgba color)
 {
     ta_primitive_push_aabb(e->aabb, color);
@@ -110,14 +119,37 @@ void ta_entity_render(ta_entity *e, ta_camera *camera)
     DLB_ASSERT(texture);
     DLB_ASSERT(mesh_group);
 
-    ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
-    ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
-    ta_shader_set_mat4(shader, SYM_U_MODEL, &e->model);
-    ta_shader_set_light(shader, SYM_U_SUN, tg_game.sun);
-    ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
-    ta_shader_set_sampler2d(shader, SYM_U_TEX0, texture->gl_id);
-    ta_shader_bind(shader);
-    ta_shader_prerender(shader);
-    ta_mesh_group_render(mesh_group);
-    ta_shader_unbind(shader);
+    // TODO: This is going to make a zillion extranous calls
+    GLenum camera_poly_mode = camera->debug_wireframe ? GL_LINE : GL_FILL;
+    if (camera_poly_mode != tg_polygon_mode) {
+        glPolygonMode(GL_FRONT_AND_BACK, camera_poly_mode);
+        tg_polygon_mode = camera_poly_mode;
+    }
+
+    if (!camera->debug_no_mesh) {
+        ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
+        ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
+        ta_shader_set_mat4(shader, SYM_U_MODEL, &e->model);
+        ta_shader_set_light(shader, SYM_U_SUN, tg_game.sun);
+        ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX0, texture->gl_id);
+        ta_shader_bind(shader);
+        ta_shader_prerender(shader);
+        ta_mesh_group_render(mesh_group);
+        ta_shader_unbind(shader);
+    }
+
+    if (camera->debug_normals) {
+        ta_entity_push_normals(e);
+    }
+    if (camera->debug_bounding_boxes) {
+        ta_entity_push_aabb(e, TA_COLOR_RED);
+    }
+    if (camera->debug_bounding_spheres) {
+        ta_entity_push_sphere(e, TA_COLOR_BLUE);
+    }
+
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &e->model);
+    ta_primitive_render();
+    ta_primitive_clear();
 }

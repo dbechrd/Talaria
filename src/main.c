@@ -120,8 +120,7 @@ int main(int argc, char *argv[])
     ta_keyboard_init();
     ta_render_init();
     ta_primitive_init();
-
-    tg_game.state = TA_STATE_INIT;
+    ta_game_init();
 
     // Intro scene
     read_scene("data/scene/scene1.dml");
@@ -207,20 +206,19 @@ int main(int argc, char *argv[])
 
     //ta_shader_set_sampler2d(tg_shader_mesh, SYM_U_TEX0, tex_test->gl_id);
 
-    // TODO: What other startup states would be useful (e.g. LOADING_MESHES)?
-    //       Could use this for a progress bar during load and better logging.
-    //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
-    //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
-    tg_game.state = TA_STATE_FREE_CAM;
-
     ////////////////////////////////////////////////////////////////////////////
     // Main loop
     ////////////////////////////////////////////////////////////////////////////
     u64 frame_num = 0;
 
-    double ms_sim_t = 0;                     // current simulation time
+    // GDC2011_Catto_Erin_Soft_Constraints
+    // Semi-implicit Euler will eventually blow up if you take big time steps. A
+    // general rule is to take at least 4 time steps per period of oscillation.
+    // For example, if the oscillation frequency is 60Hz, then you shouldn’t
+    // take time steps slower than 15Hz.
     const double ms_sim_dt = 10;             // fixed dt milliseconds
     const double sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
+    double ms_sim_t = 0;                     // current simulation time
 
     double ms_frame_prev = ta_timer_elapsed_ms();
     double ms_frame_accum = 0;
@@ -256,7 +254,7 @@ int main(int argc, char *argv[])
             ms_frame_accum -= ms_sim_dt;
         }
 
-        if (tg_debug_follow_pinky) {
+        if (tg_game.camera->debug_follow_pinky) {
             ta_vec3 position_target = vec3_add(tg_game.player->transform.position,
                 (ta_vec3) { 0.0, 1.0f, 3.0f });
             ta_camera_set_target_pos_absolute(tg_game.camera, position_target);
@@ -273,33 +271,18 @@ int main(int argc, char *argv[])
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
+
 		// Draw models
 		//glDisable(GL_CULL_FACE);
         ta_scene_render(tg_game.scene, tg_game.camera);
-
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
 
         // World axes
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_primitive_push_axes(2.0f);
         ta_primitive_render();
         ta_primitive_clear();
-
-        if (tg_debug_render_normals || tg_debug_render_bounding_boxes) {
-            // TODO: This should take entity transform into account
-            dlb_vec_each(ta_entity *, entity, tg_game.scene->entities) {
-                if (tg_debug_render_normals) {
-                    ta_entity_push_normals(entity);
-                }
-                if (tg_debug_render_bounding_boxes) {
-                    ta_entity_push_aabb(entity, TA_COLOR_RED);
-                }
-                ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &entity->model);
-                ta_primitive_render();
-                ta_primitive_clear();
-            }
-        }
 
         // Minimap
 		ta_viewport_bind(&minimap_viewport, true);

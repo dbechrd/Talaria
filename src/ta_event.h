@@ -22,10 +22,10 @@ typedef enum {
     TA_EVENT_GLOBAL_MOUSE_SCROLL,
 
     // Game events
-    TA_EVENT_GAME_STATE_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GAME),
-    TA_EVENT_GAME_STATE_INIT,
-    TA_EVENT_GAME_STATE_FREE_CAM,
-    TA_EVENT_GAME_STATE_PLAY,
+    TA_EVENT_GAME_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GAME),
+    TA_EVENT_GAME_INIT,
+    TA_EVENT_GAME_FREE_CAM,
+    TA_EVENT_GAME_PLAY,
     TA_EVENT_GAME_MOUSE_MOVE,
     TA_EVENT_GAME_MOUSE_CLICK,
     TA_EVENT_GAME_MOUSE_SCROLL,
@@ -35,6 +35,8 @@ typedef enum {
     TA_EVENT_DEBUG_TOGGLE_WIREFRAME,
     TA_EVENT_DEBUG_TOGGLE_NORMALS,
     TA_EVENT_DEBUG_TOGGLE_BBOX,
+    TA_EVENT_DEBUG_TOGGLE_SPHERE,
+    TA_EVENT_DEBUG_TOGGLE_MESH,
     TA_EVENT_DEBUG_BOOST_PINKY,
     TA_EVENT_DEBUG_FOCUS_PINKY,
 
@@ -94,10 +96,6 @@ typedef struct {
     ta_event *buffer;
 } ta_event_queue;
 ta_event_queue tg_event_queues[TA_EVENT_QUEUE_COUNT];
-
-extern bool tg_debug_render_normals;
-extern bool tg_debug_render_bounding_boxes;
-extern bool tg_debug_follow_pinky;
 
 void ta_event_push(ta_event *event);
 bool ta_event_pop(ta_event *event, ta_event_queue_type queue_type);

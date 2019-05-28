@@ -5,6 +5,7 @@
 #include "ta_symbol.h"
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
+#include <math.h>
 
 static ta_vert_line *lines_queue;
 static GLuint lines_vao;
@@ -183,6 +184,64 @@ void ta_primitive_push_axes(float scale)
     ta_primitive_push_line_3d(Z_AXIS, TA_COLOR_BLUE,  TA_COLOR_BLUE);
 }
 
+// TODO: Make this a setting somewhere?
+#define SPHERE_SEGMENTS 32
+#define SPHERE_SEG_RAD (DEG_TO_RADF(360.f / SPHERE_SEGMENTS))
+void ta_primitive_push_sphere(ta_sphere sphere, ta_rgba color)
+{
+    // TODO: Could save some bandwidth with line strips
+    ta_line_3d line_yz = { 0 };
+    ta_line_3d line_xz = { 0 };
+    ta_line_3d line_xy = { 0 };
+
+    line_yz.p0 = sphere.center;
+    line_yz.p0.y += sphere.radius;
+
+    line_xz.p0 = sphere.center;
+    line_xz.p0.x += sphere.radius;
+
+    line_xy.p0 = sphere.center;
+    line_xy.p0.x += sphere.radius;
+
+    for (int i = 1; i < SPHERE_SEGMENTS; i++) {
+        float cosr = cosf(SPHERE_SEG_RAD * i) * sphere.radius;
+        float sinr = sinf(SPHERE_SEG_RAD * i) * sphere.radius;
+
+        line_yz.p1 = sphere.center;
+        line_yz.p1.y += cosr;
+        line_yz.p1.z += sinr;
+        ta_primitive_push_line_3d(line_yz, TA_COLOR_WHITE, TA_COLOR_RED);
+        line_yz.p0 = line_yz.p1;
+
+        line_xz.p1 = sphere.center;
+        line_xz.p1.x += cosr;
+        line_xz.p1.z += sinr;
+        ta_primitive_push_line_3d(line_xz, TA_COLOR_WHITE, TA_COLOR_GREEN);
+        line_xz.p0 = line_xz.p1;
+
+        line_xy.p1 = sphere.center;
+        line_xy.p1.x += cosr;
+        line_xy.p1.y += sinr;
+        ta_primitive_push_line_3d(line_xy, TA_COLOR_WHITE, TA_COLOR_BLUE);
+        line_xy.p0 = line_xy.p1;
+    }
+
+    line_yz.p1 = sphere.center;
+    line_yz.p1.y += sphere.radius;
+
+    line_xz.p1 = sphere.center;
+    line_xz.p1.x += sphere.radius;
+
+    line_xy.p1 = sphere.center;
+    line_xy.p1.x += sphere.radius;
+
+    ta_primitive_push_line_3d(line_yz, TA_COLOR_WHITE, TA_COLOR_RED);
+    ta_primitive_push_line_3d(line_xz, TA_COLOR_WHITE, TA_COLOR_GREEN);
+    ta_primitive_push_line_3d(line_xy, TA_COLOR_WHITE, TA_COLOR_BLUE);
+
+}
+#undef SPHERE_SEGMENTS
+
 void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
 {
     ta_line_3d line = { 0 };
@@ -203,7 +262,8 @@ void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
     VEC3(p7, min.x + size.x, min.y + size.y, min.z + size.z);
 #undef VEC3
 
-#define PUSH_LINE(a, b) line.p0 = a; line.p1 = b; ta_primitive_push_line_3d(line, color, color);
+#define PUSH_LINE(a, b) line.p0 = a; line.p1 = b; \
+                        ta_primitive_push_line_3d(line, color, color)
     PUSH_LINE(p0, p1);
     PUSH_LINE(p0, p2);
     PUSH_LINE(p0, p4);

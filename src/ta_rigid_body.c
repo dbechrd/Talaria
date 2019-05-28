@@ -12,6 +12,19 @@ const char *ta_collider_type_str(int type)
     }
 }
 
+bool ta_intersect_sphere_vs_sphere(const ta_sphere *a, const ta_sphere *b)
+{
+    float r = a->radius + b->radius;
+    float r2 = r*r;
+
+    float dx = a->center.x - b->center.x;
+    float dy = a->center.y - b->center.y;
+    float dz = a->center.z - b->center.z;
+    float d2 = dx*dx + dy*dy + dz*dz;
+
+    return r2 < d2;
+}
+
 void ta_rigid_body_update(ta_rigid_body *rigid_body, double dt)
 {
     // TODO: Handle other types of colliders

@@ -1,9 +1,11 @@
 #include "ta_game.h"
 #include "ta_event.h"
 #include "ta_mouse.h"
+#include "ta_keyboard.h"
 #include "ta_log.h"
 
 ta_game tg_game;
+GLenum tg_polygon_mode = GL_FILL;
 
 static const char *game_state_str(ta_game_state state)
 {
@@ -22,21 +24,83 @@ static void game_state_set(ta_game_state state)
     ta_log_write(tg_debug_log, "[Game] State = %s\n", game_state_str(state));
 }
 
+void ta_game_init()
+{
+    ta_log_write(tg_debug_log, "[Game] Initializing game\n");
+
+    // TODO: What other startup states would be useful (e.g. LOADING_MESHES)?
+    //       Could use this for a progress bar during load and better logging.
+    //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
+    //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
+    game_state_set(TA_STATE_INIT);
+
+    ta_log_write(tg_debug_log, "[Game] Initializing key binds\n");
+    // TODO: Read keybinds from file
+    //dlb_vec_reserve(tg_keybinds, 16);
+
+#define BIND1(state, e, key_state, key) \
+    ta_keybind_bind1(TA_STATE_##state, TA_EVENT_##e, TA_KEY_##key_state, \
+    SDL_SCANCODE_##key)
+
+    //--------------------------------------------------------------------------
+    // PLAY
+    BIND1(PLAY, GAME_QUIT, RELEASE, ESCAPE);
+
+    // State changes
+    BIND1(PLAY, GAME_QUIT,     RELEASE, ESCAPE);
+    BIND1(PLAY, GAME_FREE_CAM, RELEASE, X);
+
+    // Player movement
+    BIND1(PLAY, PLAYER_MOVE_FORWARD,  HOLD, W);
+    BIND1(PLAY, PLAYER_MOVE_BACKWARD, HOLD, S);
+    BIND1(PLAY, PLAYER_MOVE_RIGHT,    HOLD, D);
+    BIND1(PLAY, PLAYER_MOVE_LEFT,     HOLD, A);
+    BIND1(PLAY, PLAYER_MOVE_JUMP,     HOLD, SPACE);
+
+    //--------------------------------------------------------------------------
+    // FREE_CAM
+
+    // State changes
+    BIND1(FREE_CAM, GAME_QUIT,         RELEASE, ESCAPE);
+    BIND1(FREE_CAM, GAME_PLAY,         RELEASE, X);
+
+    // Debug keys
+    BIND1(FREE_CAM, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, M);
+    BIND1(FREE_CAM, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
+    BIND1(FREE_CAM, DEBUG_TOGGLE_BBOX,       PRESS, 1);
+    BIND1(FREE_CAM, DEBUG_TOGGLE_SPHERE,     PRESS, 2);
+    BIND1(FREE_CAM, DEBUG_TOGGLE_NORMALS,    PRESS, 3);
+    BIND1(FREE_CAM, DEBUG_BOOST_PINKY,       HOLD,  4);
+    BIND1(FREE_CAM, DEBUG_FOCUS_PINKY,       PRESS, 5);
+
+    // Camera movement
+    BIND1(FREE_CAM, CAMERA_MOVE_FORWARD,     HOLD, W);
+    BIND1(FREE_CAM, CAMERA_MOVE_BACKWARD,    HOLD, S);
+    BIND1(FREE_CAM, CAMERA_MOVE_RIGHT,       HOLD, D);
+    BIND1(FREE_CAM, CAMERA_MOVE_LEFT,        HOLD, A);
+    BIND1(FREE_CAM, CAMERA_MOVE_UP,          HOLD, SPACE);
+    BIND1(FREE_CAM, CAMERA_MOVE_DOWN,        HOLD, LSHIFT);
+#undef BIND1
+
+    ta_log_write(tg_debug_log, "[Game] Game initialized\n");
+    game_state_set(TA_STATE_FREE_CAM);
+}
+
 void ta_game_update()
 {
     ta_event event;
     while (ta_event_pop(&event, TA_EVENT_QUEUE_GAME)) {
         switch (event.type) {
-            case TA_EVENT_GAME_STATE_QUIT: {
+            case TA_EVENT_GAME_QUIT: {
                 game_state_set(TA_STATE_QUIT);
                 break;
-            } case TA_EVENT_GAME_STATE_INIT: {
+            } case TA_EVENT_GAME_INIT: {
                 game_state_set(TA_STATE_INIT);
                 break;
-            } case TA_EVENT_GAME_STATE_FREE_CAM: {
+            } case TA_EVENT_GAME_FREE_CAM: {
                 game_state_set(TA_STATE_FREE_CAM);
                 break;
-            } case TA_EVENT_GAME_STATE_PLAY: {
+            } case TA_EVENT_GAME_PLAY: {
                 game_state_set(TA_STATE_PLAY);
                 break;
             } case TA_EVENT_GAME_MOUSE_MOVE: {
@@ -72,20 +136,31 @@ void ta_game_update()
                 ta_mouse_toggle_capture();
                 break;
             } case TA_EVENT_DEBUG_TOGGLE_WIREFRAME: {
-                ta_camera_toggle_wireframe(tg_game.scene->cameras);
+                tg_game.camera->debug_wireframe =
+                    !tg_game.camera->debug_wireframe;
                 break;
             } case TA_EVENT_DEBUG_TOGGLE_NORMALS: {
-                tg_debug_render_normals = !tg_debug_render_normals;
+                tg_game.camera->debug_normals = !tg_game.camera->debug_normals;
                 break;
             } case TA_EVENT_DEBUG_TOGGLE_BBOX: {
-                tg_debug_render_bounding_boxes = !tg_debug_render_bounding_boxes;
+                tg_game.camera->debug_bounding_boxes =
+                    !tg_game.camera->debug_bounding_boxes;
+                break;
+            } case TA_EVENT_DEBUG_TOGGLE_SPHERE: {
+                tg_game.camera->debug_bounding_spheres =
+                    !tg_game.camera->debug_bounding_spheres;
+                break;
+            } case TA_EVENT_DEBUG_TOGGLE_MESH: {
+                tg_game.camera->debug_no_mesh =
+                    !tg_game.camera->debug_no_mesh;
                 break;
             } case TA_EVENT_DEBUG_BOOST_PINKY: {
                 ta_rigid_body *rb = ta_entity_rigid_body(tg_game.player);
                 rb->transform.position.y += 0.1f;
                 break;
             } case TA_EVENT_DEBUG_FOCUS_PINKY: {
-                tg_debug_follow_pinky = !tg_debug_follow_pinky;
+                tg_game.camera->debug_follow_pinky =
+                    !tg_game.camera->debug_follow_pinky;
                 break;
             } default: {
                 DLB_ASSERT(!"Unhandled event type");

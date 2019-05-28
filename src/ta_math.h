@@ -116,6 +116,7 @@ extern const ta_rgba TA_COLOR_GRAY6;
 extern const ta_rgba TA_COLOR_GRAY7;
 extern const ta_rgba TA_COLOR_GRAY8;
 extern const ta_rgba TA_COLOR_GRAY9;
+extern const ta_rgba TA_COLOR_WHITE;
 
 //int clamp(int d, int min, int max);
 float clampf(float f, float min, float max);

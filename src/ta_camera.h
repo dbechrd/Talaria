@@ -13,7 +13,6 @@ typedef struct ta_camera_s {
     const char *uid;
 
     ta_camera_mode mode;
-    bool wireframe;
     bool dirty;
 
     ta_vec3 position;           // where the camera is
@@ -37,11 +36,17 @@ typedef struct ta_camera_s {
     ta_vec3 right;
     ta_mat4 look_at;
     ta_mat4 projection;
+
+    bool debug_wireframe;
+    bool debug_normals;
+    bool debug_bounding_spheres;
+    bool debug_bounding_boxes;
+    bool debug_no_mesh;
+    bool debug_follow_pinky;
 } ta_camera;
 
 const char *ta_camera_mode_str(int type);
 void ta_camera_init(ta_camera *camera);
-void ta_camera_toggle_wireframe(ta_camera *camera);
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z);
 void ta_camera_set_rotation(ta_camera *camera, float yaw, float pitch);
 void ta_camera_set_target_pos_absolute(ta_camera *camera, ta_vec3 position_target);

@@ -20,5 +20,7 @@ typedef struct {
 } ta_game;
 
 extern ta_game tg_game;
+extern GLenum tg_polygon_mode;
 
+void ta_game_init();
 void ta_game_update();

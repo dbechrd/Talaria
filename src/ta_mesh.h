@@ -27,6 +27,7 @@ typedef struct ta_mesh_s {
 
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;
+    ta_sphere sphere;
     ta_aabb aabb;
 
 	GLuint vao;
@@ -34,9 +35,7 @@ typedef struct ta_mesh_s {
 } ta_mesh;
 
 void ta_mesh_create(ta_mesh *mesh);
-void ta_mesh_init_vertex_normals(ta_mesh *mesh, float scale);
-void ta_mesh_init_face_normals(ta_mesh *mesh, float scale);
-ta_aabb ta_mesh_aabb(ta_mesh *mesh);
+void ta_mesh_init_normals(ta_mesh *mesh, float scale);
 void ta_mesh_push_normals(ta_mesh *mesh);
 void ta_mesh_log_normals_dbg(ta_mesh *mesh);
 void ta_mesh_render(ta_mesh *mesh);

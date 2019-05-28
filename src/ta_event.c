@@ -2,13 +2,10 @@
 #include "ta_keyboard.h"
 #include "ta_log.h"
 #include "ta_mouse.h"
+#include "ta_game.h"
 #include "dlb_vector.h"
 #include "SDL/SDL.h"
 #include <string.h>
-
-bool tg_debug_render_normals = false;
-bool tg_debug_render_bounding_boxes = false;
-bool tg_debug_follow_pinky = false;
 
 void ta_event_push(ta_event *event)
 {
@@ -98,7 +95,7 @@ void ta_event_update()
         switch (event.type) {
             case TA_EVENT_GLOBAL_QUIT: {
                 ta_event e = { 0 };
-                e.type = TA_EVENT_GAME_STATE_QUIT;
+                e.type = TA_EVENT_GAME_QUIT;
                 ta_event_push(&e);
                 break;
             } case TA_EVENT_GLOBAL_MOUSE_MOVE: {

@@ -19,6 +19,7 @@ typedef struct ta_entity_s {
     const char *mesh_group_uid;
     const char *rigid_body_uid;
     const char *parent_uid;
+    ta_sphere sphere;
     ta_aabb aabb;
     ta_mat4 model;
     //ta_entity *next;  // TODO: Is a sibling linked list useful?
@@ -30,6 +31,7 @@ ta_material *ta_entity_material(ta_entity *e);
 ta_mesh_group *ta_entity_mesh_group(ta_entity *e);
 ta_rigid_body *ta_entity_rigid_body(ta_entity *e);
 void ta_entity_update(ta_entity *e, double dt);
+void ta_entity_push_sphere(ta_entity *e, ta_rgba color);
 void ta_entity_push_aabb(ta_entity *e, ta_rgba color);
 void ta_entity_push_normals(ta_entity *e);
 void ta_entity_render(ta_entity *e, ta_camera *camera);

@@ -40,12 +40,6 @@ void ta_camera_init(ta_camera *camera)
     camera->dirty = true;
 }
 
-void ta_camera_toggle_wireframe(ta_camera *camera)
-{
-    camera->wireframe = !camera->wireframe;
-    glPolygonMode(GL_FRONT_AND_BACK, camera->wireframe ? GL_LINE : GL_FILL);
-}
-
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z)
 {
     camera->position.x = x;

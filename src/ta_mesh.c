@@ -66,35 +66,27 @@ void ta_mesh_create(ta_mesh *mesh)
 	}
 }
 
-void ta_mesh_init_vertex_normals(ta_mesh *mesh, float scale)
+void ta_mesh_init_normals(ta_mesh *mesh, float scale)
 {
     DLB_ASSERT(!mesh->vertex_normals);
 
     u32 normal_count = dlb_vec_len(mesh->normals);
     DLB_ASSERT(normal_count > 0);
     DLB_ASSERT(normal_count == dlb_vec_len(mesh->positions));
-
     dlb_vec_reserve(mesh->vertex_normals, normal_count);
-    for (u32 i = 0; i < normal_count; i++) {
-        ta_line_3d *line = dlb_vec_alloc(mesh->vertex_normals);
-        ta_vec3 vertex_normal = vec3_scalef(mesh->normals[i], scale);
-        line->p0 = mesh->positions[i];
-        line->p1 = vec3_add(mesh->positions[i], vertex_normal);
-    }
-}
-
-void ta_mesh_init_face_normals(ta_mesh *mesh, float scale)
-{
-    DLB_ASSERT(!mesh->face_normals);
-
-    u32 normal_count = dlb_vec_len(mesh->normals);
-    DLB_ASSERT(normal_count > 0);
-    DLB_ASSERT(normal_count == dlb_vec_len(mesh->positions));
 
     u32 face_count = normal_count / 3;
     dlb_vec_reserve(mesh->face_normals, face_count);
-    for (u32 i = 0; i < face_count; i++) {
-        ta_line_3d *line = dlb_vec_alloc(mesh->face_normals);
+
+    u32 i = 0;
+    ta_line_3d *line;
+    for (; i < face_count; i++) {
+        line = dlb_vec_alloc(mesh->vertex_normals);
+        ta_vec3 vertex_normal = vec3_scalef(mesh->normals[i], scale);
+        line->p0 = mesh->positions[i];
+        line->p1 = vec3_add(mesh->positions[i], vertex_normal);
+
+        line = dlb_vec_alloc(mesh->face_normals);
         ta_vec3 v0 = mesh->positions[i * 3];
         ta_vec3 v1 = mesh->positions[i * 3 + 1];
         ta_vec3 v2 = mesh->positions[i * 3 + 2];
@@ -105,8 +97,15 @@ void ta_mesh_init_face_normals(ta_mesh *mesh, float scale)
         line->p0 = face_center;
         line->p1 = vec3_add(face_center, face_normal);
     }
+    for (; i < normal_count; i++) {
+        line = dlb_vec_alloc(mesh->vertex_normals);
+        ta_vec3 vertex_normal = vec3_scalef(mesh->normals[i], scale);
+        line->p0 = mesh->positions[i];
+        line->p1 = vec3_add(mesh->positions[i], vertex_normal);
+    }
 }
 
+#if 0
 ta_aabb ta_mesh_aabb(ta_mesh *mesh)
 {
     ta_vec3 min = VEC3_MAX;
@@ -126,6 +125,7 @@ ta_aabb ta_mesh_aabb(ta_mesh *mesh)
     aabb.center = vec3_add(min, aabb.extents);
     return aabb;
 }
+#endif
 
 void ta_mesh_push_normals(ta_mesh *mesh)
 {
