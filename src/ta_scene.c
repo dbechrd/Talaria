@@ -834,10 +834,12 @@ static ta_manifold *detect_collisions(ta_scene *scene, double dt)
         if (ref_a->type != F_TA_ENTITY) continue;
         ta_entity *a = ref_a->ptr;
         if (a->invisible) continue;
+        if (!a->rigid_body_uid) continue;
         dlb_vec_range(ta_scene_ref *, ref_b, ref_a + 1, dlb_vec_end(scene->refs)) {
             if (ref_b->type != F_TA_ENTITY) continue;
             ta_entity *b = ref_b->ptr;
             if (b->invisible) continue;
+            if (!b->rigid_body_uid) continue;
 
             if (ta_entity_intersect(a, b, &manifold)) {
                 ta_manifold *m = dlb_vec_alloc(manifolds);

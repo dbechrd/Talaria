@@ -22,6 +22,7 @@ void ta_entity_init(ta_entity *e)
         e->mesh_group_uid = e->ref.scene->default_mesh_group_uid;
     }
     if (!e->rigid_body_uid) {
+#if 0
         char body_uid[128] = { 0 };
         snprintf(body_uid, sizeof(body_uid) - 1, "%s_rigid_body", e->ref.uid);
         ta_rigid_body *body = ta_scene_obj_alloc(e->ref.scene, F_TA_RIGID_BODY,
@@ -30,6 +31,7 @@ void ta_entity_init(ta_entity *e)
         body->transform.rotation = e->transform.rotation;
         ta_rigid_body_init(body);
         e->rigid_body_uid = body->ref.uid;
+#endif
     }
     if (!e->sphere.radius) {
         ta_mesh_group *mesh_group = ta_entity_mesh_group(e);

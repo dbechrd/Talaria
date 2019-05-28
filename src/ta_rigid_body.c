@@ -49,11 +49,11 @@ void ta_rigid_body_update(ta_rigid_body *body, double dt)
     body->transform.position = vec3_add(body->transform.position,
         vec3_scalef(body->velocity, (float)dt));
 
-    if (body->transform.position.y <= 0.0f) {
-        body->velocity.y *= -1.0f;
-        body->transform.position.y = 0.0f;
+    if (body->transform.position.y <= body->collider.data.sphere.radius) {
+        body->velocity.y *= -0.5f;
+        body->transform.position.y = body->collider.data.sphere.radius;
     }
-    body->velocity = vec3_scalef(body->velocity, 0.995f);
+    body->velocity = vec3_scalef(body->velocity, 0.99f);
 
     // HACK: Assume collider center always first property
     body->collider.data.center = body->transform.position;
@@ -171,7 +171,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
     ////////////////////////////////////////
 
     const float percent = 0.2f;
-    const float slop = 0.01f;
+    const float slop = TA_EPSILON;
     float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) * percent;
     ta_vec3 correction = vec3_scalef(manifold->normal, c);
     a->transform.position = vec3_sub(a->transform.position, vec3_scalef(correction, a->inv_mass));
