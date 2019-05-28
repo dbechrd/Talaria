@@ -25,6 +25,7 @@ void ta_primitive_push_line_3d(ta_line_3d line_3d, ta_rgba color0, ta_rgba color
 void ta_primitive_push_rect(int x, int y, ta_rect rect, ta_rgba color);
 void ta_primitive_push_axes(float scale);
 void ta_primitive_push_sphere(ta_sphere sphere, ta_rgba color);
+void ta_primitive_push_rgb_sphere(ta_sphere sphere);
 void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color);
 void ta_primitive_render();
 void ta_primitive_clear();

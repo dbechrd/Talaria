@@ -17,8 +17,7 @@ typedef struct ta_point_light_s {
 } ta_point_light;
 
 typedef struct ta_light_s {
-    ta_scene *scene;
-    const char *uid;
+    ta_scene_ref ref;
     ta_light_type type;
     union {
         ta_sun_light sun;

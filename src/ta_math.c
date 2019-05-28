@@ -73,6 +73,10 @@ int vec3_zero(const ta_vec3 v)
 {
     return v.x == 0.0f && v.y == 0.0f && v.z == 0.0f;
 }
+int vec3_equal(const ta_vec3 a, const ta_vec3 b)
+{
+    return a.x == b.x && a.y == b.y && a.z == b.z;
+}
 ta_vec3 vec3_negate(const ta_vec3 v)
 {
     ta_vec3 result;
@@ -108,16 +112,25 @@ ta_vec3 vec3_scalef(const ta_vec3 a, float s)
 float vec3_len(const ta_vec3 v)
 {
     float len = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+    //if (fabsf(len) < TA_EPSILON) {
+    //    len = 0.0f;
+    //}
     return len;
+}
+float vec3_len2(const ta_vec3 v)
+{
+    float len2 = v.x * v.x + v.y * v.y + v.z * v.z;
+    //if (fabsf(len2) < TA_EPSILON) {
+    //    len2 = 0.0f;
+    //}
+    return len2;
 }
 ta_vec3 vec3_normalize(const ta_vec3 v)
 {
     float len = vec3_len(v);
     ta_vec3 result = v;
     if (len) {
-        result.x /= len;
-        result.y /= len;
-        result.z /= len;
+        result = vec3_scalef(result, 1.0f / len);
     } else {
         ta_log_write(tg_debug_log, "[WARNING] Normalizing zero vector\n");
         result = VEC3_ZERO;

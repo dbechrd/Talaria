@@ -210,6 +210,60 @@ void ta_primitive_push_sphere(ta_sphere sphere, ta_rgba color)
         line_yz.p1 = sphere.center;
         line_yz.p1.y += cosr;
         line_yz.p1.z += sinr;
+        ta_primitive_push_line_3d(line_yz, color, color);
+        line_yz.p0 = line_yz.p1;
+
+        line_xz.p1 = sphere.center;
+        line_xz.p1.x += cosr;
+        line_xz.p1.z += sinr;
+        ta_primitive_push_line_3d(line_xz, color, color);
+        line_xz.p0 = line_xz.p1;
+
+        line_xy.p1 = sphere.center;
+        line_xy.p1.x += cosr;
+        line_xy.p1.y += sinr;
+        ta_primitive_push_line_3d(line_xy, color, color);
+        line_xy.p0 = line_xy.p1;
+    }
+
+    line_yz.p1 = sphere.center;
+    line_yz.p1.y += sphere.radius;
+
+    line_xz.p1 = sphere.center;
+    line_xz.p1.x += sphere.radius;
+
+    line_xy.p1 = sphere.center;
+    line_xy.p1.x += sphere.radius;
+
+    ta_primitive_push_line_3d(line_yz, color, color);
+    ta_primitive_push_line_3d(line_xz, color, color);
+    ta_primitive_push_line_3d(line_xy, color, color);
+
+}
+
+void ta_primitive_push_rgb_sphere(ta_sphere sphere)
+{
+    // TODO: Could save some bandwidth with line strips
+    ta_line_3d line_yz = { 0 };
+    ta_line_3d line_xz = { 0 };
+    ta_line_3d line_xy = { 0 };
+
+    line_yz.p0 = sphere.center;
+    line_yz.p0.y += sphere.radius;
+
+    line_xz.p0 = sphere.center;
+    line_xz.p0.x += sphere.radius;
+
+    line_xy.p0 = sphere.center;
+    line_xy.p0.x += sphere.radius;
+
+    for (int i = 1; i < SPHERE_SEGMENTS; i++) {
+        float cosr = cosf(SPHERE_SEG_RAD * i) * sphere.radius;
+        float sinr = sinf(SPHERE_SEG_RAD * i) * sphere.radius;
+
+        line_yz.p1 = sphere.center;
+        line_yz.p1.y += cosr;
+        line_yz.p1.z += sinr;
         ta_primitive_push_line_3d(line_yz, TA_COLOR_WHITE, TA_COLOR_RED);
         line_yz.p0 = line_yz.p1;
 

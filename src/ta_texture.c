@@ -14,13 +14,13 @@
 
 void ta_texture_init(ta_texture *texture, const char *name, const char *path)
 {
-    texture->uid = name;
+    texture->ref.uid = name;
     texture->path = path;
 }
 
 void ta_texture_create(ta_texture *texture)
 {
-    DLB_ASSERT(texture->uid);
+    DLB_ASSERT(texture->ref.uid);
     DLB_ASSERT(texture->path);
 
     // Load pixel data from file

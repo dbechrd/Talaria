@@ -123,11 +123,13 @@ float clampf(float f, float min, float max);
 
 void ta_vec3_print(FILE *file, ta_vec3 *vec);
 int vec3_zero(const ta_vec3 v);
+int vec3_equal(const ta_vec3 a, const ta_vec3 b);
 ta_vec3 vec3_negate(const ta_vec3 v);
 ta_vec3 vec3_add(const ta_vec3 a, const ta_vec3 b);
 ta_vec3 vec3_sub(const ta_vec3 a, const ta_vec3 b);
 ta_vec3 vec3_scalef(const ta_vec3 a, float s);
 float vec3_len(const ta_vec3 v);
+float vec3_len2(const ta_vec3 v);
 ta_vec3 vec3_normalize(const ta_vec3 v);
 float vec3_dot(const ta_vec3 a, const ta_vec3 b);
 ta_vec3 vec3_cross(const ta_vec3 a, const ta_vec3 b);

@@ -55,9 +55,8 @@ void debug_tests() {
 }
 
 ta_entity *entity_create(ta_scene *scn, const char *name) {
-    ta_entity *e = ta_scene_obj_alloc(scn, F_TA_ENTITY);
+    ta_entity *e = ta_scene_obj_alloc(scn, F_TA_ENTITY, INTERN(name));
     e->type = 0;
-    e->uid = name;
     e->transform.position.x = 1.1f;
     e->transform.position.y = 1.2f;
     e->transform.position.z = 1.3f;
@@ -93,7 +92,7 @@ void read_scene(const char *filename) {
     ta_file_close(data_file);
 
     ta_log_write(tg_debug_log, "[Scene] Initializing objects\n", filename);
-    ta_scene_obj_init(tg_game.scene);
+    ta_scene_initialize_objects(tg_game.scene);
 
     ta_log_write(tg_debug_log, "[Scene] Loaded successfully\n");
     //ta_scene_print(tg_game.scene, tg_debug_log->stream);

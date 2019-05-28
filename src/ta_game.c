@@ -44,13 +44,10 @@ void ta_game_init()
 
     //--------------------------------------------------------------------------
     // PLAY
-    BIND1(PLAY, GAME_QUIT, RELEASE, ESCAPE);
 
-    // State changes
     BIND1(PLAY, GAME_QUIT,     RELEASE, ESCAPE);
     BIND1(PLAY, GAME_FREE_CAM, RELEASE, X);
 
-    // Player movement
     BIND1(PLAY, PLAYER_MOVE_FORWARD,  HOLD, W);
     BIND1(PLAY, PLAYER_MOVE_BACKWARD, HOLD, S);
     BIND1(PLAY, PLAYER_MOVE_RIGHT,    HOLD, D);
@@ -60,11 +57,16 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // FREE_CAM
 
-    // State changes
     BIND1(FREE_CAM, GAME_QUIT,         RELEASE, ESCAPE);
     BIND1(FREE_CAM, GAME_PLAY,         RELEASE, X);
 
-    // Debug keys
+    BIND1(FREE_CAM, CAMERA_MOVE_FORWARD,     HOLD, W);
+    BIND1(FREE_CAM, CAMERA_MOVE_BACKWARD,    HOLD, S);
+    BIND1(FREE_CAM, CAMERA_MOVE_RIGHT,       HOLD, D);
+    BIND1(FREE_CAM, CAMERA_MOVE_LEFT,        HOLD, A);
+    BIND1(FREE_CAM, CAMERA_MOVE_UP,          HOLD, SPACE);
+    BIND1(FREE_CAM, CAMERA_MOVE_DOWN,        HOLD, LSHIFT);
+
     BIND1(FREE_CAM, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, M);
     BIND1(FREE_CAM, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
     BIND1(FREE_CAM, DEBUG_TOGGLE_BBOX,       PRESS, 1);
@@ -72,14 +74,6 @@ void ta_game_init()
     BIND1(FREE_CAM, DEBUG_TOGGLE_NORMALS,    PRESS, 3);
     BIND1(FREE_CAM, DEBUG_BOOST_PINKY,       HOLD,  4);
     BIND1(FREE_CAM, DEBUG_FOCUS_PINKY,       PRESS, 5);
-
-    // Camera movement
-    BIND1(FREE_CAM, CAMERA_MOVE_FORWARD,     HOLD, W);
-    BIND1(FREE_CAM, CAMERA_MOVE_BACKWARD,    HOLD, S);
-    BIND1(FREE_CAM, CAMERA_MOVE_RIGHT,       HOLD, D);
-    BIND1(FREE_CAM, CAMERA_MOVE_LEFT,        HOLD, A);
-    BIND1(FREE_CAM, CAMERA_MOVE_UP,          HOLD, SPACE);
-    BIND1(FREE_CAM, CAMERA_MOVE_DOWN,        HOLD, LSHIFT);
 #undef BIND1
 
     ta_log_write(tg_debug_log, "[Game] Game initialized\n");

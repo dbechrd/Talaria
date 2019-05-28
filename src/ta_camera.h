@@ -9,8 +9,7 @@ typedef enum {
 } ta_camera_mode;
 
 typedef struct ta_camera_s {
-    ta_scene *scene;
-    const char *uid;
+    ta_scene_ref ref;
 
     ta_camera_mode mode;
     bool dirty;

@@ -9,17 +9,27 @@
 
 void ta_entity_init(ta_entity *e)
 {
-    if (!e->material_uid) {
-        e->material_uid = e->scene->materials->uid;
-    }
-    if (!e->mesh_group_uid) {
-        e->mesh_group_uid = e->scene->mesh_groups->uid;
-    }
     if (vec4_zero(e->transform.rotation)) {
         e->transform.rotation = QUAT_IDENT;
     }
     if (vec3_zero(e->transform.scale)) {
         e->transform.scale = VEC3_ONE;
+    }
+    if (!e->material_uid) {
+        e->material_uid = e->ref.scene->default_material_uid;
+    }
+    if (!e->mesh_group_uid) {
+        e->mesh_group_uid = e->ref.scene->default_mesh_group_uid;
+    }
+    if (!e->rigid_body_uid) {
+        char body_uid[128] = { 0 };
+        snprintf(body_uid, sizeof(body_uid) - 1, "%s_rigid_body", e->ref.uid);
+        ta_rigid_body *body = ta_scene_obj_alloc(e->ref.scene, F_TA_RIGID_BODY,
+            INTERN(body_uid));
+        body->transform.position = e->transform.position;
+        body->transform.rotation = e->transform.rotation;
+        ta_rigid_body_init(body);
+        e->rigid_body_uid = body->ref.uid;
     }
     if (!e->sphere.radius) {
         ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
@@ -52,7 +62,7 @@ ta_material *ta_entity_material(ta_entity *e)
     if (!e->material_uid) return 0;
 
     // NOTE: This could cache in e->material if we want to save the hash lookup
-    ta_material *mat = ta_scene_find(e->scene, F_TA_MATERIAL, e->material_uid);
+    ta_material *mat = ta_scene_find(e->ref.scene, F_TA_MATERIAL, e->material_uid);
     return mat;
 }
 
@@ -61,7 +71,7 @@ ta_mesh_group *ta_entity_mesh_group(ta_entity *e)
     if (!e->mesh_group_uid) return 0;
 
     // NOTE: This could cache in e->mesh_group if we want to save the hash lookup
-    ta_mesh_group *mesh_group = ta_scene_find(e->scene, F_TA_MESH_GROUP,
+    ta_mesh_group *mesh_group = ta_scene_find(e->ref.scene, F_TA_MESH_GROUP,
         e->mesh_group_uid);
     return mesh_group;
 }
@@ -71,14 +81,28 @@ ta_rigid_body *ta_entity_rigid_body(ta_entity *e)
     if (!e->rigid_body_uid) return 0;
 
     // NOTE: This could cache in e->mesh_group if we want to save the hash lookup
-    ta_rigid_body *rigid_body = ta_scene_find(e->scene, F_TA_RIGID_BODY,
+    ta_rigid_body *rigid_body = ta_scene_find(e->ref.scene, F_TA_RIGID_BODY,
         e->rigid_body_uid);
     return rigid_body;
+}
+
+bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold)
+{
+    bool broad_phase = ta_intersect_sphere_vs_sphere(&a->sphere, &b->sphere, 0);
+    if (!broad_phase) {
+        return false;
+    }
+
+    ta_rigid_body *ra = ta_entity_rigid_body(a);
+    ta_rigid_body *rb = ta_entity_rigid_body(b);
+    bool narrow_phase = ta_rigid_body_intersect(ra, rb, manifold);
+    return narrow_phase;
 }
 
 void ta_entity_update(ta_entity *e, double dt)
 {
     UNUSED(dt);
+
     ta_rigid_body *rigid_body = ta_entity_rigid_body(e);
     if (rigid_body) {
         e->transform.position = rigid_body->transform.position;
@@ -88,17 +112,21 @@ void ta_entity_update(ta_entity *e, double dt)
     e->model = mat4_translate(&e->transform.position);
 }
 
-void ta_entity_push_sphere(ta_entity *e, ta_rgba color)
+static void ta_entity_push_sphere(ta_entity *e, ta_rgba color)
 {
-    ta_primitive_push_sphere(e->sphere, color);
+    if (color.a) {
+        ta_primitive_push_sphere(e->sphere, color);
+    } else {
+        ta_primitive_push_rgb_sphere(e->sphere);
+    }
 }
 
-void ta_entity_push_aabb(ta_entity *e, ta_rgba color)
+static void ta_entity_push_aabb(ta_entity *e, ta_rgba color)
 {
     ta_primitive_push_aabb(e->aabb, color);
 }
 
-void ta_entity_push_normals(ta_entity *e)
+static void ta_entity_push_normals(ta_entity *e)
 {
     ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
     if (mesh_group) {
@@ -108,6 +136,10 @@ void ta_entity_push_normals(ta_entity *e)
 
 void ta_entity_render(ta_entity *e, ta_camera *camera)
 {
+    if (e->invisible) {
+        return;
+    }
+
     ta_material *mat = ta_entity_material(e);
     ta_shader *shader = ta_material_shader(mat);
     ta_texture *texture = ta_material_texture(mat);
@@ -142,11 +174,11 @@ void ta_entity_render(ta_entity *e, ta_camera *camera)
     if (camera->debug_normals) {
         ta_entity_push_normals(e);
     }
+    if (camera->debug_bounding_spheres) {
+        ta_entity_push_sphere(e, TA_COLOR_INVIS);
+    }
     if (camera->debug_bounding_boxes) {
         ta_entity_push_aabb(e, TA_COLOR_RED);
-    }
-    if (camera->debug_bounding_spheres) {
-        ta_entity_push_sphere(e, TA_COLOR_BLUE);
     }
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &e->model);

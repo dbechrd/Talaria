@@ -3,8 +3,7 @@
 #include "misc/gl3w.h"
 
 typedef struct ta_texture_s {
-    ta_scene *scene;
-    const char *uid;
+    ta_scene_ref ref;
     const char *path;
 	int width;
 	int height;

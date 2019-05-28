@@ -5,8 +5,7 @@
 #include "dlb_hash.h"
 
 typedef struct ta_mesh_group_s {
-    ta_scene *scene;
-    const char *uid;
+    ta_scene_ref ref;
     const char *path;
     ta_mesh *meshes;
     //dlb_hash meshes_by_name;

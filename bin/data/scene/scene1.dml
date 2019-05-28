@@ -93,10 +93,6 @@ ta_light:
     position: { x: 1.0, y: 2.0, z: 3.0 }
     color:    { r: 1.0, g: 2.0, b: 3.0 }
 ta_entity:
-  uid: "entity_player"
-  mesh_group_uid: "mesh_group_prim_sphere"
-  rigid_body_uid: "entity_player_aabb"
-ta_entity:
   uid: "entity_chamber_0001"
   material_uid: "material_1"
   mesh_group_uid: "mesh_group_chamber_0001"
@@ -104,6 +100,11 @@ ta_entity:
     position: { x: 0.0, y: 0.0, z: 0.0 }
     rotation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
     scale:    { x: 1.0, y: 1.0, z: 1.0 }
+  invisible: 0
+ta_entity:
+  uid: "entity_player"
+  mesh_group_uid: "mesh_group_prim_sphere"
+  rigid_body_uid: "entity_player_aabb"
 ta_rigid_body:
   uid: "entity_player_aabb"
   transform:
@@ -114,7 +115,7 @@ ta_rigid_body:
     type: 1  # TA_COLLIDER_AABB
     aabb:
       center:  { x: 0.0, y: 0.0, z: 0.0 }
-      extents: { x: 1.0, y: 1.0, z: 1.0 }
+      extents: { x: 2.0, y: 1.0, z: 1.0 }
 ta_rigid_body:
   uid: "entity_player_obb"
   transform:
@@ -131,3 +132,13 @@ ta_rigid_body:
         { x: 0.0, y: 1.0, z: 0.0 },
         { x: 0.0, y: 0.0, z: 1.0 }
       ]
+ta_entity:
+  uid: "entity_sphere1"
+  mesh_group_uid: "mesh_group_prim_sphere"
+  transform:
+    position: { x: 0.0, y: 4.0, z: 0.0 }
+ta_entity:
+  uid: "entity_sphere2"
+  mesh_group_uid: "mesh_group_prim_sphere"
+  transform:
+    position: { x: 0.0, y: 8.0, z: 0.0 }

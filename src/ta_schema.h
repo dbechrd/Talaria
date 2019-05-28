@@ -39,11 +39,6 @@ typedef enum {
     F_ATOM_ENUM,
 } ta_schema_field_type;
 
-typedef struct scene_ref_s {
-    ta_schema_field_type type;
-    void *ptr;
-} ta_schema_ref;
-
 typedef const char *(enum_to_str)(int);
 
 typedef struct {
@@ -68,7 +63,8 @@ typedef struct {
 
 const char *ta_schema_field_type_str(ta_schema_field_type type);
 void ta_schema_register();
-ta_schema *ta_schema_find(const char *name, int len);
+ta_schema *ta_schema_find_by_type(ta_schema_field_type type);
+ta_schema *ta_schema_find_by_name(const char *name, int len);
 ta_schema_field *ta_schema_field_find(ta_schema_field_type type, const char *name);
 void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
     bool in_array);
