@@ -27,10 +27,8 @@ typedef enum {
 typedef struct {
     ta_collider_type type;
     union {
-#if 0
         // NOTE: Must all start with ta_vec3 center
         ta_vec3 center;
-#endif
         ta_sphere sphere;
         ta_aabb aabb;
         ta_obb obb;
@@ -61,6 +59,7 @@ typedef struct ta_rigid_body_s {
 
 const char *ta_collider_type_str(int type);
 void ta_rigid_body_init(ta_rigid_body *body);
+void ta_rigid_body_update(ta_rigid_body *body, double dt);
 bool ta_intersect_sphere_vs_sphere(const ta_sphere *a, const ta_sphere *b,
     ta_manifold *manifold);
 bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,

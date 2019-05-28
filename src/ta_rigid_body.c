@@ -24,13 +24,39 @@ void ta_rigid_body_init(ta_rigid_body *body)
     if (vec3_zero(body->transform.scale)) {
         body->transform.scale = VEC3_ONE;
     }
-    if (!body->mass) {
-        body->mass = 1.0f;
+    if (body->collider.type == TA_COLLIDER_SPHERE &&
+        !body->collider.data.sphere.radius)
+    {
+        body->collider.data.sphere.radius = 1.0f;
     }
-    body->inv_mass = 1.0f / body->mass;
+    if (body->mass != 0.0f) {
+        body->inv_mass = 1.0f / body->mass;
+    }
     if (!body->restitution) {
         body->restitution = 0.5f;
     }
+}
+
+void ta_rigid_body_update(ta_rigid_body *body, double dt)
+{
+    ta_vec3 acc = { 0 };
+    acc.y = body->mass * -9.81f;
+
+    //body->velocity.x = 0.0f;
+    //body->velocity.z = 0.0f;
+
+    body->velocity = vec3_add(body->velocity, vec3_scalef(acc, (float)dt));
+    body->transform.position = vec3_add(body->transform.position,
+        vec3_scalef(body->velocity, (float)dt));
+
+    if (body->transform.position.y <= 0.0f) {
+        body->velocity.y *= -1.0f;
+        body->transform.position.y = 0.0f;
+    }
+    body->velocity = vec3_scalef(body->velocity, 0.995f);
+
+    // HACK: Assume collider center always first property
+    body->collider.data.center = body->transform.position;
 }
 
 bool ta_intersect_sphere_vs_sphere(const ta_sphere *a, const ta_sphere *b,
@@ -52,7 +78,7 @@ bool ta_intersect_sphere_vs_sphere(const ta_sphere *a, const ta_sphere *b,
         } else {
             // Edge case: Circles at same position
             manifold->depth = a->radius;
-            manifold->normal = VEC3_X;
+            manifold->normal = VEC3_Y;
         }
     }
 
@@ -75,8 +101,7 @@ bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
                 case TA_COLLIDER_SPHERE: {
                     collided = ta_intersect_sphere_vs_sphere(
                         &a->collider.data.sphere, &b->collider.data.sphere,
-                        manifold
-                    );
+                        manifold);
                     break;
                 } case TA_COLLIDER_AABB: {
                     break;
@@ -127,7 +152,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
     float v_normal = vec3_dot(dv, manifold->normal);
 
     // Bodies moving apart, let it happen
-    if (v_normal > 0.0f) {
+    if (v_normal >= 0.0f) {
         return;
     }
 
@@ -137,6 +162,20 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
     // Impulse
     float j = -(1.0f + e) * v_normal;
     j /= a->inv_mass + b->inv_mass;
+
+    // Apply inpulse
+    ta_vec3 impulse = vec3_scalef(manifold->normal, j);
+    a->velocity = vec3_sub(a->velocity, vec3_scalef(impulse, a->inv_mass));
+    b->velocity = vec3_add(b->velocity, vec3_scalef(impulse, b->inv_mass));
+
+    ////////////////////////////////////////
+
+    const float percent = 0.2f;
+    const float slop = 0.01f;
+    float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) * percent;
+    ta_vec3 correction = vec3_scalef(manifold->normal, c);
+    a->transform.position = vec3_sub(a->transform.position, vec3_scalef(correction, a->inv_mass));
+    b->transform.position = vec3_add(b->transform.position, vec3_scalef(correction, b->inv_mass));
 }
 
 #if 0

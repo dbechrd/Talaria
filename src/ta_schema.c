@@ -309,6 +309,7 @@ void ta_schema_register()
     TYPE_FIELD_NAME(ta_rigid_body, ref.uid,   F_ATOM_STRING, uid);
     TYPE_FIELD(ta_rigid_body, transform, F_TA_TRANSFORM);
     TYPE_FIELD(ta_rigid_body, collider,  F_TA_COLLIDER);
+    TYPE_FIELD(ta_rigid_body, mass,      F_ATOM_FLOAT);
     TYPE_END(ta_rigid_body);
 }
 

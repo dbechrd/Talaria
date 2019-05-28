@@ -95,7 +95,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
       <TreatWarningAsError>false</TreatWarningAsError>
-      <DisableSpecificWarnings>4101;4189;4700</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4101;4189;4700;4127</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib;freetype.lib</AdditionalDependencies>
@@ -113,7 +113,7 @@
       <CompileAs>CompileAsC</CompileAs>
       <TreatWarningAsError>false</TreatWarningAsError>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
-      <DisableSpecificWarnings>4101;4189;4700</DisableSpecificWarnings>
+      <DisableSpecificWarnings>4101;4189;4700;4127</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib;freetype.lib</AdditionalDependencies>

@@ -150,7 +150,7 @@ void ta_game_update()
                 break;
             } case TA_EVENT_DEBUG_BOOST_PINKY: {
                 ta_rigid_body *rb = ta_entity_rigid_body(tg_game.player);
-                rb->transform.position.y += 0.1f;
+                rb->transform.position.y += 1.0f;
                 break;
             } case TA_EVENT_DEBUG_FOCUS_PINKY: {
                 tg_game.camera->debug_follow_pinky =

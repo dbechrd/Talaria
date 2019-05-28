@@ -41,8 +41,8 @@ double ta_timer_elapsed_us()
 
 double ta_timer_elapsed_sec()
 {
-	u64 elapsed_ms = ta_timer_elapsed_ms();
-	double elapsed_sec = elapsed_ms / 1000.0;
+	double elapsed_ms = ta_timer_elapsed_ms();
+	double elapsed_sec = elapsed_ms / 1000;
 	return elapsed_sec;
 }
 

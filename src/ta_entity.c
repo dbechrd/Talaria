@@ -103,11 +103,13 @@ void ta_entity_update(ta_entity *e, double dt)
 {
     UNUSED(dt);
 
+    // TODO: Rotation
     ta_rigid_body *rigid_body = ta_entity_rigid_body(e);
     if (rigid_body) {
         e->transform.position = rigid_body->transform.position;
     }
 
+    // TODO: Rotation
     // TODO: Calculate this via mat4_mul(parent, transform)
     e->model = mat4_translate(&e->transform.position);
 }

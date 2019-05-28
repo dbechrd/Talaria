@@ -800,6 +800,7 @@ void ta_scene_initialize_objects(ta_scene *scene)
                 ta_texture_create(ref->ptr);
                 break;
             } case F_TA_RIGID_BODY: {
+                ta_rigid_body_init(ref->ptr);
                 break;
             } case F_TA_ENTITY: {
                 ta_entity_init(ref->ptr);
@@ -859,6 +860,13 @@ static ta_manifold *detect_collisions(ta_scene *scene, double dt)
 void ta_scene_update(ta_scene *scene, double dt)
 {
     UNUSED(dt);
+
+    dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
+        if (ref->type != F_TA_RIGID_BODY) continue;
+
+        ta_rigid_body *body = ref->ptr;
+        ta_rigid_body_update(body, dt);
+    }
 
     // Collision detection & resolution
     ta_manifold *manifolds = detect_collisions(scene, dt);
