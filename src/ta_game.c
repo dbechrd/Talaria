@@ -18,12 +18,6 @@ static const char *game_state_str(ta_game_state state)
     }
 };
 
-static void game_state_set(ta_game_state state)
-{
-    tg_game.state = state;
-    ta_log_write(tg_debug_log, "[Game] State = %s\n", game_state_str(state));
-}
-
 void ta_game_init()
 {
     ta_log_write(tg_debug_log, "[Game] Initializing game\n");
@@ -32,7 +26,7 @@ void ta_game_init()
     //       Could use this for a progress bar during load and better logging.
     //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
-    game_state_set(TA_STATE_INIT);
+    ta_game_state_set(TA_STATE_INIT);
 
     ta_log_write(tg_debug_log, "[Game] Initializing key binds\n");
     // TODO: Read keybinds from file
@@ -48,11 +42,19 @@ void ta_game_init()
     BIND1(PLAY, GAME_QUIT,     RELEASE, ESCAPE);
     BIND1(PLAY, GAME_FREE_CAM, RELEASE, X);
 
-    BIND1(PLAY, PLAYER_MOVE_FORWARD,  HOLD, W);
-    BIND1(PLAY, PLAYER_MOVE_BACKWARD, HOLD, S);
-    BIND1(PLAY, PLAYER_MOVE_RIGHT,    HOLD, D);
-    BIND1(PLAY, PLAYER_MOVE_LEFT,     HOLD, A);
-    BIND1(PLAY, PLAYER_MOVE_JUMP,     HOLD, SPACE);
+    BIND1(PLAY, GAME_PLAYER_MOVE_FORWARD,  HOLD, W);
+    BIND1(PLAY, GAME_PLAYER_MOVE_BACKWARD, HOLD, S);
+    BIND1(PLAY, GAME_PLAYER_MOVE_RIGHT,    HOLD, D);
+    BIND1(PLAY, GAME_PLAYER_MOVE_LEFT,     HOLD, A);
+    BIND1(PLAY, GAME_PLAYER_MOVE_JUMP,     HOLD, SPACE);
+
+    BIND1(PLAY, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, M);
+    BIND1(PLAY, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
+    BIND1(PLAY, DEBUG_TOGGLE_BBOX,       PRESS, 1);
+    BIND1(PLAY, DEBUG_TOGGLE_SPHERE,     PRESS, 2);
+    BIND1(PLAY, DEBUG_TOGGLE_NORMALS,    PRESS, 3);
+    BIND1(PLAY, DEBUG_BOOST_PINKY,       HOLD,  4);
+    BIND1(PLAY, DEBUG_FOCUS_PINKY,       PRESS, 5);
 
     //--------------------------------------------------------------------------
     // FREE_CAM
@@ -77,25 +79,44 @@ void ta_game_init()
 #undef BIND1
 
     ta_log_write(tg_debug_log, "[Game] Game initialized\n");
-    game_state_set(TA_STATE_FREE_CAM);
+}
+
+void ta_game_state_set(ta_game_state state)
+{
+    ta_log_write(tg_debug_log, "[Game] State = %s\n", game_state_str(state));
+    tg_game.state = state;
+    switch (tg_game.state) {
+        case TA_STATE_PLAY:
+            tg_game.camera_player->position = tg_game.player->transform.position;
+            tg_game.camera = tg_game.camera_player;
+            break;
+        case TA_STATE_FREE_CAM:
+            if (vec3_zero(tg_game.camera_freecam->position)) {
+                tg_game.camera_freecam->position = tg_game.camera_player->position;
+                tg_game.camera_freecam->position_target = tg_game.camera_player->position_target;
+            }
+            tg_game.camera = tg_game.camera_freecam;
+            break;
+    }
 }
 
 void ta_game_update()
 {
+    ta_vec3 dir = { 0 };
     ta_event event;
     while (ta_event_pop(&event, TA_EVENT_QUEUE_GAME)) {
         switch (event.type) {
             case TA_EVENT_GAME_QUIT: {
-                game_state_set(TA_STATE_QUIT);
+                ta_game_state_set(TA_STATE_QUIT);
                 break;
             } case TA_EVENT_GAME_INIT: {
-                game_state_set(TA_STATE_INIT);
+                ta_game_state_set(TA_STATE_INIT);
                 break;
             } case TA_EVENT_GAME_FREE_CAM: {
-                game_state_set(TA_STATE_FREE_CAM);
+                ta_game_state_set(TA_STATE_FREE_CAM);
                 break;
             } case TA_EVENT_GAME_PLAY: {
-                game_state_set(TA_STATE_PLAY);
+                ta_game_state_set(TA_STATE_PLAY);
                 break;
             } case TA_EVENT_GAME_MOUSE_MOVE: {
                 if (!tg_mouse.captured) break;
@@ -125,6 +146,24 @@ void ta_game_update()
                 //       handled, bubble up
                 //ta_ui_scrollview_scroll(view, event.data.mouse_scroll.y *
                 //    -event.data.mouse_scroll.flipped);
+                break;
+            } case TA_EVENT_GAME_PLAYER_MOVE_FORWARD: {
+                dir.x += tg_game.camera->front.x;
+                dir.z += tg_game.camera->front.z;
+                break;
+            } case TA_EVENT_GAME_PLAYER_MOVE_BACKWARD: {
+                dir.x -= tg_game.camera->front.x;
+                dir.z -= tg_game.camera->front.z;
+                break;
+            } case TA_EVENT_GAME_PLAYER_MOVE_RIGHT: {
+                dir.x += tg_game.camera->right.x;
+                dir.z += tg_game.camera->right.z;
+                break;
+            } case TA_EVENT_GAME_PLAYER_MOVE_LEFT: {
+                dir.x -= tg_game.camera->right.x;
+                dir.z -= tg_game.camera->right.z;
+                break;
+            } case TA_EVENT_GAME_PLAYER_MOVE_JUMP: {
                 break;
             } case TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK: {
                 ta_mouse_toggle_capture();
@@ -160,5 +199,12 @@ void ta_game_update()
                 DLB_ASSERT(!"Unhandled event type");
             }
         }
+    }
+    if (!vec3_zero(dir)) {
+        dir = vec3_normalize(dir);
+        dir = vec3_scalef(dir, 0.05f);
+        ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
+        player_body->transform.position =
+            vec3_add(player_body->transform.position, dir);
     }
 }

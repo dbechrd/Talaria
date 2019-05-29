@@ -17,10 +17,10 @@ ta_viewport ta_viewport_init(int left, int top, int width, int height,
 
 // TODO: Push previously bound viewport onto stack if we want to enable nested
 //       viewports.
-void ta_viewport_bind(ta_viewport *view, bool aspect)
+void ta_viewport_bind(ta_viewport *view, bool stretch_to_fit)
 {
     int inv_y = tg_window.height - (view->rect.y + view->rect.h);
-	if (aspect) {
+	if (stretch_to_fit) {
 		glViewport(view->rect.x, inv_y, view->rect.w, view->rect.h);
 	}
 	glEnable(GL_SCISSOR_TEST);

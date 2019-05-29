@@ -10,6 +10,7 @@
 #include "ta_rigid_body.h"
 #include "ta_light.h"
 #include "ta_log.h"
+#include "ta_game.h"
 #include "dlb_vector.h"
 #include <stdlib.h>
 
@@ -890,9 +891,22 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera)
 {
     // TODO: Group by shader / material to minimize redundant uniform calls
     dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
-        if (ref->type != F_TA_ENTITY) continue;
-
-        ta_entity *entity = ref->ptr;
-        ta_entity_render(entity, camera);
+        switch (ref->type) {
+            case F_TA_ENTITY: {
+                ta_entity *entity = ref->ptr;
+                ta_entity_render(entity, camera);
+                break;
+            } case F_TA_CAMERA: {
+                ta_camera *cam = ref->ptr;
+                if (cam != tg_game.camera) {
+                    ta_sphere sphere = { 0 };
+                    sphere.center = cam->position;
+                    sphere.radius = 0.2f;
+                    ta_primitive_push_sphere(sphere, TA_COLOR_YELLOW);
+                    ta_primitive_render();
+                }
+                break;
+            }
+        }
     }
 }

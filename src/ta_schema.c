@@ -215,6 +215,7 @@ void ta_schema_register()
     TYPE_FIELD(ta_camera, fov,                 F_ATOM_FLOAT);
     TYPE_FIELD(ta_camera, nearz,               F_ATOM_FLOAT);
     TYPE_FIELD(ta_camera, up,                  F_TA_VEC3);
+    TYPE_FIELD(ta_camera, ortho,               F_ATOM_UINT);
     TYPE_END(ta_camera);
 
     TYPE_START(ta_sun_light, F_TA_SUN_LIGHT);

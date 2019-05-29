@@ -124,8 +124,10 @@ int main(int argc, char *argv[])
     // Intro scene
     read_scene("data/scene/scene1.dml");
     tg_game.sun = ta_scene_find(tg_game.scene, F_TA_LIGHT, INTERN("light_sun"));
-    tg_game.camera = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_player"));
+    tg_game.camera_player = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_player"));
+    tg_game.camera_freecam = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_freecam"));
     tg_game.player = ta_scene_find(tg_game.scene, F_TA_ENTITY, INTERN("entity_player"));
+    ta_game_state_set(TA_STATE_PLAY);
     DLB_ASSERT(tg_game.sun);     // Ensure we have a valid sun light
     DLB_ASSERT(tg_game.camera);  // Ensure we have a valid camera
     DLB_ASSERT(tg_game.player);  // Ensure we have a valid player
@@ -175,8 +177,9 @@ int main(int argc, char *argv[])
     // TODO: Move this to DML (e.g. editor.dml)
     ta_camera minimap_camera = { 0 };
     minimap_camera.mode = TA_CAMERA_ORBIT;
-    minimap_camera.fov = 45.0f;
+    minimap_camera.fov = 90.0f;
     minimap_camera.up = VEC3_NZ;
+    minimap_camera.ortho = true;
     ta_camera_init(&minimap_camera);
 	ta_viewport minimap_viewport = ta_viewport_init(10, 50, 200, 200,
         (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f }, &minimap_camera);
@@ -184,12 +187,6 @@ int main(int argc, char *argv[])
 	//ta_mat4 project = mat4_perspective(65.0f, aspect, 0.1f, 100.0f);
 	//float oo = 0.5f;
 	//ta_mat4 project = mat4_ortho(-oo, oo, -oo, oo, 0.1f, 10.0f);
-
-	ta_mat4 look_at_map = mat4_lookat(
-		(ta_vec3) { 0.0f, 40.0f, 50.0f },
-		(ta_vec3) { 0.0f, 0.0f, 0.0f },
-		VEC3_Y
-	);
 
     ta_texture *tex_test = ta_scene_find(tg_game.scene, F_TA_TEXTURE,
         INTERN("texture_1"));
@@ -235,16 +232,25 @@ int main(int argc, char *argv[])
 
         ms_frame_accum += ms_frame_delta;
         while (ms_frame_accum >= ms_sim_dt) {
+            // Update player camera
+            ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
+            ta_camera_set_target_pos_absolute(tg_game.camera_player,
+                vec3_add(player_body->transform.position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
+
             // Update main camera
             ta_camera_update(tg_game.camera, sim_dt);
 
             // Update minimap camera
             ta_vec3 minimap_camera_target_pos = tg_game.camera->position;
-            minimap_camera_target_pos.y += 20.0f;
+            minimap_camera_target_pos.y += 50.0f;
             minimap_camera.focal_point = tg_game.camera->position;
             ta_camera_set_target_pos_absolute(&minimap_camera,
                 minimap_camera_target_pos);
             ta_camera_update(&minimap_camera, sim_dt);
+
+            // Update player
+            //ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
+            //player_body->transform.position = tg_game.camera->position;
 
             // Update scene
             ta_scene_update(tg_game.scene, sim_dt);

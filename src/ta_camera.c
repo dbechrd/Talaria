@@ -40,6 +40,12 @@ void ta_camera_init(ta_camera *camera)
     camera->dirty = true;
 }
 
+void ta_camera_set_ortho(ta_camera *camera, bool ortho)
+{
+    camera->ortho = ortho;
+    ta_camera_recalc_projection(camera);
+}
+
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z)
 {
     camera->position.x = x;
@@ -94,8 +100,13 @@ void ta_camera_pitch(ta_camera *camera, float delta)
 
 void ta_camera_recalc_projection(ta_camera *camera)
 {
-    camera->projection = mat4_perspective_inf(camera->fov, tg_window.aspect,
-        camera->nearz);
+    if (camera->ortho) {
+        camera->projection = mat4_ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 10.0f);
+    } else {
+        camera->projection =
+            mat4_perspective_inf(camera->fov, tg_window.aspect, camera->nearz);
+    }
+
 }
 
 static void camera_events(ta_camera *camera)
@@ -178,7 +189,7 @@ void ta_camera_update(ta_camera *camera, double dt)
     }
 
     switch (camera->mode) {
-        case TA_CAMERA_FPS: {
+        case TA_CAMERA_FREECAM: case TA_CAMERA_FPS: {
             // Update yaw
             float yaw_delta = camera->yaw_target - camera->yaw;
             float yaw_delta_abs = (float)fabs(yaw_delta);

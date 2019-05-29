@@ -4,8 +4,9 @@
 #include "dlb_types.h"
 
 typedef enum {
-    TA_CAMERA_FPS,
-    TA_CAMERA_ORBIT
+    TA_CAMERA_FREECAM   = 0,
+    TA_CAMERA_FPS       = 1,
+    TA_CAMERA_ORBIT     = 2,
 } ta_camera_mode;
 
 typedef struct ta_camera_s {
@@ -35,6 +36,7 @@ typedef struct ta_camera_s {
     ta_vec3 right;
     ta_mat4 look_at;
     ta_mat4 projection;
+    bool ortho;
 
     bool debug_wireframe;
     bool debug_normals;
@@ -46,6 +48,7 @@ typedef struct ta_camera_s {
 
 const char *ta_camera_mode_str(int type);
 void ta_camera_init(ta_camera *camera);
+void ta_camera_set_ortho(ta_camera *camera, bool ortho);
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z);
 void ta_camera_set_rotation(ta_camera *camera, float yaw, float pitch);
 void ta_camera_set_target_pos_absolute(ta_camera *camera, ta_vec3 position_target);

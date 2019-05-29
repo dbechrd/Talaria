@@ -11,5 +11,5 @@ typedef struct {
 
 ta_viewport ta_viewport_init(int left, int top, int width, int height,
 	ta_rgba background, ta_camera *camera);
-void ta_viewport_bind(ta_viewport *view, bool aspect);
+void ta_viewport_bind(ta_viewport *view, bool stretch_to_fit);
 void ta_viewport_unbind();

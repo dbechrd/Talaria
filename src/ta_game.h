@@ -16,6 +16,8 @@ typedef struct {
     ta_scene *scene;
     ta_light *sun;
     ta_camera *camera;
+    ta_camera *camera_player;
+    ta_camera *camera_freecam;
     ta_entity *player;
 } ta_game;
 
@@ -23,4 +25,5 @@ extern ta_game tg_game;
 extern GLenum tg_polygon_mode;
 
 void ta_game_init();
+void ta_game_state_set(ta_game_state state);
 void ta_game_update();
