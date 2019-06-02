@@ -9,6 +9,7 @@ typedef enum {
     F_TA_VEC2,
     F_TA_VEC3,
     F_TA_VEC4,
+    F_TA_QUAT,
     F_TA_MAT3,
     F_TA_MAT4,
     F_TA_RGB,

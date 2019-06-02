@@ -2,6 +2,7 @@
 #include "ta_scene.h"
 #include "ta_file.h"
 #include "ta_math.h"
+#include "ta_light.h"
 #include "misc/gl3w.h"
 
 typedef enum {

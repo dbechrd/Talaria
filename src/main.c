@@ -51,6 +51,7 @@ void debug_tests() {
 #if _DEBUG
     parse_tests();
     dlb_hash_test();
+    ta_math_test();
 #endif
 }
 
@@ -60,10 +61,10 @@ ta_entity *entity_create(ta_scene *scn, const char *name) {
     e->transform.position.x = 1.1f;
     e->transform.position.y = 1.2f;
     e->transform.position.z = 1.3f;
-    e->transform.rotation.x = 2.1f;
-    e->transform.rotation.y = 2.2f;
-    e->transform.rotation.z = 2.3f;
-    e->transform.rotation.w = 2.4f;
+    e->transform.orientation.x = 2.1f;
+    e->transform.orientation.y = 2.2f;
+    e->transform.orientation.z = 2.3f;
+    e->transform.orientation.w = 2.4f;
     e->transform.scale.x = 3.1f;
     e->transform.scale.y = 3.2f;
     e->transform.scale.z = 3.3f;
@@ -105,11 +106,11 @@ int main(int argc, char *argv[])
     UNUSED(argv);
     ta_timer_init();
 	srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
-    debug_tests();
 
     ta_log debug_log;
 	tg_debug_log = &debug_log;
     ta_log_init(tg_debug_log, "log.txt", true);
+    debug_tests();
 
     ta_symbol_init();
     ta_schema_register();
@@ -127,7 +128,7 @@ int main(int argc, char *argv[])
     tg_game.camera_player = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_player"));
     tg_game.camera_freecam = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_freecam"));
     tg_game.player = ta_scene_find(tg_game.scene, F_TA_ENTITY, INTERN("entity_player"));
-    ta_game_state_set(TA_STATE_PLAY);
+    ta_game_state_set(TA_STATE_FREE_CAM);
     DLB_ASSERT(tg_game.sun);     // Ensure we have a valid sun light
     DLB_ASSERT(tg_game.camera);  // Ensure we have a valid camera
     DLB_ASSERT(tg_game.player);  // Ensure we have a valid player
@@ -163,12 +164,12 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
     ////////////////////////////////////////////////////////////////////////////
-    tg_shader_lines = ta_scene_find(tg_game.scene, F_TA_SHADER,
-        INTERN("shader_lines"));
+    tg_shader_lines =
+        ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_lines"));
     DLB_ASSERT(tg_shader_lines && "Could not find shader_lines");
 
-    tg_shader_quads = ta_scene_find(tg_game.scene, F_TA_SHADER,
-        INTERN("shader_quads"));
+    tg_shader_quads =
+        ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_quads"));
     DLB_ASSERT(tg_shader_quads && "Could not find shader_quads");
 
     ////////////////////////////////////////////////////////////////////////////
@@ -184,12 +185,8 @@ int main(int argc, char *argv[])
 	ta_viewport minimap_viewport = ta_viewport_init(10, 50, 200, 200,
         (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f }, &minimap_camera);
 
-	//ta_mat4 project = mat4_perspective(65.0f, aspect, 0.1f, 100.0f);
-	//float oo = 0.5f;
-	//ta_mat4 project = mat4_ortho(-oo, oo, -oo, oo, 0.1f, 10.0f);
-
-    ta_texture *tex_test = ta_scene_find(tg_game.scene, F_TA_TEXTURE,
-        INTERN("texture_1"));
+    ta_texture *tex_test =
+        ta_scene_find(tg_game.scene, F_TA_TEXTURE, INTERN("texture_1"));
     DLB_ASSERT(tex_test && tex_test->gl_id && "Could not find texture_1");
 
 	// TODO: Remove x,y coords from init() methods and only store size. Pass x,y
@@ -207,13 +204,17 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     u64 frame_num = 0;
 
-    // GDC2011_Catto_Erin_Soft_Constraints
+    // Eric Catto - Soft Constraints (GDC 2011)
     // Semi-implicit Euler will eventually blow up if you take big time steps. A
     // general rule is to take at least 4 time steps per period of oscillation.
     // For example, if the oscillation frequency is 60Hz, then you shouldn’t
     // take time steps slower than 15Hz.
+    //
+    // Randy Gaul
+    // https://gamedevelopment.tutsplus.com/series/how-to-create-a-custom-physics-engine--gamedev-12715
     const double ms_sim_dt = 10;             // fixed dt milliseconds
     const double sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
+    const double sim_max_steps = 4;          // max simulation steps per frame
     double ms_sim_t = 0;                     // current simulation time
 
     double ms_frame_prev = ta_timer_elapsed_ms();
@@ -229,16 +230,29 @@ int main(int argc, char *argv[])
         ta_keyboard_update();
         ta_event_update();
         ta_game_update();
+        ta_camera_events(tg_game.camera);
 
         ms_frame_accum += ms_frame_delta;
+
+        // Prevent spiral of death
+        // NOTE: This breaks determinism when simulation is under duress
+        if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
+            ta_log_write(tg_debug_log,
+                "[Sim] WARNING: Physics accumulator spiraling; truncating %f to %f\n",
+                ms_frame_accum, ms_sim_dt * sim_max_steps);
+            ms_frame_accum = ms_sim_dt * sim_max_steps;
+        }
+
         while (ms_frame_accum >= ms_sim_dt) {
             // Update player camera
+            // TODO: Set target entity and follow distance vector in DML
             ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
             ta_camera_set_target_pos_absolute(tg_game.camera_player,
-                vec3_add(player_body->transform.position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
+                vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
+            ta_camera_update(tg_game.camera_player, sim_dt);
 
             // Update main camera
-            ta_camera_update(tg_game.camera, sim_dt);
+            ta_camera_update(tg_game.camera_freecam, sim_dt);
 
             // Update minimap camera
             ta_vec3 minimap_camera_target_pos = tg_game.camera->position;
@@ -260,18 +274,16 @@ int main(int argc, char *argv[])
         }
 
         if (tg_game.camera->debug_follow_pinky) {
-            ta_vec3 position_target = vec3_add(tg_game.player->transform.position,
+            ta_vec3 follow_target = vec3_add(tg_game.player->transform.position,
                 (ta_vec3) { 0.0, 1.0f, 3.0f });
-            ta_camera_set_target_pos_absolute(tg_game.camera, position_target);
+            ta_camera_set_target_pos_absolute(tg_game.camera, follow_target);
         }
 
-        const double sim_alpha = (double)ms_frame_accum / ms_sim_dt;
-        // TODO: state = state_current * sim_alpha + state_prev (1.0 - sim_alpha);
-        // TODO: render(sim_alpha)
+        float sim_alpha = (float)ms_frame_accum / ms_sim_dt;
 
         ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
         tg_game.sun->data.sun.direction =
-            mat3_mul_vec3(rotate_sun, tg_game.sun->data.sun.direction);
+            mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -281,7 +293,7 @@ int main(int argc, char *argv[])
 
 		// Draw models
 		//glDisable(GL_CULL_FACE);
-        ta_scene_render(tg_game.scene, tg_game.camera);
+        ta_scene_render(tg_game.scene, tg_game.camera, sim_alpha);
 
         // World axes
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
@@ -300,7 +312,7 @@ int main(int argc, char *argv[])
 			//}
 
 			// Draw models
-            ta_scene_render(tg_game.scene, minimap_viewport.camera);
+            ta_scene_render(tg_game.scene, minimap_viewport.camera, sim_alpha);
 
             // Red dot on map
             ta_primitive_push_rect(

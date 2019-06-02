@@ -9,12 +9,13 @@
 
 void ta_entity_init(ta_entity *e)
 {
-    if (vec4_zero(e->transform.rotation)) {
-        e->transform.rotation = QUAT_IDENT;
+    if (quat_zero(e->transform.orientation)) {
+        e->transform.orientation = QUAT_IDENT;
     }
     if (vec3_zero(e->transform.scale)) {
         e->transform.scale = VEC3_ONE;
     }
+    e->transform_prev = e->transform;
     if (!e->material_uid) {
         e->material_uid = e->ref.scene->default_material_uid;
     }
@@ -101,19 +102,14 @@ bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold)
     return narrow_phase;
 }
 
-void ta_entity_update(ta_entity *e, double dt)
+void ta_entity_update(ta_entity *e)
 {
-    UNUSED(dt);
-
-    // TODO: Rotation
-    ta_rigid_body *rigid_body = ta_entity_rigid_body(e);
-    if (rigid_body) {
-        e->transform.position = rigid_body->transform.position;
+    e->transform_prev = e->transform;
+    ta_rigid_body *body = ta_entity_rigid_body(e);
+    if (body) {
+        e->transform.position = body->position;
+        e->transform.orientation = body->orientation;
     }
-
-    // TODO: Rotation
-    // TODO: Calculate this via mat4_mul(parent, transform)
-    e->model = mat4_translate(&e->transform.position);
 }
 
 static void ta_entity_push_sphere(ta_entity *e, ta_rgba color)
@@ -138,7 +134,7 @@ static void ta_entity_push_normals(ta_entity *e)
     }
 }
 
-void ta_entity_render(ta_entity *e, ta_camera *camera)
+void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
 {
     if (e->invisible) {
         return;
@@ -161,6 +157,23 @@ void ta_entity_render(ta_entity *e, ta_camera *camera)
         glPolygonMode(GL_FRONT_AND_BACK, camera_poly_mode);
         tg_polygon_mode = camera_poly_mode;
     }
+
+    ta_vec3 lerp_pos;
+    ta_quat lerp_orient;
+
+    ta_rigid_body *body = ta_entity_rigid_body(e);
+    if (body) {
+        lerp_pos = vec3_lerp(e->transform.position, body->position, alpha);
+        lerp_orient = quat_nlerp(e->transform.orientation, body->orientation, alpha);
+    } else {
+        lerp_pos = vec3_lerp(e->transform_prev.position, e->transform.position, alpha);
+        lerp_orient = quat_nlerp(e->transform_prev.orientation, e->transform.orientation, alpha);
+    }
+
+    // TODO: Multiply position by parent via mat4_mul(parent, transform)
+    e->model = mat4_translate(lerp_pos);
+    ta_mat4 orient = mat4_rotate_quat(lerp_orient);
+    e->model = mat4_mul(&e->model, &orient);
 
     if (!camera->debug_no_mesh) {
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);

@@ -170,6 +170,13 @@ void ta_schema_register()
     TYPE_FIELD(ta_vec4, w, F_ATOM_FLOAT);
     TYPE_END(ta_vec4);
 
+    TYPE_START(ta_quat, F_TA_QUAT);
+    TYPE_FIELD(ta_quat, x, F_ATOM_FLOAT);
+    TYPE_FIELD(ta_quat, y, F_ATOM_FLOAT);
+    TYPE_FIELD(ta_quat, z, F_ATOM_FLOAT);
+    TYPE_FIELD(ta_quat, w, F_ATOM_FLOAT);
+    TYPE_END(ta_quat);
+
     TYPE_START(ta_mat3, F_TA_MAT3);
     TYPE_UNION_TYPE(ta_mat3, data, F_ATOM_ENUM, 0);
     TYPE_UNION_ARRAY(ta_mat3, arr, F_ATOM_FLOAT, 9, data, 0);
@@ -194,9 +201,9 @@ void ta_schema_register()
     TYPE_END(ta_rgba);
 
     TYPE_START(ta_transform, F_TA_TRANSFORM);
-    TYPE_FIELD(ta_transform, position, F_TA_VEC3);
-    TYPE_FIELD(ta_transform, rotation, F_TA_VEC4);
-    TYPE_FIELD(ta_transform, scale,    F_TA_VEC3);
+    TYPE_FIELD(ta_transform, position,    F_TA_VEC3);
+    TYPE_FIELD(ta_transform, orientation, F_TA_QUAT);
+    TYPE_FIELD(ta_transform, scale,       F_TA_VEC3);
     TYPE_END(ta_transform);
 
     // Scene-level object types
@@ -307,10 +314,11 @@ void ta_schema_register()
     TYPE_END(ta_collider);
 
     TYPE_START(ta_rigid_body, F_TA_RIGID_BODY);
-    TYPE_FIELD_NAME(ta_rigid_body, ref.uid,   F_ATOM_STRING, uid);
-    TYPE_FIELD(ta_rigid_body, transform, F_TA_TRANSFORM);
-    TYPE_FIELD(ta_rigid_body, collider,  F_TA_COLLIDER);
-    TYPE_FIELD(ta_rigid_body, mass,      F_ATOM_FLOAT);
+    TYPE_FIELD_NAME(ta_rigid_body, ref.uid, F_ATOM_STRING, uid);
+    TYPE_FIELD(ta_rigid_body, collider,      F_TA_COLLIDER);
+    TYPE_FIELD(ta_rigid_body, position,      F_TA_VEC3);
+    TYPE_FIELD(ta_rigid_body, orientation,   F_TA_QUAT);
+    TYPE_FIELD(ta_rigid_body, mass,          F_ATOM_FLOAT);
     TYPE_END(ta_rigid_body);
 }
 

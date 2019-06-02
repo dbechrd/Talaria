@@ -35,6 +35,47 @@ typedef struct {
     } data;
 } ta_collider;
 
+// http://allenchou.net/2013/12/game-physics-introduction/
+// https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
+typedef struct ta_rigid_body_s {
+    ta_scene_ref ref;
+    ta_collider collider;
+
+    float mass;
+    float inv_mass;
+    //ta_mat3 tensor;
+    ta_mat3 inv_tensor_global;
+    ta_mat3 inv_tensor_local;
+
+    ta_vec3 centroid_global;
+    ta_vec3 centroid_local;
+
+    ta_vec3 position;
+
+    //ta_vec3 orientation_axis;
+    ta_quat orientation;
+
+    ta_vec3 velocity;
+    ta_vec3 ang_velocity;
+
+    ta_vec3 force_accum;
+    ta_vec3 torque_accum;
+
+    // Material data
+    //   Rock       Density : 0.6  Restitution : 0.1
+    //   Wood       Density : 0.3  Restitution : 0.2
+    //   Metal      Density : 1.2  Restitution : 0.05
+    //   BouncyBall Density : 0.3  Restitution : 0.8
+    //   SuperBall  Density : 0.3  Restitution : 0.95
+    //   Pillow     Density : 0.1  Restitution : 0.2
+    //   Static     Density : 0.0  Restitution : 0.4
+    float density;
+    float restitution;
+
+    // float gravity_scale;     // Is this useful?
+    //u32 collision_groups;       // Bit flags; "layers"
+} ta_rigid_body;
+
 typedef struct {
     ta_rigid_body *a;
     ta_rigid_body *b;
@@ -42,23 +83,9 @@ typedef struct {
     float depth;
 } ta_manifold;
 
-typedef struct ta_rigid_body_s {
-    ta_scene_ref ref;
-    ta_transform transform;
-    ta_collider collider;
-
-    // http://allenchou.net/2013/12/game-physics-introduction/
-    float mass;
-    float inv_mass;
-    float restitution;
-    //ta_mat3 tensor;
-    //ta_mat3 inv_tensor;
-    ta_vec3 velocity;
-    //ta_vec3 ang_velocity;
-} ta_rigid_body;
-
 const char *ta_collider_type_str(int type);
 void ta_rigid_body_init(ta_rigid_body *body);
+void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
 void ta_rigid_body_update(ta_rigid_body *body, double dt);
 bool ta_intersect_sphere_vs_sphere(const ta_sphere *a, const ta_sphere *b,
     ta_manifold *manifold);

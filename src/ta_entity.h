@@ -4,6 +4,7 @@
 #include "ta_material.h"
 #include "ta_mesh_group.h"
 #include "ta_rigid_body.h"
+#include "ta_camera.h"
 
 typedef enum {
     ENTITY_MESH_GROUP = 0,
@@ -14,6 +15,8 @@ typedef struct ta_entity_s {
     ta_entity_type type;
 
     ta_transform transform;
+    ta_transform transform_prev;
+    ta_mat4 rotation;
     ta_mat4 model;
 
     const char *material_uid;
@@ -35,8 +38,8 @@ ta_material *ta_entity_material(ta_entity *e);
 ta_mesh_group *ta_entity_mesh_group(ta_entity *e);
 ta_rigid_body *ta_entity_rigid_body(ta_entity *e);
 bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold);
-void ta_entity_update(ta_entity *e, double dt);
+void ta_entity_update(ta_entity *e);
 //void ta_entity_push_sphere(ta_entity *e, ta_rgba color);
 //void ta_entity_push_aabb(ta_entity *e, ta_rgba color);
 //void ta_entity_push_normals(ta_entity *e);
-void ta_entity_render(ta_entity *e, ta_camera *camera);
+void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha);

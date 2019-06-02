@@ -2,7 +2,7 @@ ta_camera:
   uid: "camera_player"
   mode: 1  # TA_CAMERA_FPS
   position: { x: 0.0, y: 1.7, z: 24.0 }
-  position_smooth: 0.1
+  position_smooth: 0.05
   position_target_vel: 0.2
   yaw: 90.0
   yaw_smooth: 0.7
@@ -15,11 +15,12 @@ ta_camera:
 ta_camera:
   uid: "camera_freecam"
   mode: 0  # TA_CAMERA_FREECAM
+  position: { x: 0.0, y: 10.0, z: 10.0 }
   position_smooth: 0.1
   position_target_vel: 0.2
   yaw: 90.0
   yaw_smooth: 0.7
-  pitch: 0.0
+  pitch: -45.0
   pitch_smooth: 0.7
   pitch_min: -90.0
   pitch_max: 90.0
@@ -111,16 +112,16 @@ ta_entity:
   material_uid: "material_1"
   mesh_group_uid: "mesh_group_chamber_0001"
   transform:
-    position: { x: 0.0, y: 0.0, z: 0.0 }
-    rotation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
-    scale:    { x: 1.0, y: 1.0, z: 1.0 }
+    position:    { x: 0.0, y: 0.0, z: 0.0 }
+    orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
+    scale:       { x: 1.0, y: 1.0, z: 1.0 }
   invisible: 0
 #ta_rigid_body:
 #  uid: "entity_player_aabb"
 #  transform:
-#    position: { x: 0.0, y: 0.0, z: 0.0 }
-#    rotation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
-#    scale:    { x: 1.0, y: 1.0, z: 1.0 }
+#    position:    { x: 0.0, y: 0.0, z: 0.0 }
+#    orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
+#    scale:       { x: 1.0, y: 1.0, z: 1.0 }
 #  collider:
 #    type: 1  # TA_COLLIDER_AABB
 #    aabb:
@@ -130,9 +131,9 @@ ta_entity:
 #ta_rigid_body:
 #  uid: "entity_player_obb"
 #  transform:
-#    position: { x: 0.0, y: 0.0, z: 0.0 }
-#    rotation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
-#    scale:    { x: 1.0, y: 1.0, z: 1.0 }
+#    position:    { x: 0.0, y: 0.0, z: 0.0 }
+#    orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
+#    scale:       { x: 1.0, y: 1.0, z: 1.0 }
 #  collider:
 #    type: 2  # TA_COLLIDER_OBB
 #    obb:
@@ -146,8 +147,7 @@ ta_entity:
 ta_rigid_body:
   uid: "entity_player_sphere"
   mass: 1.0
-  transform:
-    position: { x: 0.01, y: 4.0, z: 0.01 }
+  position: { x: 0.1, y: 4.0, z: 0.1 }
 ta_entity:
   uid: "entity_player"
   mesh_group_uid: "mesh_group_prim_sphere"
@@ -155,8 +155,7 @@ ta_entity:
 ta_rigid_body:
   uid: "entity_sphere1_sphere"
   mass: 1.0
-  transform:
-    position: { x: 0.02, y: 6.0, z: 0.02 }
+  position: { x: 0.2, y: 6.0, z: 0.2 }
 ta_entity:
   uid: "entity_sphere1"
   mesh_group_uid: "mesh_group_prim_sphere"
@@ -164,9 +163,8 @@ ta_entity:
 ta_rigid_body:
   uid: "entity_sphere2_sphere"
   mass: 1.0
+  position: { x: 0.3, y: 8.0, z: 0.3 }
 ta_entity:
   uid: "entity_sphere2"
   mesh_group_uid: "mesh_group_prim_sphere"
   rigid_body_uid: "entity_sphere2_sphere"
-  transform:
-    position: { x: 0.03, y: 8.0, z: 0.03 }

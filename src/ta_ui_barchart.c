@@ -57,8 +57,8 @@ void ta_ui_barchart_draw(int x, int y, ta_ui_barchart *chart)
 		line.p0.y += y + chart->rect.y;
 		line.p1.y += y + chart->rect.y;
 
-		//ta_rgbf cc = mat3_mul_rgbf(mat3_hue_rotation((float)(i % 120)), color);
-		ta_rgb cc = mat3_mul_rgb(mat3_hue_rotation((float)i), color);
+        ta_mat3 mat_hue_rot = mat3_hue_rotation((float)i);
+		ta_rgb cc = mat3_mul_rgb(&mat_hue_rot, color);
 		float lum = color.r + color.g + color.b;
 		float lum2 = cc.r + cc.g + cc.b;
 		ta_vec3 res = *(ta_vec3 *)&cc;

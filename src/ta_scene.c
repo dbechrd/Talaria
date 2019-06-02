@@ -862,8 +862,6 @@ static ta_manifold *detect_collisions(ta_scene *scene, double dt)
 
 void ta_scene_update(ta_scene *scene, double dt)
 {
-    UNUSED(dt);
-
     dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
         if (ref->type != F_TA_RIGID_BODY) continue;
 
@@ -883,18 +881,18 @@ void ta_scene_update(ta_scene *scene, double dt)
         if (ref->type != F_TA_ENTITY) continue;
 
         ta_entity *entity = ref->ptr;
-        ta_entity_update(entity, dt);
+        ta_entity_update(entity);
     }
 }
 
-void ta_scene_render(ta_scene *scene, ta_camera *camera)
+void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
 {
     // TODO: Group by shader / material to minimize redundant uniform calls
     dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
         switch (ref->type) {
             case F_TA_ENTITY: {
                 ta_entity *entity = ref->ptr;
-                ta_entity_render(entity, camera);
+                ta_entity_render(entity, camera, alpha);
                 break;
             } case F_TA_CAMERA: {
                 ta_camera *cam = ref->ptr;
@@ -903,10 +901,15 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera)
                     sphere.center = cam->position;
                     sphere.radius = 0.2f;
                     ta_primitive_push_sphere(sphere, TA_COLOR_YELLOW);
-                    ta_primitive_render();
                 }
                 break;
             }
         }
     }
+
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+    ta_primitive_render();
+    ta_primitive_clear();
 }

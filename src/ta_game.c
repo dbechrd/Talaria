@@ -62,6 +62,12 @@ void ta_game_init()
     BIND1(FREE_CAM, GAME_QUIT,         RELEASE, ESCAPE);
     BIND1(FREE_CAM, GAME_PLAY,         RELEASE, X);
 
+    BIND1(FREE_CAM, GAME_PLAYER_MOVE_FORWARD,  HOLD, UP);
+    BIND1(FREE_CAM, GAME_PLAYER_MOVE_BACKWARD, HOLD, DOWN);
+    BIND1(FREE_CAM, GAME_PLAYER_MOVE_RIGHT,    HOLD, RIGHT);
+    BIND1(FREE_CAM, GAME_PLAYER_MOVE_LEFT,     HOLD, LEFT);
+    BIND1(FREE_CAM, GAME_PLAYER_MOVE_JUMP,     HOLD, SPACE);
+
     BIND1(FREE_CAM, CAMERA_MOVE_FORWARD,     HOLD, W);
     BIND1(FREE_CAM, CAMERA_MOVE_BACKWARD,    HOLD, S);
     BIND1(FREE_CAM, CAMERA_MOVE_RIGHT,       HOLD, D);
@@ -87,13 +93,12 @@ void ta_game_state_set(ta_game_state state)
     tg_game.state = state;
     switch (tg_game.state) {
         case TA_STATE_PLAY:
-            tg_game.camera_player->position = tg_game.player->transform.position;
             tg_game.camera = tg_game.camera_player;
             break;
         case TA_STATE_FREE_CAM:
             if (vec3_zero(tg_game.camera_freecam->position)) {
-                tg_game.camera_freecam->position = tg_game.camera_player->position;
-                tg_game.camera_freecam->position_target = tg_game.camera_player->position_target;
+                tg_game.camera_freecam->follow_target = tg_game.camera_player->follow_target;
+                tg_game.camera_freecam->position = tg_game.camera_freecam->follow_target;
             }
             tg_game.camera = tg_game.camera_freecam;
             break;
@@ -148,20 +153,20 @@ void ta_game_update()
                 //    -event.data.mouse_scroll.flipped);
                 break;
             } case TA_EVENT_GAME_PLAYER_MOVE_FORWARD: {
-                dir.x += tg_game.camera->front.x;
-                dir.z += tg_game.camera->front.z;
+                dir.x += tg_game.camera_player->front.x;
+                dir.z += tg_game.camera_player->front.z;
                 break;
             } case TA_EVENT_GAME_PLAYER_MOVE_BACKWARD: {
-                dir.x -= tg_game.camera->front.x;
-                dir.z -= tg_game.camera->front.z;
+                dir.x -= tg_game.camera_player->front.x;
+                dir.z -= tg_game.camera_player->front.z;
                 break;
             } case TA_EVENT_GAME_PLAYER_MOVE_RIGHT: {
-                dir.x += tg_game.camera->right.x;
-                dir.z += tg_game.camera->right.z;
+                dir.x += tg_game.camera_player->right.x;
+                dir.z += tg_game.camera_player->right.z;
                 break;
             } case TA_EVENT_GAME_PLAYER_MOVE_LEFT: {
-                dir.x -= tg_game.camera->right.x;
-                dir.z -= tg_game.camera->right.z;
+                dir.x -= tg_game.camera_player->right.x;
+                dir.z -= tg_game.camera_player->right.z;
                 break;
             } case TA_EVENT_GAME_PLAYER_MOVE_JUMP: {
                 break;
@@ -188,8 +193,7 @@ void ta_game_update()
                     !tg_game.camera->debug_no_mesh;
                 break;
             } case TA_EVENT_DEBUG_BOOST_PINKY: {
-                ta_rigid_body *rb = ta_entity_rigid_body(tg_game.player);
-                rb->transform.position.y += 1.0f;
+                dir.y = 2.0f;
                 break;
             } case TA_EVENT_DEBUG_FOCUS_PINKY: {
                 tg_game.camera->debug_follow_pinky =
@@ -201,10 +205,12 @@ void ta_game_update()
         }
     }
     if (!vec3_zero(dir)) {
+        float boost = dir.y;
         dir = vec3_normalize(dir);
-        dir = vec3_scalef(dir, 0.05f);
+        dir = vec3_scalef(dir, 0.1f);
+        dir.y = boost;
         ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
-        player_body->transform.position =
-            vec3_add(player_body->transform.position, dir);
+        ta_rigid_body_apply_force(player_body, dir, VEC3_ZERO);
+        //player_body->position = vec3_add(player_body->position, dir);
     }
 }

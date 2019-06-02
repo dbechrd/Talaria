@@ -1,7 +1,8 @@
 #pragma once
 #include "ta_scene.h"
-#include "ta_entity.h"
+#include "ta_light.h"
 #include "ta_camera.h"
+#include "ta_entity.h"
 
 typedef enum {
     TA_STATE_INIT,

@@ -20,7 +20,7 @@ void ta_camera_init(ta_camera *camera)
 {
     if (!camera->position_smooth)     camera->position_smooth = 1.0f;
     if (!camera->position_target_vel) camera->position_target_vel = 0.1f;
-    camera->position_target =         camera->position;
+    camera->follow_target =         camera->position;
 
     if (!camera->yaw)                 camera->yaw = 90.0f;
     if (!camera->yaw_smooth)          camera->yaw_smooth = 1.0f;
@@ -51,7 +51,7 @@ void ta_camera_set_position(ta_camera *camera, float x, float y, float z)
     camera->position.x = x;
     camera->position.y = y;
     camera->position.z = z;
-    camera->position_target = camera->position;
+    camera->follow_target = camera->position;
 }
 
 void ta_camera_set_rotation(ta_camera *camera, float yaw, float pitch)
@@ -69,16 +69,16 @@ void ta_camera_set_rotate_accel(ta_camera *camera, float yaw_accel,
 }
 #endif
 
-void ta_camera_set_target_pos_absolute(ta_camera *camera, ta_vec3 position_target)
+void ta_camera_set_target_pos_absolute(ta_camera *camera, ta_vec3 follow_target)
 {
-    camera->position_target = position_target;
+    camera->follow_target = follow_target;
     camera->dirty = true;
 }
 
 void ta_camera_set_target_pos_relative(ta_camera *camera, ta_vec3 delta)
 {
     ta_vec3 offset = vec3_scalef(delta, camera->position_target_vel);
-    camera->position_target = vec3_add(camera->position_target, offset);
+    camera->follow_target = vec3_add(camera->follow_target, offset);
     camera->dirty = true;
 }
 
@@ -109,7 +109,7 @@ void ta_camera_recalc_projection(ta_camera *camera)
 
 }
 
-static void camera_events(ta_camera *camera)
+void ta_camera_events(ta_camera *camera)
 {
     ta_vec3 dir = { 0 };
     ta_event event;
@@ -178,11 +178,10 @@ static ta_vec3 camera_fps_target(ta_camera *camera)
 void ta_camera_update(ta_camera *camera, double dt)
 {
     UNUSED(dt);
-    camera_events(camera);
 
     // Update position
-    ta_vec3 pos_delta = vec3_sub(camera->position_target, camera->position);
-    if (vec3_len(pos_delta) > TA_EPSILON) {
+    ta_vec3 pos_delta = vec3_sub(camera->follow_target, camera->position);
+    if (vec3_len(pos_delta) > camera->follow_distance) {
         camera->position = vec3_add(camera->position,
             vec3_scalef(pos_delta, camera->position_smooth));
         camera->dirty = true;
