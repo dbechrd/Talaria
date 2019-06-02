@@ -16,9 +16,9 @@ out vs_out {
 
 void main()
 {
-    vec4 pos = vec4(attr_position, 1.0);
+    vec4 pos = u_model * vec4(attr_position, 1.0);
     vertex.position = pos.xyz;
 	vertex.color = attr_color;
 	vertex.uv = attr_uv;
-	gl_Position = pos; // u_proj *u_view *u_model *pos;
+    gl_Position = u_proj * u_view * pos;
 }

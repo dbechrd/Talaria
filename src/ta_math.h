@@ -95,6 +95,7 @@ extern const ta_vec3 VEC3_NY;
 extern const ta_vec3 VEC3_NZ;
 extern const ta_vec3 VEC3_MIN;
 extern const ta_vec3 VEC3_MAX;
+extern const ta_vec3 VEC3_EPSILON;
 
 extern const ta_quat QUAT_IDENT;
 

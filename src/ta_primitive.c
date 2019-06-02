@@ -121,53 +121,90 @@ static void ta_primitive_push_quad(ta_vert_quad *quad)
 {
 	dlb_vec_push(quads_queue, *quad);
 }
-static void ta_primitive_rect_to_quad(ta_vert_quad *quad, int x, int y,
-	ta_rect rect, ta_rgba color)
+void ta_primitive_push_rect(ta_rect parent, ta_rect rect, ta_rgba color)
 {
-	// v3 *----* v2
-	//    |    |
-	// v0 *----* v1
-	// v0, v1, v2, v0, v2, v3
+    // v3 *----* v2
+    //    |    |
+    // v0 *----* v1
+    // v0, v1, v2, v0, v2, v3
 
-	float x0 = X_TO_NDC(x + rect.x);
-	float x1 = X_TO_NDC(x + rect.x + rect.w);
-	float y0 = Y_TO_NDC(y + rect.y + rect.h);
-	float y1 = Y_TO_NDC(y + rect.y);
+#define X_TO_NDC_RECT(x, r) ((float)(x) / (r.w / 2.0f) - 1.0f)
+#define Y_TO_NDC_RECT(y, r) (-(float)(y) / (r.h / 2.0f) + 1.0f)
+    float x0 = X_TO_NDC_RECT(parent.x + rect.x, parent);
+    float x1 = X_TO_NDC_RECT(parent.x + rect.x + rect.w, parent);
+    float y0 = Y_TO_NDC_RECT(parent.y + rect.y + rect.h, parent);
+    float y1 = Y_TO_NDC_RECT(parent.y + rect.y, parent);
+#undef X_TO_NDC_RECT
+#undef Y_TO_NDC_RECT
 
-	quad->verts[0].position.x = x0;  // v0 (0,0)
-	quad->verts[0].position.y = y0;
-	quad->verts[0].uv.u = 0.0f;
-	quad->verts[0].uv.v = 0.0f;
-	quad->verts[1].position.x = x1;  // v1 (1,0)
-	quad->verts[1].position.y = y0;
-	quad->verts[1].uv.u = 1.0f;
-	quad->verts[1].uv.v = 0.0f;
-	quad->verts[2].position.x = x1;  // v2 (1,1)
-	quad->verts[2].position.y = y1;
-	quad->verts[2].uv.u = 1.0f;
-	quad->verts[2].uv.v = 1.0f;
-	quad->verts[3].position.x = x0;  // v0 (0,0)
-	quad->verts[3].position.y = y0;
-	quad->verts[3].uv.u = 0.0f;
-	quad->verts[3].uv.v = 0.0f;
-	quad->verts[4].position.x = x1;  // v2 (1,1)
-	quad->verts[4].position.y = y1;
-	quad->verts[4].uv.u = 1.0f;
-	quad->verts[4].uv.v = 1.0f;
-	quad->verts[5].position.x = x0;  // v3 (0,1)
-	quad->verts[5].position.y = y1;
-	quad->verts[5].uv.u = 0.0f;
-	quad->verts[5].uv.v = 1.0f;
-	for (int i = 0; i < 6; i++) {
-		quad->verts[i].position.z = 0.1f;
-		quad->verts[i].color = color;
-	}
-}
-void ta_primitive_push_rect(int x, int y, ta_rect rect, ta_rgba color)
-{
-	ta_vert_quad quad = { 0 };
-	ta_primitive_rect_to_quad(&quad, x, y, rect, color);
+    ta_vert_quad quad = { 0 };
+    quad.verts[0].position.x = x0;  // v0 (0,0)
+    quad.verts[0].position.y = y0;
+    quad.verts[0].uv.u = 0.0f;
+    quad.verts[0].uv.v = 0.0f;
+    quad.verts[1].position.x = x1;  // v1 (1,0)
+    quad.verts[1].position.y = y0;
+    quad.verts[1].uv.u = 1.0f;
+    quad.verts[1].uv.v = 0.0f;
+    quad.verts[2].position.x = x1;  // v2 (1,1)
+    quad.verts[2].position.y = y1;
+    quad.verts[2].uv.u = 1.0f;
+    quad.verts[2].uv.v = 1.0f;
+    quad.verts[3].position.x = x0;  // v0 (0,0)
+    quad.verts[3].position.y = y0;
+    quad.verts[3].uv.u = 0.0f;
+    quad.verts[3].uv.v = 0.0f;
+    quad.verts[4].position.x = x1;  // v2 (1,1)
+    quad.verts[4].position.y = y1;
+    quad.verts[4].uv.u = 1.0f;
+    quad.verts[4].uv.v = 1.0f;
+    quad.verts[5].position.x = x0;  // v3 (0,1)
+    quad.verts[5].position.y = y1;
+    quad.verts[5].uv.u = 0.0f;
+    quad.verts[5].uv.v = 1.0f;
+    for (int i = 0; i < 6; i++) {
+        quad.verts[i].position.z = 0.1f;
+        quad.verts[i].color = color;
+    }
+
 	ta_primitive_push_quad(&quad);
+}
+void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color)
+{
+    plane.center = vec3_add(plane.center, VEC3_EPSILON);
+    ta_vec3 x = vec3_normalize(vec3_cross(plane.center, plane.normal));
+    ta_vec3 y = vec3_normalize(vec3_cross(x, plane.normal));
+    x = vec3_scalef(x, radius);
+    y = vec3_scalef(y, radius);
+
+    ta_vec3 v0 = vec3_sub(vec3_sub(plane.center, x), y);
+    ta_vec3 v1 = vec3_add(vec3_sub(plane.center, x), y);
+    ta_vec3 v2 = vec3_sub(vec3_add(plane.center, x), y);
+    ta_vec3 v3 = vec3_add(vec3_add(plane.center, x), y);
+
+    ta_vert_quad quad = { 0 };
+    quad.verts[0].position = v0;
+    quad.verts[0].uv.u = 0.0f;
+    quad.verts[0].uv.v = 0.0f;
+    quad.verts[1].position = v1;
+    quad.verts[1].uv.u = 1.0f;
+    quad.verts[1].uv.v = 0.0f;
+    quad.verts[2].position = v2;
+    quad.verts[2].uv.u = 0.0f;
+    quad.verts[2].uv.v = 1.0f;
+    quad.verts[3].position = v2;
+    quad.verts[3].uv.u = 0.0f;
+    quad.verts[3].uv.v = 1.0f;
+    quad.verts[4].position = v1;
+    quad.verts[4].uv.u = 1.0f;
+    quad.verts[4].uv.v = 0.0f;
+    quad.verts[5].position = v3;
+    quad.verts[5].uv.u = 1.0f;
+    quad.verts[5].uv.v = 1.0f;
+    for (int i = 0; i < 6; i++) {
+        quad.verts[i].color = color;
+    }
+    ta_primitive_push_quad(&quad);
 }
 
 void ta_primitive_push_axes(float scale)

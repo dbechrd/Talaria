@@ -50,8 +50,16 @@ ta_ui_image *ta_ui_image_init(int x, int y, int w, int h, ta_texture *tex)
 
 void ta_ui_image_draw(int x, int y, ta_ui_image *image)
 {
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX0, image->tex->gl_id);
-	ta_primitive_push_rect(x, y, image->rect, TA_COLOR_INVIS);
+    ta_rect parent;
+    parent.x = x;
+    parent.y = y;
+    parent.w = 2;
+    parent.h = 2;
+	ta_primitive_push_rect(parent, image->rect, TA_COLOR_INVIS);
 	ta_primitive_render();
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX0, 0);
     ta_primitive_clear();
@@ -119,7 +127,12 @@ void ta_ui_scrollview_scroll(ta_ui_scrollview *view, int scroll)
 void ta_ui_scrollview_draw(int x, int y, ta_ui_scrollview *view)
 {
 	// Background
-	ta_primitive_push_rect(x, y, view->rect, TA_COLOR_GRAY2);
+    ta_rect parent;
+    parent.x = x;
+    parent.y = y;
+    parent.w = 2;
+    parent.h = 2;
+	ta_primitive_push_rect(parent, view->rect, TA_COLOR_GRAY2);
 
 	// TODO: Should clearing prim buffer be part of viewport_bind, or some other
 	//       stack of prims? Not sure...
@@ -137,13 +150,14 @@ void ta_ui_scrollview_draw(int x, int y, ta_ui_scrollview *view)
 	if (view->scrollbar_y.visible) {
 		// Scrollbar background
 		static ta_rgba scrollbar_color = { 0.5f, 0.5f, 0.5f, 0.5f };
-		ta_primitive_push_rect(x, y, view->scrollbar_y.rect, scrollbar_color);
+		ta_primitive_push_rect(parent, view->scrollbar_y.rect, scrollbar_color);
 
 		// Scrollbar widget
-		int wx = x + view->scrollbar_y.rect.x;
-		int wy = y + view->scrollbar_y.rect.y;
+        ta_rect widget_parent = parent;
+		widget_parent.x += view->scrollbar_y.rect.x;
+		widget_parent.y += view->scrollbar_y.rect.y;
 		static ta_rgba widget_color = { 0.2f, 0.2f, 0.2f, 0.5f };
-		ta_primitive_push_rect(wx, wy, view->scrollbar_y.widget.rect,
+		ta_primitive_push_rect(widget_parent, view->scrollbar_y.widget.rect,
             widget_color);
 	}
 }

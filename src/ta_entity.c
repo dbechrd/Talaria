@@ -198,7 +198,7 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
         ta_entity_push_aabb(e, TA_COLOR_RED);
     }
 
-    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &e->model);
-    ta_primitive_render();
-    ta_primitive_clear();
+    //ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &e->model);
+    //ta_primitive_render();
+    //ta_primitive_clear();
 }

@@ -13,6 +13,7 @@ const ta_vec3 VEC3_NY = { 0.0f, -1.0f, 0.0f };
 const ta_vec3 VEC3_NZ = { 0.0f, 0.0f, -1.0f };
 const ta_vec3 VEC3_MIN = { FLT_MIN, FLT_MIN, FLT_MIN };
 const ta_vec3 VEC3_MAX = { FLT_MAX, FLT_MAX, FLT_MAX };
+const ta_vec3 VEC3_EPSILON = { TA_EPSILON, TA_EPSILON, TA_EPSILON };
 
 const ta_quat QUAT_IDENT = { 0.0f, 0.0f, 0.0f, 1.0f };
 

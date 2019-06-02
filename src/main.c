@@ -288,14 +288,15 @@ int main(int argc, char *argv[])
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
-
 		// Draw models
 		//glDisable(GL_CULL_FACE);
         ta_scene_render(tg_game.scene, tg_game.camera, sim_alpha);
+        ta_primitive_render();
+        ta_primitive_clear();
 
         // World axes
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_primitive_push_axes(1.0f);
         ta_primitive_render();
@@ -314,13 +315,19 @@ int main(int argc, char *argv[])
 			// Draw models
             ta_scene_render(tg_game.scene, minimap_viewport.camera, sim_alpha);
 
+            ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
+            ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
+            ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+
             // Red dot on map
-            ta_primitive_push_rect(
-                minimap_viewport.rect.x + minimap_viewport.rect.w / 2 - 2,
-                minimap_viewport.rect.y + minimap_viewport.rect.h / 2 - 2,
-                (ta_rect) { 0, 0, 4, 4 },
-                TA_COLOR_RED
-            );
+            ta_rect parent = minimap_viewport.rect;
+            parent.x = minimap_viewport.rect.w / 2 - 2;
+            parent.y = minimap_viewport.rect.h / 2 - 2;
+            ta_primitive_push_rect(parent, (ta_rect) { 0, 0, 4, 4 },
+                TA_COLOR_RED);
+
+            ta_primitive_render();
+            ta_primitive_clear();
 		}
 		ta_viewport_unbind(&minimap_viewport);
 		glEnable(GL_CULL_FACE);

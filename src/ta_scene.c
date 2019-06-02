@@ -832,17 +832,13 @@ static ta_manifold *detect_collisions(ta_scene *scene, double dt)
     ta_manifold *manifolds = 0;
     ta_manifold manifold;
     dlb_vec_each(ta_scene_ref *, ref_a, scene->refs) {
-        if (ref_a->type != F_TA_ENTITY) continue;
-        ta_entity *a = ref_a->ptr;
-        if (a->invisible) continue;
-        if (!a->rigid_body_uid) continue;
+        if (ref_a->type != F_TA_RIGID_BODY) continue;
+        ta_rigid_body *a = ref_a->ptr;
         dlb_vec_range(ta_scene_ref *, ref_b, ref_a + 1, dlb_vec_end(scene->refs)) {
-            if (ref_b->type != F_TA_ENTITY) continue;
-            ta_entity *b = ref_b->ptr;
-            if (b->invisible) continue;
-            if (!b->rigid_body_uid) continue;
+            if (ref_b->type != F_TA_RIGID_BODY) continue;
+            ta_rigid_body *b = ref_b->ptr;
 
-            if (ta_entity_intersect(a, b, &manifold)) {
+            if (ta_rigid_body_intersect(a, b, &manifold)) {
                 ta_manifold *m = dlb_vec_alloc(manifolds);
                 *m = manifold;
 
@@ -907,9 +903,10 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
         }
     }
 
-    ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
-    ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-    ta_primitive_render();
-    ta_primitive_clear();
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
 }

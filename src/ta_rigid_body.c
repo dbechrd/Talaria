@@ -18,6 +18,7 @@ static intersector *intersectors[TA_COLLIDER_COUNT][TA_COLLIDER_COUNT] = {
 const char *ta_collider_type_str(int type)
 {
     switch(type) {
+        case TA_COLLIDER_PLANE:  return "TA_COLLIDER_PLANE";
         case TA_COLLIDER_SPHERE: return "TA_COLLIDER_SHERE";
         case TA_COLLIDER_AABB:   return "TA_COLLIDER_AABB";
         case TA_COLLIDER_OBB:    return "TA_COLLIDER_OBB";
@@ -27,17 +28,35 @@ const char *ta_collider_type_str(int type)
     }
 }
 
+static void update_collider_center(ta_rigid_body *body)
+{
+    body->collider.center_world = vec3_add(body->position, body->collider.data.center);
+#if 0
+    switch (body->collider.type) {
+        case TA_COLLIDER_PLANE: {
+            break;
+        } case TA_COLLIDER_SPHERE: {
+            break;
+        } case TA_COLLIDER_AABB: {
+            break;
+        } case TA_COLLIDER_OBB: {
+            break;
+        }
+    }
+#endif
+}
+
 void ta_rigid_body_init(ta_rigid_body *body)
 {
     if (quat_zero(body->orientation)) {
         body->orientation = QUAT_IDENT;
     }
-    body->collider.center_world = body->position;
     if (body->collider.type == 0 && !vec3_len(body->collider.data.plane.normal))
     {
         body->collider.type = TA_COLLIDER_SPHERE;
         body->collider.data.sphere.radius = 1.0f;
     }
+    update_collider_center(body);
     if (body->mass != 0.0f) {
         body->inv_mass = 1.0f / body->mass;
     }
@@ -72,7 +91,7 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     body->velocity = vec3_add(body->velocity, vec3_scalef(acc, dt));
     body->position = vec3_add(body->position,
         vec3_scalef(body->velocity, dt));
-    body->collider.center_world = body->position;
+    update_collider_center(body);
 
     // HACK: Collide with "ground" at y = 0
     //if (body->position.y <= body->collider.data.sphere.radius) {
@@ -248,6 +267,10 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
         debug_b_impulse.center = b_impulse_global;
         debug_b_impulse.radius = 0.1f;
         ta_primitive_push_sphere(debug_b_impulse, TA_COLOR_YELLOW);
+
+        if (a->collider.type == TA_COLLIDER_PLANE) {
+            ta_primitive_push_plane(a->collider.data.plane, 1.0f, TA_COLOR_CYAN);
+        }
 #endif
     }
     DLB_ASSERT(1);
