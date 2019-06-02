@@ -43,5 +43,5 @@ void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type,
     const char *uid);
 void ta_scene_initialize_objects(ta_scene *scn);
 void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid);
-void ta_scene_update(ta_scene *scene, double dt);
+void ta_scene_update(ta_scene *scene, float dt);
 void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha);

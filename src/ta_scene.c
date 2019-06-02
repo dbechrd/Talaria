@@ -860,7 +860,7 @@ static ta_manifold *detect_collisions(ta_scene *scene, double dt)
     return manifolds;
 }
 
-void ta_scene_update(ta_scene *scene, double dt)
+void ta_scene_update(ta_scene *scene, float dt)
 {
     dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
         if (ref->type != F_TA_RIGID_BODY) continue;

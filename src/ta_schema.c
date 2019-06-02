@@ -41,6 +41,8 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
         case F_TA_SHADER_UNIFORM:   return "TA_SHADER_UNIFORM";
         case F_TA_TEXTURE:          return "TA_TEXTURE";
         case F_TA_ENTITY:           return "TA_ENTITY";
+        case F_TA_PLANE:            return "TA_PLANE";
+        case F_TA_SPHERE:           return "TA_SPHERE";
         case F_TA_AABB:             return "TA_AABB";
         case F_TA_OBB:              return "TA_OBB";
         case F_TA_COLLIDER:         return "TA_COLLIDER";
@@ -243,14 +245,14 @@ void ta_schema_register()
     TYPE_END(ta_light);
 
     TYPE_START(ta_material, F_TA_MATERIAL);
-    TYPE_FIELD_NAME(ta_material, ref.uid,     F_ATOM_STRING, uid);
+    TYPE_FIELD_NAME(ta_material, ref.uid, F_ATOM_STRING, uid);
     TYPE_FIELD(ta_material, shader_uid,  F_ATOM_STRING);
     TYPE_FIELD(ta_material, texture_uid, F_ATOM_STRING);
     TYPE_END(ta_material);
 
     TYPE_START(ta_mesh_group, F_TA_MESH_GROUP);
     TYPE_FIELD_NAME(ta_mesh_group, ref.uid, F_ATOM_STRING, uid);
-    TYPE_FIELD(ta_mesh_group, path,    F_ATOM_STRING);
+    TYPE_FIELD(ta_mesh_group, path, F_ATOM_STRING);
     TYPE_END(ta_mesh_group);
 
     TYPE_START(ta_shader_attribute, F_TA_SHADER_ATTRIBUTE);
@@ -273,7 +275,7 @@ void ta_schema_register()
     TYPE_END(ta_shader_uniform);
 
     TYPE_START(ta_shader, F_TA_SHADER);
-    TYPE_FIELD_NAME(ta_shader, ref.uid,     F_ATOM_STRING, uid);
+    TYPE_FIELD_NAME(ta_shader, ref.uid, F_ATOM_STRING, uid);
     TYPE_FIELD(ta_shader, path_vert,   F_ATOM_STRING);
     TYPE_FIELD(ta_shader, path_frag,   F_ATOM_STRING);
     TYPE_VECTOR(ta_shader, attributes, F_TA_SHADER_ATTRIBUTE);
@@ -281,12 +283,12 @@ void ta_schema_register()
     TYPE_END(ta_shader);
 
     TYPE_START(ta_texture, F_TA_TEXTURE);
-    TYPE_FIELD_NAME(ta_texture, ref.uid,  F_ATOM_STRING, uid);
-    TYPE_FIELD(ta_texture, path,     F_ATOM_STRING);
+    TYPE_FIELD_NAME(ta_texture, ref.uid, F_ATOM_STRING, uid);
+    TYPE_FIELD(ta_texture, path, F_ATOM_STRING);
     TYPE_END(ta_texture);
 
     TYPE_START(ta_entity, F_TA_ENTITY);
-    TYPE_FIELD_NAME(ta_entity, ref.uid,        F_ATOM_STRING, uid);
+    TYPE_FIELD_NAME(ta_entity, ref.uid, F_ATOM_STRING, uid);
     TYPE_FIELD(ta_entity, type,           F_ATOM_INT);
     TYPE_FIELD(ta_entity, transform,      F_TA_TRANSFORM);
     TYPE_FIELD(ta_entity, material_uid,   F_ATOM_STRING);
@@ -295,6 +297,16 @@ void ta_schema_register()
     TYPE_FIELD(ta_entity, parent_uid,     F_ATOM_STRING);
     TYPE_FIELD(ta_entity, invisible,      F_ATOM_UINT);
     TYPE_END(ta_entity);
+
+    TYPE_START(ta_plane, F_TA_PLANE);
+    TYPE_FIELD(ta_plane, center, F_TA_VEC3);
+    TYPE_FIELD(ta_plane, normal, F_TA_VEC3);
+    TYPE_END(ta_plane);
+
+    TYPE_START(ta_sphere, F_TA_SPHERE);
+    TYPE_FIELD(ta_sphere, center, F_TA_VEC3);
+    TYPE_FIELD(ta_sphere, radius, F_ATOM_FLOAT);
+    TYPE_END(ta_sphere);
 
     TYPE_START(ta_aabb, F_TA_AABB);
     TYPE_FIELD(ta_aabb, center,  F_TA_VEC3);
@@ -308,9 +320,11 @@ void ta_schema_register()
     TYPE_END(ta_obb);
 
     TYPE_START(ta_collider, F_TA_COLLIDER);
-    TYPE_UNION_TYPE(ta_collider,  type, F_ATOM_ENUM, ta_collider_type_str);
-    TYPE_UNION_FIELD(ta_collider, aabb, F_TA_AABB, data, TA_COLLIDER_AABB);
-    TYPE_UNION_FIELD(ta_collider, obb,  F_TA_OBB,  data, TA_COLLIDER_OBB);
+    TYPE_UNION_TYPE(ta_collider,  type,   F_ATOM_ENUM, ta_collider_type_str);
+    TYPE_UNION_FIELD(ta_collider, plane,  F_TA_PLANE,  data, TA_COLLIDER_PLANE);
+    TYPE_UNION_FIELD(ta_collider, sphere, F_TA_SPHERE, data, TA_COLLIDER_SPHERE);
+    TYPE_UNION_FIELD(ta_collider, aabb,   F_TA_AABB,   data, TA_COLLIDER_AABB);
+    TYPE_UNION_FIELD(ta_collider, obb,    F_TA_OBB,    data, TA_COLLIDER_OBB);
     TYPE_END(ta_collider);
 
     TYPE_START(ta_rigid_body, F_TA_RIGID_BODY);

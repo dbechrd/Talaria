@@ -91,7 +91,7 @@ ta_rigid_body *ta_entity_rigid_body(ta_entity *e)
 
 bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold)
 {
-    bool broad_phase = ta_intersect_sphere_vs_sphere(&a->sphere, &b->sphere, 0);
+    bool broad_phase = ta_sphere_v_sphere(&a->sphere, &b->sphere, 0);
     if (!broad_phase) {
         return false;
     }

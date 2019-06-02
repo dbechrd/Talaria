@@ -26,6 +26,8 @@ typedef enum {
     F_TA_SHADER,
     F_TA_TEXTURE,
     F_TA_ENTITY,
+    F_TA_PLANE,
+    F_TA_SPHERE,
     F_TA_AABB,
     F_TA_OBB,
     F_TA_COLLIDER,

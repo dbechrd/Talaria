@@ -18,20 +18,31 @@ typedef struct {
     ta_vec3 axes[3];
 } ta_obb;
 
+typedef struct {
+    ta_vec3 center;
+    ta_vec3 normal;
+} ta_plane;
+
 typedef enum {
-    TA_COLLIDER_SPHERE  = 0,
-    TA_COLLIDER_AABB    = 1,
-    TA_COLLIDER_OBB     = 2,
+    TA_COLLIDER_PLANE   = 0,
+    TA_COLLIDER_SPHERE  = 1,
+    TA_COLLIDER_AABB    = 2,
+    TA_COLLIDER_OBB     = 3,
+    TA_COLLIDER_COUNT
 } ta_collider_type;
 
 typedef struct {
     ta_collider_type type;
+    float mass;
+    ta_mat3 tensor;
+    ta_vec3 center_world;  // TODO: Update this whenever rigid body moves
     union {
         // NOTE: Must all start with ta_vec3 center
         ta_vec3 center;
         ta_sphere sphere;
         ta_aabb aabb;
         ta_obb obb;
+        ta_plane plane;
     } data;
 } ta_collider;
 
@@ -86,10 +97,12 @@ typedef struct {
 const char *ta_collider_type_str(int type);
 void ta_rigid_body_init(ta_rigid_body *body);
 void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
-void ta_rigid_body_update(ta_rigid_body *body, double dt);
-bool ta_intersect_sphere_vs_sphere(const ta_sphere *a, const ta_sphere *b,
+void ta_rigid_body_update(ta_rigid_body *body, float dt);
+bool ta_sphere_v_sphere(const ta_sphere *a, const ta_sphere *b,
     ta_manifold *manifold);
-bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
+bool ta_plane_v_sphere(const ta_plane *plane, const ta_sphere *sphere,
+    ta_manifold *manifold);
+bool ta_rigid_body_intersect(const ta_rigid_body *a, const ta_rigid_body *b,
     ta_manifold *manifold);
 void ta_rigid_body_resolve_collision(ta_manifold *manifold);
 //void ta_rigid_body_update(ta_rigid_body *rigid_body, double dt);

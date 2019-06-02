@@ -267,7 +267,7 @@ int main(int argc, char *argv[])
             //player_body->transform.position = tg_game.camera->position;
 
             // Update scene
-            ta_scene_update(tg_game.scene, sim_dt);
+            ta_scene_update(tg_game.scene, (float)sim_dt);
 
             ms_sim_t += ms_sim_dt;
             ms_frame_accum -= ms_sim_dt;
@@ -279,7 +279,7 @@ int main(int argc, char *argv[])
             ta_camera_set_target_pos_absolute(tg_game.camera, follow_target);
         }
 
-        float sim_alpha = (float)ms_frame_accum / ms_sim_dt;
+        float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
 
         ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
         tg_game.sun->data.sun.direction =
@@ -297,7 +297,7 @@ int main(int argc, char *argv[])
 
         // World axes
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-        ta_primitive_push_axes(2.0f);
+        ta_primitive_push_axes(1.0f);
         ta_primitive_render();
         ta_primitive_clear();
 

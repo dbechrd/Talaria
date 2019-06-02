@@ -193,7 +193,7 @@ void ta_game_update()
                     !tg_game.camera->debug_no_mesh;
                 break;
             } case TA_EVENT_DEBUG_BOOST_PINKY: {
-                dir.y = 2.0f;
+                dir.y = 30.0f;
                 break;
             } case TA_EVENT_DEBUG_FOCUS_PINKY: {
                 tg_game.camera->debug_follow_pinky =
@@ -207,7 +207,7 @@ void ta_game_update()
     if (!vec3_zero(dir)) {
         float boost = dir.y;
         dir = vec3_normalize(dir);
-        dir = vec3_scalef(dir, 0.1f);
+        dir = vec3_scalef(dir, 10.0f);
         dir.y = boost;
         ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
         ta_rigid_body_apply_force(player_body, dir, VEC3_ZERO);
