@@ -188,17 +188,28 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
         ta_shader_unbind(shader);
     }
 
-    if (camera->debug_normals) {
-        ta_entity_push_normals(e);
-    }
-    if (camera->debug_bounding_spheres) {
-        ta_entity_push_sphere(e, TA_COLOR_INVIS);
-    }
-    if (camera->debug_bounding_boxes) {
-        ta_entity_push_aabb(e, TA_COLOR_RED);
-    }
+    if (camera->debug_normals ||
+        camera->debug_bounding_spheres ||
+        camera->debug_bounding_boxes)
+    {
+        ta_primitive_render();
+        ta_primitive_clear();
 
-    //ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &e->model);
-    //ta_primitive_render();
-    //ta_primitive_clear();
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &e->model);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &e->model);
+        if (camera->debug_normals) {
+            ta_entity_push_normals(e);
+        }
+        if (camera->debug_bounding_spheres) {
+            ta_entity_push_sphere(e, TA_COLOR_INVIS);
+        }
+        if (camera->debug_bounding_boxes) {
+            ta_entity_push_aabb(e, TA_COLOR_RED);
+        }
+        ta_primitive_render();
+        ta_primitive_clear();
+
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+    }
 }

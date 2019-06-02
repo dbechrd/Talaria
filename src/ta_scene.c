@@ -883,6 +883,13 @@ void ta_scene_update(ta_scene *scene, float dt)
 
 void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
 {
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &camera->look_at);
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+
     // TODO: Group by shader / material to minimize redundant uniform calls
     dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
         switch (ref->type) {
