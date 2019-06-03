@@ -826,7 +826,7 @@ static ta_manifold *detect_collisions(ta_scene *scene, double dt)
 {
     UNUSED(dt);
 
-    static int print = 5;
+    static int print = 0;
     if (print) ta_log_write(tg_debug_log, "[START] ta_rigid_body_resolve\n");
 
     ta_manifold *manifolds = 0;

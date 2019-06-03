@@ -153,20 +153,20 @@ void ta_game_update()
                 //    -event.data.mouse_scroll.flipped);
                 break;
             } case TA_EVENT_GAME_PLAYER_MOVE_FORWARD: {
-                dir.x += tg_game.camera_player->front.x;
-                dir.z += tg_game.camera_player->front.z;
+                dir.x += tg_game.camera->front.x;
+                dir.z += tg_game.camera->front.z;
                 break;
             } case TA_EVENT_GAME_PLAYER_MOVE_BACKWARD: {
-                dir.x -= tg_game.camera_player->front.x;
-                dir.z -= tg_game.camera_player->front.z;
+                dir.x -= tg_game.camera->front.x;
+                dir.z -= tg_game.camera->front.z;
                 break;
             } case TA_EVENT_GAME_PLAYER_MOVE_RIGHT: {
-                dir.x += tg_game.camera_player->right.x;
-                dir.z += tg_game.camera_player->right.z;
+                dir.x += tg_game.camera->right.x;
+                dir.z += tg_game.camera->right.z;
                 break;
             } case TA_EVENT_GAME_PLAYER_MOVE_LEFT: {
-                dir.x -= tg_game.camera_player->right.x;
-                dir.z -= tg_game.camera_player->right.z;
+                dir.x -= tg_game.camera->right.x;
+                dir.z -= tg_game.camera->right.z;
                 break;
             } case TA_EVENT_GAME_PLAYER_MOVE_JUMP: {
                 break;
@@ -193,7 +193,7 @@ void ta_game_update()
                     !tg_game.camera->debug_no_mesh;
                 break;
             } case TA_EVENT_DEBUG_BOOST_PINKY: {
-                dir.y = 30.0f;
+                dir.y = 1.0f;
                 break;
             } case TA_EVENT_DEBUG_FOCUS_PINKY: {
                 tg_game.camera->debug_follow_pinky =
@@ -207,10 +207,10 @@ void ta_game_update()
     if (!vec3_zero(dir)) {
         float boost = dir.y;
         dir = vec3_normalize(dir);
-        dir = vec3_scalef(dir, 10.0f);
-        dir.y = boost;
+        dir = vec3_scalef(dir, 20.0f);
         ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
         ta_rigid_body_apply_force(player_body, dir, VEC3_ZERO);
+        //player_body->velocity = vec3_add(player_body->velocity, dir);
         //player_body->position = vec3_add(player_body->position, dir);
     }
 }

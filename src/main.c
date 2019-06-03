@@ -214,10 +214,11 @@ int main(int argc, char *argv[])
     // https://gamedevelopment.tutsplus.com/series/how-to-create-a-custom-physics-engine--gamedev-12715
     const double ms_sim_dt = 10;             // fixed dt milliseconds
     const double sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
-    const double sim_max_steps = 4;          // max simulation steps per frame
+    const double sim_max_steps = 10;         // max simulation steps per frame
     double ms_sim_t = 0;                     // current simulation time
 
-    double ms_frame_prev = ta_timer_elapsed_ms();
+    double ms_frame_first = ta_timer_elapsed_ms();
+    double ms_frame_prev = ms_frame_first;
     double ms_frame_accum = 0;
 
     while (tg_game.state != TA_STATE_QUIT) {
@@ -354,6 +355,7 @@ int main(int argc, char *argv[])
         //printf("Frame %5llu took %f ms.\n", frame_num, ms_frame_time);
 
         ta_window_swap();
+        //ta_log_write(tg_debug_log, "Frame %llu started at %f sim time: %f\n", frame_num, ms_frame_start - ms_frame_first, ms_sim_t);
         frame_num++;
     }
 

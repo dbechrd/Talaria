@@ -30,7 +30,10 @@ const char *ta_collider_type_str(int type)
 
 static void update_collider_center(ta_rigid_body *body)
 {
+    // TODO: For each collider in body->colliders
     body->collider.center_world = vec3_add(body->position, body->collider.data.center);
+    body->centroid_local = body->collider.data.center;
+    body->centroid_global = body->collider.center_world;
 #if 0
     switch (body->collider.type) {
         case TA_COLLIDER_PLANE: {
@@ -61,7 +64,7 @@ void ta_rigid_body_init(ta_rigid_body *body)
         body->inv_mass = 1.0f / body->mass;
     }
     if (!body->restitution) {
-        body->restitution = 0.1f;
+        body->restitution = 0.9f;
     }
 }
 
@@ -69,37 +72,42 @@ void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force, ta_vec3 at)
 {
     // http://allenchou.net/2013/12/game-physics-motion-dynamics-implementations/
     body->force_accum = vec3_add(body->force_accum, force);
-    //body->torque_accum = vec3_add(body->torque_accum,
-    UNUSED(at);
+    body->torque_accum = vec3_add(body->torque_accum,
+        vec3_cross(vec3_sub(at, body->centroid_global), force));
 }
 
 void ta_rigid_body_update(ta_rigid_body *body, float dt)
 {
     // TODO: Calculate this based on torque_accum and dt
+    //body.m_angularVelocity +=  body.m_globalInverseInertiaTensor * (body.m_torqueAccumulator * dt);
     if (!vec3_equal(body->ang_velocity, VEC3_ZERO)) {
         ta_quat delta_orient = quat_from_axis_angle(
             vec3_normalize(body->ang_velocity),
-            vec3_len(body->ang_velocity)
+            vec3_len(body->ang_velocity)  // * dt  TODO: angular dt??
         );
         body->orientation = quat_mul(delta_orient, body->orientation);
+
+        // NOTE: If this assert triggers, probably floating point error. Just
+        // always normalize the quat and remove the assert.
+        DLB_ASSERT(quat_equals(body->orientation, quat_normalize(body->orientation)));
     }
 
     ta_vec3 gravity = { 0.0f, -9.81f, 0.0f };
     ta_rigid_body_apply_force(body, gravity, VEC3_ZERO);
 
-    ta_vec3 acc = vec3_scalef(body->force_accum, body->inv_mass);
-    body->velocity = vec3_add(body->velocity, vec3_scalef(acc, dt));
+    ta_vec3 acc = vec3_scalef(vec3_scalef(body->force_accum, dt), body->inv_mass);
+    body->velocity = vec3_add(body->velocity, acc);
     body->position = vec3_add(body->position,
         vec3_scalef(body->velocity, dt));
     update_collider_center(body);
 
-    // HACK: Collide with "ground" at y = 0
-    //if (body->position.y <= body->collider.data.sphere.radius) {
-    //    body->velocity.y *= -0.5f;
-    //    body->position.y = body->collider.data.sphere.radius;
-    //}
+    // TODO: Implement drag in a way that doesn't vary with different timesteps
+    //       The "compound interest" problem.
     body->ang_velocity = vec3_scalef(body->ang_velocity, 0.95f);
     body->velocity = vec3_scalef(body->velocity, 0.99f);
+
+    // TODO: Update global tensor when orientation changes
+    //m_globalInverseInertiaTensor =  m_orientation * m_massData.localInertiaTensor * m_inverseOrientation
 
     // Reset accumulators
     body->force_accum = VEC3_ZERO;
@@ -225,48 +233,46 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
         // calculate contact points properly for other types of colliders.
         ta_vec3 impulse = vec3_scalef(manifold->normal, j);
 
-        //ta_rigid_body_apply_force(a, vec3_negate(impulse), vec3_scalef(vec3_negate(manifold->normal), a->collider.data.sphere.radius));
-        //ta_rigid_body_apply_force(b, impulse,              vec3_scalef(manifold->normal, b->collider.data.sphere.radius));
+        //ta_rigid_body_apply_force(a, vec3_negate(impulse),
+        //  vec3_scalef(vec3_negate(manifold->normal), a->collider.data.sphere.radius));
+        //ta_rigid_body_apply_force(b, impulse,
+        //  vec3_scalef(manifold->normal, b->collider.data.sphere.radius));
 
 #if 0
         a->velocity = vec3_sub(a->velocity, vec3_scalef(impulse, a->inv_mass));
         b->velocity = vec3_add(b->velocity, vec3_scalef(impulse, b->inv_mass));
 #else
-        ta_vec3 a_impulse = vec3_negate(vec3_scalef(impulse, a->inv_mass));
+        ta_vec3 a_impulse = vec3_scalef(impulse, -a->inv_mass);
         ta_vec3 b_impulse = vec3_scalef(impulse, b->inv_mass);
         a->velocity = vec3_add(a->velocity, a_impulse);
         b->velocity = vec3_add(b->velocity, b_impulse);
 
-        ta_vec3 a_impulse_global = vec3_add(a->position, a_impulse);
-        ta_vec3 b_impulse_global = vec3_add(b->position, b_impulse);
+        DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
+        ta_vec3 at = vec3_add(b->position, vec3_scalef(manifold->normal, -b->collider.data.sphere.radius));
 
-        ta_vec3 a_at = vec3_add(a->position, vec3_scalef(manifold->normal, a->collider.data.sphere.radius - manifold->depth));
-        ta_vec3 b_at = vec3_add(b->position, vec3_scalef(manifold->normal, -(b->collider.data.sphere.radius - manifold->depth)));
-
-        if (a->inv_mass && b->inv_mass) {
-            a->ang_velocity = vec3_cross(a_at, vec3_add(a->position, a_impulse));
-            b->ang_velocity = vec3_cross(b_at, vec3_add(b->position, b_impulse));
+        if (a->inv_mass) {
+            a->ang_velocity = vec3_cross(at, vec3_add(a->position, a_impulse));
+        }
+        if (b->inv_mass) {
+            b->ang_velocity = vec3_cross(at, vec3_add(b->position, b_impulse));
         }
 
         //vec3_scalef(a->ang_velocity, 100.0f);
         //vec3_scalef(b->ang_velocity, 100.0f);
 
         ta_sphere debug_a_at;
-        debug_a_at.center = a_at;
+        debug_a_at.center = at;
         debug_a_at.radius = 0.1f;
         ta_primitive_push_sphere(debug_a_at, TA_COLOR_RED);
-        ta_sphere debug_b_at;
-        debug_b_at.center = b_at;
-        debug_b_at.radius = 0.1f;
-        ta_primitive_push_sphere(debug_b_at, TA_COLOR_GREEN);
-        ta_sphere debug_a_impulse;
-        debug_a_impulse.center = a_impulse_global;
-        debug_a_impulse.radius = 0.1f;
-        ta_primitive_push_sphere(debug_a_impulse, TA_COLOR_BLUE);
-        ta_sphere debug_b_impulse;
-        debug_b_impulse.center = b_impulse_global;
-        debug_b_impulse.radius = 0.1f;
-        ta_primitive_push_sphere(debug_b_impulse, TA_COLOR_YELLOW);
+
+        ta_line_3d debug_a_impulse;
+        debug_a_impulse.p0 = at;
+        debug_a_impulse.p1 = vec3_add(at, a_impulse);
+        ta_primitive_push_line_3d(debug_a_impulse, TA_COLOR_WHITE, TA_COLOR_BLUE);
+        ta_line_3d debug_b_impulse;
+        debug_b_impulse.p0 = at;
+        debug_b_impulse.p1 = vec3_add(at, b_impulse);
+        ta_primitive_push_line_3d(debug_b_impulse, TA_COLOR_WHITE, TA_COLOR_YELLOW);
 
         if (a->collider.type == TA_COLLIDER_PLANE) {
             ta_primitive_push_plane(a->collider.data.plane, 1.0f, TA_COLOR_CYAN);
@@ -318,58 +324,3 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
     a->position = vec3_sub(a->position, vec3_scalef(correction, a->inv_mass));
     b->position = vec3_add(b->position, vec3_scalef(correction, b->inv_mass));
 }
-
-#if 0
-void ta_rigid_body_resolve(ta_entity *entities)
-{
-    static int print = 5;
-
-    ta_manifold manifold;
-
-    if (print) ta_log_write(tg_debug_log, "[START] ta_rigid_body_resolve\n");
-    dlb_vec_each(ta_entity *, a, entities) {
-        if (a->invisible) continue;
-        for (ta_entity *b = a + 1; b != dlb_vec_end(entities); b++) {
-            if (b->invisible) continue;
-            bool collide = ta_rigid_body_intersect(a, b, &manifold);
-            if (print) {
-                ta_log_write(tg_debug_log, "  '%s' v. '%s': %s\n",
-                    a->uid, b->uid,
-                    collide ? "true" : "false"
-                );
-            }
-        }
-    }
-    if (print) ta_log_write(tg_debug_log, "[END]\n");
-    if (print) print--;
-}
-
-void ta_rigid_body_update(ta_rigid_body *rigid_body, double dt)
-{
-    UNUSED(rigid_body);
-    UNUSED(dt);
-    // TODO: Handle other types of colliders
-    if (rigid_body->collider.type != TA_COLLIDER_AABB) {
-        return;
-    }
-
-    ta_vec3 center = vec3_add(rigid_body->position,
-        rigid_body->collider.data.aabb.center);
-    ta_vec3 contact = center;
-    contact.y -= rigid_body->collider.data.aabb.extents.y;
-
-    const float ground_height = 0.0f;
-    if (contact.y != ground_height) {
-        if (fabs(contact.y) < TA_EPSILON) {
-            contact.y = ground_height;
-        } else {
-            // TODO: Apply velocity impulse
-            double dy = ground_height - contact.y;
-            contact.y += (float)(dy * 0.98 * dt);
-        }
-    }
-
-    rigid_body->position = contact;
-    rigid_body->position.y += rigid_body->collider.data.aabb.extents.y;
-}
-#endif
