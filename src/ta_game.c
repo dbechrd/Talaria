@@ -208,6 +208,7 @@ void ta_game_update()
         float boost = dir.y;
         dir = vec3_normalize(dir);
         dir = vec3_scalef(dir, 20.0f);
+        dir.y *= 2.0f;
         ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
         ta_rigid_body_apply_force(player_body, dir, VEC3_ZERO);
         //player_body->velocity = vec3_add(player_body->velocity, dir);

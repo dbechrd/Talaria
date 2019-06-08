@@ -124,6 +124,7 @@ float clampf(float f, float min, float max);
 
 void vec3_print(FILE *file, ta_vec3 v);
 int vec3_zero(ta_vec3 v);
+int vec3_tiny(ta_vec3 v);
 int vec3_equal(ta_vec3 a, ta_vec3 b);
 ta_vec3 vec3_negate(ta_vec3 v);
 ta_vec3 vec3_add(ta_vec3 a, ta_vec3 b);

@@ -64,7 +64,13 @@ void ta_rigid_body_init(ta_rigid_body *body)
         body->inv_mass = 1.0f / body->mass;
     }
     if (!body->restitution) {
-        body->restitution = 0.9f;
+        body->restitution = 0.7f;
+    }
+    if (!body->static_friction) {
+        body->static_friction = 0.1f;
+    }
+    if (!body->dynamic_friction) {
+        body->dynamic_friction = 0.05f;
     }
 }
 
@@ -101,10 +107,12 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
         vec3_scalef(body->velocity, dt));
     update_collider_center(body);
 
+#if 0
     // TODO: Implement drag in a way that doesn't vary with different timesteps
     //       The "compound interest" problem.
-    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.95f);
     body->velocity = vec3_scalef(body->velocity, 0.99f);
+    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.98f);
+#endif
 
     // TODO: Update global tensor when orientation changes
     //m_globalInverseInertiaTensor =  m_orientation * m_massData.localInertiaTensor * m_inverseOrientation
@@ -213,6 +221,9 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
     ta_rigid_body *a = manifold->a;
     ta_rigid_body *b = manifold->b;
 
+    //a->ang_velocity = VEC3_ZERO;
+    //b->ang_velocity = VEC3_ZERO;
+
     // Relative velocity
     ta_vec3 dv = vec3_sub(b->velocity, a->velocity);
 
@@ -222,7 +233,9 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
     // If bodies moving apart, let it happen
     if (v_normal < 0.0f) {
         // TODO: Restitution
-        float e = MIN(a->restitution, b->restitution);
+        // "Box2D also uses inelastic collisions when the collision velocity is
+        // small. This is done to prevent jitter." -Box2D manual
+        float e = MAX(a->restitution, b->restitution);
 
         // Impulse
         float j = -(1.0f + e) * v_normal;
@@ -248,73 +261,112 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
         b->velocity = vec3_add(b->velocity, b_impulse);
 
         DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
-        ta_vec3 at = vec3_add(b->position, vec3_scalef(manifold->normal, -b->collider.data.sphere.radius));
+        ta_vec3 at = vec3_scalef(manifold->normal, -b->collider.data.sphere.radius);
+        ta_vec3 at_world = vec3_add(b->position, at);
 
-        if (a->inv_mass) {
-            a->ang_velocity = vec3_cross(at, vec3_add(a->position, a_impulse));
-        }
+        //if (a->inv_mass) {
+        //    a->ang_velocity = vec3_cross(at, vec3_add(a->position, a_impulse));
+        //}
         if (b->inv_mass) {
-            b->ang_velocity = vec3_cross(at, vec3_add(b->position, b_impulse));
+            // HACK: How is this supposed to be calculated for e.g. to moving
+            //       bodies? Seems like hack w/ floor at the moment.
+            b->ang_velocity = vec3_cross(at, vec3_negate(b->velocity));
         }
 
         //vec3_scalef(a->ang_velocity, 100.0f);
         //vec3_scalef(b->ang_velocity, 100.0f);
 
         ta_sphere debug_a_at;
-        debug_a_at.center = at;
+        debug_a_at.center = at_world;
         debug_a_at.radius = 0.1f;
         ta_primitive_push_sphere(debug_a_at, TA_COLOR_RED);
 
         ta_line_3d debug_a_impulse;
-        debug_a_impulse.p0 = at;
-        debug_a_impulse.p1 = vec3_add(at, a_impulse);
+        debug_a_impulse.p0 = at_world;
+        debug_a_impulse.p1 = vec3_add(at_world, a_impulse);
         ta_primitive_push_line_3d(debug_a_impulse, TA_COLOR_WHITE, TA_COLOR_BLUE);
         ta_line_3d debug_b_impulse;
-        debug_b_impulse.p0 = at;
-        debug_b_impulse.p1 = vec3_add(at, b_impulse);
+        debug_b_impulse.p0 = at_world;
+        debug_b_impulse.p1 = vec3_add(at_world, b_impulse);
         ta_primitive_push_line_3d(debug_b_impulse, TA_COLOR_WHITE, TA_COLOR_YELLOW);
 
         if (a->collider.type == TA_COLLIDER_PLANE) {
             ta_primitive_push_plane(a->collider.data.plane, 1.0f, TA_COLOR_CYAN);
         }
 #endif
+
+#if 1
+        // Randy's random Coloumb friction idea
+        // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-friction-scene-and-jump-table--gamedev-7756
+
+        ta_vec3 rv = vec3_sub(b->velocity, a->velocity);
+        float rv_normal = vec3_dot(rv, manifold->normal);
+
+        ta_vec3 tangent = vec3_sub(rv, vec3_scalef(manifold->normal, rv_normal));
+        if (!vec3_tiny(tangent)) {
+            tangent = vec3_normalize(tangent);
+
+            float jt = -vec3_dot(rv, tangent);
+            jt = jt / (a->inv_mass + b->inv_mass);
+
+            float mu = sqrtf(a->static_friction*a->static_friction + b->static_friction*b->static_friction);
+
+            ta_vec3 friction_impulse;
+            if (fabs(jt) < j * mu) {
+                friction_impulse = vec3_scalef(tangent, jt);
+            } else {
+                float dynamic_friction = sqrtf(a->dynamic_friction*a->dynamic_friction + b->dynamic_friction*b->dynamic_friction);
+                friction_impulse = vec3_scalef(tangent, -j * dynamic_friction);
+            }
+
+            ta_vec3 a_friction_impulse = vec3_scalef(friction_impulse, -a->inv_mass);
+            ta_vec3 b_friction_impulse = vec3_scalef(friction_impulse, b->inv_mass);
+            a->velocity = vec3_add(a->velocity, a_friction_impulse);
+            b->velocity = vec3_add(b->velocity, b_friction_impulse);
+
+            //if (a->inv_mass) {
+            //    a->ang_velocity = vec3_cross(at, vec3_add(a->position, a_friction_impulse));
+            //}
+            //if (b->inv_mass) {
+            //    b->ang_velocity = vec3_cross(at, friction_impulse);
+            //}
+            DLB_ASSERT(1);
+        }
+#endif
+#if 0
+        // Re-calculate relative velocity after normal impulse
+        // is applied (impulse from first article, this code comes
+        // directly thereafter in the same resolve function)
+        Vec2 rv = VB - VA
+
+            // Solve for the tangent vector
+            Vec2 tangent = rv - Dot( rv, normal ) * normal
+            tangent.Normalize( )
+
+            // Solve for magnitude to apply along the friction vector
+            float jt = -Dot( rv, t )
+            jt = jt / (1 / MassA + 1 / MassB)
+
+            // PythagoreanSolve = A^2 + B^2 = C^2, solving for C given A and B
+            // Use to approximate mu given friction coefficients of each body
+            float mu = PythagoreanSolve( A->staticFriction, B->staticFriction )
+
+            // Clamp magnitude of friction and create impulse vector
+            Vec2 frictionImpulse
+            if(abs( jt ) < j * mu)
+                frictionImpulse = jt * t
+            else
+            {
+                dynamicFriction = PythagoreanSolve( A->dynamicFriction, B->dynamicFriction )
+                    frictionImpulse = -j * t * dynamicFriction
+            }
+
+        // Apply
+        A->velocity -= (1 / A->mass) * frictionImpulse
+            B->velocity += (1 / B->mass) * frictionImpulse
+#endif
     }
     DLB_ASSERT(1);
-
-    // Randy's random Coloumb friction idea
-    // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-friction-scene-and-jump-table--gamedev-7756
-#if 0
-    // Re-calculate relative velocity after normal impulse
-    // is applied (impulse from first article, this code comes
-    // directly thereafter in the same resolve function)
-    Vec2 rv = VB - VA
-
-        // Solve for the tangent vector
-        Vec2 tangent = rv - Dot( rv, normal ) * normal
-        tangent.Normalize( )
-
-        // Solve for magnitude to apply along the friction vector
-        float jt = -Dot( rv, t )
-        jt = jt / (1 / MassA + 1 / MassB)
-
-        // PythagoreanSolve = A^2 + B^2 = C^2, solving for C given A and B
-        // Use to approximate mu given friction coefficients of each body
-        float mu = PythagoreanSolve( A->staticFriction, B->staticFriction )
-
-        // Clamp magnitude of friction and create impulse vector
-        Vec2 frictionImpulse
-        if(abs( jt ) < j * mu)
-            frictionImpulse = jt * t
-        else
-        {
-            dynamicFriction = PythagoreanSolve( A->dynamicFriction, B->dynamicFriction )
-                frictionImpulse = -j * t * dynamicFriction
-        }
-
-    // Apply
-    A->velocity -= (1 / A->mass) * frictionImpulse
-        B->velocity += (1 / B->mass) * frictionImpulse
-#endif
 
     // Positional correction
     const float percent = 1.0f;

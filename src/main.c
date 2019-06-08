@@ -363,3 +363,6 @@ int main(int argc, char *argv[])
     ta_log_write(tg_debug_log, "Goodbye.\n\n");
     return 0;
 }
+
+// Random thoughts
+// https://en.wikipedia.org/wiki/Accumulator_(energy)

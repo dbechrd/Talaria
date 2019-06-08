@@ -838,6 +838,34 @@ static ta_manifold *detect_collisions(ta_scene *scene, double dt)
             if (ref_b->type != F_TA_RIGID_BODY) continue;
             ta_rigid_body *b = ref_b->ptr;
 
+            // Box2D supports 16 collision categories. For each fixture you can
+            // specify which category it belongs to. You also specify what other
+            // categories this fixture can collide with.
+            //
+            //   if ((categoryA & maskB) != 0 && (categoryB & maskA) != 0)
+            //
+            // Collision groups let you specify an integral group index. You can
+            // have all fixtures with the same group index always collide
+            // (positive index) or never collide (negative index). Group indices
+            // are usually used for things that are somehow related, like the
+            // parts of a bicycle.
+            //
+            // Collisions between fixtures of different group indices are
+            // filtered according the category and mask bits. In other words,            // group filtering has higher precedence than category filtering.            //
+            // - A fixture on a static body can only collide with a dynamic
+            //   body.
+            // - A fixture on a kinematic body can only collide with a dynamic
+            //   body.
+            // - Fixtures on the same body never collide with each other.
+            // - You can optionally enable/disable collision between fixtures on
+            //   bodies connected by a joint.
+            //
+            // Sensor: Fixture which only detects collision, no response.
+            // -----------------------------------------------------------------
+            // Depth-first traversal of AABB tree to find islands. Put islands
+            // to sleep when all objects in island are resting. Wake up when
+            // anything interacts or applies a force to any body in the island.
+
             if (ta_rigid_body_intersect(a, b, &manifold)) {
                 ta_manifold *m = dlb_vec_alloc(manifolds);
                 *m = manifold;
@@ -858,6 +886,13 @@ static ta_manifold *detect_collisions(ta_scene *scene, double dt)
 
 void ta_scene_update(ta_scene *scene, float dt)
 {
+    // https://www.toptal.com/game/video-game-physics-part-i-an-introduction-to-rigid-body-dynamics
+
+    // Apply forces
+    // Update velocities / positions
+    // Detect collisions
+    // Resolve contraints
+
     dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
         if (ref->type != F_TA_RIGID_BODY) continue;
 

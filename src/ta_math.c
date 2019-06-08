@@ -73,12 +73,17 @@ int vec3_zero(ta_vec3 v)
 {
     return v.x == 0.0f && v.y == 0.0f && v.z == 0.0f;
 }
+int vec3_tiny(ta_vec3 v)
+{
+    return fabs(v.x) < TA_EPSILON &&
+           fabs(v.y) < TA_EPSILON &&
+           fabs(v.z) < TA_EPSILON;
+}
 int vec3_equal(ta_vec3 a, ta_vec3 b)
 {
-    return
-        fabs(a.x - b.x) < TA_EPSILON &&
-        fabs(a.y - b.y) < TA_EPSILON &&
-        fabs(a.z - b.z) < TA_EPSILON;
+    return fabs(a.x - b.x) < TA_EPSILON &&
+           fabs(a.y - b.y) < TA_EPSILON &&
+           fabs(a.z - b.z) < TA_EPSILON;
 }
 ta_vec3 vec3_negate(ta_vec3 v)
 {
@@ -135,7 +140,7 @@ ta_vec3 vec3_normalize(ta_vec3 v)
     if (len) {
         result = vec3_scalef(result, 1.0f / len);
     } else {
-        ta_log_write(tg_debug_log, "[WARNING] Normalizing zero vector\n");
+        //ta_log_write(tg_debug_log, "[WARNING] Normalizing zero vector\n");
         result = VEC3_ZERO;
     }
     return result;

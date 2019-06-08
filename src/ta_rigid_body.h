@@ -83,6 +83,9 @@ typedef struct ta_rigid_body_s {
     float density;
     float restitution;
 
+    float static_friction;
+    float dynamic_friction;
+
     // float gravity_scale;     // Is this useful?
     //u32 collision_groups;       // Bit flags; "layers"
 } ta_rigid_body;
