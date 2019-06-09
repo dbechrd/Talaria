@@ -50,6 +50,8 @@ typedef struct {
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
 typedef struct ta_rigid_body_s {
     ta_scene_ref ref;
+
+    ta_aabb aabb;
     ta_collider collider;
 
     // David's state variables
@@ -105,14 +107,19 @@ typedef struct ta_rigid_body_s {
     //   Pillow     Density : 0.1  Restitution : 0.2
     //   Static     Density : 0.0  Restitution : 0.4
     float density;
-    float restitution;
+    float e;  // Restitution
 
-    float static_friction;
-    float dynamic_friction;
+    float ks;  // Coefficient of static friction
+    float kd;  // Coefficient of dynamic friction
 
     //float gravity_scale;   // Is this useful?
     //u32 collision_groups;  // Bit flags; "layers"
 } ta_rigid_body;
+
+typedef struct {
+    ta_rigid_body *a;
+    ta_rigid_body *b;
+} ta_rigid_body_pair;
 
 typedef struct {
     ta_rigid_body *a;
@@ -131,6 +138,7 @@ void ta_rigid_body_init(ta_rigid_body *body);
 void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force);
 void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
 void ta_rigid_body_update(ta_rigid_body *body, float dt);
+bool ta_aabb_v_aabb(const ta_aabb *a, const ta_aabb *b, ta_manifold *manifold);
 bool ta_sphere_v_sphere(const ta_sphere *a, const ta_sphere *b,
     ta_manifold *manifold);
 bool ta_plane_v_sphere(const ta_plane *plane, const ta_sphere *sphere,

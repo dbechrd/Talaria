@@ -16,7 +16,6 @@ typedef struct ta_entity_s {
 
     ta_transform transform;
     ta_transform transform_prev;
-    ta_mat4 rotation;
     ta_mat4 model;
 
     const char *material_uid;
@@ -24,8 +23,6 @@ typedef struct ta_entity_s {
     const char *rigid_body_uid;
     const char *parent_uid;
 
-    // Broad phase; pick one!
-    ta_sphere sphere;
     ta_aabb aabb;
 
     bool invisible;
@@ -37,9 +34,6 @@ void ta_entity_init(ta_entity *e);
 ta_material *ta_entity_material(ta_entity *e);
 ta_mesh_group *ta_entity_mesh_group(ta_entity *e);
 ta_rigid_body *ta_entity_rigid_body(ta_entity *e);
-bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold);
+//bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold);
 void ta_entity_update(ta_entity *e);
-//void ta_entity_push_sphere(ta_entity *e, ta_rgba color);
-//void ta_entity_push_aabb(ta_entity *e, ta_rgba color);
-//void ta_entity_push_normals(ta_entity *e);
 void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha);

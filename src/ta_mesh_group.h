@@ -9,7 +9,6 @@ typedef struct ta_mesh_group_s {
     const char *path;
     ta_mesh *meshes;
     //dlb_hash meshes_by_name;
-    ta_sphere sphere;
     ta_aabb aabb;
 } ta_mesh_group;
 

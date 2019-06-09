@@ -67,14 +67,14 @@ void ta_rigid_body_init(ta_rigid_body *body)
     if (body->mass != 0.0f) {
         body->inv_mass = 1.0f / body->mass;
     }
-    if (!body->restitution) {
-        body->restitution = 0.5f;
+    if (!body->e) {
+        body->e = 0.5f;
     }
-    if (!body->static_friction) {
-        body->static_friction = 0.20f;
+    if (!body->ks) {
+        body->ks = 0.20f;
     }
-    if (!body->dynamic_friction) {
-        body->dynamic_friction = 0.15f;
+    if (!body->kd) {
+        body->kd = 0.15f;
     }
     if (body->collider.type == TA_COLLIDER_SPHERE) {
         // Sphere moment of inertia: 2/5 MR^2
@@ -126,7 +126,7 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     if (!vec3_equal(body->ang_velocity, VEC3_ZERO)) {
         ta_quat delta_orient = quat_from_axis_angle(
             vec3_normalize(body->ang_velocity),
-            vec3_len(body->ang_velocity)  // * dt  TODO: angular dt??
+            vec3_len(body->ang_velocity) //* dt  // TODO: angular dt??
         );
         body->orientation = quat_normalize(quat_mul(delta_orient, body->orientation));
     }
@@ -162,6 +162,26 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     // Reset accumulators
     body->force_accum = VEC3_ZERO;
     body->torque_accum = VEC3_ZERO;
+}
+
+bool ta_aabb_v_aabb(const ta_aabb *a, const ta_aabb *b, ta_manifold *manifold)
+{
+    // TODO: Handle generating manifolds for AABBs. For now, just allow this to
+    //       be used for broadphase collision detection.
+    DLB_ASSERT(!manifold);
+
+    bool collided = false;
+    if (a->extents.x == 0.0f || b->extents.x == 0.0f || (
+        a->center.x + a->extents.x > b->center.x - b->extents.x &&
+        a->center.y + a->extents.y > b->center.y - b->extents.y &&
+        a->center.z + a->extents.z > b->center.z - b->extents.z &&
+        b->center.x + b->extents.x > a->center.x - a->extents.x &&
+        b->center.y + b->extents.y > a->center.y - a->extents.y &&
+        b->center.z + b->extents.z > a->center.z - a->extents.z))
+    {
+        collided = true;
+    }
+    return collided;
 }
 
 bool ta_sphere_v_sphere(const ta_sphere *a, const ta_sphere *b,
@@ -262,15 +282,9 @@ bool ta_rigid_body_intersect(const ta_rigid_body *a, const ta_rigid_body *b,
     if (collided && manifold) {
         manifold->a = (void *)a;
         manifold->b = (void *)b;
-        manifold->e = MAX(a->restitution, b->restitution);
-        manifold->sf = sqrtf(
-            a->static_friction * a->static_friction +
-            b->static_friction * b->static_friction
-        );
-        manifold->df = sqrtf(
-            a->dynamic_friction * a->dynamic_friction +
-            b->dynamic_friction * b->dynamic_friction
-        );
+        manifold->e = MAX(a->e, b->e);
+        manifold->sf = sqrtf(a->ks * a->ks + b->ks * b->ks);
+        manifold->df = sqrtf(a->kd * a->kd + b->kd * b->kd);
     }
     return collided;
 }
@@ -345,23 +359,27 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
         debug_a_contact.radius = 0.1f;
         ta_primitive_push_sphere(debug_a_contact, TA_COLOR_RED);
 
-        //ta_line_3d debug_a_contact_world;
-        //debug_a_contact_world.p0 = a->position;
-        //debug_a_contact_world.p1 = manifold->contacts[i];
-        //ta_primitive_push_line_3d(debug_a_contact_world, TA_COLOR_WHITE, TA_COLOR_RED);
-        //ta_line_3d debug_b_contact_world;
-        //debug_b_contact_world.p0 = b->position;
-        //debug_b_contact_world.p1 = manifold->contacts[i];
-        //ta_primitive_push_line_3d(debug_b_contact_world, TA_COLOR_WHITE, TA_COLOR_RED);
-        //
-        //ta_line_3d debug_a_impulse;
-        //debug_a_impulse.p0 = contact_world;
-        //debug_a_impulse.p1 = vec3_add(contact_world, a_impulse);
-        //ta_primitive_push_line_3d(debug_a_impulse, TA_COLOR_WHITE, TA_COLOR_GREEN);
-        //ta_line_3d debug_b_impulse;
-        //debug_b_impulse.p0 = contact_world;
-        //debug_b_impulse.p1 = vec3_add(contact_world, b_impulse);
-        //ta_primitive_push_line_3d(debug_b_impulse, TA_COLOR_WHITE, TA_COLOR_BLUE);
+        if (a->collider.type != TA_COLLIDER_PLANE) {
+            ta_line_3d debug_a_contact_world;
+            debug_a_contact_world.p0 = a->position;
+            debug_a_contact_world.p1 = manifold->contacts[i];
+            ta_primitive_push_line_3d(debug_a_contact_world, TA_COLOR_WHITE, TA_COLOR_RED);
+        }
+        if (b->collider.type != TA_COLLIDER_PLANE) {
+            ta_line_3d debug_b_contact_world;
+            debug_b_contact_world.p0 = b->position;
+            debug_b_contact_world.p1 = manifold->contacts[i];
+            ta_primitive_push_line_3d(debug_b_contact_world, TA_COLOR_WHITE, TA_COLOR_RED);
+        }
+
+        ta_line_3d debug_a_impulse;
+        debug_a_impulse.p0 = contact_world;
+        debug_a_impulse.p1 = vec3_add(contact_world, a_impulse);
+        ta_primitive_push_line_3d(debug_a_impulse, TA_COLOR_WHITE, TA_COLOR_GREEN);
+        ta_line_3d debug_b_impulse;
+        debug_b_impulse.p0 = contact_world;
+        debug_b_impulse.p1 = vec3_add(contact_world, b_impulse);
+        ta_primitive_push_line_3d(debug_b_impulse, TA_COLOR_WHITE, TA_COLOR_BLUE);
 
         if (a->collider.type == TA_COLLIDER_PLANE) {
             ta_primitive_push_plane(a->collider.data.plane, 1.0f, TA_COLOR_CYAN);
@@ -383,7 +401,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
             t = vec3_normalize(t);
 
             float jt = -vec3_dot(rv, t) / j_denom;
-            float jt_abs = fabs(jt);
+            float jt_abs = fabsf(jt);
             if (jt_abs < TA_EPSILON) {
                 return;
             }

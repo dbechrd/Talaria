@@ -34,26 +34,28 @@ void ta_entity_init(ta_entity *e)
         e->rigid_body_uid = body->ref.uid;
 #endif
     }
-    if (!e->sphere.radius) {
-        ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
-        e->sphere = mesh_group->sphere;
-    }
     if (!e->aabb.extents.x) {
         bool use_mesh_aabb = false;
         ta_rigid_body *rigid_body = ta_entity_rigid_body(e);
         if (rigid_body) {
             switch (rigid_body->collider.type) {
-                case TA_COLLIDER_AABB: {
-                    e->aabb = rigid_body->collider.data.aabb;
+                case TA_COLLIDER_PLANE: {
+                    // Infinite AABB
                     break;
+                } case TA_COLLIDER_SPHERE: {
+                    float radius = rigid_body->collider.data.sphere.radius;
+                    e->aabb.extents.x = radius;
+                    e->aabb.extents.y = radius;
+                    e->aabb.extents.z = radius;
+                    break;
+                } case TA_COLLIDER_AABB: {
+                    e->aabb = rigid_body->aabb;
+                    break;
+                } default: {
+                    DLB_ASSERT(!"Unhandled collider type, need for broadphase");
                 }
-                default:
-                    use_mesh_aabb = true;
             }
         } else {
-            use_mesh_aabb = true;
-        }
-        if (use_mesh_aabb) {
             ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
             e->aabb = mesh_group->aabb;
         }
@@ -88,10 +90,10 @@ ta_rigid_body *ta_entity_rigid_body(ta_entity *e)
         e->rigid_body_uid);
     return rigid_body;
 }
-
+#if 0
 bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold)
 {
-    bool broad_phase = ta_sphere_v_sphere(&a->sphere, &b->sphere, 0);
+    bool broad_phase = ta_aabb_v_aabb(&a->aabb, &b->aabb, 0);
     if (!broad_phase) {
         return false;
     }
@@ -101,7 +103,7 @@ bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold)
     bool narrow_phase = ta_rigid_body_intersect(ra, rb, manifold);
     return narrow_phase;
 }
-
+#endif
 void ta_entity_update(ta_entity *e)
 {
     e->transform_prev = e->transform;
@@ -109,15 +111,6 @@ void ta_entity_update(ta_entity *e)
     if (body) {
         e->transform.position = body->position;
         e->transform.orientation = body->orientation;
-    }
-}
-
-static void ta_entity_push_sphere(ta_entity *e, ta_rgba color)
-{
-    if (color.a) {
-        ta_primitive_push_sphere(e->sphere, color);
-    } else {
-        ta_primitive_push_rgb_sphere(e->sphere);
     }
 }
 
@@ -171,9 +164,9 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
     }
 
     // TODO: Multiply position by parent via mat4_mul(parent, transform)
-    e->model = mat4_translate(lerp_pos);
+    ta_mat4 trans = mat4_translate(lerp_pos);
     ta_mat4 orient = mat4_rotate_quat(lerp_orient);
-    e->model = mat4_mul(&e->model, &orient);
+    e->model = mat4_mul(&trans, &orient);
 
     if (!camera->debug_no_mesh) {
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
@@ -189,7 +182,6 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
     }
 
     if (camera->debug_normals ||
-        camera->debug_bounding_spheres ||
         camera->debug_bounding_boxes)
     {
         ta_primitive_render();
@@ -200,9 +192,11 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
         if (camera->debug_normals) {
             ta_entity_push_normals(e);
         }
-        if (camera->debug_bounding_spheres) {
-            ta_entity_push_sphere(e, TA_COLOR_INVIS);
-        }
+        ta_primitive_render();
+        ta_primitive_clear();
+
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &trans);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &trans);
         if (camera->debug_bounding_boxes) {
             ta_entity_push_aabb(e, TA_COLOR_RED);
         }

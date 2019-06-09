@@ -823,66 +823,67 @@ void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
     return ref->ptr;
 }
 
-static ta_manifold *detect_collisions(ta_scene *scene, double dt)
+static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
 {
+    // Box2D supports 16 collision categories. For each fixture you can
+    // specify which category it belongs to. You also specify what other
+    // categories this fixture can collide with.
+    //
+    //   if ((categoryA & maskB) != 0 && (categoryB & maskA) != 0)
+    //
+    // Collision groups let you specify an integral group index. You can
+    // have all fixtures with the same group index always collide
+    // (positive index) or never collide (negative index). Group indices
+    // are usually used for things that are somehow related, like the
+    // parts of a bicycle.
+    //
+    // Collisions between fixtures of different group indices are
+    // filtered according the category and mask bits. In other words,
+    // group filtering has higher precedence than category filtering.
+    //
+    // - A fixture on a static body can only collide with a dynamic
+    //   body.
+    // - A fixture on a kinematic body can only collide with a dynamic
+    //   body.
+    // - Fixtures on the same body never collide with each other.
+    // - You can optionally enable/disable collision between fixtures on
+    //   bodies connected by a joint.
+    //
+    // Sensor: Fixture which only detects collision, no response.
+    // -----------------------------------------------------------------
+    // Depth-first traversal of AABB tree to find islands. Put islands
+    // to sleep when all objects in island are resting. Wake up when
+    // anything interacts or applies a force to any body in the island.
+
     UNUSED(dt);
 
-    static int print = 0;
-    if (print) ta_log_write(tg_debug_log, "[START] ta_rigid_body_resolve\n");
+    ta_rigid_body_pair *pairs = 0;
 
-    ta_manifold *manifolds = 0;
-    ta_manifold manifold;
-    dlb_vec_each(ta_scene_ref *, ref_a, scene->refs) {
-        if (ref_a->type != F_TA_RIGID_BODY) continue;
-        ta_rigid_body *a = ref_a->ptr;
-        dlb_vec_range(ta_scene_ref *, ref_b, ref_a + 1, dlb_vec_end(scene->refs)) {
-            if (ref_b->type != F_TA_RIGID_BODY) continue;
-            ta_rigid_body *b = ref_b->ptr;
-
-            // Box2D supports 16 collision categories. For each fixture you can
-            // specify which category it belongs to. You also specify what other
-            // categories this fixture can collide with.
-            //
-            //   if ((categoryA & maskB) != 0 && (categoryB & maskA) != 0)
-            //
-            // Collision groups let you specify an integral group index. You can
-            // have all fixtures with the same group index always collide
-            // (positive index) or never collide (negative index). Group indices
-            // are usually used for things that are somehow related, like the
-            // parts of a bicycle.
-            //
-            // Collisions between fixtures of different group indices are
-            // filtered according the category and mask bits. In other words,
-            // group filtering has higher precedence than category filtering.
-            //
-            // - A fixture on a static body can only collide with a dynamic
-            //   body.
-            // - A fixture on a kinematic body can only collide with a dynamic
-            //   body.
-            // - Fixtures on the same body never collide with each other.
-            // - You can optionally enable/disable collision between fixtures on
-            //   bodies connected by a joint.
-            //
-            // Sensor: Fixture which only detects collision, no response.
-            // -----------------------------------------------------------------
-            // Depth-first traversal of AABB tree to find islands. Put islands
-            // to sleep when all objects in island are resting. Wake up when
-            // anything interacts or applies a force to any body in the island.
-
-            if (ta_rigid_body_intersect(a, b, &manifold)) {
-                ta_manifold *m = dlb_vec_alloc(manifolds);
-                *m = manifold;
-
-                if (print) {
-                    ta_log_write(tg_debug_log, "  '%s' collided with '%s'\n",
-                        a->ref.uid, b->ref.uid);
-                }
+    dlb_vec_each(ta_rigid_body *, a, scene->pools[F_TA_RIGID_BODY]) {
+        dlb_vec_range(ta_rigid_body *, b, a + 1, dlb_vec_end((ta_rigid_body *)scene->pools[F_TA_RIGID_BODY])) {
+            if (ta_aabb_v_aabb(&a->aabb, &b->aabb, 0)) {
+                ta_rigid_body_pair *pair = dlb_vec_alloc(pairs);
+                pair->a = a;
+                pair->b = b;
             }
         }
     }
 
-    if (print) ta_log_write(tg_debug_log, "[END]\n");
-    if (print) print--;
+    return pairs;
+}
+
+static ta_manifold *detect_collisions(ta_rigid_body_pair *pairs, double dt)
+{
+    UNUSED(dt);
+
+    ta_manifold *manifolds = 0;
+    ta_manifold manifold;
+    dlb_vec_each(ta_rigid_body_pair *, pair, pairs) {
+        if (ta_rigid_body_intersect(pair->a, pair->b, &manifold)) {
+            ta_manifold *m = dlb_vec_alloc(manifolds);
+            *m = manifold;
+        }
+    }
 
     return manifolds;
 }
@@ -896,26 +897,25 @@ void ta_scene_update(ta_scene *scene, float dt)
     // Detect collisions
     // Resolve contraints
 
-    dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
-        if (ref->type != F_TA_RIGID_BODY) continue;
-
-        ta_rigid_body *body = ref->ptr;
+    dlb_vec_each(ta_rigid_body *, body, scene->pools[F_TA_RIGID_BODY]) {
         ta_rigid_body_update(body, dt);
     }
 
-    // Collision detection & resolution
-    ta_manifold *manifolds = detect_collisions(scene, dt);
-    dlb_vec_each(ta_manifold *, manifold, manifolds) {
-        ta_rigid_body_resolve_collision(manifold);
-        ta_rigid_body_positional_correction(manifold);
+    // Collision broad phase
+    ta_rigid_body_pair *pairs = collision_broadphase(scene, dt);
+    if (pairs) {
+        // Collision narrow phase
+        ta_manifold *manifolds = detect_collisions(pairs, dt);
+        dlb_vec_each(ta_manifold *, manifold, manifolds) {
+            ta_rigid_body_resolve_collision(manifold);
+            ta_rigid_body_positional_correction(manifold);
+        }
+        dlb_vec_clear(manifolds);
+        dlb_vec_clear(pairs);
     }
-    dlb_vec_clear(manifolds);
 
     // Update entities
-    dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
-        if (ref->type != F_TA_ENTITY) continue;
-
-        ta_entity *entity = ref->ptr;
+    dlb_vec_each(ta_entity *, entity, scene->pools[F_TA_ENTITY]) {
         ta_entity_update(entity);
     }
 }

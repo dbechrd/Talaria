@@ -41,7 +41,6 @@ typedef struct ta_camera_s {
 
     bool debug_wireframe;
     bool debug_normals;
-    bool debug_bounding_spheres;
     bool debug_bounding_boxes;
     bool debug_no_mesh;
     bool debug_follow_pinky;

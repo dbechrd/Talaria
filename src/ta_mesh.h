@@ -27,7 +27,6 @@ typedef struct ta_mesh_s {
 
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;
-    ta_sphere sphere;
     ta_aabb aabb;
 
 	GLuint vao;

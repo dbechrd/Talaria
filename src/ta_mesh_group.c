@@ -102,8 +102,8 @@ void ta_mesh_group_load(ta_mesh_group *group)
 
         mesh->aabb.extents = vec3_scalef(vec3_sub(mesh_max, mesh_min), 0.5f);
         mesh->aabb.center = vec3_add(mesh_min, mesh->aabb.extents);
-        mesh->sphere.center = mesh->aabb.center;
-        mesh->sphere.radius = MIN(mesh_radius, vec3_len(mesh->aabb.extents));
+        //mesh->sphere.center = mesh->aabb.center;
+        //mesh->sphere.radius = MIN(mesh_radius, vec3_len(mesh->aabb.extents));
 
         group_min.x = MIN(group_min.x, mesh_min.x);
         group_min.y = MIN(group_min.y, mesh_min.y);
@@ -128,8 +128,8 @@ void ta_mesh_group_load(ta_mesh_group *group)
 
     group->aabb.extents = vec3_scalef(vec3_sub(group_max, group_min), 0.5f);
     group->aabb.center = vec3_add(group_min, group->aabb.extents);
-    group->sphere.center = group->aabb.center;
-    group->sphere.radius = MIN(group_radius, vec3_len(group->aabb.extents));
+    //group->sphere.center = group->aabb.center;
+    //group->sphere.radius = MIN(group_radius, vec3_len(group->aabb.extents));
 
     tinyobj_attrib_free(&attrib);
     tinyobj_shapes_free(shapes, num_shapes);

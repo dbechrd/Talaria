@@ -51,10 +51,9 @@ void ta_game_init()
     BIND1(PLAY, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, M);
     BIND1(PLAY, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
     BIND1(PLAY, DEBUG_TOGGLE_BBOX,       PRESS, 1);
-    BIND1(PLAY, DEBUG_TOGGLE_SPHERE,     PRESS, 2);
-    BIND1(PLAY, DEBUG_TOGGLE_NORMALS,    PRESS, 3);
+    BIND1(PLAY, DEBUG_TOGGLE_NORMALS,    PRESS, 2);
+    BIND1(PLAY, DEBUG_FOCUS_PINKY,       PRESS, 3);
     BIND1(PLAY, DEBUG_BOOST_PINKY,       HOLD,  4);
-    BIND1(PLAY, DEBUG_FOCUS_PINKY,       PRESS, 5);
 
     //--------------------------------------------------------------------------
     // FREE_CAM
@@ -78,10 +77,9 @@ void ta_game_init()
     BIND1(FREE_CAM, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, M);
     BIND1(FREE_CAM, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
     BIND1(FREE_CAM, DEBUG_TOGGLE_BBOX,       PRESS, 1);
-    BIND1(FREE_CAM, DEBUG_TOGGLE_SPHERE,     PRESS, 2);
-    BIND1(FREE_CAM, DEBUG_TOGGLE_NORMALS,    PRESS, 3);
+    BIND1(FREE_CAM, DEBUG_TOGGLE_NORMALS,    PRESS, 2);
+    BIND1(FREE_CAM, DEBUG_FOCUS_PINKY,       PRESS, 3);
     BIND1(FREE_CAM, DEBUG_BOOST_PINKY,       HOLD,  4);
-    BIND1(FREE_CAM, DEBUG_FOCUS_PINKY,       PRESS, 5);
 #undef BIND1
 
     ta_log_write(tg_debug_log, "[Game] Game initialized\n");
@@ -183,10 +181,6 @@ void ta_game_update()
             } case TA_EVENT_DEBUG_TOGGLE_BBOX: {
                 tg_game.camera->debug_bounding_boxes =
                     !tg_game.camera->debug_bounding_boxes;
-                break;
-            } case TA_EVENT_DEBUG_TOGGLE_SPHERE: {
-                tg_game.camera->debug_bounding_spheres =
-                    !tg_game.camera->debug_bounding_spheres;
                 break;
             } case TA_EVENT_DEBUG_TOGGLE_MESH: {
                 tg_game.camera->debug_no_mesh =
