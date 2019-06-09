@@ -53,33 +53,70 @@ void ta_rigid_body_init(ta_rigid_body *body)
 {
     if (quat_zero(body->orientation)) {
         body->orientation = QUAT_IDENT;
+    } else {
+        body->orientation = quat_normalize(body->orientation);
     }
     if (body->collider.type == 0 && !vec3_len(body->collider.data.plane.normal))
     {
         body->collider.type = TA_COLLIDER_SPHERE;
         body->collider.data.sphere.radius = 1.0f;
+    } else if (body->collider.type == TA_COLLIDER_PLANE) {
+        body->collider.data.plane.normal = vec3_normalize(body->collider.data.plane.normal);
     }
     update_collider_center(body);
     if (body->mass != 0.0f) {
         body->inv_mass = 1.0f / body->mass;
     }
     if (!body->restitution) {
-        body->restitution = 0.7f;
+        body->restitution = 0.5f;
     }
     if (!body->static_friction) {
-        body->static_friction = 0.1f;
+        body->static_friction = 0.20f;
     }
     if (!body->dynamic_friction) {
-        body->dynamic_friction = 0.05f;
+        body->dynamic_friction = 0.15f;
     }
+    if (body->collider.type == TA_COLLIDER_SPHERE) {
+        // Sphere moment of inertia: 2/5 MR^2
+        float sphere_moment = 2.0f/5.0f * body->mass *
+            body->collider.data.sphere.radius * body->collider.data.sphere.radius;
+        float inv_moment = 1.0f / sphere_moment;
+        body->inv_tensor_local = mat3_init(
+            inv_moment, 0.0f, 0.0f,
+            0.0f, inv_moment, 0.0f,
+            0.0f, 0.0f, inv_moment
+        );
+    }
+    DLB_ASSERT(1);
 }
 
+#if 0
 void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force, ta_vec3 at)
 {
     // http://allenchou.net/2013/12/game-physics-motion-dynamics-implementations/
     body->force_accum = vec3_add(body->force_accum, force);
     body->torque_accum = vec3_add(body->torque_accum,
         vec3_cross(vec3_sub(at, body->centroid_global), force));
+}
+#endif
+
+void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force)
+{
+    body->force_accum = vec3_add(body->force_accum, force);
+}
+
+void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact)
+{
+    if (body->inv_mass) {
+        ta_vec3 dv = vec3_scalef(impulse, body->inv_mass);
+        body->velocity = vec3_add(body->velocity, dv);
+
+        ta_vec3 moment = vec3_cross(contact, impulse);
+        ta_vec3 dw = mat3_mul_vec3(&body->inv_tensor_global, moment);
+        body->ang_velocity = vec3_add(body->ang_velocity, dw);
+    } else {
+        body->velocity = VEC3_ZERO;
+    }
 }
 
 void ta_rigid_body_update(ta_rigid_body *body, float dt)
@@ -91,15 +128,11 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
             vec3_normalize(body->ang_velocity),
             vec3_len(body->ang_velocity)  // * dt  TODO: angular dt??
         );
-        body->orientation = quat_mul(delta_orient, body->orientation);
-
-        // NOTE: If this assert triggers, probably floating point error. Just
-        // always normalize the quat and remove the assert.
-        DLB_ASSERT(quat_equals(body->orientation, quat_normalize(body->orientation)));
+        body->orientation = quat_normalize(quat_mul(delta_orient, body->orientation));
     }
 
     ta_vec3 gravity = { 0.0f, -9.81f, 0.0f };
-    ta_rigid_body_apply_force(body, gravity, VEC3_ZERO);
+    ta_rigid_body_apply_force(body, gravity);
 
     ta_vec3 acc = vec3_scalef(vec3_scalef(body->force_accum, dt), body->inv_mass);
     body->velocity = vec3_add(body->velocity, acc);
@@ -107,15 +140,24 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
         vec3_scalef(body->velocity, dt));
     update_collider_center(body);
 
-#if 0
+#if 1
     // TODO: Implement drag in a way that doesn't vary with different timesteps
     //       The "compound interest" problem.
     body->velocity = vec3_scalef(body->velocity, 0.99f);
-    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.98f);
+    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.99f);
 #endif
 
-    // TODO: Update global tensor when orientation changes
-    //m_globalInverseInertiaTensor =  m_orientation * m_massData.localInertiaTensor * m_inverseOrientation
+    // Update global tensor when orientation changes
+    if (!quat_equals(body->tensor_orientation, body->orientation)) {
+        // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf p. D14
+        // I_global = R * I_body * R^T
+        ta_mat3 rot = mat3_rotate_quat(body->orientation);
+        ta_mat3 rot_t = mat3_transpose(&rot);
+        ta_mat3 inv_t_global = mat3_mul(&body->inv_tensor_local, &rot_t);
+        inv_t_global = mat3_mul(&rot, &inv_t_global);
+        body->inv_tensor_global = inv_t_global;
+        body->tensor_orientation = body->orientation;
+    }
 
     // Reset accumulators
     body->force_accum = VEC3_ZERO;
@@ -143,6 +185,9 @@ bool ta_sphere_v_sphere(const ta_sphere *a, const ta_sphere *b,
             manifold->depth = a->radius;
             manifold->normal = VEC3_Y;
         }
+        manifold->contact_count = 1;
+        manifold->contacts[0] = vec3_add(a->center,
+            vec3_scalef(manifold->normal, manifold->depth));
     }
 
     return true;
@@ -162,6 +207,9 @@ bool ta_plane_v_sphere(const ta_plane *plane, const ta_sphere *sphere,
     if (manifold) {
         manifold->depth = r - d;
         manifold->normal = plane->normal;
+        manifold->contact_count = 1;
+        manifold->contacts[0] = vec3_add(sphere->center,
+            vec3_scalef(manifold->normal, -d));
     }
 
     return true;
@@ -176,7 +224,8 @@ static bool intersector_sphere_v_sphere(const ta_collider *a,
     ta_sphere sphere_b;
     sphere_b.center = b->center_world;
     sphere_b.radius = b->data.sphere.radius;
-    return ta_sphere_v_sphere(&sphere_a, &sphere_b, manifold);
+    bool collided = ta_sphere_v_sphere(&sphere_a, &sphere_b, manifold);
+    return collided;
 }
 
 static bool intersector_plane_v_sphere(const ta_collider *a,
@@ -188,7 +237,8 @@ static bool intersector_plane_v_sphere(const ta_collider *a,
     ta_sphere sphere;
     sphere.center = b->center_world;
     sphere.radius = b->data.sphere.radius;
-    return ta_plane_v_sphere(&plane, &sphere, manifold);
+    bool collided = ta_plane_v_sphere(&plane, &sphere, manifold);
+    return collided;
 }
 
 bool ta_rigid_body_intersect(const ta_rigid_body *a, const ta_rigid_body *b,
@@ -212,6 +262,15 @@ bool ta_rigid_body_intersect(const ta_rigid_body *a, const ta_rigid_body *b,
     if (collided && manifold) {
         manifold->a = (void *)a;
         manifold->b = (void *)b;
+        manifold->e = MAX(a->restitution, b->restitution);
+        manifold->sf = sqrtf(
+            a->static_friction * a->static_friction +
+            b->static_friction * b->static_friction
+        );
+        manifold->df = sqrtf(
+            a->dynamic_friction * a->dynamic_friction +
+            b->dynamic_friction * b->dynamic_friction
+        );
     }
     return collided;
 }
@@ -221,156 +280,136 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
     ta_rigid_body *a = manifold->a;
     ta_rigid_body *b = manifold->b;
 
-    //a->ang_velocity = VEC3_ZERO;
-    //b->ang_velocity = VEC3_ZERO;
+    // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
+    if (a->inv_mass == 0.0f && b->inv_mass == 0.0f)
+    {
+        ta_log_write(tg_debug_log, "[WARNING] Detected movement of infinite mass body\n");
+        a->velocity = VEC3_ZERO;
+        b->velocity = VEC3_ZERO;
+        return;
+    }
 
-    // Relative velocity
-    ta_vec3 dv = vec3_sub(b->velocity, a->velocity);
+    for (u32 i = 0; i < manifold->contact_count; i++) {
+        // Radii
+        ta_vec3 ra = vec3_sub(manifold->contacts[i], a->position);
+        ta_vec3 rb = vec3_sub(manifold->contacts[i], b->position);
 
-    // Relative velocity along normal
-    float v_normal = vec3_dot(dv, manifold->normal);
+        // Relative velocity
+        //ta_vec3 rv = vec3_sub(b->velocity, a->velocity);
+        ta_vec3 rv_a = vec3_sub(a->velocity, vec3_cross(a->ang_velocity, ra));
+        ta_vec3 rv_b = vec3_add(b->velocity, vec3_cross(b->ang_velocity, rb));
+        ta_vec3 rv = vec3_sub(rv_b, rv_a);
 
-    // If bodies moving apart, let it happen
-    if (v_normal < 0.0f) {
-        // TODO: Restitution
-        // "Box2D also uses inelastic collisions when the collision velocity is
-        // small. This is done to prevent jitter." -Box2D manual
-        float e = MAX(a->restitution, b->restitution);
+        // Relative velocity along normal
+        float v_normal = vec3_dot(rv, manifold->normal);
 
-        // Impulse
-        float j = -(1.0f + e) * v_normal;
-        j /= a->inv_mass + b->inv_mass;
-
-        // Apply inpulse
-        // HACK: The "at" vector is only valid for spheres right now, need to
-        // calculate contact points properly for other types of colliders.
-        ta_vec3 impulse = vec3_scalef(manifold->normal, j);
-
-        //ta_rigid_body_apply_force(a, vec3_negate(impulse),
-        //  vec3_scalef(vec3_negate(manifold->normal), a->collider.data.sphere.radius));
-        //ta_rigid_body_apply_force(b, impulse,
-        //  vec3_scalef(manifold->normal, b->collider.data.sphere.radius));
-
-#if 0
-        a->velocity = vec3_sub(a->velocity, vec3_scalef(impulse, a->inv_mass));
-        b->velocity = vec3_add(b->velocity, vec3_scalef(impulse, b->inv_mass));
-#else
-        ta_vec3 a_impulse = vec3_scalef(impulse, -a->inv_mass);
-        ta_vec3 b_impulse = vec3_scalef(impulse, b->inv_mass);
-        a->velocity = vec3_add(a->velocity, a_impulse);
-        b->velocity = vec3_add(b->velocity, b_impulse);
-
-        DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
-        ta_vec3 at = vec3_scalef(manifold->normal, -b->collider.data.sphere.radius);
-        ta_vec3 at_world = vec3_add(b->position, at);
-
-        //if (a->inv_mass) {
-        //    a->ang_velocity = vec3_cross(at, vec3_add(a->position, a_impulse));
-        //}
-        if (b->inv_mass) {
-            // HACK: How is this supposed to be calculated for e.g. to moving
-            //       bodies? Seems like hack w/ floor at the moment.
-            b->ang_velocity = vec3_cross(at, vec3_negate(b->velocity));
+        // If bodies moving apart, let it happen
+        if (v_normal >= 0.0f) {
+            return;
         }
 
-        //vec3_scalef(a->ang_velocity, 100.0f);
-        //vec3_scalef(b->ang_velocity, 100.0f);
+        float e = manifold->e;
+#if 0
+        // "Box2D also uses inelastic collisions when the collision velocity is
+        // small. This is done to prevent jitter." -Box2D manual
+        if (v_normal < 0.01f) {
+            e = 0.0f;
+        }
+#endif
+        float j_numer = -(1.0f + e) * v_normal;
 
-        ta_sphere debug_a_at;
-        debug_a_at.center = at_world;
-        debug_a_at.radius = 0.1f;
-        ta_primitive_push_sphere(debug_a_at, TA_COLOR_RED);
+        // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-oriented-rigid-bodies--gamedev-8032
+        // TODO: Equation6 from the above the proper equation for 3D?
+        // http://chrishecker.com/images/b/bb/Gdmphys4.pdf p. 24, Figure 4
+        ta_vec3 impulse_ang_a = vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra);
+        ta_vec3 impulse_ang_b = vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb);
+        float impulse_ang = vec3_dot(vec3_add(impulse_ang_a, impulse_ang_b), manifold->normal);
 
-        ta_line_3d debug_a_impulse;
-        debug_a_impulse.p0 = at_world;
-        debug_a_impulse.p1 = vec3_add(at_world, a_impulse);
-        ta_primitive_push_line_3d(debug_a_impulse, TA_COLOR_WHITE, TA_COLOR_BLUE);
-        ta_line_3d debug_b_impulse;
-        debug_b_impulse.p0 = at_world;
-        debug_b_impulse.p1 = vec3_add(at_world, b_impulse);
-        ta_primitive_push_line_3d(debug_b_impulse, TA_COLOR_WHITE, TA_COLOR_YELLOW);
+        float j_denom = a->inv_mass + b->inv_mass + impulse_ang;
+
+        // Calculate impulse
+        float j = j_numer / j_denom;
+        ta_vec3 impulse = vec3_scalef(manifold->normal, j);
+
+        // Apply impulses
+        ta_rigid_body_apply_impulse(a, vec3_negate(impulse), ra);
+        ta_rigid_body_apply_impulse(b, impulse, rb);
+
+#if _DEBUG
+        ta_vec3 contact_world = manifold->contacts[i];
+        ta_vec3 a_impulse = vec3_scalef(impulse, a->inv_mass);
+        ta_vec3 b_impulse = vec3_scalef(impulse, b->inv_mass);
+
+        ta_sphere debug_a_contact;
+        debug_a_contact.center = contact_world;
+        debug_a_contact.radius = 0.1f;
+        ta_primitive_push_sphere(debug_a_contact, TA_COLOR_RED);
+
+        //ta_line_3d debug_a_contact_world;
+        //debug_a_contact_world.p0 = a->position;
+        //debug_a_contact_world.p1 = manifold->contacts[i];
+        //ta_primitive_push_line_3d(debug_a_contact_world, TA_COLOR_WHITE, TA_COLOR_RED);
+        //ta_line_3d debug_b_contact_world;
+        //debug_b_contact_world.p0 = b->position;
+        //debug_b_contact_world.p1 = manifold->contacts[i];
+        //ta_primitive_push_line_3d(debug_b_contact_world, TA_COLOR_WHITE, TA_COLOR_RED);
+        //
+        //ta_line_3d debug_a_impulse;
+        //debug_a_impulse.p0 = contact_world;
+        //debug_a_impulse.p1 = vec3_add(contact_world, a_impulse);
+        //ta_primitive_push_line_3d(debug_a_impulse, TA_COLOR_WHITE, TA_COLOR_GREEN);
+        //ta_line_3d debug_b_impulse;
+        //debug_b_impulse.p0 = contact_world;
+        //debug_b_impulse.p1 = vec3_add(contact_world, b_impulse);
+        //ta_primitive_push_line_3d(debug_b_impulse, TA_COLOR_WHITE, TA_COLOR_BLUE);
 
         if (a->collider.type == TA_COLLIDER_PLANE) {
             ta_primitive_push_plane(a->collider.data.plane, 1.0f, TA_COLOR_CYAN);
         }
 #endif
 
-#if 1
-        // Randy's random Coloumb friction idea
+        // Randy's Coloumb friction
         // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-friction-scene-and-jump-table--gamedev-7756
 
-        ta_vec3 rv = vec3_sub(b->velocity, a->velocity);
+        // Recalculate relative velocity after impulses are applied
+        //rv = vec3_sub(b->velocity, a->velocity);
+        rv_a = vec3_sub(a->velocity, vec3_cross(a->ang_velocity, ra));
+        rv_b = vec3_add(b->velocity, vec3_cross(b->ang_velocity, rb));
+        rv = vec3_sub(rv_b, rv_a);
+
         float rv_normal = vec3_dot(rv, manifold->normal);
+        ta_vec3 t = vec3_sub(rv, vec3_scalef(manifold->normal, rv_normal));
+        if (!vec3_tiny(t)) {
+            t = vec3_normalize(t);
 
-        ta_vec3 tangent = vec3_sub(rv, vec3_scalef(manifold->normal, rv_normal));
-        if (!vec3_tiny(tangent)) {
-            tangent = vec3_normalize(tangent);
-
-            float jt = -vec3_dot(rv, tangent);
-            jt = jt / (a->inv_mass + b->inv_mass);
-
-            float mu = sqrtf(a->static_friction*a->static_friction + b->static_friction*b->static_friction);
+            float jt = -vec3_dot(rv, t) / j_denom;
+            float jt_abs = fabs(jt);
+            if (jt_abs < TA_EPSILON) {
+                return;
+            }
 
             ta_vec3 friction_impulse;
-            if (fabs(jt) < j * mu) {
-                friction_impulse = vec3_scalef(tangent, jt);
+            if (jt_abs < j * manifold->sf) {
+                friction_impulse = vec3_scalef(t, jt);
             } else {
-                float dynamic_friction = sqrtf(a->dynamic_friction*a->dynamic_friction + b->dynamic_friction*b->dynamic_friction);
-                friction_impulse = vec3_scalef(tangent, -j * dynamic_friction);
+                friction_impulse = vec3_scalef(t, -j * manifold->df);
             }
 
-            ta_vec3 a_friction_impulse = vec3_scalef(friction_impulse, -a->inv_mass);
-            ta_vec3 b_friction_impulse = vec3_scalef(friction_impulse, b->inv_mass);
-            a->velocity = vec3_add(a->velocity, a_friction_impulse);
-            b->velocity = vec3_add(b->velocity, b_friction_impulse);
-
-            //if (a->inv_mass) {
-            //    a->ang_velocity = vec3_cross(at, vec3_add(a->position, a_friction_impulse));
-            //}
-            //if (b->inv_mass) {
-            //    b->ang_velocity = vec3_cross(at, friction_impulse);
-            //}
-            DLB_ASSERT(1);
+            // Apply friction impulses
+            ta_rigid_body_apply_impulse(a, vec3_negate(friction_impulse), ra);
+            ta_rigid_body_apply_impulse(b, friction_impulse, rb);
         }
-#endif
-#if 0
-        // Re-calculate relative velocity after normal impulse
-        // is applied (impulse from first article, this code comes
-        // directly thereafter in the same resolve function)
-        Vec2 rv = VB - VA
-
-            // Solve for the tangent vector
-            Vec2 tangent = rv - Dot( rv, normal ) * normal
-            tangent.Normalize( )
-
-            // Solve for magnitude to apply along the friction vector
-            float jt = -Dot( rv, t )
-            jt = jt / (1 / MassA + 1 / MassB)
-
-            // PythagoreanSolve = A^2 + B^2 = C^2, solving for C given A and B
-            // Use to approximate mu given friction coefficients of each body
-            float mu = PythagoreanSolve( A->staticFriction, B->staticFriction )
-
-            // Clamp magnitude of friction and create impulse vector
-            Vec2 frictionImpulse
-            if(abs( jt ) < j * mu)
-                frictionImpulse = jt * t
-            else
-            {
-                dynamicFriction = PythagoreanSolve( A->dynamicFriction, B->dynamicFriction )
-                    frictionImpulse = -j * t * dynamicFriction
-            }
-
-        // Apply
-        A->velocity -= (1 / A->mass) * frictionImpulse
-            B->velocity += (1 / B->mass) * frictionImpulse
-#endif
     }
-    DLB_ASSERT(1);
+}
+
+void ta_rigid_body_positional_correction(ta_manifold *manifold)
+{
+    ta_rigid_body *a = manifold->a;
+    ta_rigid_body *b = manifold->b;
 
     // Positional correction
-    const float percent = 1.0f;
     const float slop = TA_EPSILON;
+    const float percent = 1.0f;
     float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) * percent;
     ta_vec3 correction = vec3_scalef(manifold->normal, c);
     a->position = vec3_sub(a->position, vec3_scalef(correction, a->inv_mass));

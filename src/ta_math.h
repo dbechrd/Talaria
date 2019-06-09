@@ -99,6 +99,8 @@ extern const ta_vec3 VEC3_EPSILON;
 
 extern const ta_quat QUAT_IDENT;
 
+extern const ta_mat3 MAT3_IDENT;
+
 extern const ta_mat4 MAT4_IDENT;
 
 extern const ta_rgba TA_COLOR_INVIS;
@@ -160,10 +162,12 @@ ta_mat3 mat3_init(
     float m00, float m01, float m02,
     float m10, float m11, float m12,
     float m20, float m21, float m22);
+ta_mat3 mat3_transpose(const ta_mat3 *m);
 ta_mat3 mat3_rotate_x(float deg);
 ta_mat3 mat3_rotate_y(float deg);
 ta_mat3 mat3_rotate_z(float deg);
 ta_mat3 mat3_rotate_quat(ta_quat q);
+ta_mat3 mat3_mul(const ta_mat3 *a, const ta_mat3 *b);
 ta_vec3 mat3_mul_vec3(const ta_mat3 *m, ta_vec3 v);
 ta_rgb mat3_mul_rgb(const ta_mat3 *m, ta_rgb v);
 ta_mat3 mat3_hue_rotation(float degrees);

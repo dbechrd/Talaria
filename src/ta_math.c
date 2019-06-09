@@ -17,6 +17,12 @@ const ta_vec3 VEC3_EPSILON = { TA_EPSILON, TA_EPSILON, TA_EPSILON };
 
 const ta_quat QUAT_IDENT = { 0.0f, 0.0f, 0.0f, 1.0f };
 
+const ta_mat3 MAT3_IDENT = {
+    1.0f, 0.0f, 0.0f,
+    0.0f, 1.0f, 0.0f,
+    0.0f, 0.0f, 1.0f,
+};
+
 const ta_mat4 MAT4_IDENT = {
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
@@ -140,7 +146,7 @@ ta_vec3 vec3_normalize(ta_vec3 v)
     if (len) {
         result = vec3_scalef(result, 1.0f / len);
     } else {
-        //ta_log_write(tg_debug_log, "[WARNING] Normalizing zero vector\n");
+        ta_log_write(tg_debug_log, "[WARNING] Normalizing zero vector\n");
         result = VEC3_ZERO;
     }
     return result;
@@ -375,6 +381,15 @@ ta_mat3 mat3_init(
     result.data.f[2][2] = m22;
     return result;
 }
+ta_mat3 mat3_transpose(const ta_mat3 *m)
+{
+    ta_mat3 result = mat3_init(
+        m->data.f[0][0], m->data.f[1][0], m->data.f[2][0],
+        m->data.f[0][1], m->data.f[1][1], m->data.f[2][1],
+        m->data.f[0][2], m->data.f[1][2], m->data.f[2][2]
+    );
+    return result;
+}
 ta_mat3 mat3_rotate_x(float deg)
 {
     float rad = DEG_TO_RADF(deg);
@@ -437,6 +452,18 @@ ta_mat3 mat3_rotate_quat(ta_quat q)
     m.data.f[2][1] = 2*yz + 2*xw;
     m.data.f[2][2] = 1 - 2*xx - 2*yy;
     return m;
+}
+ta_mat3 mat3_mul(const ta_mat3 *a, const ta_mat3 *b)
+{
+    ta_mat3 result = { 0 };
+    for (int j = 0; j < 3; ++j) {
+        for (int i = 0; i < 3; ++i) {
+            for (int n = 0; n < 3; ++n) {
+                result.data.f[j][i] += a->data.f[j][n] * b->data.f[n][i];
+            }
+        }
+    }
+    return result;
 }
 ta_vec3 mat3_mul_vec3(const ta_mat3 *m, ta_vec3 v)
 {

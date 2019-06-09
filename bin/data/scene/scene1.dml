@@ -162,19 +162,19 @@ ta_entity:
   uid: "entity_player"
   mesh_group_uid: "mesh_group_prim_sphere"
   rigid_body_uid: "rb_entity_player"
-#ta_rigid_body:
-#  uid: "rb_entity_sphere1"
-#  mass: 1.0
-#  position: { x: 0.2, y: 6.0, z: 0.2 }
-#ta_entity:
-#  uid: "entity_sphere1"
-#  mesh_group_uid: "mesh_group_prim_sphere"
-#  rigid_body_uid: "rb_entity_sphere1"
-#ta_rigid_body:
-#  uid: "rb_entity_sphere2"
-#  mass: 1.0
-#  position: { x: 0.3, y: 9.0, z: 0.3 }
-#ta_entity:
-#  uid: "entity_sphere2"
-#  mesh_group_uid: "mesh_group_prim_sphere"
-#  rigid_body_uid: "rb_entity_sphere2"
+ta_rigid_body:
+  uid: "rb_entity_sphere1"
+  mass: 1.0
+  position: { x: 0.2, y: 6.0, z: 0.2 }
+ta_entity:
+  uid: "entity_sphere1"
+  mesh_group_uid: "mesh_group_prim_sphere"
+  rigid_body_uid: "rb_entity_sphere1"
+ta_rigid_body:
+  uid: "rb_entity_sphere2"
+  mass: 1.0
+  position: { x: 0.3, y: 9.0, z: 0.3 }
+ta_entity:
+  uid: "entity_sphere2"
+  mesh_group_uid: "mesh_group_prim_sphere"
+  rigid_body_uid: "rb_entity_sphere2"

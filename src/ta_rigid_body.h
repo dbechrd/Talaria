@@ -52,18 +52,42 @@ typedef struct ta_rigid_body_s {
     ta_scene_ref ref;
     ta_collider collider;
 
+    // David's state variables
+    // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf p. D16
+#if 0
+    // Constant quantities
+    float mass;        // M: mass
+    ta_mat3 Ibody,     // Ibody
+            Ibodyinv;  // I-1 body (inverse of Ibody)
+
+    // State variables
+    ta_vec3 x;     // x(t): position
+    quaternion q;  // q(t): rotation
+    ta_vec3 P,     // P(t): linear momentum (P = mv) (v = P * mass_inv)
+            L;     // L(t): angular momentum (L = Iw) (w = L * I_inv)
+
+    // Derived quantities (auxiliary variables)
+    ta_mat3 Iinv;    // I-1(t): I-1 global (global inverse of Ibody)
+    ta_vec3 v,      // v(t): linear velocity
+            omega;  // w(t): angular velocity
+
+    // Computed quantities
+    ta_vec3 force,   // F(t): sum of applied forces
+            torque;  // t(t): sum of applied torques
+#endif
+
     float mass;
     float inv_mass;
+
     //ta_mat3 tensor;
     ta_mat3 inv_tensor_global;
     ta_mat3 inv_tensor_local;
+    ta_quat tensor_orientation;
 
     ta_vec3 centroid_global;
     ta_vec3 centroid_local;
 
     ta_vec3 position;
-
-    //ta_vec3 orientation_axis;
     ta_quat orientation;
 
     ta_vec3 velocity;
@@ -86,8 +110,8 @@ typedef struct ta_rigid_body_s {
     float static_friction;
     float dynamic_friction;
 
-    // float gravity_scale;     // Is this useful?
-    //u32 collision_groups;       // Bit flags; "layers"
+    //float gravity_scale;   // Is this useful?
+    //u32 collision_groups;  // Bit flags; "layers"
 } ta_rigid_body;
 
 typedef struct {
@@ -95,11 +119,17 @@ typedef struct {
     ta_rigid_body *b;
     ta_vec3 normal;
     float depth;
+    ta_vec3 contacts[1];  // world position
+    u32 contact_count;
+    float e;   // Mixed restitution
+    float df;  // Mixed dynamic friction
+    float sf;  // Mixed static friction
 } ta_manifold;
 
 const char *ta_collider_type_str(int type);
 void ta_rigid_body_init(ta_rigid_body *body);
-void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
+void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force);
+void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
 void ta_rigid_body_update(ta_rigid_body *body, float dt);
 bool ta_sphere_v_sphere(const ta_sphere *a, const ta_sphere *b,
     ta_manifold *manifold);
@@ -108,4 +138,4 @@ bool ta_plane_v_sphere(const ta_plane *plane, const ta_sphere *sphere,
 bool ta_rigid_body_intersect(const ta_rigid_body *a, const ta_rigid_body *b,
     ta_manifold *manifold);
 void ta_rigid_body_resolve_collision(ta_manifold *manifold);
-//void ta_rigid_body_update(ta_rigid_body *rigid_body, double dt);
+void ta_rigid_body_positional_correction(ta_manifold *manifold);

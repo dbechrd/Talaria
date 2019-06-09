@@ -550,6 +550,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 }
                 DLB_ASSERT(stack[sp].type == F_ATOM_INT ||
                            stack[sp].type == F_ATOM_UINT ||
+                           stack[sp].type == F_ATOM_FLOAT ||
                            stack[sp].type == F_ATOM_ENUM);
                 int *fp = stack[sp].ptr;
                 *fp = tok->value.as_int;
@@ -851,7 +852,9 @@ static ta_manifold *detect_collisions(ta_scene *scene, double dt)
             // parts of a bicycle.
             //
             // Collisions between fixtures of different group indices are
-            // filtered according the category and mask bits. In other words,            // group filtering has higher precedence than category filtering.            //
+            // filtered according the category and mask bits. In other words,
+            // group filtering has higher precedence than category filtering.
+            //
             // - A fixture on a static body can only collide with a dynamic
             //   body.
             // - A fixture on a kinematic body can only collide with a dynamic
@@ -904,6 +907,7 @@ void ta_scene_update(ta_scene *scene, float dt)
     ta_manifold *manifolds = detect_collisions(scene, dt);
     dlb_vec_each(ta_manifold *, manifold, manifolds) {
         ta_rigid_body_resolve_collision(manifold);
+        ta_rigid_body_positional_correction(manifold);
     }
     dlb_vec_clear(manifolds);
 
