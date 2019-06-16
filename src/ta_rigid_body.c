@@ -90,19 +90,17 @@ void ta_rigid_body_init(ta_rigid_body *body)
     DLB_ASSERT(1);
 }
 
-#if 0
-void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force, ta_vec3 at)
+void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force)
+{
+    body->force_accum = vec3_add(body->force_accum, force);
+}
+
+void ta_rigid_body_apply_force_at(ta_rigid_body *body, ta_vec3 force, ta_vec3 at)
 {
     // http://allenchou.net/2013/12/game-physics-motion-dynamics-implementations/
     body->force_accum = vec3_add(body->force_accum, force);
     body->torque_accum = vec3_add(body->torque_accum,
         vec3_cross(vec3_sub(at, body->centroid_global), force));
-}
-#endif
-
-void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force)
-{
-    body->force_accum = vec3_add(body->force_accum, force);
 }
 
 void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact)
@@ -335,9 +333,12 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
         // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-oriented-rigid-bodies--gamedev-8032
         // TODO: Equation6 from the above the proper equation for 3D?
         // http://chrishecker.com/images/b/bb/Gdmphys4.pdf p. 24, Figure 4
-        ta_vec3 impulse_ang_a = vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra);
-        ta_vec3 impulse_ang_b = vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb);
-        float impulse_ang = vec3_dot(vec3_add(impulse_ang_a, impulse_ang_b), manifold->normal);
+        ta_vec3 impulse_ang_a = vec3_cross(mat3_mul_vec3(&a->inv_tensor_local,
+            vec3_cross(ra, manifold->normal)), ra);
+        ta_vec3 impulse_ang_b = vec3_cross(mat3_mul_vec3(&b->inv_tensor_local,
+            vec3_cross(rb, manifold->normal)), rb);
+        float impulse_ang = vec3_dot(vec3_add(impulse_ang_a, impulse_ang_b),
+            manifold->normal);
 
         float j_denom = a->inv_mass + b->inv_mass + impulse_ang;
 
@@ -363,13 +364,15 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
             ta_line_3d debug_a_contact_world;
             debug_a_contact_world.p0 = a->position;
             debug_a_contact_world.p1 = manifold->contacts[i];
-            ta_primitive_push_line_3d(debug_a_contact_world, TA_COLOR_WHITE, TA_COLOR_RED);
+            ta_primitive_push_line_3d(debug_a_contact_world, TA_COLOR_WHITE,
+                TA_COLOR_RED);
         }
         if (b->collider.type != TA_COLLIDER_PLANE) {
             ta_line_3d debug_b_contact_world;
             debug_b_contact_world.p0 = b->position;
             debug_b_contact_world.p1 = manifold->contacts[i];
-            ta_primitive_push_line_3d(debug_b_contact_world, TA_COLOR_WHITE, TA_COLOR_RED);
+            ta_primitive_push_line_3d(debug_b_contact_world, TA_COLOR_WHITE,
+                TA_COLOR_RED);
         }
 
         ta_line_3d debug_a_impulse;
@@ -428,7 +431,8 @@ void ta_rigid_body_positional_correction(ta_manifold *manifold)
     // Positional correction
     const float slop = TA_EPSILON;
     const float percent = 1.0f;
-    float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) * percent;
+    float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) *
+        percent;
     ta_vec3 correction = vec3_scalef(manifold->normal, c);
     a->position = vec3_sub(a->position, vec3_scalef(correction, a->inv_mass));
     b->position = vec3_add(b->position, vec3_scalef(correction, b->inv_mass));

@@ -136,6 +136,7 @@ typedef struct {
 const char *ta_collider_type_str(int type);
 void ta_rigid_body_init(ta_rigid_body *body);
 void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force);
+void ta_rigid_body_apply_force_at(ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
 void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
 void ta_rigid_body_update(ta_rigid_body *body, float dt);
 bool ta_aabb_v_aabb(const ta_aabb *a, const ta_aabb *b, ta_manifold *manifold);

@@ -22,9 +22,8 @@ typedef enum token_type {
     TOKEN_INDENT,
     TOKEN_COMMENT,
     TOKEN_IDENTIFIER,
-    TOKEN_KW_NULL,
-    TOKEN_KW_TRUE,
-    TOKEN_KW_FALSE,
+    TOKEN_NULL,
+    TOKEN_BOOL,
     TOKEN_INT,
     TOKEN_FLOAT,
     TOKEN_STRING,
@@ -39,6 +38,7 @@ typedef struct token {
     token_type type;
     u32 length;
     union {
+        bool as_bool;
         s32 as_int;
         float as_float;
         s32 *int_array;
@@ -58,9 +58,8 @@ static const char *token_type_str(token_type type)
         case TOKEN_INDENT:         return "INDENT";
         case TOKEN_COMMENT:        return "COMMENT";
         case TOKEN_IDENTIFIER:     return "IDENTIFIER";
-        case TOKEN_KW_NULL:        return "KEYWORD";
-        case TOKEN_KW_TRUE:        return "KEYWORD";
-        case TOKEN_KW_FALSE:       return "KEYWORD";
+        case TOKEN_NULL:           return "NULL";
+        case TOKEN_BOOL:           return "BOOL";
         case TOKEN_INT:            return "INT";
         case TOKEN_FLOAT:          return "FLOAT";
         case TOKEN_STRING:         return "STRING";
@@ -144,11 +143,13 @@ static token *token_read(ta_file *f, token **tokens)
             if (ta_file_allow_char(f, C_IDENT_END, 1)) {
                 token->type = TOKEN_IDENTIFIER;
             } else if (token->value.string == SYM_NULL) {
-                token->type = TOKEN_KW_NULL;
+                token->type = TOKEN_NULL;
             } else if (token->value.string == SYM_TRUE) {
-                token->type = TOKEN_KW_TRUE;
+                token->type = TOKEN_BOOL;
+                token->value.as_bool = true;
             } else if (token->value.string == SYM_FALSE) {
-                token->type = TOKEN_KW_FALSE;
+                token->type = TOKEN_BOOL;
+                token->value.as_bool = false;
             } else {
                 PANIC_FILE(f, "Expected : after identifier '%s'\n", token->value.string);
             }
@@ -292,7 +293,7 @@ static void tokens_print(FILE *f, token *tokens)
                 break;
             }
             case TOKEN_COMMENT: case TOKEN_IDENTIFIER: case TOKEN_STRING:
-            case TOKEN_KW_NULL: case TOKEN_KW_TRUE: case TOKEN_KW_FALSE:
+            case TOKEN_NULL: case TOKEN_BOOL:
             {
                 if (tok->type == TOKEN_COMMENT) {
                     fprintf(f, "#");
@@ -355,7 +356,7 @@ static void tokens_print_debug(FILE *f, token *tokens)
                 break;
             }
             case TOKEN_COMMENT: case TOKEN_IDENTIFIER: case TOKEN_STRING:
-            case TOKEN_KW_NULL: case TOKEN_KW_TRUE: case TOKEN_KW_FALSE:
+            case TOKEN_NULL: case TOKEN_BOOL:
             {
                 if (tok->type == TOKEN_COMMENT) {
                     fprintf(f, "#");
@@ -417,6 +418,13 @@ static void tokens_parse(ta_scene *scene, token *tokens)
     int braces = 0;      // Current level of curly braces
     int array = 0;       // Current level of square brackets
 
+#define BAD_TOKEN() PANIC("[%d:%d] Expected %s%s%s, found %s instead.\n", \
+    tok->file_pos.line, tok->file_pos.column, \
+    ta_schema_field_type_str(stack[sp].type), \
+    stack[sp].array_len > 0 ? " (array)" : "", \
+    stack[sp].is_union_type > 0 ? " (union)" : "", \
+    token_type_str(tok->type))
+
     token *prev = tokens;
     for (token *tok = tokens; tok != dlb_vec_end(tokens); tok++) {
         switch (tok->type) {
@@ -434,8 +442,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 break;
             } case TOKEN_IDENTIFIER: {
                 if (expect_array_start) {
-                    PANIC("Expected array start, line %d column %d\n",
-                        tok->file_pos.line, tok->file_pos.column);
+                    BAD_TOKEN();
                 }
                 if (braces) {
                     stack[sp].indent = stack[sp-1].indent + 1;
@@ -536,22 +543,26 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     sp++;
                 }
                 break;
-            } case TOKEN_KW_NULL: {
-                if (expect_array_start) {
-                    PANIC("Expected array start, line %d column %d\n",
-                        tok->file_pos.line, tok->file_pos.column);
+            } case TOKEN_NULL: {
+                if (expect_array_start || stack[sp].type != F_ATOM_STRING) {
+                    BAD_TOKEN();
                 }
-                DLB_ASSERT(stack[sp].type == F_ATOM_STRING);
+                break;
+            } case TOKEN_BOOL: {
+                if (expect_array_start || stack[sp].type != F_ATOM_BOOL) {
+                    BAD_TOKEN();
+                }
+                int *fp = stack[sp].ptr;
+                *fp = tok->value.as_bool;
                 break;
             } case TOKEN_INT: {
-                if (expect_array_start) {
-                    PANIC("Expected array start, line %d column %d\n",
-                        tok->file_pos.line, tok->file_pos.column);
+                if (expect_array_start || (stack[sp].type != F_ATOM_INT &&
+                                           stack[sp].type != F_ATOM_UINT &&
+                                           stack[sp].type != F_ATOM_FLOAT &&
+                                           stack[sp].type != F_ATOM_ENUM))
+                {
+                    BAD_TOKEN();
                 }
-                DLB_ASSERT(stack[sp].type == F_ATOM_INT ||
-                           stack[sp].type == F_ATOM_UINT ||
-                           stack[sp].type == F_ATOM_FLOAT ||
-                           stack[sp].type == F_ATOM_ENUM);
                 int *fp = stack[sp].ptr;
                 *fp = tok->value.as_int;
                 if (stack[sp].is_union_type) {
@@ -560,27 +571,15 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 }
                 break;
             } case TOKEN_FLOAT: {
-                if (expect_array_start) {
-                    PANIC("Expected array start, line %d column %d\n",
-                        tok->file_pos.line, tok->file_pos.column);
-                }
-                if (stack[sp].type != F_ATOM_FLOAT) {
-                    PANIC("Unexpected float token, expected %s, line %d column %d\n",
-                        ta_schema_field_type_str(stack[sp].type),
-                        tok->file_pos.line, tok->file_pos.column);
+                if (expect_array_start || stack[sp].type != F_ATOM_FLOAT) {
+                    BAD_TOKEN();
                 }
                 float *fp = stack[sp].ptr;
                 *fp = tok->value.as_float;
                 break;
             } case TOKEN_STRING: {
-                if (expect_array_start) {
-                    PANIC("Expected array start, line %d column %d\n",
-                        tok->file_pos.line, tok->file_pos.column);
-                }
-                if (stack[sp].type != F_ATOM_STRING) {
-                    PANIC("Unexpected string token, expected %s, line %d column %d\n",
-                        ta_schema_field_type_str(stack[sp].type),
-                        tok->file_pos.line, tok->file_pos.column);
+                if (expect_array_start || stack[sp].type != F_ATOM_STRING) {
+                    BAD_TOKEN();
                 }
                 const char **fp = stack[sp].ptr;
                 *fp = tok->value.string;
@@ -595,22 +594,19 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 break;
             } case TOKEN_ARRAY_START: {
                 if (!expect_array_start) {
-                    PANIC("Did not expect array start, line %d column %d\n",
-                        tok->file_pos.line, tok->file_pos.column);
+                    BAD_TOKEN();
                 }
                 expect_array_start = false;
                 sp++;
                 break;
             } case TOKEN_LIST_SEPARATOR: {
                 if (expect_array_start) {
-                    PANIC("Expected array start, line %d column %d\n",
-                        tok->file_pos.line, tok->file_pos.column);
+                    BAD_TOKEN();
                 }
                 break;
             } case TOKEN_ARRAY_END: {
                 if (expect_array_start) {
-                    PANIC("Expected array start, line %d column %d\n",
-                        tok->file_pos.line, tok->file_pos.column);
+                    BAD_TOKEN();
                 }
                 DLB_ASSERT(array);
                 array--;
@@ -620,8 +616,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 break;
             } case TOKEN_OBJECT_START: {
                 if (expect_array_start) {
-                    PANIC("Expected array start, line %d column %d\n",
-                        tok->file_pos.line, tok->file_pos.column);
+                    BAD_TOKEN();
                 }
                 DLB_ASSERT(stack[sp-1].type > 0);
                 DLB_ASSERT(stack[sp-1].type < F_TA_COUNT);
@@ -629,8 +624,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 break;
             } case TOKEN_OBJECT_END: {
                 if (expect_array_start) {
-                    PANIC("Expected array start, line %d column %d\n",
-                        tok->file_pos.line, tok->file_pos.column);
+                    BAD_TOKEN();
                 }
                 DLB_ASSERT(braces);
                 braces--;
@@ -639,10 +633,12 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 sp--;
                 break;
             } default: {
-                PANIC("Unexpected token %s\n", token_type_str(tok->type));
+                BAD_TOKEN();
             }
         }
     }
+
+#undef BAD_TOKEN
 }
 
 #if 0

@@ -12,41 +12,66 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "misc/stb_image.h"
 
-void ta_texture_init(ta_texture *texture, const char *name, const char *path)
+void ta_texture_init(ta_texture *tex, const char *name, const char *path)
 {
-    texture->ref.uid = name;
-    texture->path = path;
+    tex->ref.uid = name;
+    tex->path = path;
 }
 
-void ta_texture_create(ta_texture *texture)
+void ta_texture_create(ta_texture *tex)
 {
-    DLB_ASSERT(texture->ref.uid);
-    DLB_ASSERT(texture->path);
+    DLB_ASSERT(tex->ref.uid);
+    DLB_ASSERT(tex->path);
 
     // Load pixel data from file
     int w, h, channels;
     stbi_set_flip_vertically_on_load(true);
-    stbi_uc *pixels = stbi_load(texture->path, &w, &h, &channels, 4);
+    stbi_uc *pixels = stbi_load(tex->path, &w, &h, &channels, tex->channels);
     if (!pixels) {
         const char *reason = stbi_failure_reason();
-        ta_log_write(tg_debug_log, "Failed to load texture: %s\nSTBI Reason: %s\n",
-            texture->path, reason);
-        DLB_ASSERT(!"ta_texture_init: Failed to load texture");
+        ta_log_write(tg_debug_log, "Failed to load tex: %s\nSTBI Reason: %s\n",
+            tex->path, reason);
+        DLB_ASSERT(!"ta_texture_init: Failed to load tex");
     }
 
     // Create texture
-    texture->width = w;
-    texture->height = h;
-    texture->channels = channels;
-    glCreateTextures(GL_TEXTURE_2D, 1, &texture->gl_id);
-    glBindTexture(GL_TEXTURE_2D, texture->gl_id);
+    tex->width = w;
+    tex->height = h;
+    if (!tex->channels) {
+        tex->channels = channels;
+    }
+
+    GLint format_internal = 0;
+    GLenum format = 0;
+
+    switch (tex->channels)
+    {
+        case 1: // Grayscale
+            DLB_ASSERT(tex->linear);  // OpenGL doesn't support sRGB for grayscale
+            format_internal = GL_RED;
+            format = GL_RED;
+            break;
+        case 3: // RGB
+            format_internal = tex->linear ? GL_RGB8 : GL_SRGB8;
+            format = GL_RGB;
+            break;
+        case 4: // RGBA
+            format_internal = tex->linear ? GL_RGBA8 : GL_SRGB8_ALPHA8;
+            format = GL_RGBA;
+            break;
+        default: // Unsupported BPP
+            DLB_ASSERT(!"Sorry, don't know what to do with this texture, man.");
+    }
+
+    glCreateTextures(GL_TEXTURE_2D, 1, &tex->gl_id);
+    glBindTexture(GL_TEXTURE_2D, tex->gl_id);
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, texture->width, texture->height,
-            0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+        glTexImage2D(GL_TEXTURE_2D, 0, format_internal, tex->width, tex->height,
+            0, format, GL_UNSIGNED_BYTE, pixels);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -56,17 +81,17 @@ void ta_texture_create(ta_texture *texture)
     //*gl_id = texture->gl_id;
 }
 
-void ta_texture_delete(ta_texture *texture)
+void ta_texture_delete(ta_texture *tex)
 {
-    if (texture->gl_id) {
-        glDeleteTextures(1, &texture->gl_id);
+    if (tex->gl_id) {
+        glDeleteTextures(1, &tex->gl_id);
     }
-    texture->gl_id = 0;
+    tex->gl_id = 0;
 }
 
-void ta_texture_free(ta_texture *texture)
+void ta_texture_free(ta_texture *tex)
 {
-    ta_texture_delete(texture);
+    ta_texture_delete(tex);
 
     // TODO(perf): Delete all scene textures in a single GL call by aggregating
     //             gl_ids during texture initialization.

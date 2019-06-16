@@ -133,34 +133,6 @@ int main(int argc, char *argv[])
     DLB_ASSERT(tg_game.camera);  // Ensure we have a valid camera
     DLB_ASSERT(tg_game.player);  // Ensure we have a valid player
 
-    /*
-    tg_window.fov = fov;
-    tg_window.nearz = nearz;
-    tg_window.projection = mat4_perspective_inf(
-        tg_window.fov,
-        (float)tg_window.width / tg_window.height,
-        tg_window.nearz
-    );
-
-    float oo = 0.5f;
-    view.projection = mat4_ortho(-oo, oo, -oo, oo, 0.1f, 10.0f);
-
-    //view.projection = mat4_ortho(
-    //    (float)view.rect.x,
-    //    (float)view.rect.x + view.rect.w,
-    //    (float)view.rect.y + view.rect.h,
-    //    (float)view.rect.y,
-    //    nearz,
-    //    100.0f
-    //);
-
-    //view.projection = mat4_perspective_inf(
-    //    fov,
-    //    (float)view.rect.w / view.rect.h,
-    //    nearz
-    //);
-    */
-
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
     ////////////////////////////////////////////////////////////////////////////

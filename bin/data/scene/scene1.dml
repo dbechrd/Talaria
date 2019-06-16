@@ -28,7 +28,7 @@ ta_camera:
   nearz: 0.1
 ta_texture:
   uid: "texture_1"
-  path: "data/texture/genesis_1024_1024.png"
+  path: "data/texture/genesis.png"
 ta_shader:
   uid: "shader_lines"
   path_vert: "data/shader/lines_v.glsl"
@@ -153,7 +153,7 @@ ta_entity:
   material_uid: "material_1"
   mesh_group_uid: "mesh_group_chamber_0001"
   rigid_body_uid: "rb_entity_chamber_0001"
-  invisible: 0
+  invisible: false
 ta_rigid_body:
   uid: "rb_entity_player"
   mass: 1.0

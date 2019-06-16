@@ -22,17 +22,63 @@ struct light {
 //uniform int num_lights;
 uniform light u_sun;
 uniform vec3 u_camera_pos;
+
+struct Material {
+    // rgb: metallic ? specular.rgb : albedo.rgb
+    //   a: metallic ?            1 : opacity
+    sampler2D tex0;
+
+    // r: metallic
+    // g: roughness
+    // b: ao
+    // a: UNUSED
+    sampler2D tex1;
+
+    // rgb: emission color
+    //   a: UNUSED
+    sampler2D tex2;
+};
+uniform Material material;
+
 uniform sampler2D u_tex0;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 FresnelSchlick(float cosTheta, vec3 F0);
 
-#define mtl_metallic    0.1
-#define mtl_roughness   0.3
-#define mtl_albedo      pow(tex_color.rgb, vec3(2.2))
-#define mtl_ao          1.0
+// https://forum.substance3d.com/index.php?topic=3243.0#msg14976
+// Albedo
+// Raw color with no lighting information. Small amount of ambient occlusion can
+// be baked in if using it for micro-surface occlusion. The color range for dark
+// values should stay within 30-50 RGB. Never have dark values below 30 RGB. The
+// brightest color value should not go above 240 RGB.
+//
+// Roughness
+// Describes the microsurface of the object. 1.0 is rough and 0.0 is smooth. The
+// microsurface if rough can cause the light rays to scatter and make the
+// highlight appear dimmer and more broad. The same amount of light energy is
+// reflected going out as coming into the surface. This map has the most
+// artistic freedom. There is no wrong answers here. This map gives the asset
+// the most character as it truly describes the surface e.g. scratches,
+// fingerprints, smudges, grime etc.
+//
+// Metallic
+// Non-metal = 0.0, metal = 1.0. There can be transitional gray values that
+// indicate something covering the raw metal such as dirt.
+
+#define mtl_albedo      tex_color.rgb
 #define mtl_opacity     tex_color.a
+#define mtl_metallic    0.0
+#define mtl_roughness   0.3
+#define mtl_ao          1.0
+
+//#define mtl_albedo    texture(material.tex0, vertex.uv).rgb
+//#define mtl_opacity   texture(material.tex0, vertex.uv).a
+//#define mtl_metallic  texture(material.tex1, vertex.uv).r
+//#define mtl_roughness texture(material.tex1, vertex.uv).g
+//#define mtl_ao        texture(material.tex1, vertex.uv).b
+//#define mtl_emission  texture(material.tex2, vertex.uv).rgb
+//#define mtl_emit      step(0.01, texture(material.tex2, vertex.uv).a)
 
 void main()
 {
@@ -43,6 +89,8 @@ void main()
 
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, mtl_albedo, mtl_metallic);
+
+    vec3 L0 = vec3(0.0);
 
     ////////////////////////////////////////////////////////////////////////////
     // Per-light calculations
@@ -68,10 +116,10 @@ void main()
     float denom = 4.0 * max(dot(N, V), 0.0) * NdotL;
     vec3 specular = numer / max(denom, 0.001);
 
-    vec3 L0 = (kD * mtl_albedo / PI + specular) * radiance * NdotL;
+    L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
     ////////////////////////////////////////////////////////////////////////////
 
-    vec3 ambient = vec3(0.03) * mtl_albedo * mtl_ao;
+    vec3 ambient = vec3(0.01) * mtl_albedo * mtl_ao;
     vec3 color = ambient + L0;
     color /= color + vec3(1.0);
     color = pow(color, vec3(1.0 / 2.2));
@@ -81,21 +129,15 @@ void main()
 	//final_color = mix(tex_color, vertex.color, vertex.color.a > 0);
 	//final_color = final_color + 0.0000001 * (tex_color);
 
-    // colors
+    // vertex colors
     //final_color = vertex.color;
 
     // normals
     //final_color = vec4(abs(vertex.normal), 1.0);
+    //final_color = vec4((vertex.normal + vec3(1.0)) / 2.0, 1.0);
 
     // uv coords
-    //final_color = vec4(vertex.uv, 0.0, 1.0);
-
-    // shitty diffuse
-    //float strength = dot(-u_sun.direction, vertex.normal);
-    //final_color = vec4(tex_color.rgb * clamp(strength, 0.2, 0.6), tex_color.a);
-
-    // shitty ambient
-    //final_color = tex_color * vec4(vec3(0.1), 1.0);
+    //final_color = vec4(vertex.uv.x, vertex.uv.y, 0.0, 1.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

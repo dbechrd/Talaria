@@ -49,6 +49,7 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
         case F_TA_RIGID_BODY:       return "TA_RIGID_BODY";
 
         // Atomic types
+        case F_ATOM_BOOL:           return "ATOM_BOOL";
         case F_ATOM_INT:            return "ATOM_INT";
         case F_ATOM_UINT:           return "ATOM_UINT";
         case F_ATOM_FLOAT:          return "ATOM_FLOAT";
@@ -284,7 +285,9 @@ void ta_schema_register()
 
     TYPE_START(ta_texture, F_TA_TEXTURE);
     TYPE_FIELD_NAME(ta_texture, ref.uid, F_ATOM_STRING, uid);
-    TYPE_FIELD(ta_texture, path, F_ATOM_STRING);
+    TYPE_FIELD(ta_texture, path,     F_ATOM_STRING);
+    TYPE_FIELD(ta_texture, channels, F_ATOM_INT);
+    TYPE_FIELD(ta_texture, linear,   F_ATOM_BOOL);
     TYPE_END(ta_texture);
 
     TYPE_START(ta_entity, F_TA_ENTITY);
@@ -295,7 +298,7 @@ void ta_schema_register()
     TYPE_FIELD(ta_entity, mesh_group_uid, F_ATOM_STRING);
     TYPE_FIELD(ta_entity, rigid_body_uid, F_ATOM_STRING);
     TYPE_FIELD(ta_entity, parent_uid,     F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, invisible,      F_ATOM_UINT);
+    TYPE_FIELD(ta_entity, invisible,      F_ATOM_BOOL);
     TYPE_END(ta_entity);
 
     TYPE_START(ta_plane, F_TA_PLANE);

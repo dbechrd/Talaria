@@ -35,7 +35,8 @@ typedef enum {
     F_TA_COUNT,
 
     // Atomic types
-    F_ATOM_INT     = 0x1000,
+    F_ATOM_BOOL         = 0x1000,
+    F_ATOM_INT,
     F_ATOM_UINT,
     F_ATOM_FLOAT,
     F_ATOM_STRING,
