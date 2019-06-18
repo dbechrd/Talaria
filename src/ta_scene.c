@@ -658,16 +658,27 @@ static void scene_add_ref(ta_scene *scene, ta_schema_field_type type,
 static void scene_load_placeholders(ta_scene *scene)
 {
     // Fallback resources
-    ta_texture *texture = ta_scene_obj_alloc(scene, F_TA_TEXTURE,
-        INTERN("TEXTURE_DEFAULT"));
-    //texture->path = INTERN("data/texture/default_1024_1024.png");
-    texture->width = 1;
-    texture->height = 1;
-    texture->channels = 3;
-    texture->linear = true;
-    u8 data[] = { 0, 0, 255 };
-    ta_texture_set_pixels(texture, data);
-    scene->default_texture_uid = texture->ref.uid;
+    ta_texture *tex_albedo = ta_scene_obj_alloc(scene, F_TA_TEXTURE,
+        INTERN("TEXTURE_ALBEDO"));
+    //tex_albedo->path = INTERN("data/texture/default_1024_1024.png");
+    tex_albedo->width = 1;
+    tex_albedo->height = 1;
+    tex_albedo->channels = 3;
+    tex_albedo->linear = true;
+    u8 albedo_pixels[] = { 255, 0, 0 };
+    ta_texture_set_pixels(tex_albedo, albedo_pixels);
+    scene->default_texture_uid = tex_albedo->ref.uid;
+
+    ta_texture *tex_metallic = ta_scene_obj_alloc(scene, F_TA_TEXTURE,
+        INTERN("TEXTURE_METALLIC"));
+    //tex_metallic->path = INTERN("data/texture/default_1024_1024.png");
+    tex_metallic->width = 1;
+    tex_metallic->height = 1;
+    tex_metallic->channels = 1;
+    tex_metallic->linear = true;
+    u8 metallic = 0;
+    ta_texture_set_pixels(tex_metallic, &metallic);
+    scene->default_texture_uid = tex_metallic->ref.uid;
 
     ta_mesh_group *mesh_group = ta_scene_obj_alloc(scene, F_TA_MESH_GROUP,
         INTERN("MESH_GROUP_DEFAULT"));
@@ -678,9 +689,8 @@ static void scene_load_placeholders(ta_scene *scene)
         INTERN("MATERIAL_DEFAULT"));
     // TODO: Hard-code default shader instead of hoping it's in the scene file
     material->shader_uid = INTERN("shader_mesh");
-    material->texture_albedo_uid = texture->ref.uid;
-    // TODO: Don't use albedo at metallic.. lol
-    material->texture_metallic_uid = texture->ref.uid;
+    material->texture_albedo_uid = tex_albedo->ref.uid;
+    material->texture_metallic_uid = tex_metallic->ref.uid;
     scene->default_material_uid = material->ref.uid;
 }
 
