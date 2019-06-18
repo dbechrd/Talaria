@@ -660,7 +660,13 @@ static void scene_load_placeholders(ta_scene *scene)
     // Fallback resources
     ta_texture *texture = ta_scene_obj_alloc(scene, F_TA_TEXTURE,
         INTERN("TEXTURE_DEFAULT"));
-    texture->path = INTERN("data/texture/default_1024_1024.png");
+    //texture->path = INTERN("data/texture/default_1024_1024.png");
+    texture->width = 1;
+    texture->height = 1;
+    texture->channels = 3;
+    texture->linear = true;
+    u8 data[] = { 0, 0, 255 };
+    ta_texture_set_pixels(texture, data);
     scene->default_texture_uid = texture->ref.uid;
 
     ta_mesh_group *mesh_group = ta_scene_obj_alloc(scene, F_TA_MESH_GROUP,
@@ -672,7 +678,9 @@ static void scene_load_placeholders(ta_scene *scene)
         INTERN("MATERIAL_DEFAULT"));
     // TODO: Hard-code default shader instead of hoping it's in the scene file
     material->shader_uid = INTERN("shader_mesh");
-    material->texture_uid = texture->ref.uid;
+    material->texture_albedo_uid = texture->ref.uid;
+    // TODO: Don't use albedo at metallic.. lol
+    material->texture_metallic_uid = texture->ref.uid;
     scene->default_material_uid = material->ref.uid;
 }
 
@@ -795,7 +803,7 @@ void ta_scene_initialize_objects(ta_scene *scene)
                 ta_shader_create(ref->ptr);
                 break;
             } case F_TA_TEXTURE: {
-                ta_texture_create(ref->ptr);
+                ta_texture_init(ref->ptr);
                 break;
             } case F_TA_RIGID_BODY: {
                 ta_rigid_body_init(ref->ptr);

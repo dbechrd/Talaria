@@ -12,21 +12,26 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "misc/stb_image.h"
 
-void ta_texture_init(ta_texture *tex, const char *name, const char *path)
+void ta_texture_init(ta_texture *tex)
 {
-    tex->ref.uid = name;
-    tex->path = path;
+    if (tex->path) {
+        ta_texture_load_path(tex, tex->path);
+    } else if(tex->pixels) {
+        DLB_ASSERT(tex->width);
+        DLB_ASSERT(tex->height);
+        DLB_ASSERT(tex->channels);
+        ta_texture_load(tex);
+    }
 }
 
-void ta_texture_create(ta_texture *tex)
+void ta_texture_load_path(ta_texture *tex, const char *path)
 {
-    DLB_ASSERT(tex->ref.uid);
-    DLB_ASSERT(tex->path);
+    tex->path = path;
 
     // Load pixel data from file
     int w, h, channels;
     stbi_set_flip_vertically_on_load(true);
-    stbi_uc *pixels = stbi_load(tex->path, &w, &h, &channels, tex->channels);
+    u8 *pixels = stbi_load(tex->path, &w, &h, &channels, tex->channels);
     if (!pixels) {
         const char *reason = stbi_failure_reason();
         ta_log_write(tg_debug_log, "Failed to load tex: %s\nSTBI Reason: %s\n",
@@ -34,13 +39,25 @@ void ta_texture_create(ta_texture *tex)
         DLB_ASSERT(!"ta_texture_init: Failed to load tex");
     }
 
-    // Create texture
     tex->width = w;
     tex->height = h;
     if (!tex->channels) {
         tex->channels = channels;
     }
+    tex->pixels = pixels;
+    ta_texture_load(tex);
+    stbi_image_free(pixels);
+}
 
+void ta_texture_set_pixels(ta_texture *tex, u8 *pixels)
+{
+    size_t bytes = tex->width * tex->height * tex->channels * sizeof(*tex->pixels);
+    tex->pixels = calloc(1, bytes);
+    memcpy(tex->pixels, pixels, bytes);
+}
+
+void ta_texture_load(ta_texture *tex)
+{
     GLint format_internal = 0;
     GLenum format = 0;
 
@@ -48,7 +65,7 @@ void ta_texture_create(ta_texture *tex)
     {
         case 1: // Grayscale
             DLB_ASSERT(tex->linear);  // OpenGL doesn't support sRGB for grayscale
-            format_internal = GL_RED;
+            format_internal = GL_R8;
             format = GL_RED;
             break;
         case 3: // RGB
@@ -71,11 +88,10 @@ void ta_texture_create(ta_texture *tex)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexImage2D(GL_TEXTURE_2D, 0, format_internal, tex->width, tex->height,
-            0, format, GL_UNSIGNED_BYTE, pixels);
+            0, format, GL_UNSIGNED_BYTE, tex->pixels);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
     glBindTexture(GL_TEXTURE_2D, 0);
-    stbi_image_free(pixels);
 
     //GLuint *gl_id = dlb_vec_alloc(gl_ids[queue]);
     //*gl_id = texture->gl_id;
@@ -83,6 +99,9 @@ void ta_texture_create(ta_texture *tex)
 
 void ta_texture_delete(ta_texture *tex)
 {
+    if (tex->pixels) {
+        free(tex->pixels);
+    }
     if (tex->gl_id) {
         glDeleteTextures(1, &tex->gl_id);
     }

@@ -362,7 +362,8 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
                 if (tex_id >= 0) {
                     glActiveTexture(GL_TEXTURE0 + *tex_count);
                     glBindTexture(GL_TEXTURE_2D, tex_id);
-                    glUniform1i(u->location, 0);
+                    glUniform1i(u->location, *tex_count);
+                    (*tex_count)++;
                 }
                 break;
             } case TA_GLSL_VEC2: {

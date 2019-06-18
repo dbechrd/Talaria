@@ -40,7 +40,8 @@ struct Material {
 };
 uniform Material material;
 
-uniform sampler2D u_tex0;
+uniform sampler2D u_tex_albedo;
+uniform sampler2D u_tex_metallic;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
@@ -66,9 +67,9 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0);
 // Non-metal = 0.0, metal = 1.0. There can be transitional gray values that
 // indicate something covering the raw metal such as dirt.
 
-#define mtl_albedo      tex_color.rgb
-#define mtl_opacity     tex_color.a
-#define mtl_metallic    0.0
+#define mtl_albedo      pow(tex_albedo.rgb, vec3(2.2))
+#define mtl_opacity     tex_albedo.a
+#define mtl_metallic    tex_metallic.r
 #define mtl_roughness   0.3
 #define mtl_ao          1.0
 
@@ -82,7 +83,9 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0);
 
 void main()
 {
-    vec4 tex_color = texture(u_tex0, vertex.uv);
+    vec4 tex_albedo = texture(u_tex_albedo, vertex.uv);
+    vec4 tex_metallic = texture(u_tex_metallic, vertex.uv);
+    //vec4 tex_metallic = vec4(0); //vec4(0.3, 0.3, 0.3, 1.0);
 
     vec3 N = vertex.normal;
     vec3 V = normalize(u_camera_pos - vertex.position);
@@ -126,8 +129,8 @@ void main()
 
     final_color = vec4(color, mtl_opacity);
 
-	//final_color = mix(tex_color, vertex.color, vertex.color.a > 0);
-	//final_color = final_color + 0.0000001 * (tex_color);
+	//final_color = mix(tex_albedo, vertex.color, vertex.color.a > 0);
+	//final_color = final_color + 0.0000001 * (tex_albedo);
 
     // vertex colors
     //final_color = vertex.color;
@@ -138,6 +141,13 @@ void main()
 
     // uv coords
     //final_color = vec4(vertex.uv.x, vertex.uv.y, 0.0, 1.0);
+
+    // albedo
+    //final_color = vec4(mtl_albedo, 1.0);
+    //final_color = vec4(pow(mtl_albedo, vec3(1.0 / 2.2)), tex_albedo.a);
+
+    // metallic
+    //final_color = vec4(vec3(mtl_metallic), 1.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

@@ -53,7 +53,7 @@ void ta_ui_image_draw(int x, int y, ta_ui_image *image)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
-    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX0, image->tex->gl_id);
+    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, image->tex->gl_id);
     ta_rect parent;
     parent.x = x;
     parent.y = y;
@@ -61,7 +61,7 @@ void ta_ui_image_draw(int x, int y, ta_ui_image *image)
     parent.h = 2;
 	ta_primitive_push_rect(parent, image->rect, TA_COLOR_INVIS);
 	ta_primitive_render();
-    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX0, 0);
+    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
     ta_primitive_clear();
 }
 

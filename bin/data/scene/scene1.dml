@@ -26,9 +26,6 @@ ta_camera:
   pitch_max: 90.0
   fov: 65.0
   nearz: 0.1
-ta_texture:
-  uid: "texture_1"
-  path: "data/texture/genesis.png"
 ta_shader:
   uid: "shader_lines"
   path_vert: "data/shader/lines_v.glsl"
@@ -55,7 +52,7 @@ ta_shader:
     { name: "u_proj",  type: 7 },  # TA_GLSL_MAT4
     { name: "u_view",  type: 7 },  # TA_GLSL_MAT4
     { name: "u_model", type: 7 },  # TA_GLSL_MAT4
-    { name: "u_tex0",  type: 2 },  # TA_GLSL_SAMPLER2D
+    { name: "u_tex",   type: 2 },  # TA_GLSL_SAMPLER2D
   ]
 ta_shader:
   uid: "shader_mesh"
@@ -79,13 +76,25 @@ ta_shader:
         { name: "u_sun.color",     type: 4 },  # TA_GLSL_VEC3
       ]
     },
-    { name: "u_camera_pos", type: 4 },  # TA_GLSL_VEC3
-    { name: "u_tex0", type: 2 }  # TA_GLSL_SAMPLER2D
+    { name: "u_camera_pos",   type: 4 },  # TA_GLSL_VEC3
+    { name: "u_tex_albedo",   type: 2 }  # TA_GLSL_SAMPLER2D
+    { name: "u_tex_metallic", type: 2 }  # TA_GLSL_SAMPLER2D
   ]
+ta_texture:
+  uid: "texture_genesis_albedo"
+  path: "data/texture/genesis_albedo.png"
+  linear: true
+  channels: 4
+ta_texture:
+  uid: "texture_genesis_metallic"
+  path: "data/texture/genesis_metallic.png"
+  linear: true
+  channels: 1
 ta_material:
   uid: "material_1"
   shader_uid: "shader_mesh"
-  texture_uid: "texture_1"
+  texture_albedo_uid: "texture_genesis_albedo"
+  texture_metallic_uid: "texture_genesis_metallic"
 ta_mesh_group:
   uid: "mesh_group_prim_cube"
   path: "data/mesh/prim_cube.obj"
@@ -99,7 +108,7 @@ ta_light:
   uid: "light_sun"
   type: 0  # TA_LIGHT_SUN
   sun:
-    direction: { x: -1.0, y: -1.0, z: -1.0 }
+    direction: { x: -1.0, y: -1.0, z: 1.0 }
     color:     { r: 1.0, g: 1.0, b: 1.0 }
 ta_light:
   uid: "light_1"

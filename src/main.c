@@ -158,8 +158,8 @@ int main(int argc, char *argv[])
         (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f }, &minimap_camera);
 
     ta_texture *tex_test =
-        ta_scene_find(tg_game.scene, F_TA_TEXTURE, INTERN("texture_1"));
-    DLB_ASSERT(tex_test && tex_test->gl_id && "Could not find texture_1");
+        ta_scene_find(tg_game.scene, F_TA_TEXTURE, INTERN("TEXTURE_DEFAULT"));
+    DLB_ASSERT(tex_test && tex_test->gl_id && "Could not find TEXTURE_DEFAULT");
 
 	// TODO: Remove x,y coords from init() methods and only store size. Pass x,y
 	//       at render time (make sure to update viewport correctly).
@@ -254,9 +254,9 @@ int main(int argc, char *argv[])
 
         float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
 
-        ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
-        tg_game.sun->data.sun.direction =
-            mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
+        //ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
+        //tg_game.sun->data.sun.direction =
+        //    mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
 
 		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

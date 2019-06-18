@@ -135,13 +135,15 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
 
     ta_material *mat = ta_entity_material(e);
     ta_shader *shader = ta_material_shader(mat);
-    ta_texture *texture = ta_material_texture(mat);
+    ta_texture *texture_albedo = ta_material_texture_albedo(mat);
+    ta_texture *texture_metallic = ta_material_texture_metallic(mat);
     ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
 
     // TODO: Allow some entities to not be renderable; skip them
     DLB_ASSERT(mat);
     DLB_ASSERT(shader);
-    DLB_ASSERT(texture);
+    DLB_ASSERT(texture_albedo);
+    DLB_ASSERT(texture_metallic);
     DLB_ASSERT(mesh_group);
 
     // TODO: This is going to make a zillion extranous calls
@@ -174,7 +176,8 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
         ta_shader_set_mat4(shader, SYM_U_MODEL, &e->model);
         ta_shader_set_light(shader, SYM_U_SUN, tg_game.sun);
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX0, texture->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO, texture_albedo->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_METALLIC, texture_metallic->gl_id);
         ta_shader_bind(shader);
         ta_shader_prerender(shader);
         ta_mesh_group_render(mesh_group);
