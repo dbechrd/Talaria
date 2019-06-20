@@ -32,7 +32,7 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
         case F_TA_TRANSFORM:        return "TA_TRANSFORM";
         case F_TA_CAMERA:           return "TA_CAMERA";
         case F_TA_LIGHT:            return "TA_LIGHT";
-        case F_TA_SUN_LIGHT:        return "TA_SUN_LIGHT";
+        case F_TA_DIRECTIONAL_LIGHT:        return "TA_SUN_LIGHT";
         case F_TA_POINT_LIGHT:      return "TA_POINT_LIGHT";
         case F_TA_MATERIAL:         return "TA_MATERIAL";
         case F_TA_MESH_GROUP:       return "TA_MESH_GROUP";
@@ -212,21 +212,30 @@ void ta_schema_register()
     TYPE_FIELD(ta_camera, ortho,               F_ATOM_UINT);
     TYPE_END(ta_camera);
 
-    TYPE_START(ta_sun_light, F_TA_SUN_LIGHT);
-    TYPE_FIELD(ta_sun_light, direction, F_TA_VEC3);
-    TYPE_FIELD(ta_sun_light, color,     F_TA_RGB);
-    TYPE_END(ta_sun_light);
+    TYPE_START(ta_directional_light, F_TA_DIRECTIONAL_LIGHT);
+    TYPE_FIELD(ta_directional_light, direction, F_TA_VEC3);
+    TYPE_END(ta_directional_light);
 
     TYPE_START(ta_point_light, F_TA_POINT_LIGHT);
-    TYPE_FIELD(ta_point_light, position, F_TA_VEC3);
-    TYPE_FIELD(ta_point_light, color,    F_TA_RGB);
     TYPE_END(ta_point_light);
+
+    TYPE_START(ta_spot_light, F_TA_SPOT_LIGHT);
+    TYPE_FIELD(ta_spot_light, direction,     F_TA_VEC3);
+    TYPE_FIELD(ta_spot_light, theta_cone,    F_ATOM_FLOAT);
+    TYPE_FIELD(ta_spot_light, theta_falloff, F_ATOM_FLOAT);
+    TYPE_END(ta_spot_light);
 
     TYPE_START(ta_light, F_TA_LIGHT);
     TYPE_FIELD_NAME(ta_light, ref.uid, F_ATOM_STRING, uid);
-    TYPE_UNION_TYPE(ta_light,  type,  F_ATOM_ENUM,      ta_light_type_str);
-    TYPE_UNION_FIELD(ta_light, sun,   F_TA_SUN_LIGHT,   data, TA_LIGHT_SUN);
-    TYPE_UNION_FIELD(ta_light, point, F_TA_POINT_LIGHT, data, TA_LIGHT_POINT);
+    TYPE_FIELD(ta_light, disabled,  F_ATOM_BOOL);
+    TYPE_FIELD(ta_light, intensity, F_ATOM_FLOAT);
+    TYPE_FIELD(ta_light, position,  F_TA_VEC3);
+    TYPE_FIELD(ta_light, color,     F_TA_RGB);
+    TYPE_UNION_TYPE(ta_light,  type,        F_ATOM_ENUM,            ta_light_type_str);
+    TYPE_UNION_FIELD(ta_light, ambient,     F_TA_AMBIENT_LIGHT,     data, TA_LIGHT_AMBIENT);
+    TYPE_UNION_FIELD(ta_light, directional, F_TA_DIRECTIONAL_LIGHT, data, TA_LIGHT_DIRECTIONAL);
+    TYPE_UNION_FIELD(ta_light, point,       F_TA_POINT_LIGHT,       data, TA_LIGHT_POINT);
+    TYPE_UNION_FIELD(ta_light, spot,        F_TA_SPOT_LIGHT,        data, TA_LIGHT_SPOT);
     TYPE_END(ta_light);
 
     TYPE_START(ta_material, F_TA_MATERIAL);
@@ -249,8 +258,8 @@ void ta_schema_register()
     TYPE_START(ta_shader_uniform, F_TA_SHADER_UNIFORM);
     TYPE_FIELD(ta_shader_uniform, name, F_ATOM_STRING);
     TYPE_UNION_TYPE(ta_shader_uniform,   type,       F_ATOM_ENUM,         ta_glsl_type_str);
-    TYPE_UNION_FIELD(ta_shader_uniform,  glint,      F_ATOM_INT,          value, TA_GLSL_GLINT);
-    TYPE_UNION_FIELD(ta_shader_uniform,  gluint,     F_ATOM_UINT,         value, TA_GLSL_GLUINT);
+    TYPE_UNION_FIELD(ta_shader_uniform,  glint,      F_ATOM_INT,          value, TA_GLSL_INT);
+    TYPE_UNION_FIELD(ta_shader_uniform,  gluint,     F_ATOM_UINT,         value, TA_GLSL_UINT);
     TYPE_UNION_FIELD(ta_shader_uniform,  sampler2d,  F_ATOM_UINT,         value, TA_GLSL_SAMPLER2D);
     TYPE_UNION_FIELD(ta_shader_uniform,  vec2,       F_TA_VEC2,           value, TA_GLSL_VEC2);
     TYPE_UNION_FIELD(ta_shader_uniform,  vec3,       F_TA_VEC3,           value, TA_GLSL_VEC3);

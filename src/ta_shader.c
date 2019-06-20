@@ -13,14 +13,15 @@ ta_shader *tg_shader_quads;
 const char *ta_glsl_type_str(int type)
 {
     switch(type) {
-        case TA_GLSL_GLINT:     return "TA_GLSL_GLINT";
-        case TA_GLSL_GLUINT:    return "TA_GLSL_GLUINT";
+        case TA_GLSL_INT:       return "TA_GLSL_GLINT";
+        case TA_GLSL_UINT:      return "TA_GLSL_GLUINT";
+        case TA_GLSL_FLOAT:     return "TA_GLSL_FLOAT";
+        case TA_GLSL_SAMPLER2D: return "TA_GLSL_SAMPLER2D";
         case TA_GLSL_VEC2:      return "TA_GLSL_VEC2";
         case TA_GLSL_VEC3:      return "TA_GLSL_VEC3";
         case TA_GLSL_VEC4:      return "TA_GLSL_VEC4";
         case TA_GLSL_MAT3:      return "TA_GLSL_MAT3";
         case TA_GLSL_MAT4:      return "TA_GLSL_MAT4";
-        case TA_GLSL_SAMPLER2D: return "TA_GLSL_SAMPLER2D";
         case TA_GLSL_STRUCT:    return "TA_GLSL_STRUCT";
         default:
             DLB_ASSERT(!"<UNKNOWN_TA_GLSL_TYPE>");
@@ -285,6 +286,36 @@ void ta_shader_unbind(ta_shader *shader)
     glUseProgram(0);
 }
 
+void ta_shader_set_int(ta_shader *shader, const char *name, GLint value)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_INT);
+    u->value.glint = value;
+}
+
+void ta_shader_set_uint(ta_shader *shader, const char *name, GLuint value)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_UINT);
+    u->value.gluint = value;
+}
+
+void ta_shader_set_float(ta_shader *shader, const char *name, GLfloat value)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_FLOAT);
+    u->value.glfloat = value;
+}
+
+void ta_shader_set_sampler2d(ta_shader *shader, const char *name, GLuint tex_id)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D);
+    u->value.gluint = tex_id;
+}
+
+void ta_shader_set_vec2(ta_shader *shader, const char *name, const ta_vec2 *v)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC2);
+    u->value.vec2 = *v;
+}
+
 void ta_shader_set_vec3(ta_shader *shader, const char *name, const ta_vec3 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC3);
@@ -297,45 +328,56 @@ void ta_shader_set_vec4(ta_shader *shader, const char *name, const ta_vec4 *v)
     u->value.vec4 = *v;
 }
 
+void ta_shader_set_mat3(ta_shader *shader, const char *name, const ta_mat3 *m)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT3);
+    u->value.mat3 = *m;
+}
+
 void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT4);
     u->value.mat4 = *m;
 }
 
-void ta_shader_set_sampler2d(ta_shader *shader, const char *name, GLuint tex_id)
-{
-    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D);
-    u->value.gluint = tex_id;
-}
-
-void ta_shader_set_light(ta_shader *shader, const char *name, ta_light *light)
+void ta_shader_set_light(ta_shader *shader, const char *name, int index,
+    ta_light *light)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
 
-    ta_shader_uniform *u_type = 0;
-    ta_shader_uniform *u_position = 0;
-    ta_shader_uniform *u_direction = 0;
-    ta_shader_uniform *u_color = 0;
+    ta_shader_uniform *u_intensity=
+        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_INTENSITY[index],
+            TA_GLSL_FLOAT);
+    ta_shader_uniform *u_position =
+        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_POSITION[index],
+            TA_GLSL_VEC3);
+    ta_shader_uniform *u_color =
+        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_COLOR[index],
+            TA_GLSL_VEC3);
+    ta_shader_uniform *u_type =
+        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_TYPE[index],
+            TA_GLSL_INT);
+    ta_shader_uniform *u_direction =
+        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_DIRECTION[index],
+            TA_GLSL_VEC3);
 
-    // TODO: Add these to symbol file
-    u_type      = find_uniform_by_name(u->value.properties, INTERN("u_sun.type"),      TA_GLSL_GLINT);
-    u_position  = find_uniform_by_name(u->value.properties, INTERN("u_sun.position"),  TA_GLSL_VEC3);
-    u_direction = find_uniform_by_name(u->value.properties, INTERN("u_sun.direction"), TA_GLSL_VEC3);
-    u_color     = find_uniform_by_name(u->value.properties, INTERN("u_sun.color"),     TA_GLSL_VEC3);
+    u_intensity->value.glfloat = light->intensity;
+    u_color->value.rgb         = light->color;
+    u_position->value.vec3     = light->position;
+    u_type->value.glint        = light->type;
+    u_direction->value.vec3    = VEC3_ZERO;
 
     switch (light->type) {
-        case TA_LIGHT_SUN:
-            u_type->value.glint     = light->type;
-            u_position->value.vec3  = VEC3_ZERO;
-            u_direction->value.vec3 = light->data.sun.direction;
-            u_color->value.vec3     = *(ta_vec3 *)&light->data.sun.color;
+        case TA_LIGHT_AMBIENT:
+            break;
+        case TA_LIGHT_DIRECTIONAL:
+            u_direction->value.vec3 = light->data.directional.direction;
             break;
         case TA_LIGHT_POINT:
-            u_type->value.glint     = light->type;
-            u_position->value.vec3  = light->data.point.position;
-            u_direction->value.vec3 = VEC3_ZERO;
-            u_color->value.vec3     = *(ta_vec3 *)&light->data.point.color;
+            break;
+        case TA_LIGHT_SPOT:
+            u_direction->value.vec3 = light->data.directional.direction;
+            DLB_ASSERT(!"Don't handle spot lights yet");
             break;
         default:
             DLB_ASSERT(!"Don't know how to initialize this type of light");
@@ -351,11 +393,14 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
         }
 
         switch (u->type) {
-            case TA_GLSL_GLINT: {
+            case TA_GLSL_INT: {
                 glUniform1i(u->location, u->value.glint);
                 break;
-            } case TA_GLSL_GLUINT: {
+            } case TA_GLSL_UINT: {
                 glUniform1ui(u->location, u->value.gluint);
+                break;
+            } case TA_GLSL_FLOAT: {
+                glUniform1f(u->location, u->value.glfloat);
                 break;
             } case TA_GLSL_SAMPLER2D: {
                 GLuint tex_id = u->value.gluint;

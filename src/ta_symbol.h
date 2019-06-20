@@ -58,11 +58,17 @@ extern const char *SYM_ATTR_NORMAL;
 extern const char *SYM_U_PROJ;
 extern const char *SYM_U_VIEW;
 extern const char *SYM_U_MODEL;
-extern const char *SYM_U_SUN;
 extern const char *SYM_U_CAMERA_POS;
 extern const char *SYM_U_TEX;
 extern const char *SYM_U_TEX_ALBEDO;
 extern const char *SYM_U_TEX_METALLIC;
+extern const char *SYM_U_LIGHTS_COUNT;
+extern const char *SYM_U_LIGHTS;
+extern const char *SYM_U_LIGHTS_INTENSITY[8];
+extern const char *SYM_U_LIGHTS_POSITION[8];
+extern const char *SYM_U_LIGHTS_COLOR[8];
+extern const char *SYM_U_LIGHTS_TYPE[8];
+extern const char *SYM_U_LIGHTS_DIRECTION[8];
 
 const char *ta_symbol_intern(const char *s, u32 len);
 void ta_symbol_init();

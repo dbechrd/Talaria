@@ -124,12 +124,13 @@ int main(int argc, char *argv[])
 
     // Intro scene
     read_scene("data/scene/scene1.dml");
-    tg_game.sun = ta_scene_find(tg_game.scene, F_TA_LIGHT, INTERN("light_sun"));
+    dlb_vec_push(tg_game.lights, ta_scene_find(tg_game.scene, F_TA_LIGHT, INTERN("light_sun")));
+    dlb_vec_push(tg_game.lights, ta_scene_find(tg_game.scene, F_TA_LIGHT, INTERN("light_point_1")));
     tg_game.camera_player = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_player"));
     tg_game.camera_freecam = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_freecam"));
     tg_game.player = ta_scene_find(tg_game.scene, F_TA_ENTITY, INTERN("entity_player"));
     ta_game_state_set(TA_STATE_FREE_CAM);
-    DLB_ASSERT(tg_game.sun);     // Ensure we have a valid sun light
+    DLB_ASSERT(tg_game.lights && tg_game.lights[0]);  // Ensure we have a valid light
     DLB_ASSERT(tg_game.camera);  // Ensure we have a valid camera
     DLB_ASSERT(tg_game.player);  // Ensure we have a valid player
 

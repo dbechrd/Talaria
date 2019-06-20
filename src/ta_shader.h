@@ -15,15 +15,16 @@ typedef enum {
 
 // TODO: Map DML string to enum to avoid confusing int values in DML
 typedef enum {
-    TA_GLSL_GLINT     = 0,
-    TA_GLSL_GLUINT    = 1,
-    TA_GLSL_SAMPLER2D = 2,
-    TA_GLSL_VEC2      = 3,
-    TA_GLSL_VEC3      = 4,
-    TA_GLSL_VEC4      = 5,
-    TA_GLSL_MAT3      = 6,
-    TA_GLSL_MAT4      = 7,
-    TA_GLSL_STRUCT    = 8,
+    TA_GLSL_INT       = 0,
+    TA_GLSL_UINT      = 1,
+    TA_GLSL_FLOAT     = 2,
+    TA_GLSL_SAMPLER2D = 3,
+    TA_GLSL_VEC2      = 4,
+    TA_GLSL_VEC3      = 5,
+    TA_GLSL_VEC4      = 6,
+    TA_GLSL_MAT3      = 7,
+    TA_GLSL_MAT4      = 8,
+    TA_GLSL_STRUCT    = 9,
 } ta_glsl_type;
 
 typedef struct ta_shader_attribute_s {
@@ -39,8 +40,9 @@ typedef struct ta_shader_uniform_s {
     union {
         GLint glint;
         GLuint gluint;
+        GLfloat glfloat;
         ta_vec2 vec2;
-        ta_vec3 vec3;
+        ta_vec3 vec3; ta_rgb rgb;
         ta_vec4 vec4;
         ta_mat3 mat3;
         ta_mat4 mat4;
@@ -95,9 +97,15 @@ void ta_shader_delete(ta_shader *shader);
 void ta_shader_free(ta_shader *shader);
 void ta_shader_bind(ta_shader *shader);
 void ta_shader_unbind(ta_shader *shader);
+void ta_shader_set_int(ta_shader *shader, const char *name, GLint value);
+void ta_shader_set_uint(ta_shader *shader, const char *name, GLuint value);
+void ta_shader_set_float(ta_shader *shader, const char *name, GLfloat value);
+void ta_shader_set_sampler2d(ta_shader *shader, const char *name, GLuint tex_id);
+void ta_shader_set_vec2(ta_shader *shader, const char *name, const ta_vec2 *v);
 void ta_shader_set_vec3(ta_shader *shader, const char *name, const ta_vec3 *v);
 void ta_shader_set_vec4(ta_shader *shader, const char *name, const ta_vec4 *v);
+void ta_shader_set_mat3(ta_shader *shader, const char *name, const ta_mat3 *m);
 void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m);
-void ta_shader_set_sampler2d(ta_shader *shader, const char *name, GLuint tex_id);
-void ta_shader_set_light(ta_shader *shader, const char *name, ta_light *light);
+void ta_shader_set_light(ta_shader *shader, const char *name, int index,
+    ta_light *light);
 void ta_shader_prerender(ta_shader *shader);

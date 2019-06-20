@@ -11,41 +11,7 @@ out vec4 final_color;
 
 const float PI = 3.14159265359;
 
-struct light {
-    int type;
-    vec3 position;
-    vec3 direction;
-    vec3 color;
-    // float intensity;
-};
-//uniform Light[8] lights;
-//uniform int num_lights;
-uniform light u_sun;
 uniform vec3 u_camera_pos;
-
-struct Material {
-    // rgb: metallic ? specular.rgb : albedo.rgb
-    //   a: metallic ?            1 : opacity
-    sampler2D tex0;
-
-    // r: metallic
-    // g: roughness
-    // b: ao
-    // a: UNUSED
-    sampler2D tex1;
-
-    // rgb: emission color
-    //   a: UNUSED
-    sampler2D tex2;
-};
-uniform Material material;
-
-uniform sampler2D u_tex_albedo;
-uniform sampler2D u_tex_metallic;
-
-float DistributionGGX(vec3 N, vec3 H, float roughness);
-float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
-vec3 FresnelSchlick(float cosTheta, vec3 F0);
 
 // https://forum.substance3d.com/index.php?topic=3243.0#msg14976
 // Albedo
@@ -81,11 +47,56 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0);
 //#define mtl_emission  texture(material.tex2, vertex.uv).rgb
 //#define mtl_emit      step(0.01, texture(material.tex2, vertex.uv).a)
 
+struct Material {
+    // rgb: metallic ? specular.rgb : albedo.rgb
+    //   a: metallic ?            1 : opacity
+    sampler2D tex0;
+
+    // r: metallic
+    // g: roughness
+    // b: ao
+    // a: UNUSED
+    sampler2D tex1;
+
+    // rgb: emission color
+    //   a: UNUSED
+    sampler2D tex2;
+};
+uniform Material material;
+
+uniform sampler2D u_tex_albedo;
+uniform sampler2D u_tex_metallic;
+
+#define LIGHT_AMBIENT       0
+#define LIGHT_DIRECTIONAL   1
+#define LIGHT_POINT         2
+#define LIGHT_SPOT          3
+
+#define L_DIR_DIRECTION(light) light.direction
+#define L_DIR_COLOR(light) light.color
+
+#define L_POINT_POSITION(light) light.position
+#define L_POINT_COLOR(light) light.color
+
+struct Light {
+    float intensity;
+    vec3 position;
+    vec3 color;
+    int type;
+    // Directional / Spot
+    vec3 direction;
+};
+uniform uint u_lights_count;
+uniform Light[8] u_lights;
+
+float DistributionGGX(vec3 N, vec3 H, float roughness);
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
+vec3 FresnelSchlick(float cosTheta, vec3 F0);
+
 void main()
 {
     vec4 tex_albedo = texture(u_tex_albedo, vertex.uv);
     vec4 tex_metallic = texture(u_tex_metallic, vertex.uv);
-    //vec4 tex_metallic = vec4(0); //vec4(0.3, 0.3, 0.3, 1.0);
 
     vec3 N = vertex.normal;
     vec3 V = normalize(u_camera_pos - vertex.position);
@@ -94,33 +105,70 @@ void main()
     F0 = mix(F0, mtl_albedo, mtl_metallic);
 
     vec3 L0 = vec3(0.0);
+    for (uint i = 0U; i < u_lights_count; ++i) {
+        vec3 fragToLight;
+        //float shadow_map_depth;
+        //float shadow_bias;
+        //float shadow_darkness;
+        float dist;
+        float attenuation;
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Per-light calculations
-    //float distance = length(u_sun.position - vertex.position);
-    //float attenuation = 1.0 / (distance * distance);
-    float attenuation = 1.0;
-    vec3 radiance = u_sun.color * attenuation;
+        switch(u_lights[i].type) {
+            case LIGHT_DIRECTIONAL: {
+                fragToLight = -u_lights[i].direction;
 
-    //vec3 L = normalize(u_sun.position - vertex.position);
-    vec3 L = normalize(-u_sun.direction);
-    vec3 H = normalize(V + L);
+                //vec3 projCoords = vertex.light_space.xyz / vertex.light_space.w;
+                //projCoords = projCoords * 0.5 + 0.5;
+                //shadow_map_depth = texture(shadow_textures[TEXTURE_IDX],
+                //                           projCoords.st).r;
+                //shadow_bias = 0.0001;
+                //shadow_darkness = 0.9;
 
-    float D = DistributionGGX(N, H, mtl_roughness);
-    vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
-    float G = GeometrySmith(N, V, L, mtl_roughness);
+                //dist = projCoords.z;
+                attenuation = u_lights[i].intensity;
+                break;
+            } case LIGHT_POINT: {
+                fragToLight = u_lights[i].position - vertex.position;
 
-    vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
-    kD *= 1.0 - mtl_metallic;
+                //shadow_map_depth = texture(shadow_cubemaps[CUBEMAP_IDX],
+                //                           -fragToLight).r;
+                //shadow_map_depth *= near_far.y;
+                //shadow_bias = 0.1;
+                //shadow_darkness = 0.9;
 
-    vec3 numer = D * F * G;
-    float NdotL = max(dot(N, L), 0.0);
-    float denom = 4.0 * max(dot(N, V), 0.0) * NdotL;
-    vec3 specular = numer / max(denom, 0.001);
+                dist = length(fragToLight);
+                attenuation = u_lights[i].intensity /
+                    (u_lights[i].intensity + 0.022 * dist + 0.0019 * dist * dist);
+                //attenuation = u_lights[i].intensity / dist * dist;
+                break;
+            }
+        }
 
-    L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
-    ////////////////////////////////////////////////////////////////////////////
+        //float shadow = mix(0.0, shadow_darkness, dist - shadow_bias >
+        //                   shadow_map_depth);
+
+        vec3 radiance = u_lights[i].color * attenuation;
+
+        //vec3 L = normalize(u_lights[0].position - vertex.position);
+        vec3 L = normalize(fragToLight);
+        vec3 H = normalize(V + L);
+
+        float D = DistributionGGX(N, H, mtl_roughness);
+        vec3 F = FresnelSchlick(max(dot(H, V), 0.0), F0);
+        float G = GeometrySmith(N, V, L, mtl_roughness);
+
+        vec3 kS = F;
+        vec3 kD = vec3(1.0) - kS;
+        kD *= 1.0 - mtl_metallic;
+
+        vec3 numer = D * F * G;
+        float NdotL = max(dot(N, L), 0.0);
+        float denom = 4.0 * max(dot(N, V), 0.0) * NdotL;
+        vec3 specular = numer / max(denom, 0.001);
+
+        L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
+        //L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
+    }
 
     vec3 ambient = vec3(0.01) * mtl_albedo * mtl_ao;
     vec3 color = ambient + L0;

@@ -31,54 +31,91 @@ ta_shader:
   path_vert: "data/shader/lines_v.glsl"
   path_frag: "data/shader/lines_f.glsl"
   attributes: [
-    { name: "attr_position", type: 4 },  # TA_GLSL_VEC3
-    { name: "attr_color",    type: 5 },  # TA_GLSL_VEC4
+    { name: "attr_position", type: 5 },  # TA_GLSL_VEC3
+    { name: "attr_color",    type: 6 },  # TA_GLSL_VEC4
   ]
   uniforms: [
-    { name: "u_proj",  type: 7 },  # TA_GLSL_MAT4
-    { name: "u_view",  type: 7 },  # TA_GLSL_MAT4
-    { name: "u_model", type: 7 },  # TA_GLSL_MAT4
+    { name: "u_proj",  type: 8 },  # TA_GLSL_MAT4
+    { name: "u_view",  type: 8 },  # TA_GLSL_MAT4
+    { name: "u_model", type: 8 },  # TA_GLSL_MAT4
   ]
 ta_shader:
   uid: "shader_quads"
   path_vert: "data/shader/quads_v.glsl"
   path_frag: "data/shader/quads_f.glsl"
   attributes: [
-    { name: "attr_position", type: 4 },  # TA_GLSL_VEC3
-    { name: "attr_color",    type: 5 },  # TA_GLSL_VEC4
-    { name: "attr_uv",       type: 3 },  # TA_GLSL_VEC2
+    { name: "attr_position", type: 5 },  # TA_GLSL_VEC3
+    { name: "attr_color",    type: 6 },  # TA_GLSL_VEC4
+    { name: "attr_uv",       type: 4 },  # TA_GLSL_VEC2
   ]
   uniforms: [
-    { name: "u_proj",  type: 7 },  # TA_GLSL_MAT4
-    { name: "u_view",  type: 7 },  # TA_GLSL_MAT4
-    { name: "u_model", type: 7 },  # TA_GLSL_MAT4
-    { name: "u_tex",   type: 2 },  # TA_GLSL_SAMPLER2D
+    { name: "u_proj",  type: 8 },  # TA_GLSL_MAT4
+    { name: "u_view",  type: 8 },  # TA_GLSL_MAT4
+    { name: "u_model", type: 8 },  # TA_GLSL_MAT4
+    { name: "u_tex",   type: 3 },  # TA_GLSL_SAMPLER2D
   ]
 ta_shader:
   uid: "shader_mesh"
   path_vert: "data/shader/mesh_v.glsl"
   path_frag: "data/shader/mesh_f.glsl"
   attributes: [
-    { name: "attr_position", type: 4 },  # TA_GLSL_VEC3
-    { name: "attr_color",    type: 5 },  # TA_GLSL_VEC4
-    { name: "attr_uv",       type: 3 },  # TA_GLSL_VEC2
-    { name: "attr_normal",   type: 4 },  # TA_GLSL_VEC3
+    { name: "attr_position", type: 5 },  # TA_GLSL_VEC3
+    { name: "attr_color",    type: 6 },  # TA_GLSL_VEC4
+    { name: "attr_uv",       type: 4 },  # TA_GLSL_VEC2
+    { name: "attr_normal",   type: 5 },  # TA_GLSL_VEC3
   ]
   uniforms: [
-    { name: "u_proj",     type: 7 },  # TA_GLSL_MAT4
-    { name: "u_view",     type: 7 },  # TA_GLSL_MAT4
-    { name: "u_model",    type: 7 },  # TA_GLSL_MAT4
-    { name: "u_sun",      type: 8,  # TA_GLSL_STRUCT
+    { name: "u_proj",         type: 8 },  # TA_GLSL_MAT4
+    { name: "u_view",         type: 8 },  # TA_GLSL_MAT4
+    { name: "u_model",        type: 8 },  # TA_GLSL_MAT4
+    { name: "u_camera_pos",   type: 5 },  # TA_GLSL_VEC3
+    { name: "u_tex_albedo",   type: 3 },  # TA_GLSL_SAMPLER2D
+    { name: "u_tex_metallic", type: 3 },  # TA_GLSL_SAMPLER2D
+    { name: "u_lights_count", type: 1 },  # TA_GLSL_GLUINT
+    { name: "u_lights",       type: 9,    # TA_GLSL_STRUCT
       properties: [
-        { name: "u_sun.type",      type: 0 },  # TA_GLSL_GLINT
-        { name: "u_sun.position",  type: 4 },  # TA_GLSL_VEC3
-        { name: "u_sun.direction", type: 4 },  # TA_GLSL_VEC3
-        { name: "u_sun.color",     type: 4 },  # TA_GLSL_VEC3
+        { name: "u_lights[0].intensity",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[1].intensity",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[2].intensity",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[3].intensity",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[4].intensity",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[5].intensity",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[6].intensity",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[7].intensity",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[0].position",   type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[1].position",   type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[2].position",   type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[3].position",   type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[4].position",   type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[5].position",   type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[6].position",   type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[7].position",   type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[0].color",      type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[1].color",      type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[2].color",      type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[3].color",      type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[4].color",      type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[5].color",      type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[6].color",      type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[7].color",      type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[0].type",       type: 0 },  # TA_GLSL_GLINT
+        { name: "u_lights[1].type",       type: 0 },  # TA_GLSL_GLINT
+        { name: "u_lights[2].type",       type: 0 },  # TA_GLSL_GLINT
+        { name: "u_lights[3].type",       type: 0 },  # TA_GLSL_GLINT
+        { name: "u_lights[4].type",       type: 0 },  # TA_GLSL_GLINT
+        { name: "u_lights[5].type",       type: 0 },  # TA_GLSL_GLINT
+        { name: "u_lights[6].type",       type: 0 },  # TA_GLSL_GLINT
+        { name: "u_lights[7].type",       type: 0 },  # TA_GLSL_GLINT
+        { name: "u_lights[0].direction",  type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[1].direction",  type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[2].direction",  type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[3].direction",  type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[4].direction",  type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[5].direction",  type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[6].direction",  type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[7].direction",  type: 5 },  # TA_GLSL_VEC3
       ]
     },
-    { name: "u_camera_pos",   type: 4 },  # TA_GLSL_VEC3
-    { name: "u_tex_albedo",   type: 2 }  # TA_GLSL_SAMPLER2D
-    { name: "u_tex_metallic", type: 2 }  # TA_GLSL_SAMPLER2D
   ]
 ta_texture:
   uid: "texture_genesis_albedo"
@@ -106,16 +143,19 @@ ta_mesh_group:
   path: "data/model/Chamber0001.obj"
 ta_light:
   uid: "light_sun"
-  type: 0  # TA_LIGHT_SUN
-  sun:
+  disabled: false
+  intensity: 0.1
+  color: { r: 1.0, g: 1.0, b: 1.0 }
+  type: 1  # TA_LIGHT_DIRECTIONAL
+  directional:
     direction: { x: -1.0, y: -1.0, z: 1.0 }
-    color:     { r: 1.0, g: 1.0, b: 1.0 }
 ta_light:
-  uid: "light_1"
-  type: 1  # TA_LIGHT_POINT
-  point:
-    position: { x: 1.0, y: 2.0, z: 3.0 }
-    color:    { r: 1.0, g: 2.0, b: 3.0 }
+  uid: "light_point_1"
+  disabled: false
+  intensity: 0.1
+  position: { x: 1.0, y: 2.0, z: 3.0 }
+  color:    { r: 0.1, g: 1.0, b: 0.1 }
+  type: 2  # TA_LIGHT_POINT
 ta_rigid_body:
   uid: "rb_entity_chamber_0001"
   position: { x: 0.0, y: 0.0, z: 1.0 }
