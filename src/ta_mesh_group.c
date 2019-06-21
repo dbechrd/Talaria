@@ -55,9 +55,8 @@ void ta_mesh_group_load(ta_mesh_group *group)
     float mesh_radius;
 
     // Each object in file
-    for (size_t i = 0; i < num_shapes; i++) {
-        tinyobj_shape_t shape = shapes[i];
-        size_t offset = 0;
+    for (size_t shape_idx = 0; shape_idx < num_shapes; shape_idx++) {
+        tinyobj_shape_t shape = shapes[shape_idx];
 
         ta_mesh *mesh = dlb_vec_alloc(group->meshes);
 
@@ -66,24 +65,23 @@ void ta_mesh_group_load(ta_mesh_group *group)
         mesh_radius = 0.0f;
 
         // Each face in object
-        for (size_t fn = shape.face_offset; fn < shape.length; fn++) {
-            int face_verts = attrib.face_num_verts[fn];
+        for (size_t f_idx = 0; f_idx < shape.length; f_idx++) {
+            int face_verts = attrib.face_num_verts[shape.face_offset + f_idx];
             DLB_ASSERT(face_verts == 3);
-            for (int f = 0; f < face_verts; f++) {
-                tinyobj_vertex_index_t face = attrib.faces[shape.face_offset + offset];
+            for (int v_idx = 0; v_idx < face_verts; v_idx++) {
+                tinyobj_vertex_index_t vert = attrib.faces[shape.face_offset * 3 + f_idx * 3 + v_idx];
                 ta_vec3 *pos = dlb_vec_alloc(mesh->positions);
-                pos->x = attrib.vertices[face.v_idx * 3];
-                pos->y = attrib.vertices[face.v_idx * 3 + 1];
-                pos->z = attrib.vertices[face.v_idx * 3 + 2];
+                pos->x = attrib.vertices[vert.v_idx * 3];
+                pos->y = attrib.vertices[vert.v_idx * 3 + 1];
+                pos->z = attrib.vertices[vert.v_idx * 3 + 2];
                 ta_vec3 *norm = dlb_vec_alloc(mesh->normals);
-                norm->x = attrib.normals[face.vn_idx * 3];
-                norm->y = attrib.normals[face.vn_idx * 3 + 1];
-                norm->z = attrib.normals[face.vn_idx * 3 + 2];
+                norm->x = attrib.normals[vert.vn_idx * 3];
+                norm->y = attrib.normals[vert.vn_idx * 3 + 1];
+                norm->z = attrib.normals[vert.vn_idx * 3 + 2];
                 ta_uv *uv = dlb_vec_alloc(mesh->uvs);
-                uv->u = attrib.texcoords[face.vt_idx * 2];
-                uv->v = attrib.texcoords[face.vt_idx * 2 + 1];
+                uv->u = attrib.texcoords[vert.vt_idx * 2];
+                uv->v = attrib.texcoords[vert.vt_idx * 2 + 1];
                 // TODO: Handle attrib.material_ids possibly for color data?
-                offset++;
 
                 mesh_min.x = MIN(mesh_min.x, pos->x);
                 mesh_min.y = MIN(mesh_min.y, pos->y);
@@ -97,8 +95,8 @@ void ta_mesh_group_load(ta_mesh_group *group)
 
         ta_mesh_create(mesh);
 
-        u32 name_len = (u32)strlen(shapes[i].name);
-        mesh->name = ta_symbol_intern(shapes[i].name, name_len);
+        u32 name_len = (u32)strlen(shapes[shape_idx].name);
+        mesh->name = ta_symbol_intern(shapes[shape_idx].name, name_len);
 
         mesh->aabb.extents = vec3_scalef(vec3_sub(mesh_max, mesh_min), 0.5f);
         mesh->aabb.center = vec3_add(mesh_min, mesh->aabb.extents);

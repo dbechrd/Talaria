@@ -36,7 +36,7 @@ uniform vec3 u_camera_pos;
 #define mtl_albedo      pow(tex_albedo.rgb, vec3(2.2))
 #define mtl_opacity     tex_albedo.a
 #define mtl_metallic    tex_metallic.r
-#define mtl_roughness   0.3
+#define mtl_roughness   0.4
 #define mtl_ao          1.0
 
 //#define mtl_albedo    texture(material.tex0, vertex.uv).rgb

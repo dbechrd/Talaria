@@ -117,6 +117,21 @@ ta_shader:
       ]
     },
   ]
+ta_light:
+  uid: "light_sun"
+  disabled: false
+  intensity: 1.0
+  color: { r: 1.0, g: 1.0, b: 1.0 }
+  type: 1  # TA_LIGHT_DIRECTIONAL
+  directional:
+    direction: { x: -0.2, y: -1.0, z: 1.0 }
+ta_light:
+  uid: "light_point_1"
+  disabled: false
+  intensity: 1.0
+  position: { x: 1.0, y: 2.0, z: 3.0 }
+  color:    { r: 0.1, g: 1.0, b: 0.1 }
+  type: 2  # TA_LIGHT_POINT
 ta_texture:
   uid: "texture_genesis_albedo"
   path: "data/texture/genesis_albedo.png"
@@ -128,7 +143,7 @@ ta_texture:
   linear: true
   channels: 1
 ta_material:
-  uid: "material_1"
+  uid: "material_genesis"
   shader_uid: "shader_mesh"
   texture_albedo_uid: "texture_genesis_albedo"
   texture_metallic_uid: "texture_genesis_metallic"
@@ -140,22 +155,10 @@ ta_mesh_group:
   path: "data/mesh/prim_sphere.obj"
 ta_mesh_group:
   uid: "mesh_group_chamber_0001"
-  path: "data/model/Chamber0001.obj"
-ta_light:
-  uid: "light_sun"
-  disabled: false
-  intensity: 0.1
-  color: { r: 1.0, g: 1.0, b: 1.0 }
-  type: 1  # TA_LIGHT_DIRECTIONAL
-  directional:
-    direction: { x: -1.0, y: -1.0, z: 1.0 }
-ta_light:
-  uid: "light_point_1"
-  disabled: false
-  intensity: 0.1
-  position: { x: 1.0, y: 2.0, z: 3.0 }
-  color:    { r: 0.1, g: 1.0, b: 0.1 }
-  type: 2  # TA_LIGHT_POINT
+  path: "data/model/chamber0001.obj"
+ta_mesh_group:
+  uid: "mesh_group_button"
+  path: "data/model/button.obj"
 ta_rigid_body:
   uid: "rb_entity_chamber_0001"
   position: { x: 0.0, y: 0.0, z: 1.0 }
@@ -199,10 +202,16 @@ ta_rigid_body:
   mass: 0.0
 ta_entity:
   uid: "entity_chamber_0001"
-  material_uid: "material_1"
+  material_uid: "material_genesis"
   mesh_group_uid: "mesh_group_chamber_0001"
   rigid_body_uid: "rb_entity_chamber_0001"
   invisible: false
+ta_entity:
+  uid: "entity_button_0001"
+  material_uid: "material_genesis"
+  mesh_group_uid: "mesh_group_button"
+  transform:
+    position: { x: 0.0, y: 0.0, z: 0.0 }
 ta_rigid_body:
   uid: "rb_entity_player"
   mass: 1.0
