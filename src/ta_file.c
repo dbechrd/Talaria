@@ -257,7 +257,7 @@ ta_buffer *ta_file_read_all(const char *filename)
     // Allocate buffer
     ta_buffer *buffer = dlb_malloc(sizeof(ta_buffer) + tell + 1);
     buffer->length = tell + 1;
-    buffer->data = (char *)buffer + sizeof(ta_buffer);
+    buffer->data = (u8 *)buffer + sizeof(ta_buffer);
 
     // Read into buffer, null-terminate
     fread(buffer->data, 1, tell, fs);

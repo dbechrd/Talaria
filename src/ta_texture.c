@@ -46,18 +46,22 @@ void ta_texture_load_path(ta_texture *tex, const char *path)
     }
     tex->pixels = pixels;
     ta_texture_load(tex);
-    stbi_image_free(pixels);
 }
 
 void ta_texture_set_pixels(ta_texture *tex, u8 *pixels)
 {
     size_t bytes = tex->width * tex->height * tex->channels * sizeof(*tex->pixels);
-    tex->pixels = calloc(1, bytes);
+    tex->pixels = dlb_calloc(1, bytes);
     memcpy(tex->pixels, pixels, bytes);
 }
 
 void ta_texture_load(ta_texture *tex)
 {
+    DLB_ASSERT(tex->pixels);
+    DLB_ASSERT(tex->width);
+    DLB_ASSERT(tex->height);
+    DLB_ASSERT(tex->channels);
+
     GLint format_internal = 0;
     GLenum format = 0;
 
@@ -82,15 +86,27 @@ void ta_texture_load(ta_texture *tex)
 
     glCreateTextures(GL_TEXTURE_2D, 1, &tex->gl_id);
     glBindTexture(GL_TEXTURE_2D, tex->gl_id);
-    {
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, format_internal, tex->width, tex->height,
-            0, format, GL_UNSIGNED_BYTE, tex->pixels);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
+
+    // GL_CLAMP_TO_EDGE
+    // GL_REPEAT
+    GLint param = GL_CLAMP_TO_EDGE;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, param);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, param);
+
+    // GL_NEAREST                 texel nearest
+    // GL_NEAREST_MIPMAP_NEAREST  texel nearest, mipmap nearest
+    // GL_NEAREST_MIPMAP_LINEAR   texel nearest, mipmap blend
+    // GL_LINEAR                  texel 2x2 avg
+    // GL_LINEAR_MIPMAP_NEAREST   texel 2x2 avg, mipmap nearest
+    // GL_LINEAR_MIPMAP_LINEAR    texel 2x2 avg, mipmap blend
+    GLint filter = GL_LINEAR_MIPMAP_LINEAR;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format_internal, tex->width, tex->height,
+        0, format, GL_UNSIGNED_BYTE, tex->pixels);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
     glBindTexture(GL_TEXTURE_2D, 0);
 
     //GLuint *gl_id = dlb_vec_alloc(gl_ids[queue]);
@@ -110,6 +126,9 @@ void ta_texture_delete(ta_texture *tex)
 
 void ta_texture_free(ta_texture *tex)
 {
+    if (tex->path) {
+        stbi_image_free(tex->pixels);
+    }
     ta_texture_delete(tex);
 
     // TODO(perf): Delete all scene textures in a single GL call by aggregating

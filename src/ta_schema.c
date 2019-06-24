@@ -6,7 +6,9 @@
 #include "ta_mesh.h"
 #include "ta_texture.h"
 #include "ta_shader.h"
+#include "ta_audio.h"
 #include "ta_entity.h"
+#include "ta_ent_button.h"
 #include "ta_rigid_body.h"
 #include "ta_light.h"
 #include "dlb_types.h"
@@ -19,42 +21,43 @@ static dlb_hash tg_schemas_by_name;
 
 const char *ta_schema_field_type_str(ta_schema_field_type type) {
     switch(type) {
-        case F_TA_NULL:             return "NULL";
-
+        case F_TA_NULL:                 return "NULL";
         // Compound types
-        case F_TA_VEC2:             return "TA_VEC2";
-        case F_TA_VEC3:             return "TA_VEC3";
-        case F_TA_VEC4:             return "TA_VEC4";
-        case F_TA_MAT3:             return "TA_MAT3";
-        case F_TA_MAT4:             return "TA_MAT4";
-        case F_TA_RGB:              return "TA_COLOR3";
-        case F_TA_RGBA:             return "TA_COLOR4";
-        case F_TA_TRANSFORM:        return "TA_TRANSFORM";
-        case F_TA_CAMERA:           return "TA_CAMERA";
-        case F_TA_LIGHT:            return "TA_LIGHT";
-        case F_TA_DIRECTIONAL_LIGHT:        return "TA_SUN_LIGHT";
-        case F_TA_POINT_LIGHT:      return "TA_POINT_LIGHT";
-        case F_TA_MATERIAL:         return "TA_MATERIAL";
-        case F_TA_MESH_GROUP:       return "TA_MESH_GROUP";
-        case F_TA_SHADER:           return "TA_SHADER";
-        case F_TA_SHADER_ATTRIBUTE: return "TA_SHADER_ATTRIBUTE";
-        case F_TA_SHADER_UNIFORM:   return "TA_SHADER_UNIFORM";
-        case F_TA_TEXTURE:          return "TA_TEXTURE";
-        case F_TA_ENTITY:           return "TA_ENTITY";
-        case F_TA_PLANE:            return "TA_PLANE";
-        case F_TA_SPHERE:           return "TA_SPHERE";
-        case F_TA_AABB:             return "TA_AABB";
-        case F_TA_OBB:              return "TA_OBB";
-        case F_TA_COLLIDER:         return "TA_COLLIDER";
-        case F_TA_RIGID_BODY:       return "TA_RIGID_BODY";
-
+        case F_TA_VEC2:                 return "TA_VEC2";
+        case F_TA_VEC3:                 return "TA_VEC3";
+        case F_TA_VEC4:                 return "TA_VEC4";
+        case F_TA_MAT3:                 return "TA_MAT3";
+        case F_TA_MAT4:                 return "TA_MAT4";
+        case F_TA_RGB:                  return "TA_COLOR3";
+        case F_TA_RGBA:                 return "TA_COLOR4";
+        case F_TA_TRANSFORM:            return "TA_TRANSFORM";
+        case F_TA_CAMERA:               return "TA_CAMERA";
+        case F_TA_LIGHT:                return "TA_LIGHT";
+        case F_TA_DIRECTIONAL_LIGHT:    return "TA_SUN_LIGHT";
+        case F_TA_POINT_LIGHT:          return "TA_POINT_LIGHT";
+        case F_TA_MATERIAL:             return "TA_MATERIAL";
+        case F_TA_MESH_GROUP:           return "TA_MESH_GROUP";
+        case F_TA_SHADER:               return "TA_SHADER";
+        case F_TA_SHADER_ATTRIBUTE:     return "TA_SHADER_ATTRIBUTE";
+        case F_TA_SHADER_UNIFORM:       return "TA_SHADER_UNIFORM";
+        case F_TA_TEXTURE:              return "TA_TEXTURE";
+        case F_TA_AUDIO_BUFFER:         return "TA_AUDIO_BUFFER";
+        case F_TA_AUDIO_SOURCE:         return "TA_AUDIO_SOURCE";
+        case F_TA_ENTITY:               return "TA_ENTITY";
+        case F_TA_ENT_BUTTON:           return "TA_ENT_BUTTON";
+        case F_TA_PLANE:                return "TA_PLANE";
+        case F_TA_SPHERE:               return "TA_SPHERE";
+        case F_TA_AABB:                 return "TA_AABB";
+        case F_TA_OBB:                  return "TA_OBB";
+        case F_TA_COLLIDER:             return "TA_COLLIDER";
+        case F_TA_RIGID_BODY:           return "TA_RIGID_BODY";
         // Atomic types
-        case F_ATOM_BOOL:           return "ATOM_BOOL";
-        case F_ATOM_INT:            return "ATOM_INT";
-        case F_ATOM_UINT:           return "ATOM_UINT";
-        case F_ATOM_FLOAT:          return "ATOM_FLOAT";
-        case F_ATOM_STRING:         return "ATOM_STRING";
-        case F_ATOM_ENUM:           return "ATOM_ENUM";
+        case F_ATOM_BOOL:               return "ATOM_BOOL";
+        case F_ATOM_INT:                return "ATOM_INT";
+        case F_ATOM_UINT:               return "ATOM_UINT";
+        case F_ATOM_FLOAT:              return "ATOM_FLOAT";
+        case F_ATOM_STRING:             return "ATOM_STRING";
+        case F_ATOM_ENUM:               return "ATOM_ENUM";
         default:
             DLB_ASSERT(!"<UNKNOWN_TA_FIELD_TYPE>");
             return 0;
@@ -284,6 +287,19 @@ void ta_schema_register()
     TYPE_FIELD(ta_texture, linear,   F_ATOM_BOOL);
     TYPE_END(ta_texture);
 
+    TYPE_START(ta_audio_buffer, F_TA_AUDIO_BUFFER);
+    TYPE_FIELD_NAME(ta_audio_buffer, ref.uid, F_ATOM_STRING, uid);
+    TYPE_FIELD(ta_audio_buffer, path, F_ATOM_STRING);
+    TYPE_END(ta_audio_buffer);
+
+    TYPE_START(ta_audio_source, F_TA_AUDIO_SOURCE);
+    TYPE_FIELD_NAME(ta_audio_source, ref.uid, F_ATOM_STRING, uid);
+    TYPE_FIELD(ta_audio_source, pitch,            F_ATOM_FLOAT);
+    TYPE_FIELD(ta_audio_source, gain,             F_ATOM_FLOAT);
+    TYPE_FIELD(ta_audio_source, loop,             F_ATOM_BOOL);
+    TYPE_FIELD(ta_audio_source, audio_buffer_uid, F_ATOM_STRING);
+    TYPE_END(ta_audio_source);
+
     TYPE_START(ta_entity, F_TA_ENTITY);
     TYPE_FIELD_NAME(ta_entity, ref.uid, F_ATOM_STRING, uid);
     TYPE_FIELD(ta_entity, type,           F_ATOM_INT);
@@ -294,6 +310,14 @@ void ta_schema_register()
     TYPE_FIELD(ta_entity, parent_uid,     F_ATOM_STRING);
     TYPE_FIELD(ta_entity, invisible,      F_ATOM_BOOL);
     TYPE_END(ta_entity);
+
+    TYPE_START(ta_ent_button, F_TA_ENT_BUTTON);
+    TYPE_FIELD(ta_ent_button, base,                F_TA_ENTITY);
+    TYPE_FIELD(ta_ent_button, audio_source_uid,    F_ATOM_STRING);
+    TYPE_FIELD(ta_ent_button, sfx_activated_uid,   F_ATOM_STRING);
+    TYPE_FIELD(ta_ent_button, sfx_active_uid,      F_ATOM_STRING);
+    TYPE_FIELD(ta_ent_button, sfx_deactivated_uid, F_ATOM_STRING);
+    TYPE_END(ta_ent_button);
 
     TYPE_START(ta_plane, F_TA_PLANE);
     TYPE_FIELD(ta_plane, center, F_TA_VEC3);
@@ -326,10 +350,11 @@ void ta_schema_register()
 
     TYPE_START(ta_rigid_body, F_TA_RIGID_BODY);
     TYPE_FIELD_NAME(ta_rigid_body, ref.uid, F_ATOM_STRING, uid);
-    TYPE_FIELD(ta_rigid_body, collider,      F_TA_COLLIDER);
-    TYPE_FIELD(ta_rigid_body, position,      F_TA_VEC3);
-    TYPE_FIELD(ta_rigid_body, orientation,   F_TA_QUAT);
-    TYPE_FIELD(ta_rigid_body, mass,          F_ATOM_FLOAT);
+    TYPE_FIELD(ta_rigid_body, collider,    F_TA_COLLIDER);
+    TYPE_FIELD(ta_rigid_body, position,    F_TA_VEC3);
+    TYPE_FIELD(ta_rigid_body, orientation, F_TA_QUAT);
+    TYPE_FIELD(ta_rigid_body, mass,        F_ATOM_FLOAT);
+    TYPE_FIELD(ta_rigid_body, trigger,     F_ATOM_BOOL);
     TYPE_END(ta_rigid_body);
 }
 

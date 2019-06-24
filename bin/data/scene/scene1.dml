@@ -119,7 +119,7 @@ ta_shader:
   ]
 ta_light:
   uid: "light_sun"
-  disabled: false
+  disabled: true
   intensity: 1.0
   color: { r: 1.0, g: 1.0, b: 1.0 }
   type: 1  # TA_LIGHT_DIRECTIONAL
@@ -130,7 +130,7 @@ ta_light:
   disabled: false
   intensity: 1.0
   position: { x: 1.0, y: 2.0, z: 3.0 }
-  color:    { r: 0.1, g: 1.0, b: 0.1 }
+  color:    { r: 1.0, g: 1.0, b: 0.4 }
   type: 2  # TA_LIGHT_POINT
 ta_texture:
   uid: "texture_genesis_albedo"
@@ -155,10 +155,10 @@ ta_mesh_group:
   path: "data/mesh/prim_sphere.obj"
 ta_mesh_group:
   uid: "mesh_group_chamber_0001"
-  path: "data/model/chamber0001.obj"
+  path: "data/mesh/chamber0001.obj"
 ta_mesh_group:
   uid: "mesh_group_button"
-  path: "data/model/button.obj"
+  path: "data/mesh/button.obj"
 ta_rigid_body:
   uid: "rb_entity_chamber_0001"
   position: { x: 0.0, y: 0.0, z: 1.0 }
@@ -206,12 +206,45 @@ ta_entity:
   mesh_group_uid: "mesh_group_chamber_0001"
   rigid_body_uid: "rb_entity_chamber_0001"
   invisible: false
-ta_entity:
-  uid: "entity_button_0001"
-  material_uid: "material_genesis"
-  mesh_group_uid: "mesh_group_button"
-  transform:
-    position: { x: 0.0, y: 0.0, z: 0.0 }
+
+ta_audio_buffer:
+  uid: "ambient_wakeup"
+  path: "data/ambient/wakeup.raw"
+ta_audio_source:
+  uid: "src_ambient_wakeup"
+  audio_buffer_uid: "ambient_wakeup"
+
+ta_audio_buffer:
+  uid: "ambient_genesis"
+  path: "data/ambient/genesis.raw"
+ta_audio_source:
+  uid: "src_ambient_genesis"
+  audio_buffer_uid: "ambient_genesis"
+
+ta_audio_buffer:
+  uid: "sfx_button_activated"
+  path: "data/sfx/button_activated.raw"
+ta_audio_buffer:
+  uid: "sfx_button_deactivated"
+  path: "data/sfx/button_deactivated.raw"
+ta_audio_source:
+  uid: "src_button_0001"
+ta_rigid_body:
+  uid: "rb_button_0001"
+  mass: 1.0
+  position: { x: 0.0, y: 0.0, z: 0.0 }
+  trigger: true
+ta_ent_button:
+  base:
+    uid: "entity_button_0001"
+    type: 1  # TA_ENT_BUTTON
+    material_uid: "material_genesis"
+    mesh_group_uid: "mesh_group_button"
+    rigid_body_uid: "rb_button_0001"
+  audio_source_uid: "src_button_0001"
+  sfx_activated_uid: "sfx_button_activated"
+  sfx_deactivated_uid: "sfx_button_deactivated"
+
 ta_rigid_body:
   uid: "rb_entity_player"
   mass: 1.0

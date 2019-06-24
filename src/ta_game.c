@@ -52,14 +52,13 @@ void ta_game_init()
     BIND1(PLAY, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
     BIND1(PLAY, DEBUG_TOGGLE_BBOX,       PRESS, 1);
     BIND1(PLAY, DEBUG_TOGGLE_NORMALS,    PRESS, 2);
-    BIND1(PLAY, DEBUG_FOCUS_PINKY,       PRESS, 3);
-    BIND1(PLAY, DEBUG_BOOST_PINKY,       HOLD,  4);
+    BIND1(PLAY, DEBUG_BOOST_PINKY,       HOLD,  3);
 
     //--------------------------------------------------------------------------
     // FREE_CAM
 
-    BIND1(FREE_CAM, GAME_QUIT,         RELEASE, ESCAPE);
-    BIND1(FREE_CAM, GAME_PLAY,         RELEASE, X);
+    BIND1(FREE_CAM, GAME_QUIT, RELEASE, ESCAPE);
+    BIND1(FREE_CAM, GAME_PLAY, RELEASE, X);
 
     BIND1(FREE_CAM, GAME_PLAYER_MOVE_FORWARD,  HOLD, UP);
     BIND1(FREE_CAM, GAME_PLAYER_MOVE_BACKWARD, HOLD, DOWN);
@@ -67,19 +66,18 @@ void ta_game_init()
     BIND1(FREE_CAM, GAME_PLAYER_MOVE_LEFT,     HOLD, LEFT);
     BIND1(FREE_CAM, GAME_PLAYER_MOVE_JUMP,     HOLD, SPACE);
 
-    BIND1(FREE_CAM, CAMERA_MOVE_FORWARD,     HOLD, W);
-    BIND1(FREE_CAM, CAMERA_MOVE_BACKWARD,    HOLD, S);
-    BIND1(FREE_CAM, CAMERA_MOVE_RIGHT,       HOLD, D);
-    BIND1(FREE_CAM, CAMERA_MOVE_LEFT,        HOLD, A);
-    BIND1(FREE_CAM, CAMERA_MOVE_UP,          HOLD, SPACE);
-    BIND1(FREE_CAM, CAMERA_MOVE_DOWN,        HOLD, LSHIFT);
+    BIND1(FREE_CAM, CAMERA_MOVE_FORWARD,  HOLD, W);
+    BIND1(FREE_CAM, CAMERA_MOVE_BACKWARD, HOLD, S);
+    BIND1(FREE_CAM, CAMERA_MOVE_RIGHT,    HOLD, D);
+    BIND1(FREE_CAM, CAMERA_MOVE_LEFT,     HOLD, A);
+    BIND1(FREE_CAM, CAMERA_MOVE_UP,       HOLD, SPACE);
+    BIND1(FREE_CAM, CAMERA_MOVE_DOWN,     HOLD, LSHIFT);
 
     BIND1(FREE_CAM, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, M);
     BIND1(FREE_CAM, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
     BIND1(FREE_CAM, DEBUG_TOGGLE_BBOX,       PRESS, 1);
     BIND1(FREE_CAM, DEBUG_TOGGLE_NORMALS,    PRESS, 2);
-    BIND1(FREE_CAM, DEBUG_FOCUS_PINKY,       PRESS, 3);
-    BIND1(FREE_CAM, DEBUG_BOOST_PINKY,       HOLD,  4);
+    BIND1(FREE_CAM, DEBUG_BOOST_PINKY,       HOLD,  3);
 #undef BIND1
 
     ta_log_write(tg_debug_log, "[Game] Game initialized\n");
@@ -188,10 +186,6 @@ void ta_game_update()
                 break;
             } case TA_EVENT_DEBUG_BOOST_PINKY: {
                 dir.y = 1.0f;
-                break;
-            } case TA_EVENT_DEBUG_FOCUS_PINKY: {
-                tg_game.camera->debug_follow_pinky =
-                    !tg_game.camera->debug_follow_pinky;
                 break;
             } default: {
                 DLB_ASSERT(!"Unhandled event type");

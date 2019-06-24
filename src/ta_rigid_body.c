@@ -119,6 +119,11 @@ void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 c
 
 void ta_rigid_body_update(ta_rigid_body *body, float dt)
 {
+    // Triggers don't need to update their position
+    if (body->trigger) {
+        return;
+    }
+
     // TODO: Calculate this based on torque_accum and dt
     //body.m_angularVelocity +=  body.m_globalInverseInertiaTensor * (body.m_torqueAccumulator * dt);
     if (!vec3_equal(body->ang_velocity, VEC3_ZERO)) {
@@ -262,6 +267,9 @@ static bool intersector_plane_v_sphere(const ta_collider *a,
 bool ta_rigid_body_intersect(const ta_rigid_body *a, const ta_rigid_body *b,
     ta_manifold *manifold)
 {
+    DLB_ASSERT(a);
+    DLB_ASSERT(b);
+
     bool collided = false;
 
     ta_collider_type a_type = a->collider.type;
@@ -291,6 +299,11 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
 {
     ta_rigid_body *a = manifold->a;
     ta_rigid_body *b = manifold->b;
+
+    // Trigger colliders don't need any resolution
+    if (a->trigger || b->trigger) {
+        return;
+    }
 
     // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
     if (a->inv_mass == 0.0f && b->inv_mass == 0.0f)
@@ -427,6 +440,11 @@ void ta_rigid_body_positional_correction(ta_manifold *manifold)
 {
     ta_rigid_body *a = manifold->a;
     ta_rigid_body *b = manifold->b;
+
+    // Trigger colliders don't need any resolution
+    if (a->trigger || b->trigger) {
+        return;
+    }
 
     // Positional correction
     const float slop = TA_EPSILON;

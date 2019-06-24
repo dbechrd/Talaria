@@ -4,8 +4,14 @@
 #include "ta_symbol.h"
 #include "ta_window.h"
 #include "ta_game.h"
+#include "ta_ent_button.h"
 #include "ta_log.h"
 #include "dlb_vector.h"
+
+typedef void (entity_updater)(ta_entity *base);
+static entity_updater *entity_updaters[TA_ENT_COUNT] = {
+    [TA_ENT_BUTTON] = &ta_ent_button_update
+};
 
 void ta_entity_init(ta_entity *e)
 {
@@ -67,7 +73,8 @@ ta_material *ta_entity_material(ta_entity *e)
     if (!e->material_uid) return 0;
 
     // NOTE: This could cache in e->material if we want to save the hash lookup
-    ta_material *mat = ta_scene_find(e->ref.scene, F_TA_MATERIAL, e->material_uid);
+    ta_material *mat = ta_scene_find_by_ref(&e->ref, F_TA_MATERIAL,
+        e->material_uid);
     return mat;
 }
 
@@ -76,7 +83,7 @@ ta_mesh_group *ta_entity_mesh_group(ta_entity *e)
     if (!e->mesh_group_uid) return 0;
 
     // NOTE: This could cache in e->mesh_group if we want to save the hash lookup
-    ta_mesh_group *mesh_group = ta_scene_find(e->ref.scene, F_TA_MESH_GROUP,
+    ta_mesh_group *mesh_group = ta_scene_find_by_ref(&e->ref, F_TA_MESH_GROUP,
         e->mesh_group_uid);
     return mesh_group;
 }
@@ -86,7 +93,7 @@ ta_rigid_body *ta_entity_rigid_body(ta_entity *e)
     if (!e->rigid_body_uid) return 0;
 
     // NOTE: This could cache in e->mesh_group if we want to save the hash lookup
-    ta_rigid_body *rigid_body = ta_scene_find(e->ref.scene, F_TA_RIGID_BODY,
+    ta_rigid_body *rigid_body = ta_scene_find_by_ref(&e->ref, F_TA_RIGID_BODY,
         e->rigid_body_uid);
     return rigid_body;
 }
@@ -111,6 +118,10 @@ void ta_entity_update(ta_entity *e)
     if (body) {
         e->transform.position = body->position;
         e->transform.orientation = body->orientation;
+    }
+
+    if (entity_updaters[e->type]) {
+        entity_updaters[e->type](e);
     }
 }
 

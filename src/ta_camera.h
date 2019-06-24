@@ -43,7 +43,6 @@ typedef struct ta_camera_s {
     bool debug_normals;
     bool debug_bounding_boxes;
     bool debug_no_mesh;
-    bool debug_follow_pinky;
 } ta_camera;
 
 const char *ta_camera_mode_str(int type);

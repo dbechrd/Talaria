@@ -4,6 +4,7 @@
 #include "dlb_types.h"
 #include "SDL/SDL.h"
 
+// Keybind trigger flags
 enum {
     TA_KEY_PRESS   = 1 << 0,  // once when key pressed
     TA_KEY_HOLD    = 1 << 1,  // while key is held down

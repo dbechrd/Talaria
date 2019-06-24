@@ -7,7 +7,9 @@
 #include "ta_camera.h"
 
 typedef enum {
-    ENTITY_MESH_GROUP = 0,
+    TA_ENT_DEFAULT,  // TODO: Get rid if "default" entities and always have a type?
+    TA_ENT_BUTTON,
+    TA_ENT_COUNT
 } ta_entity_type;
 
 typedef struct ta_entity_s {
@@ -23,7 +25,7 @@ typedef struct ta_entity_s {
     const char *rigid_body_uid;
     const char *parent_uid;
 
-    ta_aabb aabb;
+    ta_aabb aabb;  // AABB in local space
 
     bool invisible;
     //ta_entity *next;  // TODO: Is a sibling linked list useful?

@@ -36,7 +36,7 @@ static void show_info_log(GLuint shader, PFNGLGETSHADERIVPROC glGet__iv,
 
     glGet__iv(shader, GL_INFO_LOG_LENGTH, (GLint *)&buf.length);
     buf.data = dlb_malloc(buf.length);
-    glGet__InfoLog(shader, buf.length, NULL, buf.data);
+    glGet__InfoLog(shader, buf.length, NULL, (GLchar *)buf.data);
     ta_log_write(tg_debug_log,
         "\n---[OpenGL Info Log]------------------------------------------------------------\n"
         "%s\n", buf.data);
@@ -49,7 +49,7 @@ static GLuint ta_shader_compile(GLenum type, ta_buffer *buf)
     GLuint shader = glCreateShader(type);
 
     // Read shader source
-    glShaderSource(shader, 1, &buf->data, (GLint *)&buf->length);
+    glShaderSource(shader, 1, &(GLchar *)buf->data, (GLint *)&buf->length);
 
     // Compile shader
     GLint status;

@@ -162,6 +162,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src/gl3w.c" />
+    <ClCompile Include="src\ta_audio.c" />
+    <ClCompile Include="src\ta_ent_button.c" />
     <ClCompile Include="src\ta_light.c" />
     <ClCompile Include="src\ta_rigid_body.c" />
     <ClCompile Include="src\ta_entity.c" />
@@ -193,6 +195,8 @@
     <ClCompile Include="src\ta_viewport.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ta_audio.h" />
+    <ClInclude Include="src\ta_ent_button.h" />
     <ClInclude Include="src\ta_light.h" />
     <ClInclude Include="src\ta_rigid_body.h" />
     <ClInclude Include="src\ta_entity.h" />

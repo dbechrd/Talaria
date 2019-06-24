@@ -7,6 +7,7 @@
 #include "ta_shader.h"
 #include "ta_texture.h"
 #include "ta_entity.h"
+#include "ta_ent_button.h"
 #include "ta_rigid_body.h"
 #include "ta_light.h"
 #include "ta_log.h"
@@ -699,7 +700,7 @@ ta_scene *ta_scene_init(const char *name)
     ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
     scene->name = name;
     // TODO: Read ref count from file
-    const u32 ref_count = 32;
+    const u32 ref_count = 64;
     // NOTE: If this resizes it will invalidate the pointers stored in the hash
     //       table. I just made it fixed size for now. Might be fun to have an
     //       optional "resized" callback on dlb_vec.
@@ -754,7 +755,7 @@ void ta_scene_free(ta_scene *scene)
                 // TODO: Free entities
                 break;
             } default: {
-                DLB_ASSERT("Invalid scene ref type");
+                DLB_ASSERT(!"Invalid scene ref type");
             }
         }
     }
@@ -815,14 +816,23 @@ void ta_scene_initialize_objects(ta_scene *scene)
             } case F_TA_TEXTURE: {
                 ta_texture_init(ref->ptr);
                 break;
-            } case F_TA_RIGID_BODY: {
-                ta_rigid_body_init(ref->ptr);
+            } case F_TA_AUDIO_BUFFER: {
+                ta_audio_buffer_init(ref->ptr);
+                break;
+            } case F_TA_AUDIO_SOURCE: {
+                ta_audio_source_init(ref->ptr);
                 break;
             } case F_TA_ENTITY: {
                 ta_entity_init(ref->ptr);
                 break;
+            } case F_TA_ENT_BUTTON: {
+                ta_ent_button_init(ref->ptr);
+                break;
+            } case F_TA_RIGID_BODY: {
+                ta_rigid_body_init(ref->ptr);
+                break;
             } default: {
-                DLB_ASSERT("Invalid scene ref type");
+                DLB_ASSERT(!"Invalid scene ref type");
             }
         }
     }
@@ -835,6 +845,12 @@ void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
     DLB_ASSERT(ref->type == type);
     DLB_ASSERT(ref->uid == uid);
     return ref->ptr;
+}
+
+void *ta_scene_find_by_ref(ta_scene_ref *ref, ta_schema_field_type type,
+    const char *uid)
+{
+    return ta_scene_find(ref->scene, type, uid);
 }
 
 static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
@@ -930,6 +946,9 @@ void ta_scene_update(ta_scene *scene, float dt)
 
     // Update entities
     dlb_vec_each(ta_entity *, entity, scene->pools[F_TA_ENTITY]) {
+        ta_entity_update(entity);
+    }
+    dlb_vec_each(ta_entity *, entity, scene->pools[F_TA_ENT_BUTTON]) {
         ta_entity_update(entity);
     }
 }

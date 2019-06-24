@@ -10,6 +10,6 @@ typedef struct ta_material_s {
     const char *texture_metallic_uid;
 } ta_material;
 
-ta_shader *ta_material_shader(ta_material *m);
-ta_texture *ta_material_texture_albedo(ta_material *m);
-ta_texture *ta_material_texture_metallic(ta_material *m);
+ta_shader *ta_material_shader(ta_material *mat);
+ta_texture *ta_material_texture_albedo(ta_material *mat);
+ta_texture *ta_material_texture_metallic(ta_material *mat);

@@ -1,6 +1,7 @@
 #include "ta_timer.h"
 #include "ta_log.h"
 #include "ta_window.h"
+#include "ta_audio.h"
 #include "ta_render.h"
 #include "ta_file.h"
 #include "ta_scene.h"
@@ -116,6 +117,9 @@ int main(int argc, char *argv[])
     ta_schema_register();
 
     ta_window_init(1600, 900, false);
+    // TODO: Make sure this gets freed or handled better
+    tg_game.audio = dlb_calloc(1, sizeof(ta_audio_listener));
+    ta_audio_listener_init(tg_game.audio);
     ta_mouse_init();
     ta_keyboard_init();
     ta_render_init();
@@ -124,15 +128,27 @@ int main(int argc, char *argv[])
 
     // Intro scene
     read_scene("data/scene/scene1.dml");
-    dlb_vec_push(tg_game.lights, ta_scene_find(tg_game.scene, F_TA_LIGHT, INTERN("light_sun")));
-    dlb_vec_push(tg_game.lights, ta_scene_find(tg_game.scene, F_TA_LIGHT, INTERN("light_point_1")));
-    tg_game.camera_player = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_player"));
-    tg_game.camera_freecam = ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_freecam"));
-    tg_game.player = ta_scene_find(tg_game.scene, F_TA_ENTITY, INTERN("entity_player"));
+    dlb_vec_push(tg_game.lights, ta_scene_find(tg_game.scene, F_TA_LIGHT,
+        INTERN("light_sun")));
+    dlb_vec_push(tg_game.lights, ta_scene_find(tg_game.scene, F_TA_LIGHT,
+        INTERN("light_point_1")));
+    tg_game.camera_player = ta_scene_find(tg_game.scene, F_TA_CAMERA,
+        INTERN("camera_player"));
+    tg_game.camera_freecam = ta_scene_find(tg_game.scene, F_TA_CAMERA,
+        INTERN("camera_freecam"));
+    tg_game.player = ta_scene_find(tg_game.scene, F_TA_ENTITY,
+        INTERN("entity_player"));
     ta_game_state_set(TA_STATE_FREE_CAM);
-    DLB_ASSERT(tg_game.lights && tg_game.lights[0]);  // Ensure we have a valid light
-    DLB_ASSERT(tg_game.camera);  // Ensure we have a valid camera
-    DLB_ASSERT(tg_game.player);  // Ensure we have a valid player
+
+    // Ensure we have a valid light, camera, and player
+    DLB_ASSERT(tg_game.lights && tg_game.lights[0]);
+    DLB_ASSERT(tg_game.camera);
+    DLB_ASSERT(tg_game.player);
+
+    ta_audio_source *ambient_wakeup = ta_scene_find(tg_game.scene,
+        F_TA_AUDIO_SOURCE, INTERN("src_ambient_genesis"));
+    DLB_ASSERT(ambient_wakeup);
+    ta_audio_source_play_loop(ambient_wakeup);
 
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
@@ -224,6 +240,8 @@ int main(int argc, char *argv[])
             ta_camera_set_target_pos_absolute(tg_game.camera_player,
                 vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
             ta_camera_update(tg_game.camera_player, sim_dt);
+            // HACK: Make point light follow player camera
+            tg_game.lights[1]->position = tg_game.camera_player->position;
 
             // Update main camera
             ta_camera_update(tg_game.camera_freecam, sim_dt);
@@ -243,14 +261,17 @@ int main(int argc, char *argv[])
             // Update scene
             ta_scene_update(tg_game.scene, (float)sim_dt);
 
+            // TODO: Put this somewhere intelligent
+            // Update audio listener position
+            ta_vec3 fwd_up[2];
+            fwd_up[0] = tg_game.camera->front;
+            fwd_up[1] = tg_game.camera->up;
+            alListenerfv(AL_ORIENTATION, (float *)fwd_up);
+            alListenerfv(AL_POSITION, (float *)&tg_game.camera->position);
+            //alListenerfv(AL_VELOCITY, (float *)&tg_game.camera->velocity);
+
             ms_sim_t += ms_sim_dt;
             ms_frame_accum -= ms_sim_dt;
-        }
-
-        if (tg_game.camera->debug_follow_pinky) {
-            ta_vec3 follow_target = vec3_add(tg_game.player->transform.position,
-                (ta_vec3) { 0.0, 1.0f, 3.0f });
-            ta_camera_set_target_pos_absolute(tg_game.camera, follow_target);
         }
 
         float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
