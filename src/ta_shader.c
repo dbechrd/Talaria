@@ -190,9 +190,10 @@ static void shader_locate_uniforms(ta_shader *shader, ta_shader_uniform *uniform
 {
     for (ta_shader_uniform *u = uniforms; u != dlb_vec_end(uniforms); u++)
     {
-        u->location = ta_shader_uniform_location(shader, u->name);
         if (u->type == TA_GLSL_STRUCT) {
             shader_locate_uniforms(shader, u->value.properties);
+        } else {
+            u->location = ta_shader_uniform_location(shader, u->name);
         }
     }
 }

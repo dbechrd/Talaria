@@ -33,7 +33,6 @@
 #include "misc/gl3w.h"
 #include "SDL/SDL.h"
 
-#if _DEBUG
 DLB_ASSERT_HANDLER(handle_assert)
 {
     ta_log_write(tg_debug_log,
@@ -46,7 +45,6 @@ DLB_ASSERT_HANDLER(handle_assert)
     exit(-1);
 }
 dlb_assert_handler_def *dlb_assert_handler = handle_assert;
-#endif
 
 void debug_tests() {
 #if _DEBUG
@@ -189,6 +187,8 @@ int main(int argc, char *argv[])
 		(ta_ui_base *)ui_image);
 
 	ta_ui_barchart chart = ta_ui_barchart_init(10, 10, tg_window.width - 20, 30);
+    UNUSED(view);
+    UNUSED(chart);
 
     //ta_shader_set_sampler2d(tg_shader_mesh, SYM_U_TEX0, tex_test->gl_id);
 
@@ -213,6 +213,8 @@ int main(int argc, char *argv[])
     double ms_frame_first = ta_timer_elapsed_ms();
     double ms_frame_prev = ms_frame_first;
     double ms_frame_accum = 0;
+
+    ta_audio_listener_mute(tg_game.audio);
 
     while (tg_game.state != TA_STATE_QUIT) {
         double ms_frame_start = ta_timer_elapsed_ms();

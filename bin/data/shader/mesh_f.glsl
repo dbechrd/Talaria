@@ -141,7 +141,7 @@ void main()
                 // TODO: This should be u_lights[i].shadowmap_farz
                 shadow_map_depth *= 20.0;
                 shadow_bias = 0.1;
-                shadow_darkness = 0.99;
+                shadow_darkness = 1.0; //0.99;
 
                 dist = length(fragToLight);
                 attenuation = u_lights[i].intensity /
@@ -196,7 +196,7 @@ void main()
     //final_color = vec4(bb - aa, 1.0);
 
     //final_color = vec4(vec3(debug_dist) / 20, 1.0);
-    //final_color = vec4(vec3(debug_depth) / 50, 1.0);
+    //final_color = vec4(vec3(debug_depth) / 20, 1.0);
 
 
 

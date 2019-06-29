@@ -427,7 +427,6 @@ static void tokens_parse(ta_scene *scene, token *tokens)
     stack[sp].is_union_type > 0 ? " (union)" : "", \
     token_type_str(tok->type))
 
-    token *prev = tokens;
     for (token *tok = tokens; tok != dlb_vec_end(tokens); tok++) {
         switch (tok->type) {
             case TOKEN_EOF: {

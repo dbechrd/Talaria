@@ -433,7 +433,6 @@ ta_mat3 mat3_rotate_quat(ta_quat q)
     float xx = q.x * q.x;
     float yy = q.y * q.y;
     float zz = q.z * q.z;
-    float ww = q.w * q.w;
     float xy = q.x * q.y;
     float xw = q.x * q.w;
     float xz = q.x * q.z;
@@ -684,7 +683,6 @@ ta_mat4 mat4_rotate_quat(ta_quat q)
     float xx = q.x * q.x;
     float yy = q.y * q.y;
     float zz = q.z * q.z;
-    float ww = q.w * q.w;
     float xy = q.x * q.y;
     float xw = q.x * q.w;
     float xz = q.x * q.z;

@@ -79,6 +79,9 @@ char ta_file_char(ta_file *f) {
     }
     f->pos.column++;
     int c = fgetc(f->hnd);
+    if (c == '\r') {
+        c = fgetc(f->hnd);
+    }
     if (c == EOF) {
         f->eof = true;
     }

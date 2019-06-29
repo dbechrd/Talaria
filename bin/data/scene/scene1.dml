@@ -273,9 +273,9 @@ ta_ent_button:
     mesh_group_uid: "mesh_group_button"
     rigid_body_uid: "rb_button_0001"
     cast_shadows: true
-  # audio_source_uid: "src_button_0001"
-  # sfx_activated_uid: "sfx_button_activated"
-  # sfx_deactivated_uid: "sfx_button_deactivated"
+  audio_source_uid: "src_button_0001"
+  sfx_activated_uid: "sfx_button_activated"
+  sfx_deactivated_uid: "sfx_button_deactivated"
 
 ta_rigid_body:
   uid: "rb_entity_player"

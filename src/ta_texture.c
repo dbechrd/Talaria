@@ -94,10 +94,13 @@ void ta_texture_load(ta_texture *tex)
     // GL_LINEAR_MIPMAP_LINEAR    texel 2x2 avg, mipmap blend
 
     // TODO: Allow each texture to set its own filtering mode
-    //GLint filter = GL_LINEAR_MIPMAP_LINEAR;
-    GLint filter = GL_NEAREST;
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+#if 0
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+#else
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#endif
 
     glTexImage2D(GL_TEXTURE_2D, 0, format_internal, tex->width, tex->height,
         0, format, GL_UNSIGNED_BYTE, tex->pixels);

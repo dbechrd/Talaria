@@ -193,7 +193,6 @@ void ta_game_update()
         }
     }
     if (!vec3_zero(dir)) {
-        float boost = dir.y;
         dir = vec3_normalize(dir);
         dir = vec3_scalef(dir, 20.0f);
         dir.y *= 2.0f;

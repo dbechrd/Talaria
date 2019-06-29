@@ -36,7 +36,6 @@ void ta_entity_init(ta_entity *e)
 #endif
     }
     if (!e->aabb.extents.x) {
-        bool use_mesh_aabb = false;
         ta_rigid_body *rigid_body = ta_entity_rigid_body(e);
         if (rigid_body) {
             switch (rigid_body->collider.type) {
