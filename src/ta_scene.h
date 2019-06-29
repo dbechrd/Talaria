@@ -7,6 +7,8 @@
 
 typedef struct ta_camera_s ta_camera;
 typedef struct ta_scene_s ta_scene;
+typedef struct ta_shader_s ta_shader;
+
 typedef struct ta_scene_ref_s {
     ta_scene *scene;
     ta_schema_field_type type;
@@ -46,4 +48,5 @@ void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
 void *ta_scene_find_by_ref(ta_scene_ref *ref, ta_schema_field_type type,
     const char *uid);
 void ta_scene_update(ta_scene *scene, float dt);
+void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha);
 void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha);

@@ -15,12 +15,12 @@ ta_camera:
 ta_camera:
   uid: "camera_freecam"
   mode: 0  # TA_CAMERA_FREECAM
-  position: { x: 0.0, y: 10.0, z: 10.0 }
+  position: { x: 0.0, y: 2.0, z: 10.0 }
   position_smooth: 0.1
   position_target_vel: 0.2
   yaw: 90.0
   yaw_smooth: 0.7
-  pitch: -45.0
+  pitch: 0.0
   pitch_smooth: 0.7
   pitch_min: -90.0
   pitch_max: 90.0
@@ -114,9 +114,36 @@ ta_shader:
         { name: "u_lights[5].direction",  type: 5 },  # TA_GLSL_VEC3
         { name: "u_lights[6].direction",  type: 5 },  # TA_GLSL_VEC3
         { name: "u_lights[7].direction",  type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[0].shadowmap2d",  type: 3 },  # TA_GLSL_SAMPLER2D
+        { name: "u_lights[1].shadowmap2d",  type: 3 },  # TA_GLSL_SAMPLER2D
+        { name: "u_lights[2].shadowmap2d",  type: 3 },  # TA_GLSL_SAMPLER2D
+        { name: "u_lights[3].shadowmap2d",  type: 3 },  # TA_GLSL_SAMPLER2D
+        { name: "u_lights[4].shadowmap2d",  type: 3 },  # TA_GLSL_SAMPLER2D
+        { name: "u_lights[5].shadowmap2d",  type: 3 },  # TA_GLSL_SAMPLER2D
+        { name: "u_lights[6].shadowmap2d",  type: 3 },  # TA_GLSL_SAMPLER2D
+        { name: "u_lights[7].shadowmap2d",  type: 3 },  # TA_GLSL_SAMPLER2D
+        { name: "u_lights[0].shadowmap3d",  type: 10 },  # TA_GLSL_SAMPLER_CUBE
+        { name: "u_lights[1].shadowmap3d",  type: 10 },  # TA_GLSL_SAMPLER_CUBE
+        { name: "u_lights[2].shadowmap3d",  type: 10 },  # TA_GLSL_SAMPLER_CUBE
+        { name: "u_lights[3].shadowmap3d",  type: 10 },  # TA_GLSL_SAMPLER_CUBE
+        { name: "u_lights[4].shadowmap3d",  type: 10 },  # TA_GLSL_SAMPLER_CUBE
+        { name: "u_lights[5].shadowmap3d",  type: 10 },  # TA_GLSL_SAMPLER_CUBE
+        { name: "u_lights[6].shadowmap3d",  type: 10 },  # TA_GLSL_SAMPLER_CUBE
+        { name: "u_lights[7].shadowmap3d",  type: 10 },  # TA_GLSL_SAMPLER_CUBE
       ]
     },
   ]
+ta_shader:
+  uid: "shader_shadow"
+  path_vert: "data/shader/shadow_v.glsl"
+  path_frag: "data/shader/shadow_f.glsl"
+  attributes: [
+    { name: "attr_position", type: 5 }  # TA_GLSL_VEC3
+  ]
+  uniforms: [
+    { name: "u_light_pvm",  type: 8 }  # TA_GLSL_MAT4
+  ]
+
 ta_light:
   uid: "light_sun"
   disabled: true
@@ -129,9 +156,10 @@ ta_light:
   uid: "light_point_1"
   disabled: false
   intensity: 1.0
-  position: { x: 1.0, y: 2.0, z: 3.0 }
+  position: { x: 5.0, y: 3.0, z: 3.0 }
   color:    { r: 1.0, g: 1.0, b: 0.4 }
   type: 2  # TA_LIGHT_POINT
+
 ta_texture:
   uid: "texture_genesis_albedo"
   path: "data/texture/genesis_albedo.png"
@@ -147,6 +175,7 @@ ta_material:
   shader_uid: "shader_mesh"
   texture_albedo_uid: "texture_genesis_albedo"
   texture_metallic_uid: "texture_genesis_metallic"
+
 ta_mesh_group:
   uid: "mesh_group_prim_cube"
   path: "data/mesh/prim_cube.obj"
@@ -159,6 +188,7 @@ ta_mesh_group:
 ta_mesh_group:
   uid: "mesh_group_button"
   path: "data/mesh/button.obj"
+
 ta_rigid_body:
   uid: "rb_entity_chamber_0001"
   position: { x: 0.0, y: 0.0, z: 1.0 }
@@ -206,6 +236,7 @@ ta_entity:
   mesh_group_uid: "mesh_group_chamber_0001"
   rigid_body_uid: "rb_entity_chamber_0001"
   invisible: false
+  cast_shadows: true
 
 ta_audio_buffer:
   uid: "ambient_wakeup"
@@ -241,9 +272,10 @@ ta_ent_button:
     material_uid: "material_genesis"
     mesh_group_uid: "mesh_group_button"
     rigid_body_uid: "rb_button_0001"
-  audio_source_uid: "src_button_0001"
-  sfx_activated_uid: "sfx_button_activated"
-  sfx_deactivated_uid: "sfx_button_deactivated"
+    cast_shadows: true
+  # audio_source_uid: "src_button_0001"
+  # sfx_activated_uid: "sfx_button_activated"
+  # sfx_deactivated_uid: "sfx_button_deactivated"
 
 ta_rigid_body:
   uid: "rb_entity_player"
@@ -253,6 +285,8 @@ ta_entity:
   uid: "entity_player"
   mesh_group_uid: "mesh_group_prim_sphere"
   rigid_body_uid: "rb_entity_player"
+  cast_shadows: true
+
 ta_rigid_body:
   uid: "rb_entity_sphere1"
   mass: 1.0
@@ -261,6 +295,8 @@ ta_entity:
   uid: "entity_sphere1"
   mesh_group_uid: "mesh_group_prim_sphere"
   rigid_body_uid: "rb_entity_sphere1"
+  cast_shadows: true
+
 ta_rigid_body:
   uid: "rb_entity_sphere2"
   mass: 1.0
@@ -269,3 +305,4 @@ ta_entity:
   uid: "entity_sphere2"
   mesh_group_uid: "mesh_group_prim_sphere"
   rigid_body_uid: "rb_entity_sphere2"
+  cast_shadows: true

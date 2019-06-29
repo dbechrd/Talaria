@@ -140,10 +140,10 @@ int main(int argc, char *argv[])
         INTERN("entity_player"));
     ta_game_state_set(TA_STATE_FREE_CAM);
 
-    // Ensure we have a valid light, camera, and player
-    DLB_ASSERT(tg_game.lights && tg_game.lights[0]);
+    // Ensure we have a valid camera, player and light
     DLB_ASSERT(tg_game.camera);
     DLB_ASSERT(tg_game.player);
+    DLB_ASSERT(tg_game.lights && tg_game.lights[0]);
 
     ta_audio_source *ambient_wakeup = ta_scene_find(tg_game.scene,
         F_TA_AUDIO_SOURCE, INTERN("src_ambient_genesis"));
@@ -155,11 +155,15 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     tg_shader_lines =
         ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_lines"));
-    DLB_ASSERT(tg_shader_lines && "Could not find shader_lines");
+    DLB_ASSERT(tg_shader_lines);
 
     tg_shader_quads =
         ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_quads"));
-    DLB_ASSERT(tg_shader_quads && "Could not find shader_quads");
+    DLB_ASSERT(tg_shader_quads);
+
+    tg_shader_shadow =
+        ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_shadow"));
+    DLB_ASSERT(tg_shader_shadow);
 
     ////////////////////////////////////////////////////////////////////////////
     // UI
@@ -240,8 +244,11 @@ int main(int argc, char *argv[])
             ta_camera_set_target_pos_absolute(tg_game.camera_player,
                 vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
             ta_camera_update(tg_game.camera_player, sim_dt);
+
             // HACK: Make point light follow player camera
-            tg_game.lights[1]->position = tg_game.camera_player->position;
+            //tg_game.lights[1]->position = tg_game.camera_player->position;
+            // HACK: Make point light follow camera
+            //tg_game.lights[1]->position = vec3_add(tg_game.camera_freecam->position, tg_game.camera_freecam->front);
 
             // Update main camera
             ta_camera_update(tg_game.camera_freecam, sim_dt);
@@ -285,7 +292,10 @@ int main(int argc, char *argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw models
-		glDisable(GL_CULL_FACE);
+		//glDisable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
+        ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
+        glCullFace(GL_BACK);
         ta_scene_render(tg_game.scene, tg_game.camera, sim_alpha);
         ta_primitive_render();
         ta_primitive_clear();
@@ -298,9 +308,14 @@ int main(int argc, char *argv[])
         ta_primitive_render();
         ta_primitive_clear();
 
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+
         // Minimap
 		ta_viewport_bind(&minimap_viewport, true);
 		{
+#if 0
 			// TODO: Mesh selector, highlight and rotate mesh while mouse hover
 			//ta_mat4 model = mat4_rotate_y(model_deg);
 			//model_deg += 1.0f;
@@ -324,10 +339,38 @@ int main(int argc, char *argv[])
 
             ta_primitive_render();
             ta_primitive_clear();
+#elif 0
+            ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex_test->gl_id);
+            ta_rect parent = { 0 };
+            parent.w = tex_test->width;
+            parent.h = tex_test->height;
+            ta_rect child = { 0 };
+            child.w = tex_test->width;
+            child.h = tex_test->height;
+
+            ta_primitive_push_rect(parent, child, TA_COLOR_INVIS);
+            ta_primitive_render();
+            ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+            ta_primitive_clear();
+#elif 0
+            ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tg_game.lights[0]->shadowmap.texture);
+            ta_rect parent = { 0 };
+            parent.w = tg_game.lights[0]->shadowmap.resolution;
+            parent.h = tg_game.lights[0]->shadowmap.resolution;
+            ta_rect child = { 0 };
+            child.w = tg_game.lights[0]->shadowmap.resolution;
+            child.h = tg_game.lights[0]->shadowmap.resolution;
+
+            ta_primitive_push_rect(parent, child, TA_COLOR_INVIS);
+            ta_primitive_render();
+            ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+            ta_primitive_clear();
+#endif
 		}
 		ta_viewport_unbind(&minimap_viewport);
 		glEnable(GL_CULL_FACE);
 
+#if 0
 		// Barchart
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
@@ -335,6 +378,7 @@ int main(int argc, char *argv[])
         ta_ui_barchart_draw(0, 0, &chart);
         ta_primitive_render();
         ta_primitive_clear();
+#endif
 
 #if 0
         // Scroll view

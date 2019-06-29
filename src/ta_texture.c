@@ -48,13 +48,6 @@ void ta_texture_load_path(ta_texture *tex, const char *path)
     ta_texture_load(tex);
 }
 
-void ta_texture_set_pixels(ta_texture *tex, u8 *pixels)
-{
-    size_t bytes = tex->width * tex->height * tex->channels * sizeof(*tex->pixels);
-    tex->pixels = dlb_calloc(1, bytes);
-    memcpy(tex->pixels, pixels, bytes);
-}
-
 void ta_texture_load(ta_texture *tex)
 {
     DLB_ASSERT(tex->pixels);
@@ -99,7 +92,10 @@ void ta_texture_load(ta_texture *tex)
     // GL_LINEAR                  texel 2x2 avg
     // GL_LINEAR_MIPMAP_NEAREST   texel 2x2 avg, mipmap nearest
     // GL_LINEAR_MIPMAP_LINEAR    texel 2x2 avg, mipmap blend
-    GLint filter = GL_LINEAR_MIPMAP_LINEAR;
+
+    // TODO: Allow each texture to set its own filtering mode
+    //GLint filter = GL_LINEAR_MIPMAP_LINEAR;
+    GLint filter = GL_NEAREST;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
 
@@ -128,6 +124,8 @@ void ta_texture_free(ta_texture *tex)
 {
     if (tex->path) {
         stbi_image_free(tex->pixels);
+    } else {
+        dlb_vec_free(tex->pixels);
     }
     ta_texture_delete(tex);
 

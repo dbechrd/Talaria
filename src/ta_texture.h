@@ -15,7 +15,6 @@ typedef struct ta_texture_s {
 
 void ta_texture_init(ta_texture *tex);
 void ta_texture_load_path(ta_texture *tex, const char *path);
-void ta_texture_set_pixels(ta_texture *tex, u8 *pixels);
 void ta_texture_load(ta_texture *tex);
 void ta_texture_delete(ta_texture *tex);
 void ta_texture_free(ta_texture *tex);

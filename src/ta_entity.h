@@ -28,6 +28,8 @@ typedef struct ta_entity_s {
     ta_aabb aabb;  // AABB in local space
 
     bool invisible;
+    bool cast_shadows;
+    bool receive_shadows;  // TODO: Pass as flag to PBR shader, skip shadows if false
     //ta_entity *next;  // TODO: Is a sibling linked list useful?
     //ta_entity **children;
 } ta_entity;
@@ -38,4 +40,6 @@ ta_mesh_group *ta_entity_mesh_group(ta_entity *e);
 ta_rigid_body *ta_entity_rigid_body(ta_entity *e);
 //bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold);
 void ta_entity_update(ta_entity *e);
+void ta_entity_shadow_pass(ta_entity *e, ta_shader *shader, ta_mat4 *light_pv,
+    float alpha);
 void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha);

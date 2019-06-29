@@ -8,11 +8,6 @@
 #include "ta_log.h"
 #include "dlb_vector.h"
 
-typedef void (entity_updater)(ta_entity *base);
-static entity_updater *entity_updaters[TA_ENT_COUNT] = {
-    [TA_ENT_BUTTON] = &ta_ent_button_update
-};
-
 void ta_entity_init(ta_entity *e)
 {
     if (quat_zero(e->transform.orientation)) {
@@ -111,6 +106,13 @@ bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold)
     return narrow_phase;
 }
 #endif
+
+typedef void (entity_updater)(ta_entity *base);
+
+static entity_updater *entity_updaters[TA_ENT_COUNT] = {
+    [TA_ENT_BUTTON] = &ta_ent_button_update
+};
+
 void ta_entity_update(ta_entity *e)
 {
     e->transform_prev = e->transform;
@@ -138,31 +140,15 @@ static void ta_entity_push_normals(ta_entity *e)
     }
 }
 
-void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
+void ta_entity_shadow_pass(ta_entity *e, ta_shader *shader, ta_mat4 *light_pv,
+    float alpha)
 {
-    if (e->invisible) {
+    if (e->invisible || !e->cast_shadows) {
         return;
     }
 
-    ta_material *mat = ta_entity_material(e);
-    ta_shader *shader = ta_material_shader(mat);
-    ta_texture *texture_albedo = ta_material_texture_albedo(mat);
-    ta_texture *texture_metallic = ta_material_texture_metallic(mat);
     ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
-
-    // TODO: Allow some entities to not be renderable; skip them
-    DLB_ASSERT(mat);
-    DLB_ASSERT(shader);
-    DLB_ASSERT(texture_albedo);
-    DLB_ASSERT(texture_metallic);
     DLB_ASSERT(mesh_group);
-
-    // TODO: This is going to make a zillion extranous calls
-    GLenum camera_poly_mode = camera->debug_wireframe ? GL_LINE : GL_FILL;
-    if (camera_poly_mode != tg_polygon_mode) {
-        glPolygonMode(GL_FRONT_AND_BACK, camera_poly_mode);
-        tg_polygon_mode = camera_poly_mode;
-    }
 
     ta_vec3 lerp_pos;
     ta_quat lerp_orient;
@@ -181,7 +167,61 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
     ta_mat4 orient = mat4_rotate_quat(lerp_orient);
     e->model = mat4_mul(&trans, &orient);
 
+    // TODO: Allow updating model uniform without having to rebind everything
+    // We can probably bind in the set functions instead of prerender, or can
+    // set a "loaded" flag for each uniform (will be 0 by default, so safer than
+    // "dirty" flag), and only load when changed. I don't know how expensive
+    // glUniform calls are, so this may or may not matter.
+    ta_mat4 light_pvm = mat4_mul(light_pv, &e->model);
+    ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
+    ta_shader_prerender(shader);
+    ta_mesh_group_render(mesh_group);
+}
+
+void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
+{
+    // If invisible or all rendering disabled
+    if (e->invisible || !(!camera->debug_no_mesh || camera->debug_normals || camera->debug_bounding_boxes)) {
+        return;
+    }
+
+    ta_vec3 lerp_pos;
+    ta_quat lerp_orient;
+    ta_rigid_body *body = ta_entity_rigid_body(e);
+    if (body) {
+        lerp_pos = vec3_lerp(e->transform.position, body->position, alpha);
+        lerp_orient = quat_nlerp(e->transform.orientation, body->orientation, alpha);
+    } else {
+        lerp_pos = vec3_lerp(e->transform_prev.position, e->transform.position, alpha);
+        lerp_orient = quat_nlerp(e->transform_prev.orientation, e->transform.orientation, alpha);
+    }
+
+    // TODO: Multiply position by parent via mat4_mul(parent, transform)
+    ta_mat4 trans = mat4_translate(lerp_pos);
+    ta_mat4 orient = mat4_rotate_quat(lerp_orient);
+    e->model = mat4_mul(&trans, &orient);
+
     if (!camera->debug_no_mesh) {
+        ta_material *mat = ta_entity_material(e);
+        ta_shader *shader = ta_material_shader(mat);
+        ta_texture *texture_albedo = ta_material_texture_albedo(mat);
+        ta_texture *texture_metallic = ta_material_texture_metallic(mat);
+        ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
+
+        // TODO: Allow some entities to not be renderable; skip them
+        DLB_ASSERT(mat);
+        DLB_ASSERT(shader);
+        DLB_ASSERT(texture_albedo);
+        DLB_ASSERT(texture_metallic);
+        DLB_ASSERT(mesh_group);
+
+        // TODO: This is going to make a zillion extranous calls
+        GLenum camera_poly_mode = camera->debug_wireframe ? GL_LINE : GL_FILL;
+        if (camera_poly_mode != tg_polygon_mode) {
+            glPolygonMode(GL_FRONT_AND_BACK, camera_poly_mode);
+            tg_polygon_mode = camera_poly_mode;
+        }
+
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
         ta_shader_set_mat4(shader, SYM_U_MODEL, &e->model);
@@ -203,29 +243,22 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
         ta_shader_unbind(shader);
     }
 
-    if (camera->debug_normals ||
-        camera->debug_bounding_boxes)
-    {
-        ta_primitive_render();
-        ta_primitive_clear();
+    ta_primitive_render();
+    ta_primitive_clear();
 
+    if (camera->debug_normals) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &e->model);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &e->model);
-        if (camera->debug_normals) {
-            ta_entity_push_normals(e);
-        }
+        ta_entity_push_normals(e);
         ta_primitive_render();
         ta_primitive_clear();
+    }
 
+    if (camera->debug_bounding_boxes) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &trans);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &trans);
-        if (camera->debug_bounding_boxes) {
-            ta_entity_push_aabb(e, TA_COLOR_RED);
-        }
+        ta_entity_push_aabb(e, TA_COLOR_RED);
         ta_primitive_render();
         ta_primitive_clear();
-
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
     }
 }

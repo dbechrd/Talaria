@@ -302,13 +302,15 @@ void ta_schema_register()
 
     TYPE_START(ta_entity, F_TA_ENTITY);
     TYPE_FIELD_NAME(ta_entity, ref.uid, F_ATOM_STRING, uid);
-    TYPE_FIELD(ta_entity, type,           F_ATOM_INT);
-    TYPE_FIELD(ta_entity, transform,      F_TA_TRANSFORM);
-    TYPE_FIELD(ta_entity, material_uid,   F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, mesh_group_uid, F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, rigid_body_uid, F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, parent_uid,     F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, invisible,      F_ATOM_BOOL);
+    TYPE_FIELD(ta_entity, type,            F_ATOM_INT);
+    TYPE_FIELD(ta_entity, transform,       F_TA_TRANSFORM);
+    TYPE_FIELD(ta_entity, material_uid,    F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, mesh_group_uid,  F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, rigid_body_uid,  F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, parent_uid,      F_ATOM_STRING);
+    TYPE_FIELD(ta_entity, invisible,       F_ATOM_BOOL);
+    TYPE_FIELD(ta_entity, cast_shadows,    F_ATOM_BOOL);
+    TYPE_FIELD(ta_entity, receive_shadows, F_ATOM_BOOL);
     TYPE_END(ta_entity);
 
     TYPE_START(ta_ent_button, F_TA_ENT_BUTTON);

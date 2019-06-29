@@ -12,6 +12,7 @@
 #include "ta_light.h"
 #include "ta_log.h"
 #include "ta_game.h"
+#include "ta_window.h"
 #include "dlb_vector.h"
 #include <stdlib.h>
 
@@ -661,25 +662,51 @@ static void scene_load_placeholders(ta_scene *scene)
     // Fallback resources
     ta_texture *tex_albedo = ta_scene_obj_alloc(scene, F_TA_TEXTURE,
         INTERN("TEXTURE_ALBEDO"));
-    //tex_albedo->path = INTERN("data/texture/default_1024_1024.png");
-    tex_albedo->width = 1;
-    tex_albedo->height = 1;
-    tex_albedo->channels = 3;
-    tex_albedo->linear = true;
-    u8 albedo_pixels[] = { 255, 0, 0 };
-    ta_texture_set_pixels(tex_albedo, albedo_pixels);
-    scene->default_texture_uid = tex_albedo->ref.uid;
+    {
+#if 0
+        tex_albedo->path = INTERN("data/texture/default_1024_1024.png");
+#else
+        // Generate magenta/white grid pattern
+        tex_albedo->width = 64;
+        tex_albedo->height = 64;
+        tex_albedo->channels = 3;
+        tex_albedo->linear = true;
+        u8 *albedo_pixels = 0;
+        u32 bytes = tex_albedo->width * tex_albedo->height * tex_albedo->channels;
+        dlb_vec_reserve(albedo_pixels, bytes);
+        u8 toggle = 0;
+        u8 toggle_width = 4;
+        for (int y = 0; y < tex_albedo->height; y++) {
+            if (y % toggle_width == 0) toggle = !toggle;
+            for (int x = 0; x < tex_albedo->width; x++) {
+                if (x % toggle_width == 0) toggle = !toggle;
+                dlb_vec_push(albedo_pixels, 255);
+                dlb_vec_push(albedo_pixels, toggle * 255);
+                dlb_vec_push(albedo_pixels, 255);
+            }
+        }
+        DLB_ASSERT(dlb_vec_len(albedo_pixels) == bytes);
+        tex_albedo->pixels = albedo_pixels;
+#endif
+        scene->default_texture_uid = tex_albedo->ref.uid;
+    }
 
     ta_texture *tex_metallic = ta_scene_obj_alloc(scene, F_TA_TEXTURE,
         INTERN("TEXTURE_METALLIC"));
-    //tex_metallic->path = INTERN("data/texture/default_1024_1024.png");
-    tex_metallic->width = 1;
-    tex_metallic->height = 1;
-    tex_metallic->channels = 1;
-    tex_metallic->linear = true;
-    u8 metallic = 0;
-    ta_texture_set_pixels(tex_metallic, &metallic);
-    scene->default_texture_uid = tex_metallic->ref.uid;
+    {
+#if 0
+        tex_metallic->path = INTERN("data/texture/default_1024_1024.png");
+#else
+        tex_metallic->width = 1;
+        tex_metallic->height = 1;
+        tex_metallic->channels = 1;
+        tex_metallic->linear = true;
+        u8 *metallic = 0;
+        dlb_vec_alloc(metallic);
+        tex_metallic->pixels = metallic;
+#endif
+        scene->default_texture_uid = tex_metallic->ref.uid;
+    }
 
     ta_mesh_group *mesh_group = ta_scene_obj_alloc(scene, F_TA_MESH_GROUP,
         INTERN("MESH_GROUP_DEFAULT"));
@@ -953,6 +980,23 @@ void ta_scene_update(ta_scene *scene, float dt)
     }
 }
 
+void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
+{
+    ta_shader_bind(shader);
+    dlb_vec_each(ta_light *, light, scene->pools[F_TA_LIGHT]) {
+        // TODO: Handle shadows for other light types
+        if (light->type != TA_LIGHT_POINT) {
+            continue;
+        }
+
+        ta_light_shadowpass_render(light, shader, alpha, scene->pools[F_TA_ENTITY]);
+    }
+    ta_shader_unbind(shader);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glViewport(0, 0, tg_window.width, tg_window.height);
+}
+
 void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
 {
     ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);
@@ -963,24 +1007,28 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
 
     // TODO: Group by shader / material to minimize redundant uniform calls
-    dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
-        switch (ref->type) {
-            case F_TA_ENTITY: {
-                ta_entity *entity = ref->ptr;
-                ta_entity_render(entity, camera, alpha);
-                break;
-            } case F_TA_CAMERA: {
-                ta_camera *cam = ref->ptr;
-                if (cam != tg_game.camera) {
-                    ta_sphere sphere = { 0 };
-                    sphere.center = cam->position;
-                    sphere.radius = 0.2f;
-                    ta_primitive_push_sphere(sphere, TA_COLOR_YELLOW);
-                }
-                break;
-            }
+    dlb_vec_each(ta_entity *, entity, scene->pools[F_TA_ENTITY]) {
+        ta_entity_render(entity, camera, alpha);
+    }
+    dlb_vec_each(ta_ent_button *, button, scene->pools[F_TA_ENT_BUTTON]) {
+        ta_entity_render(&button->base, camera, alpha);
+    }
+#if 1
+    dlb_vec_each(ta_camera *, cam, scene->pools[F_TA_CAMERA]) {
+        if (cam != tg_game.camera) {
+            ta_sphere sphere = { 0 };
+            sphere.center = cam->position;
+            sphere.radius = 0.2f;
+            ta_primitive_push_sphere(sphere, TA_COLOR_GREEN);
         }
     }
+    dlb_vec_each(ta_light *, light, scene->pools[F_TA_LIGHT]) {
+        ta_sphere sphere = { 0 };
+        sphere.center = light->position;
+        sphere.radius = 0.2f;
+        ta_primitive_push_sphere(sphere, TA_COLOR_YELLOW);
+    }
+#endif
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &camera->look_at);

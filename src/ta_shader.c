@@ -9,20 +9,22 @@
 
 ta_shader *tg_shader_lines;
 ta_shader *tg_shader_quads;
+ta_shader *tg_shader_shadow;
 
 const char *ta_glsl_type_str(int type)
 {
     switch(type) {
-        case TA_GLSL_INT:       return "TA_GLSL_GLINT";
-        case TA_GLSL_UINT:      return "TA_GLSL_GLUINT";
-        case TA_GLSL_FLOAT:     return "TA_GLSL_FLOAT";
-        case TA_GLSL_SAMPLER2D: return "TA_GLSL_SAMPLER2D";
-        case TA_GLSL_VEC2:      return "TA_GLSL_VEC2";
-        case TA_GLSL_VEC3:      return "TA_GLSL_VEC3";
-        case TA_GLSL_VEC4:      return "TA_GLSL_VEC4";
-        case TA_GLSL_MAT3:      return "TA_GLSL_MAT3";
-        case TA_GLSL_MAT4:      return "TA_GLSL_MAT4";
-        case TA_GLSL_STRUCT:    return "TA_GLSL_STRUCT";
+        case TA_GLSL_INT:          return "TA_GLSL_GLINT";
+        case TA_GLSL_UINT:         return "TA_GLSL_GLUINT";
+        case TA_GLSL_FLOAT:        return "TA_GLSL_FLOAT";
+        case TA_GLSL_SAMPLER2D:    return "TA_GLSL_SAMPLER2D";
+        case TA_GLSL_VEC2:         return "TA_GLSL_VEC2";
+        case TA_GLSL_VEC3:         return "TA_GLSL_VEC3";
+        case TA_GLSL_VEC4:         return "TA_GLSL_VEC4";
+        case TA_GLSL_MAT3:         return "TA_GLSL_MAT3";
+        case TA_GLSL_MAT4:         return "TA_GLSL_MAT4";
+        case TA_GLSL_STRUCT:       return "TA_GLSL_STRUCT";
+        case TA_GLSL_SAMPLER_CUBE: return "TA_GLSL_SAMPLER_CUBE";
         default:
             DLB_ASSERT(!"<UNKNOWN_TA_GLSL_TYPE>");
             return 0;
@@ -307,7 +309,13 @@ void ta_shader_set_float(ta_shader *shader, const char *name, GLfloat value)
 void ta_shader_set_sampler2d(ta_shader *shader, const char *name, GLuint tex_id)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D);
-    u->value.gluint = tex_id;
+    u->value.sampler2d = tex_id;
+}
+
+void ta_shader_set_sampler_cube(ta_shader *shader, const char *name, GLuint tex_id)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER_CUBE);
+    u->value.sampler_cube = tex_id;
 }
 
 void ta_shader_set_vec2(ta_shader *shader, const char *name, const ta_vec2 *v)
@@ -360,23 +368,34 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     ta_shader_uniform *u_direction =
         find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_DIRECTION[index],
             TA_GLSL_VEC3);
+    ta_shader_uniform *u_shadowmap2d =
+        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP2D[index],
+            TA_GLSL_SAMPLER2D);
+    ta_shader_uniform *u_shadowmap3d =
+        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP3D[index],
+            TA_GLSL_SAMPLER_CUBE);
 
     u_intensity->value.glfloat = light->intensity;
     u_color->value.rgb         = light->color;
     u_position->value.vec3     = light->position;
     u_type->value.glint        = light->type;
     u_direction->value.vec3    = VEC3_ZERO;
+    u_shadowmap2d->value.sampler2d = 0;
+    u_shadowmap3d->value.sampler_cube = 0;
 
     switch (light->type) {
         case TA_LIGHT_AMBIENT:
             break;
         case TA_LIGHT_DIRECTIONAL:
             u_direction->value.vec3 = light->data.directional.direction;
+            u_shadowmap2d->value.sampler2d = light->shadowmap.texture;
             break;
         case TA_LIGHT_POINT:
+            u_shadowmap3d->value.sampler_cube = light->shadowmap.texture;
             break;
         case TA_LIGHT_SPOT:
             u_direction->value.vec3 = light->data.directional.direction;
+            u_shadowmap2d->value.sampler2d = light->shadowmap.texture;
             DLB_ASSERT(!"Don't handle spot lights yet");
             break;
         default:
@@ -407,6 +426,15 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
                 if (tex_id >= 0) {
                     glActiveTexture(GL_TEXTURE0 + *tex_count);
                     glBindTexture(GL_TEXTURE_2D, tex_id);
+                    glUniform1i(u->location, *tex_count);
+                    (*tex_count)++;
+                }
+                break;
+            } case TA_GLSL_SAMPLER_CUBE: {
+                GLuint tex_id = u->value.gluint;
+                if (tex_id >= 0) {
+                    glActiveTexture(GL_TEXTURE0 + *tex_count);
+                    glBindTexture(GL_TEXTURE_CUBE_MAP, tex_id);
                     glUniform1i(u->location, *tex_count);
                     (*tex_count)++;
                 }

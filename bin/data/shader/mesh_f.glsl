@@ -85,6 +85,9 @@ struct Light {
     int type;
     // Directional / Spot
     vec3 direction;
+    sampler2D shadowmap2d;
+    // Point
+    samplerCube shadowmap3d;
 };
 uniform uint u_lights_count;
 uniform Light[8] u_lights;
@@ -104,13 +107,16 @@ void main()
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, mtl_albedo, mtl_metallic);
 
+    float debug_dist = 0;
+    float debug_depth = 0;
+
     vec3 L0 = vec3(0.0);
     for (uint i = 0U; i < u_lights_count; ++i) {
         vec3 fragToLight;
-        //float shadow_map_depth;
-        //float shadow_bias;
-        //float shadow_darkness;
-        float dist;
+        float shadow_map_depth = 0.0;
+        float shadow_bias = 0.0;
+        float shadow_darkness = 0.0;
+        float dist = 0.0;
         float attenuation;
 
         switch(u_lights[i].type) {
@@ -130,22 +136,26 @@ void main()
             } case LIGHT_POINT: {
                 fragToLight = u_lights[i].position - vertex.position;
 
-                //shadow_map_depth = texture(shadow_cubemaps[CUBEMAP_IDX],
-                //                           -fragToLight).r;
-                //shadow_map_depth *= near_far.y;
-                //shadow_bias = 0.1;
-                //shadow_darkness = 0.9;
+                shadow_map_depth = texture(u_lights[i].shadowmap3d,
+                                           -fragToLight).r;
+                // TODO: This should be u_lights[i].shadowmap_farz
+                shadow_map_depth *= 20.0;
+                shadow_bias = 0.1;
+                shadow_darkness = 0.99;
 
                 dist = length(fragToLight);
                 attenuation = u_lights[i].intensity /
                     (u_lights[i].intensity + 0.022 * dist + 0.0019 * dist * dist);
                 //attenuation = u_lights[i].intensity / dist * dist;
+
+                debug_dist = dist - shadow_bias;
+                debug_depth = shadow_map_depth;
                 break;
             }
         }
 
-        //float shadow = mix(0.0, shadow_darkness, dist - shadow_bias >
-        //                   shadow_map_depth);
+        float shadow = mix(0.0, shadow_darkness, dist - shadow_bias >
+                           shadow_map_depth);
 
         vec3 radiance = u_lights[i].color * attenuation;
 
@@ -166,8 +176,9 @@ void main()
         float denom = 4.0 * max(dot(N, V), 0.0) * NdotL;
         vec3 specular = numer / max(denom, 0.001);
 
-        L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
-        //L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
+        //L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
+        L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
+        //L0 += mtl_albedo * (1.0 - shadow);
     }
 
     vec3 ambient = vec3(0.01) * mtl_albedo * mtl_ao;
@@ -177,11 +188,22 @@ void main()
 
     final_color = vec4(color, mtl_opacity);
 
-	//final_color = mix(tex_albedo, vertex.color, vertex.color.a > 0);
-	//final_color = final_color + 0.0000001 * (tex_albedo);
+
+
+
+    //vec3 aa = vec3(debug_dist) / 20;
+    //vec3 bb = vec3(debug_depth) / 20;
+    //final_color = vec4(bb - aa, 1.0);
+
+    //final_color = vec4(vec3(debug_dist) / 20, 1.0);
+    //final_color = vec4(vec3(debug_depth) / 50, 1.0);
+
+
+
 
     // vertex colors
     //final_color = vertex.color;
+	//final_color = mix(tex_albedo, vertex.color, vertex.color.a > 0);
 
     // normals
     //final_color = vec4(abs(vertex.normal), 1.0);

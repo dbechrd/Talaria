@@ -275,7 +275,6 @@ void ta_primitive_push_sphere(ta_sphere sphere, ta_rgba color)
     ta_primitive_push_line_3d(line_yz, color, color);
     ta_primitive_push_line_3d(line_xz, color, color);
     ta_primitive_push_line_3d(line_xy, color, color);
-
 }
 
 void ta_primitive_push_rgb_sphere(ta_sphere sphere)
@@ -329,7 +328,6 @@ void ta_primitive_push_rgb_sphere(ta_sphere sphere)
     ta_primitive_push_line_3d(line_yz, TA_COLOR_WHITE, TA_COLOR_RED);
     ta_primitive_push_line_3d(line_xz, TA_COLOR_WHITE, TA_COLOR_GREEN);
     ta_primitive_push_line_3d(line_xy, TA_COLOR_WHITE, TA_COLOR_BLUE);
-
 }
 #undef SPHERE_SEGMENTS
 
