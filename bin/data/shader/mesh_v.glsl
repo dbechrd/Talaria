@@ -19,9 +19,10 @@ uniform mat4 u_model;
 void main()
 {
     vec4 pos = u_model * vec4(attr_position, 1.0);
+    // TODO: Premultiply MVP matrix and pass as uniform
+    gl_Position = u_proj * u_view * pos;
     vertex.position = pos.xyz;
 	vertex.color = attr_color;
 	vertex.uv = attr_uv;
-    vertex.normal = normalize(mat3(u_model) * attr_normal);
-	gl_Position = u_proj * u_view * pos;
+    vertex.normal = (u_model * vec4(attr_normal, 0.0)).xyz;
 }

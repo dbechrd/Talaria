@@ -34,8 +34,9 @@ const char *ta_glsl_type_str(int type)
 static void show_info_log(GLuint shader, PFNGLGETSHADERIVPROC glGet__iv,
     PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
 {
-    ta_buffer buf;
+    ta_log_write(tg_debug_log, "Trying to show_info_log\n");
 
+    ta_buffer buf;
     glGet__iv(shader, GL_INFO_LOG_LENGTH, (GLint *)&buf.length);
     buf.data = dlb_malloc(buf.length);
     glGet__InfoLog(shader, buf.length, NULL, (GLchar *)buf.data);
@@ -118,7 +119,6 @@ static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
     return location;
 }
 
-// Return attribute if found, else null
 static ta_shader_attribute *find_attribute_by_name(ta_shader *shader,
     const char *name, ta_glsl_type type)
 {
@@ -135,7 +135,6 @@ static ta_shader_attribute *find_attribute_by_name(ta_shader *shader,
     return result;
 }
 
-// Return attribute if found, else assert
 static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms,
     const char *name, ta_glsl_type type)
 {
@@ -148,7 +147,7 @@ static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms,
             break;
         }
     }
-    DLB_ASSERT(!result || result->type == type);
+    DLB_ASSERT(result && result->type == type);
     return result;
 }
 
@@ -375,6 +374,9 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     ta_shader_uniform *u_shadowmap3d =
         find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP3D[index],
             TA_GLSL_SAMPLER_CUBE);
+    ta_shader_uniform *u_shadowmap_farz =
+        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP_FARZ[index],
+            TA_GLSL_FLOAT);
 
     u_intensity->value.glfloat = light->intensity;
     u_color->value.rgb         = light->color;
@@ -383,6 +385,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     u_direction->value.vec3    = VEC3_ZERO;
     u_shadowmap2d->value.sampler2d = 0;
     u_shadowmap3d->value.sampler_cube = 0;
+    u_shadowmap_farz->value.glfloat = 0;
 
     switch (light->type) {
         case TA_LIGHT_AMBIENT:
@@ -393,6 +396,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
             break;
         case TA_LIGHT_POINT:
             u_shadowmap3d->value.sampler_cube = light->shadowmap.texture;
+            u_shadowmap_farz->value.glfloat = light->shadowmap.farz;
             break;
         case TA_LIGHT_SPOT:
             u_direction->value.vec3 = light->data.directional.direction;

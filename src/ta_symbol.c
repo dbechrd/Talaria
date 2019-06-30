@@ -36,6 +36,8 @@ const char *SYM_U_PROJ;
 const char *SYM_U_VIEW;
 const char *SYM_U_MODEL;
 const char *SYM_U_LIGHT_PVM;
+const char *SYM_U_LIGHT_POS;
+const char *SYM_U_LIGHT_FARZ;
 const char *SYM_U_CAMERA_POS;
 const char *SYM_U_TEX;
 const char *SYM_U_TEX_ALBEDO;
@@ -49,6 +51,7 @@ const char *SYM_U_LIGHTS_TYPE[8];
 const char *SYM_U_LIGHTS_DIRECTION[8];
 const char *SYM_U_LIGHTS_SHADOWMAP2D[8];
 const char *SYM_U_LIGHTS_SHADOWMAP3D[8];
+const char *SYM_U_LIGHTS_SHADOWMAP_FARZ[8];
 
 // TODO: It may be useful to have multiple symbol tables to allow freeing
 //       symbols that are no longer in use (e.g. table per scene file). This
@@ -82,6 +85,8 @@ void ta_symbol_init() {
     SYM_U_VIEW          = INTERN("u_view");
     SYM_U_MODEL         = INTERN("u_model");
     SYM_U_LIGHT_PVM     = INTERN("u_light_pvm");
+    SYM_U_LIGHT_POS     = INTERN("u_light_pos");
+    SYM_U_LIGHT_FARZ    = INTERN("u_light_farz");
     SYM_U_CAMERA_POS    = INTERN("u_camera_pos");
     SYM_U_TEX           = INTERN("u_tex");
     SYM_U_TEX_ALBEDO    = INTERN("u_tex_albedo");
@@ -151,6 +156,15 @@ void ta_symbol_init() {
     SYM_U_LIGHTS_SHADOWMAP3D[5] = INTERN("u_lights[5].shadowmap3d");
     SYM_U_LIGHTS_SHADOWMAP3D[6] = INTERN("u_lights[6].shadowmap3d");
     SYM_U_LIGHTS_SHADOWMAP3D[7] = INTERN("u_lights[7].shadowmap3d");
+
+    SYM_U_LIGHTS_SHADOWMAP_FARZ[0] = INTERN("u_lights[0].shadowmap_farz");
+    SYM_U_LIGHTS_SHADOWMAP_FARZ[1] = INTERN("u_lights[1].shadowmap_farz");
+    SYM_U_LIGHTS_SHADOWMAP_FARZ[2] = INTERN("u_lights[2].shadowmap_farz");
+    SYM_U_LIGHTS_SHADOWMAP_FARZ[3] = INTERN("u_lights[3].shadowmap_farz");
+    SYM_U_LIGHTS_SHADOWMAP_FARZ[4] = INTERN("u_lights[4].shadowmap_farz");
+    SYM_U_LIGHTS_SHADOWMAP_FARZ[5] = INTERN("u_lights[5].shadowmap_farz");
+    SYM_U_LIGHTS_SHADOWMAP_FARZ[6] = INTERN("u_lights[6].shadowmap_farz");
+    SYM_U_LIGHTS_SHADOWMAP_FARZ[7] = INTERN("u_lights[7].shadowmap_farz");
 }
 
 const char *ta_symbol_intern(const char *s, u32 len) {

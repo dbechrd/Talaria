@@ -171,6 +171,7 @@ void ta_entity_shadow_pass(ta_entity *e, ta_shader *shader, ta_mat4 *light_pv,
     // set a "loaded" flag for each uniform (will be 0 by default, so safer than
     // "dirty" flag), and only load when changed. I don't know how expensive
     // glUniform calls are, so this may or may not matter.
+    ta_shader_set_mat4(shader, SYM_U_MODEL, &e->model);
     ta_mat4 light_pvm = mat4_mul(light_pv, &e->model);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
     ta_shader_prerender(shader);

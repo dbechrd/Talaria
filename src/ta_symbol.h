@@ -59,6 +59,8 @@ extern const char *SYM_U_PROJ;
 extern const char *SYM_U_VIEW;
 extern const char *SYM_U_MODEL;
 extern const char *SYM_U_LIGHT_PVM;
+extern const char *SYM_U_LIGHT_POS;
+extern const char *SYM_U_LIGHT_FARZ;
 extern const char *SYM_U_CAMERA_POS;
 extern const char *SYM_U_TEX;
 extern const char *SYM_U_TEX_ALBEDO;
@@ -72,6 +74,7 @@ extern const char *SYM_U_LIGHTS_TYPE[8];
 extern const char *SYM_U_LIGHTS_DIRECTION[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP2D[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP3D[8];
+extern const char *SYM_U_LIGHTS_SHADOWMAP_FARZ[8];
 
 const char *ta_symbol_intern(const char *s, u32 len);
 void ta_symbol_init();

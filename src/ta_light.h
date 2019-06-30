@@ -30,6 +30,7 @@ typedef struct ta_spot_light_s {
 typedef struct ta_shadowmap_s {
     u32 framebuffer;
     u32 texture;
+    u32 depthbuffer;
     s32 resolution;
     float nearz;
     float farz;

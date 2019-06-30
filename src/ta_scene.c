@@ -15,6 +15,7 @@
 #include "ta_window.h"
 #include "dlb_vector.h"
 #include <stdlib.h>
+#include <float.h>
 
 typedef enum token_type {
     TOKEN_UNKNOWN,
@@ -981,6 +982,9 @@ void ta_scene_update(ta_scene *scene, float dt)
 
 void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 {
+    glCullFace(GL_FRONT);
+    glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
+
     ta_shader_bind(shader);
     dlb_vec_each(ta_light *, light, scene->pools[F_TA_LIGHT]) {
         // TODO: Handle shadows for other light types
@@ -988,16 +992,30 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
             continue;
         }
 
+        ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &light->position);
+        ta_shader_set_float(shader, SYM_U_LIGHT_FARZ, light->shadowmap.farz);
         ta_light_shadowpass_render(light, shader, alpha, scene->pools[F_TA_ENTITY]);
+
+        // TODO: Make button a component that an entity can have (*button_uid)
+        //       instead of having it contain entity. It probably needs to have
+        //       (*entity_uid) pointer as well in order to find the rigid body?
+        //       Alternatively, it can have an explicit rigid body of its own
+        //       which defaults to entity->rigid_body on initialization.
+        ta_light_shadowpass_render(light, shader, alpha, scene->pools[F_TA_ENT_BUTTON]);
     }
     ta_shader_unbind(shader);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glViewport(0, 0, tg_window.width, tg_window.height);
 }
 
 void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
 {
+    glViewport(0, 0, tg_window.width, tg_window.height);
+    glCullFace(GL_BACK);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);

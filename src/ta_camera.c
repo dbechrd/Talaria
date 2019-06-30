@@ -20,7 +20,7 @@ void ta_camera_init(ta_camera *camera)
 {
     if (!camera->position_smooth)     camera->position_smooth = 1.0f;
     if (!camera->position_target_vel) camera->position_target_vel = 0.1f;
-    camera->follow_target =         camera->position;
+    camera->follow_target =           camera->position;
 
     if (!camera->yaw)                 camera->yaw = 90.0f;
     if (!camera->yaw_smooth)          camera->yaw_smooth = 1.0f;

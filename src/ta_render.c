@@ -125,7 +125,7 @@ static void ta_render_init_gl()
 #endif
 
     // Depth buffer
-    glDepthFunc(GL_LEQUAL);  // Default GL_LESS
+    //glDepthFunc(GL_LEQUAL);  // Default GL_LESS
     glEnable(GL_DEPTH_TEST); // Default off
     glEnable(GL_CULL_FACE);  // Backface culling
     glCullFace(GL_BACK);
@@ -140,9 +140,6 @@ static void ta_render_init_gl()
 
     // Gamma correction
     //glEnable(GL_FRAMEBUFFER_SRGB);
-
-    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void ta_render_init()

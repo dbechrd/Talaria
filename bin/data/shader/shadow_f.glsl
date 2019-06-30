@@ -1,9 +1,19 @@
 #version 330 core
 
-// TODO: Why do I need this when using gl_FragDepth?
-layout(location = 0) out float final_depth;
+in vs_out {
+    vec3 position;
+} vertex;
+
+uniform vec3 u_light_pos;
+uniform float u_light_farz;
+
+out float frag_color;
 
 void main() {
-    //final_depth = 0.2; //gl_FragCoord.z;
-    gl_FragDepth = gl_FragCoord.z / 20;
+#if 0
+    //gl_FragDepth = gl_FragCoord.z / u_light_farz;
+#else
+    vec3 light_to_vert = vertex.position - u_light_pos;
+    frag_color = length(light_to_vert);
+#endif
 }

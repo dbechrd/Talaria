@@ -289,16 +289,11 @@ int main(int argc, char *argv[])
         //tg_game.sun->data.sun.direction =
         //    mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
 
-		//glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Draw models
-		//glDisable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
         ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
-        glCullFace(GL_BACK);
         ta_scene_render(tg_game.scene, tg_game.camera, sim_alpha);
+
         ta_primitive_render();
         ta_primitive_clear();
 

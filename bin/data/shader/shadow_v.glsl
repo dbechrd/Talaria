@@ -2,8 +2,15 @@
 
 layout(location = 0) in vec3 attr_position;
 
+uniform mat4 u_model;
 uniform mat4 u_light_pvm;
 
+out vs_out {
+    vec3 position;
+} vertex;
+
 void main() {
-    gl_Position = u_light_pvm * vec4(attr_position, 1.0);
+    vec4 pos = vec4(attr_position, 1.0);
+    gl_Position = u_light_pvm * pos;
+    vertex.position = (u_model * pos).xyz;
 }
