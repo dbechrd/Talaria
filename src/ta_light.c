@@ -7,7 +7,7 @@
 #define DEFAULT_LIGHT_INTENSITY         1.0f
 #define DEFAULT_SHADOWMAP_RESOLUTION    1024
 #define DEFAULT_SHADOWMAP_NEARZ         0.1f
-#define DEFAULT_SHADOWMAP_FARZ          20.0f
+#define DEFAULT_SHADOWMAP_FARZ          50.0f
 
 static void shadowmap_directional_create(ta_light *light);
 static void shadowmap_point_create(ta_light *light);
@@ -116,7 +116,7 @@ static void shadowmap_point_create(ta_light *light)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     for (int i = 0; i < 6; ++i) {
         glTexImage2D(
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT24,
             light->shadowmap.resolution, light->shadowmap.resolution, 0,
             GL_DEPTH_COMPONENT, GL_FLOAT, NULL
         );

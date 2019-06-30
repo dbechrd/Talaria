@@ -140,7 +140,7 @@ void main()
                 shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
                 shadow_map_depth *= u_lights[i].shadowmap_farz;
                 debug_depth = shadow_map_depth;
-                shadow_bias = 0.001;
+                shadow_bias = 0;
 
                 dist = length(fragToLight);
                 attenuation = u_lights[i].intensity / dist * dist;

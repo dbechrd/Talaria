@@ -1,5 +1,6 @@
 # Whitelist
 #!**/mesh/*.obj
+!/obj/Talaria/**/Talaria32_d.exe
 
 # Blacklist
 bin/log.txt

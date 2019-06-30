@@ -125,7 +125,7 @@ static void ta_render_init_gl()
 #endif
 
     // Depth buffer
-    //glDepthFunc(GL_LEQUAL);  // Default GL_LESS
+    glDepthFunc(GL_LEQUAL);  // Default GL_LESS
     glEnable(GL_DEPTH_TEST); // Default off
     glEnable(GL_CULL_FACE);  // Backface culling
     glCullFace(GL_BACK);
