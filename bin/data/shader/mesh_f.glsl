@@ -138,7 +138,7 @@ void main()
                 fragToLight = u_lights[i].position - vertex.position;
 
                 shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
-                //shadow_map_depth *= u_lights[i].shadowmap_farz;
+                shadow_map_depth *= u_lights[i].shadowmap_farz;
                 debug_depth = shadow_map_depth;
                 shadow_bias = 0.001;
 
@@ -153,8 +153,7 @@ void main()
             }
         }
 
-        //float shadow = step(shadow_map_depth, dist - shadow_bias);
-        float shadow = (dist < shadow_map_depth) ? 0.0 : 1.0;
+        float shadow = step(shadow_map_depth, dist - shadow_bias);
 
         vec3 radiance = u_lights[i].color * attenuation;
 
@@ -176,8 +175,8 @@ void main()
         vec3 specular = numer / max(denom, 0.001);
 
         //L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
-        //L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
-        L0 += mtl_albedo * (1.0 - shadow);
+        L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
+        //L0 += mtl_albedo * (1.0 - shadow);
     }
 
     vec3 ambient = vec3(0.005) * mtl_albedo * mtl_ao;
@@ -195,7 +194,7 @@ void main()
     //final_color = vec4(bb - aa, 1.0);
 
     //final_color = vec4(vec3(debug_dist / 20), 1.0);
-    final_color = vec4(vec3(debug_depth), 1.0);
+    //final_color = vec4(vec3(debug_depth) / 20, 1.0);
     //final_color = vec4(vec3(1 - debug_dist / 20, 1.0 - debug_depth, 0.0), 1.0);
 
 

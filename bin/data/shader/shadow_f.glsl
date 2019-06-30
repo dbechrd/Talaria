@@ -7,13 +7,7 @@ in vs_out {
 uniform vec3 u_light_pos;
 uniform float u_light_farz;
 
-out float frag_color;
-
 void main() {
-#if 0
-    //gl_FragDepth = gl_FragCoord.z / u_light_farz;
-#else
     vec3 light_to_vert = vertex.position - u_light_pos;
-    frag_color = length(light_to_vert);
-#endif
+    gl_FragDepth = length(light_to_vert) / u_light_farz;
 }

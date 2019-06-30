@@ -1001,7 +1001,7 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
         //       (*entity_uid) pointer as well in order to find the rigid body?
         //       Alternatively, it can have an explicit rigid body of its own
         //       which defaults to entity->rigid_body on initialization.
-        ta_light_shadowpass_render(light, shader, alpha, scene->pools[F_TA_ENT_BUTTON]);
+        //ta_light_shadowpass_render(light, shader, alpha, scene->pools[F_TA_ENT_BUTTON]);
     }
     ta_shader_unbind(shader);
 }

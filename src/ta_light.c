@@ -105,17 +105,6 @@ static void shadowmap_point_create(ta_light *light)
 {
     glGenFramebuffers(1, &light->shadowmap.framebuffer);
 
-    // Create the depth buffer
-    // http://ogldev.atspace.co.uk/www/tutorial43/tutorial43.html
-    glGenTextures(1, &light->shadowmap.depthbuffer);
-    glBindTexture(GL_TEXTURE_2D, light->shadowmap.depthbuffer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, light->shadowmap.resolution, light->shadowmap.resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
     glGenTextures(1, &light->shadowmap.texture);
     glBindTexture(GL_TEXTURE_CUBE_MAP, light->shadowmap.texture);
     //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -127,14 +116,14 @@ static void shadowmap_point_create(ta_light *light)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
     for (int i = 0; i < 6; ++i) {
         glTexImage2D(
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_R32F,
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT,
             light->shadowmap.resolution, light->shadowmap.resolution, 0,
-            GL_RED, GL_FLOAT, NULL
+            GL_DEPTH_COMPONENT, GL_FLOAT, NULL
         );
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, light->shadowmap.depthbuffer, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, light->shadowmap.texture, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
@@ -203,16 +192,15 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
 #if 1
     for (int i = 0; i < 6; ++i ) {
         // TODO: Figure out how to bind a specific side of the cubemap
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
             GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, light->shadowmap.texture, 0);
-        glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
             DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
         }
 
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view[i]);
         dlb_vec_each(ta_entity *, entity, entities) {
