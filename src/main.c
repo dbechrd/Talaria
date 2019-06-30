@@ -118,6 +118,7 @@ int main(int argc, char *argv[])
     // TODO: Make sure this gets freed or handled better
     tg_game.audio = dlb_calloc(1, sizeof(ta_audio_listener));
     ta_audio_listener_init(tg_game.audio);
+    //ta_audio_listener_mute(tg_game.audio);
     ta_mouse_init();
     ta_keyboard_init();
     ta_render_init();
@@ -213,8 +214,6 @@ int main(int argc, char *argv[])
     double ms_frame_first = ta_timer_elapsed_ms();
     double ms_frame_prev = ms_frame_first;
     double ms_frame_accum = 0;
-
-    ta_audio_listener_mute(tg_game.audio);
 
     while (tg_game.state != TA_STATE_QUIT) {
         double ms_frame_start = ta_timer_elapsed_ms();

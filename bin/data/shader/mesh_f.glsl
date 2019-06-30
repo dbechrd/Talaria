@@ -143,9 +143,7 @@ void main()
                 shadow_bias = 0.001;
 
                 dist = length(fragToLight);
-                attenuation = u_lights[i].intensity /
-                    (u_lights[i].intensity + 0.022 * dist + 0.0019 * dist * dist);
-                //attenuation = u_lights[i].intensity / dist * dist;
+                attenuation = u_lights[i].intensity / dist * dist;
 
                 debug_dist = dist - shadow_bias;
                 debug_shadow = step(shadow_map_depth, dist - shadow_bias);

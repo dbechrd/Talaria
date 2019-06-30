@@ -1011,9 +1011,8 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     glViewport(0, 0, tg_window.width, tg_window.height);
     glCullFace(GL_BACK);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    //glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);
