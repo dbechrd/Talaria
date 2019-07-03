@@ -127,10 +127,8 @@ int main(int argc, char *argv[])
 
     // Intro scene
     read_scene("data/scene/scene1.dml");
-    dlb_vec_push(tg_game.lights, ta_scene_find(tg_game.scene, F_TA_LIGHT,
-        INTERN("light_sun")));
-    dlb_vec_push(tg_game.lights, ta_scene_find(tg_game.scene, F_TA_LIGHT,
-        INTERN("light_point_1")));
+    // TODO: Find closest 8 lights and store them in tg_game.lights
+    tg_game.lights = tg_game.scene->pools[F_TA_LIGHT];
     tg_game.camera_player = ta_scene_find(tg_game.scene, F_TA_CAMERA,
         INTERN("camera_player"));
     tg_game.camera_freecam = ta_scene_find(tg_game.scene, F_TA_CAMERA,
@@ -142,7 +140,7 @@ int main(int argc, char *argv[])
     // Ensure we have a valid camera, player and light
     DLB_ASSERT(tg_game.camera);
     DLB_ASSERT(tg_game.player);
-    DLB_ASSERT(tg_game.lights && tg_game.lights[0]);
+    DLB_ASSERT(tg_game.lights);
 
     ta_audio_source *ambient_wakeup = ta_scene_find(tg_game.scene,
         F_TA_AUDIO_SOURCE, INTERN("src_ambient_genesis"));

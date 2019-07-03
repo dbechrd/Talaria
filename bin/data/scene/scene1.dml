@@ -48,6 +48,13 @@ ta_light:
   position: { x: 3.0, y: 3.0, z: 3.0 }
   color:    { r: 1.0, g: 1.0, b: 0.4 }
   type: 2  # TA_LIGHT_POINT
+ta_light:
+  uid: "light_point_2"
+  disabled: false
+  intensity: 1.0
+  position: { x: 3.0, y: 12.0, z: 3.0 }
+  color:    { r: 1.0, g: 1.0, b: 0.4 }
+  type: 2  # TA_LIGHT_POINT
 
 #-------------------------------------------------------------------------------
 # Textures
@@ -84,6 +91,9 @@ ta_mesh_group:
 ta_mesh_group:
   uid: "mesh_group_chamber_0001"
   path: "data/mesh/chamber0001.obj"
+ta_mesh_group:
+  uid: "mesh_group_wakeup"
+  path: "data/mesh/wakeup.obj"
 ta_mesh_group:
   uid: "mesh_group_button"
   path: "data/mesh/button.obj"
@@ -169,6 +179,15 @@ ta_entity:
   material_uid: "material_genesis"
   mesh_group_uid: "mesh_group_chamber_0001"
   rigid_body_uid: "rb_entity_chamber_0001"
+  invisible: false
+  cast_shadows: true
+
+ta_entity:
+  uid: "entity_wakeup"
+  material_uid: "material_genesis"
+  mesh_group_uid: "mesh_group_wakeup"
+  transform:
+    position: { x: 0.0, y: 8.0, z: 0.0 }
   invisible: false
   cast_shadows: true
 

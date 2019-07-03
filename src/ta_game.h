@@ -17,7 +17,7 @@ typedef struct {
     ta_game_state state;
     ta_audio_listener *audio;
     ta_scene *scene;
-    ta_light **lights;
+    ta_light *lights;
     ta_camera *camera;
     ta_camera *camera_player;
     ta_camera *camera_freecam;

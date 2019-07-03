@@ -227,11 +227,11 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
         ta_shader_set_mat4(shader, SYM_U_MODEL, &e->model);
         ta_shader_set_uint(shader, SYM_U_LIGHTS_COUNT, dlb_vec_len(tg_game.lights));
         int light_index = 0;
-        dlb_vec_each(ta_light **, light, tg_game.lights) {
-            if ((*light)->disabled) {
+        dlb_vec_each(ta_light *, light, tg_game.lights) {
+            if (light->disabled) {
                 continue;
             }
-            ta_shader_set_light(shader, SYM_U_LIGHTS, light_index, *light);
+            ta_shader_set_light(shader, SYM_U_LIGHTS, light_index, light);
             light_index++;
         }
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
