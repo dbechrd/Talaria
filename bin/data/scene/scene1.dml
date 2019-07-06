@@ -18,12 +18,12 @@ ta_camera:
 ta_camera:
   uid: "camera_freecam"
   mode: 0  # TA_CAMERA_FREECAM
-  position: { x: 0.0, y: 2.7, z: 10.0 }
+  position: { x: 0.0, y: 3.7, z: 7.0 }
   position_smooth: 0.1
   position_target_vel: 0.2
   yaw: 90.0
   yaw_smooth: 0.7
-  pitch: 0.0
+  pitch: -10.0
   pitch_smooth: 0.7
   pitch_min: -90.0
   pitch_max: 90.0

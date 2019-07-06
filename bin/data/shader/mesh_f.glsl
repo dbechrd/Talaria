@@ -152,8 +152,6 @@ void main()
                 debug_shadow = step(shadow_map_depth, dist - shadow_bias);
 
 				float foo_bias = 0.04;
-				//float foo_bias = tan(acos(dot(N, normalize(fragToLight))));
-
 				for (float x = -1.0; x <= 1.0; x += 1.0) {
 					for (float y = -1.0; y <= 1.0; y += 1.0) {
 					    for (float z = -1.0; z <= 1.0; z += 1.0) {
@@ -175,6 +173,7 @@ void main()
 			shadow += (1.0 / 27) * foo_shadows[i];
 		}
 		shadow = smoothstep(0.01, 1.0, shadow);
+        //shadow = step(shadow_map_depth, dist - shadow_bias);
 
         vec3 radiance = u_lights[i].color * attenuation;
 
