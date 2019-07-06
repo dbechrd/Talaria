@@ -158,6 +158,10 @@ int main(int argc, char *argv[])
         ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_quads"));
     DLB_ASSERT(tg_shader_quads);
 
+	tg_shader_cubemap =
+		ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_cubemap"));
+	DLB_ASSERT(tg_shader_cubemap);
+
     tg_shader_shadow =
         ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_shadow"));
     DLB_ASSERT(tg_shader_shadow);
@@ -185,7 +189,7 @@ int main(int argc, char *argv[])
 	ta_ui_scrollview *view = ta_ui_scrollview_init(420, 50, 800, 300,
 		(ta_ui_base *)ui_image);
 
-	ta_ui_barchart chart = ta_ui_barchart_init(10, 10, tg_window.width - 20, 30);
+	ta_ui_barchart chart = ta_ui_barchart_init(10, 10, tg_window.rect.w - 20, 30);
     UNUSED(view);
     UNUSED(chart);
 
@@ -212,6 +216,8 @@ int main(int argc, char *argv[])
     double ms_frame_first = ta_timer_elapsed_ms();
     double ms_frame_prev = ms_frame_first;
     double ms_frame_accum = 0;
+
+    float light_alpha = 0.98f;
 
     while (tg_game.state != TA_STATE_QUIT) {
         double ms_frame_start = ta_timer_elapsed_ms();
@@ -248,6 +254,7 @@ int main(int argc, char *argv[])
             //tg_game.lights[1]->position = tg_game.camera_player->position;
             // HACK: Make point light follow camera
             //tg_game.lights[1]->position = vec3_add(tg_game.camera_freecam->position, tg_game.camera_freecam->front);
+            tg_game.lights[1].intensity = tg_game.lights[1].intensity * light_alpha + ((float)rand() / RAND_MAX) * (1.0f - light_alpha);
 
             // Update main camera
             ta_camera_update(tg_game.camera_freecam, sim_dt);
@@ -301,15 +308,56 @@ int main(int argc, char *argv[])
         ta_primitive_push_axes(1.0f);
         ta_primitive_render();
         ta_primitive_clear();
+		glClear(GL_DEPTH_BUFFER_BIT);
 
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+		// Cursor
+		ta_primitive_push_crosshair(10, 2);
+		ta_primitive_render();
+		ta_primitive_clear();
 
+#if 1
+		// Render light 1's shadowmap
+		ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, tg_game.lights[1].shadowmap.texture);
+
+		s32 resolution = tg_game.lights[1].shadowmap.resolution / 10;
+
+		// Render cubemap with the following layout:
+		//      ------
+		//      | +Y |
+		// -----|----|----------
+		// | -X | -Z | +X | +Z |
+		// -----|----|----------
+		//      | -Y |
+		//      ------
+		ta_vec2i face_grid[6] = {
+			{ 2, 1 },  // +X
+			{ 0, 1 },  // -X
+			{ 1, 0 },  // +Y
+			{ 1, 2 },  // -Y
+			{ 3, 1 },  // +Z
+			{ 1, 1 },  // -Z
+		};
+
+		for (int face = 0; face < 6; face++)
+		{
+			ta_rect rect = { 0 };
+			rect.x = resolution * face_grid[face].x;
+			rect.y = resolution * face_grid[face].y;
+			rect.w = resolution;
+			rect.h = resolution;
+			ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, face);
+			ta_primitive_push_rect(tg_window.rect, rect, TA_COLOR_INVIS);
+			ta_primitive_render_quads(tg_shader_cubemap);
+			ta_primitive_clear();
+		}
+
+		ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
+#endif
+
+#if 0
         // Minimap
 		ta_viewport_bind(&minimap_viewport, true);
 		{
-#if 0
 			// TODO: Mesh selector, highlight and rotate mesh while mouse hover
 			//ta_mat4 model = mat4_rotate_y(model_deg);
 			//model_deg += 1.0f;
@@ -346,23 +394,9 @@ int main(int argc, char *argv[])
             ta_primitive_render();
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
             ta_primitive_clear();
-#elif 0
-            ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tg_game.lights[0]->shadowmap.texture);
-            ta_rect parent = { 0 };
-            parent.w = tg_game.lights[0]->shadowmap.resolution;
-            parent.h = tg_game.lights[0]->shadowmap.resolution;
-            ta_rect child = { 0 };
-            child.w = tg_game.lights[0]->shadowmap.resolution;
-            child.h = tg_game.lights[0]->shadowmap.resolution;
-
-            ta_primitive_push_rect(parent, child, TA_COLOR_INVIS);
-            ta_primitive_render();
-            ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
-            ta_primitive_clear();
-#endif
 		}
 		ta_viewport_unbind(&minimap_viewport);
-		glEnable(GL_CULL_FACE);
+#endif
 
 #if 0
 		// Barchart

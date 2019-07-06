@@ -19,7 +19,7 @@ ta_viewport ta_viewport_init(int left, int top, int width, int height,
 //       viewports.
 void ta_viewport_bind(ta_viewport *view, bool stretch_to_fit)
 {
-    int inv_y = tg_window.height - (view->rect.y + view->rect.h);
+    int inv_y = tg_window.rect.h - (view->rect.y + view->rect.h);
 	if (stretch_to_fit) {
 		glViewport(view->rect.x, inv_y, view->rect.w, view->rect.h);
 	}
@@ -33,6 +33,6 @@ void ta_viewport_bind(ta_viewport *view, bool stretch_to_fit)
 void ta_viewport_unbind()
 {
 	glDisable(GL_SCISSOR_TEST);
-	glViewport(0, 0, tg_window.width, tg_window.height);
+	glViewport(0, 0, tg_window.rect.w, tg_window.rect.h);
 	glClear(GL_DEPTH_BUFFER_BIT);
 }

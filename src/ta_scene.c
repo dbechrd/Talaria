@@ -982,7 +982,8 @@ void ta_scene_update(ta_scene *scene, float dt)
 
 void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 {
-    glCullFace(GL_FRONT);
+	glEnable(GL_CULL_FACE);
+	//glCullFace(GL_FRONT);
     glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
 
     ta_shader_bind(shader);
@@ -1008,8 +1009,9 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 
 void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
 {
-    glViewport(0, 0, tg_window.width, tg_window.height);
+    glViewport(0, 0, tg_window.rect.w, tg_window.rect.h);
     glCullFace(GL_BACK);
+	//glDisable(GL_CULL_FACE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClearColor(0.9f, 0.9f, 0.9f, 1.0f);

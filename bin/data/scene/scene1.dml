@@ -278,6 +278,21 @@ ta_shader:
     { name: "u_tex",   type: 3 },  # TA_GLSL_SAMPLER2D
   ]
 ta_shader:
+  uid: "shader_cubemap"
+  path_vert: "data/shader/cubemap_v.glsl"
+  path_frag: "data/shader/cubemap_f.glsl"
+  attributes: [
+    { name: "attr_position", type: 5 },  # TA_GLSL_VEC3
+    { name: "attr_uv",       type: 4 },  # TA_GLSL_VEC2
+  ]
+  uniforms: [
+    { name: "u_proj",  type: 8 },  # TA_GLSL_MAT4
+    { name: "u_view",  type: 8 },  # TA_GLSL_MAT4
+    { name: "u_model", type: 8 },  # TA_GLSL_MAT4
+    { name: "u_face",  type: 0 },  # TA_GLSL_INT
+    { name: "u_tex",   type: 10 },  # TA_GLSL_SAMPLER_CUBE
+  ]
+ta_shader:
   uid: "shader_mesh"
   path_vert: "data/shader/mesh_v.glsl"
   path_frag: "data/shader/mesh_f.glsl"

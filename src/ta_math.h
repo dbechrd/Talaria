@@ -81,6 +81,11 @@ typedef struct {
 } ta_rgba;
 
 typedef struct {
+	int x;
+	int y;
+} ta_vec2i;
+
+typedef struct {
     int w;
     int h;
 } ta_size;
@@ -120,6 +125,7 @@ extern const ta_rgba TA_COLOR_GRAY7;
 extern const ta_rgba TA_COLOR_GRAY8;
 extern const ta_rgba TA_COLOR_GRAY9;
 extern const ta_rgba TA_COLOR_WHITE;
+extern const ta_rgba TA_COLOR_WHITE_ALPHA;
 
 //int clamp(int d, int min, int max);
 float clampf(float f, float min, float max);

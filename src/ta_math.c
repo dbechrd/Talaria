@@ -47,6 +47,7 @@ const ta_rgba TA_COLOR_GRAY7   = { 0.7f, 0.7f, 0.7f, 1.0f };
 const ta_rgba TA_COLOR_GRAY8   = { 0.8f, 0.8f, 0.8f, 1.0f };
 const ta_rgba TA_COLOR_GRAY9   = { 0.9f, 0.9f, 0.9f, 1.0f };
 const ta_rgba TA_COLOR_WHITE   = { 1.0f, 1.0f, 1.0f, 1.0f };
+const ta_rgba TA_COLOR_WHITE_ALPHA = { 1.0f, 1.0f, 1.0f, 0.5f };
 
 #if 0
 int clamp(int d, int min, int max)

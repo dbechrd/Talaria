@@ -65,31 +65,9 @@ typedef struct ta_shader_s {
     GLuint program_id;
 } ta_shader;
 
-////////////////////////////////////////////////////////////////////////////////
-// TODO: Cleanup
-////////////////////////////////////////////////////////////////////////////////
-typedef struct {
-    ta_vec3 position;
-    ta_rgba color;
-} ta_shader_lines_vertex;
-
-typedef struct {
-    ta_shader_lines_vertex verts[2];
-} ta_vert_line;
-////////////////////////////////////////////////////////////////////////////////
-typedef struct {
-    ta_vec3 position;
-    ta_rgba color;
-    ta_uv uv;
-} ta_shader_quads_vertex;
-
-typedef struct {
-    ta_shader_quads_vertex verts[6];
-} ta_vert_quad;
-////////////////////////////////////////////////////////////////////////////////
-
 extern ta_shader *tg_shader_lines;
 extern ta_shader *tg_shader_quads;
+extern ta_shader *tg_shader_cubemap;
 extern ta_shader *tg_shader_shadow;
 
 const char *ta_glsl_type_str(int type);

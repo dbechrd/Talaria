@@ -9,6 +9,7 @@
 
 ta_shader *tg_shader_lines;
 ta_shader *tg_shader_quads;
+ta_shader *tg_shader_cubemap;
 ta_shader *tg_shader_shadow;
 
 const char *ta_glsl_type_str(int type)

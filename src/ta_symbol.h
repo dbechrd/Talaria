@@ -58,6 +58,7 @@ extern const char *SYM_ATTR_NORMAL;
 extern const char *SYM_U_PROJ;
 extern const char *SYM_U_VIEW;
 extern const char *SYM_U_MODEL;
+extern const char *SYM_U_FACE;
 extern const char *SYM_U_LIGHT_PVM;
 extern const char *SYM_U_LIGHT_POS;
 extern const char *SYM_U_LIGHT_FARZ;

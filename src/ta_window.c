@@ -88,11 +88,11 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
 void ta_window_init(int w, int h, bool fullscreen)
 {
     ta_log_write(tg_debug_log, "[Window] Initializing window\n");
-    tg_window.width = w;
-	tg_window.height = h;
-    ta_init_sdl(&tg_window.width, &tg_window.height, fullscreen);
-    DLB_ASSERT(fullscreen || (tg_window.width == w && tg_window.height == h));
-    tg_window.aspect = (float)tg_window.width / tg_window.height;
+    tg_window.rect.w = w;
+	tg_window.rect.h = h;
+    ta_init_sdl(&tg_window.rect.w, &tg_window.rect.h, fullscreen);
+    DLB_ASSERT(fullscreen || (tg_window.rect.w == w && tg_window.rect.h == h));
+    tg_window.aspect = (float)tg_window.rect.w / tg_window.rect.h;
     ta_log_write(tg_debug_log, "[Window] Window initialized\n");
 }
 
