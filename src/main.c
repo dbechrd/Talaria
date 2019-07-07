@@ -90,9 +90,6 @@ void read_scene(const char *filename) {
     tg_game.scene = ta_scene_load(data_file);
     ta_file_close(data_file);
 
-    ta_log_write(tg_debug_log, "[Scene] Initializing objects\n", filename);
-    ta_scene_initialize_objects(tg_game.scene);
-
     ta_log_write(tg_debug_log, "[Scene] Loaded successfully\n");
     ta_scene_print(tg_game.scene, tg_debug_log->stream);
     //ta_scene_free(tg_game.scene);

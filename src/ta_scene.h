@@ -36,7 +36,7 @@ void ta_scene_free(ta_scene *scn);
 void ta_scene_print(ta_scene *scn, FILE *hnd);
 void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type,
     const char *uid);
-void ta_scene_initialize_objects(ta_scene *scn);
+void ta_scene_init_pools(ta_scene *scn);
 void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid);
 void ta_scene_update(ta_scene *scene, float dt);
 void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha);

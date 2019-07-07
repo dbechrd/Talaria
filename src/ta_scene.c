@@ -53,7 +53,7 @@ typedef struct token {
 
 static const char *token_type_str(token_type type)
 {
-    switch(type) {
+    switch (type) {
         case TOKEN_UNKNOWN:        return "????????";
         case TOKEN_EOF:            return "EOF";
         case TOKEN_WHITESPACE:     return "WHITESPACE";
@@ -75,9 +75,32 @@ static const char *token_type_str(token_type type)
     }
 };
 
+typedef void (pool_init)(void *ptr);
+typedef void (pool_free)(void *ptr);
+typedef struct pool_info_s {
+    u32 size;
+    pool_init *init;
+    pool_free *free;
+} pool_info;
+
+static pool_info pool_infos[] = {
+    [TA_CAMERA]       = { sizeof(ta_camera),        ta_camera_init,       0 },
+    [TA_LIGHT]        = { sizeof(ta_light),         ta_light_init,        0 },
+    [TA_MATERIAL]     = { sizeof(ta_material),      0,                    0 },
+    [TA_MESH_GROUP]   = { sizeof(ta_mesh_group),    ta_mesh_group_load,   ta_mesh_group_free },
+    [TA_SHADER]       = { sizeof(ta_shader),        ta_shader_create,     0 },
+    [TA_TEXTURE]      = { sizeof(ta_texture),       ta_texture_init,      ta_texture_free },
+    [TA_NODE]         = { sizeof(ta_node),          ta_node_init,         0 },
+    [TA_AUDIO_BUFFER] = { sizeof(ta_audio_buffer),  ta_audio_buffer_init, 0 },
+    [TA_AUDIO_SOURCE] = { sizeof(ta_audio_source),  ta_audio_source_init, 0 },
+    [TA_RIGID_BODY]   = { sizeof(ta_rigid_body),    ta_rigid_body_init,   0 },
+    [TA_BUTTON]       = { sizeof(ta_button),        ta_button_init,       0 },
+};
+
 static void scene_ref_add(ta_scene_ref *ref)
 {
 	DLB_ASSERT(ref->scene);
+	DLB_ASSERT(ref->type < TA_COUNT_POOLS);
 	DLB_ASSERT(ref->uid);
 	DLB_ASSERT(ref->ptr);
 
@@ -86,6 +109,22 @@ static void scene_ref_add(ta_scene_ref *ref)
 	dlb_memcpy(new_ref, ref, sizeof(*ref));
 	u32 refs_index = dlb_vec_len(scene->refs) - 1;
     dlb_hash_insert(&scene->refs_by_uid, SYM(ref->uid), (void *)refs_index);
+}
+
+void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type,
+    const char *uid)
+{
+    DLB_ASSERT(type < TA_COUNT_POOLS);
+    DLB_ASSERT(uid);
+
+    ta_schema *schema = ta_schema_find_by_type(type);
+    ta_scene_ref *obj = dlb_vec_alloc_size(scene->pools[type], schema->size);
+    obj->scene = scene;
+    obj->type = type;
+    obj->uid = uid;
+    obj->ptr = obj;
+    scene_ref_add(obj);
+    return obj;
 }
 
 static token *token_read(ta_file *f, token **tokens)
@@ -741,123 +780,49 @@ ta_scene *ta_scene_load(ta_file *f)
     tokens_parse(scene, tokens);
     dlb_vec_free(tokens);
 
+    DLB_ASSERT(ARRAY_COUNT(scene->pools) == TA_COUNT_POOLS);
+
+    for (int i = 0; i < TA_COUNT_POOLS; i++) {
+        if (pool_infos[i].init) {
+            s8 *end = dlb_vec_end_size(scene->pools[i], pool_infos[i].size);
+            for (s8 *ptr = scene->pools[i]; ptr != end; ptr += pool_infos[i].size) {
+                pool_infos[i].init(ptr);
+            }
+        }
+    }
+
     return scene;
 }
 
 void ta_scene_free(ta_scene *scene)
 {
-    dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
-        switch (ref->type) {
-            case TA_CAMERA: {
-                // TODO: Free cameras
-                break;
-            } case TA_LIGHT: {
-                // TODO: Free lights
-                break;
-            } case TA_MATERIAL: {
-                // TODO: Free materials
-                break;
-            } case TA_MESH_GROUP: {
-                ta_mesh_group_free(ref->ptr);
-                break;
-            } case TA_SHADER: {
-                // TODO: Free shaders
-                break;
-            } case TA_TEXTURE: {
-                ta_texture_free(ref->ptr);
-                break;
-            } case TA_RIGID_BODY: {
-                // TODO: Free rigid bodies
-                break;
-            } case TA_NODE: {
-                // TODO: Free entities
-                break;
-            } default: {
-                DLB_ASSERT(!"Invalid scene ref type");
-            }
-        }
-    }
+	DLB_ASSERT(ARRAY_COUNT(scene->pools) == TA_COUNT_POOLS);
 
-    for (int i = 0; i < ARRAY_COUNT(scene->pools); i++) {
+    for (int i = 0; i < TA_COUNT_POOLS; i++) {
+		if (pool_infos[i].free) {
+            s8 *end = dlb_vec_end_size(scene->pools[i], pool_infos[i].size);
+			for (s8 *ptr = scene->pools[i]; ptr != end; ptr += pool_infos[i].size) {
+                pool_infos[i].free(ptr);
+			}
+		}
         dlb_vec_free(scene->pools[i]);
     }
-
     dlb_vec_free(scene->refs);
     dlb_hash_free(&scene->refs_by_uid);
-
     dlb_free(scene);
 }
 
 void ta_scene_print(ta_scene *scene, FILE *hnd)
 {
-    // TODO: Register scene as a schema that has OBJ_ARRAY of entities
-	fprintf(hnd, "#-------------------------------------------------------------------------------\n");
-	fprintf(hnd, "# [SCENE] %s\n", scene->name);
-	dlb_vec_range(ta_scene_ref *, ref, scene->refs + scene->refs_placeholder_count, dlb_vec_end(scene->refs)) {
-		fprintf(hnd, "#-------------------------------------------------------------------------------\n");
-		fprintf(hnd, "# %s\n", ta_schema_field_type_str(ref->type));
-		fprintf(hnd, "#-------------------------------------------------------------------------------\n");
-		ta_schema_print(hnd, ref->type, ref->ptr, 0, 0);
+    fprintf(hnd, "#-------------------------------------------------------------------------------\n");
+    fprintf(hnd, "# [SCENE] %s\n", scene->name);
+    dlb_vec_range(ta_scene_ref *, ref, scene->refs + scene->refs_placeholder_count, dlb_vec_end(scene->refs)) {
+        fprintf(hnd, "#-------------------------------------------------------------------------------\n");
+        fprintf(hnd, "# %s\n", ta_schema_field_type_str(ref->type));
+        fprintf(hnd, "#-------------------------------------------------------------------------------\n");
+        ta_schema_print(hnd, ref->type, ref->ptr, 0, 0);
     }
     fflush(hnd);
-}
-
-void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type,
-    const char *uid)
-{
-    DLB_ASSERT(uid);
-
-    ta_schema *schema = ta_schema_find_by_type(type);
-    ta_scene_ref *obj = dlb_vec_alloc_size(scene->pools[type], schema->size);
-	obj->scene = scene;
-    obj->type = type;
-    obj->uid = uid;
-    obj->ptr = obj;
-    scene_ref_add(obj);
-    return obj;
-}
-
-void ta_scene_initialize_objects(ta_scene *scene)
-{
-    dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
-        switch (ref->type) {
-            case TA_CAMERA: {
-                ta_camera_init(ref->ptr);
-                break;
-            } case TA_LIGHT: {
-                ta_light_init(ref->ptr);
-                break;
-            } case TA_MATERIAL: {
-                break;
-            } case TA_MESH_GROUP: {
-                ta_mesh_group_load(ref->ptr);
-                break;
-            } case TA_SHADER: {
-                ta_shader_create(ref->ptr);
-                break;
-            } case TA_TEXTURE: {
-                ta_texture_init(ref->ptr);
-                break;
-            } case TA_AUDIO_BUFFER: {
-                ta_audio_buffer_init(ref->ptr);
-                break;
-            } case TA_AUDIO_SOURCE: {
-                ta_audio_source_init(ref->ptr);
-                break;
-            } case TA_NODE: {
-                ta_node_init(ref->ptr);
-                break;
-            } case TA_BUTTON: {
-                ta_button_init(ref->ptr);
-                break;
-            } case TA_RIGID_BODY: {
-                ta_rigid_body_init(ref->ptr);
-                break;
-            } default: {
-                DLB_ASSERT(!"Invalid scene ref type");
-            }
-        }
-    }
 }
 
 void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
