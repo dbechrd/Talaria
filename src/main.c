@@ -19,7 +19,7 @@
 #include "ta_game.h"
 #include "ta_keyboard.h"
 #include "ta_mouse.h"
-#include "ta_entity.h"
+#include "ta_node.h"
 #include "ta_light.h"
 #include "ta_schema.h"
 #include "ta_parse.h"
@@ -54,9 +54,8 @@ void debug_tests() {
 #endif
 }
 
-ta_entity *entity_create(ta_scene *scn, const char *name) {
-    ta_entity *e = ta_scene_obj_alloc(scn, F_TA_ENTITY, INTERN(name));
-    e->type = 0;
+ta_node *entity_create(ta_scene *scn, const char *name) {
+    ta_node *e = ta_scene_obj_alloc(scn, F_TA_NODE, INTERN(name));
     e->transform.position.x = 1.1f;
     e->transform.position.y = 1.2f;
     e->transform.position.z = 1.3f;
@@ -95,7 +94,7 @@ void read_scene(const char *filename) {
     ta_scene_initialize_objects(tg_game.scene);
 
     ta_log_write(tg_debug_log, "[Scene] Loaded successfully\n");
-    //ta_scene_print(tg_game.scene, tg_debug_log->stream);
+    ta_scene_print(tg_game.scene, tg_debug_log->stream);
     //ta_scene_free(tg_game.scene);
 }
 
@@ -129,12 +128,12 @@ int main(int argc, char *argv[])
     read_scene("data/scene/scene1.dml");
     // TODO: Find closest 8 lights and store them in tg_game.lights
     tg_game.lights = tg_game.scene->pools[F_TA_LIGHT];
-    tg_game.camera_player = ta_scene_find(tg_game.scene, F_TA_CAMERA,
-        INTERN("camera_player"));
-    tg_game.camera_freecam = ta_scene_find(tg_game.scene, F_TA_CAMERA,
-        INTERN("camera_freecam"));
-    tg_game.player = ta_scene_find(tg_game.scene, F_TA_ENTITY,
-        INTERN("entity_player"));
+    tg_game.camera_player =
+		ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_player"));
+    tg_game.camera_freecam =
+		ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_freecam"));
+    tg_game.player =
+		ta_scene_find(tg_game.scene, F_TA_NODE, INTERN("node_player"));
     ta_game_state_set(TA_STATE_FREE_CAM);
 
     // Ensure we have a valid camera, player and light
@@ -245,7 +244,7 @@ int main(int argc, char *argv[])
         while (ms_frame_accum >= ms_sim_dt) {
             // Update player camera
             // TODO: Set target entity and follow distance vector in DML
-            ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
+            ta_rigid_body *player_body = ta_node_rigid_body(tg_game.player);
             ta_camera_set_target_pos_absolute(tg_game.camera_player,
                 vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
             ta_camera_update(tg_game.camera_player, sim_dt);
@@ -268,7 +267,7 @@ int main(int argc, char *argv[])
             ta_camera_update(&minimap_camera, sim_dt);
 
             // Update player
-            //ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
+            //ta_rigid_body *player_body = ta_node_rigid_body(tg_game.player);
             //player_body->transform.position = tg_game.camera->position;
 
             // Update scene

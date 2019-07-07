@@ -156,8 +156,8 @@ char ta_file_peek(ta_file *f) {
     return c;
 }
 
-static bool str_contains_chr(const char *str, char c) {
-    bool found = false;
+static char str_contains_chr(const char *str, char c) {
+    char found = 0;
     if (str) {
         const char *d = str;
         while (*d && *d != c) {

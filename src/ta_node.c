@@ -1,14 +1,14 @@
-#include "ta_entity.h"
+#include "ta_node.h"
 #include "ta_scene.h"
 #include "ta_schema.h"
 #include "ta_symbol.h"
 #include "ta_window.h"
 #include "ta_game.h"
-#include "ta_ent_button.h"
+#include "ta_button.h"
 #include "ta_log.h"
 #include "dlb_vector.h"
 
-void ta_entity_init(ta_entity *e)
+void ta_node_init(ta_node *e)
 {
     if (quat_zero(e->transform.orientation)) {
         e->transform.orientation = QUAT_IDENT;
@@ -36,7 +36,7 @@ void ta_entity_init(ta_entity *e)
 #endif
     }
     if (!e->aabb.extents.x) {
-        ta_rigid_body *rigid_body = ta_entity_rigid_body(e);
+        ta_rigid_body *rigid_body = ta_node_rigid_body(e);
         if (rigid_body) {
             switch (rigid_body->collider.type) {
                 case TA_COLLIDER_PLANE: {
@@ -56,103 +56,113 @@ void ta_entity_init(ta_entity *e)
                 }
             }
         } else {
-            ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
+            ta_mesh_group *mesh_group = ta_node_mesh_group(e);
             e->aabb = mesh_group->aabb;
         }
     }
 }
 
-ta_material *ta_entity_material(ta_entity *e)
+ta_material *ta_node_material(ta_node *e)
 {
     if (!e->material_uid) return 0;
 
     // NOTE: This could cache in e->material if we want to save the hash lookup
-    ta_material *mat = ta_scene_find_by_ref(&e->ref, F_TA_MATERIAL,
-        e->material_uid);
+    ta_material *mat = ta_scene_find_by_ref(&e->ref, F_TA_MATERIAL, e->material_uid);
     return mat;
 }
 
-ta_mesh_group *ta_entity_mesh_group(ta_entity *e)
+ta_mesh_group *ta_node_mesh_group(ta_node *e)
 {
     if (!e->mesh_group_uid) return 0;
 
     // NOTE: This could cache in e->mesh_group if we want to save the hash lookup
-    ta_mesh_group *mesh_group = ta_scene_find_by_ref(&e->ref, F_TA_MESH_GROUP,
-        e->mesh_group_uid);
+    ta_mesh_group *mesh_group = ta_scene_find_by_ref(&e->ref, F_TA_MESH_GROUP, e->mesh_group_uid);
     return mesh_group;
 }
 
-ta_rigid_body *ta_entity_rigid_body(ta_entity *e)
+ta_rigid_body *ta_node_rigid_body(ta_node *e)
 {
     if (!e->rigid_body_uid) return 0;
 
-    // NOTE: This could cache in e->mesh_group if we want to save the hash lookup
-    ta_rigid_body *rigid_body = ta_scene_find_by_ref(&e->ref, F_TA_RIGID_BODY,
-        e->rigid_body_uid);
+    // NOTE: This could cache in e->rigid_body if we want to save the hash lookup
+    ta_rigid_body *rigid_body = ta_scene_find_by_ref(&e->ref, F_TA_RIGID_BODY, e->rigid_body_uid);
     return rigid_body;
 }
+
+ta_button *ta_node_button(ta_node *e)
+{
+	if (!e->button_uid) return 0;
+
+	// NOTE: This could cache in e->button if we want to save the hash lookup
+	ta_button *button = ta_scene_find_by_ref(&e->ref, F_TA_BUTTON, e->button_uid);
+	return button;
+}
+
 #if 0
-bool ta_entity_intersect(ta_entity *a, ta_entity *b, ta_manifold *manifold)
+bool ta_node_intersect(ta_node *a, ta_node *b, ta_manifold *manifold)
 {
     bool broad_phase = ta_aabb_v_aabb(&a->aabb, &b->aabb, 0);
     if (!broad_phase) {
         return false;
     }
 
-    ta_rigid_body *ra = ta_entity_rigid_body(a);
-    ta_rigid_body *rb = ta_entity_rigid_body(b);
+    ta_rigid_body *ra = ta_node_rigid_body(a);
+    ta_rigid_body *rb = ta_node_rigid_body(b);
     bool narrow_phase = ta_rigid_body_intersect(ra, rb, manifold);
     return narrow_phase;
 }
 #endif
 
-typedef void (entity_updater)(ta_entity *base);
+#if 0
+typedef void (entity_updater)(ta_node *base);
 
 static entity_updater *entity_updaters[TA_ENT_COUNT] = {
     [TA_ENT_BUTTON] = &ta_ent_button_update
 };
+#endif
 
-void ta_entity_update(ta_entity *e)
+void ta_node_update(ta_node *e)
 {
     e->transform_prev = e->transform;
-    ta_rigid_body *body = ta_entity_rigid_body(e);
+    ta_rigid_body *body = ta_node_rigid_body(e);
     if (body) {
         e->transform.position = body->position;
         e->transform.orientation = body->orientation;
     }
-
+#if 0
     if (entity_updaters[e->type]) {
         entity_updaters[e->type](e);
     }
+#endif
 }
 
-static void ta_entity_push_aabb(ta_entity *e, ta_rgba color)
+static void ta_node_push_aabb(ta_node *e, ta_rgba color)
 {
     ta_primitive_push_aabb(e->aabb, color);
 }
 
-static void ta_entity_push_normals(ta_entity *e)
+static void ta_node_push_normals(ta_node *e)
 {
-    ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
+    ta_mesh_group *mesh_group = ta_node_mesh_group(e);
     if (mesh_group) {
         ta_mesh_group_push_normals(mesh_group);
     }
 }
 
-void ta_entity_shadow_pass(ta_entity *e, ta_shader *shader, ta_mat4 *light_pv,
+void ta_node_shadow_pass(ta_node *e, ta_shader *shader, ta_mat4 *light_pv,
     float alpha)
 {
     if (e->invisible || !e->cast_shadows) {
         return;
     }
 
-    ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
+    ta_mesh_group *mesh_group = ta_node_mesh_group(e);
     DLB_ASSERT(mesh_group);
 
     ta_vec3 lerp_pos;
     ta_quat lerp_orient;
 
-    ta_rigid_body *body = ta_entity_rigid_body(e);
+    ta_rigid_body *body = ta_node_rigid_body(e);
     if (body) {
         lerp_pos = vec3_lerp(e->transform.position, body->position, alpha);
         lerp_orient = quat_nlerp(e->transform.orientation, body->orientation, alpha);
@@ -178,7 +188,7 @@ void ta_entity_shadow_pass(ta_entity *e, ta_shader *shader, ta_mat4 *light_pv,
     ta_mesh_group_render(mesh_group);
 }
 
-void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
+void ta_node_render(ta_node *e, ta_camera *camera, float alpha)
 {
     // If invisible or all rendering disabled
     if (e->invisible || !(!camera->debug_no_mesh || camera->debug_normals || camera->debug_bounding_boxes)) {
@@ -187,7 +197,7 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
 
     ta_vec3 lerp_pos;
     ta_quat lerp_orient;
-    ta_rigid_body *body = ta_entity_rigid_body(e);
+    ta_rigid_body *body = ta_node_rigid_body(e);
     if (body) {
         lerp_pos = vec3_lerp(e->transform.position, body->position, alpha);
         lerp_orient = quat_nlerp(e->transform.orientation, body->orientation, alpha);
@@ -202,11 +212,11 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
     e->model = mat4_mul(&trans, &orient);
 
     if (!camera->debug_no_mesh) {
-        ta_material *mat = ta_entity_material(e);
+        ta_material *mat = ta_node_material(e);
         ta_shader *shader = ta_material_shader(mat);
         ta_texture *texture_albedo = ta_material_texture_albedo(mat);
         ta_texture *texture_metallic = ta_material_texture_metallic(mat);
-        ta_mesh_group *mesh_group = ta_entity_mesh_group(e);
+        ta_mesh_group *mesh_group = ta_node_mesh_group(e);
 
         // TODO: Allow some entities to not be renderable; skip them
         DLB_ASSERT(mat);
@@ -249,7 +259,7 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
     if (camera->debug_normals) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &e->model);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &e->model);
-        ta_entity_push_normals(e);
+        ta_node_push_normals(e);
         ta_primitive_render();
         ta_primitive_clear();
     }
@@ -257,7 +267,7 @@ void ta_entity_render(ta_entity *e, ta_camera *camera, float alpha)
     if (camera->debug_bounding_boxes) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &trans);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &trans);
-        ta_entity_push_aabb(e, TA_COLOR_RED);
+        ta_node_push_aabb(e, TA_COLOR_RED);
         ta_primitive_render();
         ta_primitive_clear();
     }

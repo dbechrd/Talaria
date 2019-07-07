@@ -29,8 +29,8 @@ typedef enum {
     F_TA_TEXTURE,
     F_TA_AUDIO_BUFFER,
     F_TA_AUDIO_SOURCE,
-    F_TA_ENTITY,
-    F_TA_ENT_BUTTON,
+    F_TA_NODE,
+    F_TA_BUTTON,
     F_TA_PLANE,
     F_TA_SPHERE,
     F_TA_AABB,
@@ -76,4 +76,4 @@ ta_schema *ta_schema_find_by_type(ta_schema_field_type type);
 ta_schema *ta_schema_find_by_name(const char *name, int len);
 ta_schema_field *ta_schema_field_find(ta_schema_field_type type, const char *name);
 void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
-    bool in_array);
+    int in_array);

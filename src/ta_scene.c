@@ -6,8 +6,8 @@
 #include "ta_mesh_group.h"
 #include "ta_shader.h"
 #include "ta_texture.h"
-#include "ta_entity.h"
-#include "ta_ent_button.h"
+#include "ta_node.h"
+#include "ta_button.h"
 #include "ta_rigid_body.h"
 #include "ta_light.h"
 #include "ta_log.h"
@@ -77,10 +77,13 @@ static const char *token_type_str(token_type type)
 
 static void scene_ref_add(ta_scene_ref *ref)
 {
-    ta_scene *scene = ref->scene;
-    ta_scene_ref *scene_ref = dlb_vec_alloc(scene->refs);
-    *scene_ref = *ref;
-    dlb_hash_insert(&scene->refs_by_uid, SYM(ref->uid), scene_ref);
+	ta_scene *scene = ref->scene;
+    ta_scene_ref *new_ref = dlb_vec_alloc(scene->refs);
+	dlb_memcpy(new_ref, ref, sizeof(*ref));
+	DLB_ASSERT(ref->type);
+	DLB_ASSERT(new_ref->type == ref->type);
+	u32 refs_index = dlb_vec_len(scene->refs) - 1;
+    dlb_hash_insert(&scene->refs_by_uid, SYM(ref->uid), (void *)refs_index);
 }
 
 static token *token_read(ta_file *f, token **tokens)
@@ -587,7 +590,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 *fp = tok->value.string;
                 if (stack[sp].name == SYM_UID) {
                     ta_scene_ref *ref = stack[sp-1].ptr;
-                    ref->scene = scene;
+					ref->scene = scene;
                     ref->type = stack[sp-1].type;
                     ref->uid = tok->value.string;
                     ref->ptr = stack[sp-1].ptr;
@@ -642,20 +645,6 @@ static void tokens_parse(ta_scene *scene, token *tokens)
 
 #undef BAD_TOKEN
 }
-
-#if 0
-static void scene_add_ref(ta_scene *scene, ta_schema_field_type type,
-    const char *uid, void *ptr)
-{
-    DLB_ASSERT(uid);
-    ta_scene_ref *ref = dlb_vec_alloc(scene->refs);
-    ref->scene = scene;
-    ref->type = type;
-    ref->uid = uid;
-    ref->ptr = ptr;
-    dlb_hash_insert(&scene->refs_by_uid, SYM(uid), ref);
-}
-#endif
 
 static void scene_load_placeholders(ta_scene *scene)
 {
@@ -720,19 +709,16 @@ static void scene_load_placeholders(ta_scene *scene)
     material->texture_albedo_uid = tex_albedo->ref.uid;
     material->texture_metallic_uid = tex_metallic->ref.uid;
     scene->default_material_uid = material->ref.uid;
+
+	scene->refs_placeholder_count = dlb_vec_len(scene->refs);
 }
 
 ta_scene *ta_scene_init(const char *name)
 {
     ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
     scene->name = name;
-    // TODO: Read ref count from file
-    const u32 ref_count = 64;
-    // NOTE: If this resizes it will invalidate the pointers stored in the hash
-    //       table. I just made it fixed size for now. Might be fun to have an
-    //       optional "resized" callback on dlb_vec.
-    dlb_vec_reserve_fixed(scene->refs, ref_count);
-    dlb_hash_init(&scene->refs_by_uid, DLB_HASH_STRING, scene->name, ref_count);
+	//scene->refs_by_uid.debug = tg_debug_log->stream;
+    dlb_hash_init(&scene->refs_by_uid, DLB_HASH_STRING, scene->name, 64);
     scene_load_placeholders(scene);
     return scene;
 }
@@ -778,7 +764,7 @@ void ta_scene_free(ta_scene *scene)
             } case F_TA_RIGID_BODY: {
                 // TODO: Free rigid bodies
                 break;
-            } case F_TA_ENTITY: {
+            } case F_TA_NODE: {
                 // TODO: Free entities
                 break;
             } default: {
@@ -800,9 +786,13 @@ void ta_scene_free(ta_scene *scene)
 void ta_scene_print(ta_scene *scene, FILE *hnd)
 {
     // TODO: Register scene as a schema that has OBJ_ARRAY of entities
-    printf("Scene name: %s\n", scene->name);
-    dlb_vec_each(ta_scene_ref *, ref, scene->refs) {
-        ta_schema_print(hnd, ref->type, ref->ptr, 0, 0);
+	fprintf(hnd, "#-------------------------------------------------------------------------------\n");
+	fprintf(hnd, "# [SCENE] %s\n", scene->name);
+	dlb_vec_range(ta_scene_ref *, ref, scene->refs + scene->refs_placeholder_count, dlb_vec_end(scene->refs)) {
+		fprintf(hnd, "#-------------------------------------------------------------------------------\n");
+		fprintf(hnd, "# %s\n", ta_schema_field_type_str(ref->type));
+		fprintf(hnd, "#-------------------------------------------------------------------------------\n");
+		ta_schema_print(hnd, ref->type, ref->ptr, 0, 0);
     }
     fflush(hnd);
 }
@@ -814,7 +804,7 @@ void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type,
 
     ta_schema *schema = ta_schema_find_by_type(type);
     ta_scene_ref *obj = dlb_vec_alloc_size(scene->pools[type], schema->size);
-    obj->scene = scene;
+	obj->scene = scene;
     obj->type = type;
     obj->uid = uid;
     obj->ptr = obj;
@@ -849,11 +839,11 @@ void ta_scene_initialize_objects(ta_scene *scene)
             } case F_TA_AUDIO_SOURCE: {
                 ta_audio_source_init(ref->ptr);
                 break;
-            } case F_TA_ENTITY: {
-                ta_entity_init(ref->ptr);
+            } case F_TA_NODE: {
+                ta_node_init(ref->ptr);
                 break;
-            } case F_TA_ENT_BUTTON: {
-                ta_ent_button_init(ref->ptr);
+            } case F_TA_BUTTON: {
+                ta_button_init(ref->ptr);
                 break;
             } case F_TA_RIGID_BODY: {
                 ta_rigid_body_init(ref->ptr);
@@ -867,11 +857,19 @@ void ta_scene_initialize_objects(ta_scene *scene)
 
 void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
 {
-    ta_scene_ref *ref = dlb_hash_search(&scene->refs_by_uid, SYM(uid));
+	bool found = false;
+
+	u32 refs_index = (u32)dlb_hash_search(&scene->refs_by_uid, SYM(uid), &found);
+	DLB_ASSERT(found);
+	u32 refs_len = dlb_vec_len(scene->refs);
+	DLB_ASSERT(refs_index < refs_len);
+
+	ta_scene_ref *ref = &scene->refs[refs_index];
     DLB_ASSERT(ref);
     DLB_ASSERT(ref->type == type);
     DLB_ASSERT(ref->uid == uid);
-    return ref->ptr;
+
+	return ref->ptr;
 }
 
 void *ta_scene_find_by_ref(ta_scene_ref *ref, ta_schema_field_type type,
@@ -972,11 +970,11 @@ void ta_scene_update(ta_scene *scene, float dt)
     }
 
     // Update entities
-    dlb_vec_each(ta_entity *, entity, scene->pools[F_TA_ENTITY]) {
-        ta_entity_update(entity);
+    dlb_vec_each(ta_node *, entity, scene->pools[F_TA_NODE]) {
+        ta_node_update(entity);
     }
-    dlb_vec_each(ta_entity *, entity, scene->pools[F_TA_ENT_BUTTON]) {
-        ta_entity_update(entity);
+    dlb_vec_each(ta_node *, entity, scene->pools[F_TA_BUTTON]) {
+        ta_node_update(entity);
     }
 }
 
@@ -995,14 +993,14 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 
         ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &light->position);
         ta_shader_set_float(shader, SYM_U_LIGHT_FARZ, light->shadowmap.farz);
-        ta_light_shadowpass_render(light, shader, alpha, scene->pools[F_TA_ENTITY]);
+        ta_light_shadowpass_render(light, shader, alpha, scene->pools[F_TA_NODE]);
 
         // TODO: Make button a component that an entity can have (*button_uid)
         //       instead of having it contain entity. It probably needs to have
         //       (*entity_uid) pointer as well in order to find the rigid body?
         //       Alternatively, it can have an explicit rigid body of its own
         //       which defaults to entity->rigid_body on initialization.
-        //ta_light_shadowpass_render(light, shader, alpha, scene->pools[F_TA_ENT_BUTTON]);
+        //ta_light_shadowpass_render(light, shader, alpha, scene->pools[F_TA_BUTTON]);
     }
     ta_shader_unbind(shader);
 }
@@ -1025,12 +1023,13 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
 
     // TODO: Group by shader / material to minimize redundant uniform calls
-    dlb_vec_each(ta_entity *, entity, scene->pools[F_TA_ENTITY]) {
-        ta_entity_render(entity, camera, alpha);
+    dlb_vec_each(ta_node *, node, scene->pools[F_TA_NODE]) {
+        ta_node_render(node, camera, alpha);
     }
-    dlb_vec_each(ta_ent_button *, button, scene->pools[F_TA_ENT_BUTTON]) {
-        ta_entity_render(&button->base, camera, alpha);
-    }
+	// TODO: Render nodes should handle this?
+    //dlb_vec_each(ta_button *, button, scene->pools[F_TA_BUTTON]) {
+    //    ta_node_render(&button->base, camera, alpha);
+    //}
 #if 1
     dlb_vec_each(ta_camera *, cam, scene->pools[F_TA_CAMERA]) {
         if (cam != tg_game.camera) {

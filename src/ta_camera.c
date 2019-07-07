@@ -8,8 +8,9 @@
 const char *ta_camera_mode_str(int type)
 {
     switch(type) {
-        case TA_CAMERA_FPS:   return "TA_CAMERA_FPS";
-        case TA_CAMERA_ORBIT: return "TA_CAMERA_ORBIT";
+		case TA_CAMERA_FREECAM: return "TA_CAMERA_FREECAM";
+		case TA_CAMERA_FPS:		return "TA_CAMERA_FPS";
+        case TA_CAMERA_ORBIT:	return "TA_CAMERA_ORBIT";
         default:
             DLB_ASSERT(!"<UNKNOWN_TA_CAMERA_TYPE>");
             return 0;

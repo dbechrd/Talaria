@@ -206,9 +206,6 @@ void main()
 
     final_color = vec4(color, mtl_opacity);
 
-
-
-
     //vec3 aa = vec3(debug_dist) / 20;
     //vec3 bb = vec3(debug_depth) / 20;
     //final_color = vec4(bb - aa, 1.0);

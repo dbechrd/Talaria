@@ -21,6 +21,7 @@ typedef struct ta_scene_s {
 
     ta_scene_ref *refs;
     dlb_hash refs_by_uid;
+	u32 refs_placeholder_count;
 
     const char *default_material_uid;
     const char *default_texture_uid;
@@ -34,7 +35,7 @@ typedef struct ta_scene_s {
     //ta_shader *shaders;
     //ta_texture *textures;
     //ta_rigid_body *rigid_bodies;
-    //ta_entity *entities;
+    //ta_node *entities;
 } ta_scene;
 
 ta_scene *ta_scene_init(const char *name);

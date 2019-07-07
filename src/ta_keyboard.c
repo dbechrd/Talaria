@@ -87,9 +87,9 @@ void ta_keyboard_update()
     memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
 
     // NOTE: Assumes mouse was updated first
-    keys[TA_SCANCODE_MOUSE_LEFT] = tg_mouse.left;
-    keys[TA_SCANCODE_MOUSE_MIDDLE] = tg_mouse.middle;
-    keys[TA_SCANCODE_MOUSE_RIGHT] = tg_mouse.right;
+    keys[TA_SCANCODE_MOUSE_LEFT] = (u8)tg_mouse.left;
+    keys[TA_SCANCODE_MOUSE_MIDDLE] = (u8)tg_mouse.middle;
+    keys[TA_SCANCODE_MOUSE_RIGHT] = (u8)tg_mouse.right;
 
     for (ta_keybind *bind = keybinds[tg_game.state];
         bind != dlb_vec_end(keybinds[tg_game.state]);

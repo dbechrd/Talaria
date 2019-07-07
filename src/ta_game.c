@@ -196,7 +196,7 @@ void ta_game_update()
         dir = vec3_normalize(dir);
         dir = vec3_scalef(dir, 20.0f);
         dir.y *= 2.0f;
-        ta_rigid_body *player_body = ta_entity_rigid_body(tg_game.player);
+        ta_rigid_body *player_body = ta_node_rigid_body(tg_game.player);
         ta_rigid_body_apply_force(player_body, dir);
         //player_body->velocity = vec3_add(player_body->velocity, dir);
         //player_body->position = vec3_add(player_body->position, dir);

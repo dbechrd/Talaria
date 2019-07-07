@@ -54,9 +54,9 @@ typedef struct ta_light_s {
     ta_shadowmap shadowmap;
 } ta_light;
 
-typedef struct ta_entity_s ta_entity;
+typedef struct ta_node_s ta_node;
 
 const char *ta_light_type_str(int type);
 void ta_light_init(ta_light *light);
 void ta_light_shadowpass_render(ta_light *light, ta_shader *shader,
-    float alpha, ta_entity *entities);
+    float alpha, ta_node *entities);

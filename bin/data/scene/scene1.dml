@@ -134,7 +134,7 @@ ta_audio_source:
 # Entities
 #-------------------------------------------------------------------------------
 ta_rigid_body:
-  uid: "rb_entity_chamber_0001"
+  uid: "rb_node_chamber_0001"
   position: { x: 0.0, y: 0.0, z: 1.0 }
   collider:
     type: 0  # TA_COLLIDER_PLANE
@@ -143,7 +143,7 @@ ta_rigid_body:
       normal: { x: 0.0, y: 1.0, z: 0.0 }
   mass: 0.0
 # ta_rigid_body:
-#   uid: "tb_entity_chamber_right"
+#   uid: "tb_node_chamber_right"
 #   collider:
 #     type: 0  # TA_COLLIDER_PLANE
 #     plane:
@@ -151,7 +151,7 @@ ta_rigid_body:
 #       normal: { x: -1.0, y: 0.0, z: 0.0 }
 #   mass: 0.0
 # ta_rigid_body:
-#   uid: "tb_entity_chamber_left"
+#   uid: "tb_node_chamber_left"
 #   collider:
 #     type: 0  # TA_COLLIDER_PLANE
 #     plane:
@@ -159,7 +159,7 @@ ta_rigid_body:
 #       normal: { x: 1.0, y: 0.0, z: 0.0 }
 #   mass: 0.0
 # ta_rigid_body:
-#   uid: "tb_entity_chamber_far"
+#   uid: "tb_node_chamber_far"
 #   collider:
 #     type: 0  # TA_COLLIDER_PLANE
 #     plane:
@@ -167,23 +167,23 @@ ta_rigid_body:
 #       normal: { x: 0.0, y: 0.0, z: -1.0 }
 #   mass: 0.0
 # ta_rigid_body:
-#   uid: "tb_entity_chamber_near"
+#   uid: "tb_node_chamber_near"
 #   collider:
 #     type: 0  # TA_COLLIDER_PLANE
 #     plane:
 #       center: { x: 0.0, y: 0.0, z: -6.0 }
 #       normal: { x: 0.0, y: 0.0, z: 1.0 }
 #   mass: 0.0
-ta_entity:
-  uid: "entity_chamber_0001"
+ta_node:
+  uid: "node_chamber_0001"
   material_uid: "material_genesis"
   mesh_group_uid: "mesh_group_chamber_0001"
-  rigid_body_uid: "rb_entity_chamber_0001"
+  rigid_body_uid: "rb_node_chamber_0001"
   invisible: false
   cast_shadows: true
 
-ta_entity:
-  uid: "entity_wakeup"
+ta_node:
+  uid: "node_wakeup"
   material_uid: "material_genesis"
   mesh_group_uid: "mesh_group_wakeup"
   transform:
@@ -196,49 +196,50 @@ ta_rigid_body:
   mass: 1.0
   position: { x: 0.0, y: 0.0, z: 0.0 }
   trigger: true
-ta_ent_button:
-  base:
-    uid: "entity_button_0001"
-    type: 1  # TA_ENT_BUTTON
-    material_uid: "material_genesis"
-    mesh_group_uid: "mesh_group_button"
-    rigid_body_uid: "rb_button_0001"
-    cast_shadows: true
+ta_button:
+  uid: "button_0001"
   audio_source_uid: "src_button_0001"
   sfx_activated_uid: "sfx_button_activated"
   sfx_deactivated_uid: "sfx_button_deactivated"
+ta_node:
+  uid: "node_button_0001"
+  material_uid: "material_genesis"
+  mesh_group_uid: "mesh_group_button"
+  rigid_body_uid: "rb_button_0001"
+  button_uid: "button_0001"
+  cast_shadows: true
 
 ta_rigid_body:
-  uid: "rb_entity_player"
+  uid: "rb_node_player"
   mass: 1.0
   position: { x: 0.1, y: 3.0, z: 0.1 }
-ta_entity:
-  uid: "entity_player"
+ta_node:
+  uid: "node_player"
   mesh_group_uid: "mesh_group_prim_cube"
-  rigid_body_uid: "rb_entity_player"
+  rigid_body_uid: "rb_node_player"
   cast_shadows: true
 
 ta_rigid_body:
-  uid: "rb_entity_sphere1"
+  uid: "rb_node_sphere1"
   mass: 1.0
   position: { x: 0.2, y: 6.0, z: 0.2 }
-ta_entity:
-  uid: "entity_sphere1"
+ta_node:
+  uid: "node_sphere1"
   mesh_group_uid: "mesh_group_prim_sphere"
-  rigid_body_uid: "rb_entity_sphere1"
+  rigid_body_uid: "rb_node_sphere1"
   cast_shadows: true
 
 ta_rigid_body:
-  uid: "rb_entity_sphere2"
+  uid: "rb_node_sphere2"
   mass: 1.0
   position: { x: 0.3, y: 9.0, z: 0.3 }
-ta_entity:
-  uid: "entity_sphere2"
+ta_node:
+  uid: "node_sphere2"
   mesh_group_uid: "mesh_group_prim_sphere"
-  rigid_body_uid: "rb_entity_sphere2"
+  rigid_body_uid: "rb_node_sphere2"
   cast_shadows: true
 
-ta_entity:
+ta_node:
   uid: "shadow_test_1"
   mesh_group_uid: "mesh_group_letter_r"
   transform:

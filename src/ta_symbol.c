@@ -173,7 +173,7 @@ const char *ta_symbol_intern(const char *s, u32 len) {
     DLB_ASSERT(len);
     DLB_ASSERT(len < TA_SYMBOL_MAX_LEN);
 
-    char *sym = dlb_hash_search(&symbol_table, s, len);
+    char *sym = dlb_hash_search(&symbol_table, s, len, 0);
     if (sym) return sym;
 
     sym = dlb_symbol_alloc(s, len);

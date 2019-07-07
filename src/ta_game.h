@@ -3,7 +3,7 @@
 #include "ta_scene.h"
 #include "ta_light.h"
 #include "ta_camera.h"
-#include "ta_entity.h"
+#include "ta_node.h"
 
 typedef enum {
     TA_STATE_INIT,
@@ -21,7 +21,7 @@ typedef struct {
     ta_camera *camera;
     ta_camera *camera_player;
     ta_camera *camera_freecam;
-    ta_entity *player;
+    ta_node *player;
 } ta_game;
 
 extern ta_game tg_game;

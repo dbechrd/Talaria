@@ -7,8 +7,8 @@
 #include "ta_texture.h"
 #include "ta_shader.h"
 #include "ta_audio.h"
-#include "ta_entity.h"
-#include "ta_ent_button.h"
+#include "ta_node.h"
+#include "ta_button.h"
 #include "ta_rigid_body.h"
 #include "ta_light.h"
 #include "dlb_types.h"
@@ -43,8 +43,8 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
         case F_TA_TEXTURE:              return "TA_TEXTURE";
         case F_TA_AUDIO_BUFFER:         return "TA_AUDIO_BUFFER";
         case F_TA_AUDIO_SOURCE:         return "TA_AUDIO_SOURCE";
-        case F_TA_ENTITY:               return "TA_ENTITY";
-        case F_TA_ENT_BUTTON:           return "TA_ENT_BUTTON";
+        case F_TA_NODE:					return "TA_NODE";
+        case F_TA_BUTTON:				return "TA_BUTTON";
         case F_TA_PLANE:                return "TA_PLANE";
         case F_TA_SPHERE:               return "TA_SPHERE";
         case F_TA_AABB:                 return "TA_AABB";
@@ -260,15 +260,15 @@ void ta_schema_register()
 
     TYPE_START(ta_shader_uniform, F_TA_SHADER_UNIFORM);
     TYPE_FIELD(ta_shader_uniform, name, F_ATOM_STRING);
-    TYPE_UNION_TYPE(ta_shader_uniform,   type,       F_ATOM_ENUM,         ta_glsl_type_str);
-    TYPE_UNION_FIELD(ta_shader_uniform,  glint,      F_ATOM_INT,          value, TA_GLSL_INT);
-    TYPE_UNION_FIELD(ta_shader_uniform,  gluint,     F_ATOM_UINT,         value, TA_GLSL_UINT);
-    TYPE_UNION_FIELD(ta_shader_uniform,  sampler2d,  F_ATOM_UINT,         value, TA_GLSL_SAMPLER2D);
-    TYPE_UNION_FIELD(ta_shader_uniform,  vec2,       F_TA_VEC2,           value, TA_GLSL_VEC2);
-    TYPE_UNION_FIELD(ta_shader_uniform,  vec3,       F_TA_VEC3,           value, TA_GLSL_VEC3);
-    TYPE_UNION_FIELD(ta_shader_uniform,  vec4,       F_TA_VEC4,           value, TA_GLSL_VEC4);
-    TYPE_UNION_FIELD(ta_shader_uniform,  mat3,       F_TA_MAT3,           value, TA_GLSL_MAT3);
-    TYPE_UNION_FIELD(ta_shader_uniform,  mat4,       F_TA_MAT4,           value, TA_GLSL_MAT4);
+    TYPE_UNION_TYPE(ta_shader_uniform, type, F_ATOM_ENUM, ta_glsl_type_str);
+    //TYPE_UNION_FIELD(ta_shader_uniform, glint,     F_ATOM_INT,  value, TA_GLSL_INT);
+    //TYPE_UNION_FIELD(ta_shader_uniform, gluint,    F_ATOM_UINT, value, TA_GLSL_UINT);
+    //TYPE_UNION_FIELD(ta_shader_uniform, sampler2d, F_ATOM_UINT, value, TA_GLSL_SAMPLER2D);
+    //TYPE_UNION_FIELD(ta_shader_uniform, vec2,      F_TA_VEC2,   value, TA_GLSL_VEC2);
+    //TYPE_UNION_FIELD(ta_shader_uniform, vec3,      F_TA_VEC3,   value, TA_GLSL_VEC3);
+    //TYPE_UNION_FIELD(ta_shader_uniform, vec4,      F_TA_VEC4,   value, TA_GLSL_VEC4);
+    //TYPE_UNION_FIELD(ta_shader_uniform, mat3,      F_TA_MAT3,   value, TA_GLSL_MAT3);
+    //TYPE_UNION_FIELD(ta_shader_uniform, mat4,      F_TA_MAT4,   value, TA_GLSL_MAT4);
     TYPE_UNION_VECTOR(ta_shader_uniform, properties, F_TA_SHADER_UNIFORM, value, TA_GLSL_STRUCT);
     TYPE_END(ta_shader_uniform);
 
@@ -300,26 +300,25 @@ void ta_schema_register()
     TYPE_FIELD(ta_audio_source, audio_buffer_uid, F_ATOM_STRING);
     TYPE_END(ta_audio_source);
 
-    TYPE_START(ta_entity, F_TA_ENTITY);
-    TYPE_FIELD_NAME(ta_entity, ref.uid, F_ATOM_STRING, uid);
-    TYPE_FIELD(ta_entity, type,            F_ATOM_INT);
-    TYPE_FIELD(ta_entity, transform,       F_TA_TRANSFORM);
-    TYPE_FIELD(ta_entity, material_uid,    F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, mesh_group_uid,  F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, rigid_body_uid,  F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, parent_uid,      F_ATOM_STRING);
-    TYPE_FIELD(ta_entity, invisible,       F_ATOM_BOOL);
-    TYPE_FIELD(ta_entity, cast_shadows,    F_ATOM_BOOL);
-    TYPE_FIELD(ta_entity, receive_shadows, F_ATOM_BOOL);
-    TYPE_END(ta_entity);
+    TYPE_START(ta_node, F_TA_NODE);
+    TYPE_FIELD_NAME(ta_node, ref.uid, F_ATOM_STRING, uid);
+    TYPE_FIELD(ta_node, transform,       F_TA_TRANSFORM);
+    TYPE_FIELD(ta_node, material_uid,    F_ATOM_STRING);
+    TYPE_FIELD(ta_node, mesh_group_uid,  F_ATOM_STRING);
+    TYPE_FIELD(ta_node, rigid_body_uid,  F_ATOM_STRING);
+    TYPE_FIELD(ta_node, button_uid,      F_ATOM_STRING);
+    TYPE_FIELD(ta_node, invisible,       F_ATOM_BOOL);
+    TYPE_FIELD(ta_node, cast_shadows,    F_ATOM_BOOL);
+    TYPE_FIELD(ta_node, receive_shadows, F_ATOM_BOOL);
+    TYPE_END(ta_node);
 
-    TYPE_START(ta_ent_button, F_TA_ENT_BUTTON);
-    TYPE_FIELD(ta_ent_button, base,                F_TA_ENTITY);
-    TYPE_FIELD(ta_ent_button, audio_source_uid,    F_ATOM_STRING);
-    TYPE_FIELD(ta_ent_button, sfx_activated_uid,   F_ATOM_STRING);
-    TYPE_FIELD(ta_ent_button, sfx_active_uid,      F_ATOM_STRING);
-    TYPE_FIELD(ta_ent_button, sfx_deactivated_uid, F_ATOM_STRING);
-    TYPE_END(ta_ent_button);
+    TYPE_START(ta_button, F_TA_BUTTON);
+	TYPE_FIELD_NAME(ta_button, ref.uid, F_ATOM_STRING, uid);
+	TYPE_FIELD(ta_button, audio_source_uid,    F_ATOM_STRING);
+    TYPE_FIELD(ta_button, sfx_activated_uid,   F_ATOM_STRING);
+    TYPE_FIELD(ta_button, sfx_active_uid,      F_ATOM_STRING);
+    TYPE_FIELD(ta_button, sfx_deactivated_uid, F_ATOM_STRING);
+    TYPE_END(ta_button);
 
     TYPE_START(ta_plane, F_TA_PLANE);
     TYPE_FIELD(ta_plane, center, F_TA_VEC3);
@@ -380,7 +379,7 @@ ta_schema *ta_schema_find_by_type(ta_schema_field_type type)
 
 ta_schema *ta_schema_find_by_name(const char *name, int len)
 {
-    ta_schema *schema = dlb_hash_search(&tg_schemas_by_name, name, len);
+    ta_schema *schema = dlb_hash_search(&tg_schemas_by_name, name, len, 0);
     return schema;
 }
 
@@ -401,7 +400,11 @@ void ta_schema_print_atom(FILE *f, ta_schema_field *field, void *ptr)
 {
     fprintf(f, "%s: ", field->name);
     switch (field->type) {
-        case F_ATOM_INT: {
+		case F_ATOM_BOOL: {
+			bool *val = ptr;
+			fprintf(f, "%s", *val ? "true" : "false");
+			break;
+		} case F_ATOM_INT: {
             int *val = ptr;
             fprintf(f, "%d", *val);
             break;
@@ -436,7 +439,7 @@ static inline void indent(FILE *f, int count)
 }
 
 void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
-    bool in_array)
+    int in_array)
 {
     ta_schema *schema = &tg_schemas[type];
     if (!in_array) {
@@ -447,7 +450,7 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
 
     // NOTE: Defaults to a value unlikely to be used in any legitimate enum to
     //       detect errors more easily.
-    int union_type = INT_MIN;
+    int union_type = -9001;
 
     dlb_vec_each(ta_schema_field *, field, schema->fields) {
         if (field->is_alias) {
@@ -458,7 +461,7 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
         }
 
         if (field->array_len) {
-            DLB_ASSERT(!in_array && "Don't know how to print nested arrays");
+            //DLB_ASSERT(!in_array && "Don't know how to print nested arrays");
             indent(f, level + 1);
             fprintf(f, "%s: [\n", field->name);
 
@@ -473,7 +476,7 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
                 if (field->type < F_TA_COUNT) {
                     indent(f, level + 2);
                     fprintf(f, "{\n");
-                    ta_schema_print(f, field->type, p, level + 2, 1);
+                    ta_schema_print(f, field->type, p, level + 2, in_array + 1);
                     indent(f, level + 2);
                     fprintf(f, "},\n");
                 } else {
@@ -500,7 +503,8 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
                     union_type = *(int *)(ptr + field->offset);
                 }
                 if (field->type == F_ATOM_ENUM && field->enum_converter) {
-                    const char *enum_str = field->enum_converter(union_type);
+					int enum_type = *(int *)(ptr + field->offset);
+                    const char *enum_str = field->enum_converter(enum_type);
                     fprintf(f, "  # %s", enum_str);
                 }
                 fprintf(f, "\n");
