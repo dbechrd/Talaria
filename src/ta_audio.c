@@ -180,8 +180,8 @@ void ta_audio_source_init(ta_audio_source *source)
 #endif
 
     if (source->audio_buffer_uid) {
-        ta_audio_buffer *buffer = ta_scene_find_by_ref(&source->ref,
-            F_TA_AUDIO_BUFFER, source->audio_buffer_uid);
+        ta_audio_buffer *buffer = ta_scene_find(source->ref.scene,
+            TA_AUDIO_BUFFER, source->audio_buffer_uid);
         ta_audio_source_set_buffer(source, buffer);
     }
 }

@@ -27,15 +27,7 @@ typedef struct ta_scene_s {
     const char *default_texture_uid;
     const char *default_mesh_group_uid;
 
-    void *pools[F_TA_COUNT];
-    //ta_camera *cameras;
-    //ta_light *lights;
-    //ta_material *materials;
-    //ta_mesh_group *mesh_groups;
-    //ta_shader *shaders;
-    //ta_texture *textures;
-    //ta_rigid_body *rigid_bodies;
-    //ta_node *entities;
+    void *pools[TA_COUNT_POOLS];
 } ta_scene;
 
 ta_scene *ta_scene_init(const char *name);
@@ -46,8 +38,6 @@ void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type,
     const char *uid);
 void ta_scene_initialize_objects(ta_scene *scn);
 void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid);
-void *ta_scene_find_by_ref(ta_scene_ref *ref, ta_schema_field_type type,
-    const char *uid);
 void ta_scene_update(ta_scene *scene, float dt);
 void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha);
 void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha);

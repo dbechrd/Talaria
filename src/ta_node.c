@@ -27,7 +27,7 @@ void ta_node_init(ta_node *e)
 #if 0
         char body_uid[128] = { 0 };
         snprintf(body_uid, sizeof(body_uid) - 1, "%s_rigid_body", e->ref.uid);
-        ta_rigid_body *body = ta_scene_obj_alloc(e->ref.scene, F_TA_RIGID_BODY,
+        ta_rigid_body *body = ta_scene_obj_alloc(e->ref.scene, TA_RIGID_BODY,
             INTERN(body_uid));
         body->transform.position = e->transform.position;
         body->transform.rotation = e->transform.rotation;
@@ -67,7 +67,7 @@ ta_material *ta_node_material(ta_node *e)
     if (!e->material_uid) return 0;
 
     // NOTE: This could cache in e->material if we want to save the hash lookup
-    ta_material *mat = ta_scene_find_by_ref(&e->ref, F_TA_MATERIAL, e->material_uid);
+    ta_material *mat = ta_scene_find(e->ref.scene, TA_MATERIAL, e->material_uid);
     return mat;
 }
 
@@ -76,7 +76,7 @@ ta_mesh_group *ta_node_mesh_group(ta_node *e)
     if (!e->mesh_group_uid) return 0;
 
     // NOTE: This could cache in e->mesh_group if we want to save the hash lookup
-    ta_mesh_group *mesh_group = ta_scene_find_by_ref(&e->ref, F_TA_MESH_GROUP, e->mesh_group_uid);
+    ta_mesh_group *mesh_group = ta_scene_find(e->ref.scene, TA_MESH_GROUP, e->mesh_group_uid);
     return mesh_group;
 }
 
@@ -85,7 +85,7 @@ ta_rigid_body *ta_node_rigid_body(ta_node *e)
     if (!e->rigid_body_uid) return 0;
 
     // NOTE: This could cache in e->rigid_body if we want to save the hash lookup
-    ta_rigid_body *rigid_body = ta_scene_find_by_ref(&e->ref, F_TA_RIGID_BODY, e->rigid_body_uid);
+    ta_rigid_body *rigid_body = ta_scene_find(e->ref.scene, TA_RIGID_BODY, e->rigid_body_uid);
     return rigid_body;
 }
 
@@ -94,7 +94,7 @@ ta_button *ta_node_button(ta_node *e)
 	if (!e->button_uid) return 0;
 
 	// NOTE: This could cache in e->button if we want to save the hash lookup
-	ta_button *button = ta_scene_find_by_ref(&e->ref, F_TA_BUTTON, e->button_uid);
+	ta_button *button = ta_scene_find(e->ref.scene, TA_BUTTON, e->button_uid);
 	return button;
 }
 

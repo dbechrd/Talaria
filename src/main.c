@@ -55,7 +55,7 @@ void debug_tests() {
 }
 
 ta_node *entity_create(ta_scene *scn, const char *name) {
-    ta_node *e = ta_scene_obj_alloc(scn, F_TA_NODE, INTERN(name));
+    ta_node *e = ta_scene_obj_alloc(scn, TA_NODE, INTERN(name));
     e->transform.position.x = 1.1f;
     e->transform.position.y = 1.2f;
     e->transform.position.z = 1.3f;
@@ -127,13 +127,13 @@ int main(int argc, char *argv[])
     // Intro scene
     read_scene("data/scene/scene1.dml");
     // TODO: Find closest 8 lights and store them in tg_game.lights
-    tg_game.lights = tg_game.scene->pools[F_TA_LIGHT];
+    tg_game.lights = tg_game.scene->pools[TA_LIGHT];
     tg_game.camera_player =
-		ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_player"));
+		ta_scene_find(tg_game.scene, TA_CAMERA, INTERN("camera_player"));
     tg_game.camera_freecam =
-		ta_scene_find(tg_game.scene, F_TA_CAMERA, INTERN("camera_freecam"));
+		ta_scene_find(tg_game.scene, TA_CAMERA, INTERN("camera_freecam"));
     tg_game.player =
-		ta_scene_find(tg_game.scene, F_TA_NODE, INTERN("node_player"));
+		ta_scene_find(tg_game.scene, TA_NODE, INTERN("node_player"));
     ta_game_state_set(TA_STATE_FREE_CAM);
 
     // Ensure we have a valid camera, player and light
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
     DLB_ASSERT(tg_game.lights);
 
     ta_audio_source *ambient_wakeup = ta_scene_find(tg_game.scene,
-        F_TA_AUDIO_SOURCE, INTERN("src_ambient_genesis"));
+        TA_AUDIO_SOURCE, INTERN("src_ambient_genesis"));
     DLB_ASSERT(ambient_wakeup);
     ta_audio_source_play_loop(ambient_wakeup);
 
@@ -150,19 +150,19 @@ int main(int argc, char *argv[])
     // Shaders
     ////////////////////////////////////////////////////////////////////////////
     tg_shader_lines =
-        ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_lines"));
+        ta_scene_find(tg_game.scene, TA_SHADER, INTERN("shader_lines"));
     DLB_ASSERT(tg_shader_lines);
 
     tg_shader_quads =
-        ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_quads"));
+        ta_scene_find(tg_game.scene, TA_SHADER, INTERN("shader_quads"));
     DLB_ASSERT(tg_shader_quads);
 
 	tg_shader_cubemap =
-		ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_cubemap"));
+		ta_scene_find(tg_game.scene, TA_SHADER, INTERN("shader_cubemap"));
 	DLB_ASSERT(tg_shader_cubemap);
 
     tg_shader_shadow =
-        ta_scene_find(tg_game.scene, F_TA_SHADER, INTERN("shader_shadow"));
+        ta_scene_find(tg_game.scene, TA_SHADER, INTERN("shader_shadow"));
     DLB_ASSERT(tg_shader_shadow);
 
     ////////////////////////////////////////////////////////////////////////////
@@ -179,7 +179,7 @@ int main(int argc, char *argv[])
         (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f }, &minimap_camera);
 
     ta_texture *tex_test =
-        ta_scene_find(tg_game.scene, F_TA_TEXTURE, INTERN("TEXTURE_ALBEDO"));
+        ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("TEXTURE_ALBEDO"));
     DLB_ASSERT(tex_test && tex_test->gl_id && "Could not find TEXTURE_ALBEDO");
 
 	// TODO: Remove x,y coords from init() methods and only store size. Pass x,y
