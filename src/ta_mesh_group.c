@@ -16,7 +16,7 @@
 
 void ta_mesh_group_init(ta_mesh_group *group, const char *uid, const char *path)
 {
-    group->ref.uid = uid;
+    group->uid.uid = uid;
     group->path = path;
 }
 

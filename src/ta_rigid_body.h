@@ -49,7 +49,7 @@ typedef struct {
 // http://allenchou.net/2013/12/game-physics-introduction/
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
 typedef struct ta_rigid_body_s {
-    ta_scene_ref ref;
+    ta_uid uid;
 
     ta_aabb aabb;
     ta_collider collider;

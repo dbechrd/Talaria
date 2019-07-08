@@ -97,34 +97,24 @@ static pool_info pool_infos[] = {
     [TA_BUTTON]       = { sizeof(ta_button),        ta_button_init,       0 },
 };
 
-static void scene_ref_add(ta_scene_ref *ref)
-{
-	DLB_ASSERT(ref->scene);
-	DLB_ASSERT(ref->type < TA_COUNT_POOLS);
-	DLB_ASSERT(ref->uid);
-	DLB_ASSERT(ref->ptr);
-
-	ta_scene *scene = ref->scene;
-    ta_scene_ref *new_ref = dlb_vec_alloc(scene->refs);
-	dlb_memcpy(new_ref, ref, sizeof(*ref));
-	u32 refs_index = dlb_vec_len(scene->refs) - 1;
-    dlb_hash_insert(&scene->refs_by_uid, SYM(ref->uid), (void *)refs_index);
-}
-
 void *ta_scene_alloc(ta_scene *scene, ta_schema_field_type type,
     const char *uid)
 {
+    DLB_ASSERT(scene);
     DLB_ASSERT(type < TA_COUNT_POOLS);
     DLB_ASSERT(uid);
 
-    ta_schema *schema = ta_schema_find_by_type(type);
-    ta_scene_ref *obj = dlb_vec_alloc_size(scene->pools[type], schema->size);
-    obj->scene = scene;
-    obj->type = type;
-    obj->uid = uid;
-    obj->ptr = obj;
-    scene_ref_add(obj);
-    return obj;
+    // Allocate object in pool
+    u32 pool_idx = dlb_vec_len(scene->pools[type]);
+    void *ptr = dlb_vec_alloc_size(scene->pools[type], pool_infos[type].size);
+    ta_uid *ptr_uid = ptr;
+    ptr_uid->uid = uid;
+    ptr_uid->scene = scene;
+
+    // Insert UID into lookup table
+    dlb_hash_insert(&scene->pooled_uids[type], SYM(uid), (void *)pool_idx);
+
+    return ptr;
 }
 
 static token *token_read(ta_file *f, token **tokens)
@@ -450,6 +440,8 @@ static void tokens_parse(ta_scene *scene, token *tokens)
         u32 array_len;   // 0 = not array, 1 = vector, >1 = fixed array size
         u32 array_elem;  // Current element of array we're writing to
         const char *name;
+        bool is_pooled;
+        u32 pool_idx;
         void *ptr;
         u32 size;
         bool is_union_type;
@@ -576,6 +568,8 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     stack[sp].array_len = 0;
                     stack[sp].array_elem = 0;
                     stack[sp].name = tok->value.string;
+                    stack[sp].is_pooled = true;
+                    stack[sp].pool_idx = dlb_vec_len(scene->pools[schema->type]);
                     stack[sp].ptr = dlb_vec_alloc_size(scene->pools[schema->type], schema->size);
                     stack[sp].size = schema->size;
                     stack[sp].is_union_type = false;
@@ -633,12 +627,17 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 const char **fp = stack[sp].ptr;
                 *fp = tok->value.string;
                 if (stack[sp].name == SYM_UID) {
-                    ta_scene_ref *ref = stack[sp-1].ptr;
-					ref->scene = scene;
-                    ref->type = stack[sp-1].type;
-                    ref->uid = tok->value.string;
-                    ref->ptr = stack[sp-1].ptr;
-                    scene_ref_add(ref);
+                    DLB_ASSERT(sp > 0);
+                    DLB_ASSERT(stack[sp-1].is_pooled);
+                    DLB_ASSERT(stack[sp-1].type < TA_COUNT_POOLS);
+
+                    ta_uid *uid = stack[sp].ptr;
+                    DLB_ASSERT(uid->uid);
+                    uid->scene = scene;
+
+                    u32 pool_idx = stack[sp-1].pool_idx;
+                    dlb_hash *hash = &scene->pooled_uids[stack[sp-1].type];
+                    dlb_hash_insert(hash, tok->value.string, tok->length, (void *)pool_idx);
                 }
                 break;
             } case TOKEN_ARRAY_START: {
@@ -694,7 +693,7 @@ static void scene_load_placeholders(ta_scene *scene)
 {
     // Fallback resources
     ta_texture *tex_albedo = ta_scene_alloc(scene, TA_TEXTURE,
-        INTERN("TEXTURE_ALBEDO"));
+        INTERN("DEFAULT_TEXTURE_ALBEDO"));
     {
 #if 0
         tex_albedo->path = INTERN("data/texture/default_1024_1024.png");
@@ -721,11 +720,10 @@ static void scene_load_placeholders(ta_scene *scene)
         DLB_ASSERT(dlb_vec_len(albedo_pixels) == bytes);
         tex_albedo->pixels = albedo_pixels;
 #endif
-        scene->default_texture_uid = tex_albedo->ref.uid;
     }
 
     ta_texture *tex_metallic = ta_scene_alloc(scene, TA_TEXTURE,
-        INTERN("TEXTURE_METALLIC"));
+        INTERN("DEFAULT_TEXTURE_METALLIC"));
     {
 #if 0
         tex_metallic->path = INTERN("data/texture/default_1024_1024.png");
@@ -738,31 +736,33 @@ static void scene_load_placeholders(ta_scene *scene)
         dlb_vec_alloc(metallic);
         tex_metallic->pixels = metallic;
 #endif
-        scene->default_texture_uid = tex_metallic->ref.uid;
     }
 
-    ta_mesh_group *mesh_group = ta_scene_alloc(scene, TA_MESH_GROUP,
-        INTERN("MESH_GROUP_DEFAULT"));
-    mesh_group->path = INTERN("data/mesh/default.obj");
-    scene->default_mesh_group_uid = mesh_group->ref.uid;
-
     ta_material *material = ta_scene_alloc(scene, TA_MATERIAL,
-        INTERN("MATERIAL_DEFAULT"));
+        INTERN("DEFAULT_MATERIAL"));
     // TODO: Hard-code default shader instead of hoping it's in the scene file
     material->shader_uid = INTERN("shader_mesh");
-    material->texture_albedo_uid = tex_albedo->ref.uid;
-    material->texture_metallic_uid = tex_metallic->ref.uid;
-    scene->default_material_uid = material->ref.uid;
+    material->texture_albedo_uid = tex_albedo->uid.uid;
+    material->texture_metallic_uid = tex_metallic->uid.uid;
 
-	scene->refs_placeholder_count = dlb_vec_len(scene->refs);
+    ta_mesh_group *mesh_group = ta_scene_alloc(scene, TA_MESH_GROUP,
+        INTERN("DEFAULT_MESH_GROUP"));
+    mesh_group->path = INTERN("data/mesh/default.obj");
+    scene->default_mesh_group_uid = mesh_group->uid.uid;
+
+    scene->default_texture_uid = tex_albedo->uid.uid;
+    scene->default_material_uid = material->uid.uid;
+    scene->default_mesh_group_uid = mesh_group->uid.uid;
 }
 
 ta_scene *ta_scene_init(const char *name)
 {
     ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
     scene->name = name;
-	//scene->refs_by_uid.debug = tg_debug_log->stream;
-    dlb_hash_init(&scene->refs_by_uid, DLB_HASH_STRING, scene->name, 64);
+    for (int i = 0; i < TA_COUNT_POOLS; i++) {
+        dlb_hash_init(&scene->pooled_uids[i], DLB_HASH_STRING, scene->name, 64);
+        //scene->pooled_uids[type].debug = tg_debug_log->stream;
+    }
     scene_load_placeholders(scene);
     return scene;
 }
@@ -784,8 +784,8 @@ ta_scene *ta_scene_load(ta_file *f)
 
     for (int i = 0; i < TA_COUNT_POOLS; i++) {
         if (pool_infos[i].init) {
-            s8 *end = dlb_vec_end_size(scene->pools[i], pool_infos[i].size);
-            for (s8 *ptr = scene->pools[i]; ptr != end; ptr += pool_infos[i].size) {
+            u8 *end = dlb_vec_end_size(scene->pools[i], pool_infos[i].size);
+            for (u8 *ptr = scene->pools[i]; ptr != end; ptr += pool_infos[i].size) {
                 pool_infos[i].init(ptr);
             }
         }
@@ -800,15 +800,14 @@ void ta_scene_free(ta_scene *scene)
 
     for (int i = 0; i < TA_COUNT_POOLS; i++) {
 		if (pool_infos[i].free) {
-            s8 *end = dlb_vec_end_size(scene->pools[i], pool_infos[i].size);
-			for (s8 *ptr = scene->pools[i]; ptr != end; ptr += pool_infos[i].size) {
+            u8 *end = dlb_vec_end_size(scene->pools[i], pool_infos[i].size);
+			for (u8 *ptr = scene->pools[i]; ptr != end; ptr += pool_infos[i].size) {
                 pool_infos[i].free(ptr);
 			}
 		}
         dlb_vec_free(scene->pools[i]);
+        dlb_hash_free(&scene->pooled_uids[i]);
     }
-    dlb_vec_free(scene->refs);
-    dlb_hash_free(&scene->refs_by_uid);
     dlb_free(scene);
 }
 
@@ -816,11 +815,14 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
 {
     fprintf(hnd, "#-------------------------------------------------------------------------------\n");
     fprintf(hnd, "# [SCENE] %s\n", scene->name);
-    dlb_vec_range(ta_scene_ref *, ref, scene->refs + scene->refs_placeholder_count, dlb_vec_end(scene->refs)) {
+    for (ta_schema_field_type type = 0; type < TA_COUNT_POOLS; type++) {
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
-        fprintf(hnd, "# %s\n", ta_schema_field_type_str(ref->type));
+        fprintf(hnd, "# %s\n", ta_schema_field_type_str(type));
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
-        ta_schema_print(hnd, ref->type, ref->ptr, 0, 0);
+        u8 *end = dlb_vec_end_size(scene->pools[type], pool_infos[type].size);
+        for (u8 *ptr = scene->pools[type]; ptr != end; ptr += pool_infos[type].size) {
+            ta_schema_print(hnd, type, ptr, 0, 0);
+        }
     }
     fflush(hnd);
 }
@@ -828,20 +830,18 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
 void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
 {
 	DLB_ASSERT(scene);
+    DLB_ASSERT(type < TA_COUNT_POOLS);
 	DLB_ASSERT(uid);
 
 	bool found = false;
-	u32 refs_index = (u32)dlb_hash_search(&scene->refs_by_uid, SYM(uid), &found);
+    dlb_hash *hash = &scene->pooled_uids[type];
+	u32 pool_idx = (u32)dlb_hash_search(hash, SYM(uid), &found);
 	DLB_ASSERT(found);
-	u32 refs_len = dlb_vec_len(scene->refs);
-	DLB_ASSERT(refs_index < refs_len);
+	u32 pool_len = dlb_vec_len(scene->pools[type]);
+	DLB_ASSERT(pool_idx < pool_len);
 
-	ta_scene_ref *ref = &scene->refs[refs_index];
-    DLB_ASSERT(ref);
-    DLB_ASSERT(ref->type == type);
-    DLB_ASSERT(ref->uid == uid);
-
-	return ref->ptr;
+    void *ptr = (u8 *)scene->pools[type] + (pool_idx * pool_infos[type].size);
+	return ptr;
 }
 
 static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
@@ -911,7 +911,7 @@ static ta_manifold *detect_collisions(ta_rigid_body_pair *pairs, double dt)
 
 void ta_scene_update(ta_scene *scene, float dt)
 {
-    // https://www.toptal.com/game/video-game-physics-part-i-an-introduction-to-rigid-body-dynamics
+    // https://www.toptal.com/game/video-game-physics-part-type-an-introduction-to-rigid-body-dynamics
 
     // Apply forces
     // Update velocities / positions

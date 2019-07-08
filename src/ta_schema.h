@@ -3,6 +3,8 @@
 #include <stdio.h>
 
 typedef enum {
+    TA_NULL,
+
     // Scene-level compound types
 	TA_CAMERA,
 	TA_LIGHT,
@@ -15,10 +17,10 @@ typedef enum {
 	TA_AUDIO_SOURCE,
 	TA_RIGID_BODY,
 	TA_BUTTON,
-	TA_COUNT_POOLS,
+    TA_COUNT_POOLS,
 
-	// Other compound types
-	TA_VEC2						= TA_COUNT_POOLS,
+    // Other compound types
+    TA_VEC2,
     TA_VEC3,
     TA_VEC4,
     TA_QUAT,

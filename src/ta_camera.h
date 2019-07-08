@@ -10,7 +10,7 @@ typedef enum {
 } ta_camera_mode;
 
 typedef struct ta_camera_s {
-    ta_scene_ref ref;
+    ta_uid uid;
 
     ta_camera_mode mode;
     bool dirty;

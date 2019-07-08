@@ -9,25 +9,20 @@ typedef struct ta_camera_s ta_camera;
 typedef struct ta_scene_s ta_scene;
 typedef struct ta_shader_s ta_shader;
 
-typedef struct ta_scene_ref_s {
-    ta_scene *scene;
-    ta_schema_field_type type;
+typedef struct ta_uid_s {
     const char *uid;
-    void *ptr;
-} ta_scene_ref;
+    ta_scene *scene;
+} ta_uid;
 
 typedef struct ta_scene_s {
     const char *name;
-
-    ta_scene_ref *refs;
-    dlb_hash refs_by_uid;
-	u32 refs_placeholder_count;
 
     const char *default_material_uid;
     const char *default_texture_uid;
     const char *default_mesh_group_uid;
 
     void *pools[TA_COUNT_POOLS];
+    dlb_hash pooled_uids[TA_COUNT_POOLS];
 } ta_scene;
 
 ta_scene *ta_scene_init(const char *name);

@@ -10,7 +10,7 @@ ta_audio_source *ta_button_audio_source(ta_button *button) {
     if (!button->audio_source_uid) return 0;
 
     // NOTE: This could cache in button->audio_source
-    ta_audio_source *audio_source = ta_scene_find(button->ref.scene,
+    ta_audio_source *audio_source = ta_scene_find(button->uid.scene,
         TA_AUDIO_SOURCE, button->audio_source_uid);
     return audio_source;
 }
@@ -18,7 +18,7 @@ ta_audio_buffer *ta_button_sfx_activated(ta_button *button) {
     if (!button->sfx_activated_uid) return 0;
 
     // NOTE: This could cache in button->sfx_activated_buffer
-    ta_audio_buffer *audio_buffer = ta_scene_find(button->ref.scene,
+    ta_audio_buffer *audio_buffer = ta_scene_find(button->uid.scene,
         TA_AUDIO_BUFFER, button->sfx_activated_uid);
     return audio_buffer;
 }
@@ -26,7 +26,7 @@ ta_audio_buffer *ta_button_sfx_active(ta_button *button) {
     if (!button->sfx_active_uid) return 0;
 
     // NOTE: This could cache in button->sfx_active_buffer
-    ta_audio_buffer *audio_buffer = ta_scene_find(button->ref.scene,
+    ta_audio_buffer *audio_buffer = ta_scene_find(button->uid.scene,
         TA_AUDIO_BUFFER, button->sfx_active_uid);
     return audio_buffer;
 }
@@ -34,7 +34,7 @@ ta_audio_buffer *ta_button_sfx_deactivated(ta_button *button) {
     if (!button->sfx_deactivated_uid) return 0;
 
     // NOTE: This could cache in button->sfx_deactivated_buffer
-    ta_audio_buffer *audio_buffer = ta_scene_find(button->ref.scene,
+    ta_audio_buffer *audio_buffer = ta_scene_find(button->uid.scene,
         TA_AUDIO_BUFFER, button->sfx_deactivated_uid);
     return audio_buffer;
 }

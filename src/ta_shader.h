@@ -55,7 +55,7 @@ typedef struct ta_shader_uniform_s {
 } ta_shader_uniform;
 
 typedef struct ta_shader_s {
-    ta_scene_ref ref;
+    ta_uid uid;
     const char *path_vert;
     const char *path_frag;
     GLint max_attrib_name_len;

@@ -7,7 +7,7 @@ typedef enum ta_button_state {
 } ta_button_state;
 
 typedef struct ta_button_s {
-	ta_scene_ref ref;
+    ta_uid uid;
     ta_button_state state_prev;
     ta_button_state state;
 

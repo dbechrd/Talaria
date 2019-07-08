@@ -38,7 +38,7 @@ typedef struct ta_shadowmap_s {
 } ta_shadowmap;
 
 typedef struct ta_light_s {
-    ta_scene_ref ref;
+    ta_uid uid;
     bool disabled;
     float intensity;
     ta_vec3 position;

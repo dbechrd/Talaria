@@ -4,7 +4,7 @@
 #include "ta_texture.h"
 
 typedef struct ta_material_s {
-    ta_scene_ref ref;
+    ta_uid uid;
     const char *shader_uid;
     const char *texture_albedo_uid;
     const char *texture_metallic_uid;

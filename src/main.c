@@ -176,8 +176,8 @@ int main(int argc, char *argv[])
         (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f }, &minimap_camera);
 
     ta_texture *tex_test =
-        ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("TEXTURE_ALBEDO"));
-    DLB_ASSERT(tex_test && tex_test->gl_id && "Could not find TEXTURE_ALBEDO");
+        ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("DEFAULT_TEXTURE_ALBEDO"));
+    DLB_ASSERT(tex_test && tex_test->gl_id && "Could not find DEFAULT_TEXTURE_ALBEDO");
 
 	// TODO: Remove x,y coords from init() methods and only store size. Pass x,y
 	//       at render time (make sure to update viewport correctly).

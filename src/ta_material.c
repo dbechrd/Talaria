@@ -4,21 +4,21 @@
 
 ta_shader *ta_material_shader(ta_material *mat)
 {
-    ta_shader *shader = ta_scene_find(mat->ref.scene, TA_SHADER,
+    ta_shader *shader = ta_scene_find(mat->uid.scene, TA_SHADER,
         mat->shader_uid);
     return shader;
 }
 
 ta_texture *ta_material_texture_albedo(ta_material *mat)
 {
-    ta_texture *tex = ta_scene_find(mat->ref.scene, TA_TEXTURE,
+    ta_texture *tex = ta_scene_find(mat->uid.scene, TA_TEXTURE,
         mat->texture_albedo_uid);
     return tex;
 }
 
 ta_texture *ta_material_texture_metallic(ta_material *mat)
 {
-    ta_texture *tex = ta_scene_find(mat->ref.scene, TA_TEXTURE,
+    ta_texture *tex = ta_scene_find(mat->uid.scene, TA_TEXTURE,
         mat->texture_metallic_uid);
     return tex;
 }

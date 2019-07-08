@@ -9,7 +9,7 @@
 
 typedef struct ta_node_s ta_node;
 typedef struct ta_node_s {
-	ta_scene_ref ref;
+    ta_uid uid;
 
 	ta_transform transform;
     ta_transform transform_prev;
