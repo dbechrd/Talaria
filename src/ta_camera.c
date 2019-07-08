@@ -33,7 +33,7 @@ void ta_camera_init(ta_camera *camera)
     camera->pitch_target =            camera->pitch;
 
     if (!camera->fov)                 camera->fov = 90.0f;
-    if (!camera->nearz)               camera->nearz = 0.1f;
+    if (!camera->znear)               camera->znear = 0.1f;
     ta_camera_recalc_projection(camera);
 
     if (vec3_zero(camera->up))        camera->up = VEC3_Y;
@@ -105,7 +105,7 @@ void ta_camera_recalc_projection(ta_camera *camera)
         camera->projection = mat4_ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 10.0f);
     } else {
         camera->projection =
-            mat4_perspective_inf(camera->fov, tg_window.aspect, camera->nearz);
+            mat4_perspective_inf(camera->fov, tg_window.aspect, camera->znear);
     }
 
 }

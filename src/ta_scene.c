@@ -88,7 +88,7 @@ static pool_info pool_infos[] = {
     [TA_LIGHT]        = { sizeof(ta_light),         ta_light_init,        0 },
     [TA_MATERIAL]     = { sizeof(ta_material),      0,                    0 },
     [TA_MESH_GROUP]   = { sizeof(ta_mesh_group),    ta_mesh_group_load,   ta_mesh_group_free },
-    [TA_SHADER]       = { sizeof(ta_shader),        ta_shader_create,     0 },
+    [TA_SHADER]       = { sizeof(ta_shader),        ta_shader_load,     0 },
     [TA_TEXTURE]      = { sizeof(ta_texture),       ta_texture_init,      ta_texture_free },
     [TA_NODE]         = { sizeof(ta_node),          ta_node_init,         0 },
     [TA_AUDIO_BUFFER] = { sizeof(ta_audio_buffer),  ta_audio_buffer_init, 0 },
@@ -111,7 +111,7 @@ static void scene_ref_add(ta_scene_ref *ref)
     dlb_hash_insert(&scene->refs_by_uid, SYM(ref->uid), (void *)refs_index);
 }
 
-void *ta_scene_obj_alloc(ta_scene *scene, ta_schema_field_type type,
+void *ta_scene_alloc(ta_scene *scene, ta_schema_field_type type,
     const char *uid)
 {
     DLB_ASSERT(type < TA_COUNT_POOLS);
@@ -325,7 +325,7 @@ static token *tokenize(ta_file *f)
 
 static void tokens_print(FILE *f, token *tokens)
 {
-    for (token *tok = tokens; tok != dlb_vec_end(tokens); tok++) {
+    dlb_vec_each(token *, tok, tokens) {
         switch (tok->type) {
             case TOKEN_EOF: {
                 break;
@@ -389,7 +389,7 @@ static void tokens_print(FILE *f, token *tokens)
 
 static void tokens_print_debug(FILE *f, token *tokens)
 {
-    for (token *tok = tokens; tok != dlb_vec_end(tokens); tok++) {
+    dlb_vec_each(token *, tok, tokens) {
         fprintf(f, "%-16s", token_type_str(tok->type));
         switch (tok->type) {
             case TOKEN_EOF:
@@ -472,7 +472,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
     stack[sp].is_union_type > 0 ? " (union)" : "", \
     token_type_str(tok->type))
 
-    for (token *tok = tokens; tok != dlb_vec_end(tokens); tok++) {
+    dlb_vec_each(token *, tok, tokens) {
         switch (tok->type) {
             case TOKEN_EOF: {
                 break;
@@ -693,7 +693,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
 static void scene_load_placeholders(ta_scene *scene)
 {
     // Fallback resources
-    ta_texture *tex_albedo = ta_scene_obj_alloc(scene, TA_TEXTURE,
+    ta_texture *tex_albedo = ta_scene_alloc(scene, TA_TEXTURE,
         INTERN("TEXTURE_ALBEDO"));
     {
 #if 0
@@ -724,7 +724,7 @@ static void scene_load_placeholders(ta_scene *scene)
         scene->default_texture_uid = tex_albedo->ref.uid;
     }
 
-    ta_texture *tex_metallic = ta_scene_obj_alloc(scene, TA_TEXTURE,
+    ta_texture *tex_metallic = ta_scene_alloc(scene, TA_TEXTURE,
         INTERN("TEXTURE_METALLIC"));
     {
 #if 0
@@ -741,12 +741,12 @@ static void scene_load_placeholders(ta_scene *scene)
         scene->default_texture_uid = tex_metallic->ref.uid;
     }
 
-    ta_mesh_group *mesh_group = ta_scene_obj_alloc(scene, TA_MESH_GROUP,
+    ta_mesh_group *mesh_group = ta_scene_alloc(scene, TA_MESH_GROUP,
         INTERN("MESH_GROUP_DEFAULT"));
     mesh_group->path = INTERN("data/mesh/default.obj");
     scene->default_mesh_group_uid = mesh_group->ref.uid;
 
-    ta_material *material = ta_scene_obj_alloc(scene, TA_MATERIAL,
+    ta_material *material = ta_scene_alloc(scene, TA_MATERIAL,
         INTERN("MATERIAL_DEFAULT"));
     // TODO: Hard-code default shader instead of hoping it's in the scene file
     material->shader_uid = INTERN("shader_mesh");
@@ -958,7 +958,7 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
         }
 
         ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &light->position);
-        ta_shader_set_float(shader, SYM_U_LIGHT_FARZ, light->shadowmap.farz);
+        ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->shadowmap.zfar);
         ta_light_shadowpass_render(light, shader, alpha, scene->pools[TA_NODE]);
 
         // TODO: Make button a component that an entity can have (*button_uid)

@@ -88,7 +88,7 @@ struct Light {
     sampler2D shadowmap2d;
     // Point
     samplerCube shadowmap3d;
-    float shadowmap_farz;
+    float shadowmap_zfar;
 };
 uniform uint u_lights_count;
 uniform Light[8] u_lights;
@@ -141,7 +141,7 @@ void main()
                 fragToLight = u_lights[i].position - vertex.position;
 
                 shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
-                shadow_map_depth *= u_lights[i].shadowmap_farz;
+                shadow_map_depth *= u_lights[i].shadowmap_zfar;
                 debug_depth = shadow_map_depth;
                 shadow_bias = 0.1;
 
@@ -157,7 +157,7 @@ void main()
 					    for (float z = -1.0; z <= 1.0; z += 1.0) {
 							vec3 foo_offset = vec3(x, y, z) * 0.04;
 							float foo_depth = texture(u_lights[i].shadowmap3d, -fragToLight + foo_offset).r;
-							foo_depth *= u_lights[i].shadowmap_farz;
+							foo_depth *= u_lights[i].shadowmap_zfar;
 							foo_shadows[foo_i] = step(foo_depth, dist - foo_bias);
 							foo_i++;
 					    }

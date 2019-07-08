@@ -213,7 +213,7 @@ void ta_schema_register()
     TYPE_FIELD(ta_camera, pitch_min,           ATOM_FLOAT);
     TYPE_FIELD(ta_camera, pitch_max,           ATOM_FLOAT);
     TYPE_FIELD(ta_camera, fov,                 ATOM_FLOAT);
-    TYPE_FIELD(ta_camera, nearz,               ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, znear,               ATOM_FLOAT);
     TYPE_FIELD(ta_camera, up,                  TA_VEC3);
     TYPE_FIELD(ta_camera, ortho,               ATOM_UINT);
     TYPE_END(ta_camera);

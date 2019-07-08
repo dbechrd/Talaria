@@ -6,8 +6,8 @@
 
 #define DEFAULT_LIGHT_INTENSITY         1.0f
 #define DEFAULT_SHADOWMAP_RESOLUTION    1024
-#define DEFAULT_SHADOWMAP_NEARZ         0.1f
-#define DEFAULT_SHADOWMAP_FARZ          50.0f
+#define DEFAULT_SHADOWMAP_ZNEAR         0.1f
+#define DEFAULT_SHADOWMAP_ZFAR          50.0f
 
 static void shadowmap_directional_create(ta_light *light);
 static void shadowmap_point_create(ta_light *light);
@@ -34,11 +34,11 @@ void ta_light_init(ta_light *light)
         if (!light->shadowmap.resolution) {
             light->shadowmap.resolution = DEFAULT_SHADOWMAP_RESOLUTION;
         }
-        if (!light->shadowmap.nearz) {
-            light->shadowmap.nearz = DEFAULT_SHADOWMAP_NEARZ;
+        if (!light->shadowmap.znear) {
+            light->shadowmap.znear = DEFAULT_SHADOWMAP_ZNEAR;
         }
-        if (!light->shadowmap.farz) {
-            light->shadowmap.farz = DEFAULT_SHADOWMAP_FARZ;
+        if (!light->shadowmap.zfar) {
+            light->shadowmap.zfar = DEFAULT_SHADOWMAP_ZFAR;
         }
     }
     switch (light->type) {
@@ -54,7 +54,7 @@ void ta_light_init(ta_light *light)
             break;
         } case TA_LIGHT_POINT: {
             light->shadowmap.projection = mat4_perspective(
-                90.0f, 1.0f, light->shadowmap.nearz, light->shadowmap.farz
+                90.0f, 1.0f, light->shadowmap.znear, light->shadowmap.zfar
             );
             shadowmap_point_create(light);
             break;
@@ -62,7 +62,7 @@ void ta_light_init(ta_light *light)
             light->data.directional.direction =
                 vec3_normalize(light->data.directional.direction);
             light->shadowmap.projection = mat4_perspective(
-                45.0f, 1.0f, light->shadowmap.nearz, light->shadowmap.farz
+                45.0f, 1.0f, light->shadowmap.znear, light->shadowmap.zfar
             );
             break;
         } default: {

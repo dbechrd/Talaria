@@ -131,20 +131,18 @@ void ta_mesh_push_normals(ta_mesh *mesh)
 {
     DLB_ASSERT(mesh->vertex_normals);
     DLB_ASSERT(mesh->face_normals);
-    for (ta_line_3d *line = mesh->vertex_normals;
-        line != dlb_vec_end(mesh->vertex_normals); line++)
-    {
+
+    dlb_vec_each(ta_line_3d *, line, mesh->vertex_normals) {
         //ta_primitive_push_line_3d(&line, TA_COLOR_RED, TA_COLOR_GREEN);
         ta_primitive_push_line_3d(*line, TA_COLOR_MAGENTA, TA_COLOR_MAGENTA);
     }
-    for (ta_line_3d *line = mesh->face_normals;
-        line != dlb_vec_end(mesh->face_normals); line++)
-    {
+    dlb_vec_each(ta_line_3d *, line, mesh->face_normals) {
         //ta_primitive_push_line_3d(&line, TA_COLOR_RED, TA_COLOR_GREEN);
         ta_primitive_push_line_3d(*line, TA_COLOR_CYAN, TA_COLOR_CYAN);
     }
 }
 
+#if 0
 void ta_mesh_log_normals_dbg(ta_mesh *mesh)
 {
     ta_log_write(tg_debug_log, "Normals:\n");
@@ -158,6 +156,7 @@ void ta_mesh_log_normals_dbg(ta_mesh *mesh)
             line.p0.x, line.p0.y, line.p0.z, line.p1.x, line.p1.y, line.p1.z);
     }
 }
+#endif
 
 void ta_mesh_render(ta_mesh *mesh)
 {

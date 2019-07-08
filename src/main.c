@@ -55,7 +55,7 @@ void debug_tests() {
 }
 
 ta_node *entity_create(ta_scene *scn, const char *name) {
-    ta_node *e = ta_scene_obj_alloc(scn, TA_NODE, INTERN(name));
+    ta_node *e = ta_scene_alloc(scn, TA_NODE, INTERN(name));
     e->transform.position.x = 1.1f;
     e->transform.position.y = 1.2f;
     e->transform.position.z = 1.3f;

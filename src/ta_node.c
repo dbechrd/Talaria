@@ -27,7 +27,7 @@ void ta_node_init(ta_node *e)
 #if 0
         char body_uid[128] = { 0 };
         snprintf(body_uid, sizeof(body_uid) - 1, "%s_rigid_body", e->ref.uid);
-        ta_rigid_body *body = ta_scene_obj_alloc(e->ref.scene, TA_RIGID_BODY,
+        ta_rigid_body *body = ta_scene_alloc(e->ref.scene, TA_RIGID_BODY,
             INTERN(body_uid));
         body->transform.position = e->transform.position;
         body->transform.rotation = e->transform.rotation;

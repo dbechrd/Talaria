@@ -32,6 +32,11 @@ const char *ta_glsl_type_str(int type)
     }
 }
 
+void ta_shader_init(ta_shader *shader)
+{
+    ta_shader_load(shader);
+}
+
 static void show_info_log(GLuint shader, PFNGLGETSHADERIVPROC glGet__iv,
     PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
 {
@@ -59,8 +64,7 @@ static GLuint ta_shader_compile(GLenum type, ta_buffer *buf)
     GLint status;
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
-    if (!status)
-    {
+    if (!status) {
         show_info_log(shader, glGetShaderiv, glGetShaderInfoLog);
         glDeleteShader(shader);
         return 0;
@@ -99,8 +103,7 @@ static void ta_shader_program_link(GLuint program)
 static GLint ta_shader_attribute_location(ta_shader *shader, const char *name)
 {
     GLint location = glGetAttribLocation(shader->program_id, name);
-    if (location < 0)
-    {
+    if (location < 0) {
         ta_log_write(tg_debug_log,
             "[Shader] Failed to locate attribute by '%s' in '%s'. "
             "Possibly optimized out.\n", name, shader->ref.uid);
@@ -111,8 +114,7 @@ static GLint ta_shader_attribute_location(ta_shader *shader, const char *name)
 static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
 {
     GLint location = glGetUniformLocation(shader->program_id, name);
-    if (location < 0)
-    {
+    if (location < 0) {
         ta_log_write(tg_debug_log,
             "[Shader] Failed to locate uniform '%s' in '%s'. "
             "Possibly optimized out.\n", name, shader->ref.uid);
@@ -124,9 +126,7 @@ static ta_shader_attribute *find_attribute_by_name(ta_shader *shader,
     const char *name, ta_glsl_type type)
 {
     ta_shader_attribute *result = 0;
-    for (ta_shader_attribute *attr = shader->attributes;
-        attr != dlb_vec_end(shader->attributes); attr++)
-    {
+    dlb_vec_each(ta_shader_attribute *, attr, shader->attributes) {
         if (attr->name == name) {
             result = attr;
             break;
@@ -140,30 +140,14 @@ static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms,
     const char *name, ta_glsl_type type)
 {
     ta_shader_uniform *result = 0;
-    for (ta_shader_uniform *u = uniforms;
-        u != dlb_vec_end(uniforms); u++)
-    {
-        if (u->name == name) {
-            result = u;
+    dlb_vec_each(ta_shader_uniform *, uniform, uniforms) {
+        if (uniform->name == name) {
+            result = uniform;
             break;
         }
     }
     DLB_ASSERT(result && result->type == type);
     return result;
-}
-
-static void delete_shader(GLuint shader)
-{
-    if (shader) {
-        glDeleteShader(shader);
-    }
-}
-
-void ta_shader_init(ta_shader *shader, const char *path_vert,
-    const char *path_frag)
-{
-    shader->path_vert = path_vert;
-    shader->path_frag = path_frag;
 }
 
 static void shader_print_uniforms(ta_shader *shader)
@@ -176,8 +160,7 @@ static void shader_print_uniforms(ta_shader *shader)
     GLint size; // size of the variable
     GLenum type; // type of the variable (float, vec3 or mat4, etc)
     GLchar *name = dlb_malloc(shader->max_uniform_name_len);
-    for (GLint i = 0; i < count; i++)
-    {
+    for (GLint i = 0; i < count; i++) {
         glGetActiveUniform(shader->program_id, (GLuint)i,
             shader->max_uniform_name_len, &length, &size, &type, name);
         ta_log_write(tg_debug_log, "[Shader]    Uniform #%d Name: %s Type: %u\n",
@@ -188,17 +171,16 @@ static void shader_print_uniforms(ta_shader *shader)
 
 static void shader_locate_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
 {
-    for (ta_shader_uniform *u = uniforms; u != dlb_vec_end(uniforms); u++)
-    {
-        if (u->type == TA_GLSL_STRUCT) {
-            shader_locate_uniforms(shader, u->value.properties);
+    dlb_vec_each(ta_shader_uniform *, uniform, uniforms) {
+        if (uniform->type == TA_GLSL_STRUCT) {
+            shader_locate_uniforms(shader, uniform->value.properties);
         } else {
-            u->location = ta_shader_uniform_location(shader, u->name);
+            uniform->location = ta_shader_uniform_location(shader, uniform->name);
         }
     }
 }
 
-void ta_shader_create(ta_shader *shader)
+void ta_shader_load(ta_shader *shader)
 {
     DLB_ASSERT(shader->path_vert);
     DLB_ASSERT(shader->path_frag);
@@ -213,7 +195,7 @@ void ta_shader_create(ta_shader *shader)
 
     GLuint fshader = ta_shader_compile_file(GL_FRAGMENT_SHADER, shader->path_frag);
     if (!fshader) {
-        delete_shader(vshader);
+        glDeleteShader(vshader);
         DLB_ASSERT(!"ta_shader_init: failed to compile fragment shader");
     }
 
@@ -228,9 +210,12 @@ void ta_shader_create(ta_shader *shader)
     glBindAttribLocation(program_id, TA_SHADER_ATTR_NORMAL,   "attr_normal");
     ta_shader_program_link(program_id);
 
-    for (ta_shader_attribute *attr = shader->attributes;
-        attr != dlb_vec_end(shader->attributes); attr++)
-    {
+    glGetProgramiv(shader->program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
+        &shader->max_attrib_name_len);
+    glGetProgramiv(shader->program_id, GL_ACTIVE_UNIFORM_MAX_LENGTH,
+        &shader->max_uniform_name_len);
+
+    dlb_vec_each(ta_shader_attribute *, attr, shader->attributes) {
         attr->location = ta_shader_attribute_location(shader, attr->name);
     }
 
@@ -249,18 +234,16 @@ void ta_shader_create(ta_shader *shader)
     DLB_ASSERT(!attr_uv   || attr_uv->location   < 0 || attr_uv->location   == TA_SHADER_ATTR_UV);
     DLB_ASSERT(!attr_norm || attr_norm->location < 0 || attr_norm->location == TA_SHADER_ATTR_NORMAL);
 
-    glGetProgramiv(shader->program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
-        &shader->max_attrib_name_len);
-    glGetProgramiv(shader->program_id, GL_ACTIVE_UNIFORM_MAX_LENGTH,
-        &shader->max_uniform_name_len);
-
-    shader_print_uniforms(shader);
     shader_locate_uniforms(shader, shader->uniforms);
+
+#if _DEBUG
+    shader_print_uniforms(shader);
+#endif
 
     glDetachShader(program_id, vshader);
     glDetachShader(program_id, fshader);
-    delete_shader(vshader);
-    delete_shader(fshader);
+    glDeleteShader(vshader);
+    glDeleteShader(fshader);
 }
 
 void ta_shader_delete(ta_shader *shader)
@@ -375,8 +358,8 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     ta_shader_uniform *u_shadowmap3d =
         find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP3D[index],
             TA_GLSL_SAMPLER_CUBE);
-    ta_shader_uniform *u_shadowmap_farz =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP_FARZ[index],
+    ta_shader_uniform *u_shadowmap_zfar =
+        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP_ZFAR[index],
             TA_GLSL_FLOAT);
 
     u_intensity->value.glfloat = light->intensity;
@@ -386,7 +369,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     u_direction->value.vec3    = VEC3_ZERO;
     u_shadowmap2d->value.sampler2d = 0;
     u_shadowmap3d->value.sampler_cube = 0;
-    u_shadowmap_farz->value.glfloat = 0;
+    u_shadowmap_zfar->value.glfloat = 0;
 
     switch (light->type) {
         case TA_LIGHT_AMBIENT:
@@ -397,7 +380,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
             break;
         case TA_LIGHT_POINT:
             u_shadowmap3d->value.sampler_cube = light->shadowmap.texture;
-            u_shadowmap_farz->value.glfloat = light->shadowmap.farz;
+            u_shadowmap_zfar->value.glfloat = light->shadowmap.zfar;
             break;
         case TA_LIGHT_SPOT:
             u_direction->value.vec3 = light->data.directional.direction;
@@ -411,7 +394,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
 
 static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
 {
-    for (ta_shader_uniform *u = uniforms; u != dlb_vec_end(uniforms); u++)
+    dlb_vec_each(ta_shader_uniform *, u, uniforms) {
     {
         if (u->location < 0 && u->type != TA_GLSL_STRUCT) {
             continue;

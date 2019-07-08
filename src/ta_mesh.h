@@ -36,6 +36,5 @@ typedef struct ta_mesh_s {
 void ta_mesh_create(ta_mesh *mesh);
 void ta_mesh_init_normals(ta_mesh *mesh, float scale);
 void ta_mesh_push_normals(ta_mesh *mesh);
-void ta_mesh_log_normals_dbg(ta_mesh *mesh);
 void ta_mesh_render(ta_mesh *mesh);
 void ta_mesh_free(ta_mesh *mesh);

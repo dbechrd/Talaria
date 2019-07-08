@@ -927,41 +927,41 @@ int mat4_inverse(const ta_mat4 *m, ta_mat4 *result)
     }
     return true;
 }
-ta_mat4 mat4_perspective(float fov_deg, float aspect, float nearz, float farz)
+ta_mat4 mat4_perspective(float fov_deg, float aspect, float znear, float zfar)
 {
     float f = 1.0f / tanf(DEG_TO_RADF(fov_deg) / 2.0f);
-    float nf = 1.0f / (nearz - farz);
+    float nf = 1.0f / (znear - zfar);
     ta_mat4 result = { 0 };
     result.data.f[0][0] = f / aspect;
     result.data.f[1][1] = f;
-    result.data.f[2][2] = (farz + nearz) * nf;
-    result.data.f[2][3] = (2.0f * farz * nearz) * nf;
+    result.data.f[2][2] = (zfar + znear) * nf;
+    result.data.f[2][3] = (2.0f * zfar * znear) * nf;
     result.data.f[3][2] = -1.0f;
     return result;
 }
-ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float nearz)
+ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float znear)
 {
     float f = 1.0f / tanf(DEG_TO_RADF(fov_deg) / 2.0f);
     ta_mat4 result = { 0 };
     result.data.f[0][0] = f / aspect;
     result.data.f[1][1] = f;
-    result.data.f[2][3] = -nearz;
+    result.data.f[2][3] = -znear;
     result.data.f[3][2] = -1.0f;
     return result;
 }
 ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
-    float nearz, float farz)
+    float znear, float zfar)
 {
     float lr = 1.0f / (left - right);
     float bt = 1.0f / (bottom - top);
-    float nf = 1.0f / (nearz - farz);
+    float nf = 1.0f / (znear - zfar);
     ta_mat4 result = { 0 };
     result.data.f[0][0] = -2.0f * lr;
     result.data.f[1][1] = -2.0f * bt;
     result.data.f[2][2] = 2.0f * nf;
     result.data.f[3][0] = (left + right) * lr;
     result.data.f[3][1] = (top + bottom) * bt;
-    result.data.f[3][2] = (farz + nearz) * nf;
+    result.data.f[3][2] = (zfar + znear) * nf;
     result.data.f[3][3] = 1.0f;
     return result;
 }

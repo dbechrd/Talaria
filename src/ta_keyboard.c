@@ -91,10 +91,7 @@ void ta_keyboard_update()
     keys[TA_SCANCODE_MOUSE_MIDDLE] = (u8)tg_mouse.middle;
     keys[TA_SCANCODE_MOUSE_RIGHT] = (u8)tg_mouse.right;
 
-    for (ta_keybind *bind = keybinds[tg_game.state];
-        bind != dlb_vec_end(keybinds[tg_game.state]);
-        bind++)
-    {
+    dlb_vec_each(ta_keybind *, bind, keybinds[tg_game.state]) {
         ta_keybind_update(bind);
         if (ta_keybind_triggered(bind)) {
             ta_event event = { 0 };

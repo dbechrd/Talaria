@@ -32,8 +32,8 @@ typedef struct ta_shadowmap_s {
     u32 texture;
     u32 depthbuffer;
     s32 resolution;
-    float nearz;
-    float farz;
+    float znear;
+    float zfar;
     ta_mat4 projection;
 } ta_shadowmap;
 

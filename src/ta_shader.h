@@ -71,9 +71,8 @@ extern ta_shader *tg_shader_cubemap;
 extern ta_shader *tg_shader_shadow;
 
 const char *ta_glsl_type_str(int type);
-void ta_shader_init(ta_shader *shader, const char *path_vert,
-    const char *path_frag);
-void ta_shader_create(ta_shader *shader);
+void ta_shader_init(ta_shader *shader);
+void ta_shader_load(ta_shader *shader);
 void ta_shader_delete(ta_shader *shader);
 void ta_shader_free(ta_shader *shader);
 void ta_shader_bind(ta_shader *shader);

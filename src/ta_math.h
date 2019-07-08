@@ -196,10 +196,10 @@ ta_mat4 mat4_rotate_z(float deg);
 ta_mat4 mat4_rotate_quat(ta_quat q);
 float mat4_det(const ta_mat4 *mat);
 int mat4_inverse(const ta_mat4 *m, ta_mat4 *result);
-ta_mat4 mat4_perspective(float fov_deg, float aspect, float nearz, float farz);
-ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float nearz);
+ta_mat4 mat4_perspective(float fov_deg, float aspect, float znear, float zfar);
+ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float znear);
 ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
-    float nearz, float farz);
+    float znear, float zfar);
 ta_mat4 mat4_lookat_fru(ta_vec3 position, ta_vec3 front, ta_vec3 right,
     ta_vec3 up);
 ta_mat4 mat4_lookat(ta_vec3 position, ta_vec3 target, ta_vec3 world_up);

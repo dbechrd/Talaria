@@ -29,7 +29,7 @@ typedef struct ta_camera_s {
     float pitch_max;
     float pitch_target;
     float fov;
-    float nearz;
+    float znear;
 
     ta_vec3 focal_point;        // camera look target in world space
     ta_vec3 up;

@@ -14,7 +14,7 @@ ta_camera:
   pitch_min: -75.0
   pitch_max: 75.0
   fov: 65.0
-  nearz: 0.1
+  znear: 0.1
 ta_camera:
   uid: "camera_freecam"
   mode: 0  # TA_CAMERA_FREECAM
@@ -28,7 +28,7 @@ ta_camera:
   pitch_min: -90.0
   pitch_max: 90.0
   fov: 65.0
-  nearz: 0.1
+  znear: 0.1
 
 #-------------------------------------------------------------------------------
 # Lights
@@ -369,14 +369,14 @@ ta_shader:
         { name: "u_lights[5].shadowmap3d",     type: 10 },  # TA_GLSL_SAMPLER_CUBE
         { name: "u_lights[6].shadowmap3d",     type: 10 },  # TA_GLSL_SAMPLER_CUBE
         { name: "u_lights[7].shadowmap3d",     type: 10 },  # TA_GLSL_SAMPLER_CUBE
-        { name: "u_lights[0].shadowmap_farz",  type: 2 },  # TA_GLSL_FLOAT
-        { name: "u_lights[1].shadowmap_farz",  type: 2 },  # TA_GLSL_FLOAT
-        { name: "u_lights[2].shadowmap_farz",  type: 2 },  # TA_GLSL_FLOAT
-        { name: "u_lights[3].shadowmap_farz",  type: 2 },  # TA_GLSL_FLOAT
-        { name: "u_lights[4].shadowmap_farz",  type: 2 },  # TA_GLSL_FLOAT
-        { name: "u_lights[5].shadowmap_farz",  type: 2 },  # TA_GLSL_FLOAT
-        { name: "u_lights[6].shadowmap_farz",  type: 2 },  # TA_GLSL_FLOAT
-        { name: "u_lights[7].shadowmap_farz",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[0].shadowmap_zfar",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[1].shadowmap_zfar",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[2].shadowmap_zfar",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[3].shadowmap_zfar",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[4].shadowmap_zfar",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[5].shadowmap_zfar",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[6].shadowmap_zfar",  type: 2 },  # TA_GLSL_FLOAT
+        { name: "u_lights[7].shadowmap_zfar",  type: 2 },  # TA_GLSL_FLOAT
       ]
     },
   ]
@@ -391,5 +391,5 @@ ta_shader:
     { name: "u_model",      type: 8 },  # TA_GLSL_MAT4
     { name: "u_light_pvm",  type: 8 },  # TA_GLSL_MAT4
     { name: "u_light_pos",  type: 5 },  # TA_GLSL_VEC3
-    { name: "u_light_farz", type: 2 },  # TA_GLSL_FLOAT
+    { name: "u_light_zfar", type: 2 },  # TA_GLSL_FLOAT
   ]
