@@ -22,4 +22,4 @@ extern ta_mouse tg_mouse;
 
 void ta_mouse_init();
 void ta_mouse_toggle_capture();
-void ta_mouse_update();
+void ta_mouse_events();

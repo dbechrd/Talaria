@@ -2,6 +2,8 @@
 #include "ta_log.h"
 #include "ta_event.h"
 #include "ta_window.h"
+#include "ta_game.h"
+#include "dlb_vector.h"
 #include "misc/gl3w.h"
 #include <math.h>
 
@@ -110,13 +112,22 @@ void ta_camera_recalc_projection(ta_camera *camera)
 
 }
 
-void ta_camera_events(ta_camera *camera)
+void ta_camera_events()
 {
+    ta_camera *camera = tg_game.camera;
     ta_vec3 dir = { 0 };
     ta_event event;
     while (ta_event_pop(&event, TA_EVENT_QUEUE_CAMERA)) {
         switch (event.type) {
-            case TA_EVENT_CAMERA_MOVE_FORWARD: {
+            case TA_EVENT_CAMERA_ASPECT_CHANGE: {
+                // Update all cameras to new aspect ratio
+                dlb_vec_each(ta_camera *, cam, tg_game.scene->pools[TA_CAMERA]) {
+                    if (!cam->ortho) {
+                        ta_camera_recalc_projection(cam);
+                    }
+                }
+                break;
+            } case TA_EVENT_CAMERA_MOVE_FORWARD: {
                 dir.x += camera->front.x;
                 dir.z += camera->front.z;
                 break;

@@ -20,7 +20,7 @@ void ta_mouse_toggle_capture()
     SDL_SetRelativeMouseMode(tg_mouse.captured);
 }
 
-void ta_mouse_update()
+void ta_mouse_events()
 {
     int dx, dy;
     u32 buttons = SDL_GetRelativeMouseState(&dx, &dy);

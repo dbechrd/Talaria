@@ -1,5 +1,6 @@
 #include "ta_window.h"
 #include "ta_log.h"
+#include "ta_event.h"
 #include "dlb_types.h"
 #include "SDL/SDL.h"
 
@@ -96,14 +97,33 @@ void ta_window_init(int w, int h, bool fullscreen)
     ta_log_write(tg_debug_log, "[Window] Window initialized\n");
 }
 
-void ta_window_swap()
-{
-    SDL_GL_SwapWindow(window);
-}
-
 void ta_window_free()
 {
     SDL_GL_DeleteContext(gl_context);
     SDL_DestroyWindow(window);
     SDL_Quit();
+}
+
+void ta_window_swap()
+{
+    SDL_GL_SwapWindow(window);
+}
+
+void ta_window_events()
+{
+    ta_event event;
+    while (ta_event_pop(&event, TA_EVENT_QUEUE_WINDOW)) {
+        switch (event.type) {
+            case TA_EVENT_WINDOW_RESIZE: {
+                int new_w = event.data.window_resize.width;
+                int new_h = event.data.window_resize.height;
+                tg_window.rect.w = new_w;
+                tg_window.rect.h = new_h;
+                tg_window.aspect = (float)tg_window.rect.w / tg_window.rect.h;
+                break;
+            } default: {
+                DLB_ASSERT(!"Unhandled event type");
+            }
+        }
+    }
 }

@@ -992,10 +992,6 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     dlb_vec_each(ta_node *, node, scene->pools[TA_NODE]) {
         ta_node_render(node, camera, alpha);
     }
-	// TODO: Render nodes should handle this?
-    //dlb_vec_each(ta_button *, button, scene->pools[TA_BUTTON]) {
-    //    ta_node_render(&button->base, camera, alpha);
-    //}
 #if 1
     dlb_vec_each(ta_camera *, cam, scene->pools[TA_CAMERA]) {
         if (cam != tg_game.camera) {

@@ -43,4 +43,4 @@ bool ta_keybind_down(ta_keybind *keybind);
 bool ta_keybind_pressed(ta_keybind *keybind);
 bool ta_keybind_released(ta_keybind *keybind);
 bool ta_keybind_triggered(ta_keybind *keybind);
-void ta_keyboard_update();
+void ta_keyboard_events();

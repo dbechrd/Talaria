@@ -220,12 +220,14 @@ int main(int argc, char *argv[])
         double ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
 
-        ta_event_sdl_poll();
-        ta_mouse_update();  // TODO: Rename these "ta_mouse_events" or similar
-        ta_keyboard_update();
-        ta_event_update();
-        ta_game_update();
-        ta_camera_events(tg_game.camera);
+        // Engine events
+        ta_mouse_events();
+        ta_keyboard_events();
+        ta_event_events();
+        ta_window_events();
+        // Game events
+        ta_game_events();
+        ta_camera_events();
 
         ms_frame_accum += ms_frame_delta;
 

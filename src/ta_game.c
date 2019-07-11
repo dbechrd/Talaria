@@ -101,7 +101,7 @@ void ta_game_state_set(ta_game_state state)
     }
 }
 
-void ta_game_update()
+void ta_game_events()
 {
     ta_vec3 dir = { 0 };
     ta_event event;

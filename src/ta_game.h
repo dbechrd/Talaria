@@ -29,4 +29,4 @@ extern GLenum tg_polygon_mode;
 
 void ta_game_init();
 void ta_game_state_set(ta_game_state state);
-void ta_game_update();
+void ta_game_events();

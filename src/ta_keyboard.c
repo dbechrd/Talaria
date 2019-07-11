@@ -3,7 +3,6 @@
 #include "ta_timer.h"
 #include "ta_log.h"
 #include "dlb_vector.h"
-#include <string.h>
 
 static u8 keys[TA_SCANCODE_COUNT];
 static ta_keybind *keybinds[TA_STATE_COUNT];
@@ -82,9 +81,9 @@ bool ta_keybind_triggered(ta_keybind *keybind)
     return triggered;
 }
 
-void ta_keyboard_update()
+void ta_keyboard_events()
 {
-    memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
+    dlb_memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
 
     // NOTE: Assumes mouse was updated first
     keys[TA_SCANCODE_MOUSE_LEFT] = (u8)tg_mouse.left;

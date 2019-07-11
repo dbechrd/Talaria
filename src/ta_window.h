@@ -30,5 +30,6 @@ typedef struct {
 extern ta_window tg_window;
 
 void ta_window_init(int w, int h, bool fullscreen);
-void ta_window_swap();
 void ta_window_free();
+void ta_window_swap();
+void ta_window_events();

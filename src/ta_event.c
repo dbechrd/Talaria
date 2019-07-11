@@ -5,7 +5,6 @@
 #include "ta_game.h"
 #include "dlb_vector.h"
 #include "SDL/SDL.h"
-#include <string.h>
 
 void ta_event_push(ta_event *event)
 {
@@ -20,10 +19,10 @@ void ta_event_push(ta_event *event)
             // After resize : [-, A, B, C, D, -, -, -]
             if (queue->head > 0) {
                 int bytes = queue->head * sizeof(queue->buffer[0]);
-                memcpy(&queue->buffer[queue->count],
+                dlb_memcpy(&queue->buffer[queue->count],
                     queue->buffer, bytes);
 #if _DEBUG
-                memset(queue->buffer, 0, bytes);
+                dlb_memset(queue->buffer, 0, bytes);
 #endif
             }
         }
@@ -58,7 +57,7 @@ bool ta_event_peek(ta_event *event, ta_event_queue_type queue_type)
     }
 }
 
-void ta_event_sdl_poll()
+static void event_sdl_poll()
 {
     SDL_Event sdl_event;
     while (SDL_PollEvent(&sdl_event)) {
@@ -69,6 +68,16 @@ void ta_event_sdl_poll()
                 ta_event_push(&event);
                 break;
             } case SDL_WINDOWEVENT: {
+                switch (sdl_event.window.event) {
+                    case SDL_WINDOWEVENT_RESIZED: {
+                        ta_event event = { 0 };
+                        event.type = TA_EVENT_GLOBAL_WINDOW_RESIZE;
+                        event.data.window_resize.width = sdl_event.window.data1;
+                        event.data.window_resize.height = sdl_event.window.data2;
+                        ta_event_push(&event);
+                        break;
+                    }
+                }
                 break;
             } case SDL_MOUSEWHEEL: {
                 ta_event event = { 0 };
@@ -87,9 +96,10 @@ void ta_event_sdl_poll()
     }
 }
 
-// TODO: Move this to ta_game_update() and rename queue to TA_EVENT_GAME
-void ta_event_update()
+void ta_event_events()
 {
+    event_sdl_poll();
+
     ta_event event;
     while (ta_event_pop(&event, TA_EVENT_QUEUE_GLOBAL)) {
         switch (event.type) {
@@ -97,6 +107,16 @@ void ta_event_update()
                 ta_event e = { 0 };
                 e.type = TA_EVENT_GAME_QUIT;
                 ta_event_push(&e);
+                break;
+            } case TA_EVENT_GLOBAL_WINDOW_RESIZE: {
+                ta_event e_w = { 0 };
+                e_w.type = TA_EVENT_WINDOW_RESIZE;
+                e_w.data.window_resize = event.data.window_resize;
+                ta_event_push(&e_w);
+                ta_event e_c = { 0 };
+                e_c.type = TA_EVENT_CAMERA_ASPECT_CHANGE;
+                e_c.data.window_resize = event.data.window_resize;
+                ta_event_push(&e_c);
                 break;
             } case TA_EVENT_GLOBAL_MOUSE_MOVE: {
                 ta_event e = { 0 };

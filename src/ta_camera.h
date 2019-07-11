@@ -55,5 +55,5 @@ void ta_camera_set_target_pos_relative(ta_camera *camera, ta_vec3 delta);
 void ta_camera_yaw(ta_camera *camera, float delta);
 void ta_camera_pitch(ta_camera *camera, float delta);
 void ta_camera_recalc_projection(ta_camera *camera);
-void ta_camera_events(ta_camera *camera);
+void ta_camera_events();
 void ta_camera_update(ta_camera *camera, double dt);

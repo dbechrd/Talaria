@@ -4,6 +4,7 @@
 
 typedef enum {
     TA_EVENT_QUEUE_GLOBAL,
+    TA_EVENT_QUEUE_WINDOW,
     TA_EVENT_QUEUE_GAME,
     TA_EVENT_QUEUE_CAMERA,
     TA_EVENT_QUEUE_COUNT
@@ -16,9 +17,13 @@ typedef enum {
 typedef enum {
     // Global events
     TA_EVENT_GLOBAL_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GLOBAL),
+    TA_EVENT_GLOBAL_WINDOW_RESIZE,
     TA_EVENT_GLOBAL_MOUSE_MOVE,
     TA_EVENT_GLOBAL_MOUSE_CLICK,
     TA_EVENT_GLOBAL_MOUSE_SCROLL,
+
+    // Window events
+    TA_EVENT_WINDOW_RESIZE = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_WINDOW),
 
     // Game events
     TA_EVENT_GAME_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GAME),
@@ -45,7 +50,8 @@ typedef enum {
     TA_EVENT_DEBUG_BOOST_PINKY,
 
     // Camera events
-    TA_EVENT_CAMERA_MOVE_FORWARD = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_CAMERA),
+    TA_EVENT_CAMERA_ASPECT_CHANGE = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_CAMERA),
+    TA_EVENT_CAMERA_MOVE_FORWARD,
     TA_EVENT_CAMERA_MOVE_BACKWARD,
     TA_EVENT_CAMERA_MOVE_RIGHT,
     TA_EVENT_CAMERA_MOVE_LEFT,
@@ -53,6 +59,11 @@ typedef enum {
     TA_EVENT_CAMERA_MOVE_DOWN,
     TA_EVENT_CAMERA_ROTATE,
 } ta_event_type;
+
+typedef struct {
+    int width;
+    int height;
+} ta_event_window_resize;
 
 typedef struct {
     int dx;
@@ -79,6 +90,7 @@ typedef struct {
 typedef struct {
     ta_event_type type;
     union {
+        ta_event_window_resize window_resize;
         ta_event_mouse_move mouse_move;
         ta_event_mouse_click mouse_click;
         ta_event_mouse_scroll mouse_scroll;
@@ -97,5 +109,4 @@ ta_event_queue tg_event_queues[TA_EVENT_QUEUE_COUNT];
 void ta_event_push(ta_event *event);
 bool ta_event_pop(ta_event *event, ta_event_queue_type queue_type);
 bool ta_event_peek(ta_event *event, ta_event_queue_type queue_type);
-void ta_event_sdl_poll();
-void ta_event_update();
+void ta_event_events();
