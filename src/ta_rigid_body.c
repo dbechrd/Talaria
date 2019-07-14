@@ -1,11 +1,12 @@
 #include "ta_rigid_body.h"
 #include "ta_node.h"
 #include "ta_log.h"
+#include "ta_primitive.h"
 #include "dlb_vector.h"
 #include <math.h>
 
-typedef bool (intersector)(const ta_collider *a,
-    const ta_collider *b, ta_manifold *manifold);
+typedef bool (intersector)(const ta_collider *a, const ta_collider *b,
+    ta_manifold *manifold);
 
 static intersector intersector_sphere_v_sphere;
 static intersector intersector_plane_v_sphere;

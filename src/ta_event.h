@@ -1,8 +1,7 @@
 #pragma once
-#include "dlb_types.h"
 #include "ta_camera.h"
 
-typedef enum {
+typedef enum ta_event_queue_type {
     TA_EVENT_QUEUE_GLOBAL,
     TA_EVENT_QUEUE_WINDOW,
     TA_EVENT_QUEUE_GAME,
@@ -14,7 +13,7 @@ typedef enum {
 #define TA_EVENT_TYPE_FIRST(queue) ((queue) << TA_EVENT_TYPE_BITS)
 #define TA_EVENT_TYPE_QUEUE(type) ((type) >> TA_EVENT_TYPE_BITS)
 
-typedef enum {
+typedef enum ta_event_type {
     // Global events
     TA_EVENT_GLOBAL_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GLOBAL),
     TA_EVENT_GLOBAL_WINDOW_RESIZE,
@@ -41,6 +40,11 @@ typedef enum {
     TA_EVENT_GAME_PLAYER_MOVE_LEFT,
     TA_EVENT_GAME_PLAYER_MOVE_JUMP,
 
+    // Button events
+    TA_EVENT_GAME_BUTTON_ACTIVATED,
+    TA_EVENT_GAME_BUTTON_DEACTIVATED,
+    TA_EVENT_GAME_BUTTON_STATE_CHANGED,
+
     // Game events for debugging
     TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,
     TA_EVENT_DEBUG_TOGGLE_WIREFRAME,
@@ -60,45 +64,50 @@ typedef enum {
     TA_EVENT_CAMERA_ROTATE,
 } ta_event_type;
 
-typedef struct {
+typedef struct ta_event_window_resize_event {
     int width;
     int height;
-} ta_event_window_resize;
+} ta_event_window_resize_event;
 
-typedef struct {
+typedef struct ta_event_mouse_move_event {
     int dx;
     int dy;
-} ta_event_mouse_move;
+} ta_event_mouse_move_event;
 
-typedef struct {
+typedef struct ta_event_mouse_click_event {
     bool left;
     bool middle;
     bool right;
-} ta_event_mouse_click;
+} ta_event_mouse_click_event;
 
-typedef struct {
+typedef struct ta_event_mouse_scroll_event {
     int x;
     int y;
     bool flipped;
-} ta_event_mouse_scroll;
+} ta_event_mouse_scroll_event;
 
-typedef struct {
+typedef struct ta_event_button_event {
+    struct ta_button *button;
+} ta_event_button_event;
+
+typedef struct ta_event_camera_rotate_event {
     float delta_pitch;
     float delta_yaw;
-} ta_event_camera_rotate;
+} ta_event_camera_rotate_event;
 
-typedef struct {
+typedef struct ta_event {
     ta_event_type type;
     union {
-        ta_event_window_resize window_resize;
-        ta_event_mouse_move mouse_move;
-        ta_event_mouse_click mouse_click;
-        ta_event_mouse_scroll mouse_scroll;
-        ta_event_camera_rotate camera_rotate;
+        ta_event_window_resize_event window_resize;
+        ta_event_mouse_move_event mouse_move;
+        ta_event_mouse_click_event mouse_click;
+        ta_event_mouse_scroll_event mouse_scroll;
+        ta_event_button_event button;
+        ta_event_camera_rotate_event camera_rotate;
     } data;
 } ta_event;
 
-typedef struct {
+typedef struct ta_event_queue {
     u32 head;  // oldest item
     u32 count;
     u32 capacity;

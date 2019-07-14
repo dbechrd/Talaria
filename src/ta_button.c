@@ -1,5 +1,7 @@
 #include "ta_button.h"
 #include "ta_game.h"
+#include "ta_event.h"
+#include "ta_rigid_body.h"
 
 void ta_button_init(ta_button *button)
 {
@@ -41,43 +43,70 @@ ta_audio_buffer *ta_button_sfx_deactivated(ta_button *button) {
 
 static bool button_activated(ta_button *button) {
     bool activated =
-        button->state == ta_button_ACTIVE &&
-        button->state_prev == ta_button_INACTIVE;
+        button->state == TA_BUTTON_ACTIVE &&
+        button->state_prev == TA_BUTTON_INACTIVE;
     return activated;
 }
 static bool button_active(ta_button *button) {
-    bool active = button->state == ta_button_ACTIVE;
+    bool active = button->state == TA_BUTTON_ACTIVE;
     return active;
 }
 static bool button_deactivated(ta_button *button) {
     bool deactivated =
-        button->state == ta_button_INACTIVE &&
-        button->state_prev == ta_button_ACTIVE;
+        button->state == TA_BUTTON_INACTIVE &&
+        button->state_prev == TA_BUTTON_ACTIVE;
     return deactivated;
 }
 void ta_button_update(ta_button *button) {
+    // TODO: Trigger event type = EVENT_BUTTON_ACTIVATED with uid = button.uid
+    //       and have audio_buffer's play event subscribe to the button event
+    //       Another example would be having a light subscribe to this event.
+    //
+    //       EVENT_BUTTON_ACTIVATED
+    //       EVENT_BUTTON_DEACTIVATED
+    //       EVENT_BUTTON_STATE_CHANGED
+
     ta_rigid_body *button_body = 0; //TODO: ta_node_rigid_body(base);
     ta_rigid_body *player_body = ta_node_rigid_body(tg_game.player);
 
     button->state_prev = button->state;
     if (ta_rigid_body_intersect(player_body, button_body, 0)) {
-        button->state = ta_button_ACTIVE;
+        button->state = TA_BUTTON_ACTIVE;
     } else {
-        button->state = ta_button_INACTIVE;
+        button->state = TA_BUTTON_INACTIVE;
     }
 
     if (button_activated(button)) {
-        ta_audio_buffer *buffer = ta_button_sfx_activated(button);
-        if (buffer) {
-            ta_audio_source *source = ta_button_audio_source(button);
-            ta_audio_source_set_buffer(source, buffer);
-            ta_audio_source_play(source);
-        }
+        ta_event event = { 0 };
+        event.data.button.button = button;
+
+        event.type = TA_EVENT_GAME_BUTTON_ACTIVATED;
+        ta_event_push(&event);
+        event.type = TA_EVENT_GAME_BUTTON_STATE_CHANGED;
+        ta_event_push(&event);
+    }
+
+    if (button_deactivated(button)) {
+        ta_event event = { 0 };
+        event.data.button.button = button;
+
+        event.type = TA_EVENT_GAME_BUTTON_DEACTIVATED;
+        ta_event_push(&event);
+        event.type = TA_EVENT_GAME_BUTTON_STATE_CHANGED;
+        ta_event_push(&event);
     }
 
 #if 0
+    // TODO: Subscribe audio buffer to button events
+    ta_audio_buffer *buffer = ta_button_sfx_activated(button);
+    if (buffer) {
+        ta_audio_source *source = ta_button_audio_source(button);
+        ta_audio_source_set_buffer(source, buffer);
+        ta_audio_source_play(source);
+    }
+
     // TODO: Queue looping active sound so that it plays after non-looping
-    //       activation sound finishes.
+    //       activation sound finishes. E.g. to make button hum while active.
     if (button_active(button)) {
         ta_audio_buffer *buffer = ta_button_sfx_active(button);
         if (buffer) {
@@ -85,14 +114,13 @@ void ta_button_update(ta_button *button) {
             ta_audio_source_set_buffer(source, buffer);
         }
     }
-#endif
 
-    if (button_deactivated(button)) {
-        ta_audio_buffer *buffer = ta_button_sfx_deactivated(button);
-        if (buffer) {
-            ta_audio_source *source = ta_button_audio_source(button);
-            ta_audio_source_set_buffer(source, buffer);
-            ta_audio_source_play(source);
-        }
+    // TODO: Subscribe audio buffer to button events
+    ta_audio_buffer *buffer = ta_button_sfx_deactivated(button);
+    if (buffer) {
+        ta_audio_source *source = ta_button_audio_source(button);
+        ta_audio_source_set_buffer(source, buffer);
+        ta_audio_source_play(source);
     }
+#endif
 }

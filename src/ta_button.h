@@ -1,12 +1,14 @@
 #pragma once
+#include "dlb_types.h"
+#include "ta_uid.h"
 #include "ta_audio.h"
 
 typedef enum ta_button_state {
-    ta_button_INACTIVE,
-    ta_button_ACTIVE,
+    TA_BUTTON_INACTIVE,
+    TA_BUTTON_ACTIVE,
 } ta_button_state;
 
-typedef struct ta_button_s {
+typedef struct ta_button {
     ta_uid uid;
     ta_button_state state_prev;
     ta_button_state state;

@@ -9,37 +9,37 @@
 #define DEG_TO_RADF(deg) deg * (float)M_PI / 180.0f
 #define RAD_TO_DEGF(rad) rad * 180.0f / (float)M_PI
 
-typedef struct {
+typedef struct ta_vec2 {
     float x;
     float y;
 } ta_vec2;
 
-typedef struct {
+typedef struct ta_uv {
     float u;
     float v;
 } ta_uv;
 
-typedef struct {
+typedef struct ta_vec3 {
     float x;
     float y;
     float z;
 } ta_vec3;
 
-typedef struct {
+typedef struct ta_vec4 {
     float x;
     float y;
     float z;
     float w;
 } ta_vec4;
 
-typedef struct {
+typedef struct ta_quat {
     float x;
     float y;
     float z;
     float w;
 } ta_quat;
 
-typedef struct {
+typedef struct ta_mat3 {
     union {
         ta_vec3 v[3];
         float f[3][3];
@@ -47,7 +47,7 @@ typedef struct {
     } data;
 } ta_mat3;
 
-typedef struct {
+typedef struct ta_mat4 {
     union {
         ta_vec4 v[4];
         float f[4][4];
@@ -55,37 +55,37 @@ typedef struct {
     } data;
 } ta_mat4;
 
-typedef struct {
+typedef struct ta_transform {
     ta_vec3 position;
     ta_quat orientation;
     ta_vec3 scale;
 } ta_transform;
 
-typedef struct {
+typedef struct ta_hsl {
     float h;
     float s;
     float l;
 } ta_hsl;
 
-typedef struct {
+typedef struct ta_rgb {
     float r;
     float g;
     float b;
 } ta_rgb;
 
-typedef struct {
+typedef struct ta_rgba {
     float r;
     float g;
     float b;
     float a;
 } ta_rgba;
 
-typedef struct {
+typedef struct ta_vec2i {
 	int x;
 	int y;
 } ta_vec2i;
 
-typedef struct {
+typedef struct ta_size {
     int w;
     int h;
 } ta_size;

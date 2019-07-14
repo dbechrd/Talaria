@@ -1,8 +1,5 @@
  #pragma once
 #include "ta_event.h"
-#include "ta_game.h"
-#include "dlb_types.h"
-#include "SDL/SDL.h"
 
 // Keybind trigger flags
 enum {
@@ -11,9 +8,9 @@ enum {
     TA_KEY_RELEASE = 1 << 2,  // once when key released
 };
 
-typedef SDL_Scancode ta_key;
+typedef enum SDL_Scancode ta_key;
 
-typedef struct {
+typedef struct ta_keybind {
     ta_event_type event_type;
     u32 triggers;
     ta_key keys[3];
@@ -23,20 +20,22 @@ typedef struct {
 } ta_keybind;
 
 #if 0
-typedef struct {
+typedef struct ta_keyboard {
     ta_key_state key_states[SDL_NUM_SCANCODES];
-    ta_keybind *keybinds[TA_STATE_COUNT];
+    ta_keybind *keybinds[TA_GAME_STATE_COUNT];
 } ta_keyboard;
 
 extern ta_keyboard tg_keyboard;
 #endif
 
+enum ta_game_state;
+
 void ta_keyboard_init();
-void ta_keybind_bind1(ta_game_state state_type, ta_event_type event_type,
+void ta_keybind_bind1(enum ta_game_state state_type, ta_event_type event_type,
     u32 triggers, ta_key key1);
-void ta_keybind_bind2(ta_game_state state_type, ta_event_type event_type,
+void ta_keybind_bind2(enum ta_game_state state_type, ta_event_type event_type,
     u32 triggers, ta_key key1, ta_key key2);
-void ta_keybind_bind3(ta_game_state state_type, ta_event_type event_type,
+void ta_keybind_bind3(enum ta_game_state state_type, ta_event_type event_type,
     u32 triggers, ta_key key1, ta_key key2, ta_key key3);
 void ta_keybind_update(ta_keybind *keybind);
 bool ta_keybind_down(ta_keybind *keybind);

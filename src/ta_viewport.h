@@ -1,9 +1,8 @@
 #pragma once
 #include "ta_primitive.h"
 #include "ta_camera.h"
-#include "dlb_types.h"
 
-typedef struct {
+typedef struct ta_viewport {
 	ta_rect rect;
 	ta_rgba background;
     ta_camera *camera;

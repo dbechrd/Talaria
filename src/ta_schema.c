@@ -11,6 +11,8 @@
 #include "ta_button.h"
 #include "ta_rigid_body.h"
 #include "ta_light.h"
+#include "ta_material.h"
+#include "ta_mesh_group.h"
 #include "dlb_types.h"
 #include "dlb_vector.h"
 #include "dlb_hash.h"
@@ -220,18 +222,18 @@ void ta_schema_register()
     TYPE_FIELD(ta_camera, ortho,               ATOM_UINT);
     TYPE_END(ta_camera);
 
-    TYPE_START(ta_directional_light, TA_DIRECTIONAL_LIGHT);
-    TYPE_FIELD(ta_directional_light, direction, TA_VEC3);
-    TYPE_END(ta_directional_light);
+    TYPE_START(ta_light_directional, TA_DIRECTIONAL_LIGHT);
+    TYPE_FIELD(ta_light_directional, direction, TA_VEC3);
+    TYPE_END(ta_light_directional);
 
-    TYPE_START(ta_point_light, TA_POINT_LIGHT);
-    TYPE_END(ta_point_light);
+    TYPE_START(ta_light_point, TA_POINT_LIGHT);
+    TYPE_END(ta_light_point);
 
-    TYPE_START(ta_spot_light, TA_SPOT_LIGHT);
-    TYPE_FIELD(ta_spot_light, direction,     TA_VEC3);
-    TYPE_FIELD(ta_spot_light, theta_cone,    ATOM_FLOAT);
-    TYPE_FIELD(ta_spot_light, theta_falloff, ATOM_FLOAT);
-    TYPE_END(ta_spot_light);
+    TYPE_START(ta_light_spot, TA_SPOT_LIGHT);
+    TYPE_FIELD(ta_light_spot, direction,     TA_VEC3);
+    TYPE_FIELD(ta_light_spot, theta_cone,    ATOM_FLOAT);
+    TYPE_FIELD(ta_light_spot, theta_falloff, ATOM_FLOAT);
+    TYPE_END(ta_light_spot);
 
     TYPE_START(ta_light, TA_LIGHT);
     TYPE_FIELD(ta_light, uid,       ATOM_STRING);

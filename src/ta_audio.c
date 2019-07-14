@@ -1,7 +1,10 @@
 #include "ta_audio.h"
 #include "ta_log.h"
 #include "ta_file.h"
+#include "ta_scene.h"
 #include "dlb_memory.h"
+#include "AL/al.h"
+#include "AL/alc.h"
 
 #define TA_AUDIO_SAMPLE_RATE 44100
 

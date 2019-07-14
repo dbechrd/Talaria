@@ -2,10 +2,12 @@
 #include "ta_mouse.h"
 #include "ta_timer.h"
 #include "ta_log.h"
+#include "ta_game.h"
 #include "dlb_vector.h"
+#include "SDL/SDL.h"
 
 static u8 keys[TA_SCANCODE_COUNT];
-static ta_keybind *keybinds[TA_STATE_COUNT];
+static ta_keybind *keybinds[TA_GAME_STATE_COUNT];
 
 void ta_keyboard_init()
 {

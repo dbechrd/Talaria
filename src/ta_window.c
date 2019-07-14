@@ -58,7 +58,7 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
 			SDL_WINDOWPOS_CENTERED, 0, 0, flags | SDL_WINDOW_FULLSCREEN_DESKTOP);
 	} else if (w && h) {
 		window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED, *w, *h, flags | SDL_WINDOW_RESIZABLE);
+			SDL_WINDOWPOS_CENTERED, *w, *h, flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
 	}
     if (window == NULL) {
         ta_log_write(tg_debug_log, "[Window] SDL_CreateWindow error: %s\n", SDL_GetError());
@@ -115,10 +115,8 @@ void ta_window_events()
     while (ta_event_pop(&event, TA_EVENT_QUEUE_WINDOW)) {
         switch (event.type) {
             case TA_EVENT_WINDOW_RESIZE: {
-                int new_w = event.data.window_resize.width;
-                int new_h = event.data.window_resize.height;
-                tg_window.rect.w = new_w;
-                tg_window.rect.h = new_h;
+                tg_window.rect.w = event.data.window_resize.width;
+                tg_window.rect.h = event.data.window_resize.height;
                 tg_window.aspect = (float)tg_window.rect.w / tg_window.rect.h;
                 break;
             } default: {

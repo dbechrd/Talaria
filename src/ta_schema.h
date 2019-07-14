@@ -2,7 +2,8 @@
 #include "dlb_types.h"
 #include <stdio.h>
 
-typedef enum {
+typedef enum ta_schema_field_type {
+
     TA_NULL,
 
     // Scene-level compound types
@@ -53,7 +54,7 @@ typedef enum {
 
 typedef const char *(enum_to_str)(int);
 
-typedef struct {
+typedef struct ta_schema_field {
     ta_schema_field_type type;
     const char *name;
     u32 offset;
@@ -66,7 +67,7 @@ typedef struct {
     int union_type;
 } ta_schema_field;
 
-typedef struct {
+typedef struct ta_schema {
     ta_schema_field_type type;
     const char *name;
     u32 size;

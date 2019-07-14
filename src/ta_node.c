@@ -1,11 +1,13 @@
 #include "ta_node.h"
-#include "ta_scene.h"
 #include "ta_schema.h"
 #include "ta_symbol.h"
 #include "ta_window.h"
 #include "ta_game.h"
-#include "ta_button.h"
 #include "ta_log.h"
+#include "ta_mesh_group.h"
+#include "ta_material.h"
+#include "ta_texture.h"
+#include "ta_button.h"
 #include "dlb_vector.h"
 
 void ta_node_init(ta_node *node)

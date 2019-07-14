@@ -2,32 +2,31 @@
 #include "ta_primitive.h"
 #include "ta_viewport.h"
 #include "ta_texture.h"
-#include "dlb_types.h"
 
-typedef enum {
+typedef enum ta_ui_type {
 	TA_UI_SCROLLBAR,
 	TA_UI_SCROLLVIEW,
 	TA_UI_IMAGE,
 	TA_UI_COUNT
 } ta_ui_type;
 
-typedef struct {
+typedef struct ta_ui_base {
 	ta_ui_type type;
 	ta_rect rect;
 } ta_ui_base;
 
-typedef struct {
+typedef struct ta_ui_scrollbar_widget {
 	ta_rect rect;
 	int offset;
 } ta_ui_scrollbar_widget;
 
-typedef struct {
+typedef struct ta_ui_scrollbar {
 	ta_rect rect;
 	ta_ui_scrollbar_widget widget;
 	bool visible;
 } ta_ui_scrollbar;
 
-typedef struct {
+typedef struct ta_ui_scrollview {
 	ta_ui_type type;
 	ta_rect rect;
 	ta_ui_scrollbar scrollbar_y;
@@ -35,7 +34,7 @@ typedef struct {
 	ta_ui_base *content;
 } ta_ui_scrollview;
 
-typedef struct {
+typedef struct ta_ui_image {
 	ta_ui_type type;
 	ta_rect rect;
 	ta_texture *tex;

@@ -54,46 +54,8 @@ void debug_tests() {
 #endif
 }
 
-ta_node *entity_create(ta_scene *scn, const char *name) {
-    ta_node *e = ta_scene_alloc(scn, TA_NODE, INTERN(name));
-    e->transform.position.x = 1.1f;
-    e->transform.position.y = 1.2f;
-    e->transform.position.z = 1.3f;
-    e->transform.orientation.x = 2.1f;
-    e->transform.orientation.y = 2.2f;
-    e->transform.orientation.z = 2.3f;
-    e->transform.orientation.w = 2.4f;
-    e->transform.scale.x = 3.1f;
-    e->transform.scale.y = 3.2f;
-    e->transform.scale.z = 3.3f;
-    return e;
-}
-
-void write_scene(const char *filename) {
-    tg_game.scene = ta_scene_init("test scene");
-    entity_create(tg_game.scene, "Timmy");
-    entity_create(tg_game.scene, "Bobby");
-
-    printf("[WRITE: %s]\n", filename);
-    ta_scene_print(tg_game.scene, stdout);
-    printf("\n");
-
-    ta_file *data_file = ta_file_open(filename, FILE_WRITE);
-    ta_scene_print(tg_game.scene, data_file->hnd);
-    ta_file_close(data_file);
-    ta_scene_free(tg_game.scene);
-}
-
-void read_scene(const char *filename) {
-    ta_log_write(tg_debug_log, "[Scene] Loading %s\n", filename);
-    ta_file *data_file = ta_file_open(filename, FILE_READ);
-    tg_game.scene = ta_scene_load(data_file);
-    ta_file_close(data_file);
-
-    ta_log_write(tg_debug_log, "[Scene] Loaded successfully\n");
-    ta_scene_print(tg_game.scene, tg_debug_log->stream);
-    //ta_scene_free(tg_game.scene);
-}
+// Random thoughts
+// https://en.wikipedia.org/wiki/Accumulator_(energy)
 
 int main(int argc, char *argv[])
 {
@@ -110,6 +72,7 @@ int main(int argc, char *argv[])
     ta_symbol_init();
     ta_schema_register();
 
+    // TODO: Save size/position to a config file
     ta_window_init(1600, 900, false);
     // TODO: Make sure this gets freed or handled better
     tg_game.audio = dlb_calloc(1, sizeof(ta_audio_listener));
@@ -122,7 +85,7 @@ int main(int argc, char *argv[])
     ta_game_init();
 
     // Intro scene
-    read_scene("data/scene/scene1.dml");
+    tg_game.scene = ta_scene_load_file("data/scene/scene1.dml");
     // TODO: Find closest 8 lights and store them in tg_game.lights
     tg_game.lights = tg_game.scene->pools[TA_LIGHT];
     tg_game.camera_player =
@@ -131,7 +94,7 @@ int main(int argc, char *argv[])
 		ta_scene_find(tg_game.scene, TA_CAMERA, INTERN("camera_freecam"));
     tg_game.player =
 		ta_scene_find(tg_game.scene, TA_NODE, INTERN("node_player"));
-    ta_game_state_set(TA_STATE_FREE_CAM);
+    ta_game_state_set(TA_GAME_STATE_FREE_CAM);
 
     // Ensure we have a valid camera, player and light
     DLB_ASSERT(tg_game.camera);
@@ -215,7 +178,7 @@ int main(int argc, char *argv[])
 
     float light_alpha = 0.98f;
 
-    while (tg_game.state != TA_STATE_QUIT) {
+    while (tg_game.state != TA_GAME_STATE_QUIT) {
         double ms_frame_start = ta_timer_elapsed_ms();
         double ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
@@ -251,8 +214,12 @@ int main(int argc, char *argv[])
             // HACK: Make point light follow player camera
             //tg_game.lights[1]->position = tg_game.camera_player->position;
             // HACK: Make point light follow camera
-            //tg_game.lights[1]->position = vec3_add(tg_game.camera_freecam->position, tg_game.camera_freecam->front);
-            tg_game.lights[1].intensity = tg_game.lights[1].intensity * light_alpha + ((float)rand() / RAND_MAX) * (1.0f - light_alpha);
+            //tg_game.lights[1]->position = vec3_add(
+            //    tg_game.camera_freecam->position,
+            //    tg_game.camera_freecam->front
+            //);
+            tg_game.lights[1].intensity = tg_game.lights[1].intensity *
+                light_alpha + ((float)rand() / RAND_MAX) * (1.0f - light_alpha);
 
             // Update main camera
             ta_camera_update(tg_game.camera_freecam, sim_dt);
@@ -313,44 +280,7 @@ int main(int argc, char *argv[])
 		ta_primitive_render();
 		ta_primitive_clear();
 
-#if 1
-		// Render light 1's shadowmap
-		ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, tg_game.lights[1].shadowmap.texture);
-
-		s32 resolution = tg_game.lights[1].shadowmap.resolution / 10;
-
-		// Render cubemap with the following layout:
-		//      ------
-		//      | +Y |
-		// -----|----|----------
-		// | -X | -Z | +X | +Z |
-		// -----|----|----------
-		//      | -Y |
-		//      ------
-		ta_vec2i face_grid[6] = {
-			{ 2, 1 },  // +X
-			{ 0, 1 },  // -X
-			{ 1, 0 },  // +Y
-			{ 1, 2 },  // -Y
-			{ 3, 1 },  // +Z
-			{ 1, 1 },  // -Z
-		};
-
-		for (int face = 0; face < 6; face++)
-		{
-			ta_rect rect = { 0 };
-			rect.x = resolution * face_grid[face].x;
-			rect.y = resolution * face_grid[face].y;
-			rect.w = resolution;
-			rect.h = resolution;
-			ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, face);
-			ta_primitive_push_rect(tg_window.rect, rect, TA_COLOR_INVIS);
-			ta_primitive_render_quads(tg_shader_cubemap);
-			ta_primitive_clear();
-		}
-
-		ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
-#endif
+        ta_light_render_shadowmap_debug(&tg_game.lights[1]);
 
 #if 0
         // Minimap
@@ -428,6 +358,3 @@ int main(int argc, char *argv[])
     ta_log_write(tg_debug_log, "Goodbye.\n\n");
     return 0;
 }
-
-// Random thoughts
-// https://en.wikipedia.org/wiki/Accumulator_(energy)

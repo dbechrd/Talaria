@@ -1,15 +1,15 @@
 #pragma once
-#include "ta_scene.h"
-#include "ta_primitive.h"
+#include "ta_uid.h"
+#include "ta_math.h"
 #include "dlb_types.h"
 
-typedef enum {
+typedef enum ta_camera_mode {
     TA_CAMERA_FREECAM   = 0,
     TA_CAMERA_FPS       = 1,
     TA_CAMERA_ORBIT     = 2,
 } ta_camera_mode;
 
-typedef struct ta_camera_s {
+typedef struct ta_camera {
     ta_uid uid;
 
     ta_camera_mode mode;

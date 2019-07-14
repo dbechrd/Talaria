@@ -3,7 +3,7 @@
 #include "ta_primitive.h"
 #include "dlb_types.h"
 
-typedef struct {
+typedef struct ta_ui_barchart {
 	ta_rect rect;
 	int sample_count;
 	u32 *samples;

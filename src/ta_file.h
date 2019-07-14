@@ -1,6 +1,5 @@
 #pragma once
 #include "ta_buffer.h"
-#include "dlb_types.h"
 #include <stdio.h>
 
 typedef enum ta_file_mode {

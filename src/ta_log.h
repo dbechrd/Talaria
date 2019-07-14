@@ -2,7 +2,7 @@
 #include "dlb_types.h"
 #include <stdio.h>
 
-typedef struct {
+typedef struct ta_log {
 	const char *filename;
     FILE *stream;
     bool flush;

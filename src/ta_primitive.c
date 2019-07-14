@@ -7,23 +7,24 @@
 #include "misc/gl3w.h"
 #include <math.h>
 
-typedef struct {
-	ta_vec3 position;
-	ta_rgba color;
+
+typedef struct ta_shader_lines_vertex {
+    ta_vec3 position;
+    ta_rgba color;
 } ta_shader_lines_vertex;
 
-typedef struct {
-	ta_shader_lines_vertex verts[2];
+typedef struct ta_vert_line {
+    ta_shader_lines_vertex verts[2];
 } ta_vert_line;
 
-typedef struct {
-	ta_vec3 position;
-	ta_rgba color;
-	ta_uv uv;
+typedef struct ta_shader_quads_vertex {
+    ta_vec3 position;
+    ta_rgba color;
+    ta_uv uv;
 } ta_shader_quads_vertex;
 
-typedef struct {
-	ta_shader_quads_vertex verts[6];
+typedef struct ta_vert_quad {
+    ta_shader_quads_vertex verts[6];
 } ta_vert_quad;
 
 static ta_vert_line *lines_queue;

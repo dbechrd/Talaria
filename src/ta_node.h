@@ -1,14 +1,11 @@
 #pragma once
-#include "ta_scene.h"
+#include "ta_uid.h"
 #include "ta_math.h"
-#include "ta_material.h"
-#include "ta_mesh_group.h"
-#include "ta_rigid_body.h"
-#include "ta_button.h"
-#include "ta_camera.h"
+#include "ta_collider.h"
+#include "ta_node.h"
+#include "dlb_types.h"
 
-typedef struct ta_node_s ta_node;
-typedef struct ta_node_s {
+typedef struct ta_node {
     ta_uid uid;
 
 	ta_transform transform;
@@ -27,16 +24,19 @@ typedef struct ta_node_s {
     bool invisible;
     bool cast_shadows;
     bool receive_shadows;  // TODO: Pass as flag to PBR shader, skip shadows if false
-    ta_node *children;
+    struct ta_node *children;
 } ta_node;
 
+struct ta_shader;
+struct ta_camera;
+
 void ta_node_init(ta_node *node);
-ta_material *ta_node_material(ta_node *node);
-ta_mesh_group *ta_node_mesh_group(ta_node *node);
-ta_rigid_body *ta_node_rigid_body(ta_node *node);
-ta_button *ta_node_button(ta_node *node);
+struct ta_material *ta_node_material(ta_node *node);
+struct ta_mesh_group *ta_node_mesh_group(ta_node *node);
+struct ta_rigid_body *ta_node_rigid_body(ta_node *node);
+struct ta_button *ta_node_button(ta_node *node);
 
 void ta_node_update(ta_node *node);
-void ta_node_shadow_pass(ta_node *node, ta_shader *shader, ta_mat4 *light_pv,
-    float alpha);
-void ta_node_render(ta_node *node, ta_camera *camera, float alpha);
+void ta_node_shadow_pass(ta_node *node, struct ta_shader *shader,
+    ta_mat4 *light_pv, float alpha);
+void ta_node_render(ta_node *node, struct ta_camera *camera, float alpha);

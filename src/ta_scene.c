@@ -13,6 +13,7 @@
 #include "ta_log.h"
 #include "ta_game.h"
 #include "ta_window.h"
+#include "ta_file.h"
 #include "dlb_vector.h"
 #include <stdlib.h>
 #include <float.h>
@@ -755,33 +756,39 @@ static void scene_load_placeholders(ta_scene *scene)
     scene->default_mesh_group_uid = mesh_group->uid.uid;
 }
 
-ta_scene *ta_scene_init(const char *name)
+void ta_scene_init(ta_scene *scene)
 {
-    ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
-    scene->name = name;
+    DLB_ASSERT(scene->filename);
+    if (!scene->name) {
+        scene->name = scene->filename;
+    }
     for (int i = 0; i < TA_COUNT_POOLS; i++) {
         dlb_hash_init(&scene->pooled_uids[i], DLB_HASH_STRING, scene->name, 64);
         //scene->pooled_uids[type].debug = tg_debug_log->stream;
     }
     scene_load_placeholders(scene);
-    return scene;
 }
 
-ta_scene *ta_scene_load(ta_file *f)
+// TODO: This should take a ta_buffer pointer. Load entire file into memory
+//       and refactor all of the e.g. read_char and expect_char logic out from
+//       ta_file into ta_buffer.
+ta_scene *ta_scene_load(ta_file *file)
 {
-    ta_scene *scene = ta_scene_init(f->filename);
+    ta_log_write(tg_debug_log, "[Scene] Loading %s\n", file->filename);
+    ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
+    scene->filename = file->filename;
+    ta_scene_init(scene);
 
     // TODO: Reserve arrays based on scene header (which doesn't exist yet)
     //dlb_vec_reserve(scn->entities, 2);
+    token *tokens = tokenize(file);
 
-    token *tokens = tokenize(f);
     //tokens_print(tg_debug_log->stream, tokens);
     //tokens_print_debug(tg_debug_log->stream, tokens);
     tokens_parse(scene, tokens);
     dlb_vec_free(tokens);
 
     DLB_ASSERT(ARRAY_COUNT(scene->pools) == TA_COUNT_POOLS);
-
     for (int i = 0; i < TA_COUNT_POOLS; i++) {
         if (pool_infos[i].init) {
             u8 *end = dlb_vec_end_size(scene->pools[i], pool_infos[i].size);
@@ -791,7 +798,32 @@ ta_scene *ta_scene_load(ta_file *f)
         }
     }
 
+    ta_log_write(tg_debug_log, "[Scene] Loaded successfully\n");
     return scene;
+}
+
+ta_scene *ta_scene_load_file(const char *filename)
+{
+    //ta_buffer *buffer = ta_file_read_all(filename);
+    //ta_scene *scene = ta_scene_load(buffer);
+    ta_file *file = ta_file_open(filename, FILE_READ);
+    ta_scene *scene = ta_scene_load(file);
+    return scene;
+}
+
+void ta_scene_save(ta_buffer *buffer)
+{
+    // TODO: Write scene to memory buffer
+    UNUSED(buffer);
+}
+
+void ta_scene_save_file(ta_scene *scene, const char *filename)
+{
+    // TODO: Alloc dynamic buffer to write arbitrary data to
+    //ta_buffer *buffer = ??
+    ta_file *file = ta_file_open(filename, FILE_WRITE);
+    ta_scene_print(scene, file->hnd);
+    ta_file_close(file);
 }
 
 void ta_scene_free(ta_scene *scene)

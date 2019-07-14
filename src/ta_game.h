@@ -5,15 +5,15 @@
 #include "ta_camera.h"
 #include "ta_node.h"
 
-typedef enum {
-    TA_STATE_INIT,
-    TA_STATE_PLAY,
-    TA_STATE_FREE_CAM,
-    TA_STATE_QUIT,
-    TA_STATE_COUNT
+typedef enum ta_game_state {
+    TA_GAME_STATE_INIT,
+    TA_GAME_STATE_PLAY,
+    TA_GAME_STATE_FREE_CAM,
+    TA_GAME_STATE_QUIT,
+    TA_GAME_STATE_COUNT
 } ta_game_state;
 
-typedef struct {
+typedef struct ta_game {
     ta_game_state state;
     ta_audio_listener *audio;
     ta_scene *scene;

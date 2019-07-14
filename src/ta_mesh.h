@@ -1,5 +1,4 @@
 #pragma once
-#include "ta_scene.h"
 #include "ta_primitive.h"
 #include "ta_rigid_body.h"
 #include "misc/gl3w.h"
@@ -13,10 +12,8 @@ enum {
     TA_MESH_BUFFER_COUNT
 };
 
-typedef struct ta_mesh_group_s ta_mesh_group;
-
-typedef struct ta_mesh_s {
-    ta_mesh_group *group;
+typedef struct ta_mesh {
+    const char *group_uid;
     const char *name;
 
     GLuint *indexes;

@@ -1,8 +1,9 @@
 #pragma once
-#include "ta_scene.h"
+#include "dlb_types.h"
+#include "ta_uid.h"
 #include "misc/gl3w.h"
 
-typedef struct ta_texture_s {
+typedef struct ta_texture {
     ta_uid uid;
     const char *path;  // File path
     u8 *pixels;        // Pixel data (if inlined instead of via path)

@@ -1,54 +1,12 @@
 #pragma once
+#include "ta_uid.h"
 #include "ta_math.h"
-#include "ta_scene.h"
-
-typedef struct {
-    ta_vec3 center;
-    float radius;
-} ta_sphere;
-
-typedef struct {
-    ta_vec3 center;
-    ta_vec3 extents;
-} ta_aabb;
-
-typedef struct {
-    ta_vec3 center;
-    ta_vec3 extents;
-    ta_vec3 axes[3];
-} ta_obb;
-
-typedef struct {
-    ta_vec3 center;
-    ta_vec3 normal;
-} ta_plane;
-
-typedef enum {
-    TA_COLLIDER_PLANE   = 0,
-    TA_COLLIDER_SPHERE  = 1,
-    TA_COLLIDER_AABB    = 2,
-    TA_COLLIDER_OBB     = 3,
-    TA_COLLIDER_COUNT
-} ta_collider_type;
-
-typedef struct {
-    ta_collider_type type;
-    float mass;
-    ta_mat3 tensor;
-    ta_vec3 center_world;  // TODO: Update this whenever rigid body moves
-    union {
-        // NOTE: Must all start with ta_vec3 center
-        ta_vec3 center;
-        ta_sphere sphere;
-        ta_aabb aabb;
-        ta_obb obb;
-        ta_plane plane;
-    } data;
-} ta_collider;
+#include "ta_collider.h"
+#include "dlb_types.h"
 
 // http://allenchou.net/2013/12/game-physics-introduction/
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
-typedef struct ta_rigid_body_s {
+typedef struct ta_rigid_body {
     ta_uid uid;
 
     ta_aabb aabb;
@@ -117,12 +75,12 @@ typedef struct ta_rigid_body_s {
     //u32 collision_groups;  // Bit flags; "layers"
 } ta_rigid_body;
 
-typedef struct {
+typedef struct ta_rigid_body_pair {
     ta_rigid_body *a;
     ta_rigid_body *b;
 } ta_rigid_body_pair;
 
-typedef struct {
+typedef struct ta_manifold {
     ta_rigid_body *a;
     ta_rigid_body *b;
     ta_vec3 normal;

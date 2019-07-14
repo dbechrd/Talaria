@@ -1,14 +1,12 @@
 #pragma once
-#include "ta_scene.h"
+#include "ta_uid.h"
 #include "ta_mesh.h"
 #include "ta_rigid_body.h"
-#include "dlb_hash.h"
 
-typedef struct ta_mesh_group_s {
+typedef struct ta_mesh_group {
     ta_uid uid;
     const char *path;
     ta_mesh *meshes;
-    //dlb_hash meshes_by_name;
     ta_aabb aabb;
 } ta_mesh_group;
 

@@ -1,6 +1,7 @@
 #include "ta_light.h"
 #include "ta_window.h"
 #include "ta_node.h"
+#include "ta_symbol.h"
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
 
@@ -238,6 +239,45 @@ void ta_light_shadowpass_render(ta_light *light, ta_shader *shader,
     } else {
         DLB_ASSERT(!"No shadowpass renderer for this light type");
     }
+}
+
+void ta_light_render_shadowmap_debug(ta_light *light)
+{
+    ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX,
+        light->shadowmap.texture);
+
+    // Render cubemap with the following layout:
+    //      ------
+    //      | +Y |
+    // -----|----|----------
+    // | -X | -Z | +X | +Z |
+    // -----|----|----------
+    //      | -Y |
+    //      ------
+    ta_vec2i face_grid[6] = {
+        { 2, 1 },  // +X
+    { 0, 1 },  // -X
+    { 1, 0 },  // +Y
+    { 1, 2 },  // -Y
+    { 3, 1 },  // +Z
+    { 1, 1 },  // -Z
+    };
+
+    s32 resolution = light->shadowmap.resolution / 10;
+    for (int face = 0; face < 6; face++)
+    {
+        ta_rect rect = { 0 };
+        rect.x = resolution * face_grid[face].x;
+        rect.y = resolution * face_grid[face].y;
+        rect.w = resolution;
+        rect.h = resolution;
+        ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, face);
+        ta_primitive_push_rect(tg_window.rect, rect, TA_COLOR_INVIS);
+        ta_primitive_render_quads(tg_shader_cubemap);
+        ta_primitive_clear();
+    }
+
+    ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
 }
 
 #if 0

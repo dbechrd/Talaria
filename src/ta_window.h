@@ -1,7 +1,6 @@
 #pragma once
-#include "SDL/SDL_video.h"
-#include "dlb_types.h"
 #include "ta_primitive.h"
+#include "SDL/SDL_video.h"
 
 #define WINDOW_ASPECT ((float)tg_window.rect.w / tg_window.rect.h)
 #define X_TO_NDC(x) ((float)(x) / (tg_window.rect.w / 2.0f) - 1.0f)
@@ -22,7 +21,7 @@
 #define NDC_W(x) ((float)(x) / tg_window.rect.w * 2.0f)
 #define NDC_H(y) (-(float)(y) / tg_window.rect.h * 2.0f)
 
-typedef struct {
+typedef struct ta_window {
 	ta_rect rect;
     float aspect;
 } ta_window;

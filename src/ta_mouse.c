@@ -7,6 +7,8 @@ ta_mouse tg_mouse;
 
 void ta_mouse_init()
 {
+    DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
+
     ta_log_write(tg_debug_log, "[Mouse] Initializing mouse\n");
     tg_mouse.captured = true;
     SDL_SetRelativeMouseMode(tg_mouse.captured);

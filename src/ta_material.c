@@ -1,6 +1,8 @@
 #include "ta_material.h"
-#include "ta_scene.h"
 #include "ta_schema.h"
+#include "ta_scene.h"
+#include "ta_shader.h"
+#include "ta_texture.h"
 
 ta_shader *ta_material_shader(ta_material *mat)
 {

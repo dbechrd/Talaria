@@ -1,15 +1,16 @@
 #pragma once
 #include "dlb_types.h"
-#include "SDL/SDL.h"
+
+#define TA_SDL_NUM_SCANCODES 512
 
 enum {
-    TA_SCANCODE_MOUSE_LEFT = SDL_NUM_SCANCODES,
+    TA_SCANCODE_MOUSE_LEFT = TA_SDL_NUM_SCANCODES,
     TA_SCANCODE_MOUSE_MIDDLE,
     TA_SCANCODE_MOUSE_RIGHT,
     TA_SCANCODE_COUNT
 };
 
-typedef struct {
+typedef struct ta_mouse {
     int x;
     int y;
     bool left;
