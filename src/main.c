@@ -89,9 +89,9 @@ int main(int argc, char *argv[])
     // TODO: Find closest 8 lights and store them in tg_game.lights
     tg_game.lights = tg_game.scene->pools[TA_LIGHT];
     tg_game.camera_player =
-		ta_scene_find(tg_game.scene, TA_CAMERA, INTERN("camera_player"));
+		ta_scene_find(tg_game.scene, TA_CAMERA, INTERN("cam_player"));
     tg_game.camera_freecam =
-		ta_scene_find(tg_game.scene, TA_CAMERA, INTERN("camera_freecam"));
+		ta_scene_find(tg_game.scene, TA_CAMERA, INTERN("cam_freecam"));
     tg_game.player =
 		ta_scene_find(tg_game.scene, TA_NODE, INTERN("node_player"));
     ta_game_state_set(TA_GAME_STATE_FREE_CAM);
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     DLB_ASSERT(tg_game.lights);
 
     ta_audio_source *ambient_wakeup = ta_scene_find(tg_game.scene,
-        TA_AUDIO_SOURCE, INTERN("src_ambient_genesis"));
+        TA_AUDIO_SOURCE, INTERN("src_mus_genesis"));
     DLB_ASSERT(ambient_wakeup);
     ta_audio_source_play_loop(ambient_wakeup);
 
@@ -130,7 +130,6 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     // TODO: Move this to DML (e.g. editor.dml)
     ta_camera minimap_camera = { 0 };
-    minimap_camera.mode = TA_CAMERA_ORBIT;
     minimap_camera.fov = 90.0f;
     minimap_camera.up = VEC3_NZ;
     minimap_camera.ortho = true;
@@ -145,7 +144,7 @@ int main(int argc, char *argv[])
 	// TODO: Remove x,y coords from init() methods and only store size. Pass x,y
 	//       at render time (make sure to update viewport correctly).
 	ta_ui_image *ui_image = ta_ui_image_init(0, 0, 0, 0, tex_test);
-	ta_ui_scrollview *view = ta_ui_scrollview_init(420, 50, 800, 300,
+	ta_ui_scrollview *view = ta_ui_scrollview_init(420, 50, 400, 300,
 		(ta_ui_base *)ui_image);
 
 	ta_ui_barchart chart = ta_ui_barchart_init(10, 10, tg_window.rect.w - 20, 30);
@@ -336,7 +335,7 @@ int main(int argc, char *argv[])
         ta_primitive_clear();
 #endif
 
-#if 0
+#if 1
         // Scroll view
 		ta_ui_scrollview_draw(0, 0, view);
         ta_primitive_render();

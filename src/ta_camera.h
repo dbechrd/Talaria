@@ -3,23 +3,15 @@
 #include "ta_math.h"
 #include "dlb_types.h"
 
-typedef enum ta_camera_mode {
-    TA_CAMERA_FREECAM   = 0,
-    TA_CAMERA_FPS       = 1,
-    TA_CAMERA_ORBIT     = 2,
-} ta_camera_mode;
-
 typedef struct ta_camera {
     ta_uid uid;
-
-    ta_camera_mode mode;
-    bool dirty;
 
     ta_vec3 position;           // where the camera is
     float position_smooth;      // how fast to blend to target [0, 1]
     float position_target_vel;  // how fast to move the target
     ta_vec3 follow_target;      // where the camera wants to be
     float follow_distance;      // how far to track target
+
     float yaw;
     float yaw_smooth;
     float yaw_target;
@@ -28,24 +20,24 @@ typedef struct ta_camera {
     float pitch_min;
     float pitch_max;
     float pitch_target;
-    float fov;
-    float znear;
 
+    float fov;                  // field of view (degrees)
+    float znear;                // near clip distance
+    bool ortho;                 // true if orthographic, else perspective
     ta_vec3 focal_point;        // camera look target in world space
     ta_vec3 up;
     ta_vec3 front;
     ta_vec3 right;
     ta_mat4 look_at;
     ta_mat4 projection;
-    bool ortho;
 
+    bool dirty;
     bool debug_wireframe;
     bool debug_normals;
     bool debug_bounding_boxes;
     bool debug_no_mesh;
 } ta_camera;
 
-const char *ta_camera_mode_str(int type);
 void ta_camera_init(ta_camera *camera);
 void ta_camera_set_ortho(ta_camera *camera, bool ortho);
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z);

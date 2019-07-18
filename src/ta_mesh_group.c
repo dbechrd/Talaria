@@ -96,7 +96,7 @@ void ta_mesh_group_load(ta_mesh_group *group)
         ta_mesh_create(mesh);
 
         u32 name_len = (u32)strlen(shapes[shape_idx].name);
-        mesh->name = ta_symbol_intern(shapes[shape_idx].name, name_len);
+        mesh->uid.uid = ta_symbol_intern(shapes[shape_idx].name, name_len);
 
         mesh->aabb.extents = vec3_scalef(vec3_sub(mesh_max, mesh_min), 0.5f);
         mesh->aabb.center = vec3_add(mesh_min, mesh->aabb.extents);

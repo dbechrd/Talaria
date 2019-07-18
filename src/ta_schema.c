@@ -206,7 +206,6 @@ void ta_schema_register()
     // Scene-level object types
     TYPE_START(ta_camera, TA_CAMERA);
     TYPE_FIELD(ta_camera, uid,                 ATOM_STRING);
-    TYPE_ENUM(ta_camera,  mode,                ATOM_ENUM, ta_camera_mode_str);
     TYPE_FIELD(ta_camera, position,            TA_VEC3);
     TYPE_FIELD(ta_camera, position_smooth,     ATOM_FLOAT);
     TYPE_FIELD(ta_camera, position_target_vel, ATOM_FLOAT);
@@ -218,8 +217,9 @@ void ta_schema_register()
     TYPE_FIELD(ta_camera, pitch_max,           ATOM_FLOAT);
     TYPE_FIELD(ta_camera, fov,                 ATOM_FLOAT);
     TYPE_FIELD(ta_camera, znear,               ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, focal_point,         TA_VEC3);
     TYPE_FIELD(ta_camera, up,                  TA_VEC3);
-    TYPE_FIELD(ta_camera, ortho,               ATOM_UINT);
+    TYPE_FIELD(ta_camera, ortho,               ATOM_BOOL);
     TYPE_END(ta_camera);
 
     TYPE_START(ta_light_directional, TA_DIRECTIONAL_LIGHT);

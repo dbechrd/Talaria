@@ -7,18 +7,6 @@
 #include "misc/gl3w.h"
 #include <math.h>
 
-const char *ta_camera_mode_str(int type)
-{
-    switch(type) {
-		case TA_CAMERA_FREECAM: return "TA_CAMERA_FREECAM";
-		case TA_CAMERA_FPS:		return "TA_CAMERA_FPS";
-        case TA_CAMERA_ORBIT:	return "TA_CAMERA_ORBIT";
-        default:
-            DLB_ASSERT(!"<UNKNOWN_TA_CAMERA_TYPE>");
-            return 0;
-    }
-}
-
 void ta_camera_init(ta_camera *camera)
 {
     if (!camera->position_smooth)     camera->position_smooth = 1.0f;
@@ -168,10 +156,9 @@ void ta_camera_events()
     }
 }
 
-// pitch: -89.0f - 89.0f deg
-// yaw: 0.0f - 360.0f deg
 static ta_vec3 camera_fps_target(ta_camera *camera)
 {
+    // Prevent pathological orientations
     DLB_ASSERT(camera->yaw >= 0.0f);
     DLB_ASSERT(camera->yaw < 360.0f);
     DLB_ASSERT(camera->pitch > -90.0f);
@@ -199,49 +186,42 @@ void ta_camera_update(ta_camera *camera, double dt)
         camera->dirty = true;
     }
 
-    switch (camera->mode) {
-        case TA_CAMERA_FREECAM: case TA_CAMERA_FPS: {
-            // Update yaw
-            float yaw_delta = camera->yaw_target - camera->yaw;
-            float yaw_delta_abs = (float)fabs(yaw_delta);
-            if (yaw_delta_abs > TA_EPSILON) {
-                // NOTE(dlb): Negate delta when wrapping around 0/360 boundary.
-                // Dunno if there's a better way to handle this.
-                if (yaw_delta_abs > 180.0f) {
-                    float sign = (yaw_delta > 0.0f ? 1.0f : -1.0f);
-                    yaw_delta = (360.0f - yaw_delta_abs) * -sign;
-                }
-                camera->yaw += yaw_delta * camera->yaw_smooth;
-                while (camera->yaw < 0.0f)    { camera->yaw += 360.0f; }
-                while (camera->yaw >= 360.0f) { camera->yaw -= 360.0f; }
-                camera->dirty = true;
+    if (vec3_zero(camera->focal_point)) {
+        // Update yaw
+        float yaw_delta = camera->yaw_target - camera->yaw;
+        float yaw_delta_abs = (float)fabs(yaw_delta);
+        if (yaw_delta_abs > TA_EPSILON) {
+            // NOTE(dlb): Negate delta when wrapping around 0/360 boundary.
+            // Dunno if there's a better way to handle this.
+            if (yaw_delta_abs > 180.0f) {
+                float sign = (yaw_delta > 0.0f ? 1.0f : -1.0f);
+                yaw_delta = (360.0f - yaw_delta_abs) * -sign;
             }
+            camera->yaw += yaw_delta * camera->yaw_smooth;
+            while (camera->yaw < 0.0f)    { camera->yaw += 360.0f; }
+            while (camera->yaw >= 360.0f) { camera->yaw -= 360.0f; }
+            camera->dirty = true;
+        }
 
-            // Update pitch
-            float pitch_delta = camera->pitch_target - camera->pitch;
-            if (fabs(pitch_delta) > TA_EPSILON) {
-                camera->pitch += pitch_delta * camera->pitch_smooth;
-                camera->pitch = clampf(camera->pitch, camera->pitch_min,
-                    camera->pitch_max);
-                camera->dirty = true;
-            }
+        // Update pitch
+        float pitch_delta = camera->pitch_target - camera->pitch;
+        if (fabs(pitch_delta) > TA_EPSILON) {
+            camera->pitch += pitch_delta * camera->pitch_smooth;
+            camera->pitch = clampf(camera->pitch, camera->pitch_min,
+                camera->pitch_max);
+            camera->dirty = true;
+        }
 
-            camera->focal_point = VEC3_ZERO; // TODO: Do only when mode changes
-            if (camera->dirty) {
-                camera->front = camera_fps_target(camera);
-                camera->right = vec3_normalize(vec3_cross(camera->front, VEC3_Y));
-                camera->up = vec3_cross(camera->right, camera->front);
-            }
-            break;
-        } case TA_CAMERA_ORBIT: {
-            if (camera->dirty) {
-                camera->front = vec3_normalize(vec3_sub(camera->focal_point,
-                    camera->position));
-                //camera->right = vec3_normalize(vec3_cross(camera->front, VEC3_Y));
-                //camera->up = vec3_cross(camera->right, camera->front);
-                camera->right = vec3_normalize(vec3_cross(camera->front, camera->up));
-            }
-            break;
+        if (camera->dirty) {
+            camera->front = camera_fps_target(camera);
+            camera->right = vec3_normalize(vec3_cross(camera->front, VEC3_Y));
+            camera->up = vec3_cross(camera->right, camera->front);
+        }
+    } else {
+        if (camera->dirty) {
+            camera->front = vec3_normalize(vec3_sub(camera->focal_point,
+                camera->position));
+            camera->right = vec3_normalize(vec3_cross(camera->front, camera->up));
         }
     }
 

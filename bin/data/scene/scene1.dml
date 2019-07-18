@@ -2,8 +2,7 @@
 # Cameras
 #-------------------------------------------------------------------------------
 ta_camera:
-  uid: "camera_player"
-  mode: 1  # TA_CAMERA_FPS
+  uid: "cam_player"
   position: { x: 0.0, y: 1.7, z: 24.0 }
   position_smooth: 0.05
   position_target_vel: 0.2
@@ -16,8 +15,7 @@ ta_camera:
   fov: 65.0
   znear: 0.1
 ta_camera:
-  uid: "camera_freecam"
-  mode: 0  # TA_CAMERA_FREECAM
+  uid: "cam_freecam"
   position: { x: 0.0, y: 3.7, z: 7.0 }
   position_smooth: 0.1
   position_target_vel: 0.2
@@ -27,7 +25,7 @@ ta_camera:
   pitch_smooth: 0.7
   pitch_min: -90.0
   pitch_max: 90.0
-  fov: 65.0
+  fov: 75.0
   znear: 0.1
 
 #-------------------------------------------------------------------------------
@@ -60,12 +58,12 @@ ta_light:
 # Textures
 #-------------------------------------------------------------------------------
 ta_texture:
-  uid: "texture_genesis_albedo"
+  uid: "tex_genesis_albedo"
   path: "data/texture/genesis_albedo.png"
   linear: true
   channels: 4
 ta_texture:
-  uid: "texture_genesis_metallic"
+  uid: "tex_genesis_metallic"
   path: "data/texture/genesis_metallic.png"
   linear: true
   channels: 1
@@ -74,10 +72,10 @@ ta_texture:
 # Materials
 #-------------------------------------------------------------------------------
 ta_material:
-  uid: "material_genesis"
+  uid: "mat_genesis"
   shader_uid: "shader_mesh"
-  texture_albedo_uid: "texture_genesis_albedo"
-  texture_metallic_uid: "texture_genesis_metallic"
+  texture_albedo_uid: "tex_genesis_albedo"
+  texture_metallic_uid: "tex_genesis_metallic"
 
 #-------------------------------------------------------------------------------
 # Mesh groups
@@ -105,18 +103,18 @@ ta_mesh_group:
 # Ambient sounds
 #-------------------------------------------------------------------------------
 ta_audio_buffer:
-  uid: "ambient_wakeup"
+  uid: "mus_wakeup"
   path: "data/ambient/wakeup.raw"
 ta_audio_source:
-  uid: "src_ambient_wakeup"
-  audio_buffer_uid: "ambient_wakeup"
+  uid: "src_mus_wakeup"
+  audio_buffer_uid: "mus_wakeup"
 
 ta_audio_buffer:
-  uid: "ambient_genesis"
+  uid: "mus_genesis"
   path: "data/ambient/genesis.raw"
 ta_audio_source:
-  uid: "src_ambient_genesis"
-  audio_buffer_uid: "ambient_genesis"
+  uid: "src_mus_genesis"
+  audio_buffer_uid: "mus_genesis"
 
 #-------------------------------------------------------------------------------
 # Sound effects
@@ -176,7 +174,7 @@ ta_rigid_body:
 #   mass: 0.0
 ta_node:
   uid: "node_chamber_0001"
-  material_uid: "material_genesis"
+  material_uid: "mat_genesis"
   mesh_group_uid: "mesh_group_chamber_0001"
   rigid_body_uid: "rb_node_chamber_0001"
   invisible: false
@@ -184,7 +182,7 @@ ta_node:
 
 ta_node:
   uid: "node_wakeup"
-  material_uid: "material_genesis"
+  material_uid: "mat_genesis"
   mesh_group_uid: "mesh_group_wakeup"
   transform:
     position: { x: 0.0, y: 8.0, z: 0.0 }
@@ -203,7 +201,7 @@ ta_button:
   sfx_deactivated_uid: "sfx_button_deactivated"
 ta_node:
   uid: "node_button_0001"
-  material_uid: "material_genesis"
+  material_uid: "mat_genesis"
   mesh_group_uid: "mesh_group_button"
   rigid_body_uid: "rb_button_0001"
   button_uid: "button_0001"
