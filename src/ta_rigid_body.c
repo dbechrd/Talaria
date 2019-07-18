@@ -5,6 +5,8 @@
 #include "dlb_vector.h"
 #include <math.h>
 
+#define GRAVITY -9.81f
+
 typedef bool (intersector)(const ta_collider *a, const ta_collider *b,
     ta_manifold *manifold);
 
@@ -135,7 +137,7 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
         body->orientation = quat_normalize(quat_mul(delta_orient, body->orientation));
     }
 
-    ta_vec3 gravity = { 0.0f, -9.81f, 0.0f };
+    ta_vec3 gravity = { 0.0f, GRAVITY, 0.0f };
     ta_rigid_body_apply_force(body, gravity);
 
     ta_vec3 acc = vec3_scalef(vec3_scalef(body->force_accum, dt), body->inv_mass);
