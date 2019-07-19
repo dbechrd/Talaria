@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
         ta_scene_render(tg_game.scene, tg_game.camera, sim_alpha);
 
         ta_primitive_render();
-        ta_primitive_clear();
+        ta_primitive_clear(true);
 
         // World axes
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
@@ -271,13 +271,13 @@ int main(int argc, char *argv[])
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_primitive_push_axes(1.0f);
         ta_primitive_render();
-        ta_primitive_clear();
+        ta_primitive_clear(true);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		// Cursor
 		ta_primitive_push_crosshair(10, 2);
 		ta_primitive_render();
-		ta_primitive_clear();
+		ta_primitive_clear(true);
 
         ta_light_render_shadowmap_debug(&tg_game.lights[1]);
 
@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
         // Scroll view
 		ta_ui_scrollview_draw(0, 0, view);
         ta_primitive_render();
-        ta_primitive_clear();
+        ta_primitive_clear(true);
 #endif
 
         ta_ui_clear();

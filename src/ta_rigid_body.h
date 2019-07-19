@@ -9,7 +9,7 @@
 typedef struct ta_rigid_body {
     ta_uid uid;
 
-    ta_aabb aabb;
+    //ta_aabb aabb;
     ta_collider collider;
 
     // David's state variables

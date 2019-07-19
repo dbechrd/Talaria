@@ -491,6 +491,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                             break;
                         }
                         DLB_ASSERT(sp);
+                        stack[sp].indent = 0;
                         stack[sp].type = 0;  // Cleanup: Easier debug
                         sp--;
                     }
@@ -640,6 +641,11 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     dlb_hash *hash = &scene->pooled_uids[stack[sp-1].type];
                     dlb_hash_insert(hash, tok->value.string, tok->length, (void *)pool_idx);
                 }
+#if 0
+                if (*fp == INTERN("shadow_test_1")) {
+                    DLB_ASSERT(1);
+                }
+#endif
                 break;
             } case TOKEN_ARRAY_START: {
                 if (!expect_array_start) {
@@ -912,6 +918,17 @@ static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
 
     ta_rigid_body_pair *pairs = 0;
 
+#if 1
+    dlb_vec_each(ta_node *, a, scene->pools[TA_NODE]) {
+        dlb_vec_range(ta_node *, b, a + 1, dlb_vec_end((ta_node *)scene->pools[TA_NODE])) {
+            if (a->rigid_body_uid && b->rigid_body_uid && ta_aabb_v_aabb(&a->aabb, &b->aabb, 0)) {
+                ta_rigid_body_pair *pair = dlb_vec_alloc(pairs);
+                pair->a = ta_node_rigid_body(a);
+                pair->b = ta_node_rigid_body(b);
+            }
+        }
+    }
+#else
     dlb_vec_each(ta_rigid_body *, a, scene->pools[TA_RIGID_BODY]) {
         dlb_vec_range(ta_rigid_body *, b, a + 1, dlb_vec_end((ta_rigid_body *)scene->pools[TA_RIGID_BODY])) {
             if (ta_aabb_v_aabb(&a->aabb, &b->aabb, 0)) {
@@ -921,6 +938,7 @@ static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
             }
         }
     }
+#endif
 
     return pairs;
 }

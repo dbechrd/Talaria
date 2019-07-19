@@ -59,12 +59,30 @@ void ta_rigid_body_init(ta_rigid_body *body)
     } else {
         body->orientation = quat_normalize(body->orientation);
     }
-    if (body->collider.type == 0 && !vec3_len(body->collider.data.plane.normal))
+    switch (body->collider.type) {
+        case TA_COLLIDER_PLANE: {
+            body->collider.data.plane.normal = vec3_normalize(body->collider.data.plane.normal);
+            break;
+        } case TA_COLLIDER_SPHERE: {
+            DLB_ASSERT(body->collider.data.sphere.radius > TA_EPSILON);
+            break;
+        } case TA_COLLIDER_AABB: {
+            DLB_ASSERT(body->collider.data.aabb.extents.x > TA_EPSILON);
+            DLB_ASSERT(body->collider.data.aabb.extents.y > TA_EPSILON);
+            DLB_ASSERT(body->collider.data.aabb.extents.z > TA_EPSILON);
+            break;
+        } case TA_COLLIDER_OBB: {
+            DLB_ASSERT(body->collider.data.obb.extents.x > TA_EPSILON);
+            DLB_ASSERT(body->collider.data.obb.extents.y > TA_EPSILON);
+            DLB_ASSERT(body->collider.data.obb.extents.z > TA_EPSILON);
+            break;
+        }
+    }
+    if (body->collider.type == TA_COLLIDER_PLANE &&
+        vec3_len(body->collider.data.plane.normal))
     {
-        body->collider.type = TA_COLLIDER_SPHERE;
-        body->collider.data.sphere.radius = 1.0f;
-    } else if (body->collider.type == TA_COLLIDER_PLANE) {
-        body->collider.data.plane.normal = vec3_normalize(body->collider.data.plane.normal);
+        body->collider.data.plane.normal =
+            vec3_normalize(body->collider.data.plane.normal);
     }
     update_collider_center(body);
     if (body->mass != 0.0f) {

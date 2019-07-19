@@ -62,7 +62,7 @@ void ta_ui_image_draw(int x, int y, ta_ui_image *image)
 	ta_primitive_push_rect(parent, image->rect, TA_COLOR_INVIS);
 	ta_primitive_render();
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
-    ta_primitive_clear();
+    ta_primitive_clear(true);
 }
 
 ta_ui_scrollview *ta_ui_scrollview_init(int x, int y, int w, int h,
@@ -137,7 +137,7 @@ void ta_ui_scrollview_draw(int x, int y, ta_ui_scrollview *view)
 	// TODO: Should clearing prim buffer be part of viewport_bind, or some other
 	//       stack of prims? Not sure...
 	ta_primitive_render();
-	ta_primitive_clear();
+	ta_primitive_clear(true);
 
 	ta_viewport_bind(&view->viewport, false);
 	{

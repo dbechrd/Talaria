@@ -467,16 +467,18 @@ void ta_primitive_render()
 	ta_primitive_render_lines(tg_shader_lines);
 	ta_primitive_render_quads(tg_shader_quads);
 }
-void ta_primitive_clear()
+void ta_primitive_clear(bool reset_uniforms)
 {
 	dlb_vec_clear(lines_queue);
 	dlb_vec_clear(quads_queue);
 
-	ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
-	ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
-	ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+    if (reset_uniforms) {
+	    ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
+	    ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
+	    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
 
-	ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
-	ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
-	ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+	    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
+	    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
+	    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+    }
 }

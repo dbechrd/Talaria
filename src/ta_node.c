@@ -42,7 +42,8 @@ void ta_node_init(ta_node *node)
         if (rigid_body) {
             switch (rigid_body->collider.type) {
                 case TA_COLLIDER_PLANE: {
-                    // Infinite AABB
+                    // Infinite AABB??
+                    // TODO: Calculate AABB for plane (add TA_EPSILON depth)
                     break;
                 } case TA_COLLIDER_SPHERE: {
                     float radius = rigid_body->collider.data.sphere.radius;
@@ -51,14 +52,19 @@ void ta_node_init(ta_node *node)
                     node->aabb.extents.z = radius;
                     break;
                 } case TA_COLLIDER_AABB: {
-                    node->aabb = rigid_body->aabb;
+                    node->aabb = rigid_body->collider.data.aabb;
+                    break;
+                } case TA_COLLIDER_OBB: {
+                    // TODO: Calculate AABB from OBB
+                    DLB_ASSERT(!"OBB not yet supported");
                     break;
                 } default: {
-                    DLB_ASSERT(!"Unhandled collider type, need for broadphase");
+                    DLB_ASSERT(!"Node needs AABB for broadphase");
                 }
             }
         } else {
             ta_mesh_group *mesh_group = ta_node_mesh_group(node);
+            DLB_ASSERT(mesh_group);
             node->aabb = mesh_group->aabb;
         }
     }
@@ -256,21 +262,23 @@ void ta_node_render(ta_node *node, ta_camera *camera, float alpha)
     }
 
     ta_primitive_render();
-    ta_primitive_clear();
+    ta_primitive_clear(false);
 
     if (camera->debug_normals) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &node->model);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &node->model);
         ta_node_push_normals(node);
         ta_primitive_render();
-        ta_primitive_clear();
+        ta_primitive_clear(false);
     }
 
     if (camera->debug_bounding_boxes) {
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &trans);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &trans);
+        //ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &trans);
+        //ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &trans);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &node->model);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &node->model);
         ta_node_push_aabb(node, TA_COLOR_RED);
         ta_primitive_render();
-        ta_primitive_clear();
+        ta_primitive_clear(false);
     }
 }
