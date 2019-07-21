@@ -3,6 +3,7 @@
 #include "ta_log.h"
 #include "ta_shader.h"
 #include "ta_symbol.h"
+#include "ta_game.h"
 #include "dlb_vector.h"
 
 void ta_mesh_create(ta_mesh *mesh)
@@ -78,8 +79,8 @@ void ta_mesh_init_normals(ta_mesh *mesh, float scale)
     u32 face_count = normal_count / 3;
     dlb_vec_reserve(mesh->face_normals, face_count);
 
-    u32 i = 0;
     ta_line_3d *line;
+    u32 i = 0;
     for (; i < face_count; i++) {
         line = dlb_vec_alloc(mesh->vertex_normals);
         ta_vec3 vertex_normal = vec3_scalef(mesh->normals[i], scale);

@@ -381,7 +381,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
         ta_vec3 impulse = vec3_scalef(manifold->normal, j);
 
         // Apply impulses
-        ta_rigid_body_apply_impulse(a, vec3_negate(impulse), ra);
+        ta_rigid_body_apply_impulse(a, vec3_neg(impulse), ra);
         ta_rigid_body_apply_impulse(b, impulse, rb);
 
 #if _DEBUG
@@ -451,7 +451,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
             }
 
             // Apply friction impulses
-            ta_rigid_body_apply_impulse(a, vec3_negate(friction_impulse), ra);
+            ta_rigid_body_apply_impulse(a, vec3_neg(friction_impulse), ra);
             ta_rigid_body_apply_impulse(b, friction_impulse, rb);
         }
     }

@@ -20,7 +20,6 @@ typedef struct ta_mesh {
     ta_vec3 *normals;
     ta_uv *uvs;
     ta_rgba *colors;
-
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;
     ta_aabb aabb;

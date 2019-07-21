@@ -152,7 +152,7 @@ static void shadowpass_render_directional(ta_light *light, ta_shader *shader,
     glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
     glViewport(0, 0, light->shadowmap.resolution, light->shadowmap.resolution);
 
-    ta_vec3 inv_dir = vec3_negate(light->data.directional.direction);
+    ta_vec3 inv_dir = vec3_neg(light->data.directional.direction);
     ta_mat4 view = mat4_lookat(inv_dir, VEC3_ZERO, VEC3_Y);
     ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view);
     dlb_vec_each(ta_node *, entity, entities) {

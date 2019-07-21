@@ -92,7 +92,7 @@ int vec3_equal(ta_vec3 a, ta_vec3 b)
            fabs(a.y - b.y) < TA_EPSILON &&
            fabs(a.z - b.z) < TA_EPSILON;
 }
-ta_vec3 vec3_negate(ta_vec3 v)
+ta_vec3 vec3_neg(ta_vec3 v)
 {
     ta_vec3 result;
     result.x = -v.x;

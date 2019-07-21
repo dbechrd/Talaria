@@ -3,10 +3,10 @@
 #include "ta_window.h"
 #include "ta_shader.h"
 #include "ta_symbol.h"
+#include "ta_game.h"
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
 #include <math.h>
-
 
 typedef struct ta_shader_lines_vertex {
     ta_vec3 position;
@@ -36,11 +36,6 @@ static ta_vert_quad *quads_queue;
 static GLuint quads_vao;
 static GLuint quads_buffer;
 static GLint quads_buffer_size;
-
-static void ta_primitive_push_line(ta_vert_line *line);
-static void ta_primitive_push_quad(ta_vert_quad *quad);
-static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d line2d,
-	ta_rgba color0, ta_rgba color1);
 
 static void ta_primitive_init_lines()
 {
@@ -118,6 +113,49 @@ static void ta_primitive_line3d_to_line(ta_vert_line *line, ta_line_3d line3d,
     line->verts[1].position = line3d.p1;
     line->verts[1].color = color1;
 }
+#if 0
+void ta_primitive_line3d_to_quad(ta_vert_quad *quad, ta_line_3d line3d,
+    ta_vec3 normal, ta_rgba color0, ta_rgba color1)
+{
+    ta_vec3 p0_p1 = vec3_sub(line3d.p1, line3d.p0);
+    ta_vec3 p0_cam = vec3_sub(normal, line3d.p0);
+    ta_vec3 p0_offset = vec3_scalef(vec3_normalize(vec3_cross(p0_p1, p0_cam)), 0.001f);
+
+    ta_vec3 p1_p0 = vec3_neg(p0_p1);
+    ta_vec3 p1_cam = vec3_sub(normal, line3d.p1);
+    ta_vec3 p1_offset = vec3_scalef(vec3_normalize(vec3_cross(p1_p0, p1_cam)), 0.001f);
+
+    ta_vec3 v0 = vec3_add(line3d.p0, p0_offset);
+    ta_vec3 v1 = vec3_sub(line3d.p0, p0_offset);
+    ta_vec3 v2 = vec3_add(line3d.p1, p1_offset);
+    ta_vec3 v3 = vec3_sub(line3d.p1, p1_offset);
+
+    quad->verts[0].position = v0;
+    quad->verts[0].color = color0;
+    quad->verts[0].uv.u = 0.0f;
+    quad->verts[0].uv.v = 0.0f;
+    quad->verts[1].position = v1;
+    quad->verts[1].color = color0;
+    quad->verts[1].uv.u = 1.0f;
+    quad->verts[1].uv.v = 0.0f;
+    quad->verts[2].position = v2;
+    quad->verts[2].color = color1;
+    quad->verts[2].uv.u = 1.0f;
+    quad->verts[2].uv.v = 1.0f;
+    quad->verts[3].position = v0;
+    quad->verts[3].color = color0;
+    quad->verts[3].uv.u = 0.0f;
+    quad->verts[3].uv.v = 0.0f;
+    quad->verts[4].position = v2;
+    quad->verts[4].color = color1;
+    quad->verts[4].uv.u = 1.0f;
+    quad->verts[4].uv.v = 1.0f;
+    quad->verts[5].position = v3;
+    quad->verts[5].color = color1;
+    quad->verts[5].uv.u = 0.0f;
+    quad->verts[5].uv.v = 1.0f;
+}
+#endif
 void ta_primitive_push_line_2d(ta_line_2d line_2d, ta_rgba color0,
 	ta_rgba color1)
 {
@@ -135,14 +173,19 @@ void ta_primitive_push_line_3d(ta_line_3d line_3d, ta_rgba color0,
 
 static void ta_primitive_push_quad(ta_vert_quad *quad)
 {
-	dlb_vec_push(quads_queue, *quad);
+    dlb_vec_push(quads_queue, *quad);
 }
 void ta_primitive_push_rect(ta_rect parent, ta_rect rect, ta_rgba color)
 {
-    // v3 *----* v2
-    //    |    |
-    // v0 *----* v1
-    // v0, v1, v2, v0, v2, v3
+    // v3 _______ v2
+    //    |    /|
+    //    |   / |
+    //    |  /  |
+    //    | /   |
+    //    |/____|
+    // v0         v1
+    //
+    // {v0, v1, v2}, {v0, v2, v3}
 
 #define X_TO_NDC_RECT(x, r) ((float)(x) / (r.w / 2.0f) - 1.0f)
 #define Y_TO_NDC_RECT(y, r) (-(float)(y) / (r.h / 2.0f) + 1.0f)
@@ -464,8 +507,10 @@ void ta_primitive_render_quads(ta_shader *shader)
 }
 void ta_primitive_render()
 {
-	ta_primitive_render_lines(tg_shader_lines);
-	ta_primitive_render_quads(tg_shader_quads);
+    glDisable(GL_CULL_FACE);
+    ta_primitive_render_lines(tg_shader_lines);
+    ta_primitive_render_quads(tg_shader_quads);
+    glEnable(GL_CULL_FACE);
 }
 void ta_primitive_clear(bool reset_uniforms)
 {
