@@ -24,7 +24,6 @@ typedef struct ta_ui_scrollbar {
 struct ta_ui_control;
 typedef struct ta_ui_scrollview {
     //ta_ui_scrollbar scrollbar_y;
-    ta_viewport viewport;
     struct ta_ui_control *content;
 } ta_ui_scrollview;
 
@@ -42,7 +41,7 @@ typedef struct ta_ui_control {
     } data;
 } ta_ui_control;
 
-void ta_ui_draw(ta_ui_control *control, ta_rect viewport, ta_vec2i position);
+void ta_ui_draw(ta_ui_control *control, ta_vec2i position);
 void ta_ui_clear();
 
 ta_ui_control *ta_ui_create_image(ta_size size, ta_texture *tex);

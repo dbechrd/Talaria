@@ -3,33 +3,71 @@
 #include "ta_mouse.h"
 #include "misc/gl3w.h"
 
-ta_viewport ta_viewport_init(ta_size size, ta_rgba background)
-{
-	ta_viewport view;
-	view.size = size;
-	view.background = background;
-	return view;
-}
+typedef struct viewport {
+    ta_rect viewport_rect;
+    bool scissor_enabled;
+    ta_rect scissor_rect;
+    ta_rgba clear_color;
+} viewport;
+
+static viewport viewports[16];
+static int next = 0;
 
 // TODO: Push previously bound viewport onto stack if we want to enable nested
 //       viewports.
-void ta_viewport_bind(ta_viewport *view, ta_vec2i position, bool relative)
+void ta_viewport_bind(ta_rect parent, ta_rect rect, ta_rgba background, bool relative)
 {
-    int inv_y = tg_window.rect.h - (position.y + view->size.h);
+    DLB_ASSERT(next < ARRAY_COUNT(viewports));
+
+    // Save previous state
+    glGetIntegerv(GL_VIEWPORT, (int *)&viewports[next].viewport_rect);
+    glGetBooleanv(GL_SCISSOR_TEST, (GLboolean *)&viewports[next].scissor_enabled);
+    glGetIntegerv(GL_SCISSOR_BOX, (int *)&viewports[next].scissor_rect);
+    glGetFloatv(GL_COLOR_CLEAR_VALUE, (float *)&viewports[next].clear_color);
+    next++;
+
+    rect.x += parent.x;
+    rect.y += parent.y;
+
+    // Set new state
+    int inv_y = tg_window.rect.h - (rect.y + rect.h);
 	if (relative) {
-		glViewport(position.x, inv_y, view->size.w, view->size.h);
+		glViewport(rect.x, inv_y, rect.w, rect.h);
 	}
 	glEnable(GL_SCISSOR_TEST);
-	glScissor(position.x, inv_y, view->size.w, view->size.h);
-	glClearColor(view->background.r, view->background.g, view->background.b,
-		view->background.a);
+	glScissor(rect.x, inv_y, rect.w, rect.h);
+	glClearColor(background.r, background.g, background.b, background.a);
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 void ta_viewport_unbind()
 {
-	glDisable(GL_SCISSOR_TEST);
-	glViewport(0, 0, tg_window.rect.w, tg_window.rect.h);
+    DLB_ASSERT(next > 0);
+    next--;
+
+    glViewport(
+        viewports[next].viewport_rect.x,
+        viewports[next].viewport_rect.y,
+        viewports[next].viewport_rect.w,
+        viewports[next].viewport_rect.h
+    );
+    if (viewports[next].scissor_enabled) {
+        glEnable(GL_SCISSOR_TEST);
+    } else {
+        glDisable(GL_SCISSOR_TEST);
+    }
+    glScissor(
+        viewports[next].scissor_rect.x,
+        viewports[next].scissor_rect.y,
+        viewports[next].scissor_rect.w,
+        viewports[next].scissor_rect.h
+    );
+    glClearColor(
+        viewports[next].clear_color.r,
+        viewports[next].clear_color.g,
+        viewports[next].clear_color.b,
+        viewports[next].clear_color.a
+    );
 	glClear(GL_DEPTH_BUFFER_BIT);
 }

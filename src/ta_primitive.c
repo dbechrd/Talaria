@@ -175,7 +175,7 @@ static void ta_primitive_push_quad(ta_vert_quad *quad)
 {
     dlb_vec_push(quads_queue, *quad);
 }
-void ta_primitive_push_rect(ta_rect viewport, ta_rect rect, ta_rgba color)
+void ta_primitive_push_rect(ta_rect rect, ta_rgba color)
 {
     // v3 _______ v2
     //    |    /|
@@ -189,10 +189,10 @@ void ta_primitive_push_rect(ta_rect viewport, ta_rect rect, ta_rgba color)
 
 #define X_TO_NDC_RECT(x, w) ( (float)(x) / (w / 2.0f) - 1.0f)
 #define Y_TO_NDC_RECT(y, h) (-(float)(y) / (h / 2.0f) + 1.0f)
-    float x0 = X_TO_NDC_RECT(viewport.x + rect.x,          viewport.w);
-    float x1 = X_TO_NDC_RECT(viewport.x + rect.x + rect.w, viewport.w);
-    float y0 = Y_TO_NDC_RECT(viewport.y + rect.y + rect.h, viewport.h);
-    float y1 = Y_TO_NDC_RECT(viewport.y + rect.y,          viewport.h);
+    float x0 = X_TO_NDC_RECT(rect.x,          tg_window.rect.w);
+    float x1 = X_TO_NDC_RECT(rect.x + rect.w, tg_window.rect.w);
+    float y0 = Y_TO_NDC_RECT(rect.y + rect.h, tg_window.rect.h);
+    float y1 = Y_TO_NDC_RECT(rect.y,          tg_window.rect.h);
 #undef X_TO_NDC_RECT
 #undef Y_TO_NDC_RECT
 
@@ -283,8 +283,8 @@ void ta_primitive_push_crosshair(s32 length, s32 thickness)
 	y.w = thickness;
 	y.h = length;
 
-	ta_primitive_push_rect(tg_window.rect, x, TA_COLOR_WHITE_ALPHA);
-	ta_primitive_push_rect(tg_window.rect, y, TA_COLOR_WHITE_ALPHA);
+	ta_primitive_push_rect(x, TA_COLOR_WHITE_ALPHA);
+	ta_primitive_push_rect(y, TA_COLOR_WHITE_ALPHA);
 }
 
 void ta_primitive_push_axes(float scale)

@@ -131,8 +131,6 @@ int main(int argc, char *argv[])
     minimap_camera.up = VEC3_NZ;
     minimap_camera.ortho = true;
     ta_camera_init(&minimap_camera);
-	ta_viewport minimap_viewport = ta_viewport_init(TA_SIZE(200, 200),
-        (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f });
 
     ta_texture *tex_test =
         ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_albedo"));
@@ -279,6 +277,8 @@ int main(int argc, char *argv[])
 
 #if 0
         // Minimap
+        ta_viewport minimap_viewport = ta_viewport_init(TA_SIZE(200, 200),
+            (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f });
 		ta_viewport_bind(&minimap_viewport, TA_POSITION(10, 50), true);
 		{
 			// TODO: Mesh selector, highlight and rotate mesh while mouse hover
@@ -333,7 +333,7 @@ int main(int argc, char *argv[])
 
         if (!tg_mouse.captured) {
             // Scroll view
-		    ta_ui_draw(ui_scrollview, tg_window.rect, TA_POSITION(20, 20));
+		    ta_ui_draw(ui_scrollview, TA_POSITION(20, 20));
             ta_primitive_render();
             ta_primitive_clear(true);
         }

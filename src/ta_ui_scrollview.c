@@ -7,7 +7,7 @@
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
 
-#define CONTENT_PAD 10
+#define CONTENT_PAD 4
 #define WIDGET_PAD 1
 #define SCROLL_SPEED 20
 
@@ -40,8 +40,6 @@ ta_ui_control *ta_ui_create_image(ta_size size, ta_texture *tex)
 ta_ui_control *ta_ui_create_scrollview(ta_size size, ta_ui_control *content)
 {
     ta_ui_control *control = ta_ui_control_init(TA_UI_SCROLLVIEW, size);
-    control->data.scrollview.viewport = ta_viewport_init(control->size,
-		TA_COLOR_GREEN);
     control->data.scrollview.content = content;
 
 #if 0
@@ -87,22 +85,10 @@ void ta_ui_scrollview_scroll(ta_ui_scrollview *sv, int scroll)
 #endif
 }
 
-
-static void ta_ui_draw_scrollview(ta_ui_control *control, ta_rect viewport,
-    ta_vec2i position)
+static void ui_draw(ta_ui_control *control, ta_rect parent);
+static void ui_draw_scrollview(ta_ui_control *control, ta_rect rect)
 {
-    UNUSED(viewport);
-
-    ta_viewport_bind(&control->data.scrollview.viewport, position, true);
-    {
-        ta_rect content_viewport = { 0 };
-        content_viewport.x = CONTENT_PAD;
-        content_viewport.y = CONTENT_PAD - 0; //sv->scrollbar_y.widget.offset;
-        content_viewport.w = control->size.w - CONTENT_PAD * 2;
-        content_viewport.h = control->size.h - CONTENT_PAD * 2;
-        ta_ui_draw(control->data.scrollview.content, content_viewport, TA_POSITION_ZERO);
-    }
-    ta_viewport_unbind();
+    ui_draw(control->data.scrollview.content, rect);
 
 #if 0
     if (sv->scrollbar_y.visible) {
@@ -121,36 +107,34 @@ static void ta_ui_draw_scrollview(ta_ui_control *control, ta_rect viewport,
 #endif
 }
 
-static void ta_ui_draw_image(ta_ui_control *control, ta_rect viewport,
-    ta_vec2i position)
+static void ui_draw_image(ta_ui_control *control, ta_rect rect)
 {
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, control->data.image.tex->gl_id);
-    ta_rect rect = { 0 };
-    rect.x = position.x;
-    rect.y = position.y;
-    rect.w = control->size.w;
-    rect.h = control->size.h;
-    ta_primitive_push_rect(viewport, rect, TA_COLOR_INVIS);
+    ta_rect img_rect = rect;
+    img_rect.w = control->data.image.tex->width;
+    img_rect.h = control->data.image.tex->height;
+    ta_primitive_push_rect(img_rect, TA_COLOR_INVIS);
     ta_primitive_render();
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
     ta_primitive_clear(true);
 }
 
-#define UI_COLOR_CONTROL_HOVER TA_COLOR_YELLOW
-#define UI_COLOR_CONTROL_CLICK TA_COLOR_RED
+#define UI_COLOR_CONTROL_NONE  (ta_rgba){ 0.5f, 0.5f, 0.5f, 1.0f }; //TA_COLOR_GRAY2
+#define UI_COLOR_CONTROL_HOVER (ta_rgba){ 1.0f, 1.0f, 0.0f, 1.0f }; //TA_COLOR_YELLOW
+#define UI_COLOR_CONTROL_CLICK (ta_rgba){ 1.0f, 0.0f, 0.0f, 1.0f }; //TA_COLOR_RED
 
-void ta_ui_draw(ta_ui_control *control, ta_rect viewport, ta_vec2i position)
+static void ui_draw(ta_ui_control *control, ta_rect parent)
 {
     ta_rect rect = { 0 };
-    rect.x = position.x;
-    rect.y = position.y;
-    rect.w = MIN(viewport.w, control->size.w);
-    rect.h = MIN(viewport.h, control->size.h);
+    rect.x = parent.x;
+    rect.y = parent.y;
+    rect.w = control->size.w;
+    rect.h = control->size.h;
 
-    ta_rgba bg_color = TA_COLOR_GRAY2;
+    ta_rgba bg_color = UI_COLOR_CONTROL_NONE;
 
     if (tg_mouse.x >= rect.x && tg_mouse.x < rect.x + rect.w &&
         tg_mouse.y >= rect.y && tg_mouse.y < rect.y + rect.w)
@@ -162,16 +146,44 @@ void ta_ui_draw(ta_ui_control *control, ta_rect viewport, ta_vec2i position)
     }
 
     // Background color
-    ta_primitive_push_rect(viewport, rect, bg_color);
+    ta_primitive_push_rect(rect, bg_color);
     ta_primitive_render();
     ta_primitive_clear(true);
 
+    ta_rect content_rect = { 0 };
+    content_rect.x = rect.x + CONTENT_PAD;
+    content_rect.y = rect.y + CONTENT_PAD - 0; //sv->scrollbar_y.widget.offset;
+    content_rect.w = rect.w - CONTENT_PAD * 2;
+    content_rect.h = rect.h - CONTENT_PAD * 2;
+
+    glEnable(GL_SCISSOR_TEST);
+    int inv_y = tg_window.rect.h - (content_rect.y + content_rect.h);
+    glScissor(content_rect.x, inv_y, content_rect.w, content_rect.h);
+    //glClear(GL_DEPTH_BUFFER_BIT);
+
     switch (control->type) {
         case TA_UI_IMAGE:
-            ta_ui_draw_image(control, viewport, position);
+            ui_draw_image(control, content_rect);
             break;
         case TA_UI_SCROLLVIEW:
-            ta_ui_draw_scrollview(control, viewport, position);
+            ui_draw_scrollview(control, content_rect);
             break;
     };
+
+    glDisable(GL_SCISSOR_TEST);
+    //glClear(GL_DEPTH_BUFFER_BIT);
+}
+
+void ta_ui_draw(ta_ui_control *control, ta_vec2i position)
+{
+    glDisable(GL_DEPTH_TEST);
+
+    ta_rect rect = { 0 };
+    rect.x = position.x;
+    rect.y = position.y;
+    rect.w = tg_window.rect.w - position.x;
+    rect.h = tg_window.rect.h - position.y;
+    ui_draw(control, rect);
+
+    glEnable(GL_DEPTH_TEST);
 }
