@@ -256,11 +256,11 @@ void ta_light_render_shadowmap_debug(ta_light *light)
     //      ------
     ta_vec2i face_grid[6] = {
         { 2, 1 },  // +X
-    { 0, 1 },  // -X
-    { 1, 0 },  // +Y
-    { 1, 2 },  // -Y
-    { 3, 1 },  // +Z
-    { 1, 1 },  // -Z
+        { 0, 1 },  // -X
+        { 1, 0 },  // +Y
+        { 1, 2 },  // -Y
+        { 3, 1 },  // +Z
+        { 1, 1 },  // -Z
     };
 
     s32 resolution = light->shadowmap.resolution / 10;

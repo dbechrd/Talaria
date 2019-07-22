@@ -175,7 +175,7 @@ static void ta_primitive_push_quad(ta_vert_quad *quad)
 {
     dlb_vec_push(quads_queue, *quad);
 }
-void ta_primitive_push_rect(ta_rect parent, ta_rect rect, ta_rgba color)
+void ta_primitive_push_rect(ta_rect viewport, ta_rect rect, ta_rgba color)
 {
     // v3 _______ v2
     //    |    /|
@@ -187,12 +187,12 @@ void ta_primitive_push_rect(ta_rect parent, ta_rect rect, ta_rgba color)
     //
     // {v0, v1, v2}, {v0, v2, v3}
 
-#define X_TO_NDC_RECT(x, r) ((float)(x) / (r.w / 2.0f) - 1.0f)
-#define Y_TO_NDC_RECT(y, r) (-(float)(y) / (r.h / 2.0f) + 1.0f)
-    float x0 = X_TO_NDC_RECT(parent.x + rect.x, parent);
-    float x1 = X_TO_NDC_RECT(parent.x + rect.x + rect.w, parent);
-    float y0 = Y_TO_NDC_RECT(parent.y + rect.y + rect.h, parent);
-    float y1 = Y_TO_NDC_RECT(parent.y + rect.y, parent);
+#define X_TO_NDC_RECT(x, w) ( (float)(x) / (w / 2.0f) - 1.0f)
+#define Y_TO_NDC_RECT(y, h) (-(float)(y) / (h / 2.0f) + 1.0f)
+    float x0 = X_TO_NDC_RECT(viewport.x + rect.x,          viewport.w);
+    float x1 = X_TO_NDC_RECT(viewport.x + rect.x + rect.w, viewport.w);
+    float y0 = Y_TO_NDC_RECT(viewport.y + rect.y + rect.h, viewport.h);
+    float y1 = Y_TO_NDC_RECT(viewport.y + rect.y,          viewport.h);
 #undef X_TO_NDC_RECT
 #undef Y_TO_NDC_RECT
 

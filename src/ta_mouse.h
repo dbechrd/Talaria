@@ -1,5 +1,6 @@
 #pragma once
 #include "dlb_types.h"
+#include "ta_button_state.h"
 
 #define TA_SDL_NUM_SCANCODES 512
 
@@ -13,9 +14,9 @@ enum {
 typedef struct ta_mouse {
     int x;
     int y;
-    bool left;
-    bool middle;
-    bool right;
+    ta_button_state left;
+    ta_button_state middle;
+    ta_button_state right;
     bool captured;
 } ta_mouse;
 

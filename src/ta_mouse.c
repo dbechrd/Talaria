@@ -1,6 +1,7 @@
 #include "ta_mouse.h"
 #include "ta_event.h"
 #include "ta_log.h"
+#include "ta_timer.h"
 #include "SDL/SDL.h"
 
 ta_mouse tg_mouse;
@@ -22,18 +23,27 @@ void ta_mouse_toggle_capture()
     SDL_SetRelativeMouseMode(tg_mouse.captured);
 }
 
+static void mouse_update_button(ta_button_state *button_state, bool down)
+{
+    bool old_down = button_state->down;
+    button_state->down = down;
+    button_state->changed = button_state->down != old_down;
+    if (button_state->changed) {
+        button_state->last_change_ms = ta_timer_elapsed_ms();
+    }
+}
+
 void ta_mouse_events()
 {
     int dx, dy;
     u32 buttons = SDL_GetRelativeMouseState(&dx, &dy);
-    tg_mouse.left   = (buttons & SDL_BUTTON_LMASK) > 0;
-    tg_mouse.middle = (buttons & SDL_BUTTON_MMASK) > 0;
-    tg_mouse.right  = (buttons & SDL_BUTTON_RMASK) > 0;
+    mouse_update_button(&tg_mouse.left,   (buttons & SDL_BUTTON_LMASK) > 0);
+    mouse_update_button(&tg_mouse.middle, (buttons & SDL_BUTTON_MMASK) > 0);
+    mouse_update_button(&tg_mouse.right,  (buttons & SDL_BUTTON_RMASK) > 0);
 
     // Mouse move events
     if (dx || dy) {
-        tg_mouse.x += dx;
-        tg_mouse.y += dy;
+        SDL_GetMouseState(&tg_mouse.x, &tg_mouse.y);
 
         ta_event mouse_move_evt = { 0 };
         mouse_move_evt.type = TA_EVENT_GLOBAL_MOUSE_MOVE;
@@ -42,6 +52,8 @@ void ta_mouse_events()
         ta_event_push(&mouse_move_evt);
     }
 
+    // TODO (cleanup): Is this necessary on top of TA_SCANCODE_MOUSE_LEFT?
+#if 0
     // Mouse click events
     if (tg_mouse.left || tg_mouse.middle || tg_mouse.right) {
 
@@ -52,4 +64,5 @@ void ta_mouse_events()
         mouse_move_evt.data.mouse_click.right = tg_mouse.right;
         ta_event_push(&mouse_move_evt);
     }
+#endif
 }

@@ -1,33 +1,30 @@
 #include "ta_viewport.h"
 #include "ta_window.h"
+#include "ta_mouse.h"
 #include "misc/gl3w.h"
 
-ta_viewport ta_viewport_init(int left, int top, int width, int height,
-	ta_rgba background, ta_camera *camera)
+ta_viewport ta_viewport_init(ta_size size, ta_rgba background)
 {
 	ta_viewport view;
-	view.rect.x = left;
-	view.rect.y = top;
-	view.rect.w = width;
-	view.rect.h = height;
+	view.size = size;
 	view.background = background;
-    view.camera = camera;
 	return view;
 }
 
 // TODO: Push previously bound viewport onto stack if we want to enable nested
 //       viewports.
-void ta_viewport_bind(ta_viewport *view, bool stretch_to_fit)
+void ta_viewport_bind(ta_viewport *view, ta_vec2i position, bool relative)
 {
-    int inv_y = tg_window.rect.h - (view->rect.y + view->rect.h);
-	if (stretch_to_fit) {
-		glViewport(view->rect.x, inv_y, view->rect.w, view->rect.h);
+    int inv_y = tg_window.rect.h - (position.y + view->size.h);
+	if (relative) {
+		glViewport(position.x, inv_y, view->size.w, view->size.h);
 	}
 	glEnable(GL_SCISSOR_TEST);
-	glScissor(view->rect.x, inv_y, view->rect.w, view->rect.h);
+	glScissor(position.x, inv_y, view->size.w, view->size.h);
 	glClearColor(view->background.r, view->background.g, view->background.b,
 		view->background.a);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 }
 
 void ta_viewport_unbind()

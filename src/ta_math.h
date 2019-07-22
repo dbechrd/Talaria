@@ -9,6 +9,9 @@
 #define DEG_TO_RADF(deg) deg * (float)M_PI / 180.0f
 #define RAD_TO_DEGF(rad) rad * 180.0f / (float)M_PI
 
+#define TA_SIZE(w, h) (ta_size){ w, h }
+#define TA_POSITION(x, y) (ta_vec2i){ x, y }
+
 typedef struct ta_vec2 {
     float x;
     float y;
@@ -126,6 +129,10 @@ extern const ta_rgba TA_COLOR_GRAY8;
 extern const ta_rgba TA_COLOR_GRAY9;
 extern const ta_rgba TA_COLOR_WHITE;
 extern const ta_rgba TA_COLOR_WHITE_ALPHA;
+
+extern const ta_size TA_SIZE_ZERO;
+
+extern const ta_vec2i TA_POSITION_ZERO;
 
 //int clamp(int d, int min, int max);
 float clampf(float f, float min, float max);

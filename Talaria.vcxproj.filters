@@ -205,6 +205,9 @@
     <ClInclude Include="src\ta_collider.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\ta_button_state.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />

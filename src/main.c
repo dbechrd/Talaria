@@ -6,9 +6,6 @@
 #include "ta_file.h"
 #include "ta_scene.h"
 #include "ta_shader.h"
-//#include "ta_shader_lines.h"
-//#include "ta_shader_quads.h"
-//#include "ta_shader_mesh.h"
 #include "ta_ui_scrollview.h"
 #include "ta_ui_barchart.h"
 #include "ta_texture.h"
@@ -134,21 +131,20 @@ int main(int argc, char *argv[])
     minimap_camera.up = VEC3_NZ;
     minimap_camera.ortho = true;
     ta_camera_init(&minimap_camera);
-	ta_viewport minimap_viewport = ta_viewport_init(10, 50, 200, 200,
-        (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f }, &minimap_camera);
+	ta_viewport minimap_viewport = ta_viewport_init(TA_SIZE(200, 200),
+        (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f });
 
     ta_texture *tex_test =
-        ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("DEFAULT_TEXTURE_ALBEDO"));
+        ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_albedo"));
     DLB_ASSERT(tex_test && tex_test->gl_id && "Could not find DEFAULT_TEXTURE_ALBEDO");
 
 	// TODO: Remove x,y coords from init() methods and only store size. Pass x,y
 	//       at render time (make sure to update viewport correctly).
-	ta_ui_image *ui_image = ta_ui_image_init(0, 0, 0, 0, tex_test);
-	ta_ui_scrollview *view = ta_ui_scrollview_init(420, 50, 400, 300,
-		(ta_ui_base *)ui_image);
+    ta_ui_control *ui_image = ta_ui_create_image(TA_SIZE(100, 100), tex_test);
+    ta_ui_control *ui_scrollview = ta_ui_create_scrollview(TA_SIZE(800, 800), ui_image);
+    UNUSED(ui_scrollview);
 
 	ta_ui_barchart chart = ta_ui_barchart_init(10, 10, tg_window.rect.w - 20, 30);
-    UNUSED(view);
     UNUSED(chart);
 
     //ta_shader_set_sampler2d(tg_shader_mesh, SYM_U_TEX0, tex_test->gl_id);
@@ -283,7 +279,7 @@ int main(int argc, char *argv[])
 
 #if 0
         // Minimap
-		ta_viewport_bind(&minimap_viewport, true);
+		ta_viewport_bind(&minimap_viewport, TA_POSITION(10, 50), true);
 		{
 			// TODO: Mesh selector, highlight and rotate mesh while mouse hover
 			//ta_mat4 model = mat4_rotate_y(model_deg);
@@ -293,7 +289,7 @@ int main(int argc, char *argv[])
 			//}
 
 			// Draw models
-            ta_scene_render(tg_game.scene, minimap_viewport.camera, sim_alpha);
+            ta_scene_render(tg_game.scene, &minimap_camera, sim_alpha);
 
             ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
             ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
@@ -335,12 +331,12 @@ int main(int argc, char *argv[])
         ta_primitive_clear();
 #endif
 
-#if 1
-        // Scroll view
-		ta_ui_scrollview_draw(0, 0, view);
-        ta_primitive_render();
-        ta_primitive_clear(true);
-#endif
+        if (!tg_mouse.captured) {
+            // Scroll view
+		    ta_ui_draw(ui_scrollview, tg_window.rect, TA_POSITION(20, 20));
+            ta_primitive_render();
+            ta_primitive_clear(true);
+        }
 
         ta_ui_clear();
 

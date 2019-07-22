@@ -197,6 +197,7 @@
   <ItemGroup>
     <ClInclude Include="src\ta_audio.h" />
     <ClInclude Include="src\ta_button.h" />
+    <ClInclude Include="src\ta_button_state.h" />
     <ClInclude Include="src\ta_collider.h" />
     <ClInclude Include="src\ta_light.h" />
     <ClInclude Include="src\ta_rigid_body.h" />

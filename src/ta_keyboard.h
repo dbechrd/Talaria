@@ -1,5 +1,6 @@
  #pragma once
 #include "ta_event.h"
+#include "ta_button_state.h"
 
 // Keybind trigger flags
 enum {
@@ -14,9 +15,7 @@ typedef struct ta_keybind {
     ta_event_type event_type;
     u32 triggers;
     ta_key keys[3];
-    bool down;              // all keys are currently down
-    bool changed;           // state changed since last frame
-    double last_change_ms;  // time of last state change in milliseconds
+    ta_button_state button_state;
 } ta_keybind;
 
 #if 0
@@ -37,7 +36,6 @@ void ta_keybind_bind2(enum ta_game_state state_type, ta_event_type event_type,
     u32 triggers, ta_key key1, ta_key key2);
 void ta_keybind_bind3(enum ta_game_state state_type, ta_event_type event_type,
     u32 triggers, ta_key key1, ta_key key2, ta_key key3);
-void ta_keybind_update(ta_keybind *keybind);
 bool ta_keybind_down(ta_keybind *keybind);
 bool ta_keybind_pressed(ta_keybind *keybind);
 bool ta_keybind_released(ta_keybind *keybind);
