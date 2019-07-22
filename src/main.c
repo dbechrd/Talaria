@@ -132,16 +132,6 @@ int main(int argc, char *argv[])
     minimap_camera.ortho = true;
     ta_camera_init(&minimap_camera);
 
-    ta_texture *tex_test =
-        ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_albedo"));
-    DLB_ASSERT(tex_test && tex_test->gl_id && "Could not find DEFAULT_TEXTURE_ALBEDO");
-
-	// TODO: Remove x,y coords from init() methods and only store size. Pass x,y
-	//       at render time (make sure to update viewport correctly).
-    ta_ui_control *ui_image = ta_ui_create_image(TA_SIZE(100, 100), tex_test);
-    ta_ui_control *ui_scrollview = ta_ui_create_scrollview(TA_SIZE(800, 800), ui_image);
-    UNUSED(ui_scrollview);
-
 	ta_ui_barchart chart = ta_ui_barchart_init(10, 10, tg_window.rect.w - 20, 30);
     UNUSED(chart);
 
@@ -332,13 +322,8 @@ int main(int argc, char *argv[])
 #endif
 
         if (!tg_mouse.captured) {
-            // Scroll view
-		    ta_ui_draw(ui_scrollview, TA_POSITION(20, 20));
-            ta_primitive_render();
-            ta_primitive_clear(true);
+            ta_ui_test();
         }
-
-        ta_ui_clear();
 
         // TODO: Print frame time on the screen once we have text rendering
         //double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
