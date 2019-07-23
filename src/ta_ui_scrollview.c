@@ -9,66 +9,100 @@
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
 
-#define CONTENT_PAD 4
+#define ROW_PAD_LEFT 4
+#define ROW_PAD_RIGHT 0
+#define ROW_PAD_TOP 4
 #define WIDGET_PAD 1
 #define SCROLL_SPEED 20
 
-static ta_vec2i cur_pos;
+static ta_vec2i row_start;
+static ta_vec2i row_current;
+static int row_max_height;
+static bool row_first;
+static bool row_continue;
 
-#define UI_COLOR_CONTROL_NONE  (ta_rgba){ 0.5f, 0.5f, 0.5f, 1.0f }; //TA_COLOR_GRAY2
-#define UI_COLOR_CONTROL_HOVER (ta_rgba){ 1.0f, 1.0f, 0.0f, 1.0f }; //TA_COLOR_YELLOW
-#define UI_COLOR_CONTROL_CLICK (ta_rgba){ 1.0f, 0.0f, 0.0f, 1.0f }; //TA_COLOR_RED
+#define UI_COLOR_CONTROL_NONE  (ta_rgba){ 0.5f, 0.5f, 0.5f, 1.0f } //TA_COLOR_GRAY2
+#define UI_COLOR_CONTROL_HOVER (ta_rgba){ 1.0f, 1.0f, 0.0f, 1.0f } //TA_COLOR_YELLOW
+#define UI_COLOR_CONTROL_CLICK (ta_rgba){ 1.0f, 0.0f, 0.0f, 1.0f } //TA_COLOR_RED
 
-static void ui_before(ta_size *size)
+static void ui_before(ta_size *size, bool block)
 {
+    if (block) {
+        if (row_first) {
+            row_first = false;
+        }
+        if (row_continue) {
+            row_current.x += size->w;
+            row_continue = false;
+        } else {
+            row_start.y += row_max_height;
+            row_current = row_start;
+            row_max_height = 0;
+            row_first = true;
+        }
+        row_max_height = MAX(row_max_height, size->h);
+    }
+    glDisable(GL_SCISSOR_TEST);
+
+    ////////////////////////////////////////////////////////////////////////
+
+    // Background
     ta_rect rect = { 0 };
-    rect.x = cur_pos.x;
-    rect.y = cur_pos.y;
+    rect.x = row_current.x;
+    rect.y = row_current.y;
     rect.w = size->w;
     rect.h = size->h;
 
-    ta_rgba bg_color = UI_COLOR_CONTROL_NONE;
-
+    ta_rgba bg_color = block ? UI_COLOR_CONTROL_NONE : TA_COLOR_RED;
     if (tg_mouse.x >= rect.x && tg_mouse.x < rect.x + rect.w &&
         tg_mouse.y >= rect.y && tg_mouse.y < rect.y + rect.w)
     {
-        bg_color = UI_COLOR_CONTROL_HOVER;
+        bg_color = block ? UI_COLOR_CONTROL_HOVER : TA_COLOR_GREEN;
         if (ta_button_state_down(&tg_mouse.left)) {
-            bg_color = UI_COLOR_CONTROL_CLICK;
+            bg_color = block ? UI_COLOR_CONTROL_CLICK : TA_COLOR_BLUE;
         }
     }
 
-    // Background color
     ta_primitive_push_rect(rect, bg_color);
     ta_primitive_render();
     ta_primitive_clear(true);
 
-    cur_pos.x += CONTENT_PAD;
-    cur_pos.y += CONTENT_PAD;
-
+    // Content
     ta_rect content_rect = { 0 };
-    content_rect.x = cur_pos.x;
-    content_rect.y = cur_pos.y - 0; //sv->scrollbar_y.widget.offset;
-    content_rect.w = rect.w - CONTENT_PAD * 2;
-    content_rect.h = rect.h - CONTENT_PAD * 2;
-
+    content_rect.x = row_current.x + ROW_PAD_LEFT;
+    content_rect.y = row_current.y + ROW_PAD_TOP - 0; //sv->scrollbar_y.widget.offset;
+    content_rect.w = rect.w - ROW_PAD_LEFT * 2;
+    content_rect.h = rect.h - ROW_PAD_TOP * 2;
     glEnable(GL_SCISSOR_TEST);
     int inv_y = tg_window.rect.h - (content_rect.y + content_rect.h);
     glScissor(content_rect.x, inv_y, content_rect.w, content_rect.h);
-    //glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-static void ui_after()
+static void ui_after(ta_size *size, bool block)
 {
-    //glClear(GL_DEPTH_BUFFER_BIT);
+    if (block) {
+        if (row_continue) {
+            row_current.x += size->w;
+            row_continue = false;
+        } else {
+            row_current.x = row_start.x;
+            row_current.y = row_start.y + row_max_height;
+            row_start = row_current;
+            row_first = true;
+        }
+    }
     glDisable(GL_SCISSOR_TEST);
 }
 
 void ta_ui_window_begin(ta_vec2i *pos, ta_size *size, int *scroll_v)
 {
-    cur_pos = *pos;
-    ui_before(size);
+    row_start = *pos;
+    row_current = *pos;
+    row_max_height = 0;
+    row_first = true;
+    row_continue = false;
 
+    ui_before(size, false);
     UNUSED(scroll_v);
 
 #if 0
@@ -105,36 +139,29 @@ void ta_ui_window_begin(ta_vec2i *pos, ta_size *size, int *scroll_v)
         bar->visible = true;
     }
 #endif
-
-    ui_after();
 }
 
-void ta_ui_image(int w, int h, ta_texture *tex)
+void ta_ui_sameline()
 {
-    ta_vec2i old_pos = cur_pos;
-    ta_size size;
-    size.w = w;
-    size.h = h;
-    ui_before(&size);
+    row_continue = true;
+}
 
+void ta_ui_image(ta_size *size, ta_texture *tex)
+{
+    ui_before(size, true);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex->gl_id);
     ta_rect img_rect;
-    img_rect.x = cur_pos.x;
-    img_rect.y = cur_pos.y;
+    img_rect.x = row_current.x;
+    img_rect.y = row_current.y;
     img_rect.w = tex->width;
     img_rect.h = tex->height;
     ta_primitive_push_rect(img_rect, TA_COLOR_INVIS);
     ta_primitive_render();
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
     ta_primitive_clear(true);
-
-    cur_pos.x = old_pos.x;
-    cur_pos.y += size.h;
-
-    ui_after();
 }
 
 void ta_ui_window_end()
@@ -154,9 +181,6 @@ void ta_ui_window_end()
             widget_color);
     }
 #endif
-
-    cur_pos.x = 0;
-    cur_pos.y = 0;
 }
 
 void ta_ui_test()
@@ -176,10 +200,12 @@ void ta_ui_test()
     //       at render time (make sure to update viewport correctly).
     ta_ui_window_begin(&ui_window_pos, &ui_window_size, 0);
     //ta_ui_next_size(50, 50);  // TODO: Implement this? Auto-size otherwise
-    ta_ui_image(50, 50, tex_test);
-    ta_ui_image(50, 50, tex_test);
+    ta_ui_image(&TA_SIZE(100, 100), tex_test);
+    ta_ui_sameline();
+    ta_ui_image(&TA_SIZE(100, 100), tex_test);
     ta_ui_window_end();
 
+    glDisable(GL_SCISSOR_TEST);
     glEnable(GL_DEPTH_TEST);
 
 #if 0
