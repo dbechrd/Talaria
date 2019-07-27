@@ -90,15 +90,15 @@ static ui_frame *ui_container()
     return frame;
 }
 
-static void ui_pop(ui_frame *control)
+static void ui_pop(int index)
 {
     DLB_ASSERT(dlb_vec_len(ui_frames));
     ui_frame *frame = dlb_vec_last(ui_frames);
-    while (frame != ui_frames && frame != control) {
+    while (frame != ui_frames && frame->index != index) {
         dlb_vec_popz(ui_frames);
         frame--;
     }
-    DLB_ASSERT(frame == control);
+    DLB_ASSERT(frame->index == index);
     dlb_vec_popz(ui_frames);
 }
 
@@ -133,19 +133,21 @@ static control_state *ui_before(ui_frame *control)
         }
     }
 
-    ta_primitive_push_rect(rect, bg_color);
-    ta_primitive_render();
-    ta_primitive_clear(true);
+    if (!type_is_container(control->type)) {
+        ta_primitive_push_rect(rect, bg_color);
+        ta_primitive_render();
+        ta_primitive_clear(true);
+    }
 
     // Content
-    ta_rect content_rect = { 0 };
-    content_rect.x = control->offset.x + ROW_PAD_LEFT;
-    content_rect.y = control->offset.y + ROW_PAD_TOP - 0; //sv->scrollbar_y.widget.offset;
-    content_rect.w = rect.w - ROW_PAD_LEFT * 2;
-    content_rect.h = rect.h - ROW_PAD_TOP * 2;
+    ta_rect clip_rect = { 0 };
+    clip_rect.x = control->offset.x + ROW_PAD_LEFT;
+    clip_rect.y = control->offset.y + ROW_PAD_TOP - 0; //sv->scrollbar_y.widget.offset;
+    clip_rect.w = rect.w - ROW_PAD_LEFT * 2;
+    clip_rect.h = rect.h - ROW_PAD_TOP * 2;
     glEnable(GL_SCISSOR_TEST);
-    int inv_y = tg_window.rect.h - (content_rect.y + content_rect.h);
-    glScissor(content_rect.x, inv_y, content_rect.w, content_rect.h);
+    int inv_y = tg_window.rect.h - (clip_rect.y + clip_rect.h);
+    glScissor(clip_rect.x, inv_y, clip_rect.w, clip_rect.h);
 
     return &last_control_state;
 }
@@ -213,7 +215,7 @@ void ta_ui_window_begin(ta_vec2i *pos, ta_size *size, int *scroll_v)
 #endif
 }
 
-void ta_ui_panel_begin(ta_size *size, ui_frame **panel)
+void ta_ui_panel_begin(ta_size *size, int *index)
 {
     ui_frame *container = ui_container();
     ui_frame *frame = dlb_vec_alloc(ui_frames);
@@ -227,12 +229,12 @@ void ta_ui_panel_begin(ta_size *size, ui_frame **panel)
     //frame->row_continue = false;
     ui_before(frame);
 
-    if (panel) *panel = frame;
+    if (index) *index = frame->index;
 }
 
-void ta_ui_panel_end(ui_frame *panel)
+void ta_ui_panel_end(int index)
 {
-    ui_pop(panel);
+    ui_pop(index);
 }
 
 void ta_ui_row_end();
@@ -318,29 +320,29 @@ void ta_ui_window_end()
 
 void ui_4x4_grid(ta_texture *tex)
 {
-    ui_frame *panel = 0;
-    ta_ui_panel_begin(&TA_SIZE(240, 240), &panel);
-    DLB_ASSERT(panel);
+    int index = -1;
+    ta_ui_panel_begin(&TA_SIZE(240, 240), &index);
+    DLB_ASSERT(index >= 0);
 
-    for (int r = 0; r < 2; r++) {
+    for (int r = 0; r < 4; r++) {
         ta_ui_row_start();
-        //ta_ui_pad(&TA_SIZE(0, 2));
-        for (int c = 0; c < 2; c++) {
-            //ta_ui_pad(&TA_SIZE(2, 0));
-            ta_ui_image(&TA_SIZE(50, 50), tex);
+        for (int c = 0; c < 4; c++) {
+            ta_ui_pad(&TA_SIZE(4, 0));
+            ta_ui_image(&TA_SIZE(80, 80), tex);
         }
         //ta_ui_row_end();
+        ta_ui_pad(&TA_SIZE(0, 4));
     }
-    //ta_ui_pad(&TA_SIZE(0, 2));
-    ta_ui_panel_end(panel);
+    ta_ui_pad(&TA_SIZE(0, 4));
+    ta_ui_panel_end(index);
 }
 
 void ta_ui_test()
 {
     glDisable(GL_DEPTH_TEST);
 
-    static ta_vec2i ui_window_pos = { 20, 20 };
-    static ta_size ui_window_size = { 400, 400 };
+    static ta_vec2i ui_window_pos = { 10, 10 };
+    static ta_size ui_window_size = { 300, 400 };
 
     static ta_texture *tex_test = 0;
     if (!tex_test) {
@@ -359,13 +361,14 @@ void ta_ui_test()
     ui_4x4_grid(tex_test);
     //ta_ui_row_end();
 #else
-    static bool show_grid[4] = { 0 };
-    for (int i = 0; i < ARRAY_COUNT(show_grid); i++) {
+    static int selected_index = -1;
+    for (int i = 0; i < 4; i++) {
         ta_ui_row_start();
+        ta_ui_pad(&TA_SIZE(4, 4));
         if (ta_ui_image(&TA_SIZE(50, 50), tex_test)->pressed) {
-            show_grid[i] = !show_grid[i];
+            selected_index = i == selected_index ? -1 : i;
         }
-        if (show_grid[i]) {
+        if (i == selected_index) {
             ui_4x4_grid(tex_test);
         }
     }
