@@ -132,7 +132,7 @@ extern const ta_rgba TA_COLOR_WHITE_ALPHA;
 
 extern const ta_size TA_SIZE_ZERO;
 
-extern const ta_vec2i TA_POSITION_ZERO;
+extern const ta_vec2i TA_VEC2I_ZERO;
 
 //int clamp(int d, int min, int max);
 float clampf(float f, float min, float max);

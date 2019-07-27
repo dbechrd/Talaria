@@ -50,7 +50,7 @@ const ta_rgba TA_COLOR_WHITE   = { 1.0f, 1.0f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_WHITE_ALPHA = { 1.0f, 1.0f, 1.0f, 0.5f };
 
 const ta_size TA_SIZE_ZERO = { 0, 0 };
-const ta_vec2i TA_POSITION_ZERO = { 0, 0 };
+const ta_vec2i TA_VEC2I_ZERO = { 0, 0 };
 
 #if 0
 int clamp(int d, int min, int max)
