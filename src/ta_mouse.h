@@ -5,18 +5,18 @@
 #define TA_SDL_NUM_SCANCODES 512
 
 enum {
-    TA_SCANCODE_MOUSE_LEFT = TA_SDL_NUM_SCANCODES,
-    TA_SCANCODE_MOUSE_MIDDLE,
-    TA_SCANCODE_MOUSE_RIGHT,
+    SDL_SCANCODE_MOUSE_LEFT = TA_SDL_NUM_SCANCODES,
+    SDL_SCANCODE_MOUSE_MIDDLE,
+    SDL_SCANCODE_MOUSE_RIGHT,
     TA_SCANCODE_COUNT
 };
 
 typedef struct ta_mouse {
     int x;
     int y;
-    ta_button_state left;
-    ta_button_state middle;
-    ta_button_state right;
+    ta_key_state left;
+    ta_key_state middle;
+    ta_key_state right;
     bool captured;
 } ta_mouse;
 

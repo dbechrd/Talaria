@@ -91,6 +91,10 @@ int main(int argc, char *argv[])
 		ta_scene_find(tg_game.scene, TA_CAMERA, INTERN("cam_freecam"));
     tg_game.player =
 		ta_scene_find(tg_game.scene, TA_NODE, INTERN("node_player"));
+    tg_game.player_ammo_max = 20;
+    tg_game.player_ammo = tg_game.player_ammo_max;
+    tg_game.player_clip_max = 8;
+    tg_game.player_clip = MIN(tg_game.player_clip_max, tg_game.player_ammo);
     ta_game_state_set(TA_GAME_STATE_FREE_CAM);
 
     // Ensure we have a valid camera, player and light
@@ -159,7 +163,7 @@ int main(int argc, char *argv[])
     double ms_frame_prev = ms_frame_first;
     double ms_frame_accum = 0;
 
-    float light_alpha = 0.98f;
+    float light_deg = 0;
 
     while (tg_game.state != TA_GAME_STATE_QUIT) {
         double ms_frame_start = ta_timer_elapsed_ms();
@@ -194,6 +198,12 @@ int main(int argc, char *argv[])
                 vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
             ta_camera_update(tg_game.camera_player, sim_dt);
 
+            light_deg += 0.005f;
+            if (light_deg >= 360.0f) light_deg = 0.0f;
+
+            tg_game.lights[1].position.x = cosf(light_deg) * 4.0f;
+            tg_game.lights[1].position.z = sinf(light_deg) * 4.0f;
+
             // HACK: Make point light follow player camera
             //tg_game.lights[1]->position = tg_game.camera_player->position;
             // HACK: Make point light follow camera
@@ -201,8 +211,6 @@ int main(int argc, char *argv[])
             //    tg_game.camera_freecam->position,
             //    tg_game.camera_freecam->front
             //);
-            tg_game.lights[1].intensity = tg_game.lights[1].intensity *
-                light_alpha + ((float)rand() / RAND_MAX) * (1.0f - light_alpha);
 
             // Update main camera
             ta_camera_update(tg_game.camera_freecam, sim_dt);
@@ -323,6 +331,9 @@ int main(int argc, char *argv[])
 
         if (!tg_mouse.captured) {
             ta_ui_test();
+        }
+        if (tg_mouse.captured) {
+            ta_ui_hud();
         }
 
         // TODO: Print frame time on the screen once we have text rendering

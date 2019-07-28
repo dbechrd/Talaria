@@ -40,18 +40,25 @@ ta_light:
   directional:
     direction: { x: -0.2, y: -1.0, z: 1.0 }
 ta_light:
-  uid: "light_point_1"
+  uid: "light_point_room2"
   disabled: false
-  intensity: 1.0
-  position: { x: 3.0, y: 3.0, z: 3.0 }
+  intensity: 0.5
+  position: { x: 3.0, y: 4.0, z: 3.0 }
   color:    { r: 1.0, g: 1.0, b: 0.4 }
   type: 2  # TA_LIGHT_POINT
 ta_light:
-  uid: "light_point_2"
+  uid: "light_point_attic"
   disabled: false
   intensity: 1.0
   position: { x: 3.0, y: 12.0, z: 3.0 }
   color:    { r: 1.0, g: 1.0, b: 0.4 }
+  type: 2  # TA_LIGHT_POINT
+ta_light:
+  uid: "light_point_room3"
+  disabled: false
+  intensity: 2.0
+  position: { x: 5.0, y: 4.0, z: -28.0 }
+  color:    { r: 0.2, g: 0.2, b: 1.0 }
   type: 2  # TA_LIGHT_POINT
 
 #-------------------------------------------------------------------------------
@@ -100,21 +107,14 @@ ta_mesh_group:
   path: "data/mesh/letter_r.obj"
 
 #-------------------------------------------------------------------------------
-# Ambient sounds
+# Music / ambience
 #-------------------------------------------------------------------------------
 ta_audio_buffer:
   uid: "mus_wakeup"
   path: "data/ambient/wakeup.raw"
-ta_audio_source:
-  uid: "src_mus_wakeup"
-  audio_buffer_uid: "mus_wakeup"
-
 ta_audio_buffer:
   uid: "mus_genesis"
   path: "data/ambient/genesis.raw"
-ta_audio_source:
-  uid: "src_mus_genesis"
-  audio_buffer_uid: "mus_genesis"
 
 #-------------------------------------------------------------------------------
 # Sound effects
@@ -125,8 +125,37 @@ ta_audio_buffer:
 ta_audio_buffer:
   uid: "sfx_button_deactivated"
   path: "data/sfx/button_deactivated.raw"
+ta_audio_buffer:
+  uid: "sfx_cock"
+  path: "data/sfx/cock.raw"
+ta_audio_buffer:
+  uid: "sfx_gunshot"
+  path: "data/sfx/gunshot.raw"
+ta_audio_buffer:
+  uid: "sfx_oh_no"
+  path: "data/sfx/oh_no.raw"
+ta_audio_buffer:
+  uid: "sfx_explosion"
+  path: "data/sfx/explosion.raw"
+
+#-------------------------------------------------------------------------------
+# Audio sources
+#-------------------------------------------------------------------------------
+ta_audio_source:
+  uid: "src_mus_wakeup"
+  audio_buffer_uid: "mus_wakeup"
+ta_audio_source:
+  uid: "src_mus_genesis"
+  audio_buffer_uid: "mus_genesis"
 ta_audio_source:
   uid: "src_button_0001"
+ta_audio_source:
+  uid: "src_gun"
+ta_audio_source:
+  uid: "src_player"
+ta_audio_source:
+  uid: "src_explosion"
+  audio_buffer_uid: "sfx_explosion"
 
 #-------------------------------------------------------------------------------
 # Entities
@@ -194,6 +223,10 @@ ta_rigid_body:
   mass: 1.0
   position: { x: 0.0, y: 0.0, z: 0.0 }
   trigger: true
+  collider:
+    type: 1  # TA_COLLIDER_SPHERE
+      sphere:
+        radius: 0.7
 ta_button:
   uid: "button_0001"
   audio_source_uid: "src_button_0001"
@@ -224,6 +257,11 @@ ta_node:
   uid: "node_player"
   mesh_group_uid: "mesh_group_prim_cube"
   rigid_body_uid: "rb_node_player"
+  # TODO: Make player it's own class like button and handle dialogue in there
+  #audio_source_uid: "src_player"
+  #dialogue_uids: [
+  #  "sfx_oh_no"
+  #]
   cast_shadows: true
 
 ta_rigid_body:
@@ -258,7 +296,7 @@ ta_node:
   uid: "shadow_test_1"
   mesh_group_uid: "mesh_group_letter_r"
   transform:
-    position: { x: 3.5, y: 2.8, z: 3.0 }
+    position: { x: 4.5, y: 4.0, z: 0.0 }
     orientation: { x: 0.0, y: -1.0, z: 0.0, w: 1.0 }
   cast_shadows: true
 

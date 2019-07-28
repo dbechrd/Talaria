@@ -15,7 +15,7 @@ typedef struct ta_keybind {
     ta_event_type event_type;
     u32 triggers;
     ta_key keys[3];
-    ta_button_state button_state;
+    ta_key_state key_state;
 } ta_keybind;
 
 #if 0

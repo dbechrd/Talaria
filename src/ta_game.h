@@ -22,6 +22,10 @@ typedef struct ta_game {
     ta_camera *camera_player;
     ta_camera *camera_freecam;
     ta_node *player;
+    int player_ammo_max;
+    int player_ammo;
+    int player_clip_max;
+    int player_clip;
 } ta_game;
 
 extern ta_game tg_game;

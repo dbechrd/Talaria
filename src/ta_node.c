@@ -121,14 +121,6 @@ bool ta_node_intersect(ta_node *a, ta_node *b, ta_manifold *manifold)
 }
 #endif
 
-#if 0
-typedef void (entity_updater)(ta_node *base);
-
-static entity_updater *entity_updaters[TA_ENT_COUNT] = {
-    [TA_ENT_BUTTON] = &ta_ent_button_update
-};
-#endif
-
 void ta_node_update(ta_node *node)
 {
     node->transform_prev = node->transform;
@@ -137,11 +129,7 @@ void ta_node_update(ta_node *node)
         node->transform.position = body->position;
         node->transform.orientation = body->orientation;
     }
-#if 0
-    if (entity_updaters[node->type]) {
-        entity_updaters[node->type](node);
-    }
-#endif
+    if (node->button_uid) ta_button_update(node);
 }
 
 static void ta_node_push_aabb(ta_node *node, ta_rgba color)

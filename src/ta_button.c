@@ -8,7 +8,8 @@ void ta_button_init(ta_button *button)
     UNUSED(button);
 }
 
-ta_audio_source *ta_button_audio_source(ta_button *button) {
+ta_audio_source *ta_button_audio_source(ta_button *button)
+{
     if (!button->audio_source_uid) return 0;
 
     // NOTE: This could cache in button->audio_source
@@ -16,7 +17,8 @@ ta_audio_source *ta_button_audio_source(ta_button *button) {
         TA_AUDIO_SOURCE, button->audio_source_uid);
     return audio_source;
 }
-ta_audio_buffer *ta_button_sfx_activated(ta_button *button) {
+ta_audio_buffer *ta_button_sfx_activated(ta_button *button)
+{
     if (!button->sfx_activated_uid) return 0;
 
     // NOTE: This could cache in button->sfx_activated_buffer
@@ -24,7 +26,8 @@ ta_audio_buffer *ta_button_sfx_activated(ta_button *button) {
         TA_AUDIO_BUFFER, button->sfx_activated_uid);
     return audio_buffer;
 }
-ta_audio_buffer *ta_button_sfx_active(ta_button *button) {
+ta_audio_buffer *ta_button_sfx_active(ta_button *button)
+{
     if (!button->sfx_active_uid) return 0;
 
     // NOTE: This could cache in button->sfx_active_buffer
@@ -32,7 +35,8 @@ ta_audio_buffer *ta_button_sfx_active(ta_button *button) {
         TA_AUDIO_BUFFER, button->sfx_active_uid);
     return audio_buffer;
 }
-ta_audio_buffer *ta_button_sfx_deactivated(ta_button *button) {
+ta_audio_buffer *ta_button_sfx_deactivated(ta_button *button)
+{
     if (!button->sfx_deactivated_uid) return 0;
 
     // NOTE: This could cache in button->sfx_deactivated_buffer
@@ -41,23 +45,27 @@ ta_audio_buffer *ta_button_sfx_deactivated(ta_button *button) {
     return audio_buffer;
 }
 
-static bool button_activated(ta_button *button) {
+static bool button_activated(ta_button *button)
+{
     bool activated =
         button->state == TA_BUTTON_ACTIVE &&
         button->state_prev == TA_BUTTON_INACTIVE;
     return activated;
 }
-static bool button_active(ta_button *button) {
+static bool button_active(ta_button *button)
+{
     bool active = button->state == TA_BUTTON_ACTIVE;
     return active;
 }
-static bool button_deactivated(ta_button *button) {
+static bool button_deactivated(ta_button *button)
+{
     bool deactivated =
         button->state == TA_BUTTON_INACTIVE &&
         button->state_prev == TA_BUTTON_ACTIVE;
     return deactivated;
 }
-void ta_button_update(ta_button *button) {
+void ta_button_update(ta_node *node)
+{
     // TODO: Trigger event type = EVENT_BUTTON_ACTIVATED with uid = button.uid
     //       and have audio_buffer's play event subscribe to the button event
     //       Another example would be having a light subscribe to this event.
@@ -66,7 +74,10 @@ void ta_button_update(ta_button *button) {
     //       EVENT_BUTTON_DEACTIVATED
     //       EVENT_BUTTON_STATE_CHANGED
 
-    ta_rigid_body *button_body = 0; //TODO: ta_node_rigid_body(base);
+    ta_button *button = ta_scene_find(tg_game.scene, TA_BUTTON, node->button_uid);
+    DLB_ASSERT(button);
+
+    ta_rigid_body *button_body = ta_node_rigid_body(node);
     ta_rigid_body *player_body = ta_node_rigid_body(tg_game.player);
 
     button->state_prev = button->state;
@@ -78,7 +89,7 @@ void ta_button_update(ta_button *button) {
 
     if (button_activated(button)) {
         ta_event event = { 0 };
-        event.data.button.button = button;
+        event.data.button.button_uid = button->uid.uid;
 
         event.type = TA_EVENT_GAME_BUTTON_ACTIVATED;
         ta_event_push(&event);
@@ -88,7 +99,7 @@ void ta_button_update(ta_button *button) {
 
     if (button_deactivated(button)) {
         ta_event event = { 0 };
-        event.data.button.button = button;
+        event.data.button.button_uid = button->uid.uid;
 
         event.type = TA_EVENT_GAME_BUTTON_DEACTIVATED;
         ta_event_push(&event);

@@ -7,6 +7,7 @@
 #include "AL/alc.h"
 
 #define TA_AUDIO_SAMPLE_RATE 44100
+#define TA_AUDIO_SAMPLES_PER_MS (TA_AUDIO_SAMPLE_RATE / 1000.0)
 
 void ta_audio_listener_init(ta_audio_listener *listener)
 {
@@ -118,7 +119,6 @@ void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, ta_buffer *samples)
     DLB_ASSERT(!buffer->samples);
     buffer->samples = samples;
 }
-
 #include <math.h>
 void ta_audio_buffer_load(ta_audio_buffer *buffer)
 {
@@ -151,6 +151,12 @@ void ta_audio_buffer_load(ta_audio_buffer *buffer)
     alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, buffer->samples->data,
         buffer->samples->length - 1, TA_AUDIO_SAMPLE_RATE);
 #endif
+}
+double ta_audio_buffer_duration_ms(ta_audio_buffer *buffer)
+{
+    DLB_ASSERT(buffer->samples);
+    double duration_ms = buffer->samples->length / TA_AUDIO_SAMPLES_PER_MS;
+    return duration_ms;
 }
 void ta_audio_buffer_free(ta_audio_buffer *buffer)
 {
@@ -204,18 +210,25 @@ void ta_audio_source_set_gain(ta_audio_source *source, float gain)
 }
 void ta_audio_source_set_buffer(ta_audio_source *source, ta_audio_buffer *buffer)
 {
-    if (source->state != TA_AUDIO_STOPPED) {
+    if (ta_audio_source_get_state(source) != TA_AUDIO_STOPPED) {
         ta_audio_source_stop(source);
     }
-    source->audio_buffer_uid = buffer->uid.uid;
-    //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
-    alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
+    if (source->audio_buffer_uid != buffer->uid.uid) {
+        source->audio_buffer_uid = buffer->uid.uid;
+        //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
+        alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
+    }
 }
 static ALenum al_source_state(ta_audio_source *source)
 {
     DLB_ASSERT(source->al_source_id);
     ALenum state;
     alGetSourcei(source->al_source_id, AL_SOURCE_STATE, &state);
+    return state;
+}
+ta_audio_source_state ta_audio_source_get_state(ta_audio_source *source)
+{
+    ta_audio_source_state state = al_source_state(source);
     return state;
 }
 #define AUDIO_ASSERT 0
@@ -238,7 +251,6 @@ void ta_audio_source_play(ta_audio_source *source)
 #if AUDIO_ASSERT
     DLB_ASSERT(al_source_state(source) == AL_PLAYING);
 #endif
-    source->state = TA_AUDIO_PLAYING;
 }
 void ta_audio_source_play_loop(ta_audio_source *source)
 {
@@ -259,7 +271,6 @@ void ta_audio_source_play_loop(ta_audio_source *source)
 #if AUDIO_ASSERT
     DLB_ASSERT(al_source_state(source) == AL_PLAYING);
 #endif
-    source->state = TA_AUDIO_PLAYING;
 }
 void ta_audio_source_pause(ta_audio_source *source)
 {
@@ -267,7 +278,6 @@ void ta_audio_source_pause(ta_audio_source *source)
 #if AUDIO_ASSERT
     DLB_ASSERT(al_source_state(source) == AL_PAUSED);
 #endif
-    source->state = TA_AUDIO_PAUSED;
 }
 void ta_audio_source_resume(ta_audio_source *source)
 {
@@ -275,7 +285,6 @@ void ta_audio_source_resume(ta_audio_source *source)
 #if AUDIO_ASSERT
     DLB_ASSERT(al_source_state(source) == AL_PLAYING);
 #endif
-    source->state = TA_AUDIO_PLAYING;
 }
 void ta_audio_source_stop(ta_audio_source *source)
 {
@@ -283,5 +292,4 @@ void ta_audio_source_stop(ta_audio_source *source)
 #if AUDIO_ASSERT
     DLB_ASSERT(al_source_state(source) == AL_STOPPED);
 #endif
-    source->state = TA_AUDIO_STOPPED;
 }

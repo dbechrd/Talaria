@@ -47,29 +47,29 @@ void ta_keybind_bind3(enum ta_game_state state_type, ta_event_type event_type,
 
 bool ta_keybind_down(ta_keybind *keybind)
 {
-    return keybind->button_state.down;
+    return keybind->key_state.down;
 }
 
 bool ta_keybind_pressed(ta_keybind *keybind)
 {
-    return keybind->button_state.down && keybind->button_state.changed;
+    return keybind->key_state.down && keybind->key_state.changed;
 }
 
 bool ta_keybind_released(ta_keybind *keybind)
 {
-    return !keybind->button_state.down && keybind->button_state.changed;
+    return !keybind->key_state.down && keybind->key_state.changed;
 }
 
 static void keybind_update(ta_keybind *keybind)
 {
-    bool old_down = keybind->button_state.down;
-    keybind->button_state.down =
+    bool old_down = keybind->key_state.down;
+    keybind->key_state.down =
         (!keybind->keys[0] || keys[keybind->keys[0]]) &&
         (!keybind->keys[1] || keys[keybind->keys[1]]) &&
         (!keybind->keys[2] || keys[keybind->keys[2]]);
-    keybind->button_state.changed = keybind->button_state.down != old_down;
-    if (keybind->button_state.changed) {
-        keybind->button_state.last_change_ms = ta_timer_elapsed_ms();
+    keybind->key_state.changed = keybind->key_state.down != old_down;
+    if (keybind->key_state.changed) {
+        keybind->key_state.last_change_ms = ta_timer_elapsed_ms();
     }
 }
 
@@ -88,9 +88,13 @@ void ta_keyboard_events()
     dlb_memcpy(keys, SDL_GetKeyboardState(0), SDL_NUM_SCANCODES);
 
     // NOTE: Assumes mouse was updated first
-    keys[TA_SCANCODE_MOUSE_LEFT] = (u8)tg_mouse.left.down;
-    keys[TA_SCANCODE_MOUSE_MIDDLE] = (u8)tg_mouse.middle.down;
-    keys[TA_SCANCODE_MOUSE_RIGHT] = (u8)tg_mouse.right.down;
+    keys[SDL_SCANCODE_MOUSE_LEFT] = (u8)tg_mouse.left.down;
+    keys[SDL_SCANCODE_MOUSE_MIDDLE] = (u8)tg_mouse.middle.down;
+    keys[SDL_SCANCODE_MOUSE_RIGHT] = (u8)tg_mouse.right.down;
+
+    if (tg_mouse.left.down) {
+        DLB_ASSERT(1);
+    }
 
     dlb_vec_each(ta_keybind *, bind, keybinds[tg_game.state]) {
         keybind_update(bind);

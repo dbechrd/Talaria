@@ -4,6 +4,9 @@
 #include "ta_keyboard.h"
 #include "ta_log.h"
 #include "ta_rigid_body.h"
+#include "ta_symbol.h"
+#include "ta_timer.h"
+#include "ta_button.h"
 #include "SDL/SDL.h"
 
 ta_game tg_game;
@@ -48,7 +51,8 @@ void ta_game_init()
     BIND1(PLAY, GAME_PLAYER_MOVE_BACKWARD, HOLD, S);
     BIND1(PLAY, GAME_PLAYER_MOVE_RIGHT,    HOLD, D);
     BIND1(PLAY, GAME_PLAYER_MOVE_LEFT,     HOLD, A);
-    BIND1(PLAY, GAME_PLAYER_MOVE_JUMP,     HOLD, SPACE);
+    BIND1(PLAY, GAME_PLAYER_JUMP,          HOLD, SPACE);
+    BIND1(PLAY, GAME_PLAYER_SHOOT,         PRESS, MOUSE_LEFT);
 
     BIND1(PLAY, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, M);
     BIND1(PLAY, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
@@ -77,7 +81,7 @@ void ta_game_init()
     BIND1(FREE_CAM, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
     BIND1(FREE_CAM, DEBUG_TOGGLE_BBOX,       PRESS, 1);
     BIND1(FREE_CAM, DEBUG_TOGGLE_NORMALS,    PRESS, 2);
-    BIND1(FREE_CAM, GAME_PLAYER_MOVE_JUMP,   HOLD,  3);
+    BIND1(FREE_CAM, GAME_PLAYER_JUMP,        HOLD,  3);
 #undef BIND1
 
     ta_log_write(tg_debug_log, "[Game] Game initialized\n");
@@ -98,6 +102,67 @@ void ta_game_state_set(ta_game_state state)
             }
             tg_game.camera = tg_game.camera_freecam;
             break;
+    }
+}
+
+static void game_player_shoot()
+{
+    if (!tg_mouse.captured) {
+        return;
+    }
+
+    static double last_shoot_ms = 0;
+    static double last_cock_ms = 0;
+    static double last_oh_no_ms = 0;
+
+    ta_audio_source *src_gun =
+        ta_scene_find(tg_game.scene, TA_AUDIO_SOURCE, INTERN("src_gun"));
+
+    double now_ms = ta_timer_elapsed_ms();
+
+    if (tg_game.player_clip > 0) {
+        static double after_shoot_delay_ms = 150;
+        static double after_cock_delay_ms = 1000;
+        if (now_ms < last_shoot_ms + after_shoot_delay_ms ||
+            now_ms < last_cock_ms + after_cock_delay_ms) {
+            return;
+        }
+
+        ta_audio_buffer *sfx_gunshot =
+            ta_scene_find(tg_game.scene, TA_AUDIO_BUFFER, INTERN("sfx_gunshot"));
+        ta_audio_source_set_buffer(src_gun, sfx_gunshot);
+        ta_audio_source_play(src_gun);
+        last_shoot_ms = ta_timer_elapsed_ms();
+        tg_game.player_clip--;
+    } else {
+        if (tg_game.player_ammo) {
+            static double after_shoot_delay_ms = 750;
+            if (now_ms < last_shoot_ms + after_shoot_delay_ms) {
+                return;
+            }
+
+            ta_audio_buffer *sfx_cock =
+                ta_scene_find(tg_game.scene, TA_AUDIO_BUFFER, INTERN("sfx_cock"));
+            ta_audio_source_set_buffer(src_gun, sfx_cock);
+            ta_audio_source_play(src_gun);
+            last_cock_ms = ta_timer_elapsed_ms();
+
+            tg_game.player_clip = MIN(tg_game.player_clip_max, tg_game.player_ammo);
+            tg_game.player_ammo -= tg_game.player_clip;
+        } else {
+            static double after_shoot_delay_ms = 750;
+            static double after_oh_no_delay_ms = 2000;
+            if (now_ms < last_shoot_ms + after_shoot_delay_ms ||
+                now_ms < last_oh_no_ms + after_oh_no_delay_ms) {
+                return;
+            }
+
+            ta_audio_buffer *sfx_cock =
+                ta_scene_find(tg_game.scene, TA_AUDIO_BUFFER, INTERN("sfx_oh_no"));
+            ta_audio_source_set_buffer(src_gun, sfx_cock);
+            ta_audio_source_play(src_gun);
+            last_oh_no_ms = ta_timer_elapsed_ms();
+        }
     }
 }
 
@@ -140,6 +205,7 @@ void ta_game_events()
                     }
                 }
                 break;
+#if 0
             } case TA_EVENT_GAME_MOUSE_CLICK: {
                 break;
             } case TA_EVENT_GAME_MOUSE_SCROLL: {
@@ -148,6 +214,7 @@ void ta_game_events()
                 //ta_ui_scrollview_scroll(view, event.data.mouse_scroll.y *
                 //    -event.data.mouse_scroll.flipped);
                 break;
+#endif
             } case TA_EVENT_GAME_PLAYER_MOVE_FORWARD: {
                 dir.x += tg_game.camera->front.x;
                 dir.z += tg_game.camera->front.z;
@@ -164,10 +231,33 @@ void ta_game_events()
                 dir.x -= tg_game.camera->right.x;
                 dir.z -= tg_game.camera->right.z;
                 break;
-            } case TA_EVENT_GAME_PLAYER_MOVE_JUMP: {
+            } case TA_EVENT_GAME_PLAYER_JUMP: {
                 //dir.y = 1000.0f;
                 ta_rigid_body *player_body = ta_node_rigid_body(tg_game.player);
                 ta_rigid_body_apply_impulse(player_body, VEC3_Y, VEC3_ZERO);
+                break;
+            } case TA_EVENT_GAME_PLAYER_SHOOT: {
+                game_player_shoot();
+                break;
+            } case TA_EVENT_GAME_BUTTON_ACTIVATED: {
+                if (tg_game.player_ammo == 0 && tg_game.player_clip == 0) {
+                    tg_game.player_ammo = tg_game.player_ammo_max;
+                }
+
+                // TODO: Should audio source subscribe to this event somehow,
+                //       or should the button queue the play request itself?
+                ta_button *button =
+                    ta_scene_find(tg_game.scene, TA_BUTTON, event.data.button.button_uid);
+                ta_audio_buffer *buffer = ta_button_sfx_activated(button);
+                if (buffer) {
+                    ta_audio_source *source = ta_button_audio_source(button);
+                    ta_audio_source_set_buffer(source, buffer);
+                    ta_audio_source_play(source);
+                }
+                break;
+            } case TA_EVENT_GAME_BUTTON_DEACTIVATED: {
+                break;
+            } case TA_EVENT_GAME_BUTTON_STATE_CHANGED: {
                 break;
             } case TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK: {
                 ta_mouse_toggle_capture();

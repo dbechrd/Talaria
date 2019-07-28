@@ -19,9 +19,11 @@ typedef struct ta_button {
     const char *sfx_deactivated_uid;
 } ta_button;
 
+struct ta_node;
+
 void ta_button_init(ta_button *button);
 ta_audio_source *ta_button_audio_source(ta_button *button);
 ta_audio_buffer *ta_button_sfx_activated(ta_button *button);
 ta_audio_buffer *ta_button_sfx_active(ta_button *button);
 ta_audio_buffer *ta_button_sfx_deactivated(ta_button *button);
-void ta_button_update(ta_button *button);
+void ta_button_update(struct ta_node *node);

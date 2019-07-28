@@ -124,12 +124,12 @@ static control_state *ui_before(ui_frame *control)
     {
         bg_color = ui_colors[control->type][COLOR_HOVER];
         last_control_state.hover = true;
-        if (ta_button_state_down(&tg_mouse.left)) {
+        if (ta_key_state_down(&tg_mouse.left)) {
             bg_color = ui_colors[control->type][COLOR_DOWN];
             last_control_state.down = true;
-            last_control_state.pressed = ta_button_state_pressed(&tg_mouse.left);
+            last_control_state.pressed = ta_key_state_pressed(&tg_mouse.left);
         } else {
-            last_control_state.released = ta_button_state_released(&tg_mouse.left);
+            last_control_state.released = ta_key_state_released(&tg_mouse.left);
         }
     }
 
@@ -318,11 +318,56 @@ void ta_ui_window_end()
     dlb_vec_clearz(ui_frames);
 }
 
+void ta_ui_hud()
+{
+    glDisable(GL_DEPTH_TEST);
+
+    static ta_vec2i ui_window_pos = { 10, 10 };
+    static ta_size ui_window_size = { 200, 40 };
+
+    static ta_texture *tex_orange = 0;
+    if (!tex_orange) {
+        tex_orange = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_albedo"));
+        DLB_ASSERT(tex_orange && tex_orange->gl_id);
+    }
+
+    static ta_texture *tex_gray = 0;
+    if (!tex_gray) {
+        tex_gray = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_metallic"));
+        DLB_ASSERT(tex_gray && tex_gray->gl_id);
+    }
+
+    // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
+    //       at render time (make sure to update viewport correctly).
+    ta_ui_window_begin(&ui_window_pos, &ui_window_size, 0);
+    ta_ui_row_start();
+    for (int i = 0; i < tg_game.player_ammo_max; i++) {
+        if (i < tg_game.player_ammo) {
+            ta_ui_image(&TA_SIZE(20, 20), tex_orange);
+        } else {
+            ta_ui_image(&TA_SIZE(20, 20), tex_gray);
+        }
+    }
+    ta_ui_pad(&TA_SIZE(0, 4));
+    ta_ui_row_start();
+    for (int i = 0; i < tg_game.player_clip_max; i++) {
+        if (i < tg_game.player_clip) {
+            ta_ui_image(&TA_SIZE(20, 20), tex_orange);
+        } else {
+            ta_ui_image(&TA_SIZE(20, 20), tex_gray);
+        }
+    }
+    ta_ui_window_end();
+
+    glDisable(GL_SCISSOR_TEST);
+    glEnable(GL_DEPTH_TEST);
+}
+
 void ui_4x4_grid(ta_texture *tex)
 {
-    int index = -1;
-    ta_ui_panel_begin(&TA_SIZE(240, 240), &index);
-    DLB_ASSERT(index >= 0);
+    int panel_id = -1;
+    ta_ui_panel_begin(&TA_SIZE(240, 240), &panel_id);
+    DLB_ASSERT(panel_id >= 0);
 
     for (int r = 0; r < 4; r++) {
         ta_ui_row_start();
@@ -334,7 +379,7 @@ void ui_4x4_grid(ta_texture *tex)
         ta_ui_pad(&TA_SIZE(0, 4));
     }
     ta_ui_pad(&TA_SIZE(0, 4));
-    ta_ui_panel_end(index);
+    ta_ui_panel_end(panel_id);
 }
 
 void ta_ui_test()

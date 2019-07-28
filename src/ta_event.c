@@ -124,18 +124,20 @@ void ta_event_events()
                 e.data.mouse_move = event.data.mouse_move;
                 ta_event_push(&e);
                 break;
-            //} case TA_EVENT_GLOBAL_MOUSE_CLICK: {
-            //    ta_event e = { 0 };
-            //    e.type = TA_EVENT_GAME_MOUSE_CLICK;
-            //    e.data.mouse_click = event.data.mouse_click;
-            //    ta_event_push(&e);
-            //    break;
+#if 0
+            } case TA_EVENT_GLOBAL_MOUSE_CLICK: {
+                ta_event e = { 0 };
+                e.type = TA_EVENT_GAME_MOUSE_CLICK;
+                e.data.mouse_click = event.data.mouse_click;
+                ta_event_push(&e);
+                break;
             } case TA_EVENT_GLOBAL_MOUSE_SCROLL: {
                 ta_event e = { 0 };
                 e.type = TA_EVENT_GAME_MOUSE_SCROLL;
                 e.data.mouse_scroll = event.data.mouse_scroll;
                 ta_event_push(&e);
                 break;
+#endif
             } default: {
                 DLB_ASSERT(!"Unhandled event type");
             }

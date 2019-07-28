@@ -21,14 +21,13 @@ typedef struct ta_audio_buffer {
 } ta_audio_buffer;
 
 typedef enum ta_audio_source_state {
-    TA_AUDIO_STOPPED,
-    TA_AUDIO_PLAYING,
-    TA_AUDIO_PAUSED
+    TA_AUDIO_STOPPED = AL_STOPPED,
+    TA_AUDIO_PLAYING = AL_PLAYING,
+    TA_AUDIO_PAUSED = AL_PAUSED
 } ta_audio_source_state;
 
 typedef struct ta_audio_source {
     ta_uid uid;
-    ta_audio_source_state state;
     float pitch;
     float gain;
     bool loop;
@@ -47,6 +46,7 @@ void ta_audio_buffer_init(ta_audio_buffer *buffer);
 void ta_audio_buffer_load_path(ta_audio_buffer *buffer, const char *path);
 void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, struct ta_buffer *samples);
 void ta_audio_buffer_load(ta_audio_buffer *buffer);
+double ta_audio_buffer_duration_ms(ta_audio_buffer *buffer);
 void ta_audio_buffer_free(ta_audio_buffer *buffer);
 
 void ta_audio_source_init(ta_audio_source *source);
@@ -54,6 +54,7 @@ void ta_audio_source_free(ta_audio_source *source);
 void ta_audio_source_set_pitch(ta_audio_source *source, float pitch);
 void ta_audio_source_set_gain(ta_audio_source *source, float gain);
 void ta_audio_source_set_buffer(ta_audio_source *source, ta_audio_buffer *buffer);
+ta_audio_source_state ta_audio_source_get_state(ta_audio_source *source);
 void ta_audio_source_play(ta_audio_source *source);
 void ta_audio_source_play_loop(ta_audio_source *source);
 void ta_audio_source_pause(ta_audio_source *source);

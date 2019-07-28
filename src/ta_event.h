@@ -30,17 +30,18 @@ typedef enum ta_event_type {
     TA_EVENT_GAME_FREE_CAM,
     TA_EVENT_GAME_PLAY,
     TA_EVENT_GAME_MOUSE_MOVE,
-    TA_EVENT_GAME_MOUSE_CLICK,
-    TA_EVENT_GAME_MOUSE_SCROLL,
+    //TA_EVENT_GAME_MOUSE_CLICK,
+    //TA_EVENT_GAME_MOUSE_SCROLL,
 
     // Player events
     TA_EVENT_GAME_PLAYER_MOVE_FORWARD,
     TA_EVENT_GAME_PLAYER_MOVE_BACKWARD,
     TA_EVENT_GAME_PLAYER_MOVE_RIGHT,
     TA_EVENT_GAME_PLAYER_MOVE_LEFT,
-    TA_EVENT_GAME_PLAYER_MOVE_JUMP,
+    TA_EVENT_GAME_PLAYER_JUMP,
+    TA_EVENT_GAME_PLAYER_SHOOT,
 
-    // Button events
+    // Big red button events
     TA_EVENT_GAME_BUTTON_ACTIVATED,
     TA_EVENT_GAME_BUTTON_DEACTIVATED,
     TA_EVENT_GAME_BUTTON_STATE_CHANGED,
@@ -86,7 +87,7 @@ typedef struct ta_event_mouse_scroll_event {
 } ta_event_mouse_scroll_event;
 
 typedef struct ta_event_button_event {
-    struct ta_button *button;
+    const char *button_uid;
 } ta_event_button_event;
 
 typedef struct ta_event_camera_rotate_event {
