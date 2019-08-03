@@ -18,6 +18,7 @@ typedef enum ta_schema_field_type {
 	TA_AUDIO_SOURCE,
 	TA_RIGID_BODY,
 	TA_BUTTON,
+    TA_FONT,
     TA_COUNT_POOLS,
 
     // Other compound types

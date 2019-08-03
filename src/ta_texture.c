@@ -115,7 +115,7 @@ void ta_texture_load(ta_texture *tex)
 void ta_texture_delete(ta_texture *tex)
 {
     if (tex->pixels) {
-        free(tex->pixels);
+        dlb_free(tex->pixels);
     }
     if (tex->gl_id) {
         glDeleteTextures(1, &tex->gl_id);

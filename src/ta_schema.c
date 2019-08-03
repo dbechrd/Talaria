@@ -13,6 +13,7 @@
 #include "ta_light.h"
 #include "ta_material.h"
 #include "ta_mesh_group.h"
+#include "ta_font.h"
 #include "dlb_types.h"
 #include "dlb_vector.h"
 #include "dlb_hash.h"
@@ -36,7 +37,8 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
 		case TA_AUDIO_BUFFER:       return "TA_AUDIO_BUFFER";
 		case TA_AUDIO_SOURCE:       return "TA_AUDIO_SOURCE";
 		case TA_RIGID_BODY:         return "TA_RIGID_BODY";
-		case TA_BUTTON:			    return "TA_BUTTON";
+        case TA_BUTTON:			    return "TA_BUTTON";
+        case TA_FONT:			    return "TA_FONT";
 
 		// Other compound types
         case TA_VEC2:               return "TA_VEC2";
@@ -364,6 +366,11 @@ void ta_schema_register()
     TYPE_FIELD(ta_rigid_body, mass,        ATOM_FLOAT);
     TYPE_FIELD(ta_rigid_body, trigger,     ATOM_BOOL);
     TYPE_END(ta_rigid_body);
+
+    TYPE_START(ta_font, TA_FONT);
+    TYPE_FIELD(ta_font, uid,  ATOM_STRING);
+    TYPE_FIELD(ta_font, path, ATOM_STRING);
+    TYPE_END(ta_font);
 }
 
 #undef TYPE_START

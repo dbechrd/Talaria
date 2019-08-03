@@ -16,6 +16,7 @@ typedef enum ta_game_state {
 typedef struct ta_game {
     ta_game_state state;
     ta_audio_listener *audio;
+    ta_audio_source *background_music;
     ta_scene *scene;
     ta_light *lights;
     ta_camera *camera;

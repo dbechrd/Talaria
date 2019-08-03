@@ -399,6 +399,35 @@ void ta_ui_test()
     //       at render time (make sure to update viewport correctly).
     ta_ui_window_begin(&ui_window_pos, &ui_window_size, 0);
 
+    // Audio buffers
+    ta_ui_row_start();
+    ta_audio_buffer *audio_buffers = tg_game.scene->pools[TA_AUDIO_BUFFER];
+    u32 buf_count = dlb_vec_len(audio_buffers);
+    for (u32 i = 0; i < buf_count; i++) {
+        ta_ui_pad(&TA_SIZE(4, 0));
+#if 0
+        // TODO: Text rendering
+        int panel_id = -1;
+        ta_ui_panel_begin(&TA_SIZE(60 * buf_count, 60), &panel_id);
+        DLB_ASSERT(panel_id >= 0);
+
+        ta_ui_label(audio_buffers[i].uid.uid);
+        ta_ui_row_start();
+        ta_ui_button("Play");
+        ta_ui_button("Loop");
+
+        ta_ui_pad(&TA_SIZE(0, 4));
+        ta_ui_panel_end(panel_id);
+#endif
+        if (ta_ui_image(&TA_SIZE(50, 50), tex_test)->pressed) {
+            if (tg_game.background_music) {
+                ta_audio_source_stop(tg_game.background_music);
+            }
+            ta_audio_source_set_buffer(tg_game.background_music, &audio_buffers[i]);
+            ta_audio_source_play_loop(tg_game.background_music);
+        }
+    }
+
 #if 0
     ta_ui_row_start();
     ta_ui_image(&TA_SIZE(50, 50), tex_test);

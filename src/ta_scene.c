@@ -8,6 +8,7 @@
 #include "ta_texture.h"
 #include "ta_node.h"
 #include "ta_button.h"
+#include "ta_font.h"
 #include "ta_rigid_body.h"
 #include "ta_light.h"
 #include "ta_log.h"
@@ -89,13 +90,14 @@ static pool_info pool_infos[] = {
     [TA_LIGHT]        = { sizeof(ta_light),         ta_light_init,        0 },
     [TA_MATERIAL]     = { sizeof(ta_material),      0,                    0 },
     [TA_MESH_GROUP]   = { sizeof(ta_mesh_group),    ta_mesh_group_load,   ta_mesh_group_free },
-    [TA_SHADER]       = { sizeof(ta_shader),        ta_shader_load,     0 },
+    [TA_SHADER]       = { sizeof(ta_shader),        ta_shader_load,       0 },
     [TA_TEXTURE]      = { sizeof(ta_texture),       ta_texture_init,      ta_texture_free },
     [TA_NODE]         = { sizeof(ta_node),          ta_node_init,         0 },
     [TA_AUDIO_BUFFER] = { sizeof(ta_audio_buffer),  ta_audio_buffer_init, 0 },
     [TA_AUDIO_SOURCE] = { sizeof(ta_audio_source),  ta_audio_source_init, 0 },
     [TA_RIGID_BODY]   = { sizeof(ta_rigid_body),    ta_rigid_body_init,   0 },
     [TA_BUTTON]       = { sizeof(ta_button),        ta_button_init,       0 },
+    [TA_FONT]         = { sizeof(ta_font),          ta_font_init,         0 },
 };
 
 void *ta_scene_alloc(ta_scene *scene, ta_schema_field_type type,

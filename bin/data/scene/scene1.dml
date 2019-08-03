@@ -1,4 +1,11 @@
 #-------------------------------------------------------------------------------
+# Fonts
+#-------------------------------------------------------------------------------
+ta_font:
+  uid: "font_default"
+  path: "data/font/consola.ttf"
+
+#-------------------------------------------------------------------------------
 # Cameras
 #-------------------------------------------------------------------------------
 ta_camera:
@@ -142,10 +149,7 @@ ta_audio_buffer:
 # Audio sources
 #-------------------------------------------------------------------------------
 ta_audio_source:
-  uid: "src_mus_wakeup"
-  audio_buffer_uid: "mus_wakeup"
-ta_audio_source:
-  uid: "src_mus_genesis"
+  uid: "src_background_music"
   audio_buffer_uid: "mus_genesis"
 ta_audio_source:
   uid: "src_button_0001"

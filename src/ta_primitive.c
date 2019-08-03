@@ -171,20 +171,65 @@ void ta_primitive_push_line_3d(ta_line_3d line_3d, ta_rgba color0,
     ta_primitive_push_line(&line);
 }
 
-static void ta_primitive_push_quad(ta_vert_quad *quad)
+static void primitive_push_quad(ta_vert_quad *quad)
 {
     dlb_vec_push(quads_queue, *quad);
+}
+void ta_primitive_push_rect_uv(ta_rect_uv rect_uv, ta_rgba color)
+{
+    // v3 _______ v2
+    //    |    /|
+    //    |  /  |
+    //    |/____|
+    // v0         v1
+
+    // {v0, v1, v2}, {v0, v2, v3}
+
+    float x0 = NDC_X(rect_uv.rect.x);
+    float x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
+    float y0 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
+    float y1 = NDC_Y(rect_uv.rect.y);
+
+    ta_vert_quad quad = { 0 };
+    quad.verts[0].position.x = x0;  // v0 (0,0)
+    quad.verts[0].position.y = y0;
+    quad.verts[0].uv.u = rect_uv.uv0.u;
+    quad.verts[0].uv.v = rect_uv.uv0.v;
+    quad.verts[1].position.x = x1;  // v1 (1,0)
+    quad.verts[1].position.y = y0;
+    quad.verts[1].uv.u = rect_uv.uv1.u;
+    quad.verts[1].uv.v = rect_uv.uv0.v;
+    quad.verts[2].position.x = x1;  // v2 (1,1)
+    quad.verts[2].position.y = y1;
+    quad.verts[2].uv.u = rect_uv.uv1.u;
+    quad.verts[2].uv.v = rect_uv.uv1.v;
+    quad.verts[3].position.x = x0;  // v0 (0,0)
+    quad.verts[3].position.y = y0;
+    quad.verts[3].uv.u = rect_uv.uv0.u;
+    quad.verts[3].uv.v = rect_uv.uv0.v;
+    quad.verts[4].position.x = x1;  // v2 (1,1)
+    quad.verts[4].position.y = y1;
+    quad.verts[4].uv.u = rect_uv.uv1.u;
+    quad.verts[4].uv.v = rect_uv.uv1.v;
+    quad.verts[5].position.x = x0;  // v3 (0,1)
+    quad.verts[5].position.y = y1;
+    quad.verts[5].uv.u = rect_uv.uv0.u;
+    quad.verts[5].uv.v = rect_uv.uv1.v;
+    for (int i = 0; i < 6; i++) {
+        quad.verts[i].position.z = 0.1f;
+        quad.verts[i].color = color;
+    }
+
+    primitive_push_quad(&quad);
 }
 void ta_primitive_push_rect(ta_rect rect, ta_rgba color)
 {
     // v3 _______ v2
     //    |    /|
-    //    |   / |
     //    |  /  |
-    //    | /   |
     //    |/____|
     // v0         v1
-    //
+
     // {v0, v1, v2}, {v0, v2, v3}
 
 #define X_TO_NDC_RECT(x, w) ( (float)(x) / (w / 2.0f) - 1.0f)
@@ -226,7 +271,7 @@ void ta_primitive_push_rect(ta_rect rect, ta_rgba color)
         quad.verts[i].color = color;
     }
 
-	ta_primitive_push_quad(&quad);
+	primitive_push_quad(&quad);
 }
 void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color)
 {
@@ -263,7 +308,7 @@ void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color)
     for (int i = 0; i < 6; i++) {
         quad.verts[i].color = color;
     }
-    ta_primitive_push_quad(&quad);
+    primitive_push_quad(&quad);
 }
 
 void ta_primitive_push_crosshair(s32 length, s32 thickness)

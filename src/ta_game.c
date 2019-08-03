@@ -244,6 +244,7 @@ void ta_game_events()
                     tg_game.player_ammo = tg_game.player_ammo_max;
                 }
 
+#if 0
                 // TODO: Should audio source subscribe to this event somehow,
                 //       or should the button queue the play request itself?
                 ta_button *button =
@@ -254,6 +255,7 @@ void ta_game_events()
                     ta_audio_source_set_buffer(source, buffer);
                     ta_audio_source_play(source);
                 }
+#endif
                 break;
             } case TA_EVENT_GAME_BUTTON_DEACTIVATED: {
                 break;

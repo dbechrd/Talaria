@@ -25,28 +25,34 @@ void ta_audio_listener_init(ta_audio_listener *listener)
     }
 
     // TODO: Allow user to set which device they want to use
+    ta_log_write(tg_debug_log, "[Audio] alcOpenDevice...\n");
     listener->al_device = alcOpenDevice(NULL);
     if (!listener->al_device)
     {
         DLB_ASSERT(!"Failed to open listener context");
         return;
     }
+    ta_log_write(tg_debug_log, "[Audio] Success\n");
 
     // TODO: What other attributes can I specify on a context?
     ALCint attrlist[] = { ALC_FREQUENCY, TA_AUDIO_SAMPLE_RATE, 0 };
+    ta_log_write(tg_debug_log, "[Audio] alcCreateContext...\n");
     listener->al_context = alcCreateContext(listener->al_device, attrlist);
     if (!listener->al_context)
     {
         DLB_ASSERT(!"Failed to create listener context");
         return;
     }
+    ta_log_write(tg_debug_log, "[Audio] Success\n");
 
     // TODO: Can I have more than one context, is that useful?
+    ta_log_write(tg_debug_log, "[Audio] alcMakeContextCurrent...\n");
     if (!alcMakeContextCurrent(listener->al_context))
     {
         DLB_ASSERT(!"Failed to activate listener context");
         return;
     }
+    ta_log_write(tg_debug_log, "[Audio] Success\n");
 
     ALenum err = alGetError();
     if (err) {
@@ -57,8 +63,7 @@ void ta_audio_listener_init(ta_audio_listener *listener)
     ta_audio_listener_set_volume(listener, listener->volume);
 }
 
-void ta_audio_listener_set_volume(ta_audio_listener *listener,
-    float volume)
+void ta_audio_listener_set_volume(ta_audio_listener *listener, float volume)
 {
     listener->volume = volume;
     if (!listener->muted) {
@@ -143,7 +148,8 @@ void ta_audio_buffer_load(ta_audio_buffer *buffer)
         x1 += ring1;
         x2 += ring2;
     }
-    alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, buf, sizeof(buf), TA_AUDIO_SAMPLE_RATE);
+    alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, buf, sizeof(buf),
+        TA_AUDIO_SAMPLE_RATE);
 #else
     // TODO: Allow caller to specify format (and maybe sample rate, but that's
     //       specified in the context attributes as well so I'm not sure if
@@ -191,7 +197,7 @@ void ta_audio_source_init(ta_audio_source *source)
     if (source->audio_buffer_uid) {
         ta_audio_buffer *buffer = ta_scene_find(source->uid.scene,
             TA_AUDIO_BUFFER, source->audio_buffer_uid);
-        ta_audio_source_set_buffer(source, buffer);
+        alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
 }
 void ta_audio_source_free(ta_audio_source *source)

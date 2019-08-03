@@ -21,6 +21,7 @@
 #include "ta_schema.h"
 #include "ta_parse.h"
 #include "ta_symbol.h"
+#include "ta_font.h"
 #include "dlb_types.h"
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb_vector.h"
@@ -102,10 +103,13 @@ int main(int argc, char *argv[])
     DLB_ASSERT(tg_game.player);
     DLB_ASSERT(tg_game.lights);
 
-    ta_audio_source *ambient_wakeup = ta_scene_find(tg_game.scene,
-        TA_AUDIO_SOURCE, INTERN("src_mus_genesis"));
-    DLB_ASSERT(ambient_wakeup);
-    ta_audio_source_play_loop(ambient_wakeup);
+    ta_audio_source *bg_music = ta_scene_find(tg_game.scene, TA_AUDIO_SOURCE,
+        INTERN("src_background_music"));
+    DLB_ASSERT(bg_music);
+    tg_game.background_music = bg_music;
+    ta_audio_source_play_loop(tg_game.background_music);
+
+    ta_font *font = ta_scene_find(tg_game.scene, TA_FONT, INTERN("font_default"));
 
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
@@ -336,9 +340,14 @@ int main(int argc, char *argv[])
             ta_ui_hud();
         }
 
+        ta_font_print(font, 500.0f, 500.0f, "This is some text, woop woop!");
+
         // TODO: Print frame time on the screen once we have text rendering
-        //double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
-        //printf("Frame %5llu took %f ms.\n", frame_num, ms_frame_time);
+        double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
+        char frame_time_buf[40] = { 0 };
+        int len = snprintf(frame_time_buf, sizeof(frame_time_buf) - 1, "Frame %5llu\n%f ms", frame_num, ms_frame_time);
+        frame_time_buf[len] = 0;
+        ta_font_print(font, -100.0f, font->pixel_height, frame_time_buf);
 
         ta_window_swap();
         //ta_log_write(tg_debug_log, "Frame %llu started at %f sim time: %f\n", frame_num, ms_frame_start - ms_frame_first, ms_sim_t);
