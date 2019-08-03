@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
         char frame_time_buf[40] = { 0 };
         int len = snprintf(frame_time_buf, sizeof(frame_time_buf) - 1, "Frame %5llu\n%f ms", frame_num, ms_frame_time);
         frame_time_buf[len] = 0;
-        ta_font_print(font, -100.0f, font->pixel_height, frame_time_buf);
+        ta_font_print(font, -100.0f, 0.0f, frame_time_buf);
 
         ta_window_swap();
         //ta_log_write(tg_debug_log, "Frame %llu started at %f sim time: %f\n", frame_num, ms_frame_start - ms_frame_first, ms_sim_t);

@@ -6,6 +6,7 @@
 #include "ta_primitive.h"
 #include "ta_log.h"
 #include "ta_symbol.h"
+#include "ta_window.h"
 #include "dlb_memory.h"
 #include "misc/gl3w.h"
 
@@ -71,7 +72,10 @@ void ta_font_print(ta_font *font, float x, float y, char *text)
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, font->gl_id);
 
     float x_start = x;
+    float x_start_ndc = NDC_X(x_start);
     float y_max = 0;
+
+    y += font->pixel_height;
 
     while (*text) {
         if (*text == '\n') {
@@ -83,18 +87,21 @@ void ta_font_print(ta_font *font, float x, float y, char *text)
             stbtt_aligned_quad q;
             stbtt_GetBakedQuad(font->chars, 512, 512, *text - 32, &x, &y, &q, 1);
 
-            ta_rect_uv rect_uv = { 0 };
-            rect_uv.rect.x = (int)q.x0;
-            rect_uv.rect.y = (int)q.y0;
-            rect_uv.rect.w = (int)(q.x1 - q.x0);
-            rect_uv.rect.h = (int)(q.y1 - q.y0);
-            rect_uv.uv0.u = q.s0;
-            rect_uv.uv0.v = q.t1;
-            rect_uv.uv1.u = q.s1;
-            rect_uv.uv1.v = q.t0;
-            ta_primitive_push_rect_uv(rect_uv, TA_COLOR_RED);
+            // HACK: Cull characters that would be cut off by edge of screen
+            if (NDC_X(q.x0) >= x_start_ndc && NDC_X(q.x1) > x_start_ndc) {
+                ta_rect_uv rect_uv = { 0 };
+                rect_uv.rect.x = (int)q.x0;
+                rect_uv.rect.y = (int)q.y0;
+                rect_uv.rect.w = (int)(q.x1 - q.x0);
+                rect_uv.rect.h = (int)(q.y1 - q.y0);
+                rect_uv.uv0.u = q.s0;
+                rect_uv.uv0.v = q.t1;
+                rect_uv.uv1.u = q.s1;
+                rect_uv.uv1.v = q.t0;
+                ta_primitive_push_rect_uv(rect_uv, TA_COLOR_WHITE);
 
-            y_max = MAX(y_max, (float)rect_uv.rect.h);
+                y_max = MAX(y_max, (float)rect_uv.rect.h);
+            }
         }
         ++text;
     }
