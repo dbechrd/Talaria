@@ -5,6 +5,7 @@
 #include "ta_camera.h"
 #include "ta_node.h"
 #include "ta_font.h"
+#include "ta_texture.h"
 
 typedef enum ta_game_state {
     TA_GAME_STATE_INIT,
@@ -14,11 +15,14 @@ typedef enum ta_game_state {
     TA_GAME_STATE_COUNT
 } ta_game_state;
 
+// WARNING: Any of these pointers will be invalidated if their pool resizes
 typedef struct ta_game {
     ta_game_state state;
     ta_audio_listener *audio;
     ta_audio_source *background_music;
     ta_font *font;
+    ta_texture *tex_orange;
+    ta_texture *tex_gray;
     ta_scene *scene;
     ta_light *lights;
     ta_camera *camera;

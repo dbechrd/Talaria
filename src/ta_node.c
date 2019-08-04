@@ -249,15 +249,13 @@ void ta_node_render(ta_node *node, ta_camera *camera, float alpha)
         ta_shader_unbind(shader);
     }
 
-    ta_primitive_render();
-    ta_primitive_clear(false);
+    ta_primitive_render(true, false);
 
     if (camera->debug_normals) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &node->model);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &node->model);
         ta_node_push_normals(node);
-        ta_primitive_render();
-        ta_primitive_clear(false);
+        ta_primitive_render(true, false);
     }
 
     if (camera->debug_bounding_boxes) {
@@ -266,7 +264,6 @@ void ta_node_render(ta_node *node, ta_camera *camera, float alpha)
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &node->model);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &node->model);
         ta_node_push_aabb(node, TA_COLOR_RED);
-        ta_primitive_render();
-        ta_primitive_clear(false);
+        ta_primitive_render(true, false);
     }
 }

@@ -6,6 +6,7 @@
 #include <math.h>
 
 #define GRAVITY -9.81f
+#define DV_EPSILON 0.001f  // minimum velocity required to affect position
 
 typedef bool (intersector)(const ta_collider *a, const ta_collider *b,
     ta_manifold *manifold);
@@ -160,8 +161,11 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
 
     ta_vec3 acc = vec3_scalef(vec3_scalef(body->force_accum, dt), body->inv_mass);
     body->velocity = vec3_add(body->velocity, acc);
-    body->position = vec3_add(body->position,
-        vec3_scalef(body->velocity, dt));
+    ta_vec3 dv = vec3_scalef(body->velocity, dt);
+    float dv_mag = vec3_len(dv);
+    if (dv_mag > DV_EPSILON) {
+        body->position = vec3_add(body->position, dv);
+    }
     update_collider_center(body);
 
 #if 1

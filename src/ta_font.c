@@ -71,7 +71,7 @@ static const ta_rgba *colors[2] = {
 void ta_font_print(ta_font *font, float x, float y, const char *text, bool screen)
 {
     glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_DEPTH_TEST);
     ta_shader *shader = ta_font_shader(font);
     DLB_ASSERT(shader);
 
@@ -112,7 +112,9 @@ void ta_font_print(ta_font *font, float x, float y, const char *text, bool scree
                     rect_uv.uv0.v = quad.t1;
                     rect_uv.uv1.u = quad.s1;
                     rect_uv.uv1.v = quad.t0;
-                    ta_primitive_push_rect_uv(rect_uv, *colors[i], -0.01f, screen);
+                    float layer = (i == 0) ? UI_LAYER_SHADOW : UI_LAYER_1;
+                    if (screen) layer *= -1.0f;
+                    ta_primitive_push_rect_uv(rect_uv, *colors[i], layer, screen);
                 }
             }
             ++chr;
@@ -120,9 +122,8 @@ void ta_font_print(ta_font *font, float x, float y, const char *text, bool scree
     }
 
     ta_shader_set_sampler2d(shader, SYM_U_TEX, font->gl_id);
-    ta_primitive_render_quads(shader);
-    ta_primitive_clear(false);
+    ta_primitive_render_quads(shader, true, true);
     ta_shader_set_sampler2d(shader, SYM_U_TEX, 0);
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 }

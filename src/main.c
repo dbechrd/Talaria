@@ -116,6 +116,11 @@ int main(int argc, char *argv[])
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
 
+    tg_game.tex_orange = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_albedo"));
+    DLB_ASSERT(tg_game.tex_orange && tg_game.tex_orange->gl_id);
+    tg_game.tex_gray = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_metallic"));
+    DLB_ASSERT(tg_game.tex_gray && tg_game.tex_gray->gl_id);
+
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
     ////////////////////////////////////////////////////////////////////////////
@@ -262,23 +267,19 @@ int main(int argc, char *argv[])
 		// Draw models
         ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
         ta_scene_render(tg_game.scene, tg_game.camera, sim_alpha);
-
-        ta_primitive_render();
-        ta_primitive_clear(true);
+        ta_primitive_render(true, true);
 
         // World axes
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_primitive_push_axes(1.0f);
-        ta_primitive_render();
-        ta_primitive_clear(true);
+        ta_primitive_render(true, true);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		// Cursor
 		ta_primitive_push_crosshair(10, 2);
-		ta_primitive_render();
-		ta_primitive_clear(true);
+		ta_primitive_render(true, true);
 
         ta_light_render_shadowmap_debug(&tg_game.lights[1]);
 
@@ -354,28 +355,35 @@ int main(int argc, char *argv[])
         tag_to_cam.y *= 0.0f;
         ta_mat4 tag_rot = mat4_lookat(VEC3_ZERO, tag_to_cam, VEC3_Y);
 
-        float tag_scalef = MAX(vec3_len(tag_to_cam) / 1.4f, 1.5f);
-        ta_vec3 tag_scalev = { 0 };
-        tag_scalev.x = tag_scalef;
-        tag_scalev.y = tag_scalef;
-        tag_scalev.z = 1.0f;
-        ta_mat4 tag_scale = mat4_scale(tag_scalev);
+        float tag_scalef = MAX(vec3_len(tag_to_cam) / 1.5f, 1.5f);
+        ta_mat4 tag_scale = mat4_scalef(tag_scalef);
 
         ta_mat4 tag_xform = tag_scale;
         tag_xform = mat4_mul(&tag_rot, &tag_xform);
         tag_xform = mat4_mul(&tag_trans, &tag_xform);
 
+        // Name tag background
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &tg_game.camera->projection);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &tg_game.camera->look_at);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform);
+        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tg_game.tex_orange->gl_id);
+        ta_rect_uv tag_background = { 0 };
+        tag_background.rect.w = 100.0f;
+        tag_background.rect.h = tg_game.font->pixel_height * 1.5f;
+        tag_background.rect.x = -(tag_background.rect.w / 2.0f);
+        tag_background.uv1.u = 1.0f;
+        tag_background.uv1.v = 1.0f;
+        ta_primitive_push_rect_uv(tag_background, TA_COLOR_GRAY3, UI_LAYER_BG, false);
+        ta_primitive_render_quads(tg_shader_quads, true, true);
+        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+
+        // Name tag text
         ta_shader_set_mat4(font_shader, SYM_U_PROJ, &tg_game.camera->projection);
         ta_shader_set_mat4(font_shader, SYM_U_VIEW, &tg_game.camera->look_at);
         ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform);
-
         ta_font_print(tg_game.font, -30.0f, 0.0f, "Player 1", false);
 
         // Print frame time on the screen
-        ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
-        ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
-        ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-
         double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
         char frame_time_buf[40] = { 0 };
         int len = snprintf(frame_time_buf, sizeof(frame_time_buf) - 1, "Frame %8llu\n%f ms", frame_num, ms_frame_time);

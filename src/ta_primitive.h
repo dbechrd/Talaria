@@ -47,7 +47,8 @@ void ta_primitive_push_axes(float scale);
 void ta_primitive_push_sphere(ta_sphere sphere, ta_rgba color);
 void ta_primitive_push_rgb_sphere(ta_sphere sphere);
 void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color);
-void ta_primitive_render_lines(struct ta_shader *shader);
-void ta_primitive_render_quads(struct ta_shader *shader);
-void ta_primitive_render();
-void ta_primitive_clear(bool reset_uniforms);
+void ta_primitive_render_lines(struct ta_shader *shader, bool clear_queues,
+    bool reset_uniforms);
+void ta_primitive_render_quads(struct ta_shader *shader, bool clear_queues,
+    bool reset_uniforms);
+void ta_primitive_render(bool clear_queues, bool reset_uniforms);

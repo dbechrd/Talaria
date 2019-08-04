@@ -273,8 +273,7 @@ void ta_light_render_shadowmap_debug(ta_light *light)
         rect.h = resolution;
         ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, face);
         ta_primitive_push_rect(rect, TA_COLOR_INVIS);
-        ta_primitive_render_quads(tg_shader_cubemap);
-        ta_primitive_clear(true);
+        ta_primitive_render_quads(tg_shader_cubemap, true, true);
     }
 
     ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);

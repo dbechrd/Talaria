@@ -135,8 +135,7 @@ static control_state *ui_before(ui_frame *control)
 
     if (!type_is_container(control->type)) {
         ta_primitive_push_rect(rect, bg_color);
-        ta_primitive_render();
-        ta_primitive_clear(true);
+        ta_primitive_render(true, true);
     }
 
     // Content
@@ -289,9 +288,8 @@ control_state *ta_ui_image(ta_size *size, ta_texture *tex)
     img_rect.w = tex->width;
     img_rect.h = tex->height;
     ta_primitive_push_rect(img_rect, TA_COLOR_INVIS);
-    ta_primitive_render();
+    ta_primitive_render(true, true);
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
-    ta_primitive_clear(true);
     ui_after(frame);
     return state;
 }
@@ -300,16 +298,10 @@ void ta_ui_tooltip(const char *text)
 {
     GLboolean scissor_test = 0;
     glGetBooleanv(GL_SCISSOR_TEST, &scissor_test);
-    if (scissor_test) {
-        glDisable(GL_SCISSOR_TEST);
-    }
-
+    if (scissor_test) glDisable(GL_SCISSOR_TEST);
     ta_font_print(tg_game.font, tg_mouse.x + 10.0f, tg_mouse.y + 20.0f, text,
         true);
-
-    if (scissor_test) {
-        glEnable(GL_SCISSOR_TEST);
-    }
+    if (scissor_test) glEnable(GL_SCISSOR_TEST);
 }
 
 void ta_ui_window_end()
@@ -339,36 +331,24 @@ void ta_ui_hud()
     static ta_vec2i ui_window_pos = { 10, 10 };
     static ta_size ui_window_size = { 200, 40 };
 
-    static ta_texture *tex_orange = 0;
-    if (!tex_orange) {
-        tex_orange = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_albedo"));
-        DLB_ASSERT(tex_orange && tex_orange->gl_id);
-    }
-
-    static ta_texture *tex_gray = 0;
-    if (!tex_gray) {
-        tex_gray = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_metallic"));
-        DLB_ASSERT(tex_gray && tex_gray->gl_id);
-    }
-
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
     ta_ui_window_begin(&ui_window_pos, &ui_window_size, 0);
     ta_ui_row_start();
     for (int i = 0; i < tg_game.player_ammo_max; i++) {
         if (i < tg_game.player_ammo) {
-            ta_ui_image(&TA_SIZE(20, 20), tex_orange);
+            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_orange);
         } else {
-            ta_ui_image(&TA_SIZE(20, 20), tex_gray);
+            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_gray);
         }
     }
     ta_ui_pad(&TA_SIZE(0, 4));
     ta_ui_row_start();
     for (int i = 0; i < tg_game.player_clip_max; i++) {
         if (i < tg_game.player_clip) {
-            ta_ui_image(&TA_SIZE(20, 20), tex_orange);
+            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_orange);
         } else {
-            ta_ui_image(&TA_SIZE(20, 20), tex_gray);
+            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_gray);
         }
     }
     ta_ui_window_end();

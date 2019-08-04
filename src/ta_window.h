@@ -3,10 +3,10 @@
 #include "SDL/SDL_video.h"
 
 #define WINDOW_ASPECT ((float)tg_window.rect.w / tg_window.rect.h)
-#define X_TO_NDC(x) ((float)(x) / (tg_window.rect.w / 2.0f) - 1.0f)
-#define Y_TO_NDC(y) (-(float)(y) / (tg_window.rect.h / 2.0f) + 1.0f)
-#define X_TO_NDC_TOPLEFT(x) ((float)(x) / (tg_window.rect.w / 2.0f))
-#define Y_TO_NDC_TOPLEFT(y) (-(float)(y) / (tg_window.rect.h / 2.0f))
+#define X_SCREEN(x) ((float)(x) / (tg_window.rect.w / 2.0f))
+#define Y_SCREEN(y) (-(float)(y) / (tg_window.rect.h / 2.0f))
+#define X_TO_NDC(x) (X_SCREEN(x) - 1.0f)
+#define Y_TO_NDC(y) (Y_SCREEN(y) + 1.0f)
 
 // NOTE: Pixel origin is top-left of screen
 // NOTE: NDC origin is center of screen
@@ -22,6 +22,14 @@
 // Takes width/height in pixels, returns width/height in NDC
 #define NDC_W(x) ((float)(x) / tg_window.rect.w * 2.0f)
 #define NDC_H(y) (-(float)(y) / tg_window.rect.h * 2.0f)
+
+#define UI_LAYER_BG     0.001f
+#define UI_LAYER_SHADOW 0.002f
+#define UI_LAYER_1      0.003f
+#define UI_LAYER_2      0.004f
+#define UI_LAYER_3      0.005f
+#define UI_LAYER_4      0.006f
+#define UI_LAYER_TIP    0.007f
 
 typedef struct ta_window {
 	ta_rect rect;

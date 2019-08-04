@@ -193,14 +193,10 @@ void ta_primitive_push_rect_uv(ta_rect_uv rect_uv, ta_rgba color, float z,
         y0 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
         y1 = NDC_Y(rect_uv.rect.y);
     } else {
-#define X_TO_NDC_TOPLEFT(x) ((float)(x) / (tg_window.rect.w / 2.0f))
-#define Y_TO_NDC_TOPLEFT(y) (-(float)(y) / (tg_window.rect.h / 2.0f))
-        x0 = X_TO_NDC_TOPLEFT(rect_uv.rect.x) * WINDOW_ASPECT;
-        x1 = X_TO_NDC_TOPLEFT(rect_uv.rect.x + rect_uv.rect.w) * WINDOW_ASPECT;
-        y0 = Y_TO_NDC_TOPLEFT(rect_uv.rect.y + rect_uv.rect.h);
-        y1 = Y_TO_NDC_TOPLEFT(rect_uv.rect.y);
-#undef X_TO_NDC2
-#undef Y_TO_NDC2
+        x0 = X_SCREEN(rect_uv.rect.x) * WINDOW_ASPECT;
+        x1 = X_SCREEN(rect_uv.rect.x + rect_uv.rect.w) * WINDOW_ASPECT;
+        y0 = Y_SCREEN(rect_uv.rect.y + rect_uv.rect.h);
+        y1 = Y_SCREEN(rect_uv.rect.y);
     }
 
     ta_vert_quad quad = { 0 };
@@ -280,7 +276,7 @@ void ta_primitive_push_rect(ta_rect rect, ta_rgba color)
     quad.verts[5].uv.u = 0.0f;
     quad.verts[5].uv.v = 1.0f;
     for (int i = 0; i < 6; i++) {
-        quad.verts[i].position.z = 0.1f;
+        quad.verts[i].position.z = UI_LAYER_1;
         quad.verts[i].color = color;
     }
 
@@ -506,8 +502,13 @@ void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
 #undef PUSH_LINE
 }
 
-void ta_primitive_render_lines(ta_shader *shader)
+void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
+    bool reset_uniforms)
 {
+    GLboolean cull_face = 0;
+    glGetBooleanv(GL_CULL_FACE, &cull_face);
+    if (cull_face) glDisable(GL_CULL_FACE);
+
 	u32 queue_len = dlb_vec_len(lines_queue);
 	if (!queue_len) {
 		return;
@@ -533,9 +534,24 @@ void ta_primitive_render_lines(ta_shader *shader)
     glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     ta_shader_unbind(shader);
+
+    if (clear_queues) {
+        dlb_vec_clear(lines_queue);
+    }
+    if (reset_uniforms) {
+        ta_shader_set_mat4(shader, SYM_U_PROJ, &MAT4_IDENT);
+        ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
+        ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
+    }
+    if (cull_face) glEnable(GL_CULL_FACE);
 }
-void ta_primitive_render_quads(ta_shader *shader)
+void ta_primitive_render_quads(ta_shader *shader, bool clear_queues,
+    bool reset_uniforms)
 {
+    GLboolean cull_face = 0;
+    glGetBooleanv(GL_CULL_FACE, &cull_face);
+    if (cull_face) glDisable(GL_CULL_FACE);
+
 	u32 queue_len = dlb_vec_len(quads_queue);
 	if (!queue_len) {
 		return;
@@ -562,26 +578,19 @@ void ta_primitive_render_quads(ta_shader *shader)
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     ta_shader_unbind(shader);
-}
-void ta_primitive_render()
-{
-    glDisable(GL_CULL_FACE);
-    ta_primitive_render_lines(tg_shader_lines);
-    ta_primitive_render_quads(tg_shader_quads);
-    glEnable(GL_CULL_FACE);
-}
-void ta_primitive_clear(bool reset_uniforms)
-{
-	dlb_vec_clear(lines_queue);
-	dlb_vec_clear(quads_queue);
 
-    if (reset_uniforms) {
-	    ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
-	    ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
-	    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-
-	    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
-	    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
-	    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+    if (clear_queues) {
+        dlb_vec_clear(quads_queue);
     }
+    if (reset_uniforms) {
+        ta_shader_set_mat4(shader, SYM_U_PROJ, &MAT4_IDENT);
+        ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
+        ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
+    }
+    if (cull_face) glEnable(GL_CULL_FACE);
+}
+void ta_primitive_render(bool clear_queues, bool reset_uniforms)
+{
+    ta_primitive_render_lines(tg_shader_lines, clear_queues, reset_uniforms);
+    ta_primitive_render_quads(tg_shader_quads, clear_queues, reset_uniforms);
 }
