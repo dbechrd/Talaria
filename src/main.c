@@ -109,7 +109,12 @@ int main(int argc, char *argv[])
     tg_game.background_music = bg_music;
     ta_audio_source_play_loop(tg_game.background_music);
 
-    ta_font *font = ta_scene_find(tg_game.scene, TA_FONT, INTERN("font_default"));
+    tg_game.font = ta_scene_find(tg_game.scene, TA_FONT, INTERN("font_default"));
+    DLB_ASSERT(tg_game.font);
+    ta_shader *font_shader = ta_font_shader(tg_game.font);
+    ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
+    ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
+    ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
 
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
@@ -340,14 +345,42 @@ int main(int argc, char *argv[])
             ta_ui_hud();
         }
 
-        ta_font_print(font, 500.0f, 500.0f, "This is some text, woop woop!");
 
-        // TODO: Print frame time on the screen once we have text rendering
+        ta_vec3 tag_pos = vec3_add(tg_game.player->transform.position, (ta_vec3){ 0.0f, 1.2f, 0.0f });
+        ta_mat4 tag_trans = mat4_translate(tag_pos);
+
+        ta_vec3 tag_to_cam = vec3_sub(tg_game.camera->position, tag_pos);
+        tag_to_cam.z *= -1.0f;
+        tag_to_cam.y *= 0.0f;
+        ta_mat4 tag_rot = mat4_lookat(VEC3_ZERO, tag_to_cam, VEC3_Y);
+
+        float tag_scalef = MAX(vec3_len(tag_to_cam) / 1.4f, 1.5f);
+        ta_vec3 tag_scalev = { 0 };
+        tag_scalev.x = tag_scalef;
+        tag_scalev.y = tag_scalef;
+        tag_scalev.z = 1.0f;
+        ta_mat4 tag_scale = mat4_scale(tag_scalev);
+
+        ta_mat4 tag_xform = tag_scale;
+        tag_xform = mat4_mul(&tag_rot, &tag_xform);
+        tag_xform = mat4_mul(&tag_trans, &tag_xform);
+
+        ta_shader_set_mat4(font_shader, SYM_U_PROJ, &tg_game.camera->projection);
+        ta_shader_set_mat4(font_shader, SYM_U_VIEW, &tg_game.camera->look_at);
+        ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform);
+
+        ta_font_print(tg_game.font, -30.0f, 0.0f, "Player 1", false);
+
+        // Print frame time on the screen
+        ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
+        ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
+        ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
+
         double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
         char frame_time_buf[40] = { 0 };
-        int len = snprintf(frame_time_buf, sizeof(frame_time_buf) - 1, "Frame %5llu\n%f ms", frame_num, ms_frame_time);
+        int len = snprintf(frame_time_buf, sizeof(frame_time_buf) - 1, "Frame %8llu\n%f ms", frame_num, ms_frame_time);
         frame_time_buf[len] = 0;
-        ta_font_print(font, -100.0f, 0.0f, frame_time_buf);
+        ta_font_print(tg_game.font, -130.0f, 0.0f, frame_time_buf, true);
 
         ta_window_swap();
         //ta_log_write(tg_debug_log, "Frame %llu started at %f sim time: %f\n", frame_num, ms_frame_start - ms_frame_first, ms_sim_t);

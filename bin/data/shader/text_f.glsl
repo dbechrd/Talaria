@@ -13,5 +13,5 @@ out vec4 final_color;
 void main()
 {
 	vec4 tex_color = texture(u_tex, vertex.uv);
-    final_color = mix(tex_color, vertex.color, vertex.color.a > 0);
+    final_color = vec4(vertex.color.rgb, vertex.color.a * tex_color.r);
 }

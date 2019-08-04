@@ -368,8 +368,10 @@ void ta_schema_register()
     TYPE_END(ta_rigid_body);
 
     TYPE_START(ta_font, TA_FONT);
-    TYPE_FIELD(ta_font, uid,  ATOM_STRING);
-    TYPE_FIELD(ta_font, path, ATOM_STRING);
+    TYPE_FIELD(ta_font, uid,          ATOM_STRING);
+    TYPE_FIELD(ta_font, path,         ATOM_STRING);
+    TYPE_FIELD(ta_font, pixel_height, ATOM_FLOAT);
+    TYPE_FIELD(ta_font, shader_uid,   ATOM_STRING);
     TYPE_END(ta_font);
 }
 

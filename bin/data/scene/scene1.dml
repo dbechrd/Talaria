@@ -4,6 +4,8 @@
 ta_font:
   uid: "font_default"
   path: "data/font/consola.ttf"
+  pixel_height: 16.0
+  shader_uid: "shader_text"
 
 #-------------------------------------------------------------------------------
 # Cameras
@@ -324,6 +326,21 @@ ta_shader:
   uid: "shader_quads"
   path_vert: "data/shader/quads_v.glsl"
   path_frag: "data/shader/quads_f.glsl"
+  attributes: [
+    { name: "attr_position", type: 5 },  # TA_GLSL_VEC3
+    { name: "attr_color",    type: 6 },  # TA_GLSL_VEC4
+    { name: "attr_uv",       type: 4 },  # TA_GLSL_VEC2
+  ]
+  uniforms: [
+    { name: "u_proj",  type: 8 },  # TA_GLSL_MAT4
+    { name: "u_view",  type: 8 },  # TA_GLSL_MAT4
+    { name: "u_model", type: 8 },  # TA_GLSL_MAT4
+    { name: "u_tex",   type: 3 },  # TA_GLSL_SAMPLER2D
+  ]
+ta_shader:
+  uid: "shader_text"
+  path_vert: "data/shader/text_v.glsl"
+  path_frag: "data/shader/text_f.glsl"
   attributes: [
     { name: "attr_position", type: 5 },  # TA_GLSL_VEC3
     { name: "attr_color",    type: 6 },  # TA_GLSL_VEC4

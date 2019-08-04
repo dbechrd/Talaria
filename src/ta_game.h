@@ -4,6 +4,7 @@
 #include "ta_light.h"
 #include "ta_camera.h"
 #include "ta_node.h"
+#include "ta_font.h"
 
 typedef enum ta_game_state {
     TA_GAME_STATE_INIT,
@@ -17,6 +18,7 @@ typedef struct ta_game {
     ta_game_state state;
     ta_audio_listener *audio;
     ta_audio_source *background_music;
+    ta_font *font;
     ta_scene *scene;
     ta_light *lights;
     ta_camera *camera;

@@ -175,7 +175,8 @@ static void primitive_push_quad(ta_vert_quad *quad)
 {
     dlb_vec_push(quads_queue, *quad);
 }
-void ta_primitive_push_rect_uv(ta_rect_uv rect_uv, ta_rgba color)
+void ta_primitive_push_rect_uv(ta_rect_uv rect_uv, ta_rgba color, float z,
+    bool screen)
 {
     // v3 _______ v2
     //    |    /|
@@ -185,10 +186,22 @@ void ta_primitive_push_rect_uv(ta_rect_uv rect_uv, ta_rgba color)
 
     // {v0, v1, v2}, {v0, v2, v3}
 
-    float x0 = NDC_X(rect_uv.rect.x);
-    float x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
-    float y0 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
-    float y1 = NDC_Y(rect_uv.rect.y);
+    float x0, x1, y0, y1;
+    if (screen) {
+        x0 = NDC_X(rect_uv.rect.x);
+        x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
+        y0 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
+        y1 = NDC_Y(rect_uv.rect.y);
+    } else {
+#define X_TO_NDC_TOPLEFT(x) ((float)(x) / (tg_window.rect.w / 2.0f))
+#define Y_TO_NDC_TOPLEFT(y) (-(float)(y) / (tg_window.rect.h / 2.0f))
+        x0 = X_TO_NDC_TOPLEFT(rect_uv.rect.x) * WINDOW_ASPECT;
+        x1 = X_TO_NDC_TOPLEFT(rect_uv.rect.x + rect_uv.rect.w) * WINDOW_ASPECT;
+        y0 = Y_TO_NDC_TOPLEFT(rect_uv.rect.y + rect_uv.rect.h);
+        y1 = Y_TO_NDC_TOPLEFT(rect_uv.rect.y);
+#undef X_TO_NDC2
+#undef Y_TO_NDC2
+    }
 
     ta_vert_quad quad = { 0 };
     quad.verts[0].position.x = x0;  // v0 (0,0)
@@ -216,7 +229,7 @@ void ta_primitive_push_rect_uv(ta_rect_uv rect_uv, ta_rgba color)
     quad.verts[5].uv.u = rect_uv.uv0.u;
     quad.verts[5].uv.v = rect_uv.uv1.v;
     for (int i = 0; i < 6; i++) {
-        quad.verts[i].position.z = 0.1f;
+        quad.verts[i].position.z = z;
         quad.verts[i].color = color;
     }
 

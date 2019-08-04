@@ -5,6 +5,8 @@
 #define WINDOW_ASPECT ((float)tg_window.rect.w / tg_window.rect.h)
 #define X_TO_NDC(x) ((float)(x) / (tg_window.rect.w / 2.0f) - 1.0f)
 #define Y_TO_NDC(y) (-(float)(y) / (tg_window.rect.h / 2.0f) + 1.0f)
+#define X_TO_NDC_TOPLEFT(x) ((float)(x) / (tg_window.rect.w / 2.0f))
+#define Y_TO_NDC_TOPLEFT(y) (-(float)(y) / (tg_window.rect.h / 2.0f))
 
 // NOTE: Pixel origin is top-left of screen
 // NOTE: NDC origin is center of screen

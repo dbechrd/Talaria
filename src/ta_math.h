@@ -106,12 +106,11 @@ extern const ta_vec3 VEC3_MAX;
 extern const ta_vec3 VEC3_EPSILON;
 
 extern const ta_quat QUAT_IDENT;
-
 extern const ta_mat3 MAT3_IDENT;
-
 extern const ta_mat4 MAT4_IDENT;
 
 extern const ta_rgba TA_COLOR_INVIS;
+extern const ta_rgba TA_COLOR_BLACK;
 extern const ta_rgba TA_COLOR_RED;
 extern const ta_rgba TA_COLOR_GREEN;
 extern const ta_rgba TA_COLOR_BLUE;
@@ -129,9 +128,9 @@ extern const ta_rgba TA_COLOR_GRAY8;
 extern const ta_rgba TA_COLOR_GRAY9;
 extern const ta_rgba TA_COLOR_WHITE;
 extern const ta_rgba TA_COLOR_WHITE_ALPHA;
+extern const ta_rgba TA_COLOR_SHADOW;
 
 extern const ta_size TA_SIZE_ZERO;
-
 extern const ta_vec2i TA_VEC2I_ZERO;
 
 //int clamp(int d, int min, int max);

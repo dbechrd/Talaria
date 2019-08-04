@@ -296,6 +296,22 @@ control_state *ta_ui_image(ta_size *size, ta_texture *tex)
     return state;
 }
 
+void ta_ui_tooltip(const char *text)
+{
+    GLboolean scissor_test = 0;
+    glGetBooleanv(GL_SCISSOR_TEST, &scissor_test);
+    if (scissor_test) {
+        glDisable(GL_SCISSOR_TEST);
+    }
+
+    ta_font_print(tg_game.font, tg_mouse.x + 10.0f, tg_mouse.y + 20.0f, text,
+        true);
+
+    if (scissor_test) {
+        glEnable(GL_SCISSOR_TEST);
+    }
+}
+
 void ta_ui_window_end()
 {
     // TODO: Render scrollbar on top of content, don't try to pad beforehand
@@ -320,8 +336,6 @@ void ta_ui_window_end()
 
 void ta_ui_hud()
 {
-    glDisable(GL_DEPTH_TEST);
-
     static ta_vec2i ui_window_pos = { 10, 10 };
     static ta_size ui_window_size = { 200, 40 };
 
@@ -360,7 +374,6 @@ void ta_ui_hud()
     ta_ui_window_end();
 
     glDisable(GL_SCISSOR_TEST);
-    glEnable(GL_DEPTH_TEST);
 }
 
 void ui_4x4_grid(ta_texture *tex)
@@ -384,7 +397,8 @@ void ui_4x4_grid(ta_texture *tex)
 
 void ta_ui_test()
 {
-    glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_DEPTH_TEST);
+    //glClear(GL_DEPTH_BUFFER_BIT);
 
     static ta_vec2i ui_window_pos = { 10, 10 };
     static ta_size ui_window_size = { 300, 400 };
@@ -419,12 +433,16 @@ void ta_ui_test()
         ta_ui_pad(&TA_SIZE(0, 4));
         ta_ui_panel_end(panel_id);
 #endif
-        if (ta_ui_image(&TA_SIZE(50, 50), tex_test)->pressed) {
+
+        control_state *state = ta_ui_image(&TA_SIZE(50, 50), tex_test);
+        if (state->pressed) {
             if (tg_game.background_music) {
                 ta_audio_source_stop(tg_game.background_music);
             }
             ta_audio_source_set_buffer(tg_game.background_music, &audio_buffers[i]);
             ta_audio_source_play_loop(tg_game.background_music);
+        } else if (state->hover) {
+            ta_ui_tooltip(audio_buffers[i].uid.uid);
         }
     }
 
@@ -473,7 +491,7 @@ void ta_ui_test()
     ta_ui_window_end();
 
     glDisable(GL_SCISSOR_TEST);
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
 
 #if 0
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
