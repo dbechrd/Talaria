@@ -74,36 +74,31 @@ typedef struct ta_event_mouse_move_event {
     int dy;
 } ta_event_mouse_move_event;
 
-typedef struct ta_event_mouse_click_event {
-    bool left;
-    bool middle;
-    bool right;
-} ta_event_mouse_click_event;
-
 typedef struct ta_event_mouse_scroll_event {
     int x;
     int y;
     bool flipped;
 } ta_event_mouse_scroll_event;
 
-typedef struct ta_event_button_event {
-    const char *button_uid;
-} ta_event_button_event;
-
 typedef struct ta_event_camera_rotate_event {
     float delta_pitch;
     float delta_yaw;
 } ta_event_camera_rotate_event;
+
+typedef struct ta_event_button_event {
+    const char *button_uid;
+} ta_event_button_event;
 
 typedef struct ta_event {
     ta_event_type type;
     union {
         ta_event_window_resize_event window_resize;
         ta_event_mouse_move_event mouse_move;
-        ta_event_mouse_click_event mouse_click;
         ta_event_mouse_scroll_event mouse_scroll;
-        ta_event_button_event button;
+
+        // TODO: Move game-specific events out of this struct?
         ta_event_camera_rotate_event camera_rotate;
+        ta_event_button_event button;
     } data;
 } ta_event;
 

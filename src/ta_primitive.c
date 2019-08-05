@@ -8,34 +8,19 @@
 #include "misc/gl3w.h"
 #include <math.h>
 
-typedef struct ta_shader_lines_vertex {
-    ta_vec3 position;
-    ta_rgba color;
-} ta_shader_lines_vertex;
-
-typedef struct ta_vert_line {
-    ta_shader_lines_vertex verts[2];
-} ta_vert_line;
-
-typedef struct ta_shader_quads_vertex {
-    ta_vec3 position;
-    ta_rgba color;
-    ta_uv uv;
-} ta_shader_quads_vertex;
-
-typedef struct ta_vert_quad {
-    ta_shader_quads_vertex verts[6];
-} ta_vert_quad;
-
-static ta_vert_line *lines_queue;
+ta_vert_line *lines_queue;
 static GLuint lines_vao;
 static GLuint lines_buffer;
 static GLint lines_buffer_size;
 
-static ta_vert_quad *quads_queue;
+ta_vert_quad *quads_queue;
 static GLuint quads_vao;
 static GLuint quads_buffer;
 static GLint quads_buffer_size;
+
+// TODO: This is getting messy, optionally sort by depth before rendering, maybe
+//       on insert?
+ta_vert_quad *font_queue;
 
 static void ta_primitive_init_lines()
 {
@@ -171,12 +156,8 @@ void ta_primitive_push_line_3d(ta_line_3d line_3d, ta_rgba color0,
     ta_primitive_push_line(&line);
 }
 
-static void primitive_push_quad(ta_vert_quad *quad)
-{
-    dlb_vec_push(quads_queue, *quad);
-}
-void ta_primitive_push_rect_uv(ta_rect_uv rect_uv, ta_rgba color, float z,
-    bool screen)
+void ta_primitive_push_rect_uv(ta_vert_quad **queue, ta_rect_uv rect_uv,
+    ta_rgba color, float z, bool screen)
 {
     // v3 _______ v2
     //    |    /|
@@ -229,7 +210,7 @@ void ta_primitive_push_rect_uv(ta_rect_uv rect_uv, ta_rgba color, float z,
         quad.verts[i].color = color;
     }
 
-    primitive_push_quad(&quad);
+    dlb_vec_push(*queue, quad);
 }
 void ta_primitive_push_rect(ta_rect rect, ta_rgba color)
 {
@@ -280,7 +261,7 @@ void ta_primitive_push_rect(ta_rect rect, ta_rgba color)
         quad.verts[i].color = color;
     }
 
-	primitive_push_quad(&quad);
+    dlb_vec_push(quads_queue, quad);
 }
 void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color)
 {
@@ -317,7 +298,7 @@ void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color)
     for (int i = 0; i < 6; i++) {
         quad.verts[i].color = color;
     }
-    primitive_push_quad(&quad);
+    dlb_vec_push(quads_queue, quad);
 }
 
 void ta_primitive_push_crosshair(s32 length, s32 thickness)
@@ -545,14 +526,14 @@ void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
     }
     if (cull_face) glEnable(GL_CULL_FACE);
 }
-void ta_primitive_render_quads(ta_shader *shader, bool clear_queues,
-    bool reset_uniforms)
+void ta_primitive_render_quads(ta_vert_quad *queue, ta_shader *shader,
+    bool clear_queue, bool reset_uniforms)
 {
     GLboolean cull_face = 0;
     glGetBooleanv(GL_CULL_FACE, &cull_face);
     if (cull_face) glDisable(GL_CULL_FACE);
 
-	u32 queue_len = dlb_vec_len(quads_queue);
+	u32 queue_len = dlb_vec_len(queue);
 	if (!queue_len) {
 		return;
 	}
@@ -564,12 +545,12 @@ void ta_primitive_render_quads(ta_shader *shader, bool clear_queues,
 	glBindBuffer(GL_ARRAY_BUFFER, quads_buffer);
 
 	// Update buffer (resize if necessary)
-	int queue_size = dlb_vec_size(quads_queue);
+	int queue_size = dlb_vec_size(queue);
 	if (queue_size > quads_buffer_size) {
-		glNamedBufferData(quads_buffer, queue_size, quads_queue, GL_DYNAMIC_DRAW);
+		glNamedBufferData(quads_buffer, queue_size, queue, GL_DYNAMIC_DRAW);
 		quads_buffer_size = queue_size;
 	} else {
-		glNamedBufferSubData(quads_buffer, 0, queue_size, quads_queue);
+		glNamedBufferSubData(quads_buffer, 0, queue_size, queue);
 	}
 
 	// Draw quads
@@ -579,8 +560,8 @@ void ta_primitive_render_quads(ta_shader *shader, bool clear_queues,
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
     ta_shader_unbind(shader);
 
-    if (clear_queues) {
-        dlb_vec_clear(quads_queue);
+    if (clear_queue) {
+        dlb_vec_clear(queue);
     }
     if (reset_uniforms) {
         ta_shader_set_mat4(shader, SYM_U_PROJ, &MAT4_IDENT);
@@ -592,5 +573,5 @@ void ta_primitive_render_quads(ta_shader *shader, bool clear_queues,
 void ta_primitive_render(bool clear_queues, bool reset_uniforms)
 {
     ta_primitive_render_lines(tg_shader_lines, clear_queues, reset_uniforms);
-    ta_primitive_render_quads(tg_shader_quads, clear_queues, reset_uniforms);
+    ta_primitive_render_quads(quads_queue, tg_shader_quads, clear_queues, reset_uniforms);
 }

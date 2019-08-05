@@ -68,21 +68,13 @@ static const ta_rgba *colors[2] = {
     &TA_COLOR_WHITE,
 };
 
-void ta_font_print(ta_font *font, float x, float y, const char *text, bool screen)
+float ta_font_push_text(ta_font *font, float x, float y, const char *text,
+    bool screen)
 {
-    glDisable(GL_CULL_FACE);
-    //glDisable(GL_DEPTH_TEST);
-    ta_shader *shader = ta_font_shader(font);
-    DLB_ASSERT(shader);
-
-    // TODO: Can probably remove these? Unless we want to render text in 3D?
-    //ta_shader_set_mat4(shader, SYM_U_PROJ, &MAT4_IDENT);
-    //ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
-    //ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
-
     float start_x = x;
     float start_y = y + font->pixel_height;
     float start_x_ndc = NDC_X(start_x);
+    float max_x = 0.0f;
 
     const float shadow_offset_x = 1.0f;
     const float shadow_offset_y = 1.0f;
@@ -114,16 +106,29 @@ void ta_font_print(ta_font *font, float x, float y, const char *text, bool scree
                     rect_uv.uv1.v = quad.t0;
                     float layer = (i == 0) ? UI_LAYER_SHADOW : UI_LAYER_1;
                     if (screen) layer *= -1.0f;
-                    ta_primitive_push_rect_uv(rect_uv, *colors[i], layer, screen);
+                    ta_primitive_push_rect_uv(&font_queue, rect_uv, *colors[i], layer, screen);
                 }
+
+                max_x = MAX(max_x, cur_x);
             }
             ++chr;
         }
     }
 
+    float max_w = max_x - start_x;
+    return max_w;
+}
+
+void ta_font_render(ta_font *font, bool clear_queues, bool reset_uniforms)
+{
+    glDisable(GL_CULL_FACE);
+    //glDisable(GL_DEPTH_TEST);
+
+    ta_shader *shader = ta_font_shader(font);
     ta_shader_set_sampler2d(shader, SYM_U_TEX, font->gl_id);
-    ta_primitive_render_quads(shader, true, true);
+    ta_primitive_render_quads(font_queue, shader, clear_queues, reset_uniforms);
     ta_shader_set_sampler2d(shader, SYM_U_TEX, 0);
+
     //glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 }

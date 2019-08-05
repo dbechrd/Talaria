@@ -296,11 +296,16 @@ control_state *ta_ui_image(ta_size *size, ta_texture *tex)
 
 void ta_ui_tooltip(const char *text)
 {
+    // TODO: Queue up tooltip request then render after the UI is rendered to
+    //       fix the blending order.
+    //       Alternatively, just figure out the size of the label and display
+    //       an opaque background rect.
     GLboolean scissor_test = 0;
     glGetBooleanv(GL_SCISSOR_TEST, &scissor_test);
     if (scissor_test) glDisable(GL_SCISSOR_TEST);
-    ta_font_print(tg_game.font, tg_mouse.x + 10.0f, tg_mouse.y + 20.0f, text,
+    ta_font_push_text(tg_game.font, tg_mouse.x + 10.0f, tg_mouse.y + 20.0f, text,
         true);
+    ta_font_render(tg_game.font, true, true);
     if (scissor_test) glEnable(GL_SCISSOR_TEST);
 }
 
