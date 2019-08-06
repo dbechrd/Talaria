@@ -165,6 +165,8 @@ static void ui_after(ui_frame *control)
 
 void ta_ui_window_begin(ta_vec2i *pos, ta_size *size, int *scroll_v)
 {
+    glClear(GL_DEPTH_BUFFER_BIT);
+
     ui_frame *frame = dlb_vec_alloc(ui_frames);
     frame->index = dlb_vec_len(ui_frames) - 1;
     frame->type = UI_WINDOW;
@@ -296,21 +298,26 @@ control_state *ta_ui_image(ta_size *size, ta_texture *tex)
 
 void ta_ui_tooltip(const char *text)
 {
-    // TODO: Queue up tooltip request then render after the UI is rendered to
-    //       fix the blending order.
-    //       Alternatively, just figure out the size of the label and display
-    //       an opaque background rect.
-    GLboolean scissor_test = 0;
-    glGetBooleanv(GL_SCISSOR_TEST, &scissor_test);
-    if (scissor_test) glDisable(GL_SCISSOR_TEST);
-    ta_font_push_text(tg_game.font, tg_mouse.x + 10.0f, tg_mouse.y + 20.0f, text,
-        true);
-    ta_font_render(tg_game.font, true, true);
-    if (scissor_test) glEnable(GL_SCISSOR_TEST);
+    float x = tg_mouse.x + 10.0f;
+    float y = tg_mouse.y + 20.0f;
+    float tip_w = ta_font_push_text(&tooltip_fg_queue, tg_game.font, x, y, text, true);
+
+    ta_rect_uv tag_background = { 0 };
+    tag_background.rect.x = x - 10.0f;
+    tag_background.rect.y = y;
+    tag_background.rect.w = tip_w + 20.0f;
+    tag_background.rect.h = tg_game.font->pixel_height * 1.5f;
+    ta_primitive_push_rect_uv(&tooltip_bg_queue, tag_background, TA_COLOR_GRAY3A, UI_LAYER_BG, true);
 }
 
 void ta_ui_window_end()
 {
+    glDisable(GL_SCISSOR_TEST);
+
+    // Render tooltips
+    ta_primitive_render_quads(tooltip_bg_queue, tg_shader_quads, true, true);
+    ta_font_render(tooltip_fg_queue, tg_game.font, true, true);
+
     // TODO: Render scrollbar on top of content, don't try to pad beforehand
     //       since we don't yet know the size.
 #if 0
@@ -382,9 +389,6 @@ void ui_4x4_grid(ta_texture *tex)
 
 void ta_ui_test()
 {
-    //glDisable(GL_DEPTH_TEST);
-    //glClear(GL_DEPTH_BUFFER_BIT);
-
     static ta_vec2i ui_window_pos = { 10, 10 };
     static ta_size ui_window_size = { 300, 400 };
 
@@ -474,9 +478,6 @@ void ta_ui_test()
     //    //ta_ui_row_end();
     //}
     ta_ui_window_end();
-
-    glDisable(GL_SCISSOR_TEST);
-    //glEnable(GL_DEPTH_TEST);
 
 #if 0
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).

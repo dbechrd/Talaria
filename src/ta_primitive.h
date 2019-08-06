@@ -54,13 +54,15 @@ typedef struct ta_vert_quad {
 
 extern ta_vert_line *lines_queue;
 extern ta_vert_quad *quads_queue;
-extern ta_vert_quad *font_queue;
+extern ta_vert_quad *tooltip_bg_queue;
+extern ta_vert_quad *tooltip_fg_queue;
 
 struct ta_shader;
 
 void ta_primitive_init();
 void ta_primitive_push_line_2d(ta_line_2d line_2d, ta_rgba color0, ta_rgba color1);
 void ta_primitive_push_line_3d(ta_line_3d line_3d, ta_rgba color0, ta_rgba color1);
+void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color);
 void ta_primitive_push_rect(ta_rect rect, ta_rgba color);
 void ta_primitive_push_rect_uv(ta_vert_quad **queue, ta_rect_uv rect_uv,
     ta_rgba color, float z, bool screen);

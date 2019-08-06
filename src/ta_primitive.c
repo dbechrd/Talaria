@@ -20,7 +20,8 @@ static GLint quads_buffer_size;
 
 // TODO: This is getting messy, optionally sort by depth before rendering, maybe
 //       on insert?
-ta_vert_quad *font_queue;
+ta_vert_quad *tooltip_bg_queue;
+ta_vert_quad *tooltip_fg_queue;
 
 static void ta_primitive_init_lines()
 {
@@ -212,7 +213,7 @@ void ta_primitive_push_rect_uv(ta_vert_quad **queue, ta_rect_uv rect_uv,
 
     dlb_vec_push(*queue, quad);
 }
-void ta_primitive_push_rect(ta_rect rect, ta_rgba color)
+void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color)
 {
     // v3 _______ v2
     //    |    /|
@@ -261,7 +262,11 @@ void ta_primitive_push_rect(ta_rect rect, ta_rgba color)
         quad.verts[i].color = color;
     }
 
-    dlb_vec_push(quads_queue, quad);
+    dlb_vec_push(*queue, quad);
+}
+void ta_primitive_push_rect(ta_rect rect, ta_rgba color)
+{
+    ta_primitive_push_rect_q(&quads_queue, rect, color);
 }
 void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color)
 {
@@ -486,35 +491,37 @@ void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
 void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
     bool reset_uniforms)
 {
-    GLboolean cull_face = 0;
-    glGetBooleanv(GL_CULL_FACE, &cull_face);
-    if (cull_face) glDisable(GL_CULL_FACE);
+
 
 	u32 queue_len = dlb_vec_len(lines_queue);
-	if (!queue_len) {
-		return;
+	if (queue_len) {
+        GLboolean cull_face = 0;
+        glGetBooleanv(GL_CULL_FACE, &cull_face);
+        if (cull_face) glDisable(GL_CULL_FACE);
+
+        ta_shader_bind(shader);
+        ta_shader_prerender(shader);
+        glBindVertexArray(lines_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
+
+        // Update buffer (resize if necessary)
+        int queue_size = dlb_vec_size(lines_queue);
+        if (queue_size > lines_buffer_size) {
+            glNamedBufferData(lines_buffer, queue_size, lines_queue, GL_DYNAMIC_DRAW);
+            lines_buffer_size = queue_size;
+        } else {
+            glNamedBufferSubData(lines_buffer, 0, queue_size, lines_queue);
+        }
+
+        // Draw lines
+        glDrawArrays(GL_LINES, 0, 2 * queue_len);
+
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        ta_shader_unbind(shader);
+
+        if (cull_face) glEnable(GL_CULL_FACE);
 	}
-
-	ta_shader_bind(shader);
-    ta_shader_prerender(shader);
-    glBindVertexArray(lines_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
-
-	// Update buffer (resize if necessary)
-	int queue_size = dlb_vec_size(lines_queue);
-	if (queue_size > lines_buffer_size) {
-		glNamedBufferData(lines_buffer, queue_size, lines_queue, GL_DYNAMIC_DRAW);
-		lines_buffer_size = queue_size;
-	} else {
-		glNamedBufferSubData(lines_buffer, 0, queue_size, lines_queue);
-	}
-
-	// Draw lines
-    glDrawArrays(GL_LINES, 0, 2 * queue_len);
-
-    glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-    ta_shader_unbind(shader);
 
     if (clear_queues) {
         dlb_vec_clear(lines_queue);
@@ -524,41 +531,40 @@ void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
         ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
         ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
     }
-    if (cull_face) glEnable(GL_CULL_FACE);
 }
 void ta_primitive_render_quads(ta_vert_quad *queue, ta_shader *shader,
     bool clear_queue, bool reset_uniforms)
 {
-    GLboolean cull_face = 0;
-    glGetBooleanv(GL_CULL_FACE, &cull_face);
-    if (cull_face) glDisable(GL_CULL_FACE);
-
 	u32 queue_len = dlb_vec_len(queue);
-	if (!queue_len) {
-		return;
+	if (queue_len) {
+        GLboolean cull_face = 0;
+        glGetBooleanv(GL_CULL_FACE, &cull_face);
+        if (cull_face) glDisable(GL_CULL_FACE);
+
+        ta_shader_bind(shader);
+        ta_shader_prerender(shader);
+
+        glBindVertexArray(quads_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, quads_buffer);
+
+        // Update buffer (resize if necessary)
+        int queue_size = dlb_vec_size(queue);
+        if (queue_size > quads_buffer_size) {
+	        glNamedBufferData(quads_buffer, queue_size, queue, GL_DYNAMIC_DRAW);
+	        quads_buffer_size = queue_size;
+        } else {
+	        glNamedBufferSubData(quads_buffer, 0, queue_size, queue);
+        }
+
+        // Draw quads
+        glDrawArrays(GL_TRIANGLES, 0, 6 * queue_len);
+
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        ta_shader_unbind(shader);
+
+        if (cull_face) glEnable(GL_CULL_FACE);
 	}
-
-    ta_shader_bind(shader);
-	ta_shader_prerender(shader);
-
-	glBindVertexArray(quads_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, quads_buffer);
-
-	// Update buffer (resize if necessary)
-	int queue_size = dlb_vec_size(queue);
-	if (queue_size > quads_buffer_size) {
-		glNamedBufferData(quads_buffer, queue_size, queue, GL_DYNAMIC_DRAW);
-		quads_buffer_size = queue_size;
-	} else {
-		glNamedBufferSubData(quads_buffer, 0, queue_size, queue);
-	}
-
-	// Draw quads
-	glDrawArrays(GL_TRIANGLES, 0, 6 * queue_len);
-
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-    ta_shader_unbind(shader);
 
     if (clear_queue) {
         dlb_vec_clear(queue);
@@ -568,7 +574,6 @@ void ta_primitive_render_quads(ta_vert_quad *queue, ta_shader *shader,
         ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
         ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
     }
-    if (cull_face) glEnable(GL_CULL_FACE);
 }
 void ta_primitive_render(bool clear_queues, bool reset_uniforms)
 {

@@ -1035,15 +1035,17 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &camera->look_at);
-    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
 
     // TODO: Group by shader / material to minimize redundant uniform calls
     dlb_vec_each(ta_node *, node, scene->pools[TA_NODE]) {
         ta_node_render(node, camera, alpha);
     }
+
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+
 #if 1
     dlb_vec_each(ta_camera *, cam, scene->pools[TA_CAMERA]) {
         if (cam != tg_game.camera) {
@@ -1059,12 +1061,9 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
         sphere.radius = 0.2f;
         ta_primitive_push_sphere(sphere, TA_COLOR_YELLOW);
     }
-#endif
 
-    ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);
-    ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+    ta_primitive_render(true, false);
+#endif
 }

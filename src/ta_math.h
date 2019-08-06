@@ -120,6 +120,7 @@ extern const ta_rgba TA_COLOR_YELLOW;
 extern const ta_rgba TA_COLOR_GRAY1;
 extern const ta_rgba TA_COLOR_GRAY2;
 extern const ta_rgba TA_COLOR_GRAY3;
+extern const ta_rgba TA_COLOR_GRAY3A;
 extern const ta_rgba TA_COLOR_GRAY4;
 extern const ta_rgba TA_COLOR_GRAY5;
 extern const ta_rgba TA_COLOR_GRAY6;

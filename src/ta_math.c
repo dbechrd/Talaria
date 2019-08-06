@@ -41,6 +41,7 @@ const ta_rgba TA_COLOR_CYAN        = { 0.1f, 1.0f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_GRAY1       = { 0.1f, 0.1f, 0.1f, 1.0f };
 const ta_rgba TA_COLOR_GRAY2       = { 0.2f, 0.2f, 0.2f, 1.0f };
 const ta_rgba TA_COLOR_GRAY3       = { 0.3f, 0.3f, 0.3f, 1.0f };
+const ta_rgba TA_COLOR_GRAY3A      = { 0.3f, 0.3f, 0.3f, 0.7f };
 const ta_rgba TA_COLOR_GRAY4       = { 0.4f, 0.4f, 0.4f, 1.0f };
 const ta_rgba TA_COLOR_GRAY5       = { 0.5f, 0.5f, 0.5f, 1.0f };
 const ta_rgba TA_COLOR_GRAY6       = { 0.6f, 0.6f, 0.6f, 1.0f };

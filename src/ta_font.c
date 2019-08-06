@@ -68,8 +68,8 @@ static const ta_rgba *colors[2] = {
     &TA_COLOR_WHITE,
 };
 
-float ta_font_push_text(ta_font *font, float x, float y, const char *text,
-    bool screen)
+float ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y,
+    const char *text, bool screen)
 {
     float start_x = x;
     float start_y = y + font->pixel_height;
@@ -106,7 +106,7 @@ float ta_font_push_text(ta_font *font, float x, float y, const char *text,
                     rect_uv.uv1.v = quad.t0;
                     float layer = (i == 0) ? UI_LAYER_SHADOW : UI_LAYER_1;
                     if (screen) layer *= -1.0f;
-                    ta_primitive_push_rect_uv(&font_queue, rect_uv, *colors[i], layer, screen);
+                    ta_primitive_push_rect_uv(queue, rect_uv, *colors[i], layer, screen);
                 }
 
                 max_x = MAX(max_x, cur_x);
@@ -119,14 +119,15 @@ float ta_font_push_text(ta_font *font, float x, float y, const char *text,
     return max_w;
 }
 
-void ta_font_render(ta_font *font, bool clear_queues, bool reset_uniforms)
+void ta_font_render(ta_vert_quad *queue, ta_font *font, bool clear_queues,
+    bool reset_uniforms)
 {
     glDisable(GL_CULL_FACE);
     //glDisable(GL_DEPTH_TEST);
 
     ta_shader *shader = ta_font_shader(font);
     ta_shader_set_sampler2d(shader, SYM_U_TEX, font->gl_id);
-    ta_primitive_render_quads(font_queue, shader, clear_queues, reset_uniforms);
+    ta_primitive_render_quads(queue, shader, clear_queues, reset_uniforms);
     ta_shader_set_sampler2d(shader, SYM_U_TEX, 0);
 
     //glEnable(GL_DEPTH_TEST);

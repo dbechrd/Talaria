@@ -267,12 +267,8 @@ int main(int argc, char *argv[])
 		// Draw models
         ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
         ta_scene_render(tg_game.scene, tg_game.camera, sim_alpha);
-        ta_primitive_render(true, true);
 
         // World axes
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &tg_game.camera->projection);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &tg_game.camera->look_at);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_primitive_push_axes(1.0f);
         ta_primitive_render(true, true);
 		glClear(GL_DEPTH_BUFFER_BIT);
@@ -354,7 +350,7 @@ int main(int argc, char *argv[])
             tag_to_cam.y *= 0.0f;
             float tag_scalef = MAX(vec3_len(tag_to_cam) / 1.5f, 1.5f);
 
-            float tag_w = ta_font_push_text(tg_game.font, 0.0f, 0.0f, "Player 1", false);
+            float tag_w = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, "Player 1", false);
             ta_vec3 tag_offset = tg_game.camera->right;
             tag_offset = vec3_scalef(tag_offset, NDC_W(tag_w) * tag_scalef);
             tag_pos = vec3_sub(tag_pos, tag_offset);
@@ -372,13 +368,10 @@ int main(int argc, char *argv[])
             ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform);
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tg_game.tex_orange->gl_id);
             ta_rect_uv tag_background = { 0 };
-            tag_background.rect.w = tag_w;
+            tag_background.rect.x = -10.0f;
+            tag_background.rect.w = tag_w + 20.0f;
             tag_background.rect.h = tg_game.font->pixel_height * 1.5f;
-            tag_background.uv0.u = 0.0f;
-            tag_background.uv0.v = 0.9f;
-            tag_background.uv1.u = 0.5f;
-            tag_background.uv1.v = 1.0f;
-            ta_primitive_push_rect_uv(&quads_queue, tag_background, TA_COLOR_GRAY3, UI_LAYER_BG, false);
+            ta_primitive_push_rect_uv(&quads_queue, tag_background, TA_COLOR_GRAY3A, UI_LAYER_BG, false);
             ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
@@ -386,7 +379,7 @@ int main(int argc, char *argv[])
             ta_shader_set_mat4(font_shader, SYM_U_PROJ, &tg_game.camera->projection);
             ta_shader_set_mat4(font_shader, SYM_U_VIEW, &tg_game.camera->look_at);
             ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform);
-            ta_font_render(tg_game.font, true, true);
+            ta_font_render(tooltip_fg_queue, tg_game.font, true, true);
         }
 
         // Print frame time on the screen
@@ -394,8 +387,8 @@ int main(int argc, char *argv[])
         char frame_time_buf[40] = { 0 };
         int len = snprintf(frame_time_buf, sizeof(frame_time_buf) - 1, "Frame %8llu\n%f ms", frame_num, ms_frame_time);
         frame_time_buf[len] = 0;
-        ta_font_push_text(tg_game.font, -130.0f, 0.0f, frame_time_buf, true);
-        ta_font_render(tg_game.font, true, true);
+        ta_font_push_text(&tooltip_fg_queue, tg_game.font, -130.0f, 0.0f, frame_time_buf, true);
+        ta_font_render(tooltip_fg_queue, tg_game.font, true, true);
 
         ta_window_swap();
         //ta_log_write(tg_debug_log, "Frame %llu started at %f sim time: %f\n", frame_num, ms_frame_start - ms_frame_first, ms_sim_t);
