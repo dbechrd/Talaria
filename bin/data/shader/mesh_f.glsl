@@ -151,6 +151,8 @@ void main()
                 debug_dist = dist - shadow_bias;
                 debug_shadow = step(shadow_map_depth, dist - shadow_bias);
 
+                // TODO: Clean this crap up via:
+                // https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
 				float foo_bias = 0.04;
 				for (float x = -1.0; x <= 1.0; x += 1.0) {
 					for (float y = -1.0; y <= 1.0; y += 1.0) {
