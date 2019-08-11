@@ -6,12 +6,16 @@
 #include "ta_mouse.h"
 #include "ta_scene.h"
 #include "ta_game.h"
+#include "ta_buffer.h"
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
 
-#define ROW_PAD_LEFT 4
+#define ROW_PAD_LEFT 1 //4
 #define ROW_PAD_RIGHT 0
-#define ROW_PAD_TOP 4
+#define ROW_PAD_TOP 1 //4
+#define TEXTBOX_PAD_LEFT 0 //8
+#define TEXTBOX_PAD_TOP 0 //4
+#define TEXTBOX_PAD_CURSOR 0 //4
 #define WIDGET_PAD 1
 #define SCROLL_SPEED 20
 
@@ -49,6 +53,14 @@ typedef struct ui_frame {
 
 static ui_frame *ui_frames;
 
+typedef struct textbox_settings {
+    ta_buffer buffer;
+    u32 text_len;
+    u32 cursor;  // index of next character, 0 = before first char, len = after last char
+    u32 selection_start;
+    u32 selection_len;
+} textbox_settings;
+
 typedef enum ui_color_type {
     COLOR_NONE,
     COLOR_HOVER,
@@ -81,6 +93,8 @@ static bool type_is_container(ui_frame_type type)
 
 static ui_frame *ui_container()
 {
+    // TODO: Could just keep track of most recent container? Idk.. this most
+    // likely only runs for 1-2 iterations worst case right now.
     DLB_ASSERT(dlb_vec_len(ui_frames));
     ui_frame *frame = dlb_vec_last(ui_frames);
     while (frame != ui_frames && !type_is_container(frame->type)) {
@@ -134,7 +148,7 @@ static control_state *ui_before(ui_frame *control)
     }
 
     if (!type_is_container(control->type)) {
-        ta_primitive_push_rect(rect, bg_color);
+        ta_primitive_push_rect(rect, bg_color, UI_LAYER_EDIT_1_BG);
         ta_primitive_render(true, true);
     }
 
@@ -264,7 +278,22 @@ void ta_ui_pad(ta_size *size)
     container->offset.y += size->h;
 }
 
-control_state *ta_ui_image(ta_size *size, ta_texture *tex)
+void ta_ui_tooltip(const char *text, u32 text_len)
+{
+    float x = tg_mouse.x + 10.0f;
+    float y = tg_mouse.y + 20.0f;
+    ta_rectf tip_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, x, y,
+        UI_LAYER_TIP, text, text_len, true, 0, 0);
+
+    ta_rect_uv tag_background = { 0 };
+    tag_background.rect.x = x - 10.0f;
+    tag_background.rect.y = y;
+    tag_background.rect.w = tip_rect.w + 20.0f;
+    tag_background.rect.h = tip_rect.h; //tg_game.font->pixel_height * 1.5f;
+    ta_primitive_push_rect_uv(&tooltip_bg_queue, tag_background, TA_COLOR_GRAY3A, UI_LAYER_TIP_BG, true);
+}
+
+bool ta_ui_image(ta_size *size, ta_texture *tex, const char *tooltip, u32 tooltip_len)
 {
     DLB_ASSERT(dlb_vec_len(ui_frames));
 
@@ -289,25 +318,68 @@ control_state *ta_ui_image(ta_size *size, ta_texture *tex)
     img_rect.y = frame->pos.y;
     img_rect.w = tex->width;
     img_rect.h = tex->height;
-    ta_primitive_push_rect(img_rect, TA_COLOR_INVIS);
+    ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
     ta_primitive_render(true, true);
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
     ui_after(frame);
-    return state;
+
+    if (tooltip && state->hover) {
+        ta_ui_tooltip(tooltip, tooltip_len);
+    }
+
+    return state->pressed;
 }
 
-void ta_ui_tooltip(const char *text)
+void ta_ui_textbox(ta_size *size, textbox_settings *settings)
 {
-    float x = tg_mouse.x + 10.0f;
-    float y = tg_mouse.y + 20.0f;
-    float tip_w = ta_font_push_text(&tooltip_fg_queue, tg_game.font, x, y, text, true);
+    DLB_ASSERT(settings);
 
-    ta_rect_uv tag_background = { 0 };
-    tag_background.rect.x = x - 10.0f;
-    tag_background.rect.y = y;
-    tag_background.rect.w = tip_w + 20.0f;
-    tag_background.rect.h = tg_game.font->pixel_height * 1.5f;
-    ta_primitive_push_rect_uv(&tooltip_bg_queue, tag_background, TA_COLOR_GRAY3A, UI_LAYER_BG, true);
+    ui_frame *container = ui_container();
+    ui_frame *frame = dlb_vec_alloc(ui_frames);
+    frame->index = dlb_vec_len(ui_frames) - 1;
+    frame->type = UI_IMAGE;
+    frame->pos = container->offset;
+    frame->offset = frame->pos;
+    frame->size = *size;
+    ui_before(frame);
+
+    static ta_vert_quad *text_queue;
+    float cursor_x = 0.0f;
+
+    float text_left = (float)frame->pos.x + TEXTBOX_PAD_LEFT;
+    float text_top = (float)frame->pos.y + TEXTBOX_PAD_TOP;
+
+    // Calculate text rect
+    ta_rectf text_rect = ta_font_push_text(&text_queue, tg_game.font, text_left,
+        text_top, UI_LAYER_EDIT_1, (char *)(settings->buffer.data),
+        settings->buffer.length, true, settings->cursor, &cursor_x);
+
+    ta_rect bg_rect;
+    bg_rect.x = frame->pos.x;
+    bg_rect.y = frame->pos.y;
+    bg_rect.w = (int)(text_rect.w + 0.5f);
+    bg_rect.h = (int)(text_rect.h + 0.5f);
+
+    // Render background
+    ta_primitive_push_rect(bg_rect, TA_COLOR_GRAY2, UI_LAYER_EDIT_1_BG);
+    ta_primitive_render(true, false);
+
+    // Render text
+    ta_font_render(text_queue, tg_game.font, true, true);
+    dlb_vec_clear(text_queue);
+
+    ui_after(frame);
+
+    glDisable(GL_SCISSOR_TEST);
+    // Render cursor
+    ta_rect cursor_rect = bg_rect;
+    cursor_rect.x = (int)cursor_x;
+    cursor_rect.y += TEXTBOX_PAD_CURSOR;
+    cursor_rect.w = 1;
+    cursor_rect.h -= TEXTBOX_PAD_CURSOR * 2;
+    ta_primitive_push_rect(cursor_rect, TA_COLOR_RED, UI_LAYER_EDIT_2);
+    ta_primitive_render(true, false);
+    glEnable(GL_SCISSOR_TEST);
 }
 
 void ta_ui_window_end()
@@ -349,18 +421,18 @@ void ta_ui_hud()
     ta_ui_row_start();
     for (int i = 0; i < tg_game.player_ammo_max; i++) {
         if (i < tg_game.player_ammo) {
-            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_orange);
+            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_orange, 0, 0);
         } else {
-            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_gray);
+            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_gray, 0, 0);
         }
     }
     ta_ui_pad(&TA_SIZE(0, 4));
     ta_ui_row_start();
     for (int i = 0; i < tg_game.player_clip_max; i++) {
         if (i < tg_game.player_clip) {
-            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_orange);
+            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_orange, 0, 0);
         } else {
-            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_gray);
+            ta_ui_image(&TA_SIZE(20, 20), tg_game.tex_gray, 0, 0);
         }
     }
     ta_ui_window_end();
@@ -378,7 +450,7 @@ void ui_4x4_grid(ta_texture *tex)
         ta_ui_row_start();
         for (int c = 0; c < 4; c++) {
             ta_ui_pad(&TA_SIZE(4, 0));
-            ta_ui_image(&TA_SIZE(80, 80), tex);
+            ta_ui_image(&TA_SIZE(80, 80), tex, 0, 0);
         }
         //ta_ui_row_end();
         ta_ui_pad(&TA_SIZE(0, 4));
@@ -389,10 +461,11 @@ void ui_4x4_grid(ta_texture *tex)
 
 void ta_ui_test()
 {
-    static ta_vec2i ui_window_pos = { 10, 10 };
+    //static ta_vec2i ui_window_pos = { 10, 10 };
+    static ta_vec2i ui_window_pos = { 0, 0 };
     static ta_size ui_window_size = { 300, 400 };
 
-    static ta_texture *tex_test = 0;
+    static ta_texture *tex_test;
     if (!tex_test) {
         tex_test = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_albedo"));
         DLB_ASSERT(tex_test && tex_test->gl_id);
@@ -401,6 +474,15 @@ void ta_ui_test()
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
     ta_ui_window_begin(&ui_window_pos, &ui_window_size, 0);
+
+    ta_ui_row_start();
+    //ta_ui_pad(&TA_SIZE(600, 400));
+    static textbox_settings text_settings;
+    if (!text_settings.buffer.length) {
+        ta_buffer_init(&text_settings.buffer, 32);
+        dlb_memcpy(text_settings.buffer.data, CSTR("g|QI^_,`"));
+    }
+    ta_ui_textbox(&TA_SIZE(200, 50), &text_settings);
 
     // Audio buffers
     ta_ui_row_start();
@@ -423,60 +505,27 @@ void ta_ui_test()
         ta_ui_panel_end(panel_id);
 #endif
 
-        control_state *state = ta_ui_image(&TA_SIZE(50, 50), tex_test);
-        if (state->pressed) {
+        if (ta_ui_image(&TA_SIZE(50, 50), tex_test, SYM(audio_buffers[i].uid.uid))) {
             if (tg_game.background_music) {
                 ta_audio_source_stop(tg_game.background_music);
             }
             ta_audio_source_set_buffer(tg_game.background_music, &audio_buffers[i]);
             ta_audio_source_play_loop(tg_game.background_music);
-        } else if (state->hover) {
-            ta_ui_tooltip(audio_buffers[i].uid.uid);
         }
     }
 
-#if 0
-    ta_ui_row_start();
-    ta_ui_image(&TA_SIZE(50, 50), tex_test);
-    ta_ui_image(&TA_SIZE(50, 50), tex_test);
-    ui_4x4_grid(tex_test);
-    //ta_ui_row_end();
-#else
     static int selected_index = -1;
     for (int i = 0; i < 4; i++) {
         ta_ui_row_start();
         ta_ui_pad(&TA_SIZE(4, 4));
-        if (ta_ui_image(&TA_SIZE(50, 50), tex_test)->pressed) {
+        if (ta_ui_image(&TA_SIZE(50, 50), tex_test, 0, 0)) {
             selected_index = i == selected_index ? -1 : i;
         }
         if (i == selected_index) {
             ui_4x4_grid(tex_test);
         }
     }
-#endif
 
-    //ta_ui_next_size(50, 50);  // TODO: Implement this? Auto-size otherwise
-    //static bool subimage1 = false;
-    //static bool subimage2 = false;
-    //if (ta_ui_image(&TA_SIZE(100, 20), tex_test)->pressed) {
-    //    subimage1 = !subimage1;
-    //}
-    //if (subimage1) {
-    //    //ta_ui_row_start();
-    //    ta_ui_pad(&TA_SIZE(10, 0));
-    //    if (ta_ui_image(&TA_SIZE(100, 20), tex_test)->pressed) {
-    //        subimage2 = !subimage2;
-    //    }
-    //    //if (subimage2) {
-    //    //    ta_ui_pad(&TA_SIZE(20, 0));
-    //    //    ta_ui_sameline();
-    //    //    ta_ui_image(&TA_SIZE(100, 20), tex_test);
-    //    //    ta_ui_pad(&TA_SIZE(20, 0));
-    //    //    ta_ui_sameline();
-    //    //    ta_ui_image(&TA_SIZE(100, 20), tex_test);
-    //    //}
-    //    //ta_ui_row_end();
-    //}
     ta_ui_window_end();
 
 #if 0

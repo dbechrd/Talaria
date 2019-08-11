@@ -23,13 +23,16 @@
 #define NDC_W(x) ((float)(x) / tg_window.rect.w * 2.0f)
 #define NDC_H(y) (-(float)(y) / tg_window.rect.h * 2.0f)
 
-#define UI_LAYER_BG     0.001f
-#define UI_LAYER_SHADOW 0.002f
-#define UI_LAYER_1      0.003f
-#define UI_LAYER_2      0.004f
-#define UI_LAYER_3      0.005f
-#define UI_LAYER_4      0.006f
-#define UI_LAYER_TIP    0.007f
+#define UI_LAYER_EPSILON 0.001f
+
+#define UI_LAYER_HUD_BG     -0.001f  // minimap
+#define UI_LAYER_HUD        -0.002f  // crosshair
+#define UI_LAYER_EDIT_1_BG  -0.003f
+#define UI_LAYER_EDIT_1     -0.004f
+#define UI_LAYER_EDIT_2_BG  -0.005f
+#define UI_LAYER_EDIT_2     -0.006f
+#define UI_LAYER_TIP_BG     -0.007f
+#define UI_LAYER_TIP        -0.008f
 
 typedef struct ta_window {
 	ta_rect rect;

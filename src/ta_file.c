@@ -34,8 +34,8 @@ void ta_file_close(ta_file *f) {
 
 void ta_file_debug_context(ta_file *f)
 {
-    fprintf(stderr, "File: %s:%d:%d\n\n", f->filename, f->pos.line, f->pos.column);
-    fprintf(stderr, "%04d:%.*s", f->pos.line, f->context_len, f->context_buf);
+    fprintf(stderr, "File: %s:%zd:%zd\n\n", f->filename, f->pos.line, f->pos.column);
+    fprintf(stderr, "%04zd:%.*s", f->pos.line, f->context_len, f->context_buf);
     size_t col = f->pos.column;
 
     char buf[1024] = { 0 };

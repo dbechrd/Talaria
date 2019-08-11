@@ -108,7 +108,7 @@ void *ta_scene_alloc(ta_scene *scene, ta_schema_field_type type,
     DLB_ASSERT(uid);
 
     // Allocate object in pool
-    u32 pool_idx = dlb_vec_len(scene->pools[type]);
+    size_t pool_idx = dlb_vec_len(scene->pools[type]);
     void *ptr = dlb_vec_alloc_size(scene->pools[type], pool_infos[type].size);
     ta_uid *ptr_uid = ptr;
     ptr_uid->uid = uid;
@@ -460,7 +460,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
     int braces = 0;      // Current level of curly braces
     int array = 0;       // Current level of square brackets
 
-#define BAD_TOKEN() PANIC("[%d:%d] Expected %s%s%s, found %s instead.\n", \
+#define BAD_TOKEN() PANIC("[%zd:%zd] Expected %s%s%s, found %s instead.\n", \
     tok->file_pos.line, tok->file_pos.column, \
     ta_schema_field_type_str(stack[sp].type), \
     stack[sp].array_len > 0 ? " (array)" : "", \
@@ -639,7 +639,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     DLB_ASSERT(uid->uid);
                     uid->scene = scene;
 
-                    u32 pool_idx = stack[sp-1].pool_idx;
+                    size_t pool_idx = stack[sp-1].pool_idx;
                     dlb_hash *hash = &scene->pooled_uids[stack[sp-1].type];
                     dlb_hash_insert(hash, tok->value.string, tok->length, (void *)pool_idx);
                 }
@@ -875,9 +875,9 @@ void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
 
 	bool found = false;
     dlb_hash *hash = &scene->pooled_uids[type];
-	u32 pool_idx = (u32)dlb_hash_search(hash, SYM(uid), &found);
+	size_t pool_idx = (size_t)dlb_hash_search(hash, SYM(uid), &found);
 	DLB_ASSERT(found);
-	u32 pool_len = dlb_vec_len(scene->pools[type]);
+    size_t pool_len = dlb_vec_len(scene->pools[type]);
 	DLB_ASSERT(pool_idx < pool_len);
 
     void *ptr = (u8 *)scene->pools[type] + (pool_idx * pool_infos[type].size);

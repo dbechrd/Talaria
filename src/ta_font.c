@@ -13,6 +13,17 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "misc/stb_truetype.h"
 
+enum font_layers {
+    LAYER_SHADOW,
+    LAYER_TEXT,
+    LAYER_COUNT
+};
+
+static const ta_rgba *colors[LAYER_COUNT] = {
+    [LAYER_SHADOW] = &TA_COLOR_BLACK,
+    [LAYER_TEXT]   = &TA_COLOR_WHITE,
+};
+
 void ta_font_init(ta_font *font)
 {
     if (!font->pixel_height) {
@@ -26,18 +37,86 @@ void ta_font_init(ta_font *font)
 void ta_font_load_path(ta_font *font, const char *path)
 {
     ta_buffer *buf = ta_file_read_all(path);
+    if (!stbtt_InitFont(&font->font_info, buf->data, 0)) {
+        ta_log_write(tg_debug_log, "[font] Failed to initialize font %s\n", path);
+        DLB_ASSERT(!"Failed to initialize font!");
+    }
 
-    // NOTE: No guarantee texture is big enough to hold all of the glyphs!
-    // ASCII 32..126 is 95 glyphs
-    font->chars = dlb_calloc(96, sizeof(*font->chars));
 
-    u8 *pixels = dlb_calloc(512*512, 1);
-    stbtt_BakeFontBitmap(buf->data, 0, font->pixel_height, pixels, 512, 512, 32,
-        96, font->chars);
+    font->tex_w = 512;
+    font->tex_h = 512;
+    u8 *pixels = dlb_calloc(font->tex_w * font->tex_h, sizeof(*pixels));
+    DLB_ASSERT(pixels);
+
+    font->first_char = 32;
+    font->last_char = 126;
+    int num_chars = font->last_char - font->first_char;
+    font->chars = dlb_calloc(num_chars, sizeof(*font->chars));
+    DLB_ASSERT(font->chars);
+
+    font->scale = stbtt_ScaleForPixelHeight(&font->font_info, font->pixel_height);
+
+    int x = 1;
+    int y = 1;
+    int bottom_y = 1;
+
+    for (int i = 0; i < num_chars; ++i) {
+        int advance, lsb, x0, y0, x1, y1, gw, gh;
+        int g = stbtt_FindGlyphIndex(&font->font_info, font->first_char + i);
+        stbtt_GetGlyphHMetrics(&font->font_info, g, &advance, &lsb);
+        stbtt_GetGlyphBitmapBox(&font->font_info, g, font->scale, font->scale,
+            &x0, &y0, &x1, &y1);
+        gw = x1 - x0;
+        gh = y1 - y0;
+        // advance to next row
+        if (x + gw + 1 >= font->tex_w) {
+            y = bottom_y;
+            x = 1;
+        }
+        // check if it fits vertically AFTER potentially moving to next row
+        if (y + gh + 1 >= font->tex_h) {
+            DLB_ASSERT(!"Ran out of space in font atlas");
+        }
+        DLB_ASSERT(x + gw < font->tex_w);
+        DLB_ASSERT(y + gh < font->tex_h);
+        stbtt_MakeGlyphBitmap(&font->font_info, pixels + x + y * font->tex_w, gw,
+            gh, font->tex_w, font->scale, font->scale, g);
+        //----------------------------------------------------------------------
+        int padding = 5;
+        u8 onedge_value = 180;
+        float pixel_dist_scale = 180 / 5.0;
+        int sdf_gw;
+        int sdf_gh;
+        int sdf_gx_off;
+        int sdf_gy_off;
+        stbtt_GetGlyphSDF(&font->font_info, font->scale, g, padding, onedge_value,
+            pixel_dist_scale, &sdf_gw, &sdf_gh, &sdf_gx_off, &sdf_gy_off);
+        // TODO: memcpy into pixels buffer, dunno about size of buf
+        //----------------------------------------------------------------------
+        font->chars[i].x0 = (s16)x;
+        font->chars[i].y0 = (s16)y;
+        font->chars[i].x1 = (s16)(x + gw);
+        font->chars[i].y1 = (s16)(y + gh);
+        font->chars[i].xadvance = font->scale * advance;
+        font->chars[i].xoff = (float) x0;
+        font->chars[i].yoff = (float) y0;
+        x = x + gw + 1;
+        if (y + gh + 1 > bottom_y) {
+            bottom_y = y + gh + 1;
+        }
+    }
+
+    stbtt_GetFontVMetrics(&font->font_info, &font->ascent, &font->descent, &font->line_gap);
+    stbtt_GetFontBoundingBox(&font->font_info, &font->bbox.x, &font->bbox.y, &font->bbox.w, &font->bbox.h);
+
+    while (font->tex_h > bottom_y) {
+        font->tex_h >>= 1;
+    }
+    font->tex_h <<= 1;
 
     glGenTextures(1, &font->gl_id);
     glBindTexture(GL_TEXTURE_2D, font->gl_id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, 512, 512, 0, GL_RED,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, font->tex_w, font->tex_h, 0, GL_RED,
         GL_UNSIGNED_BYTE, pixels);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -63,60 +142,111 @@ ta_shader *ta_font_shader(ta_font *font)
     return shader;
 }
 
-static const ta_rgba *colors[2] = {
-    &TA_COLOR_BLACK,
-    &TA_COLOR_WHITE,
-};
-
-float ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y,
-    const char *text, bool screen)
+static float ta_GetBakedQuad(const stbtt_bakedchar *chardata, int pw, int ph,
+    int char_index, float *xpos, float *ypos, ta_rect_uv *rect)
 {
-    float start_x = x;
-    float start_y = y + font->pixel_height;
-    float start_x_ndc = NDC_X(start_x);
-    float max_x = 0.0f;
+    float ipw = 1.0f / pw, iph = 1.0f / ph;
+    const stbtt_bakedchar *b = chardata + char_index;
+    int round_x = STBTT_ifloor((*xpos + b->xoff) + 0.5f);
+    int round_y = STBTT_ifloor((*ypos + b->yoff) + 0.5f);
+
+    rect->rect.x = (float)round_x;
+    rect->rect.y = (float)round_y;
+    rect->rect.w = (float)(b->x1 - b->x0);
+    rect->rect.h = (float)(b->y1 - b->y0);
+    rect->uv0.u = b->x0 * ipw;
+    rect->uv0.v = b->y1 * iph;
+    rect->uv1.u = b->x1 * ipw;
+    rect->uv1.v = b->y0 * iph;
+
+    *xpos += b->xadvance;
+    return rect->rect.h + b->yoff;
+}
+
+ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y,
+    float z, const char *text, u32 text_len, bool screen, u32 cursor_idx,
+    float *cursor_x)
+{
+    DLB_ASSERT(text);
+    DLB_ASSERT(text_len);
+
+    ta_rectf rect = { 0 };
+    rect.x = x;
+    rect.y = y;
 
     const float shadow_offset_x = 1.0f;
     const float shadow_offset_y = 1.0f;
+    const float layer_dir = (screen) ? 1.0f : -1.0f;
+    float layer_offset = 0.0f;
 
-    for (int i = 0; i < 2; i++) {
-        float cur_x = start_x + (shadow_offset_x * (1 - i));
-        float cur_y = start_y + (shadow_offset_y * (1 - i));
-        char *chr = (char *)text;
+    for (int layer = 0; layer < LAYER_COUNT; layer++) {
+        // TODO: Try SDFs instead for shadowing. This anti-aliased shadowing
+        //       doesn't look right.
+        if (layer == LAYER_SHADOW) continue;
 
-        while (*chr) {
-            if (*chr == '\n') {
+        float cur_x = rect.x;
+        float cur_y = rect.y + font->pixel_height;
+        float ndc_x = NDC_X(cur_x);
+        float ndc_y = NDC_Y(cur_y);
+
+        switch (layer) {
+            case LAYER_SHADOW: {
+                cur_x += shadow_offset_x;
+                cur_y += shadow_offset_y;
+                layer_offset = (z - (UI_LAYER_EPSILON / 2.0f)) * layer_dir;
+                break;
+            } case LAYER_TEXT: {
+                layer_offset = z * layer_dir;
+                break;
+            }
+        }
+
+        float max_h = 0.0f;
+
+        for (u32 i = 0; i < text_len; i++) {
+            // Save cursor position
+            if (i == cursor_idx && cursor_x) {
+                *cursor_x = cur_x;
+            }
+
+            if (text[i] == '\n') {
                 //DLB_ASSERT(y_max <= font->pixel_height);
-                cur_x = start_x;
-                cur_y += font->pixel_height;  // TODO: This probably should be relative to baseline
-            } else if (*chr >= 32 && *chr < 128) {
-                stbtt_aligned_quad quad;
-                stbtt_GetBakedQuad(font->chars, 512, 512, *chr - 32, &cur_x, &cur_y, &quad, 1);
+                cur_x = rect.x;
+                cur_y += max_h;
+                rect.h += max_h;
+                max_h = 0.0f;
+            } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
+                ta_rect_uv rect_uv = { 0 };
+                float descent = ta_GetBakedQuad(font->chars, font->tex_w,
+                    font->tex_h, text[i] - 32, &cur_x, &cur_y, &rect_uv);
 
+#if 0
                 // HACK: Cull characters that would be cut off by edge of screen
-                if (!screen || (NDC_X(quad.x0) >= start_x_ndc && NDC_X(quad.x1) > start_x_ndc)) {
-                    ta_rect_uv rect_uv = { 0 };
-                    rect_uv.rect.x = quad.x0;
-                    rect_uv.rect.y = quad.y0;
-                    rect_uv.rect.w = (quad.x1 - quad.x0);
-                    rect_uv.rect.h = (quad.y1 - quad.y0);
-                    rect_uv.uv0.u = quad.s0;
-                    rect_uv.uv0.v = quad.t1;
-                    rect_uv.uv1.u = quad.s1;
-                    rect_uv.uv1.v = quad.t0;
-                    float layer = (i == 0) ? UI_LAYER_SHADOW : UI_LAYER_1;
-                    if (screen) layer *= -1.0f;
-                    ta_primitive_push_rect_uv(queue, rect_uv, *colors[i], layer, screen);
+                //       to prevent weird wrapping glitches in screen mode.
+                float a = NDC_X(rect_uv.rect.x);
+                float b = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
+                float c = NDC_Y(rect_uv.rect.y);
+                float d = NDC_Y(rect_uv.rect.y - rect_uv.rect.h);
+#endif
+                if (!screen || (
+                    NDC_X(rect_uv.rect.x) >= ndc_x &&
+                    NDC_X(rect_uv.rect.x + rect_uv.rect.w) > ndc_x
+                )) {
+                    ta_primitive_push_rect_uv(queue, rect_uv, *colors[layer],
+                        layer_offset, screen);
+                    max_h = MAX(max_h, font->pixel_height + descent);
+                } else {
+                    DLB_ASSERT(1);
                 }
 
-                max_x = MAX(max_x, cur_x);
+                rect.w = MAX(rect.w, cur_x - rect.x);
             }
-            ++chr;
         }
+
+        rect.h += max_h;
     }
 
-    float max_w = max_x - start_x;
-    return max_w;
+    return rect;
 }
 
 void ta_font_render(ta_vert_quad *queue, ta_font *font, bool clear_queues,

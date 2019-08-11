@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
         INTERN("src_background_music"));
     DLB_ASSERT(bg_music);
     tg_game.background_music = bg_music;
-    ta_audio_source_play_loop(tg_game.background_music);
+    //ta_audio_source_play_loop(tg_game.background_music);
 
     tg_game.font = ta_scene_find(tg_game.scene, TA_FONT, INTERN("font_default"));
     DLB_ASSERT(tg_game.font);
@@ -342,6 +342,7 @@ int main(int argc, char *argv[])
             ta_ui_hud();
         }
 
+#if 1
         // TODO: Move "name tag" logic somewhere else
         {
             ta_vec3 tag_pos = vec3_add(tg_game.player->transform.position, (ta_vec3){ 0.0f, 1.2f, 0.0f });
@@ -350,9 +351,9 @@ int main(int argc, char *argv[])
             tag_to_cam.y *= 0.0f;
             float tag_scalef = MAX(vec3_len(tag_to_cam) / 1.5f, 1.5f);
 
-            float tag_w = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, "Player 1", false);
+            ta_rectf tag_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, UI_LAYER_HUD, CSTR("Player 1"), false, 0, 0);
             ta_vec3 tag_offset = tg_game.camera->right;
-            tag_offset = vec3_scalef(tag_offset, NDC_W(tag_w) * tag_scalef);
+            tag_offset = vec3_scalef(tag_offset, NDC_W(tag_rect.w) * tag_scalef);
             tag_pos = vec3_sub(tag_pos, tag_offset);
 
             ta_mat4 tag_scale = mat4_scalef(tag_scalef);
@@ -368,10 +369,10 @@ int main(int argc, char *argv[])
             ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform);
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tg_game.tex_orange->gl_id);
             ta_rect_uv tag_background = { 0 };
-            tag_background.rect.x = -10.0f;
-            tag_background.rect.w = tag_w + 20.0f;
-            tag_background.rect.h = tg_game.font->pixel_height * 1.5f;
-            ta_primitive_push_rect_uv(&quads_queue, tag_background, TA_COLOR_GRAY3A, UI_LAYER_BG, false);
+            tag_background.rect.x = -4.0f;
+            tag_background.rect.w = tag_rect.w + 8.0f;
+            tag_background.rect.h = tag_rect.h; //tg_game.font->pixel_height * 1.5f;
+            ta_primitive_push_rect_uv(&quads_queue, tag_background, TA_COLOR_GRAY3A, UI_LAYER_HUD_BG, false);
             ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
@@ -385,10 +386,10 @@ int main(int argc, char *argv[])
         // Print frame time on the screen
         double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
         char frame_time_buf[40] = { 0 };
-        int len = snprintf(frame_time_buf, sizeof(frame_time_buf) - 1, "Frame %8llu\n%f ms", frame_num, ms_frame_time);
-        frame_time_buf[len] = 0;
-        ta_font_push_text(&tooltip_fg_queue, tg_game.font, -130.0f, 0.0f, frame_time_buf, true);
+        int len = snprintf(CSTR(frame_time_buf), "Frame %8llu\n%f ms", frame_num, ms_frame_time);
+        ta_font_push_text(&tooltip_fg_queue, tg_game.font, -130.0f, 0.0f, UI_LAYER_HUD, CSTR(frame_time_buf), true, 0, 0);
         ta_font_render(tooltip_fg_queue, tg_game.font, true, true);
+#endif
 
         ta_window_swap();
         //ta_log_write(tg_debug_log, "Frame %llu started at %f sim time: %f\n", frame_num, ms_frame_start - ms_frame_first, ms_sim_t);

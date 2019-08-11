@@ -213,7 +213,8 @@ void ta_primitive_push_rect_uv(ta_vert_quad **queue, ta_rect_uv rect_uv,
 
     dlb_vec_push(*queue, quad);
 }
-void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color)
+void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color,
+    float z)
 {
     // v3 _______ v2
     //    |    /|
@@ -258,15 +259,15 @@ void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color)
     quad.verts[5].uv.u = 0.0f;
     quad.verts[5].uv.v = 1.0f;
     for (int i = 0; i < 6; i++) {
-        quad.verts[i].position.z = UI_LAYER_1;
+        quad.verts[i].position.z = z;
         quad.verts[i].color = color;
     }
 
     dlb_vec_push(*queue, quad);
 }
-void ta_primitive_push_rect(ta_rect rect, ta_rgba color)
+void ta_primitive_push_rect(ta_rect rect, ta_rgba color, float z)
 {
-    ta_primitive_push_rect_q(&quads_queue, rect, color);
+    ta_primitive_push_rect_q(&quads_queue, rect, color, z);
 }
 void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color)
 {
@@ -323,8 +324,8 @@ void ta_primitive_push_crosshair(s32 length, s32 thickness)
 	y.w = thickness;
 	y.h = length;
 
-	ta_primitive_push_rect(x, TA_COLOR_WHITE_ALPHA);
-	ta_primitive_push_rect(y, TA_COLOR_WHITE_ALPHA);
+	ta_primitive_push_rect(x, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
+	ta_primitive_push_rect(y, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
 }
 
 void ta_primitive_push_axes(float scale)

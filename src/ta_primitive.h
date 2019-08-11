@@ -62,8 +62,9 @@ struct ta_shader;
 void ta_primitive_init();
 void ta_primitive_push_line_2d(ta_line_2d line_2d, ta_rgba color0, ta_rgba color1);
 void ta_primitive_push_line_3d(ta_line_3d line_3d, ta_rgba color0, ta_rgba color1);
-void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color);
-void ta_primitive_push_rect(ta_rect rect, ta_rgba color);
+void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color,
+    float z);
+void ta_primitive_push_rect(ta_rect rect, ta_rgba color, float z);
 void ta_primitive_push_rect_uv(ta_vert_quad **queue, ta_rect_uv rect_uv,
     ta_rgba color, float z, bool screen);
 void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color);
