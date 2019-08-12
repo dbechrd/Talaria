@@ -3,25 +3,32 @@
 #include "SDL/SDL_video.h"
 
 #define WINDOW_ASPECT ((float)tg_window.rect.w / tg_window.rect.h)
-#define X_SCREEN(x) ((float)(x) / (tg_window.rect.w / 2.0f))
-#define Y_SCREEN(y) (-(float)(y) / (tg_window.rect.h / 2.0f))
-#define X_TO_NDC(x) (X_SCREEN(x) - 1.0f)
-#define Y_TO_NDC(y) (Y_SCREEN(y) + 1.0f)
+
+// Converts top-left screen x/y to normalized device coordinates:
+//
+//          +1.0
+//       ___________
+//       |    |    |
+// -1.0  |____|____|  +1.0
+//       |    |    |
+//       |____|____|
+//
+//          -1.0
+//
+#define NDC_W(x) ((float)(x) / tg_window.rect.w * 2.0f)
+#define NDC_H(y) ((float)(y) / tg_window.rect.h * 2.0f)
+#define NDC_X(x) (NDC_W(x) - 1.0f)
+#define NDC_Y(y) (1.0f - NDC_H(y))
 
 // NOTE: Pixel origin is top-left of screen
 // NOTE: NDC origin is center of screen
 // e.g. [0, 0]     -> [-1.0f, 1.0f]
 // e.g. [800, 450] -> [0.0f, 0.0f]
 
-// Calculate relative x/y in pixels, returns x/y in normalized device
-// coordinates (negative values are relative to right and bottom edges of
-// screen)
-#define NDC_X(x) (x >= 0.0f ? X_TO_NDC(x) : X_TO_NDC(x + tg_window.rect.w))
-#define NDC_Y(y) (y >= 0.0f ? Y_TO_NDC(y) : Y_TO_NDC(y + tg_window.rect.h))
-
-// Takes width/height in pixels, returns width/height in NDC
-#define NDC_W(x) ((float)(x) / tg_window.rect.w * 2.0f)
-#define NDC_H(y) (-(float)(y) / tg_window.rect.h * 2.0f)
+// Calculate relative x/y in pixels (negative values are relative to right and
+// bottom edges of screen)
+#define SCREEN_WRAP_X(x) ((x) >= 0 ? (x) : (float)((x) + tg_window.rect.w))
+#define SCREEN_WRAP_Y(y) ((y) >= 0 ? (y) : (float)((y) + tg_window.rect.h))
 
 #define UI_LAYER_EPSILON 0.001f
 

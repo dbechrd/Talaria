@@ -52,6 +52,18 @@ void debug_tests() {
 #endif
 }
 
+void ndc_tests() {
+    DLB_ASSERT(SCREEN_WRAP_X(0) == 0);
+    DLB_ASSERT(SCREEN_WRAP_X(1) == 1);
+    DLB_ASSERT(SCREEN_WRAP_X(tg_window.rect.w) == tg_window.rect.w);
+    DLB_ASSERT(SCREEN_WRAP_X(-1) == tg_window.rect.w - 1);
+
+    DLB_ASSERT(SCREEN_WRAP_Y(0) == 0);
+    DLB_ASSERT(SCREEN_WRAP_Y(1) == 1);
+    DLB_ASSERT(SCREEN_WRAP_Y(tg_window.rect.h) == tg_window.rect.h);
+    DLB_ASSERT(SCREEN_WRAP_Y(-1) == tg_window.rect.h - 1);
+}
+
 // Random thoughts
 // https://en.wikipedia.org/wiki/Accumulator_(energy)
 
@@ -72,6 +84,7 @@ int main(int argc, char *argv[])
 
     // TODO: Save size/position to a config file
     ta_window_init(1600, 900, false);
+    ndc_tests();
     // TODO: Make sure this gets freed or handled better
     tg_game.audio = dlb_calloc(1, sizeof(ta_audio_listener));
     ta_audio_listener_init(tg_game.audio);
@@ -273,9 +286,15 @@ int main(int argc, char *argv[])
         ta_primitive_render(true, true);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
+        ta_rect test1 = { 0 };
+        test1.x = 5;
+        test1.y = 5;
+        test1.w = 10;
+        test1.h = 10;
+        ta_primitive_push_rect(test1, TA_COLOR_RED, UI_LAYER_HUD);
+
 		// Cursor
 		ta_primitive_push_crosshair(10, 2);
-		ta_primitive_render(true, true);
 
 #if 0
         ta_light_render_shadowmap_debug(&tg_game.lights[1]);
@@ -347,12 +366,16 @@ int main(int argc, char *argv[])
         // TODO: Move "name tag" logic somewhere else
         {
             ta_vec3 tag_pos = vec3_add(tg_game.player->transform.position, (ta_vec3){ 0.0f, 1.2f, 0.0f });
+#if 0
             ta_vec3 tag_to_cam = vec3_sub(tg_game.camera->position, tag_pos);
             tag_to_cam.z *= -1.0f;
             tag_to_cam.y *= 0.0f;
-            float tag_scalef = MAX(vec3_len(tag_to_cam) / 1.5f, 1.5f);
+#else
+            ta_vec3 tag_to_cam = VEC3_NZ;
+#endif
+            float tag_scalef = MAX(vec3_len(tag_to_cam) * NDC_W(2), NDC_W(2));
 
-            ta_rectf tag_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, UI_LAYER_HUD, CSTR("| Player 1 |"), false, 0, 0);
+            ta_rectf tag_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, UI_LAYER_HUD, CSTR("_|_g"), false, 0, 0);
             ta_vec3 tag_offset = tg_game.camera->right;
             tag_offset = vec3_scalef(tag_offset, NDC_W(tag_rect.w) * tag_scalef);
             tag_pos = vec3_sub(tag_pos, tag_offset);
@@ -381,15 +404,15 @@ int main(int argc, char *argv[])
             ta_shader_set_mat4(font_shader, SYM_U_PROJ, &tg_game.camera->projection);
             ta_shader_set_mat4(font_shader, SYM_U_VIEW, &tg_game.camera->look_at);
             ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform);
-            ta_font_render(tooltip_fg_queue, tg_game.font, true, true);
+            ta_font_render(tooltip_fg_queue, tg_game.font, 0, true, true);
         }
 
         // Print frame time on the screen
         double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
         char frame_time_buf[40] = { 0 };
-        int len = snprintf(CSTR(frame_time_buf), "Frame %8llu\n%8.2f ms", frame_num, ms_frame_time);
+        int len = snprintf(CSTR(frame_time_buf), "Frame %8llu\n%.2f ms", frame_num, ms_frame_time);
         ta_font_push_text(&tooltip_fg_queue, tg_game.font, -130.0f, 0.0f, UI_LAYER_HUD, CSTR(frame_time_buf), true, 0, 0);
-        ta_font_render(tooltip_fg_queue, tg_game.font, true, true);
+        ta_font_render(tooltip_fg_queue, tg_game.font, 0, true, true);
 #endif
 
         ta_window_swap();

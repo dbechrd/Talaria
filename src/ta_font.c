@@ -143,7 +143,7 @@ ta_shader *ta_font_shader(ta_font *font)
     return shader;
 }
 
-static void ta_GetBakedQuad(const stbtt_bakedchar *chardata, int pw, int ph,
+static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
     int char_index, float *xpos, float *ypos, ta_rect_uv *rect)
 {
     float ipw = 1.0f / pw, iph = 1.0f / ph;
@@ -156,9 +156,9 @@ static void ta_GetBakedQuad(const stbtt_bakedchar *chardata, int pw, int ph,
     rect->rect.w = (float)(b->x1 - b->x0);
     rect->rect.h = (float)(b->y1 - b->y0);
     rect->uv0.u = b->x0 * ipw;
-    rect->uv0.v = b->y1 * iph;
+    rect->uv0.v = b->y0 * iph;
     rect->uv1.u = b->x1 * ipw;
-    rect->uv1.v = b->y0 * iph;
+    rect->uv1.v = b->y1 * iph;
 
     *xpos += b->xadvance;
 
@@ -173,8 +173,8 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
     DLB_ASSERT(text);
 
     ta_rectf rect = { 0 };
-    rect.x = x;
-    rect.y = y;
+    rect.x = SCREEN_WRAP_X(x);
+    rect.y = SCREEN_WRAP_X(y);
 
     const float shadow_offset_x = 1.0f;
     const float shadow_offset_y = 1.0f;
@@ -217,7 +217,7 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
                 rect.h += font->line_height;
             } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
                 ta_rect_uv rect_uv = { 0 };
-                ta_GetBakedQuad(font->chars, font->tex_w, font->tex_h,
+                ta_baked_quad(font->chars, font->tex_w, font->tex_h,
                     text[i] - 32, &cur_x, &cur_y, &rect_uv);
 
 #if 1
@@ -228,6 +228,8 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
                 float ndc_y0 = NDC_Y(rect_uv.rect.y);
                 float ndc_y1 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
 #endif
+
+#if 0
                 if (!screen || text[i] == ' ' || (
                     ndc_x0 >= ndc_x && ndc_x1 > ndc_x &&
                     ndc_y0 <= ndc_y && ndc_y1 < ndc_y
@@ -237,6 +239,10 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
                 } else {
                     DLB_ASSERT(1);
                 }
+#else
+                ta_primitive_push_rect_uv(queue, rect_uv, *colors[layer],
+                    layer_offset, screen);
+#endif
 
                 rect.w = MAX(rect.w, cur_x - rect.x);
             }
@@ -248,13 +254,19 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
     return rect;
 }
 
-void ta_font_render(ta_vert_quad *queue, ta_font *font, bool clear_queues,
-    bool reset_uniforms)
+void ta_font_render(ta_vert_quad *queue, ta_font *font, ta_vec3 *offset,
+    bool clear_queues, bool reset_uniforms)
 {
     glDisable(GL_CULL_FACE);
     //glDisable(GL_DEPTH_TEST);
 
     ta_shader *shader = ta_font_shader(font);
+    if (offset) {
+        offset->x = NDC_X(offset->x) + 1.0f;
+        offset->y = NDC_Y(offset->y) - 1.0f;
+        ta_mat4 xform = mat4_translate(*offset);
+        ta_shader_set_mat4(shader, SYM_U_MODEL, &xform);
+    }
     ta_shader_set_sampler2d(shader, SYM_U_TEX, font->gl_id);
     ta_primitive_render_quads(queue, shader, clear_queues, reset_uniforms);
     ta_shader_set_sampler2d(shader, SYM_U_TEX, 0);

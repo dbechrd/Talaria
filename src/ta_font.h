@@ -39,5 +39,5 @@ struct ta_shader *ta_font_shader(ta_font *font);
 ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y,
     float z, const char *text, u32 text_len, bool screen, u32 cursor_idx,
     float *cursor_x);
-void ta_font_render(struct ta_vert_quad *queue, ta_font *font, bool clear_queues,
-    bool reset_uniforms);
+void ta_font_render(struct ta_vert_quad *queue, ta_font *font, ta_vec3 *offset,
+    bool clear_queues, bool reset_uniforms);

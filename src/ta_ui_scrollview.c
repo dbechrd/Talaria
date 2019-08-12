@@ -33,10 +33,6 @@
     #define SCROLL_SPEED        20
 #endif
 
-#define STATUSBAR_PAD_LEFT    4
-#define STATUSBAR_PAD_BOTTOM  4
-#define STATUS_PAD_LEFT       4
-
 typedef struct control_state {
     bool hover;
     bool down;
@@ -362,24 +358,14 @@ void ta_ui_tooltip(const char *text, u32 text_len)
 void ta_ui_statusbar()
 //void ta_ui_statusbar(int x, int y)
 {
+    const float statusbar_pad = 4;
     ta_rect_uv status_bg = { 0 };
-    status_bg.rect.x = STATUSBAR_PAD_LEFT;
-    status_bg.rect.y = -(float)(tg_game.font->line_height + STATUSBAR_PAD_BOTTOM);
-    status_bg.rect.w = (float)(tg_window.rect.w - STATUSBAR_PAD_LEFT * 2);
+    status_bg.rect.x = statusbar_pad;
+    status_bg.rect.y = -(float)(tg_game.font->line_height + statusbar_pad);
+    status_bg.rect.w = (float)(tg_window.rect.w - statusbar_pad * 2);
     status_bg.rect.h = (float)tg_game.font->line_height;
     ta_primitive_push_rect_uv(&tooltip_bg_queue, status_bg, TA_COLOR_GRAY3A,
         UI_LAYER_TIP_BG, true);
-}
-
-void ta_ui_status(const char *text, u32 text_len)
-{
-    // TODO: Pass id of parent status bar and calculate based on that. Can't do
-    //       easily atm because status bar is not a frame.
-    float x = STATUSBAR_PAD_LEFT + STATUS_PAD_LEFT;
-    float y = -(float)(tg_game.font->line_height + STATUSBAR_PAD_BOTTOM);
-
-    ta_rectf text_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, x, y,
-        UI_LAYER_TIP, text, text_len, true, 0, 0);
 }
 
 bool ta_ui_button(const char *name, const ta_size *size, const ta_rect *margin,
@@ -432,7 +418,7 @@ void ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
     ta_primitive_render(true, false);
 
     // Render text
-    ta_font_render(text_queue, tg_game.font, true, true);
+    ta_font_render(text_queue, tg_game.font, 0, true, true);
     dlb_vec_clear(text_queue);
 
     ui_frame_end(frame_idx);
@@ -517,8 +503,6 @@ void ui_4x4_grid(int rows, ta_texture *tex)
 
 void ta_ui_test()
 {
-    ta_ui_statusbar();
-
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
     ta_ui_window_begin(INTERN("test_window"), &TA_SIZE(300, 400), &TA_RECT_ZERO, 0);
@@ -606,13 +590,24 @@ void ta_ui_test()
     ta_ui_window_end();
 
     if (status_msg) {
-        ta_ui_status(status_msg, 0);
+        //ta_ui_statusbar();
+
+        ta_rectf status_rect = ta_font_push_text(&quads_queue, tg_game.font, 0,
+            0, UI_LAYER_TIP, SYM(status_msg), true, 0, 0);
+        float status_halfw = (float)tg_window.rect.w / 2 - status_rect.w / 2;
+
+        const int status_pad_bottom = 20;
+        ta_vec3 status_pos = { 0 };
+        status_pos.x = status_halfw;
+        status_pos.y = (float)(tg_window.rect.h - (tg_game.font->ascent + status_pad_bottom));
+        ta_font_render(quads_queue, tg_game.font, &status_pos, true, true);
+
         status_msg = 0;
     }
 
     // Render tooltips
     ta_primitive_render_quads(tooltip_bg_queue, tg_shader_quads, true, true);
-    ta_font_render(tooltip_fg_queue, tg_game.font, true, true);
+    ta_font_render(tooltip_fg_queue, tg_game.font, 0, true, true);
 
 #if 0
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).

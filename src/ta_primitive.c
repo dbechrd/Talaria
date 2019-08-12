@@ -79,10 +79,10 @@ static void ta_primitive_push_line(ta_vert_line *line)
 static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d line2d,
 	ta_rgba color0, ta_rgba color1)
 {
-	float x0 = X_TO_NDC(line2d.p0.x);
-	float x1 = X_TO_NDC(line2d.p1.x);
-	float y0 = Y_TO_NDC(line2d.p0.y);
-	float y1 = Y_TO_NDC(line2d.p1.y);
+	float x0 = NDC_X(line2d.p0.x);
+	float x1 = NDC_X(line2d.p1.x);
+	float y0 = NDC_Y(line2d.p0.y);
+	float y1 = NDC_Y(line2d.p1.y);
 
 	line->verts[0].position.x = x0;
 	line->verts[0].position.y = y0;
@@ -172,13 +172,13 @@ void ta_primitive_push_rect_uv(ta_vert_quad **queue, ta_rect_uv rect_uv,
     if (screen) {
         x0 = NDC_X(rect_uv.rect.x);
         x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
-        y0 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
-        y1 = NDC_Y(rect_uv.rect.y);
+        y0 = NDC_Y(rect_uv.rect.y);
+        y1 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
     } else {
-        x0 = X_SCREEN(rect_uv.rect.x) * WINDOW_ASPECT;
-        x1 = X_SCREEN(rect_uv.rect.x + rect_uv.rect.w) * WINDOW_ASPECT;
-        y0 = Y_SCREEN(rect_uv.rect.y + rect_uv.rect.h);
-        y1 = Y_SCREEN(rect_uv.rect.y);
+        x0 = rect_uv.rect.x;
+        x1 = rect_uv.rect.x + rect_uv.rect.w;
+        y0 = rect_uv.rect.y;
+        y1 = rect_uv.rect.y + rect_uv.rect.h;
     }
 
     ta_vert_quad quad = { 0 };
@@ -224,14 +224,10 @@ void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color,
 
     // {v0, v1, v2}, {v0, v2, v3}
 
-#define X_TO_NDC_RECT(x, w) ( (float)(x) / (w / 2.0f) - 1.0f)
-#define Y_TO_NDC_RECT(y, h) (-(float)(y) / (h / 2.0f) + 1.0f)
-    float x0 = X_TO_NDC_RECT(rect.x,          tg_window.rect.w);
-    float x1 = X_TO_NDC_RECT(rect.x + rect.w, tg_window.rect.w);
-    float y0 = Y_TO_NDC_RECT(rect.y + rect.h, tg_window.rect.h);
-    float y1 = Y_TO_NDC_RECT(rect.y,          tg_window.rect.h);
-#undef X_TO_NDC_RECT
-#undef Y_TO_NDC_RECT
+    float x0 = NDC_X(rect.x);
+    float x1 = NDC_X(rect.x + rect.w);
+    float y0 = NDC_Y(rect.y);
+    float y1 = NDC_Y(rect.y + rect.h);
 
     ta_vert_quad quad = { 0 };
     quad.verts[0].position.x = x0;  // v0 (0,0)
@@ -326,6 +322,7 @@ void ta_primitive_push_crosshair(s32 length, s32 thickness)
 
 	ta_primitive_push_rect(x, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
 	ta_primitive_push_rect(y, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
+    ta_primitive_render(true, true);
 }
 
 void ta_primitive_push_axes(float scale)
