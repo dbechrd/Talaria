@@ -355,29 +355,28 @@ int main(int argc, char *argv[])
         ta_primitive_clear();
 #endif
 
+#if 1
         if (!tg_mouse.captured) {
             ta_ui_test();
         }
         if (tg_mouse.captured) {
             ta_ui_hud();
         }
+#endif
 
 #if 1
         // TODO: Move "name tag" logic somewhere else
         {
             ta_vec3 tag_pos = vec3_add(tg_game.player->transform.position, (ta_vec3){ 0.0f, 1.2f, 0.0f });
-#if 0
             ta_vec3 tag_to_cam = vec3_sub(tg_game.camera->position, tag_pos);
             tag_to_cam.z *= -1.0f;
             tag_to_cam.y *= 0.0f;
-#else
-            ta_vec3 tag_to_cam = VEC3_NZ;
-#endif
-            float tag_scalef = MAX(vec3_len(tag_to_cam) * NDC_W(2), NDC_W(2));
+            float tag_scalef = MAX(vec3_len(tag_to_cam) * NDC_W(1), NDC_W(8));
 
-            ta_rectf tag_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, UI_LAYER_HUD, CSTR("_|_g"), false, 0, 0);
+            ta_rectf tag_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, UI_LAYER_HUD, CSTR("Player 1"), false, 0, 0);
             ta_vec3 tag_offset = tg_game.camera->right;
-            tag_offset = vec3_scalef(tag_offset, NDC_W(tag_rect.w) * tag_scalef);
+            // HACK: Why 4.0? Dunno proper way to center this.
+            tag_offset = vec3_scalef(tag_offset, NDC_W(tag_rect.w) * 4.0f);
             tag_pos = vec3_sub(tag_pos, tag_offset);
 
             ta_mat4 tag_scale = mat4_scalef(tag_scalef);

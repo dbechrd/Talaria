@@ -220,6 +220,15 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
                 ta_baked_quad(font->chars, font->tex_w, font->tex_h,
                     text[i] - 32, &cur_x, &cur_y, &rect_uv);
 
+                // HACK: Flip world text upside down.. this is super gross,
+                //       surely there's a better way?
+                if (!screen) {
+                    rect_uv.rect.y = font->line_height - (rect_uv.rect.y + rect_uv.rect.h);
+                    float v = rect_uv.uv0.v;
+                    rect_uv.uv0.v = rect_uv.uv1.v;
+                    rect_uv.uv1.v = v;
+                }
+
 #if 1
                 // HACK: Cull characters that would be cut off by edge of screen
                 //       to prevent weird wrapping glitches in screen mode.
@@ -257,8 +266,8 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
 void ta_font_render(ta_vert_quad *queue, ta_font *font, ta_vec3 *offset,
     bool clear_queues, bool reset_uniforms)
 {
-    glDisable(GL_CULL_FACE);
-    //glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_CULL_FACE);
+    glDisable(GL_DEPTH_TEST);
 
     ta_shader *shader = ta_font_shader(font);
     if (offset) {
@@ -271,6 +280,5 @@ void ta_font_render(ta_vert_quad *queue, ta_font *font, ta_vec3 *offset,
     ta_primitive_render_quads(queue, shader, clear_queues, reset_uniforms);
     ta_shader_set_sampler2d(shader, SYM_U_TEX, 0);
 
-    //glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
 }
