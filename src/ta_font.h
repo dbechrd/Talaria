@@ -19,7 +19,8 @@ typedef struct ta_font {
     float scale;
     int ascent;
     int descent;
-    int line_gap;
+    int line_height;
+    int left_bearing;
     ta_rect bbox;
 
     int tex_w;

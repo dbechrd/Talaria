@@ -25,14 +25,14 @@
 
 #define UI_LAYER_EPSILON 0.001f
 
-#define UI_LAYER_HUD_BG     -0.001f  // minimap
-#define UI_LAYER_HUD        -0.002f  // crosshair
-#define UI_LAYER_EDIT_1_BG  -0.003f
-#define UI_LAYER_EDIT_1     -0.004f
-#define UI_LAYER_EDIT_2_BG  -0.005f
-#define UI_LAYER_EDIT_2     -0.006f
-#define UI_LAYER_TIP_BG     -0.007f
-#define UI_LAYER_TIP        -0.008f
+#define UI_LAYER_HUD_BG     -0.0001f  // minimap
+#define UI_LAYER_HUD        -0.0002f  // crosshair
+#define UI_LAYER_EDIT_1_BG  -0.0003f
+#define UI_LAYER_EDIT_1     -0.0004f
+#define UI_LAYER_EDIT_2_BG  -0.0005f
+#define UI_LAYER_EDIT_2     -0.0006f
+#define UI_LAYER_TIP_BG     -0.0007f
+#define UI_LAYER_TIP        -0.0008f
 
 typedef struct ta_window {
 	ta_rect rect;

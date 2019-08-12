@@ -9,8 +9,11 @@
 #define DEG_TO_RADF(deg) deg * (float)M_PI / 180.0f
 #define RAD_TO_DEGF(rad) rad * 180.0f / (float)M_PI
 
-#define TA_SIZE(w, h) (ta_size){ w, h }
-#define TA_POSITION(x, y) (ta_vec2i){ x, y }
+#define TA_SIZE(w, h) (const ta_size){ w, h }
+#define TA_POSITION(x, y) (const ta_vec2i){ x, y }
+#define TA_RECT(x, y, w, h) (const ta_rect){ x, y, w, h }
+#define TA_RECT1(x) TA_RECT(x, x, x, x)
+#define TA_RECT_ZERO TA_RECT(0, 0, 0, 0)
 
 typedef struct ta_vec2 {
     float x;

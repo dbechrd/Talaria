@@ -97,17 +97,18 @@ void ta_font_load_path(ta_font *font, const char *path)
         font->chars[i].y0 = (s16)y;
         font->chars[i].x1 = (s16)(x + gw);
         font->chars[i].y1 = (s16)(y + gh);
-        font->chars[i].xadvance = font->scale * advance;
-        font->chars[i].xoff = (float) x0;
-        font->chars[i].yoff = (float) y0;
+        font->chars[i].xadvance = ceilf(font->scale * advance);
+        font->chars[i].xoff = (float)x0;
+        font->chars[i].yoff = (float)y0;
+        font->ascent = MAX(font->ascent, -y0);
+        font->descent = MAX(font->descent, y0 + gh);
+        font->line_height = font->ascent + font->descent;
+        font->left_bearing = MIN(font->left_bearing, x0);
         x = x + gw + 1;
         if (y + gh + 1 > bottom_y) {
             bottom_y = y + gh + 1;
         }
     }
-
-    stbtt_GetFontVMetrics(&font->font_info, &font->ascent, &font->descent, &font->line_gap);
-    stbtt_GetFontBoundingBox(&font->font_info, &font->bbox.x, &font->bbox.y, &font->bbox.w, &font->bbox.h);
 
     while (font->tex_h > bottom_y) {
         font->tex_h >>= 1;
@@ -142,7 +143,7 @@ ta_shader *ta_font_shader(ta_font *font)
     return shader;
 }
 
-static float ta_GetBakedQuad(const stbtt_bakedchar *chardata, int pw, int ph,
+static void ta_GetBakedQuad(const stbtt_bakedchar *chardata, int pw, int ph,
     int char_index, float *xpos, float *ypos, ta_rect_uv *rect)
 {
     float ipw = 1.0f / pw, iph = 1.0f / ph;
@@ -160,7 +161,9 @@ static float ta_GetBakedQuad(const stbtt_bakedchar *chardata, int pw, int ph,
     rect->uv1.v = b->y0 * iph;
 
     *xpos += b->xadvance;
-    return rect->rect.h + b->yoff;
+
+    // TODO(cleanup): returns descent; don't need for now
+    //return rect->rect.h + b->yoff;
 }
 
 ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y,
@@ -168,7 +171,6 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
     float *cursor_x)
 {
     DLB_ASSERT(text);
-    DLB_ASSERT(text_len);
 
     ta_rectf rect = { 0 };
     rect.x = x;
@@ -185,9 +187,9 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
         if (layer == LAYER_SHADOW) continue;
 
         float cur_x = rect.x;
-        float cur_y = rect.y + font->pixel_height;
-        float ndc_x = NDC_X(cur_x);
-        float ndc_y = NDC_Y(cur_y);
+        float cur_y = rect.y + font->ascent;
+        float ndc_x = NDC_X(rect.x);
+        float ndc_y = NDC_Y(rect.y);
 
         switch (layer) {
             case LAYER_SHADOW: {
@@ -201,9 +203,8 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
             }
         }
 
-        float max_h = 0.0f;
-
-        for (u32 i = 0; i < text_len; i++) {
+        // Loop until i == text_len or, if text_len is 0, we hit a nil character
+        for (u32 i = 0; ((text_len) ? i < text_len : text[i]); i++) {
             // Save cursor position
             if (i == cursor_idx && cursor_x) {
                 *cursor_x = cur_x;
@@ -212,29 +213,27 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
             if (text[i] == '\n') {
                 //DLB_ASSERT(y_max <= font->pixel_height);
                 cur_x = rect.x;
-                cur_y += max_h;
-                rect.h += max_h;
-                max_h = 0.0f;
+                cur_y += font->line_height;
+                rect.h += font->line_height;
             } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
                 ta_rect_uv rect_uv = { 0 };
-                float descent = ta_GetBakedQuad(font->chars, font->tex_w,
-                    font->tex_h, text[i] - 32, &cur_x, &cur_y, &rect_uv);
+                ta_GetBakedQuad(font->chars, font->tex_w, font->tex_h,
+                    text[i] - 32, &cur_x, &cur_y, &rect_uv);
 
-#if 0
+#if 1
                 // HACK: Cull characters that would be cut off by edge of screen
                 //       to prevent weird wrapping glitches in screen mode.
-                float a = NDC_X(rect_uv.rect.x);
-                float b = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
-                float c = NDC_Y(rect_uv.rect.y);
-                float d = NDC_Y(rect_uv.rect.y - rect_uv.rect.h);
+                float ndc_x0 = NDC_X(rect_uv.rect.x);
+                float ndc_x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
+                float ndc_y0 = NDC_Y(rect_uv.rect.y);
+                float ndc_y1 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
 #endif
-                if (!screen || (
-                    NDC_X(rect_uv.rect.x) >= ndc_x &&
-                    NDC_X(rect_uv.rect.x + rect_uv.rect.w) > ndc_x
+                if (!screen || text[i] == ' ' || (
+                    ndc_x0 >= ndc_x && ndc_x1 > ndc_x &&
+                    ndc_y0 <= ndc_y && ndc_y1 < ndc_y
                 )) {
                     ta_primitive_push_rect_uv(queue, rect_uv, *colors[layer],
                         layer_offset, screen);
-                    max_h = MAX(max_h, font->pixel_height + descent);
                 } else {
                     DLB_ASSERT(1);
                 }
@@ -243,7 +242,7 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
             }
         }
 
-        rect.h += max_h;
+        rect.h += font->line_height;
     }
 
     return rect;

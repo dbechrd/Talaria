@@ -22,7 +22,7 @@ typedef struct ta_game {
     ta_audio_source *background_music;
     ta_font *font;
     ta_texture *tex_orange;
-    ta_texture *tex_gray;
+    ta_texture *tex_red;
     ta_scene *scene;
     ta_light *lights;
     ta_camera *camera;

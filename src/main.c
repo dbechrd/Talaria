@@ -118,8 +118,8 @@ int main(int argc, char *argv[])
 
     tg_game.tex_orange = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_albedo"));
     DLB_ASSERT(tg_game.tex_orange && tg_game.tex_orange->gl_id);
-    tg_game.tex_gray = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_metallic"));
-    DLB_ASSERT(tg_game.tex_gray && tg_game.tex_gray->gl_id);
+    tg_game.tex_red = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_metallic"));
+    DLB_ASSERT(tg_game.tex_red && tg_game.tex_red->gl_id);
 
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
@@ -277,8 +277,9 @@ int main(int argc, char *argv[])
 		ta_primitive_push_crosshair(10, 2);
 		ta_primitive_render(true, true);
 
+#if 0
         ta_light_render_shadowmap_debug(&tg_game.lights[1]);
-
+#endif
 #if 0
         // Minimap
         ta_viewport minimap_viewport = ta_viewport_init(TA_SIZE(200, 200),
@@ -351,7 +352,7 @@ int main(int argc, char *argv[])
             tag_to_cam.y *= 0.0f;
             float tag_scalef = MAX(vec3_len(tag_to_cam) / 1.5f, 1.5f);
 
-            ta_rectf tag_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, UI_LAYER_HUD, CSTR("Player 1"), false, 0, 0);
+            ta_rectf tag_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, UI_LAYER_HUD, CSTR("| Player 1 |"), false, 0, 0);
             ta_vec3 tag_offset = tg_game.camera->right;
             tag_offset = vec3_scalef(tag_offset, NDC_W(tag_rect.w) * tag_scalef);
             tag_pos = vec3_sub(tag_pos, tag_offset);
@@ -386,7 +387,7 @@ int main(int argc, char *argv[])
         // Print frame time on the screen
         double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
         char frame_time_buf[40] = { 0 };
-        int len = snprintf(CSTR(frame_time_buf), "Frame %8llu\n%f ms", frame_num, ms_frame_time);
+        int len = snprintf(CSTR(frame_time_buf), "Frame %8llu\n%8.2f ms", frame_num, ms_frame_time);
         ta_font_push_text(&tooltip_fg_queue, tg_game.font, -130.0f, 0.0f, UI_LAYER_HUD, CSTR(frame_time_buf), true, 0, 0);
         ta_font_render(tooltip_fg_queue, tg_game.font, true, true);
 #endif
