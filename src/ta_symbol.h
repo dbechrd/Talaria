@@ -26,7 +26,6 @@ static inline char *dlb_symbol__alloc(const char *buf, u32 len) {
     return str;
 }
 
-#define CSTR(s) (s), sizeof(s) - 1
 #define SYM(s) (s), dlb_symbol_len(s)
 #define INTERN(s) ta_symbol_intern(CSTR(s))
 

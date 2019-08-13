@@ -371,7 +371,7 @@ int main(int argc, char *argv[])
             ta_vec3 tag_to_cam = vec3_sub(tg_game.camera->position, tag_pos);
             tag_to_cam.z *= -1.0f;
             tag_to_cam.y *= 0.0f;
-            float tag_scalef = MAX(vec3_len(tag_to_cam) * NDC_W(1), NDC_W(8));
+            float tag_scalef = MAX(vec3_len(tag_to_cam) * NDC_W(1.2), NDC_W(8));
 
             ta_rectf tag_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, UI_LAYER_HUD, CSTR("Player 1"), false, 0, 0);
             ta_vec3 tag_offset = tg_game.camera->right;

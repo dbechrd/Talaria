@@ -10,9 +10,9 @@
 #include "dlb_vector.h"
 #include "misc/gl3w.h"
 
-#define UI_DEBUG_CONTAINERS 1
+#define UI_DEBUG_CONTAINERS 0
 
-#if 1
+#if 0
     #define ROW_PAD_LEFT        1 //4
     #define ROW_PAD_RIGHT       0
     #define ROW_PAD_TOP         1 //4
@@ -68,6 +68,7 @@ typedef struct ui_frame {
 
     int row_height;
     bool row_continue;
+    ta_size content_size;
 } ui_frame;
 
 static ui_frame ui_root = {
@@ -183,6 +184,8 @@ static u32 ui_frame_start(ui_frame_type type, const char *name,
     frame->size = *size;
     if (margin) frame->margin = *margin;
     if (pad)    frame->pad = *pad;
+    frame->content_size.w = frame->pad.x + frame->pad.w;
+    frame->content_size.h = frame->pad.y + frame->pad.h;
     ui_frame *container = ui_container(frame->index);
     frame->pos = container->pos;
     frame->pos.x += container->offset.x;
@@ -221,6 +224,9 @@ static u32 ui_frame_start(ui_frame_type type, const char *name,
         }
     }
 
+    // TODO: If we're going to render containers we need to defer *all*
+    //       rendering to e.g. container->queue until the container pops, then
+    //       render everything starting at the container for proper ordering.
     if (UI_DEBUG_CONTAINERS || !type_is_container(frame->type)) {
         ta_primitive_push_rect(rect, bg_color, UI_LAYER_EDIT_1_BG);
         ta_primitive_render(true, true);
@@ -248,20 +254,32 @@ static void ui_frame_end(u32 frame_idx)
 {
     ui_frame *container = ui_container(frame_idx);
     ui_frame *frame = &ui_frames[frame_idx];
-    container->offset.x += frame->margin.x + frame->size.w + frame->margin.w;
-    container->row_height = MAX(container->row_height, frame->margin.y + frame->size.h + frame->margin.h);
 
-    // Container padding
+    int frame_w = 0;
+    int frame_h = 0;
     if (type_is_container(frame->type)) {
-        ta_ui_pad(frame->pad.w, frame->pad.h);
-        ui_pop(frame->index);  // required for container search to work
+        // assume all containers auto-expand for now
+        frame_w = frame->margin.x + frame->content_size.w + frame->margin.w;
+        frame_h = frame->margin.y + frame->content_size.h + frame->margin.h;
+    } else {
+        frame_w = frame->margin.x + frame->size.w + frame->margin.w;
+        frame_h = frame->margin.y + frame->size.h + frame->margin.h;
     }
 
-    // Container row wrapping
+    container->offset.x += frame_w;
+    container->row_height = MAX(container->row_height, frame_h);
+    container->content_size.w = MAX(container->content_size.w, container->offset.x);
+    container->content_size.h += container->row_height;
+
     if (!container->row_continue) {
         container->offset.x = container->pad.x;
         container->offset.y += container->row_height;
         container->row_height = 0;
+    }
+
+    // Pop container (currently required for container search to work)
+    if (type_is_container(frame->type)) {
+        ui_pop(frame->index);
     }
 }
 
@@ -332,7 +350,7 @@ void ta_ui_row_end()
     }
 }
 
-void ta_ui_row_start()
+void ta_ui_row_begin()
 {
     ui_frame *container = ui_container_last();
     ta_ui_row_end();
@@ -467,7 +485,7 @@ void ta_ui_hud()
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
     ta_ui_window_begin(INTERN("hud"), &TA_SIZE(200, 40), 0, 0);
-    ta_ui_row_start();
+    ta_ui_row_begin();
     for (int i = 0; i < tg_game.player_ammo_max; i++) {
         if (i < tg_game.player_ammo) {
             ta_ui_button(INTERN("clip_slot_full"), &TA_SIZE(20, 20), 0, 0, tg_game.tex_orange);
@@ -476,7 +494,7 @@ void ta_ui_hud()
         }
     }
     ta_ui_pad(0, 4);
-    ta_ui_row_start();
+    ta_ui_row_begin();
     for (int i = 0; i < tg_game.player_clip_max; i++) {
         if (i < tg_game.player_clip) {
             ta_ui_button(INTERN("ammo_slot_full"), &TA_SIZE(20, 20), 0, 0, tg_game.tex_orange);
@@ -494,7 +512,7 @@ static const ta_rect grid_pad = { 1, 1, 1, 1 };
 void ui_4x4_grid(int rows, ta_texture *tex)
 {
     for (int r = 0; r < rows; r++) {
-        ta_ui_row_start();
+        ta_ui_row_begin();
         for (int c = 0; c < 4; c++) {
             ta_ui_button(INTERN("4x4_cell"), &TA_SIZE(20, 20), &grid_pad, &grid_pad, tex);
         }
@@ -505,10 +523,9 @@ void ta_ui_test()
 {
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
-    ta_ui_window_begin(INTERN("test_window"), &TA_SIZE(300, 400), &TA_RECT_ZERO, 0);
+    ta_ui_window_begin(INTERN("test_window"), &TA_SIZE(300, 400), &TA_RECT1(2), 0);
 
-    ta_ui_row_start();
-    //ta_ui_pad(&TA_SIZE(600, 400));
+    ta_ui_row_begin();
     static textbox_settings text_settings;
     if (!text_settings.buffer.length) {
         ta_buffer_init(&text_settings.buffer, 32);
@@ -516,89 +533,109 @@ void ta_ui_test()
     }
     ta_ui_textbox(INTERN("test_textbox"), &TA_SIZE(200, 50), 0, 0, &text_settings);
 
-    // Audio buffers
-    ta_ui_row_start();
-    static const char *audio_playing_uid = 0;
-
-    ta_audio_buffer *audio_buffers = tg_game.scene->pools[TA_AUDIO_BUFFER];
-    u32 buf_count = dlb_vec_len(audio_buffers);
-
-    u32 audio_panel_id = (u32)-1;
-    ta_ui_panel_begin(INTERN("sound_panel"), &TA_SIZE(50, 50), 0, &TA_RECT1(2), &audio_panel_id);
-    ta_ui_row_start();
-
-    int audio_playing_idx = -1;
-    int audio_request_idx = -1;
-
-    for (u32 i = 0; i < buf_count; i++) {
-#if 0
-        int panel_id = -1;
-        ta_ui_panel_begin(&TA_SIZE(60 * buf_count, 60), &panel_id);
-        DLB_ASSERT(panel_id >= 0);
-
-        ta_ui_label(audio_buffers[i].uid.uid);
-        ta_ui_row_start();
-        ta_ui_button("Play");
-        ta_ui_button("Loop");
-
-        ta_ui_pad(&TA_SIZE(0, 4));
-        ta_ui_panel_end(panel_id);
-#endif
-        if (audio_buffers[i].uid.uid == audio_playing_uid) {
-            audio_playing_idx = i;
-        }
-        if (ta_ui_button(INTERN("sound_button"), &TA_SIZE(50, 50), &TA_RECT1(2), 0, 0)) { //tg_game.tex_orange)) {
-            audio_request_idx = i;
-        }
-        if (last_frame_state.hover) {
-            ta_ui_tooltip(SYM(audio_buffers[i].uid.uid));
-        }
-    }
-
-    if (audio_request_idx >= 0) {
-        ta_audio_source_stop(tg_game.background_music);
-        audio_playing_uid = 0;
-        if (audio_request_idx != audio_playing_idx) {
-            ta_audio_source_set_buffer(tg_game.background_music, &audio_buffers[audio_request_idx]);
-            ta_audio_source_play_loop(tg_game.background_music);
-            audio_playing_uid = audio_buffers[audio_request_idx].uid.uid;
-        }
-    }
-
-    ta_ui_panel_end(audio_panel_id);
-    ta_ui_row_start();
-
+    enum {
+        CATEGORY_AUDIO,
+        CATEGORY_NOT_USED_1,
+        CATEGORY_NOT_USED_2,
+        CATEGORY_NOT_USED_3,
+        CATEGORY_COUNT
+    };
+    const char *category_names[CATEGORY_COUNT] = {
+        [CATEGORY_AUDIO]      = INTERN(STRING(CATEGORY_AUDIO)),
+        [CATEGORY_NOT_USED_1] = INTERN(STRING(CATEGORY_NOT_USED_1)),
+        [CATEGORY_NOT_USED_2] = INTERN(STRING(CATEGORY_NOT_USED_2)),
+        [CATEGORY_NOT_USED_3] = INTERN(STRING(CATEGORY_NOT_USED_3)),
+    };
     static int category_selected = -1;
 
+    ta_ui_row_begin();
     u32 category_panel_id = (u32)-1;
     ta_ui_panel_begin(INTERN("category_panel"), &TA_SIZE(50, 50), 0, &TA_RECT1(2), &category_panel_id);
-    for (int i = 0; i < 4; i++) {
-        ta_ui_row_start();
+    for (int i = 0; i < CATEGORY_COUNT; i++) {
+        ta_ui_row_begin();
         if (ta_ui_button(INTERN("category_button"), &TA_SIZE(50, 50), 0, &TA_RECT1(2), tg_game.tex_orange)) {
             category_selected = (i == category_selected ? -1 : i);
+        }
+        if (last_frame_state.hover) {
+            ta_ui_tooltip(SYM(category_names[i]));
         }
     }
     ta_ui_panel_end(category_panel_id);
 
-    if (category_selected >= 0) {
-        u32 category_details_id = (u32)-1;
-        ta_ui_panel_begin(INTERN("category_details_panel"), &TA_SIZE(240, 240), 0, &grid_pad, &category_details_id);
-        ui_4x4_grid(category_selected + 1, tg_game.tex_orange);
-        ta_ui_panel_end(category_details_id);
+    switch (category_selected) {
+        case -1: {
+            break;
+        } case CATEGORY_AUDIO: {
+            // Audio buffers
+            static const char *audio_playing_uid = 0;
+            ta_audio_buffer *audio_buffers = tg_game.scene->pools[TA_AUDIO_BUFFER];
+            u32 buf_count = dlb_vec_len(audio_buffers);
+
+            int audio_playing_idx = -1;
+            int audio_request_idx = -1;
+
+            u32 audio_panel_id = (u32)-1;
+            ta_ui_panel_begin(INTERN("sound_panel"), &TA_SIZE(50, 50), 0, &TA_RECT1(2), &audio_panel_id);
+
+            ta_ui_row_begin();
+            for (u32 i = 0; i < buf_count; i++) {
+#if 0
+                int panel_id = -1;
+                ta_ui_panel_begin(&TA_SIZE(60 * buf_count, 60), &panel_id);
+                DLB_ASSERT(panel_id >= 0);
+
+                ta_ui_label(audio_buffers[i].uid.uid);
+                ta_ui_row_begin();
+                ta_ui_button("Play");
+                ta_ui_button("Loop");
+
+                ta_ui_pad(&TA_SIZE(0, 4));
+                ta_ui_panel_end(panel_id);
+#endif
+                if (audio_buffers[i].uid.uid == audio_playing_uid) {
+                    audio_playing_idx = i;
+                }
+                if (ta_ui_button(INTERN("sound_button"), &TA_SIZE(50, 50), 0, &TA_RECT1(2), 0)) { //tg_game.tex_orange)) {
+                    audio_request_idx = i;
+                }
+                if (last_frame_state.hover) {
+                    ta_ui_tooltip(SYM(audio_buffers[i].uid.uid));
+                }
+            }
+
+            if (audio_request_idx >= 0) {
+                ta_audio_source_stop(tg_game.background_music);
+                audio_playing_uid = 0;
+                if (audio_request_idx != audio_playing_idx) {
+                    ta_audio_source_set_buffer(tg_game.background_music, &audio_buffers[audio_request_idx]);
+                    ta_audio_source_play_loop(tg_game.background_music);
+                    audio_playing_uid = audio_buffers[audio_request_idx].uid.uid;
+                }
+            }
+
+            ta_ui_panel_end(audio_panel_id);
+            break;
+        } default: {
+            u32 category_details_id = (u32)-1;
+            ta_ui_panel_begin(INTERN("category_details_panel"), &TA_SIZE(240, 240), 0, &grid_pad, &category_details_id);
+            ui_4x4_grid(category_selected + 1, tg_game.tex_orange);
+            ta_ui_panel_end(category_details_id);
+            break;
+        }
     }
 
     ta_ui_window_end();
 
     if (status_msg) {
-        //ta_ui_statusbar();
+        ta_ui_statusbar();
 
         ta_rectf status_rect = ta_font_push_text(&quads_queue, tg_game.font, 0,
             0, UI_LAYER_TIP, SYM(status_msg), true, 0, 0);
-        float status_halfw = (float)tg_window.rect.w / 2 - status_rect.w / 2;
+        int status_halfw = tg_window.rect.w / 2 - (int)status_rect.w / 2;
 
         const int status_pad_bottom = 20;
         ta_vec3 status_pos = { 0 };
-        status_pos.x = status_halfw;
+        status_pos.x = (float)status_halfw;
         status_pos.y = (float)(tg_window.rect.h - (tg_game.font->ascent + status_pad_bottom));
         ta_font_render(quads_queue, tg_game.font, &status_pos, true, true);
 
