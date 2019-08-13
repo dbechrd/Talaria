@@ -16,8 +16,6 @@
     #define ROW_PAD_LEFT        1 //4
     #define ROW_PAD_RIGHT       0
     #define ROW_PAD_TOP         1 //4
-    #define TEXTBOX_PAD_LEFT    4
-    #define TEXTBOX_PAD_TOP     4
     #define TEXTBOX_PAD_CURSOR  4
     #define WIDGET_PAD          1
     #define SCROLL_SPEED        20
@@ -26,8 +24,6 @@
     #define ROW_PAD_RIGHT       0
     #define ROW_PAD_TOP         0
     #define GRID_PAD            0
-    #define TEXTBOX_PAD_LEFT    0
-    #define TEXTBOX_PAD_TOP     0
     #define TEXTBOX_PAD_CURSOR  0
     #define WIDGET_PAD          0
     #define SCROLL_SPEED        20
@@ -60,15 +56,14 @@ typedef struct ui_frame {
     u32 index;
     ui_frame_type type;
 
-    ta_vec2i pos;
-    ta_vec2i offset;
-    ta_size size;
-    ta_rect margin;
-    ta_rect pad;
+    ta_rect margin;         // external margin
+    ta_rect pad;            // internal padding
+    ta_rect rect;           // position & size (-margin, +pad)
+    ta_vec2i offset;        // dynamic offset for layout
 
-    int row_height;
-    bool row_continue;
-    ta_size content_size;
+    int row_height;         // height of current layout row
+    bool row_continue;      // if true, next element will layout on same row
+    ta_size content_size;   // dynamic content size (-margin, +pad)
 } ui_frame;
 
 static ui_frame ui_root = {
@@ -171,78 +166,87 @@ static void ui_pop(u32 index)
     dlb_vec_popz(ui_frames);
 }
 
+static ta_rect rect_shrink(ta_rect orig, ta_rect shrink)
+{
+    ta_rect result = { 0 };
+    result.x = orig.x + shrink.x;
+    result.y = orig.y + shrink.y;
+    result.w = orig.w - (shrink.x + shrink.w);
+    result.h = orig.h - (shrink.w + shrink.h);
+    return result;
+}
+
+static bool rect_contains_mouse(ta_rect rect)
+{
+    if (tg_mouse.x >= rect.x && tg_mouse.x < rect.x + rect.w &&
+        tg_mouse.y >= rect.y && tg_mouse.y < rect.y + rect.h)
+    {
+        return true;
+    }
+    return false;
+}
+
 // returns frame index
 static u32 ui_frame_start(ui_frame_type type, const char *name,
     const ta_size *size, const ta_rect *margin, const ta_rect *pad)
 {
+    // TODO: This probably shouldn't be here...
     glDisable(GL_SCISSOR_TEST);
 
     // Allocate frame
     ui_frame *frame = dlb_vec_alloc(ui_frames);
     frame->index = dlb_vec_len(ui_frames) - 1;
     frame->type = type;
-    frame->size = *size;
     if (margin) frame->margin = *margin;
     if (pad)    frame->pad = *pad;
+    ui_frame *container = ui_container(frame->index);
+    frame->rect.x = container->rect.x + container->offset.x + frame->margin.x;
+    frame->rect.y = container->rect.y + container->offset.y + frame->margin.y;
+    frame->rect.w = size->w;
+    frame->rect.h = size->h;
     frame->content_size.w = frame->pad.x + frame->pad.w;
     frame->content_size.h = frame->pad.y + frame->pad.h;
-    ui_frame *container = ui_container(frame->index);
-    frame->pos = container->pos;
-    frame->pos.x += container->offset.x;
-    frame->pos.y += container->offset.y;
 
     // Margin
     //ta_ui_pad(frame->margin.x, frame->margin.y);
 
-    // Background
-    ta_rect rect = { 0 };
-    rect.x = frame->pos.x + frame->margin.x;
-    rect.y = frame->pos.y + frame->margin.y;
-    rect.w = frame->size.w;
-    rect.h = frame->size.h;
+    // Container padding
+    if (type_is_container(frame->type)) {
+        ta_ui_pad(frame->pad.x, frame->pad.y);
+    } else {
+        last_frame_state.hover = false;
+        last_frame_state.down = false;
+        last_frame_state.pressed = false;
+        last_frame_state.released = false;
 
-    last_frame_state.hover = false;
-    last_frame_state.down = false;
-    last_frame_state.pressed = false;
-    last_frame_state.released = false;
-
-    ta_rgba bg_color = ui_colors[frame->type][COLOR_NONE];
-    if (tg_mouse.x >= rect.x && tg_mouse.x < rect.x + rect.w &&
-        tg_mouse.y >= rect.y && tg_mouse.y < rect.y + rect.h)
-    {
-        bg_color = ui_colors[frame->type][COLOR_HOVER];
-        last_frame_state.hover = true;
-        if (last_frame_state.hover) {
-            status_msg = name;
-        }
-        if (ta_key_state_down(&tg_mouse.left)) {
-            bg_color = ui_colors[frame->type][COLOR_DOWN];
-            last_frame_state.down = true;
-            last_frame_state.pressed = ta_key_state_pressed(&tg_mouse.left);
-        } else {
-            last_frame_state.released = ta_key_state_released(&tg_mouse.left);
+        ta_rgba bg_color = ui_colors[frame->type][COLOR_NONE];
+        if (rect_contains_mouse(frame->rect))
+        {
+            bg_color = ui_colors[frame->type][COLOR_HOVER];
+            last_frame_state.hover = true;
+            if (last_frame_state.hover) {
+                status_msg = name;
+            }
+            if (ta_key_state_down(&tg_mouse.left)) {
+                bg_color = ui_colors[frame->type][COLOR_DOWN];
+                last_frame_state.down = true;
+                last_frame_state.pressed = ta_key_state_pressed(&tg_mouse.left);
+            } else {
+                last_frame_state.released = ta_key_state_released(&tg_mouse.left);
+            }
         }
     }
 
     // TODO: If we're going to render containers we need to defer *all*
     //       rendering to e.g. container->queue until the container pops, then
     //       render everything starting at the container for proper ordering.
-    if (UI_DEBUG_CONTAINERS || !type_is_container(frame->type)) {
-        ta_primitive_push_rect(rect, bg_color, UI_LAYER_EDIT_1_BG);
-        ta_primitive_render(true, true);
-    }
+    //if (UI_DEBUG_CONTAINERS || !type_is_container(frame->type)) {
+    //    ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
+    //    ta_primitive_render(true, true);
+    //}
 
-    // Container padding
-    if (type_is_container(frame->type)) {
-        ta_ui_pad(frame->pad.x, frame->pad.y);
-    }
-
-    // Content
-    ta_rect clip_rect = { 0 };
-    clip_rect.x = rect.x + frame->pad.x;
-    clip_rect.y = rect.y + frame->pad.y;
-    clip_rect.w = rect.w - (frame->pad.x + frame->pad.w);
-    clip_rect.h = rect.h - (frame->pad.w + frame->pad.h);
+    // TODO: Should clip rect contain pad or not? Not sure.. see how it looks.
+    ta_rect clip_rect = rect_shrink(frame->rect, frame->pad);
     glEnable(GL_SCISSOR_TEST);
     int inv_y = tg_window.rect.h - (clip_rect.y + clip_rect.h);
     glScissor(clip_rect.x, inv_y, clip_rect.w, clip_rect.h);
@@ -262,8 +266,8 @@ static void ui_frame_end(u32 frame_idx)
         frame_w = frame->margin.x + frame->content_size.w + frame->margin.w;
         frame_h = frame->margin.y + frame->content_size.h + frame->margin.h;
     } else {
-        frame_w = frame->margin.x + frame->size.w + frame->margin.w;
-        frame_h = frame->margin.y + frame->size.h + frame->margin.h;
+        frame_w = frame->margin.x + frame->rect.w + frame->margin.w;
+        frame_h = frame->margin.y + frame->rect.h + frame->margin.h;
     }
 
     container->offset.x += frame_w;
@@ -390,16 +394,26 @@ bool ta_ui_button(const char *name, const ta_size *size, const ta_rect *margin,
     const ta_rect *pad, const ta_texture *tex)
 {
     u32 frame_idx = ui_frame_start(UI_BUTTON, name, size, margin, pad);
+    ui_frame *frame = &ui_frames[frame_idx];
+
+    ta_rgba bg_color = ui_colors[frame->type][COLOR_NONE];
+    if (last_frame_state.down) {
+        bg_color = ui_colors[frame->type][COLOR_DOWN];
+    } else if (last_frame_state.hover) {
+        bg_color = ui_colors[frame->type][COLOR_HOVER];
+    }
+
+    ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_render(true, true);
+
+    frame->pad = TA_RECT1(3);
+
     if (tex) {
         ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
         ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex->gl_id);
-        ta_rect img_rect;
-        img_rect.x = ui_frames[frame_idx].pos.x;
-        img_rect.y = ui_frames[frame_idx].pos.y;
-        img_rect.w = tex->width;
-        img_rect.h = tex->height;
+        ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
         ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
         ta_primitive_render(true, true);
         ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
@@ -417,19 +431,19 @@ void ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
     u32 frame_idx = ui_frame_start(UI_TEXTBOX, name, size, margin, pad);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    // Calculate text rect
+    // Calculate text bg_rect
     static ta_vert_quad *text_queue;
     float cursor_x = 0.0f;
-    float text_left = (float)frame->pos.x + TEXTBOX_PAD_LEFT;
-    float text_top = (float)frame->pos.y + TEXTBOX_PAD_TOP;
+    float text_left = (float)frame->rect.x + frame->pad.x;
+    float text_top = (float)frame->rect.y + frame->pad.y;
     ta_rectf text_rect = ta_font_push_text(&text_queue, tg_game.font, text_left,
         text_top, UI_LAYER_EDIT_1, (char *)(settings->buffer.data),
         settings->buffer.length, true, settings->cursor, &cursor_x);
+    frame->content_size.w += (int)text_rect.w;
+    frame->content_size.h += (int)text_rect.h;
 
     // Render background
-    ta_rect bg_rect;
-    bg_rect.x = frame->pos.x;
-    bg_rect.y = frame->pos.y;
+    ta_rect bg_rect = frame->rect;
     bg_rect.w = (int)(text_rect.w + 0.5f);
     bg_rect.h = (int)(text_rect.h + 0.5f);
     ta_primitive_push_rect(bg_rect, TA_COLOR_GRAY2, UI_LAYER_EDIT_1_BG);
@@ -529,9 +543,9 @@ void ta_ui_test()
     static textbox_settings text_settings;
     if (!text_settings.buffer.length) {
         ta_buffer_init(&text_settings.buffer, 32);
-        dlb_memcpy(text_settings.buffer.data, CSTR("|`_,_`|"));
+        dlb_memcpy(text_settings.buffer.data, CSTR("This is some text, yay!")); //|`_,_`|"));
     }
-    ta_ui_textbox(INTERN("test_textbox"), &TA_SIZE(200, 50), 0, 0, &text_settings);
+    ta_ui_textbox(INTERN("test_textbox"), &TA_SIZE(300, 30), 0, 0, &text_settings);
 
     enum {
         CATEGORY_AUDIO,
@@ -617,7 +631,7 @@ void ta_ui_test()
             break;
         } default: {
             u32 category_details_id = (u32)-1;
-            ta_ui_panel_begin(INTERN("category_details_panel"), &TA_SIZE(240, 240), 0, &grid_pad, &category_details_id);
+            ta_ui_panel_begin(INTERN("category_details_panel"), &TA_SIZE(20, 20), 0, &grid_pad, &category_details_id);
             ui_4x4_grid(category_selected + 1, tg_game.tex_orange);
             ta_ui_panel_end(category_details_id);
             break;
