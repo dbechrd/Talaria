@@ -34,7 +34,7 @@ void ta_node_init(ta_node *node);
 struct ta_material *ta_node_material(ta_node *node);
 struct ta_mesh_group *ta_node_mesh_group(ta_node *node);
 struct ta_rigid_body *ta_node_rigid_body(ta_node *node);
-struct ta_button *ta_node_button(ta_node *node);
+struct e_button *ta_node_button(ta_node *node);
 
 void ta_node_update(ta_node *node);
 void ta_node_shadow_pass(ta_node *node, struct ta_shader *shader,

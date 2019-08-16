@@ -96,7 +96,7 @@ static pool_info pool_infos[] = {
     [TA_AUDIO_BUFFER] = { sizeof(ta_audio_buffer),  ta_audio_buffer_init, 0 },
     [TA_AUDIO_SOURCE] = { sizeof(ta_audio_source),  ta_audio_source_init, 0 },
     [TA_RIGID_BODY]   = { sizeof(ta_rigid_body),    ta_rigid_body_init,   0 },
-    [TA_BUTTON]       = { sizeof(ta_button),        ta_button_init,       0 },
+    [TA_BUTTON]       = { sizeof(e_button),        e_button_init,       0 },
     [TA_FONT]         = { sizeof(ta_font),          ta_font_init,         0 },
 };
 

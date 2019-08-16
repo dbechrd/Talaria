@@ -72,18 +72,11 @@ static ui_frame ui_root = {
 };
 static ui_frame *ui_frames;
 
-typedef struct textbox_settings {
-    ta_buffer buffer;
-    u32 text_len;
-    u32 cursor;  // index of next character, 0 = before first char, len = after last char
-    u32 selection_start;
-    u32 selection_len;
-} textbox_settings;
-
 typedef enum ui_color_type {
     COLOR_NONE,
     COLOR_HOVER,
     COLOR_DOWN,
+    COLOR_ACTIVE,
     COLOR_COUNT
 } ui_color_type;
 
@@ -109,9 +102,10 @@ static ta_rgba ui_colors[][COLOR_COUNT] = {
         [COLOR_DOWN]  = { 1.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_MAGENTA
     },
     [UI_BUTTON] = {
-        [COLOR_NONE]  = { 0.5f, 0.5f, 0.5f, 1.0f }, //TA_COLOR_GRAY2
-        [COLOR_HOVER] = { 1.0f, 1.0f, 0.0f, 1.0f }, //TA_COLOR_YELLOW
-        [COLOR_DOWN]  = { 1.0f, 0.0f, 1.0f, 1.0f }, //TA_COLOR_MAGENTA
+        [COLOR_NONE]   = { 0.5f, 0.5f, 0.5f, 1.0f }, //TA_COLOR_GRAY2
+        [COLOR_HOVER]  = { 1.0f, 1.0f, 0.0f, 1.0f }, //TA_COLOR_YELLOW
+        [COLOR_DOWN]   = { 1.0f, 0.0f, 1.0f, 1.0f }, //TA_COLOR_MAGENTA
+        [COLOR_ACTIVE] = { 0.0f, 1.0f, 1.0f, 1.0f }, //TA_COLOR_CYAN
     },
 };
 
@@ -227,12 +221,12 @@ static u32 ui_frame_start(ui_frame_type type, const char *name,
             if (last_frame_state.hover) {
                 status_msg = name;
             }
-            if (ta_key_state_down(&tg_mouse.left)) {
+            if (ta_button_state_down(&tg_mouse.left)) {
                 bg_color = ui_colors[frame->type][COLOR_DOWN];
                 last_frame_state.down = true;
-                last_frame_state.pressed = ta_key_state_pressed(&tg_mouse.left);
+                last_frame_state.pressed = ta_button_state_pressed(&tg_mouse.left);
             } else {
-                last_frame_state.released = ta_key_state_released(&tg_mouse.left);
+                last_frame_state.released = ta_button_state_released(&tg_mouse.left);
             }
         }
     }
@@ -406,8 +400,6 @@ bool ta_ui_button(const char *name, const ta_size *size, const ta_rect *margin,
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, true);
 
-    frame->pad = TA_RECT1(3);
-
     if (tex) {
         ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
@@ -423,35 +415,89 @@ bool ta_ui_button(const char *name, const ta_size *size, const ta_rect *margin,
     return last_frame_state.pressed;
 }
 
-void ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
-    const ta_rect *pad, textbox_settings *settings)
+bool ta_ui_button_toggle(const char *name, const ta_size *size,
+    const ta_rect *margin, const ta_rect *pad, const ta_texture *tex,
+    bool *active)
 {
-    DLB_ASSERT(settings);
+    u32 frame_idx = ui_frame_start(UI_BUTTON, name, size, margin, pad);
+    ui_frame *frame = &ui_frames[frame_idx];
+
+    ta_rgba bg_color = ui_colors[frame->type][COLOR_NONE];
+    if (last_frame_state.pressed) {
+        *active = !*active;
+    }
+    if (*active) {
+        bg_color = ui_colors[frame->type][COLOR_ACTIVE];
+    } else if (last_frame_state.down) {
+        bg_color = ui_colors[frame->type][COLOR_DOWN];
+    } else if (last_frame_state.hover) {
+        bg_color = ui_colors[frame->type][COLOR_HOVER];
+    }
+
+    ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_render(true, true);
+
+    if (tex) {
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex->gl_id);
+        ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
+        ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+        ta_primitive_render(true, true);
+        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+    }
+    ui_frame_end(frame_idx);
+
+    return *active;
+}
+
+bool ui_textbox_filter(char c) {
+    if (c >= 'a' && c <= 'z') {
+        return true;
+    }
+    return false;
+}
+
+bool ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
+    const ta_rect *pad, text_entry_settings *text_entry)
+{
+    DLB_ASSERT(text_entry);
 
     u32 frame_idx = ui_frame_start(UI_TEXTBOX, name, size, margin, pad);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    // Calculate text bg_rect
-    static ta_vert_quad *text_queue;
+    ta_vert_quad *text_queue = { 0 };
     float cursor_x = 0.0f;
-    float text_left = (float)frame->rect.x + frame->pad.x;
-    float text_top = (float)frame->rect.y + frame->pad.y;
-    ta_rectf text_rect = ta_font_push_text(&text_queue, tg_game.font, text_left,
-        text_top, UI_LAYER_EDIT_1, (char *)(settings->buffer.data),
-        settings->buffer.length, true, settings->cursor, &cursor_x);
-    frame->content_size.w += (int)text_rect.w;
-    frame->content_size.h += (int)text_rect.h;
+
+    if (dlb_vec_len(text_entry->buffer)) {
+        // Calculate text bg_rect
+        float text_left = (float)frame->rect.x + frame->pad.x;
+        float text_top = (float)frame->rect.y + frame->pad.y;
+        ta_rectf text_rect = ta_font_push_text(&text_queue, tg_game.font, text_left,
+            text_top, UI_LAYER_EDIT_1, text_entry->buffer, dlb_vec_len(text_entry->buffer),
+            true, text_entry->cursor, &cursor_x);
+        frame->content_size.w += (int)text_rect.w;
+        frame->content_size.h += (int)text_rect.h;
+    }
+
+    ta_rgba bg_color = TA_COLOR_GRAY2;
+    if (tg_game.text_entry.entry == text_entry) {
+        bg_color = TA_COLOR_BLUE;
+    }
 
     // Render background
     ta_rect bg_rect = frame->rect;
-    bg_rect.w = (int)(text_rect.w + 0.5f);
-    bg_rect.h = (int)(text_rect.h + 0.5f);
-    ta_primitive_push_rect(bg_rect, TA_COLOR_GRAY2, UI_LAYER_EDIT_1_BG);
+    //bg_rect.w = (int)(text_rect.w + 0.5f);
+    //bg_rect.h = (int)(text_rect.h + 0.5f);
+    ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, false);
 
     // Render text
-    ta_font_render(text_queue, tg_game.font, 0, true, true);
-    dlb_vec_clear(text_queue);
+    if (dlb_vec_len(text_queue)) {
+        ta_font_render(text_queue, tg_game.font, 0, true, true);
+        dlb_vec_clear(text_queue);
+    }
 
     ui_frame_end(frame_idx);
 
@@ -466,6 +512,8 @@ void ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
     ta_primitive_push_rect(cursor_rect, TA_COLOR_RED, UI_LAYER_EDIT_2);
     ta_primitive_render(true, false);
     glEnable(GL_SCISSOR_TEST);
+
+    return last_frame_state.pressed;
 }
 
 void ta_ui_window_end()
@@ -533,6 +581,24 @@ void ui_4x4_grid(int rows, ta_texture *tex)
     }
 }
 
+void text_entry_update(text_entry_settings *text_entry)
+{
+    if (!text_entry->dirty)
+        return;
+
+    dlb_vec_clearz(text_entry->buffer);
+    int llen = dlb_vec_len(text_entry->lbuffer);
+    int rlen = dlb_vec_len(text_entry->rbuffer);
+    for (int i = 0; i < llen; ++i) {
+        dlb_vec_push(text_entry->buffer, text_entry->lbuffer[i]);
+    }
+    for (int i = rlen - 1; i >= 0; --i) {
+        dlb_vec_push(text_entry->buffer, text_entry->rbuffer[i]);
+    }
+
+    text_entry->dirty = false;
+}
+
 void ta_ui_test()
 {
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
@@ -540,12 +606,31 @@ void ta_ui_test()
     ta_ui_window_begin(INTERN("test_window"), &TA_SIZE(300, 400), &TA_RECT1(2), 0);
 
     ta_ui_row_begin();
-    static textbox_settings text_settings;
-    if (!text_settings.buffer.length) {
-        ta_buffer_init(&text_settings.buffer, 32);
-        dlb_memcpy(text_settings.buffer.data, CSTR("This is some text, yay!")); //|`_,_`|"));
+    static text_entry_settings text_entry;
+    if (!text_entry.lbuffer) {
+        const char default_text[] = "Text: "; //|`_,_`|";
+        //dlb_vec_alloc_size(text_settings.buffer, 32);
+        const char *c = default_text;
+        while (*c) {
+            dlb_vec_push(text_entry.lbuffer, *c);
+            c++;
+        }
+        text_entry.dirty = true;
+        text_entry.cursor = dlb_vec_len(text_entry.lbuffer);
     }
-    ta_ui_textbox(INTERN("test_textbox"), &TA_SIZE(300, 30), 0, 0, &text_settings);
+    text_entry_update(&text_entry);
+    if (ta_ui_textbox(INTERN("test_textbox"), &TA_SIZE(300, 30), 0, 0, &text_entry)) {
+        tg_game.text_entry.entry = &text_entry;
+        tg_game.text_entry.filter = &ui_textbox_filter;
+        tg_game.text_entry.entry->prev_state = tg_game.state;
+        ta_game_state_set(TA_GAME_STATE_TEXT_ENTRY);
+    } else if (tg_game.text_entry.entry == &text_entry &&
+        ta_button_state_pressed(&tg_mouse.left))
+    {
+        ta_game_state_set(tg_game.text_entry.entry->prev_state);
+        tg_game.text_entry.entry = 0;
+        tg_game.text_entry.filter = 0;
+    }
 
     enum {
         CATEGORY_AUDIO,
@@ -554,12 +639,11 @@ void ta_ui_test()
         CATEGORY_NOT_USED_3,
         CATEGORY_COUNT
     };
-    const char *category_names[CATEGORY_COUNT] = {
-        [CATEGORY_AUDIO]      = INTERN(STRING(CATEGORY_AUDIO)),
-        [CATEGORY_NOT_USED_1] = INTERN(STRING(CATEGORY_NOT_USED_1)),
-        [CATEGORY_NOT_USED_2] = INTERN(STRING(CATEGORY_NOT_USED_2)),
-        [CATEGORY_NOT_USED_3] = INTERN(STRING(CATEGORY_NOT_USED_3)),
-    };
+    const char *category_names[CATEGORY_COUNT] = { 0 };
+    category_names[CATEGORY_AUDIO]      = INTERN(STRING(CATEGORY_AUDIO));
+    category_names[CATEGORY_NOT_USED_1] = INTERN(STRING(CATEGORY_NOT_USED_1));
+    category_names[CATEGORY_NOT_USED_2] = INTERN(STRING(CATEGORY_NOT_USED_2));
+    category_names[CATEGORY_NOT_USED_3] = INTERN(STRING(CATEGORY_NOT_USED_3));
     static int category_selected = -1;
 
     ta_ui_row_begin();
@@ -606,10 +690,12 @@ void ta_ui_test()
                 ta_ui_pad(&TA_SIZE(0, 4));
                 ta_ui_panel_end(panel_id);
 #endif
-                if (audio_buffers[i].uid.uid == audio_playing_uid) {
+                bool active = audio_buffers[i].uid.uid == audio_playing_uid;
+                if (active) {
                     audio_playing_idx = i;
                 }
-                if (ta_ui_button(INTERN("sound_button"), &TA_SIZE(50, 50), 0, &TA_RECT1(2), 0)) { //tg_game.tex_orange)) {
+                ta_ui_button_toggle(INTERN("sound_button"), &TA_SIZE(36, 36), 0, &TA_RECT1(2), tg_game.tex_audio_icon, &active);
+                if (last_frame_state.pressed) {
                     audio_request_idx = i;
                 }
                 if (last_frame_state.hover) {

@@ -23,7 +23,7 @@ void ta_mouse_toggle_capture()
     SDL_SetRelativeMouseMode(tg_mouse.captured);
 }
 
-static void mouse_update_button(ta_key_state *key_state, bool down)
+static void mouse_update_button(ta_button_state *key_state, bool down)
 {
     bool old_down = key_state->down;
     key_state->down = down;

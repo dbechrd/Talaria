@@ -18,6 +18,7 @@ static const char *game_state_str(ta_game_state state)
         case TA_GAME_STATE_INIT:         return "TA_GAME_STATE_INIT";
         case TA_GAME_STATE_PLAY:         return "TA_GAME_STATE_PLAY";
         case TA_GAME_STATE_FREE_CAM:     return "TA_GAME_STATE_FREE_CAM";
+        case TA_GAME_STATE_TEXT_ENTRY:   return "TA_GAME_STATE_TEXT_ENTRY";
         case TA_GAME_STATE_QUIT:         return "TA_GAME_STATE_QUIT";
         default: DLB_ASSERT(!"Unknown game state");  return 0;
     }
@@ -77,11 +78,155 @@ void ta_game_init()
     BIND1(FREE_CAM, CAMERA_MOVE_UP,       HOLD, SPACE);
     BIND1(FREE_CAM, CAMERA_MOVE_DOWN,     HOLD, LSHIFT);
 
-    BIND1(FREE_CAM, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, M);
+    BIND1(FREE_CAM, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, SCROLLLOCK);
     BIND1(FREE_CAM, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
     BIND1(FREE_CAM, DEBUG_TOGGLE_BBOX,       PRESS, 1);
     BIND1(FREE_CAM, DEBUG_TOGGLE_NORMALS,    PRESS, 2);
     BIND1(FREE_CAM, GAME_PLAYER_JUMP,        HOLD,  3);
+
+    //--------------------------------------------------------------------------
+    // TEXT_ENTRY
+
+#if 0
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, A);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, B);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, C);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, D);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, E);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, F);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, G);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, H);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, I);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, J);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, K);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, L);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, M);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, N);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, O);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, P);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, Q);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, R);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, S);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, T);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, U);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, V);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, W);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, X);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, Y);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, Z);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 0);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 1);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 2);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 3);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 4);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 5);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 6);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 7);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 8);
+    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 9);
+
+    SDL_SCANCODE_A = 4,
+    SDL_SCANCODE_B = 5,
+    SDL_SCANCODE_C = 6,
+    SDL_SCANCODE_D = 7,
+    SDL_SCANCODE_E = 8,
+    SDL_SCANCODE_F = 9,
+    SDL_SCANCODE_G = 10,
+    SDL_SCANCODE_H = 11,
+    SDL_SCANCODE_I = 12,
+    SDL_SCANCODE_J = 13,
+    SDL_SCANCODE_K = 14,
+    SDL_SCANCODE_L = 15,
+    SDL_SCANCODE_M = 16,
+    SDL_SCANCODE_N = 17,
+    SDL_SCANCODE_O = 18,
+    SDL_SCANCODE_P = 19,
+    SDL_SCANCODE_Q = 20,
+    SDL_SCANCODE_R = 21,
+    SDL_SCANCODE_S = 22,
+    SDL_SCANCODE_T = 23,
+    SDL_SCANCODE_U = 24,
+    SDL_SCANCODE_V = 25,
+    SDL_SCANCODE_W = 26,
+    SDL_SCANCODE_X = 27,
+    SDL_SCANCODE_Y = 28,
+    SDL_SCANCODE_Z = 29,
+
+    SDL_SCANCODE_1 = 30,
+    SDL_SCANCODE_2 = 31,
+    SDL_SCANCODE_3 = 32,
+    SDL_SCANCODE_4 = 33,
+    SDL_SCANCODE_5 = 34,
+    SDL_SCANCODE_6 = 35,
+    SDL_SCANCODE_7 = 36,
+    SDL_SCANCODE_8 = 37,
+    SDL_SCANCODE_9 = 38,
+    SDL_SCANCODE_0 = 39,
+
+    SDL_SCANCODE_RETURN = 40,
+    SDL_SCANCODE_ESCAPE = 41,
+    SDL_SCANCODE_BACKSPACE = 42,
+    SDL_SCANCODE_TAB = 43,
+    SDL_SCANCODE_SPACE = 44,
+
+    SDL_SCANCODE_MINUS = 45,
+    SDL_SCANCODE_EQUALS = 46,
+    SDL_SCANCODE_LEFTBRACKET = 47,
+    SDL_SCANCODE_RIGHTBRACKET = 48,
+    SDL_SCANCODE_BACKSLASH = 49,
+    SDL_SCANCODE_SEMICOLON = 51,
+    SDL_SCANCODE_APOSTROPHE = 52,
+    SDL_SCANCODE_GRAVE = 53,
+    SDL_SCANCODE_COMMA = 54,
+    SDL_SCANCODE_PERIOD = 55,
+    SDL_SCANCODE_SLASH = 56,
+
+    SDL_SCANCODE_F1 = 58,
+    SDL_SCANCODE_F2 = 59,
+    SDL_SCANCODE_F3 = 60,
+    SDL_SCANCODE_F4 = 61,
+    SDL_SCANCODE_F5 = 62,
+    SDL_SCANCODE_F6 = 63,
+    SDL_SCANCODE_F7 = 64,
+    SDL_SCANCODE_F8 = 65,
+    SDL_SCANCODE_F9 = 66,
+    SDL_SCANCODE_F10 = 67,
+    SDL_SCANCODE_F11 = 68,
+    SDL_SCANCODE_F12 = 69,
+
+    SDL_SCANCODE_PRINTSCREEN = 70,
+    SDL_SCANCODE_SCROLLLOCK = 71,
+    SDL_SCANCODE_PAUSE = 72,
+
+    SDL_SCANCODE_INSERT = 73,
+    SDL_SCANCODE_HOME = 74,
+    SDL_SCANCODE_PAGEUP = 75,
+    SDL_SCANCODE_DELETE = 76,
+    SDL_SCANCODE_END = 77,
+    SDL_SCANCODE_PAGEDOWN = 78,
+
+    SDL_SCANCODE_RIGHT = 79,
+    SDL_SCANCODE_LEFT = 80,
+    SDL_SCANCODE_DOWN = 81,
+    SDL_SCANCODE_UP = 82,
+
+    SDL_SCANCODE_KP_DIVIDE = 84,
+    SDL_SCANCODE_KP_MULTIPLY = 85,
+    SDL_SCANCODE_KP_MINUS = 86,
+    SDL_SCANCODE_KP_PLUS = 87,
+    SDL_SCANCODE_KP_ENTER = 88,
+    SDL_SCANCODE_KP_1 = 89,
+    SDL_SCANCODE_KP_2 = 90,
+    SDL_SCANCODE_KP_3 = 91,
+    SDL_SCANCODE_KP_4 = 92,
+    SDL_SCANCODE_KP_5 = 93,
+    SDL_SCANCODE_KP_6 = 94,
+    SDL_SCANCODE_KP_7 = 95,
+    SDL_SCANCODE_KP_8 = 96,
+    SDL_SCANCODE_KP_9 = 97,
+    SDL_SCANCODE_KP_0 = 98,
+    SDL_SCANCODE_KP_PERIOD = 99,
+#endif
 #undef BIND1
 
     ta_log_write(tg_debug_log, "[Game] Game initialized\n");
@@ -101,6 +246,9 @@ void ta_game_state_set(ta_game_state state)
                 tg_game.camera_freecam->position = tg_game.camera_freecam->follow_target;
             }
             tg_game.camera = tg_game.camera_freecam;
+            break;
+        case TA_GAME_STATE_TEXT_ENTRY:
+            // TODO: Some sort of global text entry buffer?
             break;
     }
 }
@@ -247,11 +395,11 @@ void ta_game_events()
 #if 0
                 // TODO: Should audio source subscribe to this event somehow,
                 //       or should the button queue the play request itself?
-                ta_button *button =
+                e_button *button =
                     ta_scene_find(tg_game.scene, TA_BUTTON, event.data.button.button_uid);
-                ta_audio_buffer *buffer = ta_button_sfx_activated(button);
+                ta_audio_buffer *buffer = e_button_sfx_activated(button);
                 if (buffer) {
-                    ta_audio_source *source = ta_button_audio_source(button);
+                    ta_audio_source *source = e_button_audio_source(button);
                     ta_audio_source_set_buffer(source, buffer);
                     ta_audio_source_play(source);
                 }

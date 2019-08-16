@@ -6,10 +6,11 @@ typedef enum ta_event_queue_type {
     TA_EVENT_QUEUE_WINDOW,
     TA_EVENT_QUEUE_GAME,
     TA_EVENT_QUEUE_CAMERA,
+    TA_EVENT_QUEUE_TEXT_ENTRY,
     TA_EVENT_QUEUE_COUNT
 } ta_event_queue_type;
 
-#define TA_EVENT_TYPE_BITS 7
+#define TA_EVENT_TYPE_BITS TA_EVENT_QUEUE_COUNT
 #define TA_EVENT_TYPE_FIRST(queue) ((queue) << TA_EVENT_TYPE_BITS)
 #define TA_EVENT_TYPE_QUEUE(type) ((type) >> TA_EVENT_TYPE_BITS)
 
@@ -62,6 +63,9 @@ typedef enum ta_event_type {
     TA_EVENT_CAMERA_MOVE_UP,
     TA_EVENT_CAMERA_MOVE_DOWN,
     TA_EVENT_CAMERA_ROTATE,
+
+    // Text entry events
+    TA_EVENT_TEXT_ENTRY_KEYDOWN = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_TEXT_ENTRY),
 } ta_event_type;
 
 typedef struct ta_event_window_resize_event {

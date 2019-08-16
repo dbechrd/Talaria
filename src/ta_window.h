@@ -52,3 +52,4 @@ void ta_window_init(int w, int h, bool fullscreen);
 void ta_window_free();
 void ta_window_swap();
 void ta_window_events();
+int ta_window_msgbox(u32 flags, const char *title, const char *message);

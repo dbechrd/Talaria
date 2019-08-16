@@ -87,9 +87,91 @@ static void event_sdl_poll()
                 event.data.mouse_scroll.flipped = (u8)sdl_event.wheel.direction;
                 ta_event_push(&event);
                 break;
-            } case SDL_TEXTEDITING: {
+            } case SDL_KEYDOWN: {
+                if (tg_game.text_entry.entry) {
+                    switch (sdl_event.key.keysym.scancode) {
+#if 0
+                        // NOTE: This doesn't work because it gets double processed
+                        //       and the entire application exits.
+                        case SDL_SCANCODE_ESCAPE: {
+                            ta_game_state_set(tg_game.text_entry.entry->prev_state);
+                            tg_game.text_entry.entry = 0;
+                            tg_game.text_entry.filter = 0;
+                            break;
+                        }
+#endif
+                        case SDL_SCANCODE_BACKSPACE: {
+                            if (dlb_vec_len(tg_game.text_entry.entry->lbuffer)) {
+                                dlb_vec_popz(tg_game.text_entry.entry->lbuffer);
+                                tg_game.text_entry.entry->cursor--;
+                                tg_game.text_entry.entry->dirty = true;
+                            }
+                            break;
+                        } case SDL_SCANCODE_DELETE: {
+                            if (dlb_vec_len(tg_game.text_entry.entry->rbuffer)) {
+                                dlb_vec_popz(tg_game.text_entry.entry->rbuffer);
+                                tg_game.text_entry.entry->dirty = true;
+                            }
+                            break;
+                        } case SDL_SCANCODE_RIGHT: {
+                            u32 len = dlb_vec_len(tg_game.text_entry.entry->lbuffer) +
+                                      dlb_vec_len(tg_game.text_entry.entry->rbuffer);
+                            if (tg_game.text_entry.entry->cursor < len) {
+                                DLB_ASSERT(dlb_vec_len(tg_game.text_entry.entry->rbuffer));
+                                char *c = dlb_vec_last(tg_game.text_entry.entry->rbuffer);
+                                dlb_vec_push(tg_game.text_entry.entry->lbuffer, *c);
+                                dlb_vec_popz(tg_game.text_entry.entry->rbuffer);
+                                tg_game.text_entry.entry->cursor++;
+                            }
+                            break;
+                        } case SDL_SCANCODE_LEFT: {
+                            if (tg_game.text_entry.entry->cursor) {
+                                DLB_ASSERT(dlb_vec_len(tg_game.text_entry.entry->lbuffer));
+                                char *c = dlb_vec_last(tg_game.text_entry.entry->lbuffer);
+                                dlb_vec_push(tg_game.text_entry.entry->rbuffer, *c);
+                                dlb_vec_popz(tg_game.text_entry.entry->lbuffer);
+                                tg_game.text_entry.entry->cursor--;
+                            }
+                            break;
+#if 0
+                        } case SDL_SCANCODE_DOWN: {
+                            break;
+                        } case SDL_SCANCODE_UP: {
+                            break;
+#endif
+                        }
+#if 0
+                        case SDL_SCANCODE_PAGEUP: {
+                            SDL_StartTextInput();
+                            break;
+                        } case SDL_SCANCODE_PAGEDOWN: {
+                            SDL_StopTextInput();
+                            break;
+                        }
+#endif
+                    }
+                }
                 break;
             } case SDL_TEXTINPUT: {
+                if (tg_game.text_entry.entry) {
+                    char *c = sdl_event.text.text;
+
+                    if (tg_game.text_entry.filter(*c)) {
+                        dlb_vec_push(tg_game.text_entry.entry->lbuffer, *c);
+                        tg_game.text_entry.entry->cursor++;
+                        tg_game.text_entry.entry->dirty = true;
+                    }
+#if 0
+                    while (*c) {
+                        // TODO: Accept all valid chars, maybe pointer to filter
+                        //       function provided by textbox?
+                        if (tg_game.text_entry.filter(*c)) {
+                            dlb_vec_push(*tg_game.text_entry.buffer, *c);
+                        }
+                        c++;
+                    }
+#endif
+                }
                 break;
             }
         }

@@ -33,13 +33,28 @@
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
-    ta_log_write(tg_debug_log,
-        "\n---[DLB_ASSERT_HANDLER]---------------------------------------------------------\n"
+    if (tg_debug_log) {
+        ta_log_write(tg_debug_log,
+            "\n---[DLB_ASSERT_HANDLER]-----------------\n"
+            "Source file: %s:%d\n\n"
+            "%s\n"
+            "----------------------------------------\n",
+            filename, line, expr
+        );
+    }
+#if _DEBUG
+    __debugbreak();
+#else
+    char buf[8192] = { 0 };
+    snprintf(buf, sizeof(buf),
+        "\n---[DLB_ASSERT_HANDLER]-----------------\n"
         "Source file: %s:%d\n\n"
         "%s\n"
-        "--------------------------------------------------------------------------------\n",
-		filename, line, expr);
-    UNUSED(getchar());
+        "----------------------------------------\n",
+        filename, line, expr
+    );
+    ta_window_msgbox(SDL_MESSAGEBOX_ERROR, "ASSERT", buf);
+#endif
     exit(-1);
 }
 dlb_assert_handler_def *dlb_assert_handler = handle_assert;
@@ -74,9 +89,9 @@ int main(int argc, char *argv[])
     ta_timer_init();
 	srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
-    ta_log debug_log;
-	tg_debug_log = &debug_log;
-    ta_log_init(tg_debug_log, "log.txt", true);
+    ta_log debug_log = { 0 };
+    ta_log_init(&debug_log, "log.txt", true);
+    tg_debug_log = &debug_log;
     debug_tests();
 
     ta_symbol_init();
@@ -89,6 +104,7 @@ int main(int argc, char *argv[])
     tg_game.audio = dlb_calloc(1, sizeof(ta_audio_listener));
     ta_audio_listener_init(tg_game.audio);
     //ta_audio_listener_mute(tg_game.audio);
+    ta_audio_listener_set_volume(tg_game.audio, 0.5f);
     ta_mouse_init();
     ta_keyboard_init();
     ta_render_init();
@@ -133,6 +149,8 @@ int main(int argc, char *argv[])
     DLB_ASSERT(tg_game.tex_orange && tg_game.tex_orange->gl_id);
     tg_game.tex_red = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_metallic"));
     DLB_ASSERT(tg_game.tex_red && tg_game.tex_red->gl_id);
+    tg_game.tex_audio_icon = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_audio_icon"));
+    DLB_ASSERT(tg_game.tex_audio_icon && tg_game.tex_audio_icon->gl_id);
 
     ////////////////////////////////////////////////////////////////////////////
     // Shaders

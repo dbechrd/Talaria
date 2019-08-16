@@ -123,3 +123,8 @@ void ta_window_events()
         }
     }
 }
+
+int ta_window_msgbox(u32 flags, const char *title, const char *message)
+{
+    return SDL_ShowSimpleMessageBox(flags, title, message, window);
+}

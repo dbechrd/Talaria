@@ -14,9 +14,9 @@ enum {
 typedef struct ta_mouse {
     int x;
     int y;
-    ta_key_state left;
-    ta_key_state middle;
-    ta_key_state right;
+    ta_button_state left;
+    ta_button_state middle;
+    ta_button_state right;
     bool captured;
 } ta_mouse;
 

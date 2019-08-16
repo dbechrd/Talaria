@@ -97,12 +97,12 @@ ta_rigid_body *ta_node_rigid_body(ta_node *node)
     return rigid_body;
 }
 
-ta_button *ta_node_button(ta_node *node)
+e_button *ta_node_button(ta_node *node)
 {
 	if (!node->button_uid) return 0;
 
 	// NOTE: This could cache in node->button if we want to save the hash lookup
-	ta_button *button = ta_scene_find(node->uid.scene, TA_BUTTON, node->button_uid);
+	e_button *button = ta_scene_find(node->uid.scene, TA_BUTTON, node->button_uid);
 	return button;
 }
 
@@ -129,7 +129,7 @@ void ta_node_update(ta_node *node)
         node->transform.position = body->position;
         node->transform.orientation = body->orientation;
     }
-    if (node->button_uid) ta_button_update(node);
+    if (node->button_uid) e_button_update(node);
 }
 
 static void ta_node_push_aabb(ta_node *node, ta_rgba color)

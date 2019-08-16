@@ -321,13 +321,13 @@ void ta_schema_register()
     TYPE_FIELD(ta_node, receive_shadows, ATOM_BOOL);
     TYPE_END(ta_node);
 
-    TYPE_START(ta_button, TA_BUTTON);
-	TYPE_FIELD(ta_button, uid,                 ATOM_STRING);
-	TYPE_FIELD(ta_button, audio_source_uid,    ATOM_STRING);
-    TYPE_FIELD(ta_button, sfx_activated_uid,   ATOM_STRING);
-    TYPE_FIELD(ta_button, sfx_active_uid,      ATOM_STRING);
-    TYPE_FIELD(ta_button, sfx_deactivated_uid, ATOM_STRING);
-    TYPE_END(ta_button);
+    TYPE_START(e_button, TA_BUTTON);
+	TYPE_FIELD(e_button, uid,                 ATOM_STRING);
+	TYPE_FIELD(e_button, audio_source_uid,    ATOM_STRING);
+    TYPE_FIELD(e_button, sfx_activated_uid,   ATOM_STRING);
+    TYPE_FIELD(e_button, sfx_active_uid,      ATOM_STRING);
+    TYPE_FIELD(e_button, sfx_deactivated_uid, ATOM_STRING);
+    TYPE_END(e_button);
 
     TYPE_START(ta_plane, TA_PLANE);
     TYPE_FIELD(ta_plane, center, TA_VEC3);

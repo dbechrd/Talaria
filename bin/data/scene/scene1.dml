@@ -83,6 +83,11 @@ ta_texture:
   path: "data/texture/genesis_metallic.png"
   linear: true
   channels: 1
+ta_texture:
+  uid: "tex_audio_icon"
+  path: "data/texture/audio_icon.png"
+  linear: true
+  channels: 4
 
 #-------------------------------------------------------------------------------
 # Materials
@@ -233,7 +238,7 @@ ta_rigid_body:
     type: 1  # TA_COLLIDER_SPHERE
       sphere:
         radius: 0.7
-ta_button:
+e_button:
   uid: "button_0001"
   audio_source_uid: "src_button_0001"
   sfx_activated_uid: "sfx_button_activated"

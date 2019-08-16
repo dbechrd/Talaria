@@ -13,17 +13,6 @@
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "misc/stb_truetype.h"
 
-enum font_layers {
-    LAYER_SHADOW,
-    LAYER_TEXT,
-    LAYER_COUNT
-};
-
-static const ta_rgba *colors[LAYER_COUNT] = {
-    [LAYER_SHADOW] = &TA_COLOR_BLACK,
-    [LAYER_TEXT]   = &TA_COLOR_WHITE,
-};
-
 void ta_font_init(ta_font *font)
 {
     if (!font->pixel_height) {
@@ -179,86 +168,73 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
     const float shadow_offset_x = 1.0f;
     const float shadow_offset_y = 1.0f;
     const float layer_dir = (screen) ? 1.0f : -1.0f;
-    float layer_offset = 0.0f;
+    float layer_offset = z * layer_dir;
 
-    for (int layer = 0; layer < LAYER_COUNT; layer++) {
-        // TODO: Try SDFs instead for shadowing. This anti-aliased shadowing
-        //       doesn't look right.
-        if (layer == LAYER_SHADOW) continue;
 
-        float cur_x = rect.x;
-        float cur_y = rect.y + font->ascent;
-        float ndc_x = NDC_X(rect.x);
-        float ndc_y = NDC_Y(rect.y);
+    float cur_x = rect.x;
+    float cur_y = rect.y + font->ascent;
+    float ndc_x = NDC_X(rect.x);
+    float ndc_y = NDC_Y(rect.y);
 
-        switch (layer) {
-            case LAYER_SHADOW: {
-                cur_x += shadow_offset_x;
-                cur_y += shadow_offset_y;
-                layer_offset = (z - (UI_LAYER_EPSILON / 2.0f)) * layer_dir;
-                break;
-            } case LAYER_TEXT: {
-                layer_offset = z * layer_dir;
-                break;
-            }
+    // Loop until i == text_len or, if text_len is 0, we hit a nil character
+    for (u32 i = 0; ((text_len) ? i < text_len : text[i]); i++) {
+        // Save cursor position
+        if (i == cursor_idx && cursor_x) {
+            *cursor_x = cur_x;
         }
 
-        // Loop until i == text_len or, if text_len is 0, we hit a nil character
-        for (u32 i = 0; ((text_len) ? i < text_len : text[i]); i++) {
-            // Save cursor position
-            if (i == cursor_idx && cursor_x) {
-                *cursor_x = cur_x;
+        if (text[i] == '\n') {
+            //DLB_ASSERT(y_max <= font->pixel_height);
+            cur_x = rect.x;
+            cur_y += font->line_height;
+            rect.h += font->line_height;
+        } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
+            ta_rect_uv rect_uv = { 0 };
+            ta_baked_quad(font->chars, font->tex_w, font->tex_h,
+                text[i] - 32, &cur_x, &cur_y, &rect_uv);
+
+            // HACK: Flip world text upside down.. this is super gross,
+            //       surely there's a better way?
+            if (!screen) {
+                rect_uv.rect.y = font->line_height - (rect_uv.rect.y + rect_uv.rect.h);
+                float v = rect_uv.uv0.v;
+                rect_uv.uv0.v = rect_uv.uv1.v;
+                rect_uv.uv1.v = v;
             }
 
-            if (text[i] == '\n') {
-                //DLB_ASSERT(y_max <= font->pixel_height);
-                cur_x = rect.x;
-                cur_y += font->line_height;
-                rect.h += font->line_height;
-            } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
-                ta_rect_uv rect_uv = { 0 };
-                ta_baked_quad(font->chars, font->tex_w, font->tex_h,
-                    text[i] - 32, &cur_x, &cur_y, &rect_uv);
-
-                // HACK: Flip world text upside down.. this is super gross,
-                //       surely there's a better way?
-                if (!screen) {
-                    rect_uv.rect.y = font->line_height - (rect_uv.rect.y + rect_uv.rect.h);
-                    float v = rect_uv.uv0.v;
-                    rect_uv.uv0.v = rect_uv.uv1.v;
-                    rect_uv.uv1.v = v;
-                }
-
 #if 1
-                // HACK: Cull characters that would be cut off by edge of screen
-                //       to prevent weird wrapping glitches in screen mode.
-                float ndc_x0 = NDC_X(rect_uv.rect.x);
-                float ndc_x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
-                float ndc_y0 = NDC_Y(rect_uv.rect.y);
-                float ndc_y1 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
+            // HACK: Cull characters that would be cut off by edge of screen
+            //       to prevent weird wrapping glitches in screen mode.
+            float ndc_x0 = NDC_X(rect_uv.rect.x);
+            float ndc_x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
+            float ndc_y0 = NDC_Y(rect_uv.rect.y);
+            float ndc_y1 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
 #endif
 
 #if 0
-                if (!screen || text[i] == ' ' || (
-                    ndc_x0 >= ndc_x && ndc_x1 > ndc_x &&
-                    ndc_y0 <= ndc_y && ndc_y1 < ndc_y
-                )) {
-                    ta_primitive_push_rect_uv(queue, rect_uv, *colors[layer],
-                        layer_offset, screen);
-                } else {
-                    DLB_ASSERT(1);
-                }
-#else
+            if (!screen || text[i] == ' ' || (
+                ndc_x0 >= ndc_x && ndc_x1 > ndc_x &&
+                ndc_y0 <= ndc_y && ndc_y1 < ndc_y
+            )) {
                 ta_primitive_push_rect_uv(queue, rect_uv, *colors[layer],
                     layer_offset, screen);
+            } else {
+                DLB_ASSERT(1);
+            }
+#else
+            ta_primitive_push_rect_uv(queue, rect_uv, TA_COLOR_WHITE,
+                layer_offset, screen);
 #endif
 
-                rect.w = MAX(rect.w, cur_x - rect.x);
-            }
+            rect.w = MAX(rect.w, cur_x - rect.x);
         }
-
-        rect.h += font->line_height;
     }
+
+    if (cursor_x && !*cursor_x) {
+        *cursor_x = cur_x;
+    }
+
+    rect.h += font->line_height;
 
     return rect;
 }

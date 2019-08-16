@@ -27,21 +27,21 @@ typedef struct ta_file {
 } ta_file;
 
 #define PANIC(format, ...) { \
-    fprintf(stderr, "\n---[PANIC]----------------------------------------------------------------------\n" \
+    fprintf(stderr, "\n---[PANIC]------------------------------\n" \
         "Source file: %s:%d\n\n", __FILE__, __LINE__); \
     fprintf(stderr, (format), __VA_ARGS__); \
-    fprintf(stderr, "\n--------------------------------------------------------------------------------\n"); \
-	DLB_ASSERT(0); \
+    fprintf(stderr, "\n----------------------------------------\n"); \
+	DLB_ASSERT(!"PANIC at the disco"); \
     getchar(); \
     exit(1); }
 
 #define PANIC_FILE(f, format, ...) { \
-    fprintf(stderr, "\n---[PANIC_FILE]-----------------------------------------------------------------\n" \
+    fprintf(stderr, "\n---[PANIC_FILE]-------------------------\n" \
         "Source file: %s:%d\n", __FILE__, __LINE__); \
     ta_file_debug_context(f); \
     fprintf(stderr, (format), __VA_ARGS__); \
-    fprintf(stderr, "\n--------------------------------------------------------------------------------\n"); \
-	DLB_ASSERT(0); \
+    fprintf(stderr, "\n----------------------------------------\n"); \
+	DLB_ASSERT(!"PANIC at the disco"); \
 	getchar(); \
     exit(1); }
 

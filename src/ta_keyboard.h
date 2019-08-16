@@ -15,12 +15,12 @@ typedef struct ta_keybind {
     ta_event_type event_type;
     u32 triggers;
     ta_key keys[3];
-    ta_key_state key_state;
+    ta_button_state key_state;
 } ta_keybind;
 
 #if 0
 typedef struct ta_keyboard {
-    ta_key_state key_states[SDL_NUM_SCANCODES];
+    ta_button_state key_states[SDL_NUM_SCANCODES];
     ta_keybind *keybinds[TA_GAME_STATE_COUNT];
 } ta_keyboard;
 
