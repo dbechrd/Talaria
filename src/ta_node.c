@@ -99,11 +99,11 @@ ta_rigid_body *ta_node_rigid_body(ta_node *node)
 
 e_button *ta_node_button(ta_node *node)
 {
-	if (!node->button_uid) return 0;
+    if (!node->button_uid) return 0;
 
-	// NOTE: This could cache in node->button if we want to save the hash lookup
-	e_button *button = ta_scene_find(node->uid.scene, TYP_BUTTON, node->button_uid);
-	return button;
+    // NOTE: This could cache in node->button if we want to save the hash lookup
+    e_button *button = ta_scene_find(node->uid.scene, TYP_BUTTON, node->button_uid);
+    return button;
 }
 
 #if 0

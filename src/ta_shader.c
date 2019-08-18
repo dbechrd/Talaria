@@ -82,7 +82,7 @@ static GLuint ta_shader_compile_file(GLenum type, const char *filename)
         ta_log_write(tg_debug_log, "Failed to compile shader '%s'\n", filename);
     }
 
-	ta_buffer_free(buf);
+    ta_buffer_free(buf);
     return shader;
 }
 

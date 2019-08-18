@@ -31,7 +31,7 @@ typedef struct ta_file {
         "Source file: %s:%d\n\n", __FILE__, __LINE__); \
     fprintf(stderr, (format), __VA_ARGS__); \
     fprintf(stderr, "\n----------------------------------------\n"); \
-	DLB_ASSERT(!"PANIC at the disco"); \
+    DLB_ASSERT(!"PANIC at the disco"); \
     getchar(); \
     exit(1); }
 
@@ -41,8 +41,8 @@ typedef struct ta_file {
     ta_file_debug_context(f); \
     fprintf(stderr, (format), __VA_ARGS__); \
     fprintf(stderr, "\n----------------------------------------\n"); \
-	DLB_ASSERT(!"PANIC at the disco"); \
-	getchar(); \
+    DLB_ASSERT(!"PANIC at the disco"); \
+    getchar(); \
     exit(1); }
 
 ta_file *ta_file_open(const char *filename, ta_file_mode mode);

@@ -8,10 +8,10 @@ typedef struct ta_texture {
     const char *path;  // File path
     u8 *pixels;        // Pixel data (if inlined instead of via path)
     int width;         // Size of texture (pixels)
-	int height;
-	int channels;      // Number of color channels (1, 2, 4)
+    int height;
+    int channels;      // Number of color channels (1, 2, 4)
     bool linear;       // True if linear color space. E.g. metallic, etc.
-	GLuint gl_id;
+    GLuint gl_id;
 } ta_texture;
 
 void ta_texture_init(ta_texture *tex);

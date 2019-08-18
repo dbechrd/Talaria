@@ -26,21 +26,21 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
     switch(type) {
         case TYP_NULL:               return "TYP_NULL";
 
-		// Scene-level compound types
-		case TYP_CAMERA:				return "TYP_CAMERA";
-		case TYP_LIGHT:              return "TYP_LIGHT";
-		case TYP_MATERIAL:           return "TYP_MATERIAL";
-		case TYP_MESH_GROUP:         return "TYP_MESH_GROUP";
-		case TYP_SHADER:             return "TYP_SHADER";
-		case TYP_TEXTURE:            return "TYP_TEXTURE";
-		case TYP_NODE:				return "TYP_NODE";
-		case TYP_AUDIO_BUFFER:       return "TYP_AUDIO_BUFFER";
-		case TYP_AUDIO_SOURCE:       return "TYP_AUDIO_SOURCE";
-		case TYP_RIGID_BODY:         return "TYP_RIGID_BODY";
-        case TYP_BUTTON:			    return "TYP_BUTTON";
-        case TYP_FONT:			    return "TYP_FONT";
+        // Scene-level compound types
+        case TYP_CAMERA:             return "TYP_CAMERA";
+        case TYP_LIGHT:              return "TYP_LIGHT";
+        case TYP_MATERIAL:           return "TYP_MATERIAL";
+        case TYP_MESH_GROUP:         return "TYP_MESH_GROUP";
+        case TYP_SHADER:             return "TYP_SHADER";
+        case TYP_TEXTURE:            return "TYP_TEXTURE";
+        case TYP_NODE:                 return "TYP_NODE";
+        case TYP_AUDIO_BUFFER:       return "TYP_AUDIO_BUFFER";
+        case TYP_AUDIO_SOURCE:       return "TYP_AUDIO_SOURCE";
+        case TYP_RIGID_BODY:         return "TYP_RIGID_BODY";
+        case TYP_BUTTON:             return "TYP_BUTTON";
+        case TYP_FONT:                 return "TYP_FONT";
 
-		// Other compound types
+        // Other compound types
         case TYP_VEC2:               return "TYP_VEC2";
         case TYP_VEC3:               return "TYP_VEC3";
         case TYP_VEC4:               return "TYP_VEC4";
@@ -322,8 +322,8 @@ void ta_schema_register()
     TYPE_END(ta_node);
 
     TYPE_START(e_button, TYP_BUTTON);
-	TYPE_FIELD(e_button, uid,                 ATOM_STRING);
-	TYPE_FIELD(e_button, audio_source_uid,    ATOM_STRING);
+    TYPE_FIELD(e_button, uid,                 ATOM_STRING);
+    TYPE_FIELD(e_button, audio_source_uid,    ATOM_STRING);
     TYPE_FIELD(e_button, sfx_activated_uid,   ATOM_STRING);
     TYPE_FIELD(e_button, sfx_active_uid,      ATOM_STRING);
     TYPE_FIELD(e_button, sfx_deactivated_uid, ATOM_STRING);
@@ -416,11 +416,11 @@ void ta_schema_print_atom(FILE *f, ta_schema_field *field, void *ptr)
 {
     fprintf(f, "%s: ", field->name);
     switch (field->type) {
-		case ATOM_BOOL: {
-			bool *val = ptr;
-			fprintf(f, "%s", *val ? "true" : "false");
-			break;
-		} case ATOM_INT: {
+        case ATOM_BOOL: {
+            bool *val = ptr;
+            fprintf(f, "%s", *val ? "true" : "false");
+            break;
+        } case ATOM_INT: {
             int *val = ptr;
             fprintf(f, "%d", *val);
             break;
@@ -519,7 +519,7 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
                     union_type = *(int *)(ptr + field->offset);
                 }
                 if (field->type == ATOM_ENUM && field->enum_converter) {
-					int enum_type = *(int *)(ptr + field->offset);
+                    int enum_type = *(int *)(ptr + field->offset);
                     const char *enum_str = field->enum_converter(enum_type);
                     fprintf(f, "  # %s", enum_str);
                 }

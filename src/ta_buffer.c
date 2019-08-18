@@ -9,5 +9,5 @@ void ta_buffer_init(ta_buffer *buffer, u32 len)
 }
 void ta_buffer_free(ta_buffer *buffer)
 {
-	dlb_free(buffer);
+    dlb_free(buffer);
 }

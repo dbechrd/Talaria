@@ -31,12 +31,12 @@ void ta_viewport_bind(ta_rect parent, ta_rect rect, ta_rgba background, bool rel
 
     // Set new state
     int inv_y = tg_window.rect.h - (rect.y + rect.h);
-	if (relative) {
-		glViewport(rect.x, inv_y, rect.w, rect.h);
-	}
-	glEnable(GL_SCISSOR_TEST);
-	glScissor(rect.x, inv_y, rect.w, rect.h);
-	glClearColor(background.r, background.g, background.b, background.a);
+    if (relative) {
+        glViewport(rect.x, inv_y, rect.w, rect.h);
+    }
+    glEnable(GL_SCISSOR_TEST);
+    glScissor(rect.x, inv_y, rect.w, rect.h);
+    glClearColor(background.r, background.g, background.b, background.a);
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glClear(GL_DEPTH_BUFFER_BIT);
 }
@@ -69,5 +69,5 @@ void ta_viewport_unbind()
         viewports[next].clear_color.b,
         viewports[next].clear_color.a
     );
-	glClear(GL_DEPTH_BUFFER_BIT);
+    glClear(GL_DEPTH_BUFFER_BIT);
 }

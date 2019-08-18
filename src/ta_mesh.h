@@ -24,8 +24,8 @@ typedef struct ta_mesh {
     ta_line_3d *face_normals;
     ta_aabb aabb;
 
-	GLuint vao;
-	GLuint buffers[TA_MESH_BUFFER_COUNT];
+    GLuint vao;
+    GLuint buffers[TA_MESH_BUFFER_COUNT];
 } ta_mesh;
 
 void ta_mesh_create(ta_mesh *mesh);

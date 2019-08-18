@@ -563,9 +563,9 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     if (!schema) {
                         PANIC("Unexpected type name '%s'\n", tok->value.string);
                     }
-					if (schema->type >= TYP_COUNT_POOLS) {
-						PANIC("Type '%s' is not a scene-level type; invalid pool ID.\n", tok->value.string);
-					}
+                    if (schema->type >= TYP_COUNT_POOLS) {
+                        PANIC("Type '%s' is not a scene-level type; invalid pool ID.\n", tok->value.string);
+                    }
                     DLB_ASSERT(schema->size);
                     DLB_ASSERT(schema->name == tok->value.string);
                     stack[sp].type = schema->type;
@@ -836,15 +836,15 @@ void ta_scene_save_file(ta_scene *scene, const char *filename)
 
 void ta_scene_free(ta_scene *scene)
 {
-	DLB_ASSERT(ARRAY_COUNT(scene->pools) == TYP_COUNT_POOLS);
+    DLB_ASSERT(ARRAY_COUNT(scene->pools) == TYP_COUNT_POOLS);
 
     for (int i = 0; i < TYP_COUNT_POOLS; i++) {
-		if (pool_infos[i].free) {
+        if (pool_infos[i].free) {
             u8 *end = dlb_vec_end_size(scene->pools[i], pool_infos[i].size);
-			for (u8 *ptr = scene->pools[i]; ptr != end; ptr += pool_infos[i].size) {
+            for (u8 *ptr = scene->pools[i]; ptr != end; ptr += pool_infos[i].size) {
                 pool_infos[i].free(ptr);
-			}
-		}
+            }
+        }
         dlb_vec_free(scene->pools[i]);
         dlb_hash_free(&scene->pooled_uids[i]);
     }
@@ -869,19 +869,19 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
 
 void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
 {
-	DLB_ASSERT(scene);
+    DLB_ASSERT(scene);
     DLB_ASSERT(type < TYP_COUNT_POOLS);
-	DLB_ASSERT(uid);
+    DLB_ASSERT(uid);
 
-	bool found = false;
+    bool found = false;
     dlb_hash *hash = &scene->pooled_uids[type];
-	size_t pool_idx = (size_t)dlb_hash_search(hash, SYM(uid), &found);
-	DLB_ASSERT(found);
+    size_t pool_idx = (size_t)dlb_hash_search(hash, SYM(uid), &found);
+    DLB_ASSERT(found);
     size_t pool_len = dlb_vec_len(scene->pools[type]);
-	DLB_ASSERT(pool_idx < pool_len);
+    DLB_ASSERT(pool_idx < pool_len);
 
     void *ptr = (u8 *)scene->pools[type] + (pool_idx * pool_infos[type].size);
-	return ptr;
+    return ptr;
 }
 
 static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
@@ -998,8 +998,8 @@ void ta_scene_update(ta_scene *scene, float dt)
 
 void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 {
-	glEnable(GL_CULL_FACE);
-	//glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);
+    //glCullFace(GL_FRONT);
     glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
 
     ta_shader_bind(shader);
@@ -1027,7 +1027,7 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
 {
     glViewport(0, 0, tg_window.rect.w, tg_window.rect.h);
     glCullFace(GL_BACK);
-	//glDisable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClearColor(0.9f, 0.9f, 0.9f, 1.0f);

@@ -25,12 +25,12 @@ ta_vert_quad *tooltip_fg_queue;
 
 static void ta_primitive_init_lines()
 {
-	glCreateVertexArrays(1, &lines_vao);
-	glCreateBuffers(1, &lines_buffer);
-	lines_buffer_size = 0;
+    glCreateVertexArrays(1, &lines_vao);
+    glCreateBuffers(1, &lines_buffer);
+    lines_buffer_size = 0;
 
-	glBindVertexArray(lines_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
+    glBindVertexArray(lines_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
 
     glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
     glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
@@ -40,17 +40,17 @@ static void ta_primitive_init_lines()
     glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 4, GL_FLOAT, GL_FALSE,
         sizeof(ta_shader_lines_vertex), (void *)sizeof(ta_vec3));
 
-	glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 static void ta_primitive_init_quads()
 {
-	glCreateVertexArrays(1, &quads_vao);
-	glCreateBuffers(1, &quads_buffer);
-	quads_buffer_size = 0;
+    glCreateVertexArrays(1, &quads_vao);
+    glCreateBuffers(1, &quads_buffer);
+    quads_buffer_size = 0;
 
-	glBindVertexArray(quads_vao);
-	glBindBuffer(GL_ARRAY_BUFFER, quads_buffer);
+    glBindVertexArray(quads_vao);
+    glBindBuffer(GL_ARRAY_BUFFER, quads_buffer);
 
     glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
     glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
@@ -64,32 +64,32 @@ static void ta_primitive_init_quads()
         sizeof(ta_shader_quads_vertex), (void *)(sizeof(ta_vec3) + sizeof(ta_rgba)));
 
     glBindVertexArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 void ta_primitive_init()
 {
-	ta_primitive_init_lines();
-	ta_primitive_init_quads();
+    ta_primitive_init_lines();
+    ta_primitive_init_quads();
 }
 
 static void ta_primitive_push_line(ta_vert_line *line)
 {
-	dlb_vec_push(lines_queue, *line);
+    dlb_vec_push(lines_queue, *line);
 }
 static void ta_primitive_line2d_to_line(ta_vert_line *line, ta_line_2d line2d,
-	ta_rgba color0, ta_rgba color1)
+    ta_rgba color0, ta_rgba color1)
 {
-	float x0 = NDC_X(line2d.p0.x);
-	float x1 = NDC_X(line2d.p1.x);
-	float y0 = NDC_Y(line2d.p0.y);
-	float y1 = NDC_Y(line2d.p1.y);
+    float x0 = NDC_X(line2d.p0.x);
+    float x1 = NDC_X(line2d.p1.x);
+    float y0 = NDC_Y(line2d.p0.y);
+    float y1 = NDC_Y(line2d.p1.y);
 
-	line->verts[0].position.x = x0;
-	line->verts[0].position.y = y0;
-	line->verts[0].color = color0;
-	line->verts[1].position.x = x1;
-	line->verts[1].position.y = y1;
-	line->verts[1].color = color1;
+    line->verts[0].position.x = x0;
+    line->verts[0].position.y = y0;
+    line->verts[0].color = color0;
+    line->verts[1].position.x = x1;
+    line->verts[1].position.y = y1;
+    line->verts[1].color = color1;
 }
 static void ta_primitive_line3d_to_line(ta_vert_line *line, ta_line_3d line3d,
     ta_rgba color0, ta_rgba color1)
@@ -143,11 +143,11 @@ void ta_primitive_line3d_to_quad(ta_vert_quad *quad, ta_line_3d line3d,
 }
 #endif
 void ta_primitive_push_line_2d(ta_line_2d line_2d, ta_rgba color0,
-	ta_rgba color1)
+    ta_rgba color1)
 {
-	ta_vert_line line = { 0 };
-	ta_primitive_line2d_to_line(&line, line_2d, color0, color1);
-	ta_primitive_push_line(&line);
+    ta_vert_line line = { 0 };
+    ta_primitive_line2d_to_line(&line, line_2d, color0, color1);
+    ta_primitive_push_line(&line);
 }
 void ta_primitive_push_line_3d(ta_line_3d line_3d, ta_rgba color0,
     ta_rgba color1)
@@ -305,23 +305,23 @@ void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color)
 
 void ta_primitive_push_crosshair(s32 length, s32 thickness)
 {
-	float ndc_x = (2.0f / tg_window.rect.w);
-	float ndc_y = (2.0f / tg_window.rect.h);
+    float ndc_x = (2.0f / tg_window.rect.w);
+    float ndc_y = (2.0f / tg_window.rect.h);
 
-	ta_rect x = { 0 };
-	x.x = tg_window.rect.w / 2 - length / 2;
-	x.y = tg_window.rect.h / 2 - thickness / 2;
-	x.w = length;
-	x.h = thickness;
+    ta_rect x = { 0 };
+    x.x = tg_window.rect.w / 2 - length / 2;
+    x.y = tg_window.rect.h / 2 - thickness / 2;
+    x.w = length;
+    x.h = thickness;
 
-	ta_rect y = { 0 };
-	y.x = tg_window.rect.w / 2 - thickness / 2;
-	y.y = tg_window.rect.h / 2 - length / 2;
-	y.w = thickness;
-	y.h = length;
+    ta_rect y = { 0 };
+    y.x = tg_window.rect.w / 2 - thickness / 2;
+    y.y = tg_window.rect.h / 2 - length / 2;
+    y.w = thickness;
+    y.h = length;
 
-	ta_primitive_push_rect(x, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
-	ta_primitive_push_rect(y, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
+    ta_primitive_push_rect(x, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
+    ta_primitive_push_rect(y, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
     ta_primitive_render(true, true);
 }
 
@@ -491,8 +491,8 @@ void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
 {
 
 
-	u32 queue_len = dlb_vec_len(lines_queue);
-	if (queue_len) {
+    u32 queue_len = dlb_vec_len(lines_queue);
+    if (queue_len) {
         GLboolean cull_face = 0;
         glGetBooleanv(GL_CULL_FACE, &cull_face);
         if (cull_face) glDisable(GL_CULL_FACE);
@@ -519,7 +519,7 @@ void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
         ta_shader_unbind(shader);
 
         if (cull_face) glEnable(GL_CULL_FACE);
-	}
+    }
 
     if (clear_queues) {
         dlb_vec_clear(lines_queue);
@@ -533,8 +533,8 @@ void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
 void ta_primitive_render_quads(ta_vert_quad *queue, ta_shader *shader,
     bool clear_queue, bool reset_uniforms)
 {
-	u32 queue_len = dlb_vec_len(queue);
-	if (queue_len) {
+    u32 queue_len = dlb_vec_len(queue);
+    if (queue_len) {
         GLboolean cull_face = 0;
         glGetBooleanv(GL_CULL_FACE, &cull_face);
         if (cull_face) glDisable(GL_CULL_FACE);
@@ -548,10 +548,10 @@ void ta_primitive_render_quads(ta_vert_quad *queue, ta_shader *shader,
         // Update buffer (resize if necessary)
         int queue_size = dlb_vec_size(queue);
         if (queue_size > quads_buffer_size) {
-	        glNamedBufferData(quads_buffer, queue_size, queue, GL_DYNAMIC_DRAW);
-	        quads_buffer_size = queue_size;
+            glNamedBufferData(quads_buffer, queue_size, queue, GL_DYNAMIC_DRAW);
+            quads_buffer_size = queue_size;
         } else {
-	        glNamedBufferSubData(quads_buffer, 0, queue_size, queue);
+            glNamedBufferSubData(quads_buffer, 0, queue_size, queue);
         }
 
         // Draw quads
@@ -562,7 +562,7 @@ void ta_primitive_render_quads(ta_vert_quad *queue, ta_shader *shader,
         ta_shader_unbind(shader);
 
         if (cull_face) glEnable(GL_CULL_FACE);
-	}
+    }
 
     if (clear_queue) {
         dlb_vec_clear(queue);

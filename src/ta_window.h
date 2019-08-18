@@ -42,7 +42,7 @@
 #define UI_LAYER_TIP        -0.0008f
 
 typedef struct ta_window {
-	ta_rect rect;
+    ta_rect rect;
     float aspect;
 } ta_window;
 

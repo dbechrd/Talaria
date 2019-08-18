@@ -8,7 +8,7 @@
 typedef struct ta_node {
     ta_uid uid;
 
-	ta_transform transform;
+    ta_transform transform;
     ta_transform transform_prev;
     ta_mat4 model;
 
@@ -16,7 +16,7 @@ typedef struct ta_node {
     const char *mesh_group_uid;
     const char *rigid_body_uid;
 
-	// Entity types
+    // Entity types
     const char *button_uid;
 
     ta_aabb aabb;  // AABB in local space

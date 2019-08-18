@@ -87,8 +87,8 @@ typedef struct ta_rgba {
 } ta_rgba;
 
 typedef struct ta_vec2i {
-	int x;
-	int y;
+    int x;
+    int y;
 } ta_vec2i;
 
 typedef struct ta_size {

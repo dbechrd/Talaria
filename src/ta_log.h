@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 typedef struct ta_log {
-	const char *filename;
+    const char *filename;
     FILE *stream;
     bool flush;
 } ta_log;

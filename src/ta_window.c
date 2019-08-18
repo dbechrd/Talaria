@@ -39,9 +39,9 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
     sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 4);
     //sdl_gl_attrib(SDL_GL_MULTISAMPLEBUFFERS, 1);
     //sdl_gl_attrib(SDL_GL_ACCELERATED_VISUAL, 1);
-	int context_flags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+    int context_flags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
 #if _DEBUG
-	context_flags |= SDL_GL_CONTEXT_DEBUG_FLAG;
+    context_flags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 #endif
     sdl_gl_attrib(SDL_GL_CONTEXT_FLAGS, context_flags);
     sdl_gl_attrib(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -52,17 +52,17 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
     ta_log_write(tg_debug_log, "[Window] SDL_CreateWindow...\n");
     u32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
     if (fullscreen) {
-		window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED, 0, 0, flags | SDL_WINDOW_FULLSCREEN_DESKTOP);
-	} else if (w && h) {
-		window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
-			SDL_WINDOWPOS_CENTERED, *w, *h, flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
-	}
+        window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
+            SDL_WINDOWPOS_CENTERED, 0, 0, flags | SDL_WINDOW_FULLSCREEN_DESKTOP);
+    } else if (w && h) {
+        window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
+            SDL_WINDOWPOS_CENTERED, *w, *h, flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
+    }
     if (window == NULL) {
         ta_log_write(tg_debug_log, "[Window] SDL_CreateWindow error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_CreateWindow failed");
     }
-	ta_log_write(tg_debug_log, "[Window] Success\n");
+    ta_log_write(tg_debug_log, "[Window] Success\n");
 
     // Create GL context
     ta_log_write(tg_debug_log, "[Window] SDL_GL_CreateContext...\n");
@@ -79,7 +79,7 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
     }
 
     // Log default VSync state
-	//SDL_GL_SetSwapInterval(0);
+    //SDL_GL_SetSwapInterval(0);
     int swap = SDL_GL_GetSwapInterval();
     ta_log_write(tg_debug_log, "[Window] vsync: %s\n", (swap) ? "enabled" : "disabled");
 }
@@ -88,7 +88,7 @@ void ta_window_init(int w, int h, bool fullscreen)
 {
     ta_log_write(tg_debug_log, "[Window] Initializing window\n");
     tg_window.rect.w = w;
-	tg_window.rect.h = h;
+    tg_window.rect.h = h;
     ta_init_sdl(&tg_window.rect.w, &tg_window.rect.h, fullscreen);
     DLB_ASSERT(fullscreen || (tg_window.rect.w == w && tg_window.rect.h == h));
     tg_window.aspect = (float)tg_window.rect.w / tg_window.rect.h;

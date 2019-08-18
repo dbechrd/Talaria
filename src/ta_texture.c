@@ -134,7 +134,7 @@ void ta_texture_free(ta_texture *tex)
 
     // TODO(perf): Delete all scene textures in a single GL call by aggregating
     //             gl_ids during texture initialization.
-	//glDeleteTextures(dlb_vec_len(gl_ids[queue]), gl_ids[queue]);
-	//dlb_vec_clear(tex[queue]);
-	//dlb_vec_clear(gl_ids[queue]);
+    //glDeleteTextures(dlb_vec_len(gl_ids[queue]), gl_ids[queue]);
+    //dlb_vec_clear(tex[queue]);
+    //dlb_vec_clear(gl_ids[queue]);
 }
