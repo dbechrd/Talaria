@@ -2,7 +2,7 @@
 #include "ta_window.h"
 #include "ta_node.h"
 #include "ta_symbol.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 
 #define DEFAULT_LIGHT_INTENSITY         1.0f

@@ -3,7 +3,7 @@
 #include "ta_timer.h"
 #include "ta_log.h"
 #include "ta_game.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
 static u8 keys[TA_SCANCODE_COUNT];

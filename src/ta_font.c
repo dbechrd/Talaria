@@ -7,7 +7,7 @@
 #include "ta_log.h"
 #include "ta_symbol.h"
 #include "ta_window.h"
-#include "dlb_memory.h"
+#include "dlb/dlb_memory.h"
 #include "misc/gl3w.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION

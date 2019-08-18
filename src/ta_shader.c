@@ -3,8 +3,8 @@
 #include "ta_file.h"
 #include "ta_symbol.h"
 #include "ta_light.h"
-#include "dlb_memory.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_memory.h"
+#include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 
 ta_shader *tg_shader_lines;

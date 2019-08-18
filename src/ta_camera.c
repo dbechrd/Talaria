@@ -3,7 +3,7 @@
 #include "ta_event.h"
 #include "ta_window.h"
 #include "ta_game.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 #include <math.h>
 

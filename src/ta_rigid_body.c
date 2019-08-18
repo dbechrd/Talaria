@@ -2,7 +2,7 @@
 #include "ta_node.h"
 #include "ta_log.h"
 #include "ta_primitive.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_vector.h"
 #include <math.h>
 
 #define GRAVITY -9.81f

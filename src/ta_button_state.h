@@ -1,5 +1,5 @@
 #pragma once
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 
 typedef struct ta_button_state {
     bool down;              // button is currently down

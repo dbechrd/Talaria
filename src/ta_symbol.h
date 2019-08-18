@@ -1,6 +1,6 @@
 #pragma once
-#include "dlb_types.h"
-#include "dlb_memory.h"
+#include "dlb/dlb_types.h"
+#include "dlb/dlb_memory.h"
 
 #define dlb_symbol__hdr(s) ((dlb_symbol__hdr *)((char *)s - sizeof(dlb_symbol__hdr)))
 

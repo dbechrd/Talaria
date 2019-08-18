@@ -1,5 +1,5 @@
 #pragma once
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 #include <stdio.h>
 
 typedef enum ta_schema_field_type {

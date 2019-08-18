@@ -1,8 +1,8 @@
 #include "ta_texture.h"
 #include "ta_log.h"
-#include "dlb_types.h"
-#include "dlb_memory.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_types.h"
+#include "dlb/dlb_memory.h"
+#include "dlb/dlb_vector.h"
 
 #define STBI_ASSERT(x) DLB_ASSERT(x)
 #define STBI_MALLOC dlb_malloc

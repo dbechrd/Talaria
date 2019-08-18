@@ -1,7 +1,7 @@
 #pragma once
 #include "ta_math.h"
 #include "ta_collider.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 
 typedef struct ta_line_2d {
     ta_vec2 p0;

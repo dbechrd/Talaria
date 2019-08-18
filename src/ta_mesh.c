@@ -4,7 +4,7 @@
 #include "ta_shader.h"
 #include "ta_symbol.h"
 #include "ta_game.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_vector.h"
 
 void ta_mesh_create(ta_mesh *mesh)
 {

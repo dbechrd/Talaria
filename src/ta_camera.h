@@ -1,7 +1,7 @@
 #pragma once
 #include "ta_uid.h"
 #include "ta_math.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 
 typedef struct ta_camera {
     ta_uid uid;

@@ -1,7 +1,7 @@
 #pragma once
 #include "ta_uid.h"
 #include "ta_primitive.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 #include "misc/stb_truetype.h"
 #include "misc/gl3w.h"
 

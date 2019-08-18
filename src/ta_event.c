@@ -3,7 +3,7 @@
 #include "ta_log.h"
 #include "ta_mouse.h"
 #include "ta_game.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
 void ta_event_push(ta_event *event)

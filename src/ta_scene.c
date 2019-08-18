@@ -15,7 +15,7 @@
 #include "ta_game.h"
 #include "ta_window.h"
 #include "ta_file.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_vector.h"
 #include <stdlib.h>
 #include <float.h>
 

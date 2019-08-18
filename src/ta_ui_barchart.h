@@ -1,7 +1,7 @@
 #pragma once
 #include "ta_math.h"
 #include "ta_primitive.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 
 typedef struct ta_ui_barchart {
 	ta_rect rect;

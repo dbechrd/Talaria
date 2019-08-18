@@ -1,5 +1,5 @@
 #pragma once
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 #include "ta_button_state.h"
 
 #define TA_SDL_NUM_SCANCODES 512

@@ -7,7 +7,7 @@
 #include "ta_scene.h"
 #include "ta_game.h"
 #include "ta_buffer.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 
 #define UI_DEBUG_CONTAINERS 0

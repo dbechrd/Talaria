@@ -1,7 +1,7 @@
 #include "ta_window.h"
 #include "ta_log.h"
 #include "ta_event.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 #include "SDL/SDL.h"
 
 static SDL_Window *window;

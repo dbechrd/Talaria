@@ -1,6 +1,6 @@
 #include "ta_file.h"
 #include "ta_log.h"
-#include "dlb_memory.h"
+#include "dlb/dlb_memory.h"
 #include <ctype.h>
 #include <stdlib.h>
 

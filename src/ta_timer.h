@@ -1,5 +1,5 @@
 #pragma once
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 
 void ta_timer_init();
 u64 ta_timer_elapsed_ticks();

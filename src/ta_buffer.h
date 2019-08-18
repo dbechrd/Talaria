@@ -1,5 +1,5 @@
 #pragma once
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 
 typedef struct ta_buffer {
 	u32 length;  // length, including null terminator

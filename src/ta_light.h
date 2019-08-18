@@ -2,7 +2,7 @@
 #include "ta_uid.h"
 #include "ta_math.h"
 #include "ta_shader.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 
 typedef enum ta_light_type {
     TA_LIGHT_AMBIENT,

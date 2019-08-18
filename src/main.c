@@ -22,12 +22,12 @@
 #include "ta_parse.h"
 #include "ta_symbol.h"
 #include "ta_font.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 #define DLB_VECTOR_IMPLEMENTATION
-#include "dlb_vector.h"
+#include "dlb/dlb_vector.h"
 #define DLB_HASH_IMPLEMENTATION
 #define DLB_HASH_TEST
-#include "dlb_hash.h"
+#include "dlb/dlb_hash.h"
 #include "misc/gl3w.h"
 #include "SDL/SDL.h"
 

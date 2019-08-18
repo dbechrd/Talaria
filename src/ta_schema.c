@@ -14,9 +14,9 @@
 #include "ta_material.h"
 #include "ta_mesh_group.h"
 #include "ta_font.h"
-#include "dlb_types.h"
-#include "dlb_vector.h"
-#include "dlb_hash.h"
+#include "dlb/dlb_types.h"
+#include "dlb/dlb_vector.h"
+#include "dlb/dlb_hash.h"
 #include <stdlib.h>
 
 static ta_schema tg_schemas[TA_COUNT];

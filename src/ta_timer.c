@@ -1,5 +1,5 @@
 #include "ta_timer.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 #include "SDL/SDL_timer.h"
 
 static u64 perf_frequency;

@@ -8,7 +8,7 @@
 #include "ta_material.h"
 #include "ta_texture.h"
 #include "ta_button.h"
-#include "dlb_vector.h"
+#include "dlb/dlb_vector.h"
 
 void ta_node_init(ta_node *node)
 {

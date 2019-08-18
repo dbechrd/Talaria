@@ -1,8 +1,8 @@
 #include "ta_symbol.h"
 #include "ta_parse.h"
-#include "dlb_types.h"
-#include "dlb_arena.h"
-#include "dlb_hash.h"
+#include "dlb/dlb_types.h"
+#include "dlb/dlb_arena.h"
+#include "dlb/dlb_hash.h"
 
 #define TA_SYMBOL_MAX_LEN 256
 

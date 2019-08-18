@@ -1,5 +1,5 @@
 #include "ta_parse.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 #include <stdlib.h>
 
 unsigned int parse_uint(char *buf)

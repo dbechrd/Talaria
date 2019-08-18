@@ -1,6 +1,6 @@
 #pragma once
 #include "ta_schema.h"
-#include "dlb_hash.h"
+#include "dlb/dlb_hash.h"
 
 typedef struct ta_scene {
     const char *filename;

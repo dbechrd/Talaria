@@ -1,5 +1,5 @@
 #include "ta_buffer.h"
-#include "dlb_memory.h"
+#include "dlb/dlb_memory.h"
 
 void ta_buffer_init(ta_buffer *buffer, u32 len)
 {

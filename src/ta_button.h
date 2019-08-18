@@ -1,5 +1,5 @@
 #pragma once
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 #include "ta_uid.h"
 #include "ta_audio.h"
 

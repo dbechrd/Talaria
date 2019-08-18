@@ -1,6 +1,6 @@
 #pragma once
 #include "ta_uid.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 #include "AL/al.h"
 #include "AL/alc.h"
 

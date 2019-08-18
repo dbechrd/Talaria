@@ -2,7 +2,7 @@
 #include "ta_uid.h"
 #include "ta_math.h"
 #include "ta_collider.h"
-#include "dlb_types.h"
+#include "dlb/dlb_types.h"
 
 // http://allenchou.net/2013/12/game-physics-introduction/
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493

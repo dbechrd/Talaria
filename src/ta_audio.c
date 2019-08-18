@@ -2,7 +2,7 @@
 #include "ta_log.h"
 #include "ta_file.h"
 #include "ta_scene.h"
-#include "dlb_memory.h"
+#include "dlb/dlb_memory.h"
 #include "AL/al.h"
 #include "AL/alc.h"
 
