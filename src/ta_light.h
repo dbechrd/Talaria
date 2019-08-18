@@ -57,10 +57,10 @@ typedef struct ta_light {
     ta_light_shadowmap shadowmap;
 } ta_light;
 
-#include "ta_node.h"
+struct ta_node;
 
 const char *ta_light_type_str(int type);
 void ta_light_init(ta_light *light);
 void ta_light_shadowpass_render(ta_light *light, ta_shader *shader,
-    float alpha, ta_node *entities);
+    float alpha, struct ta_node *entities);
 void ta_light_render_shadowmap_debug(ta_light *light);

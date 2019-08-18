@@ -12,22 +12,9 @@
 
 #define UI_DEBUG_CONTAINERS 0
 
-#if 0
-    #define ROW_PAD_LEFT        1 //4
-    #define ROW_PAD_RIGHT       0
-    #define ROW_PAD_TOP         1 //4
-    #define TEXTBOX_PAD_CURSOR  4
-    #define WIDGET_PAD          1
-    #define SCROLL_SPEED        20
-#else
-    #define ROW_PAD_LEFT        0
-    #define ROW_PAD_RIGHT       0
-    #define ROW_PAD_TOP         0
-    #define GRID_PAD            0
-    #define TEXTBOX_PAD_CURSOR  0
-    #define WIDGET_PAD          0
-    #define SCROLL_SPEED        20
-#endif
+#define TEXTBOX_PAD_CURSOR  4
+#define WIDGET_PAD          1
+#define SCROLL_SPEED        20
 
 typedef struct control_state {
     bool hover;
@@ -666,7 +653,7 @@ void ta_ui_test()
         } case CATEGORY_AUDIO: {
             // Audio buffers
             static const char *audio_playing_uid = 0;
-            ta_audio_buffer *audio_buffers = tg_game.scene->pools[TA_AUDIO_BUFFER];
+            ta_audio_buffer *audio_buffers = tg_game.scene->pools[TYP_AUDIO_BUFFER];
             u32 buf_count = dlb_vec_len(audio_buffers);
 
             int audio_playing_idx = -1;

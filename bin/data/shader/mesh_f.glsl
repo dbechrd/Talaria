@@ -123,8 +123,6 @@ void main()
         float dist = 0.0;
         float attenuation;
 
-		int foo_i = 0;
-
         switch(u_lights[i].type) {
             case LIGHT_DIRECTIONAL: {
                 fragToLight = -u_lights[i].direction;
@@ -154,6 +152,7 @@ void main()
 
                 // TODO: Clean this crap up via:
                 // https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
+		        int foo_i = 0;
 				float foo_bias = 0.04;
 				for (float x = -1.0; x <= 1.0; x += 1.0) {
 					for (float y = -1.0; y <= 1.0; y += 1.0) {

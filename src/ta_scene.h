@@ -10,8 +10,8 @@ typedef struct ta_scene {
     const char *default_texture_uid;
     const char *default_mesh_group_uid;
 
-    void *pools[TA_COUNT_POOLS];
-    dlb_hash pooled_uids[TA_COUNT_POOLS];
+    void *pools[TYP_COUNT_POOLS];
+    dlb_hash pooled_uids[TYP_COUNT_POOLS];
 } ta_scene;
 
 struct ta_shader;

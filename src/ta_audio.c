@@ -196,7 +196,7 @@ void ta_audio_source_init(ta_audio_source *source)
 
     if (source->audio_buffer_uid) {
         ta_audio_buffer *buffer = ta_scene_find(source->uid.scene,
-            TA_AUDIO_BUFFER, source->audio_buffer_uid);
+            TYP_AUDIO_BUFFER, source->audio_buffer_uid);
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
 }

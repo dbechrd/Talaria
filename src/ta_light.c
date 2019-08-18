@@ -169,11 +169,11 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
     // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#rendering-the-shadow-map
     // https://www.khronos.org/opengl/wiki/GLAPI/glBindFragDataLocation
 
-
     // https://gamedev.stackexchange.com/questions/19461/opengl-glsl-render-to-cube-map
 
     // TODO: Cache lookat matrices in dlb_vec, store light_pos as lookat_pos and
     //       update if light_pos != lookat_pos (i.e. position has changed)
+    // PERF: Cache may be slower than just recalculating every frame.. profile!
     ta_mat4 view[6];
     view[0] = mat4_lookat(light->position, vec3_add(light->position, VEC3_X),  VEC3_NY);
     view[1] = mat4_lookat(light->position, vec3_add(light->position, VEC3_NX), VEC3_NY);
@@ -190,9 +190,7 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
     glViewport(0, 0, light->shadowmap.resolution, light->shadowmap.resolution);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light->shadowmap.framebuffer);
 
-#if 1
     for (int i = 0; i < 6; ++i ) {
-        // TODO: Figure out how to bind a specific side of the cubemap
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
             GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, light->shadowmap.texture, 0);
 
@@ -208,19 +206,6 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
             ta_node_shadow_pass(entity, shader, &light_pv, alpha);
         }
     }
-#else
-    for (int i = 0; i < 6; ++i ) {
-        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (status != GL_FRAMEBUFFER_COMPLETE) {
-            DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
-        }
-
-        ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view[i]);
-        dlb_vec_each(ta_node *, entity, entities) {
-            ta_node_shadow_pass(entity, shader, &light_pv, alpha);
-        }
-    }
-#endif
 }
 
 typedef void (* shadowpass_render)(ta_light *light, ta_shader *shader,
@@ -264,8 +249,7 @@ void ta_light_render_shadowmap_debug(ta_light *light)
     };
 
     s32 resolution = light->shadowmap.resolution / 10;
-    for (int face = 0; face < 6; face++)
-    {
+    for (int face = 0; face < 6; face++) {
         ta_rect rect = { 0 };
         rect.x = resolution * face_grid[face].x;
         rect.y = resolution * face_grid[face].y;

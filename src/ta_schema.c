@@ -19,45 +19,45 @@
 #include "dlb/dlb_hash.h"
 #include <stdlib.h>
 
-static ta_schema tg_schemas[TA_COUNT];
+static ta_schema tg_schemas[TYP_COUNT];
 static dlb_hash tg_schemas_by_name;
 
 const char *ta_schema_field_type_str(ta_schema_field_type type) {
     switch(type) {
-        case TA_NULL:               return "TA_NULL";
+        case TYP_NULL:               return "TYP_NULL";
 
 		// Scene-level compound types
-		case TA_CAMERA:				return "TA_CAMERA";
-		case TA_LIGHT:              return "TA_LIGHT";
-		case TA_MATERIAL:           return "TA_MATERIAL";
-		case TA_MESH_GROUP:         return "TA_MESH_GROUP";
-		case TA_SHADER:             return "TA_SHADER";
-		case TA_TEXTURE:            return "TA_TEXTURE";
-		case TA_NODE:				return "TA_NODE";
-		case TA_AUDIO_BUFFER:       return "TA_AUDIO_BUFFER";
-		case TA_AUDIO_SOURCE:       return "TA_AUDIO_SOURCE";
-		case TA_RIGID_BODY:         return "TA_RIGID_BODY";
-        case TA_BUTTON:			    return "TA_BUTTON";
-        case TA_FONT:			    return "TA_FONT";
+		case TYP_CAMERA:				return "TYP_CAMERA";
+		case TYP_LIGHT:              return "TYP_LIGHT";
+		case TYP_MATERIAL:           return "TYP_MATERIAL";
+		case TYP_MESH_GROUP:         return "TYP_MESH_GROUP";
+		case TYP_SHADER:             return "TYP_SHADER";
+		case TYP_TEXTURE:            return "TYP_TEXTURE";
+		case TYP_NODE:				return "TYP_NODE";
+		case TYP_AUDIO_BUFFER:       return "TYP_AUDIO_BUFFER";
+		case TYP_AUDIO_SOURCE:       return "TYP_AUDIO_SOURCE";
+		case TYP_RIGID_BODY:         return "TYP_RIGID_BODY";
+        case TYP_BUTTON:			    return "TYP_BUTTON";
+        case TYP_FONT:			    return "TYP_FONT";
 
 		// Other compound types
-        case TA_VEC2:               return "TA_VEC2";
-        case TA_VEC3:               return "TA_VEC3";
-        case TA_VEC4:               return "TA_VEC4";
-        case TA_MAT3:               return "TA_MAT3";
-        case TA_MAT4:               return "TA_MAT4";
-        case TA_RGB:                return "TA_RGB";
-        case TA_RGBA:               return "TA_RGBA";
-        case TA_TRANSFORM:          return "TA_TRANSFORM";
-        case TA_DIRECTIONAL_LIGHT:  return "TA_DIRECTIONAL_LIGHT";
-        case TA_POINT_LIGHT:        return "TA_POINT_LIGHT";
-        case TA_SHADER_ATTRIBUTE:   return "TA_SHADER_ATTRIBUTE";
-        case TA_SHADER_UNIFORM:     return "TA_SHADER_UNIFORM";
-        case TA_PLANE:              return "TA_PLANE";
-        case TA_SPHERE:             return "TA_SPHERE";
-        case TA_AABB:               return "TA_AABB";
-        case TA_OBB:                return "TA_OBB";
-        case TA_COLLIDER:           return "TA_COLLIDER";
+        case TYP_VEC2:               return "TYP_VEC2";
+        case TYP_VEC3:               return "TYP_VEC3";
+        case TYP_VEC4:               return "TYP_VEC4";
+        case TYP_MAT3:               return "TYP_MAT3";
+        case TYP_MAT4:               return "TYP_MAT4";
+        case TYP_RGB:                return "TYP_RGB";
+        case TYP_RGBA:               return "TYP_RGBA";
+        case TYP_TRANSFORM:          return "TYP_TRANSFORM";
+        case TYP_LIGHT_DIRECTIONAL:  return "TYP_LIGHT_DIRECTIONAL";
+        case TYP_LIGHT_POINT:        return "TYP_LIGHT_POINT";
+        case TYP_SHADER_ATTRIBUTE:   return "TYP_SHADER_ATTRIBUTE";
+        case TYP_SHADER_UNIFORM:     return "TYP_SHADER_UNIFORM";
+        case TYP_PLANE:              return "TYP_PLANE";
+        case TYP_SPHERE:             return "TYP_SPHERE";
+        case TYP_AABB:               return "TYP_AABB";
+        case TYP_OBB:                return "TYP_OBB";
+        case TYP_COLLIDER:           return "TYP_COLLIDER";
 
         // Atomic types
         case ATOM_BOOL:             return "ATOM_BOOL";
@@ -151,64 +151,64 @@ void ta_schema_register()
     dlb_hash_init(&tg_schemas_by_name, DLB_HASH_STRING, "[schema_register]", 64);
     ta_schema *schema;
 
-    TYPE_START(ta_vec2, TA_VEC2);
+    TYPE_START(ta_vec2, TYP_VEC2);
     TYPE_FIELD(ta_vec2, x, ATOM_FLOAT);
     TYPE_FIELD(ta_vec2, y, ATOM_FLOAT);
     TYPE_END(ta_vec2);
 
-    TYPE_START(ta_vec3, TA_VEC3);
+    TYPE_START(ta_vec3, TYP_VEC3);
     TYPE_FIELD(ta_vec3, x, ATOM_FLOAT);
     TYPE_FIELD(ta_vec3, y, ATOM_FLOAT);
     TYPE_FIELD(ta_vec3, z, ATOM_FLOAT);
     TYPE_END(ta_vec3);
 
-    TYPE_START(ta_vec4, TA_VEC4);
+    TYPE_START(ta_vec4, TYP_VEC4);
     TYPE_FIELD(ta_vec4, x, ATOM_FLOAT);
     TYPE_FIELD(ta_vec4, y, ATOM_FLOAT);
     TYPE_FIELD(ta_vec4, z, ATOM_FLOAT);
     TYPE_FIELD(ta_vec4, w, ATOM_FLOAT);
     TYPE_END(ta_vec4);
 
-    TYPE_START(ta_quat, TA_QUAT);
+    TYPE_START(ta_quat, TYP_QUAT);
     TYPE_FIELD(ta_quat, x, ATOM_FLOAT);
     TYPE_FIELD(ta_quat, y, ATOM_FLOAT);
     TYPE_FIELD(ta_quat, z, ATOM_FLOAT);
     TYPE_FIELD(ta_quat, w, ATOM_FLOAT);
     TYPE_END(ta_quat);
 
-    TYPE_START(ta_mat3, TA_MAT3);
+    TYPE_START(ta_mat3, TYP_MAT3);
     TYPE_UNION_TYPE(ta_mat3, data, ATOM_ENUM, 0);
     TYPE_UNION_ARRAY(ta_mat3, arr, ATOM_FLOAT, 9, data, 0);
     TYPE_END(ta_mat3);
 
-    TYPE_START(ta_mat4, TA_MAT4);
+    TYPE_START(ta_mat4, TYP_MAT4);
     TYPE_UNION_TYPE(ta_mat4, data, ATOM_ENUM, 0);
     TYPE_UNION_ARRAY(ta_mat4, arr, ATOM_FLOAT, 16, data, 0);
     TYPE_END(ta_mat4);
 
-    TYPE_START(ta_rgb, TA_RGB);
+    TYPE_START(ta_rgb, TYP_RGB);
     TYPE_FIELD(ta_rgb, r, ATOM_FLOAT);
     TYPE_FIELD(ta_rgb, g, ATOM_FLOAT);
     TYPE_FIELD(ta_rgb, b, ATOM_FLOAT);
     TYPE_END(ta_rgb);
 
-    TYPE_START(ta_rgba, TA_RGBA);
+    TYPE_START(ta_rgba, TYP_RGBA);
     TYPE_FIELD(ta_rgba, r, ATOM_FLOAT);
     TYPE_FIELD(ta_rgba, g, ATOM_FLOAT);
     TYPE_FIELD(ta_rgba, b, ATOM_FLOAT);
     TYPE_FIELD(ta_rgba, a, ATOM_FLOAT);
     TYPE_END(ta_rgba);
 
-    TYPE_START(ta_transform, TA_TRANSFORM);
-    TYPE_FIELD(ta_transform, position,    TA_VEC3);
-    TYPE_FIELD(ta_transform, orientation, TA_QUAT);
-    TYPE_FIELD(ta_transform, scale,       TA_VEC3);
+    TYPE_START(ta_transform, TYP_TRANSFORM);
+    TYPE_FIELD(ta_transform, position,    TYP_VEC3);
+    TYPE_FIELD(ta_transform, orientation, TYP_QUAT);
+    TYPE_FIELD(ta_transform, scale,       TYP_VEC3);
     TYPE_END(ta_transform);
 
     // Scene-level object types
-    TYPE_START(ta_camera, TA_CAMERA);
+    TYPE_START(ta_camera, TYP_CAMERA);
     TYPE_FIELD(ta_camera, uid,                 ATOM_STRING);
-    TYPE_FIELD(ta_camera, position,            TA_VEC3);
+    TYPE_FIELD(ta_camera, position,            TYP_VEC3);
     TYPE_FIELD(ta_camera, position_smooth,     ATOM_FLOAT);
     TYPE_FIELD(ta_camera, position_target_vel, ATOM_FLOAT);
     TYPE_FIELD(ta_camera, yaw,                 ATOM_FLOAT);
@@ -219,89 +219,89 @@ void ta_schema_register()
     TYPE_FIELD(ta_camera, pitch_max,           ATOM_FLOAT);
     TYPE_FIELD(ta_camera, fov,                 ATOM_FLOAT);
     TYPE_FIELD(ta_camera, znear,               ATOM_FLOAT);
-    TYPE_FIELD(ta_camera, focal_point,         TA_VEC3);
-    TYPE_FIELD(ta_camera, up,                  TA_VEC3);
+    TYPE_FIELD(ta_camera, focal_point,         TYP_VEC3);
+    TYPE_FIELD(ta_camera, up,                  TYP_VEC3);
     TYPE_FIELD(ta_camera, ortho,               ATOM_BOOL);
     TYPE_END(ta_camera);
 
-    TYPE_START(ta_light_directional, TA_DIRECTIONAL_LIGHT);
-    TYPE_FIELD(ta_light_directional, direction, TA_VEC3);
+    TYPE_START(ta_light_directional, TYP_LIGHT_DIRECTIONAL);
+    TYPE_FIELD(ta_light_directional, direction, TYP_VEC3);
     TYPE_END(ta_light_directional);
 
-    TYPE_START(ta_light_point, TA_POINT_LIGHT);
+    TYPE_START(ta_light_point, TYP_LIGHT_POINT);
     TYPE_END(ta_light_point);
 
-    TYPE_START(ta_light_spot, TA_SPOT_LIGHT);
-    TYPE_FIELD(ta_light_spot, direction,     TA_VEC3);
+    TYPE_START(ta_light_spot, TYP_LIGHT_SPOT);
+    TYPE_FIELD(ta_light_spot, direction,     TYP_VEC3);
     TYPE_FIELD(ta_light_spot, theta_cone,    ATOM_FLOAT);
     TYPE_FIELD(ta_light_spot, theta_falloff, ATOM_FLOAT);
     TYPE_END(ta_light_spot);
 
-    TYPE_START(ta_light, TA_LIGHT);
+    TYPE_START(ta_light, TYP_LIGHT);
     TYPE_FIELD(ta_light, uid,       ATOM_STRING);
     TYPE_FIELD(ta_light, disabled,  ATOM_BOOL);
     TYPE_FIELD(ta_light, intensity, ATOM_FLOAT);
-    TYPE_FIELD(ta_light, position,  TA_VEC3);
-    TYPE_FIELD(ta_light, color,     TA_RGB);
+    TYPE_FIELD(ta_light, position,  TYP_VEC3);
+    TYPE_FIELD(ta_light, color,     TYP_RGB);
     TYPE_UNION_TYPE(ta_light,  type,        ATOM_ENUM,            ta_light_type_str);
-    TYPE_UNION_FIELD(ta_light, ambient,     TA_AMBIENT_LIGHT,     data, TA_LIGHT_AMBIENT);
-    TYPE_UNION_FIELD(ta_light, directional, TA_DIRECTIONAL_LIGHT, data, TA_LIGHT_DIRECTIONAL);
-    TYPE_UNION_FIELD(ta_light, point,       TA_POINT_LIGHT,       data, TA_LIGHT_POINT);
-    TYPE_UNION_FIELD(ta_light, spot,        TA_SPOT_LIGHT,        data, TA_LIGHT_SPOT);
+    TYPE_UNION_FIELD(ta_light, ambient,     TYP_LIGHT_AMBIENT,     data, TA_LIGHT_AMBIENT);
+    TYPE_UNION_FIELD(ta_light, directional, TYP_LIGHT_DIRECTIONAL, data, TA_LIGHT_DIRECTIONAL);
+    TYPE_UNION_FIELD(ta_light, point,       TYP_LIGHT_POINT,       data, TA_LIGHT_POINT);
+    TYPE_UNION_FIELD(ta_light, spot,        TYP_LIGHT_SPOT,        data, TA_LIGHT_SPOT);
     TYPE_END(ta_light);
 
-    TYPE_START(ta_material, TA_MATERIAL);
+    TYPE_START(ta_material, TYP_MATERIAL);
     TYPE_FIELD(ta_material, uid,                  ATOM_STRING);
     TYPE_FIELD(ta_material, shader_uid,           ATOM_STRING);
     TYPE_FIELD(ta_material, texture_albedo_uid,   ATOM_STRING);
     TYPE_FIELD(ta_material, texture_metallic_uid, ATOM_STRING);
     TYPE_END(ta_material);
 
-    TYPE_START(ta_mesh_group, TA_MESH_GROUP);
+    TYPE_START(ta_mesh_group, TYP_MESH_GROUP);
     TYPE_FIELD(ta_mesh_group, uid,  ATOM_STRING);
     TYPE_FIELD(ta_mesh_group, path, ATOM_STRING);
     TYPE_END(ta_mesh_group);
 
-    TYPE_START(ta_shader_attribute, TA_SHADER_ATTRIBUTE);
+    TYPE_START(ta_shader_attribute, TYP_SHADER_ATTRIBUTE);
     TYPE_FIELD(ta_shader_attribute, name, ATOM_STRING);
     TYPE_ENUM(ta_shader_attribute, type, ATOM_ENUM, ta_glsl_type_str);
     TYPE_END(ta_shader_attribute);
 
-    TYPE_START(ta_shader_uniform, TA_SHADER_UNIFORM);
+    TYPE_START(ta_shader_uniform, TYP_SHADER_UNIFORM);
     TYPE_FIELD(ta_shader_uniform, name, ATOM_STRING);
     TYPE_UNION_TYPE(ta_shader_uniform, type, ATOM_ENUM, ta_glsl_type_str);
     //TYPE_UNION_FIELD(ta_shader_uniform, glint,     ATOM_INT,  value, TA_GLSL_INT);
     //TYPE_UNION_FIELD(ta_shader_uniform, gluint,    ATOM_UINT, value, TA_GLSL_UINT);
     //TYPE_UNION_FIELD(ta_shader_uniform, sampler2d, ATOM_UINT, value, TA_GLSL_SAMPLER2D);
-    //TYPE_UNION_FIELD(ta_shader_uniform, vec2,      TA_VEC2,   value, TA_GLSL_VEC2);
-    //TYPE_UNION_FIELD(ta_shader_uniform, vec3,      TA_VEC3,   value, TA_GLSL_VEC3);
-    //TYPE_UNION_FIELD(ta_shader_uniform, vec4,      TA_VEC4,   value, TA_GLSL_VEC4);
-    //TYPE_UNION_FIELD(ta_shader_uniform, mat3,      TA_MAT3,   value, TA_GLSL_MAT3);
-    //TYPE_UNION_FIELD(ta_shader_uniform, mat4,      TA_MAT4,   value, TA_GLSL_MAT4);
-    TYPE_UNION_VECTOR(ta_shader_uniform, properties, TA_SHADER_UNIFORM, value, TA_GLSL_STRUCT);
+    //TYPE_UNION_FIELD(ta_shader_uniform, vec2,      TYP_VEC2,   value, TA_GLSL_VEC2);
+    //TYPE_UNION_FIELD(ta_shader_uniform, vec3,      TYP_VEC3,   value, TA_GLSL_VEC3);
+    //TYPE_UNION_FIELD(ta_shader_uniform, vec4,      TYP_VEC4,   value, TA_GLSL_VEC4);
+    //TYPE_UNION_FIELD(ta_shader_uniform, mat3,      TYP_MAT3,   value, TA_GLSL_MAT3);
+    //TYPE_UNION_FIELD(ta_shader_uniform, mat4,      TYP_MAT4,   value, TA_GLSL_MAT4);
+    TYPE_UNION_VECTOR(ta_shader_uniform, properties, TYP_SHADER_UNIFORM, value, TA_GLSL_STRUCT);
     TYPE_END(ta_shader_uniform);
 
-    TYPE_START(ta_shader, TA_SHADER);
+    TYPE_START(ta_shader, TYP_SHADER);
     TYPE_FIELD(ta_shader, uid,         ATOM_STRING);
     TYPE_FIELD(ta_shader, path_vert,   ATOM_STRING);
     TYPE_FIELD(ta_shader, path_frag,   ATOM_STRING);
-    TYPE_VECTOR(ta_shader, attributes, TA_SHADER_ATTRIBUTE);
-    TYPE_VECTOR(ta_shader, uniforms,   TA_SHADER_UNIFORM);
+    TYPE_VECTOR(ta_shader, attributes, TYP_SHADER_ATTRIBUTE);
+    TYPE_VECTOR(ta_shader, uniforms,   TYP_SHADER_UNIFORM);
     TYPE_END(ta_shader);
 
-    TYPE_START(ta_texture, TA_TEXTURE);
+    TYPE_START(ta_texture, TYP_TEXTURE);
     TYPE_FIELD(ta_texture, uid,      ATOM_STRING);
     TYPE_FIELD(ta_texture, path,     ATOM_STRING);
     TYPE_FIELD(ta_texture, channels, ATOM_INT);
     TYPE_FIELD(ta_texture, linear,   ATOM_BOOL);
     TYPE_END(ta_texture);
 
-    TYPE_START(ta_audio_buffer, TA_AUDIO_BUFFER);
+    TYPE_START(ta_audio_buffer, TYP_AUDIO_BUFFER);
     TYPE_FIELD(ta_audio_buffer, uid,  ATOM_STRING);
     TYPE_FIELD(ta_audio_buffer, path, ATOM_STRING);
     TYPE_END(ta_audio_buffer);
 
-    TYPE_START(ta_audio_source, TA_AUDIO_SOURCE);
+    TYPE_START(ta_audio_source, TYP_AUDIO_SOURCE);
     TYPE_FIELD(ta_audio_source, uid,              ATOM_STRING);
     TYPE_FIELD(ta_audio_source, pitch,            ATOM_FLOAT);
     TYPE_FIELD(ta_audio_source, gain,             ATOM_FLOAT);
@@ -309,9 +309,9 @@ void ta_schema_register()
     TYPE_FIELD(ta_audio_source, audio_buffer_uid, ATOM_STRING);
     TYPE_END(ta_audio_source);
 
-    TYPE_START(ta_node, TA_NODE);
+    TYPE_START(ta_node, TYP_NODE);
     TYPE_FIELD(ta_node, uid,             ATOM_STRING);
-    TYPE_FIELD(ta_node, transform,       TA_TRANSFORM);
+    TYPE_FIELD(ta_node, transform,       TYP_TRANSFORM);
     TYPE_FIELD(ta_node, material_uid,    ATOM_STRING);
     TYPE_FIELD(ta_node, mesh_group_uid,  ATOM_STRING);
     TYPE_FIELD(ta_node, rigid_body_uid,  ATOM_STRING);
@@ -321,7 +321,7 @@ void ta_schema_register()
     TYPE_FIELD(ta_node, receive_shadows, ATOM_BOOL);
     TYPE_END(ta_node);
 
-    TYPE_START(e_button, TA_BUTTON);
+    TYPE_START(e_button, TYP_BUTTON);
 	TYPE_FIELD(e_button, uid,                 ATOM_STRING);
 	TYPE_FIELD(e_button, audio_source_uid,    ATOM_STRING);
     TYPE_FIELD(e_button, sfx_activated_uid,   ATOM_STRING);
@@ -329,45 +329,45 @@ void ta_schema_register()
     TYPE_FIELD(e_button, sfx_deactivated_uid, ATOM_STRING);
     TYPE_END(e_button);
 
-    TYPE_START(ta_plane, TA_PLANE);
-    TYPE_FIELD(ta_plane, center, TA_VEC3);
-    TYPE_FIELD(ta_plane, normal, TA_VEC3);
+    TYPE_START(ta_plane, TYP_PLANE);
+    TYPE_FIELD(ta_plane, center, TYP_VEC3);
+    TYPE_FIELD(ta_plane, normal, TYP_VEC3);
     TYPE_END(ta_plane);
 
-    TYPE_START(ta_sphere, TA_SPHERE);
-    TYPE_FIELD(ta_sphere, center, TA_VEC3);
+    TYPE_START(ta_sphere, TYP_SPHERE);
+    TYPE_FIELD(ta_sphere, center, TYP_VEC3);
     TYPE_FIELD(ta_sphere, radius, ATOM_FLOAT);
     TYPE_END(ta_sphere);
 
-    TYPE_START(ta_aabb, TA_AABB);
-    TYPE_FIELD(ta_aabb, center,  TA_VEC3);
-    TYPE_FIELD(ta_aabb, extents, TA_VEC3);
+    TYPE_START(ta_aabb, TYP_AABB);
+    TYPE_FIELD(ta_aabb, center,  TYP_VEC3);
+    TYPE_FIELD(ta_aabb, extents, TYP_VEC3);
     TYPE_END(ta_aabb);
 
-    TYPE_START(ta_obb, TA_OBB);
-    TYPE_FIELD(ta_obb, center,  TA_VEC3);
-    TYPE_FIELD(ta_obb, extents, TA_VEC3);
-    TYPE_ARRAY(ta_obb, axes,    TA_VEC3, 3);
+    TYPE_START(ta_obb, TYP_OBB);
+    TYPE_FIELD(ta_obb, center,  TYP_VEC3);
+    TYPE_FIELD(ta_obb, extents, TYP_VEC3);
+    TYPE_ARRAY(ta_obb, axes,    TYP_VEC3, 3);
     TYPE_END(ta_obb);
 
-    TYPE_START(ta_collider, TA_COLLIDER);
+    TYPE_START(ta_collider, TYP_COLLIDER);
     TYPE_UNION_TYPE(ta_collider,  type,   ATOM_ENUM, ta_collider_type_str);
-    TYPE_UNION_FIELD(ta_collider, plane,  TA_PLANE,  data, TA_COLLIDER_PLANE);
-    TYPE_UNION_FIELD(ta_collider, sphere, TA_SPHERE, data, TA_COLLIDER_SPHERE);
-    TYPE_UNION_FIELD(ta_collider, aabb,   TA_AABB,   data, TA_COLLIDER_AABB);
-    TYPE_UNION_FIELD(ta_collider, obb,    TA_OBB,    data, TA_COLLIDER_OBB);
+    TYPE_UNION_FIELD(ta_collider, plane,  TYP_PLANE,  data, TA_COLLIDER_PLANE);
+    TYPE_UNION_FIELD(ta_collider, sphere, TYP_SPHERE, data, TA_COLLIDER_SPHERE);
+    TYPE_UNION_FIELD(ta_collider, aabb,   TYP_AABB,   data, TA_COLLIDER_AABB);
+    TYPE_UNION_FIELD(ta_collider, obb,    TYP_OBB,    data, TA_COLLIDER_OBB);
     TYPE_END(ta_collider);
 
-    TYPE_START(ta_rigid_body, TA_RIGID_BODY);
+    TYPE_START(ta_rigid_body, TYP_RIGID_BODY);
     TYPE_FIELD(ta_rigid_body, uid,         ATOM_STRING);
-    TYPE_FIELD(ta_rigid_body, collider,    TA_COLLIDER);
-    TYPE_FIELD(ta_rigid_body, position,    TA_VEC3);
-    TYPE_FIELD(ta_rigid_body, orientation, TA_QUAT);
+    TYPE_FIELD(ta_rigid_body, collider,    TYP_COLLIDER);
+    TYPE_FIELD(ta_rigid_body, position,    TYP_VEC3);
+    TYPE_FIELD(ta_rigid_body, orientation, TYP_QUAT);
     TYPE_FIELD(ta_rigid_body, mass,        ATOM_FLOAT);
     TYPE_FIELD(ta_rigid_body, trigger,     ATOM_BOOL);
     TYPE_END(ta_rigid_body);
 
-    TYPE_START(ta_font, TA_FONT);
+    TYPE_START(ta_font, TYP_FONT);
     TYPE_FIELD(ta_font, uid,          ATOM_STRING);
     TYPE_FIELD(ta_font, path,         ATOM_STRING);
     TYPE_FIELD(ta_font, pixel_height, ATOM_FLOAT);
@@ -489,7 +489,7 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
             }
             u8 *arr_end = arr + (arr_len * field->size);
             for (u8 *p = arr; p != arr_end; p += field->size) {
-                if (field->type < TA_COUNT) {
+                if (field->type < TYP_COUNT) {
                     indent(f, level + 2);
                     fprintf(f, "{\n");
                     ta_schema_print(f, field->type, p, level + 2, in_array + 1);
@@ -504,7 +504,7 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
             fprintf(f, "]\n");
         } else {
             indent(f, level + 1);
-            if (field->type < TA_COUNT) {
+            if (field->type < TYP_COUNT) {
                 fprintf(f, "%s:\n", field->name);
                 ta_schema_print(f, field->type, ptr + field->offset, level + 1, 0);
                 if (in_array) {

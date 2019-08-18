@@ -109,7 +109,7 @@ void ta_camera_events()
         switch (event.type) {
             case TA_EVENT_CAMERA_ASPECT_CHANGE: {
                 // Update all cameras to new aspect ratio
-                dlb_vec_each(ta_camera *, cam, tg_game.scene->pools[TA_CAMERA]) {
+                dlb_vec_each(ta_camera *, cam, tg_game.scene->pools[TYP_CAMERA]) {
                     if (!cam->ortho) {
                         ta_camera_recalc_projection(cam);
                     }

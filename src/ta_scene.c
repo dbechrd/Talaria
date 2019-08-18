@@ -86,25 +86,25 @@ typedef struct pool_info_s {
 } pool_info;
 
 static pool_info pool_infos[] = {
-    [TA_CAMERA]       = { sizeof(ta_camera),        ta_camera_init,       0 },
-    [TA_LIGHT]        = { sizeof(ta_light),         ta_light_init,        0 },
-    [TA_MATERIAL]     = { sizeof(ta_material),      0,                    0 },
-    [TA_MESH_GROUP]   = { sizeof(ta_mesh_group),    ta_mesh_group_load,   ta_mesh_group_free },
-    [TA_SHADER]       = { sizeof(ta_shader),        ta_shader_load,       0 },
-    [TA_TEXTURE]      = { sizeof(ta_texture),       ta_texture_init,      ta_texture_free },
-    [TA_NODE]         = { sizeof(ta_node),          ta_node_init,         0 },
-    [TA_AUDIO_BUFFER] = { sizeof(ta_audio_buffer),  ta_audio_buffer_init, 0 },
-    [TA_AUDIO_SOURCE] = { sizeof(ta_audio_source),  ta_audio_source_init, 0 },
-    [TA_RIGID_BODY]   = { sizeof(ta_rigid_body),    ta_rigid_body_init,   0 },
-    [TA_BUTTON]       = { sizeof(e_button),        e_button_init,       0 },
-    [TA_FONT]         = { sizeof(ta_font),          ta_font_init,         0 },
+    [TYP_CAMERA]       = { sizeof(ta_camera),        ta_camera_init,       0 },
+    [TYP_LIGHT]        = { sizeof(ta_light),         ta_light_init,        0 },
+    [TYP_MATERIAL]     = { sizeof(ta_material),      0,                    0 },
+    [TYP_MESH_GROUP]   = { sizeof(ta_mesh_group),    ta_mesh_group_load,   ta_mesh_group_free },
+    [TYP_SHADER]       = { sizeof(ta_shader),        ta_shader_load,       0 },
+    [TYP_TEXTURE]      = { sizeof(ta_texture),       ta_texture_init,      ta_texture_free },
+    [TYP_NODE]         = { sizeof(ta_node),          ta_node_init,         0 },
+    [TYP_AUDIO_BUFFER] = { sizeof(ta_audio_buffer),  ta_audio_buffer_init, 0 },
+    [TYP_AUDIO_SOURCE] = { sizeof(ta_audio_source),  ta_audio_source_init, 0 },
+    [TYP_RIGID_BODY]   = { sizeof(ta_rigid_body),    ta_rigid_body_init,   0 },
+    [TYP_BUTTON]       = { sizeof(e_button),        e_button_init,       0 },
+    [TYP_FONT]         = { sizeof(ta_font),          ta_font_init,         0 },
 };
 
 void *ta_scene_alloc(ta_scene *scene, ta_schema_field_type type,
     const char *uid)
 {
     DLB_ASSERT(scene);
-    DLB_ASSERT(type < TA_COUNT_POOLS);
+    DLB_ASSERT(type < TYP_COUNT_POOLS);
     DLB_ASSERT(uid);
 
     // Allocate object in pool
@@ -563,7 +563,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     if (!schema) {
                         PANIC("Unexpected type name '%s'\n", tok->value.string);
                     }
-					if (schema->type >= TA_COUNT_POOLS) {
+					if (schema->type >= TYP_COUNT_POOLS) {
 						PANIC("Type '%s' is not a scene-level type; invalid pool ID.\n", tok->value.string);
 					}
                     DLB_ASSERT(schema->size);
@@ -586,7 +586,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     expect_array_start = true;
                 }
 
-                if (!braces && !array && stack[sp].type < TA_COUNT) {
+                if (!braces && !array && stack[sp].type < TYP_COUNT) {
                     sp++;
                 }
                 break;
@@ -633,7 +633,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 if (stack[sp].name == SYM_UID) {
                     DLB_ASSERT(sp > 0);
                     DLB_ASSERT(stack[sp-1].is_pooled);
-                    DLB_ASSERT(stack[sp-1].type < TA_COUNT_POOLS);
+                    DLB_ASSERT(stack[sp-1].type < TYP_COUNT_POOLS);
 
                     ta_uid *uid = stack[sp].ptr;
                     DLB_ASSERT(uid->uid);
@@ -676,7 +676,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     BAD_TOKEN();
                 }
                 DLB_ASSERT(stack[sp-1].type >= 0);
-                DLB_ASSERT(stack[sp-1].type < TA_COUNT);
+                DLB_ASSERT(stack[sp-1].type < TYP_COUNT);
                 braces++;
                 break;
             } case TOKEN_OBJECT_END: {
@@ -701,7 +701,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
 static void scene_load_placeholders(ta_scene *scene)
 {
     // Fallback resources
-    ta_texture *tex_albedo = ta_scene_alloc(scene, TA_TEXTURE,
+    ta_texture *tex_albedo = ta_scene_alloc(scene, TYP_TEXTURE,
         INTERN("DEFAULT_TEXTURE_ALBEDO"));
     {
 #if 0
@@ -731,7 +731,7 @@ static void scene_load_placeholders(ta_scene *scene)
 #endif
     }
 
-    ta_texture *tex_metallic = ta_scene_alloc(scene, TA_TEXTURE,
+    ta_texture *tex_metallic = ta_scene_alloc(scene, TYP_TEXTURE,
         INTERN("DEFAULT_TEXTURE_METALLIC"));
     {
 #if 0
@@ -747,14 +747,14 @@ static void scene_load_placeholders(ta_scene *scene)
 #endif
     }
 
-    ta_material *material = ta_scene_alloc(scene, TA_MATERIAL,
+    ta_material *material = ta_scene_alloc(scene, TYP_MATERIAL,
         INTERN("DEFAULT_MATERIAL"));
     // TODO: Hard-code default shader instead of hoping it's in the scene file
     material->shader_uid = INTERN("shader_mesh");
     material->texture_albedo_uid = tex_albedo->uid.uid;
     material->texture_metallic_uid = tex_metallic->uid.uid;
 
-    ta_mesh_group *mesh_group = ta_scene_alloc(scene, TA_MESH_GROUP,
+    ta_mesh_group *mesh_group = ta_scene_alloc(scene, TYP_MESH_GROUP,
         INTERN("DEFAULT_MESH_GROUP"));
     mesh_group->path = INTERN("data/mesh/default.obj");
     scene->default_mesh_group_uid = mesh_group->uid.uid;
@@ -770,7 +770,7 @@ void ta_scene_init(ta_scene *scene)
     if (!scene->name) {
         scene->name = scene->filename;
     }
-    for (int i = 0; i < TA_COUNT_POOLS; i++) {
+    for (int i = 0; i < TYP_COUNT_POOLS; i++) {
         dlb_hash_init(&scene->pooled_uids[i], DLB_HASH_STRING, scene->name, 64);
         //scene->pooled_uids[type].debug = tg_debug_log->stream;
     }
@@ -796,8 +796,8 @@ ta_scene *ta_scene_load(ta_file *file)
     tokens_parse(scene, tokens);
     dlb_vec_free(tokens);
 
-    DLB_ASSERT(ARRAY_COUNT(scene->pools) == TA_COUNT_POOLS);
-    for (int i = 0; i < TA_COUNT_POOLS; i++) {
+    DLB_ASSERT(ARRAY_COUNT(scene->pools) == TYP_COUNT_POOLS);
+    for (int i = 0; i < TYP_COUNT_POOLS; i++) {
         if (pool_infos[i].init) {
             u8 *end = dlb_vec_end_size(scene->pools[i], pool_infos[i].size);
             for (u8 *ptr = scene->pools[i]; ptr != end; ptr += pool_infos[i].size) {
@@ -836,9 +836,9 @@ void ta_scene_save_file(ta_scene *scene, const char *filename)
 
 void ta_scene_free(ta_scene *scene)
 {
-	DLB_ASSERT(ARRAY_COUNT(scene->pools) == TA_COUNT_POOLS);
+	DLB_ASSERT(ARRAY_COUNT(scene->pools) == TYP_COUNT_POOLS);
 
-    for (int i = 0; i < TA_COUNT_POOLS; i++) {
+    for (int i = 0; i < TYP_COUNT_POOLS; i++) {
 		if (pool_infos[i].free) {
             u8 *end = dlb_vec_end_size(scene->pools[i], pool_infos[i].size);
 			for (u8 *ptr = scene->pools[i]; ptr != end; ptr += pool_infos[i].size) {
@@ -855,7 +855,7 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
 {
     fprintf(hnd, "#-------------------------------------------------------------------------------\n");
     fprintf(hnd, "# [SCENE] %s\n", scene->name);
-    for (ta_schema_field_type type = 0; type < TA_COUNT_POOLS; type++) {
+    for (ta_schema_field_type type = 0; type < TYP_COUNT_POOLS; type++) {
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
         fprintf(hnd, "# %s\n", ta_schema_field_type_str(type));
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
@@ -870,7 +870,7 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
 void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
 {
 	DLB_ASSERT(scene);
-    DLB_ASSERT(type < TA_COUNT_POOLS);
+    DLB_ASSERT(type < TYP_COUNT_POOLS);
 	DLB_ASSERT(uid);
 
 	bool found = false;
@@ -921,8 +921,8 @@ static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
     ta_rigid_body_pair *pairs = 0;
 
 #if 1
-    dlb_vec_each(ta_node *, a, scene->pools[TA_NODE]) {
-        dlb_vec_range(ta_node *, b, a + 1, dlb_vec_end((ta_node *)scene->pools[TA_NODE])) {
+    dlb_vec_each(ta_node *, a, scene->pools[TYP_NODE]) {
+        dlb_vec_range(ta_node *, b, a + 1, dlb_vec_end((ta_node *)scene->pools[TYP_NODE])) {
             if (a->rigid_body_uid && b->rigid_body_uid && ta_aabb_v_aabb(&a->aabb, &b->aabb, 0)) {
                 ta_rigid_body_pair *pair = dlb_vec_alloc(pairs);
                 pair->a = ta_node_rigid_body(a);
@@ -931,8 +931,8 @@ static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
         }
     }
 #else
-    dlb_vec_each(ta_rigid_body *, a, scene->pools[TA_RIGID_BODY]) {
-        dlb_vec_range(ta_rigid_body *, b, a + 1, dlb_vec_end((ta_rigid_body *)scene->pools[TA_RIGID_BODY])) {
+    dlb_vec_each(ta_rigid_body *, a, scene->pools[TYP_RIGID_BODY]) {
+        dlb_vec_range(ta_rigid_body *, b, a + 1, dlb_vec_end((ta_rigid_body *)scene->pools[TYP_RIGID_BODY])) {
             if (ta_aabb_v_aabb(&a->aabb, &b->aabb, 0)) {
                 ta_rigid_body_pair *pair = dlb_vec_alloc(pairs);
                 pair->a = a;
@@ -970,7 +970,7 @@ void ta_scene_update(ta_scene *scene, float dt)
     // Detect collisions
     // Resolve contraints
 
-    dlb_vec_each(ta_rigid_body *, body, scene->pools[TA_RIGID_BODY]) {
+    dlb_vec_each(ta_rigid_body *, body, scene->pools[TYP_RIGID_BODY]) {
         ta_rigid_body_update(body, dt);
     }
 
@@ -988,10 +988,10 @@ void ta_scene_update(ta_scene *scene, float dt)
     }
 
     // Update entities
-    dlb_vec_each(ta_node *, entity, scene->pools[TA_NODE]) {
+    dlb_vec_each(ta_node *, entity, scene->pools[TYP_NODE]) {
         ta_node_update(entity);
     }
-    dlb_vec_each(ta_node *, entity, scene->pools[TA_BUTTON]) {
+    dlb_vec_each(ta_node *, entity, scene->pools[TYP_BUTTON]) {
         ta_node_update(entity);
     }
 }
@@ -1003,7 +1003,7 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
     glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
 
     ta_shader_bind(shader);
-    dlb_vec_each(ta_light *, light, scene->pools[TA_LIGHT]) {
+    dlb_vec_each(ta_light *, light, scene->pools[TYP_LIGHT]) {
         // TODO: Handle shadows for other light types
         if (light->type != TA_LIGHT_POINT) {
             continue;
@@ -1011,14 +1011,14 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 
         ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &light->position);
         ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->shadowmap.zfar);
-        ta_light_shadowpass_render(light, shader, alpha, scene->pools[TA_NODE]);
+        ta_light_shadowpass_render(light, shader, alpha, scene->pools[TYP_NODE]);
 
         // TODO: Make button a component that an entity can have (*button_uid)
         //       instead of having it contain entity. It probably needs to have
         //       (*entity_uid) pointer as well in order to find the rigid body?
         //       Alternatively, it can have an explicit rigid body of its own
         //       which defaults to entity->rigid_body on initialization.
-        //ta_light_shadowpass_render(light, shader, alpha, scene->pools[TA_BUTTON]);
+        //ta_light_shadowpass_render(light, shader, alpha, scene->pools[TYP_BUTTON]);
     }
     ta_shader_unbind(shader);
 }
@@ -1039,7 +1039,7 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
 
     // TODO: Group by shader / material to minimize redundant uniform calls
-    dlb_vec_each(ta_node *, node, scene->pools[TA_NODE]) {
+    dlb_vec_each(ta_node *, node, scene->pools[TYP_NODE]) {
         ta_node_render(node, camera, alpha);
     }
 
@@ -1047,7 +1047,7 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
 
 #if 1
-    dlb_vec_each(ta_camera *, cam, scene->pools[TA_CAMERA]) {
+    dlb_vec_each(ta_camera *, cam, scene->pools[TYP_CAMERA]) {
         if (cam != tg_game.camera) {
             ta_sphere sphere = { 0 };
             sphere.center = cam->position;
@@ -1056,7 +1056,7 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
             //ta_primitive_push_sphere(sphere, TA_COLOR_GREEN);
         }
     }
-    dlb_vec_each(ta_light *, light, scene->pools[TA_LIGHT]) {
+    dlb_vec_each(ta_light *, light, scene->pools[TYP_LIGHT]) {
         ta_sphere sphere = { 0 };
         sphere.center = light->position;
         sphere.radius = 0.2f;

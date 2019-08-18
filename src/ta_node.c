@@ -29,7 +29,7 @@ void ta_node_init(ta_node *node)
 #if 0
         char body_uid[128] = { 0 };
         snprintf(body_uid, sizeof(body_uid) - 1, "%s_rigid_body", node->ref.uid);
-        ta_rigid_body *body = ta_scene_alloc(node->ref.scene, TA_RIGID_BODY,
+        ta_rigid_body *body = ta_scene_alloc(node->ref.scene, TYP_RIGID_BODY,
             INTERN(body_uid));
         body->transform.position = node->transform.position;
         body->transform.rotation = node->transform.rotation;
@@ -75,7 +75,7 @@ ta_material *ta_node_material(ta_node *node)
     if (!node->material_uid) return 0;
 
     // NOTE: This could cache in node->material if we want to save the hash lookup
-    ta_material *mat = ta_scene_find(node->uid.scene, TA_MATERIAL, node->material_uid);
+    ta_material *mat = ta_scene_find(node->uid.scene, TYP_MATERIAL, node->material_uid);
     return mat;
 }
 
@@ -84,7 +84,7 @@ ta_mesh_group *ta_node_mesh_group(ta_node *node)
     if (!node->mesh_group_uid) return 0;
 
     // NOTE: This could cache in node->mesh_group if we want to save the hash lookup
-    ta_mesh_group *mesh_group = ta_scene_find(node->uid.scene, TA_MESH_GROUP, node->mesh_group_uid);
+    ta_mesh_group *mesh_group = ta_scene_find(node->uid.scene, TYP_MESH_GROUP, node->mesh_group_uid);
     return mesh_group;
 }
 
@@ -93,7 +93,7 @@ ta_rigid_body *ta_node_rigid_body(ta_node *node)
     if (!node->rigid_body_uid) return 0;
 
     // NOTE: This could cache in node->rigid_body if we want to save the hash lookup
-    ta_rigid_body *rigid_body = ta_scene_find(node->uid.scene, TA_RIGID_BODY, node->rigid_body_uid);
+    ta_rigid_body *rigid_body = ta_scene_find(node->uid.scene, TYP_RIGID_BODY, node->rigid_body_uid);
     return rigid_body;
 }
 
@@ -102,7 +102,7 @@ e_button *ta_node_button(ta_node *node)
 	if (!node->button_uid) return 0;
 
 	// NOTE: This could cache in node->button if we want to save the hash lookup
-	e_button *button = ta_scene_find(node->uid.scene, TA_BUTTON, node->button_uid);
+	e_button *button = ta_scene_find(node->uid.scene, TYP_BUTTON, node->button_uid);
 	return button;
 }
 

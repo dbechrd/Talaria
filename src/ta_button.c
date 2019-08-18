@@ -14,7 +14,7 @@ ta_audio_source *e_button_audio_source(e_button *button)
 
     // NOTE: This could cache in button->audio_source
     ta_audio_source *audio_source = ta_scene_find(button->uid.scene,
-        TA_AUDIO_SOURCE, button->audio_source_uid);
+        TYP_AUDIO_SOURCE, button->audio_source_uid);
     return audio_source;
 }
 ta_audio_buffer *e_button_sfx_activated(e_button *button)
@@ -23,7 +23,7 @@ ta_audio_buffer *e_button_sfx_activated(e_button *button)
 
     // NOTE: This could cache in button->sfx_activated_buffer
     ta_audio_buffer *audio_buffer = ta_scene_find(button->uid.scene,
-        TA_AUDIO_BUFFER, button->sfx_activated_uid);
+        TYP_AUDIO_BUFFER, button->sfx_activated_uid);
     return audio_buffer;
 }
 ta_audio_buffer *e_button_sfx_active(e_button *button)
@@ -32,7 +32,7 @@ ta_audio_buffer *e_button_sfx_active(e_button *button)
 
     // NOTE: This could cache in button->sfx_active_buffer
     ta_audio_buffer *audio_buffer = ta_scene_find(button->uid.scene,
-        TA_AUDIO_BUFFER, button->sfx_active_uid);
+        TYP_AUDIO_BUFFER, button->sfx_active_uid);
     return audio_buffer;
 }
 ta_audio_buffer *e_button_sfx_deactivated(e_button *button)
@@ -41,7 +41,7 @@ ta_audio_buffer *e_button_sfx_deactivated(e_button *button)
 
     // NOTE: This could cache in button->sfx_deactivated_buffer
     ta_audio_buffer *audio_buffer = ta_scene_find(button->uid.scene,
-        TA_AUDIO_BUFFER, button->sfx_deactivated_uid);
+        TYP_AUDIO_BUFFER, button->sfx_deactivated_uid);
     return audio_buffer;
 }
 
@@ -74,7 +74,7 @@ void e_button_update(ta_node *node)
     //       EVENT_BUTTON_DEACTIVATED
     //       EVENT_BUTTON_STATE_CHANGED
 
-    e_button *button = ta_scene_find(tg_game.scene, TA_BUTTON, node->button_uid);
+    e_button *button = ta_scene_find(tg_game.scene, TYP_BUTTON, node->button_uid);
     DLB_ASSERT(button);
 
     ta_rigid_body *button_body = ta_node_rigid_body(node);

@@ -114,13 +114,13 @@ int main(int argc, char *argv[])
     // Intro scene
     tg_game.scene = ta_scene_load_file("data/scene/scene1.dml");
     // TODO: Find closest 8 lights and store them in tg_game.lights
-    tg_game.lights = tg_game.scene->pools[TA_LIGHT];
+    tg_game.lights = tg_game.scene->pools[TYP_LIGHT];
     tg_game.camera_player =
-		ta_scene_find(tg_game.scene, TA_CAMERA, INTERN("cam_player"));
+		ta_scene_find(tg_game.scene, TYP_CAMERA, INTERN("cam_player"));
     tg_game.camera_freecam =
-		ta_scene_find(tg_game.scene, TA_CAMERA, INTERN("cam_freecam"));
+		ta_scene_find(tg_game.scene, TYP_CAMERA, INTERN("cam_freecam"));
     tg_game.player =
-		ta_scene_find(tg_game.scene, TA_NODE, INTERN("node_player"));
+		ta_scene_find(tg_game.scene, TYP_NODE, INTERN("node_player"));
     tg_game.player_ammo_max = 20;
     tg_game.player_ammo = tg_game.player_ammo_max;
     tg_game.player_clip_max = 8;
@@ -132,43 +132,43 @@ int main(int argc, char *argv[])
     DLB_ASSERT(tg_game.player);
     DLB_ASSERT(tg_game.lights);
 
-    ta_audio_source *bg_music = ta_scene_find(tg_game.scene, TA_AUDIO_SOURCE,
+    ta_audio_source *bg_music = ta_scene_find(tg_game.scene, TYP_AUDIO_SOURCE,
         INTERN("src_background_music"));
     DLB_ASSERT(bg_music);
     tg_game.background_music = bg_music;
     //ta_audio_source_play_loop(tg_game.background_music);
 
-    tg_game.font = ta_scene_find(tg_game.scene, TA_FONT, INTERN("font_default"));
+    tg_game.font = ta_scene_find(tg_game.scene, TYP_FONT, INTERN("font_default"));
     DLB_ASSERT(tg_game.font);
     ta_shader *font_shader = ta_font_shader(tg_game.font);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
 
-    tg_game.tex_orange = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_test_diff"));
+    tg_game.tex_orange = ta_scene_find(tg_game.scene, TYP_TEXTURE, INTERN("tex_test_diff"));
     DLB_ASSERT(tg_game.tex_orange && tg_game.tex_orange->gl_id);
-    tg_game.tex_red = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_test_mrao"));
+    tg_game.tex_red = ta_scene_find(tg_game.scene, TYP_TEXTURE, INTERN("tex_test_mrao"));
     DLB_ASSERT(tg_game.tex_red && tg_game.tex_red->gl_id);
-    tg_game.tex_audio_icon = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_audio_icon"));
+    tg_game.tex_audio_icon = ta_scene_find(tg_game.scene, TYP_TEXTURE, INTERN("tex_audio_icon"));
     DLB_ASSERT(tg_game.tex_audio_icon && tg_game.tex_audio_icon->gl_id);
 
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
     ////////////////////////////////////////////////////////////////////////////
     tg_shader_lines =
-        ta_scene_find(tg_game.scene, TA_SHADER, INTERN("shader_lines"));
+        ta_scene_find(tg_game.scene, TYP_SHADER, INTERN("shader_lines"));
     DLB_ASSERT(tg_shader_lines);
 
     tg_shader_quads =
-        ta_scene_find(tg_game.scene, TA_SHADER, INTERN("shader_quads"));
+        ta_scene_find(tg_game.scene, TYP_SHADER, INTERN("shader_quads"));
     DLB_ASSERT(tg_shader_quads);
 
 	tg_shader_cubemap =
-		ta_scene_find(tg_game.scene, TA_SHADER, INTERN("shader_cubemap"));
+		ta_scene_find(tg_game.scene, TYP_SHADER, INTERN("shader_cubemap"));
 	DLB_ASSERT(tg_shader_cubemap);
 
     tg_shader_shadow =
-        ta_scene_find(tg_game.scene, TA_SHADER, INTERN("shader_shadow"));
+        ta_scene_find(tg_game.scene, TYP_SHADER, INTERN("shader_shadow"));
     DLB_ASSERT(tg_shader_shadow);
 
     ////////////////////////////////////////////////////////////////////////////

@@ -264,7 +264,7 @@ static void game_player_shoot()
     static double last_oh_no_ms = 0;
 
     ta_audio_source *src_gun =
-        ta_scene_find(tg_game.scene, TA_AUDIO_SOURCE, INTERN("src_gun"));
+        ta_scene_find(tg_game.scene, TYP_AUDIO_SOURCE, INTERN("src_gun"));
 
     double now_ms = ta_timer_elapsed_ms();
 
@@ -277,7 +277,7 @@ static void game_player_shoot()
         }
 
         ta_audio_buffer *sfx_gunshot =
-            ta_scene_find(tg_game.scene, TA_AUDIO_BUFFER, INTERN("sfx_gunshot"));
+            ta_scene_find(tg_game.scene, TYP_AUDIO_BUFFER, INTERN("sfx_gunshot"));
         ta_audio_source_set_buffer(src_gun, sfx_gunshot);
         ta_audio_source_play(src_gun);
         last_shoot_ms = ta_timer_elapsed_ms();
@@ -290,7 +290,7 @@ static void game_player_shoot()
             }
 
             ta_audio_buffer *sfx_cock =
-                ta_scene_find(tg_game.scene, TA_AUDIO_BUFFER, INTERN("sfx_cock"));
+                ta_scene_find(tg_game.scene, TYP_AUDIO_BUFFER, INTERN("sfx_cock"));
             ta_audio_source_set_buffer(src_gun, sfx_cock);
             ta_audio_source_play(src_gun);
             last_cock_ms = ta_timer_elapsed_ms();
@@ -306,7 +306,7 @@ static void game_player_shoot()
             }
 
             ta_audio_buffer *sfx_cock =
-                ta_scene_find(tg_game.scene, TA_AUDIO_BUFFER, INTERN("sfx_oh_no"));
+                ta_scene_find(tg_game.scene, TYP_AUDIO_BUFFER, INTERN("sfx_oh_no"));
             ta_audio_source_set_buffer(src_gun, sfx_cock);
             ta_audio_source_play(src_gun);
             last_oh_no_ms = ta_timer_elapsed_ms();
@@ -396,7 +396,7 @@ void ta_game_events()
                 // TODO: Should audio source subscribe to this event somehow,
                 //       or should the button queue the play request itself?
                 e_button *button =
-                    ta_scene_find(tg_game.scene, TA_BUTTON, event.data.button.button_uid);
+                    ta_scene_find(tg_game.scene, TYP_BUTTON, event.data.button.button_uid);
                 ta_audio_buffer *buffer = e_button_sfx_activated(button);
                 if (buffer) {
                     ta_audio_source *source = e_button_audio_source(button);
