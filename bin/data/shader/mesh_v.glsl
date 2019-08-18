@@ -24,5 +24,5 @@ void main()
     vertex.position = pos.xyz;
 	vertex.color = attr_color;
 	vertex.uv = attr_uv;
-    vertex.normal = (u_model * vec4(attr_normal, 0.0)).xyz;
+    vertex.normal = normalize((u_model * vec4(attr_normal, 0.0)).xyz);
 }

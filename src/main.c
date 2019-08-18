@@ -145,9 +145,9 @@ int main(int argc, char *argv[])
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
 
-    tg_game.tex_orange = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_albedo"));
+    tg_game.tex_orange = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_test_diff"));
     DLB_ASSERT(tg_game.tex_orange && tg_game.tex_orange->gl_id);
-    tg_game.tex_red = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_genesis_metallic"));
+    tg_game.tex_red = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_test_mrao"));
     DLB_ASSERT(tg_game.tex_red && tg_game.tex_red->gl_id);
     tg_game.tex_audio_icon = ta_scene_find(tg_game.scene, TA_TEXTURE, INTERN("tex_audio_icon"));
     DLB_ASSERT(tg_game.tex_audio_icon && tg_game.tex_audio_icon->gl_id);

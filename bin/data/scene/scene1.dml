@@ -53,7 +53,14 @@ ta_light:
   disabled: false
   intensity: 0.5
   position: { x: 3.0, y: 4.0, z: 3.0 }
-  color:    { r: 1.0, g: 1.0, b: 0.4 }
+  color:    { r: 1.0, g: 1.0, b: 0.1 }
+  type: 2  # TA_LIGHT_POINT
+ta_light:
+  uid: "light_point_room3"
+  disabled: false
+  intensity: 2.0
+  position: { x: 5.0, y: 4.0, z: -28.0 }
+  color:    { r: 1.0, g: 0.1, b: 1.0 }
   type: 2  # TA_LIGHT_POINT
 ta_light:
   uid: "light_point_attic"
@@ -62,27 +69,30 @@ ta_light:
   position: { x: 3.0, y: 12.0, z: 3.0 }
   color:    { r: 1.0, g: 1.0, b: 0.4 }
   type: 2  # TA_LIGHT_POINT
-ta_light:
-  uid: "light_point_room3"
-  disabled: false
-  intensity: 2.0
-  position: { x: 5.0, y: 4.0, z: -28.0 }
-  color:    { r: 0.2, g: 0.2, b: 1.0 }
-  type: 2  # TA_LIGHT_POINT
 
 #-------------------------------------------------------------------------------
 # Textures
 #-------------------------------------------------------------------------------
 ta_texture:
-  uid: "tex_genesis_albedo"
-  path: "data/texture/genesis_albedo.png"
+  uid: "tex_test_diff"
+  path: "data/texture/pbr_default_0.png"
+  linear: false
+  channels: 4
+ta_texture:
+  uid: "tex_test_mrao"
+  path: "data/texture/pbr_default_1.png"
   linear: true
   channels: 4
 ta_texture:
-  uid: "tex_genesis_metallic"
-  path: "data/texture/genesis_metallic.png"
+  uid: "tex_cobble_diff"
+  path: "data/texture/cobble_diff.png"
+  linear: false
+  channels: 4
+ta_texture:
+  uid: "tex_cobble_mrao"
+  path: "data/texture/cobble_mrao.png"
   linear: true
-  channels: 1
+  channels: 4
 ta_texture:
   uid: "tex_audio_icon"
   path: "data/texture/audio_icon.png"
@@ -93,10 +103,15 @@ ta_texture:
 # Materials
 #-------------------------------------------------------------------------------
 ta_material:
-  uid: "mat_genesis"
+  uid: "mat_test"
   shader_uid: "shader_mesh"
-  texture_albedo_uid: "tex_genesis_albedo"
-  texture_metallic_uid: "tex_genesis_metallic"
+  texture_albedo_uid: "tex_test_diff"
+  texture_metallic_uid: "tex_test_mrao"
+ta_material:
+  uid: "mat_cobble"
+  shader_uid: "shader_mesh"
+  texture_albedo_uid: "tex_cobble_diff"
+  texture_metallic_uid: "tex_cobble_mrao"
 
 #-------------------------------------------------------------------------------
 # Mesh groups
@@ -214,7 +229,7 @@ ta_rigid_body:
 #   mass: 0.0
 ta_node:
   uid: "node_chamber_0001"
-  material_uid: "mat_genesis"
+  material_uid: "mat_test"
   mesh_group_uid: "mesh_group_chamber_0001"
   rigid_body_uid: "rb_node_chamber_0001"
   invisible: false
@@ -222,7 +237,7 @@ ta_node:
 
 ta_node:
   uid: "node_wakeup"
-  material_uid: "mat_genesis"
+  material_uid: "mat_cobble"
   mesh_group_uid: "mesh_group_wakeup"
   transform:
     position: { x: 0.0, y: 8.0, z: 0.0 }
@@ -245,7 +260,7 @@ e_button:
   sfx_deactivated_uid: "sfx_button_deactivated"
 ta_node:
   uid: "node_button_0001"
-  material_uid: "mat_genesis"
+  material_uid: "mat_test"
   mesh_group_uid: "mesh_group_button"
   rigid_body_uid: "rb_button_0001"
   button_uid: "button_0001"
@@ -266,6 +281,7 @@ ta_rigid_body:
         radius: 1.0
 ta_node:
   uid: "node_player"
+  material_uid: "mat_cobble"
   mesh_group_uid: "mesh_group_prim_cube"
   rigid_body_uid: "rb_node_player"
   # TODO: Make player it's own class like button and handle dialogue in there
@@ -387,6 +403,13 @@ ta_shader:
     { name: "u_view",         type: 8 },  # TA_GLSL_MAT4
     { name: "u_model",        type: 8 },  # TA_GLSL_MAT4
     { name: "u_camera_pos",   type: 5 },  # TA_GLSL_VEC3
+    { name: "u_material",     type: 9,    # TA_GLSL_STRUCT
+      properties: [
+        { name: "u_material.tex0", type: 3 },  # TA_GLSL_SAMPLER2D
+        { name: "u_material.tex1", type: 3 },  # TA_GLSL_SAMPLER2D
+        { name: "u_material.tex2", type: 3 },  # TA_GLSL_SAMPLER2D
+      ]
+    },
     { name: "u_tex_albedo",   type: 3 },  # TA_GLSL_SAMPLER2D
     { name: "u_tex_metallic", type: 3 },  # TA_GLSL_SAMPLER2D
     { name: "u_lights_count", type: 1 },  # TA_GLSL_GLUINT

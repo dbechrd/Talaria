@@ -33,11 +33,12 @@ uniform vec3 u_camera_pos;
 // Non-metal = 0.0, metal = 1.0. There can be transitional gray values that
 // indicate something covering the raw metal such as dirt.
 
-#define mtl_albedo      pow(tex_albedo.rgb, vec3(2.2))
+//#define mtl_albedo      pow(tex_albedo.rgb, vec3(2.2))
+#define mtl_albedo      tex_albedo.rgb
 #define mtl_opacity     tex_albedo.a
 #define mtl_metallic    tex_metallic.r
-#define mtl_roughness   0.4
-#define mtl_ao          1.0
+#define mtl_roughness   tex_metallic.g
+#define mtl_ao          tex_metallic.b
 
 //#define mtl_albedo    texture(material.tex0, vertex.uv).rgb
 //#define mtl_opacity   texture(material.tex0, vertex.uv).a
@@ -49,7 +50,7 @@ uniform vec3 u_camera_pos;
 
 struct Material {
     // rgb: metallic ? specular.rgb : albedo.rgb
-    //   a: metallic ?            1 : opacity
+    //   a: metallic ?            1 : albedo.a
     sampler2D tex0;
 
     // r: metallic
@@ -62,7 +63,7 @@ struct Material {
     //   a: UNUSED
     sampler2D tex2;
 };
-uniform Material material;
+uniform Material u_material;
 
 uniform sampler2D u_tex_albedo;
 uniform sampler2D u_tex_metallic;

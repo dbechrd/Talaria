@@ -1052,14 +1052,19 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
             ta_sphere sphere = { 0 };
             sphere.center = cam->position;
             sphere.radius = 0.2f;
-            ta_primitive_push_sphere(sphere, TA_COLOR_GREEN);
+            ta_primitive_push_rgb_sphere(sphere);
+            //ta_primitive_push_sphere(sphere, TA_COLOR_GREEN);
         }
     }
     dlb_vec_each(ta_light *, light, scene->pools[TA_LIGHT]) {
         ta_sphere sphere = { 0 };
         sphere.center = light->position;
         sphere.radius = 0.2f;
-        ta_primitive_push_sphere(sphere, TA_COLOR_YELLOW);
+        ta_rgba color = { 0 };
+        color.r = light->color.r;
+        color.g = light->color.g;
+        color.b = light->color.b;
+        ta_primitive_push_sphere(sphere, color);
     }
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
