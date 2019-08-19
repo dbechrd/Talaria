@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
     double ms_frame_prev = ms_frame_first;
     double ms_frame_accum = 0;
 
-    float light_deg = 0;
+    //float light_deg = 0;
 
     while (tg_game.state != TA_GAME_STATE_QUIT) {
         double ms_frame_start = ta_timer_elapsed_ms();
@@ -431,7 +431,7 @@ int main(int argc, char *argv[])
         double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
         char frame_time_buf[40] = { 0 };
         int len = snprintf(CSTR(frame_time_buf), "Frame %8llu\n%.2f ms", frame_num, ms_frame_time);
-        ta_font_push_text(&tooltip_fg_queue, tg_game.font, -130.0f, 0.0f, UI_LAYER_HUD, CSTR(frame_time_buf), true, 0, 0);
+        ta_font_push_text(&tooltip_fg_queue, tg_game.font, -130.0f, 0.0f, UI_LAYER_HUD, frame_time_buf, len, true, 0, 0);
         ta_font_render(tooltip_fg_queue, tg_game.font, 0, true, true);
 #endif
 

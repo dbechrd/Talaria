@@ -39,7 +39,7 @@ void ta_font_load_path(ta_font *font, const char *path)
 
     font->first_char = 32;
     font->last_char = 126;
-    int num_chars = font->last_char - font->first_char;
+    int num_chars = (font->last_char + 1) - font->first_char;
     font->chars = dlb_calloc(num_chars, sizeof(*font->chars));
     DLB_ASSERT(font->chars);
 
@@ -165,16 +165,13 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
     rect.x = SCREEN_WRAP_X(x);
     rect.y = SCREEN_WRAP_X(y);
 
-    const float shadow_offset_x = 1.0f;
-    const float shadow_offset_y = 1.0f;
     const float layer_dir = (screen) ? 1.0f : -1.0f;
     float layer_offset = z * layer_dir;
 
-
     float cur_x = rect.x;
     float cur_y = rect.y + font->ascent;
-    float ndc_x = NDC_X(rect.x);
-    float ndc_y = NDC_Y(rect.y);
+    //float ndc_x = NDC_X(rect.x);
+    //float ndc_y = NDC_Y(rect.y);
 
     // Loop until i == text_len or, if text_len is 0, we hit a nil character
     for (u32 i = 0; ((text_len) ? i < text_len : text[i]); i++) {
@@ -202,16 +199,14 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
                 rect_uv.uv1.v = v;
             }
 
-#if 1
+#if 0
             // HACK: Cull characters that would be cut off by edge of screen
             //       to prevent weird wrapping glitches in screen mode.
             float ndc_x0 = NDC_X(rect_uv.rect.x);
             float ndc_x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
             float ndc_y0 = NDC_Y(rect_uv.rect.y);
             float ndc_y1 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
-#endif
 
-#if 0
             if (!screen || text[i] == ' ' || (
                 ndc_x0 >= ndc_x && ndc_x1 > ndc_x &&
                 ndc_y0 <= ndc_y && ndc_y1 < ndc_y

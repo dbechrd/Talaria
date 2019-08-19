@@ -133,15 +133,18 @@ static void event_sdl_poll()
                                 tg_game.text_entry.entry->cursor--;
                             }
                             break;
+                        } case SDL_SCANCODE_RETURN: {
+                            dlb_vec_push(tg_game.text_entry.entry->lbuffer, '\n');
+                            tg_game.text_entry.entry->cursor++;
+                            tg_game.text_entry.entry->dirty = true;
+                            break;
+                        }
 #if 0
                         } case SDL_SCANCODE_DOWN: {
                             break;
                         } case SDL_SCANCODE_UP: {
                             break;
-#endif
-                        }
-#if 0
-                        case SDL_SCANCODE_PAGEUP: {
+                        } case SDL_SCANCODE_PAGEUP: {
                             SDL_StartTextInput();
                             break;
                         } case SDL_SCANCODE_PAGEDOWN: {

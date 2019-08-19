@@ -234,8 +234,13 @@ void ta_game_init()
 
 void ta_game_state_set(ta_game_state state)
 {
-    ta_log_write(tg_debug_log, "[Game] State = %s\n", game_state_str(state));
+    if (state == tg_game.state) {
+        return;
+    }
+
+    tg_game.state_prev = tg_game.state;
     tg_game.state = state;
+    ta_log_write(tg_debug_log, "[Game] State = %s\n", game_state_str(state));
     switch (tg_game.state) {
         case TA_GAME_STATE_PLAY:
             tg_game.camera = tg_game.camera_player;

@@ -583,10 +583,11 @@ typedef struct {
 static unsigned long hash_djb2(const unsigned char *str)
 {
 	unsigned long hash = 5381;
-	int c;
+    const unsigned char *cp = str;
 
-	while ((c = *str++)) {
-		hash = ((hash << 5) + hash) + (unsigned long)(c);
+	while (*cp) {
+		hash = ((hash << 5) + hash) + (unsigned long)(*cp);
+        cp++;
 	}
 
 	return hash;

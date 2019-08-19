@@ -25,7 +25,6 @@ typedef struct text_entry_settings {
     u32 cursor;  // index of next character, 0 = before first char, len = after last char
     u32 selection_start;
     u32 selection_len;
-    ta_game_state prev_state;
 } text_entry_settings;
 
 typedef bool text_entry_filter(char c);
@@ -33,6 +32,7 @@ typedef bool text_entry_filter(char c);
 // WARNING: Any of these pointers will be invalidated if their pool resizes
 typedef struct ta_game {
     ta_game_state state;
+    ta_game_state state_prev;
     ta_audio_listener *audio;
     ta_audio_source *background_music;
     ta_font *font;

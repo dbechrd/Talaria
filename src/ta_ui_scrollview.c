@@ -12,7 +12,7 @@
 
 #define UI_DEBUG_CONTAINERS 0
 
-#define TEXTBOX_PAD_CURSOR  4
+#define TEXTBOX_PAD_CURSOR  0
 #define WIDGET_PAD          1
 #define SCROLL_SPEED        20
 
@@ -226,11 +226,13 @@ static u32 ui_frame_start(ui_frame_type type, const char *name,
     //    ta_primitive_render(true, true);
     //}
 
-    // TODO: Should clip rect contain pad or not? Not sure.. see how it looks.
-    ta_rect clip_rect = rect_shrink(frame->rect, frame->pad);
-    glEnable(GL_SCISSOR_TEST);
-    int inv_y = tg_window.rect.h - (clip_rect.y + clip_rect.h);
-    glScissor(clip_rect.x, inv_y, clip_rect.w, clip_rect.h);
+    if (frame->type != UI_TEXTBOX) {
+        // TODO: Should clip rect contain pad or not? Not sure.. see how it looks.
+        ta_rect clip_rect = rect_shrink(frame->rect, frame->pad);
+        glEnable(GL_SCISSOR_TEST);
+        int inv_y = tg_window.rect.h - (clip_rect.y + clip_rect.h);
+        glScissor(clip_rect.x, inv_y, clip_rect.w, clip_rect.h);
+    }
 
     return frame->index;
 }
@@ -274,6 +276,7 @@ void ta_ui_window_begin(const char *name, const ta_size *size,
     glClear(GL_DEPTH_BUFFER_BIT);
 
     u32 frame_idx = ui_frame_start(UI_WINDOW, name, size, 0, pad);
+    UNUSED(frame_idx);
     UNUSED(scroll_v);
 
 #if 0
@@ -440,7 +443,9 @@ bool ta_ui_button_toggle(const char *name, const ta_size *size,
 }
 
 bool ui_textbox_filter(char c) {
-    if (c >= 'a' && c <= 'z') {
+    if ((c >= tg_game.font->first_char && c <= tg_game.font->last_char) ||
+        c == '\n')
+    {
         return true;
     }
     return false;
@@ -466,17 +471,19 @@ bool ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
             true, text_entry->cursor, &cursor_x);
         frame->content_size.w += (int)text_rect.w;
         frame->content_size.h += (int)text_rect.h;
+
+        // Auto-resize frame based on contents
+        frame->rect.w = MAX(frame->rect.w, frame->content_size.w);
+        frame->rect.h = MAX(frame->rect.h, frame->content_size.h);
     }
 
-    ta_rgba bg_color = TA_COLOR_GRAY2;
+    ta_rgba bg_color = TA_COLOR_BLACK;
     if (tg_game.text_entry.entry == text_entry) {
         bg_color = TA_COLOR_BLUE;
     }
 
     // Render background
     ta_rect bg_rect = frame->rect;
-    //bg_rect.w = (int)(text_rect.w + 0.5f);
-    //bg_rect.h = (int)(text_rect.h + 0.5f);
     ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, false);
 
@@ -486,11 +493,7 @@ bool ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
         dlb_vec_clear(text_queue);
     }
 
-    ui_frame_end(frame_idx);
-
-    // TODO: Remove scissors and move back up before frame_end, was just debugging
     // Render cursor
-    glDisable(GL_SCISSOR_TEST);
     ta_rect cursor_rect = bg_rect;
     cursor_rect.x = (int)cursor_x;
     cursor_rect.y += TEXTBOX_PAD_CURSOR;
@@ -498,8 +501,8 @@ bool ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
     cursor_rect.h -= TEXTBOX_PAD_CURSOR * 2;
     ta_primitive_push_rect(cursor_rect, TA_COLOR_RED, UI_LAYER_EDIT_2);
     ta_primitive_render(true, false);
-    glEnable(GL_SCISSOR_TEST);
 
+    ui_frame_end(frame_idx);
     return last_frame_state.pressed;
 }
 
@@ -592,31 +595,34 @@ void ta_ui_test()
     //       at render time (make sure to update viewport correctly).
     ta_ui_window_begin(INTERN("test_window"), &TA_SIZE(300, 400), &TA_RECT1(2), 0);
 
-    ta_ui_row_begin();
-    static text_entry_settings text_entry;
-    if (!text_entry.lbuffer) {
-        const char default_text[] = "Text: "; //|`_,_`|";
-        //dlb_vec_alloc_size(text_settings.buffer, 32);
-        const char *c = default_text;
-        while (*c) {
-            dlb_vec_push(text_entry.lbuffer, *c);
-            c++;
+    static text_entry_settings text_entry[2];
+    for (int i = 0; i < ARRAY_COUNT(text_entry); i++) {
+        ta_ui_row_begin();
+        if (!text_entry[i].lbuffer) {
+            const char default_text[] = "Text: "; //|`_,_`|";
+            //dlb_vec_alloc_size(text_settings.buffer, 32);
+            const char *c = default_text;
+            while (*c) {
+                dlb_vec_push(text_entry[i].lbuffer, *c);
+                c++;
+            }
+            text_entry[i].dirty = true;
+            text_entry[i].cursor = dlb_vec_len(text_entry[i].lbuffer);
         }
-        text_entry.dirty = true;
-        text_entry.cursor = dlb_vec_len(text_entry.lbuffer);
-    }
-    text_entry_update(&text_entry);
-    if (ta_ui_textbox(INTERN("test_textbox"), &TA_SIZE(300, 30), 0, 0, &text_entry)) {
-        tg_game.text_entry.entry = &text_entry;
-        tg_game.text_entry.filter = &ui_textbox_filter;
-        tg_game.text_entry.entry->prev_state = tg_game.state;
-        ta_game_state_set(TA_GAME_STATE_TEXT_ENTRY);
-    } else if (tg_game.text_entry.entry == &text_entry &&
-        ta_button_state_pressed(&tg_mouse.left))
-    {
-        ta_game_state_set(tg_game.text_entry.entry->prev_state);
-        tg_game.text_entry.entry = 0;
-        tg_game.text_entry.filter = 0;
+        text_entry_update(&text_entry[i]);
+        if (ta_ui_textbox(INTERN("test_textbox"), &TA_SIZE(300, 17), &TA_RECT(0, 0, 0, 2), 0,
+            &text_entry[i]))
+        {
+            tg_game.text_entry.entry = &text_entry[i];
+            tg_game.text_entry.filter = &ui_textbox_filter;
+            ta_game_state_set(TA_GAME_STATE_TEXT_ENTRY);
+        } else if (tg_game.text_entry.entry == &text_entry[i] &&
+            ta_button_state_pressed(&tg_mouse.left))
+        {
+            ta_game_state_set(tg_game.state_prev);
+            tg_game.text_entry.entry = 0;
+            tg_game.text_entry.filter = 0;
+        }
     }
 
     enum {
