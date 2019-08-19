@@ -243,11 +243,14 @@ int main(int argc, char *argv[])
                 vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
             ta_camera_update(tg_game.camera_player, sim_dt);
 
+#if 0
+            // HACK: Make point light rotate in a circle
             light_deg += 0.005f;
             if (light_deg >= 360.0f) light_deg = 0.0f;
 
             tg_game.lights[1].position.x = cosf(light_deg) * 4.0f;
             tg_game.lights[1].position.z = sinf(light_deg) * 4.0f;
+#endif
 
             // HACK: Make point light follow player camera
             //tg_game.lights[1]->position = tg_game.camera_player->position;

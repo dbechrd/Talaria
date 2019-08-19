@@ -165,6 +165,8 @@ int quat_ident(ta_quat q);
 int quat_equals(ta_quat a, ta_quat b);
 ta_quat quat_from_axis_angle(ta_vec3 axis, float deg);
 ta_quat quat_from_vec_vec(ta_vec3 from, ta_vec3 to);
+float quat_norm_sq(ta_quat q);
+float quat_norm(ta_quat q);
 ta_quat quat_normalize(ta_quat q);
 ta_quat quat_conjugate(ta_quat q);
 ta_quat quat_inverse(ta_quat q);

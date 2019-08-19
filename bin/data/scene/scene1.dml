@@ -8,134 +8,6 @@ ta_font:
   shader_uid: "shader_text"
 
 #-------------------------------------------------------------------------------
-# Cameras
-#-------------------------------------------------------------------------------
-ta_camera:
-  uid: "cam_player"
-  position: { x: 0.0, y: 1.7, z: 24.0 }
-  position_smooth: 0.05
-  position_target_vel: 0.2
-  yaw: 90.0
-  yaw_smooth: 0.7
-  pitch: 0.0
-  pitch_smooth: 0.7
-  pitch_min: -75.0
-  pitch_max: 75.0
-  fov: 65.0
-  znear: 0.1
-ta_camera:
-  uid: "cam_freecam"
-  position: { x: 0.0, y: 3.7, z: 7.0 }
-  position_smooth: 0.1
-  position_target_vel: 0.2
-  yaw: 90.0
-  yaw_smooth: 0.7
-  pitch: -10.0
-  pitch_smooth: 0.7
-  pitch_min: -90.0
-  pitch_max: 90.0
-  fov: 75.0
-  znear: 0.1
-
-#-------------------------------------------------------------------------------
-# Lights
-#-------------------------------------------------------------------------------
-ta_light:
-  uid: "light_sun"
-  disabled: true
-  intensity: 1.0
-  color: { r: 1.0, g: 1.0, b: 1.0 }
-  type: 1  # TA_LIGHT_DIRECTIONAL
-  directional:
-    direction: { x: -0.2, y: -1.0, z: 1.0 }
-ta_light:
-  uid: "light_point_room2"
-  disabled: false
-  intensity: 0.5
-  position: { x: 3.0, y: 4.0, z: 3.0 }
-  color:    { r: 1.0, g: 1.0, b: 1.0 }
-  type: 2  # TA_LIGHT_POINT
-ta_light:
-  uid: "light_point_room3"
-  disabled: false
-  intensity: 2.0
-  position: { x: 5.0, y: 4.0, z: -28.0 }
-  color:    { r: 1.0, g: 0.1, b: 1.0 }
-  type: 2  # TA_LIGHT_POINT
-ta_light:
-  uid: "light_point_attic"
-  disabled: false
-  intensity: 1.0
-  position: { x: 3.0, y: 12.0, z: 3.0 }
-  color:    { r: 1.0, g: 1.0, b: 0.4 }
-  type: 2  # TA_LIGHT_POINT
-
-#-------------------------------------------------------------------------------
-# Textures
-#-------------------------------------------------------------------------------
-ta_texture:
-  uid: "tex_test_diff"
-  path: "data/texture/pbr_default_0.png"
-  linear: false
-  channels: 4
-ta_texture:
-  uid: "tex_test_mrao"
-  path: "data/texture/pbr_default_1.png"
-  linear: true
-  channels: 4
-ta_texture:
-  uid: "tex_cobble_diff"
-  path: "data/texture/cobble_diff.png"
-  linear: false
-  channels: 4
-ta_texture:
-  uid: "tex_cobble_mrao"
-  path: "data/texture/cobble_mrao.png"
-  linear: true
-  channels: 4
-ta_texture:
-  uid: "tex_audio_icon"
-  path: "data/texture/audio_icon.png"
-  linear: true
-  channels: 4
-
-#-------------------------------------------------------------------------------
-# Materials
-#-------------------------------------------------------------------------------
-ta_material:
-  uid: "mat_test"
-  shader_uid: "shader_mesh"
-  texture_albedo_uid: "tex_test_diff"
-  texture_metallic_uid: "tex_test_mrao"
-ta_material:
-  uid: "mat_cobble"
-  shader_uid: "shader_mesh"
-  texture_albedo_uid: "tex_cobble_diff"
-  texture_metallic_uid: "tex_cobble_mrao"
-
-#-------------------------------------------------------------------------------
-# Mesh groups
-#-------------------------------------------------------------------------------
-ta_mesh_group:
-  uid: "mesh_group_prim_cube"
-  path: "data/mesh/prim_cube.obj"
-ta_mesh_group:
-  uid: "mesh_group_prim_sphere"
-  path: "data/mesh/prim_sphere.obj"
-ta_mesh_group:
-  uid: "mesh_group_chamber_0001"
-  path: "data/mesh/chamber0001.obj"
-ta_mesh_group:
-  uid: "mesh_group_wakeup"
-  path: "data/mesh/wakeup.obj"
-ta_mesh_group:
-  uid: "mesh_group_button"
-  path: "data/mesh/button.obj"
-ta_mesh_group:
-  uid: "mesh_group_letter_r"
-  path: "data/mesh/letter_r.obj"
-
-#-------------------------------------------------------------------------------
 # Music / ambience
 #-------------------------------------------------------------------------------
 ta_audio_buffer:
@@ -182,6 +54,157 @@ ta_audio_source:
 ta_audio_source:
   uid: "src_explosion"
   audio_buffer_uid: "sfx_explosion"
+
+#-------------------------------------------------------------------------------
+# Cameras
+#-------------------------------------------------------------------------------
+ta_camera:
+  uid: "cam_player"
+  position: { x: 0.0, y: 1.7, z: 24.0 }
+  position_smooth: 0.05
+  position_target_vel: 0.2
+  yaw: 90.0
+  yaw_smooth: 0.7
+  pitch: 0.0
+  pitch_smooth: 0.7
+  pitch_min: -75.0
+  pitch_max: 75.0
+  fov: 65.0
+  znear: 0.1
+ta_camera:
+  uid: "cam_freecam"
+  position: { x: 0.0, y: 3.7, z: 7.0 }
+  position_smooth: 0.1
+  position_target_vel: 0.2
+  yaw: 90.0
+  yaw_smooth: 0.7
+  pitch: -10.0
+  pitch_smooth: 0.7
+  pitch_min: -90.0
+  pitch_max: 90.0
+  fov: 75.0
+  znear: 0.1
+
+#-------------------------------------------------------------------------------
+# Lights
+#-------------------------------------------------------------------------------
+ta_light:
+  uid: "light_sun"
+  disabled: true
+  intensity: 1.0
+  color: { r: 1.0, g: 1.0, b: 1.0 }
+  type: 1  # TA_LIGHT_DIRECTIONAL
+  directional:
+    direction: { x: -0.2, y: -1.0, z: 1.0 }
+ta_light:
+  uid: "light_point_room2"
+  disabled: false
+  intensity: 1.0
+  position: { x: 3.0, y: 4.0, z: 3.0 }
+  color:    { r: 1.0, g: 1.0, b: 1.0 }
+  type: 2  # TA_LIGHT_POINT
+  shadowmap:
+    resolution: 1024
+    znear: 0.1
+    zfar: 40.0
+ta_light:
+  uid: "light_point_room3"
+  disabled: false
+  intensity: 1.0
+  position: { x: 5.0, y: 4.0, z: -28.0 }
+  color:    { r: 1.0, g: 0.1, b: 1.0 }
+  type: 2  # TA_LIGHT_POINT
+ta_light:
+  uid: "light_point_attic"
+  disabled: false
+  intensity: 1.0
+  position: { x: 3.0, y: 12.0, z: 3.0 }
+  color:    { r: 1.0, g: 1.0, b: 0.4 }
+  type: 2  # TA_LIGHT_POINT
+
+#-------------------------------------------------------------------------------
+# Textures
+#-------------------------------------------------------------------------------
+ta_texture:
+  uid: "tex_red_diff"
+  pixels: [{ r: 0, g: 45, b: 255, a: 255 }]
+  width: 1
+  height: 1
+  linear: true
+  channels: 4
+ta_texture:
+  uid: "tex_red_mrao"
+  pixels: [{ r: 255, g: 90, b: 0, a: 0 }]
+  width: 1
+  height: 1
+  linear: true
+  channels: 4
+ta_texture:
+  uid: "tex_test_diff"
+  path: "data/texture/pbr_default_0.png"
+  linear: false
+  channels: 4
+ta_texture:
+  uid: "tex_test_mrao"
+  path: "data/texture/pbr_default_1.png"
+  linear: true
+  channels: 4
+ta_texture:
+  uid: "tex_cobble_diff"
+  path: "data/texture/cobble_diff.png"
+  linear: false
+  channels: 4
+ta_texture:
+  uid: "tex_cobble_mrao"
+  path: "data/texture/cobble_mrao.png"
+  linear: true
+  channels: 4
+ta_texture:
+  uid: "tex_audio_icon"
+  path: "data/texture/audio_icon.png"
+  linear: true
+  channels: 4
+
+#-------------------------------------------------------------------------------
+# Materials
+#-------------------------------------------------------------------------------
+ta_material:
+  uid: "mat_red"
+  shader_uid: "shader_mesh"
+  texture_albedo_uid: "tex_red_diff"
+  texture_metallic_uid: "tex_red_mrao"
+ta_material:
+  uid: "mat_test"
+  shader_uid: "shader_mesh"
+  texture_albedo_uid: "tex_test_diff"
+  texture_metallic_uid: "tex_test_mrao"
+ta_material:
+  uid: "mat_cobble"
+  shader_uid: "shader_mesh"
+  texture_albedo_uid: "tex_cobble_diff"
+  texture_metallic_uid: "tex_cobble_mrao"
+
+#-------------------------------------------------------------------------------
+# Mesh groups
+#-------------------------------------------------------------------------------
+ta_mesh_group:
+  uid: "mesh_group_prim_cube"
+  path: "data/mesh/prim_cube.obj"
+ta_mesh_group:
+  uid: "mesh_group_prim_sphere"
+  path: "data/mesh/prim_sphere.obj"
+ta_mesh_group:
+  uid: "mesh_group_chamber_0001"
+  path: "data/mesh/chamber0001.obj"
+ta_mesh_group:
+  uid: "mesh_group_wakeup"
+  path: "data/mesh/wakeup.obj"
+ta_mesh_group:
+  uid: "mesh_group_button"
+  path: "data/mesh/button.obj"
+ta_mesh_group:
+  uid: "mesh_group_letter_r"
+  path: "data/mesh/letter_r.obj"
 
 #-------------------------------------------------------------------------------
 # Entities
@@ -301,6 +324,7 @@ ta_rigid_body:
         radius: 1.0
 ta_node:
   uid: "node_sphere1"
+  material_uid: "mat_test"
   mesh_group_uid: "mesh_group_prim_sphere"
   rigid_body_uid: "rb_node_sphere1"
   cast_shadows: true
@@ -315,6 +339,7 @@ ta_rigid_body:
         radius: 1.0
 ta_node:
   uid: "node_sphere2"
+  material_uid: "mat_red"
   mesh_group_uid: "mesh_group_prim_sphere"
   rigid_body_uid: "rb_node_sphere2"
   cast_shadows: true

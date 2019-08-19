@@ -333,7 +333,7 @@ static void tokens_print(FILE *f, token *tokens)
                 break;
             }
             case TOKEN_COMMENT: case TOKEN_IDENTIFIER: case TOKEN_STRING:
-            case TOKEN_NULL: case TOKEN_BOOL:
+            case TOKEN_NULL:
             {
                 if (tok->type == TOKEN_COMMENT) {
                     fprintf(f, "#");
@@ -350,6 +350,9 @@ static void tokens_print(FILE *f, token *tokens)
                 } else if (tok->type == TOKEN_STRING) {
                     fprintf(f, "\"");
                 }
+                break;
+            } case TOKEN_BOOL: {
+                fprintf(f, tok->value.as_bool ? "true" : "false");
                 break;
             } case TOKEN_INT: {
                 fprintf(f, "%d", tok->value.as_int);
@@ -378,6 +381,7 @@ static void tokens_print(FILE *f, token *tokens)
         }
     }
     fprintf(f, "\n");
+    fflush(f);
 }
 
 static void tokens_print_debug(FILE *f, token *tokens)
@@ -396,7 +400,7 @@ static void tokens_print_debug(FILE *f, token *tokens)
                 break;
             }
             case TOKEN_COMMENT: case TOKEN_IDENTIFIER: case TOKEN_STRING:
-            case TOKEN_NULL: case TOKEN_BOOL:
+            case TOKEN_NULL:
             {
                 if (tok->type == TOKEN_COMMENT) {
                     fprintf(f, "#");
@@ -413,6 +417,9 @@ static void tokens_print_debug(FILE *f, token *tokens)
                 } else if (tok->type == TOKEN_STRING) {
                     fprintf(f, "\"");
                 }
+                break;
+            } case TOKEN_BOOL: {
+                fprintf(f, tok->value.as_bool ? "true" : "false");
                 break;
             } case TOKEN_INT: {
                 fprintf(f, "%d", tok->value.as_int);
@@ -433,6 +440,7 @@ static void tokens_print_debug(FILE *f, token *tokens)
         fprintf(f, "\n");
     }
     fprintf(f, "\n");
+    fflush(f);
 }
 
 static void tokens_parse(ta_scene *scene, token *tokens)
@@ -462,9 +470,9 @@ static void tokens_parse(ta_scene *scene, token *tokens)
 
 #define BAD_TOKEN() PANIC("[%zd:%zd] Expected %s%s%s, found %s instead.\n", \
     tok->file_pos.line, tok->file_pos.column, \
-    ta_schema_field_type_str(stack[sp].type), \
-    stack[sp].array_len > 0 ? " (array)" : "", \
-    stack[sp].is_union_type > 0 ? " (union)" : "", \
+    ta_schema_field_type_str(stack[sp - (array > 0)].type), \
+    stack[sp - (array > 0)].array_len > 0 ? " (array)" : "", \
+    stack[sp - (array > 0)].is_union_type > 0 ? " (union)" : "", \
     token_type_str(tok->type))
 
     dlb_vec_each(token *, tok, tokens) {
@@ -603,7 +611,8 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 *fp = tok->value.as_bool;
                 break;
             } case TOKEN_INT: {
-                if (expect_array_start || (stack[sp].type != ATOM_INT &&
+                if (expect_array_start || (stack[sp].type != ATOM_UINT8 &&
+                                           stack[sp].type != ATOM_INT &&
                                            stack[sp].type != ATOM_UINT &&
                                            stack[sp].type != ATOM_FLOAT &&
                                            stack[sp].type != ATOM_ENUM))
@@ -643,8 +652,8 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     dlb_hash *hash = &scene->pooled_uids[stack[sp-1].type];
                     dlb_hash_insert(hash, tok->value.string, tok->length, (void *)pool_idx);
                 }
-#if 0
-                if (*fp == INTERN("shadow_test_1")) {
+#if 1
+                if (*fp == INTERN("tex_test_diff")) {
                     DLB_ASSERT(1);
                 }
 #endif
@@ -654,7 +663,11 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     BAD_TOKEN();
                 }
                 expect_array_start = false;
-                sp++;
+                if (stack[sp].type < TYP_COUNT) {
+                    sp++;
+                } else {
+                    DLB_ASSERT(!"Atomic vectors are not currently supported");
+                }
                 break;
             } case TOKEN_LIST_SEPARATOR: {
                 if (expect_array_start) {
@@ -668,8 +681,10 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 DLB_ASSERT(array);
                 array--;
                 DLB_ASSERT(sp);
-                stack[sp].type = 0;  // Cleanup: Easier debug
-                sp--;
+                if (stack[sp].type < TYP_COUNT) {
+                    stack[sp].type = 0;  // Cleanup: Easier debug
+                    sp--;
+                }
                 break;
             } case TOKEN_OBJECT_START: {
                 if (expect_array_start) {
@@ -1000,7 +1015,8 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 {
     glEnable(GL_CULL_FACE);
     //glCullFace(GL_FRONT);
-    glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
+    //glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
+    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
     ta_shader_bind(shader);
     dlb_vec_each(ta_light *, light, scene->pools[TYP_LIGHT]) {
@@ -1008,6 +1024,8 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
         if (light->type != TA_LIGHT_POINT) {
             continue;
         }
+        // TODO: Disable shadows per light (pass cast_shadows as light uniform)
+        //if (!light->cast_shadows) continue;
 
         ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &light->position);
         ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->shadowmap.zfar);
@@ -1057,14 +1075,19 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
         }
     }
     dlb_vec_each(ta_light *, light, scene->pools[TYP_LIGHT]) {
-        ta_sphere sphere = { 0 };
-        sphere.center = light->position;
-        sphere.radius = 0.2f;
+        ta_sphere light_pos = { 0 };
+        light_pos.center = light->position;
+        light_pos.radius = 0.2f;
         ta_rgba color = { 0 };
         color.r = light->color.r;
         color.g = light->color.g;
         color.b = light->color.b;
-        ta_primitive_push_sphere(sphere, color);
+        ta_primitive_push_sphere(light_pos, color);
+
+        ta_sphere light_aoe = { 0 };
+        light_aoe.center = light->position;
+        light_aoe.radius = light->shadowmap.zfar;
+        ta_primitive_push_rgb_sphere(light_aoe);
     }
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);

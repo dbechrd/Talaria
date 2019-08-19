@@ -6,7 +6,12 @@
 #include <math.h>
 
 #define GRAVITY -9.81f
-#define DV_EPSILON 0.001f  // minimum velocity required to affect position
+
+// HACK: These are closely related, and must be tuned to ensure velocity and
+//       orientation stop changing at the same time. Not sure if there's a way
+//       to calculate these analytically.
+#define DV_EPSILON 0.001f     // minimum velocity required to affect position
+#define DTHETA_EPSILON 0.08f  // minimum magnitude required to affect orientation
 
 typedef bool (intersector)(const ta_collider *a, const ta_collider *b,
     ta_manifold *manifold);
@@ -146,34 +151,20 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
         return;
     }
 
+    bool dirty = false;
+
     // TODO: Calculate this based on torque_accum and dt
     //body.m_angularVelocity +=  body.m_globalInverseInertiaTensor * (body.m_torqueAccumulator * dt);
-    if (!vec3_equal(body->ang_velocity, VEC3_ZERO)) {
+    float dtheta_mag = vec3_len(body->ang_velocity);
+    if (dtheta_mag > DTHETA_EPSILON) {
         ta_quat delta_orient = quat_from_axis_angle(
             vec3_normalize(body->ang_velocity),
             vec3_len(body->ang_velocity) //* dt  // TODO: angular dt??
         );
-        body->orientation = quat_normalize(quat_mul(delta_orient, body->orientation));
+        body->orientation = quat_normalize(quat_mul(delta_orient,
+            body->orientation));
+        dirty = true;
     }
-
-    ta_vec3 gravity = { 0.0f, GRAVITY, 0.0f };
-    ta_rigid_body_apply_force(body, gravity);
-
-    ta_vec3 acc = vec3_scalef(vec3_scalef(body->force_accum, dt), body->inv_mass);
-    body->velocity = vec3_add(body->velocity, acc);
-    ta_vec3 dv = vec3_scalef(body->velocity, dt);
-    float dv_mag = vec3_len(dv);
-    if (dv_mag > DV_EPSILON) {
-        body->position = vec3_add(body->position, dv);
-    }
-    update_collider_center(body);
-
-#if 1
-    // TODO: Implement drag in a way that doesn't vary with different timesteps
-    //       The "compound interest" problem.
-    body->velocity = vec3_scalef(body->velocity, 0.99f);
-    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.99f);
-#endif
 
     // Update global tensor when orientation changes
     if (!quat_equals(body->tensor_orientation, body->orientation)) {
@@ -186,6 +177,26 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
         body->inv_tensor_global = inv_t_global;
         body->tensor_orientation = body->orientation;
     }
+
+    ta_vec3 gravity = { 0.0f, GRAVITY, 0.0f };
+    ta_rigid_body_apply_force(body, gravity);
+
+    ta_vec3 acc = vec3_scalef(vec3_scalef(body->force_accum, dt), body->inv_mass);
+    body->velocity = vec3_add(body->velocity, acc);
+    ta_vec3 dv = vec3_scalef(body->velocity, dt);
+    float dv_mag = vec3_len(dv);
+    if (dv_mag > DV_EPSILON) {
+        body->position = vec3_add(body->position, dv);
+        dirty = true;
+    }
+    update_collider_center(body);
+
+#if 1
+    // TODO: Implement drag in a way that doesn't vary with different timesteps
+    //       The "compound interest" problem.
+    body->velocity = vec3_scalef(body->velocity, 0.99f);
+    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.99f);
+#endif
 
     // Reset accumulators
     body->force_accum = VEC3_ZERO;

@@ -2,6 +2,11 @@
 #include "dlb/dlb_types.h"
 #include <stdio.h>
 
+// HACK: Need to support atomic vectors for e.g. texture->pixels
+typedef struct ta_rgba_u8 {
+    u8 r, g, b, a;
+} ta_rgba_u8;
+
 typedef enum ta_schema_field_type {
     TYP_NULL,
 
@@ -29,11 +34,13 @@ typedef enum ta_schema_field_type {
     TYP_MAT4,
     TYP_RGB,
     TYP_RGBA,
+    TYP_RGBA_U8,
     TYP_TRANSFORM,
     TYP_LIGHT_AMBIENT,
     TYP_LIGHT_DIRECTIONAL,
     TYP_LIGHT_POINT,
     TYP_LIGHT_SPOT,
+    TYP_LIGHT_SHADOWMAP,
     TYP_SHADER_ATTRIBUTE,
     TYP_SHADER_UNIFORM,
     TYP_PLANE,
@@ -45,6 +52,7 @@ typedef enum ta_schema_field_type {
 
     // Atomic types
     ATOM_BOOL           = 0x400,
+    ATOM_UINT8,
     ATOM_INT,
     ATOM_UINT,
     ATOM_FLOAT,

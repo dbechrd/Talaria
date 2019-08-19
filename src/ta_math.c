@@ -256,11 +256,11 @@ ta_quat quat_from_vec_vec(ta_vec3 from, ta_vec3 to)
     result = quat_normalize(result);
     return result;
 }
-static float quat_norm_sq(ta_quat q)
+float quat_norm_sq(ta_quat q)
 {
     return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
 }
-static float quat_norm(ta_quat q)
+float quat_norm(ta_quat q)
 {
     return sqrtf(quat_norm_sq(q));
 }

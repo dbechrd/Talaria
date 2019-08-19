@@ -70,6 +70,8 @@ typedef struct ta_rigid_body {
     float ks;  // Coefficient of static friction
     float kd;  // Coefficient of dynamic friction
 
+    bool resting;
+
     bool trigger;   // If true, don't resolve positions
     //float gravity_scale;   // Is this useful?
     //u32 collision_groups;  // Bit flags; "layers"
