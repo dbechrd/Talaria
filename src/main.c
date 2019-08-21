@@ -388,14 +388,17 @@ int main(int argc, char *argv[])
 #if 1
         // TODO: Move "name tag" logic somewhere else
         {
+            static ta_rect_uv *tag_rects = 0;
+            ta_rectf tag_rect = ta_font_push_text(&tag_rects, tg_game.font,
+                CSTR("Player 1\nis da best"), false, 0, 0);
+            ta_vec3 tag_offset = tg_game.camera->right;
+
             ta_vec3 tag_pos = vec3_add(tg_game.player->transform.position, (ta_vec3){ 0.0f, 1.2f, 0.0f });
             ta_vec3 tag_to_cam = vec3_sub(tg_game.camera->position, tag_pos);
             tag_to_cam.z *= -1.0f;
             tag_to_cam.y *= 0.0f;
             float tag_scalef = MAX(vec3_len(tag_to_cam) * NDC_W(1.2), NDC_W(8));
 
-            ta_rectf tag_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, 0.0f, 0.0f, UI_LAYER_HUD, CSTR("Player 1"), false, 0, 0);
-            ta_vec3 tag_offset = tg_game.camera->right;
             // HACK: Why 4.0? Dunno proper way to center this.
             tag_offset = vec3_scalef(tag_offset, NDC_W(tag_rect.w) * 4.0f);
             tag_pos = vec3_sub(tag_pos, tag_offset);
@@ -424,15 +427,33 @@ int main(int argc, char *argv[])
             ta_shader_set_mat4(font_shader, SYM_U_PROJ, &tg_game.camera->projection);
             ta_shader_set_mat4(font_shader, SYM_U_VIEW, &tg_game.camera->look_at);
             ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform);
-            ta_font_render(tooltip_fg_queue, tg_game.font, 0, true, true);
+
+            // TODO: Move UI_LAYER_HUD out of push_rect_uv into tag_xform, or
+            //       make font_render's xform arguments stack with current value
+            //       of SYM_U_MODEL.
+            dlb_vec_each(ta_rect_uv *, rect, tag_rects) {
+                ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
+                    UI_LAYER_HUD, true);
+            }
+            dlb_vec_clearz(tag_rects);
+            ta_font_render(quads_queue, tg_game.font, 0, 0, 0, true, true);
         }
 
         // Print frame time on the screen
         double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
         char frame_time_buf[40] = { 0 };
         int len = snprintf(CSTR(frame_time_buf), "Frame %8llu\n%.2f ms", frame_num, ms_frame_time);
-        ta_font_push_text(&tooltip_fg_queue, tg_game.font, -130.0f, 0.0f, UI_LAYER_HUD, frame_time_buf, len, true, 0, 0);
-        ta_font_render(tooltip_fg_queue, tg_game.font, 0, true, true);
+
+        static ta_rect_uv *frame_time_rects = 0;
+        ta_rectf tag_rect = ta_font_push_text(&frame_time_rects, tg_game.font,
+            frame_time_buf, len, true, 0, 0);
+        dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
+            ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
+                UI_LAYER_HUD, true);
+        }
+        dlb_vec_clearz(frame_time_rects);
+        ta_font_render(quads_queue, tg_game.font, -130.0f, 0, UI_LAYER_HUD,
+            true, true);
 #endif
 
         ta_window_swap();

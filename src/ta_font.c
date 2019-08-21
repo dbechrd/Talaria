@@ -8,6 +8,7 @@
 #include "ta_symbol.h"
 #include "ta_window.h"
 #include "dlb/dlb_memory.h"
+#include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 
 #define STB_TRUETYPE_IMPLEMENTATION
@@ -155,29 +156,24 @@ static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
     //return rect->rect.h + b->yoff;
 }
 
-ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y,
-    float z, const char *text, u32 text_len, bool screen, u32 cursor_idx,
-    float *cursor_x)
+ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
+    u32 text_len, bool screen, u32 cursor_idx, ta_vec2 *cursor_offset)
 {
+    DLB_ASSERT(rects);
     DLB_ASSERT(text);
 
     ta_rectf rect = { 0 };
-    rect.x = SCREEN_WRAP_X(x);
-    rect.y = SCREEN_WRAP_X(y);
-
-    const float layer_dir = (screen) ? 1.0f : -1.0f;
-    float layer_offset = z * layer_dir;
-
     float cur_x = rect.x;
     float cur_y = rect.y + font->ascent;
-    //float ndc_x = NDC_X(rect.x);
-    //float ndc_y = NDC_Y(rect.y);
+    bool cursor_set = false;
 
     // Loop until i == text_len or, if text_len is 0, we hit a nil character
     for (u32 i = 0; ((text_len) ? i < text_len : text[i]); i++) {
         // Save cursor position
-        if (i == cursor_idx && cursor_x) {
-            *cursor_x = cur_x;
+        if (cursor_offset && i == cursor_idx) {
+            cursor_offset->x = cur_x;
+            cursor_offset->y = cur_y - font->ascent;
+            cursor_set = true;
         }
 
         if (text[i] == '\n') {
@@ -186,65 +182,45 @@ ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y
             cur_y += font->line_height;
             rect.h += font->line_height;
         } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
-            ta_rect_uv rect_uv = { 0 };
+            ta_rect_uv *rect_uv = dlb_vec_alloc(*rects);
             ta_baked_quad(font->chars, font->tex_w, font->tex_h,
-                text[i] - 32, &cur_x, &cur_y, &rect_uv);
+                text[i] - 32, &cur_x, &cur_y, rect_uv);
 
             // HACK: Flip world text upside down.. this is super gross,
             //       surely there's a better way?
             if (!screen) {
-                rect_uv.rect.y = font->line_height - (rect_uv.rect.y + rect_uv.rect.h);
-                float v = rect_uv.uv0.v;
-                rect_uv.uv0.v = rect_uv.uv1.v;
-                rect_uv.uv1.v = v;
+                rect_uv->rect.y = font->line_height - (rect_uv->rect.y + rect_uv->rect.h);
+                float v = rect_uv->uv0.v;
+                rect_uv->uv0.v = rect_uv->uv1.v;
+                rect_uv->uv1.v = v;
             }
-
-#if 0
-            // HACK: Cull characters that would be cut off by edge of screen
-            //       to prevent weird wrapping glitches in screen mode.
-            float ndc_x0 = NDC_X(rect_uv.rect.x);
-            float ndc_x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
-            float ndc_y0 = NDC_Y(rect_uv.rect.y);
-            float ndc_y1 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
-
-            if (!screen || text[i] == ' ' || (
-                ndc_x0 >= ndc_x && ndc_x1 > ndc_x &&
-                ndc_y0 <= ndc_y && ndc_y1 < ndc_y
-            )) {
-                ta_primitive_push_rect_uv(queue, rect_uv, *colors[layer],
-                    layer_offset, screen);
-            } else {
-                DLB_ASSERT(1);
-            }
-#else
-            ta_primitive_push_rect_uv(queue, rect_uv, TA_COLOR_WHITE,
-                layer_offset, screen);
-#endif
 
             rect.w = MAX(rect.w, cur_x - rect.x);
         }
     }
-
-    if (cursor_x && !*cursor_x) {
-        *cursor_x = cur_x;
-    }
-
     rect.h += font->line_height;
 
+    if (cursor_offset && !cursor_set) {
+        cursor_offset->x = cur_x;
+        cursor_offset->y = cur_y - font->ascent;
+    }
     return rect;
 }
 
-void ta_font_render(ta_vert_quad *queue, ta_font *font, ta_vec3 *offset,
-    bool clear_queues, bool reset_uniforms)
+// z postiive for screen, negative for world
+void ta_font_render(ta_vert_quad *queue, ta_font *font, float x, float y,
+    float z, bool clear_queues, bool reset_uniforms)
 {
     //glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
 
     ta_shader *shader = ta_font_shader(font);
-    if (offset) {
-        offset->x = NDC_X(offset->x) + 1.0f;
-        offset->y = NDC_Y(offset->y) - 1.0f;
-        ta_mat4 xform = mat4_translate(*offset);
+    if (x || y || z) {
+        ta_vec3 offset = { 0 };
+        offset.x = NDC_X(x) + 1.0f;
+        offset.y = NDC_Y(y) - 1.0f;
+        offset.z = z;
+        ta_mat4 xform = mat4_translate(offset);
         ta_shader_set_mat4(shader, SYM_U_MODEL, &xform);
     }
     ta_shader_set_sampler2d(shader, SYM_U_TEX, font->gl_id);

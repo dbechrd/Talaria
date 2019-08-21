@@ -12,7 +12,6 @@
 
 #define UI_DEBUG_CONTAINERS 0
 
-#define TEXTBOX_PAD_CURSOR  0
 #define WIDGET_PAD          1
 #define SCROLL_SPEED        20
 
@@ -347,18 +346,29 @@ void ta_ui_row_begin()
 
 void ta_ui_tooltip(const char *text, u32 text_len)
 {
-    float x = tg_mouse.x + 10.0f;
-    float y = tg_mouse.y + 20.0f;
-    ta_rectf text_rect = ta_font_push_text(&tooltip_fg_queue, tg_game.font, x, y,
-        UI_LAYER_TIP, text, text_len, true, 0, 0);
+    ta_rect_uv *text_rects = 0;
+    ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font,
+        text, text_len, true, 0, 0);
+
+    float offset_x = tg_mouse.x + 10.0f;
+    float offset_y = tg_mouse.y + 20.0f;
 
     ta_rect_uv tooltip_bg = { 0 };
-    tooltip_bg.rect.x = x - 10.0f;
-    tooltip_bg.rect.y = y;
+    tooltip_bg.rect.x = offset_x - 10.0f;
+    tooltip_bg.rect.y = offset_y;
     tooltip_bg.rect.w = text_rect.w + 20.0f;
     tooltip_bg.rect.h = text_rect.h;
     ta_primitive_push_rect_uv(&tooltip_bg_queue, tooltip_bg, TA_COLOR_GRAY3A,
         UI_LAYER_TIP_BG, true);
+
+    dlb_vec_each(ta_rect_uv *, rect, text_rects) {
+        ta_rect_uv offset_rect = *rect;
+        offset_rect.rect.x += offset_x;
+        offset_rect.rect.y += offset_y;
+        ta_primitive_push_rect_uv(&tooltip_fg_queue, offset_rect, TA_COLOR_WHITE,
+            UI_LAYER_TIP, true);
+    }
+    dlb_vec_clearz(text_rects);
 }
 
 void ta_ui_statusbar()
@@ -442,6 +452,47 @@ bool ta_ui_button_toggle(const char *name, const ta_size *size,
     return *active;
 }
 
+bool ta_ui_label(const char *name, const ta_size *size, const ta_rect *margin,
+    const ta_rect *pad, const char *text)
+{
+    DLB_ASSERT(text);
+
+    u32 frame_idx = ui_frame_start(UI_TEXTBOX, name, size, margin, pad);
+    ui_frame *frame = &ui_frames[frame_idx];
+
+    // Calculate text bg_rect
+    static ta_rect_uv *label_rects = 0;
+    ta_rectf label_rect = ta_font_push_text(&label_rects, tg_game.font, text, 0,
+        true, 0, 0);
+
+    frame->content_size.w += (int)label_rect.w;
+    frame->content_size.h += (int)label_rect.h;
+
+    // Auto-resize frame based on contents
+    frame->rect.w = MAX(frame->rect.w, frame->content_size.w);
+    frame->rect.h = MAX(frame->rect.h, frame->content_size.h);
+
+    // Render background
+    ta_rgba bg_color = TA_COLOR_CYAN;
+    ta_rect bg_rect = frame->rect;
+    ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_render(true, false);
+
+    float text_left = (float)frame->rect.x + frame->pad.x;
+    float text_top = (float)frame->rect.y + frame->pad.y;
+
+    // Render text
+    dlb_vec_each(ta_rect_uv *, rect, label_rects) {
+        ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0, true);
+    }
+    dlb_vec_clearz(label_rects);
+    ta_font_render(quads_queue, tg_game.font, text_left, text_top,
+        UI_LAYER_EDIT_1, true, true);
+
+    ui_frame_end(frame_idx);
+    return last_frame_state.pressed;
+}
+
 bool ui_textbox_filter(char c) {
     if ((c >= tg_game.font->first_char && c <= tg_game.font->last_char) ||
         c == '\n')
@@ -459,16 +510,15 @@ bool ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
     u32 frame_idx = ui_frame_start(UI_TEXTBOX, name, size, margin, pad);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    ta_vert_quad *text_queue = { 0 };
-    float cursor_x = 0.0f;
+    static ta_rect_uv *text_rects = 0;
 
+    ta_vec2 cursor_offset = { 0 };
     if (dlb_vec_len(text_entry->buffer)) {
         // Calculate text bg_rect
-        float text_left = (float)frame->rect.x + frame->pad.x;
-        float text_top = (float)frame->rect.y + frame->pad.y;
-        ta_rectf text_rect = ta_font_push_text(&text_queue, tg_game.font, text_left,
-            text_top, UI_LAYER_EDIT_1, text_entry->buffer, dlb_vec_len(text_entry->buffer),
-            true, text_entry->cursor, &cursor_x);
+        ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font,
+            text_entry->buffer, dlb_vec_len(text_entry->buffer), true,
+            text_entry->cursor, &cursor_offset);
+
         frame->content_size.w += (int)text_rect.w;
         frame->content_size.h += (int)text_rect.h;
 
@@ -487,18 +537,27 @@ bool ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
     ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, false);
 
+    int text_left = frame->rect.x + frame->pad.x;
+    int text_top = frame->rect.y + frame->pad.y;
+
     // Render text
-    if (dlb_vec_len(text_queue)) {
-        ta_font_render(text_queue, tg_game.font, 0, true, true);
-        dlb_vec_clear(text_queue);
+    if (dlb_vec_len(text_rects)) {
+        dlb_vec_each(ta_rect_uv *, rect, text_rects) {
+            ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0, true);
+        }
+        dlb_vec_clearz(text_rects);
+        ta_font_render(quads_queue, tg_game.font, (float)text_left,
+            (float)text_top, UI_LAYER_EDIT_1, true, true);
     }
 
     // Render cursor
-    ta_rect cursor_rect = bg_rect;
-    cursor_rect.x = (int)cursor_x;
-    cursor_rect.y += TEXTBOX_PAD_CURSOR;
+    const int cursor_vert_pad = 0;
+    ta_rect cursor_rect = { 0 };
+    cursor_rect.x = text_left + (int)cursor_offset.x;
+    cursor_rect.y = text_top + (int)cursor_offset.y + cursor_vert_pad;
     cursor_rect.w = 1;
-    cursor_rect.h -= TEXTBOX_PAD_CURSOR * 2;
+    cursor_rect.h = tg_game.font->line_height - (frame->pad.y + frame->pad.h) -
+        (cursor_vert_pad * 2);
     ta_primitive_push_rect(cursor_rect, TA_COLOR_RED, UI_LAYER_EDIT_2);
     ta_primitive_render(true, false);
 
@@ -596,19 +655,23 @@ void ta_ui_test()
     ta_ui_window_begin(INTERN("test_window"), &TA_SIZE(300, 400), &TA_RECT1(2), 0);
 
     static text_entry_settings text_entry[2];
+#if 0
+    // TODO: Initialize text_entry_settings to w/e editable should be
+    if (!text_entry[i].lbuffer) {
+        const char default_text[] = "Text: "; //|`_,_`|";
+        const char *c = default_text;
+        while (*c) {
+            dlb_vec_push(text_entry[i].lbuffer, *c);
+            c++;
+        }
+        text_entry[i].dirty = true;
+        text_entry[i].cursor = dlb_vec_len(text_entry[i].lbuffer);
+    }
+#endif
+
     for (int i = 0; i < ARRAY_COUNT(text_entry); i++) {
         ta_ui_row_begin();
-        if (!text_entry[i].lbuffer) {
-            const char default_text[] = "Text: "; //|`_,_`|";
-            //dlb_vec_alloc_size(text_settings.buffer, 32);
-            const char *c = default_text;
-            while (*c) {
-                dlb_vec_push(text_entry[i].lbuffer, *c);
-                c++;
-            }
-            text_entry[i].dirty = true;
-            text_entry[i].cursor = dlb_vec_len(text_entry[i].lbuffer);
-        }
+        ta_ui_label(INTERN("test_label"), &TA_SIZE(30, 17), &TA_RECT(0, 0, 2, 0), 0, "Text: ");
         text_entry_update(&text_entry[i]);
         if (ta_ui_textbox(INTERN("test_textbox"), &TA_SIZE(300, 17), &TA_RECT(0, 0, 0, 2), 0,
             &text_entry[i]))
@@ -722,22 +785,27 @@ void ta_ui_test()
     if (status_msg) {
         ta_ui_statusbar();
 
-        ta_rectf status_rect = ta_font_push_text(&quads_queue, tg_game.font, 0,
-            0, UI_LAYER_TIP, SYM(status_msg), true, 0, 0);
-        int status_halfw = tg_window.rect.w / 2 - (int)status_rect.w / 2;
+        static ta_rect_uv *status_rects = 0;
+        ta_rectf status_rect = ta_font_push_text(&status_rects, tg_game.font,
+            SYM(status_msg), true, 0, 0);
+        dlb_vec_each(ta_rect_uv *, rect, status_rects) {
+            ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
+                true);
+        }
+        dlb_vec_clearz(status_rects);
 
+        int status_halfw = tg_window.rect.w / 2 - (int)status_rect.w / 2;
         const int status_pad_bottom = 20;
-        ta_vec3 status_pos = { 0 };
-        status_pos.x = (float)status_halfw;
-        status_pos.y = (float)(tg_window.rect.h - (tg_game.font->ascent + status_pad_bottom));
-        ta_font_render(quads_queue, tg_game.font, &status_pos, true, true);
+        ta_font_render(quads_queue, tg_game.font, (float)status_halfw,
+            (float)(tg_window.rect.h - (tg_game.font->ascent + status_pad_bottom)),
+            UI_LAYER_TIP, true, true);
 
         status_msg = 0;
     }
 
     // Render tooltips
     ta_primitive_render_quads(tooltip_bg_queue, tg_shader_quads, true, true);
-    ta_font_render(tooltip_fg_queue, tg_game.font, 0, true, true);
+    ta_font_render(tooltip_fg_queue, tg_game.font, 0, 0, UI_LAYER_TIP, true, true);
 
 #if 0
     // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).

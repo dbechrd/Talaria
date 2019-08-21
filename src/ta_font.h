@@ -36,8 +36,7 @@ void ta_font_load_path(ta_font *font, const char *path);
 void ta_font_delete(ta_font *font);
 void ta_font_free(ta_font *font);
 struct ta_shader *ta_font_shader(ta_font *font);
-ta_rectf ta_font_push_text(ta_vert_quad **queue, ta_font *font, float x, float y,
-    float z, const char *text, u32 text_len, bool screen, u32 cursor_idx,
-    float *cursor_x);
-void ta_font_render(struct ta_vert_quad *queue, ta_font *font, ta_vec3 *offset,
-    bool clear_queues, bool reset_uniforms);
+ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
+    u32 text_len, bool screen, u32 cursor_idx, ta_vec2 *cursor_offset);
+void ta_font_render(ta_vert_quad *queue, ta_font *font, float x, float y,
+    float z, bool clear_queues, bool reset_uniforms);
