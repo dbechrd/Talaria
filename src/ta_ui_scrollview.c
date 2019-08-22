@@ -359,14 +359,14 @@ void ta_ui_tooltip(const char *text, u32 text_len)
     tooltip_bg.rect.w = text_rect.w + 20.0f;
     tooltip_bg.rect.h = text_rect.h;
     ta_primitive_push_rect_uv(&tooltip_bg_queue, tooltip_bg, TA_COLOR_GRAY3A,
-        UI_LAYER_TIP_BG, true);
+        UI_LAYER_TIP_BG, true, false);
 
     dlb_vec_each(ta_rect_uv *, rect, text_rects) {
         ta_rect_uv offset_rect = *rect;
         offset_rect.rect.x += offset_x;
         offset_rect.rect.y += offset_y;
         ta_primitive_push_rect_uv(&tooltip_fg_queue, offset_rect, TA_COLOR_WHITE,
-            UI_LAYER_TIP, true);
+            UI_LAYER_TIP, true, false);
     }
     dlb_vec_clearz(text_rects);
 }
@@ -381,7 +381,7 @@ void ta_ui_statusbar()
     status_bg.rect.w = (float)(tg_window.rect.w - statusbar_pad * 2);
     status_bg.rect.h = (float)tg_game.font->line_height;
     ta_primitive_push_rect_uv(&tooltip_bg_queue, status_bg, TA_COLOR_GRAY3A,
-        UI_LAYER_TIP_BG, true);
+        UI_LAYER_TIP_BG, true, false);
 }
 
 bool ta_ui_button(const char *name, const ta_size *size, const ta_rect *margin,
@@ -483,7 +483,8 @@ bool ta_ui_label(const char *name, const ta_size *size, const ta_rect *margin,
 
     // Render text
     dlb_vec_each(ta_rect_uv *, rect, label_rects) {
-        ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0, true);
+        ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0, true,
+            false);
     }
     dlb_vec_clearz(label_rects);
     ta_font_render(quads_queue, tg_game.font, text_left, text_top,
@@ -543,7 +544,8 @@ bool ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
     // Render text
     if (dlb_vec_len(text_rects)) {
         dlb_vec_each(ta_rect_uv *, rect, text_rects) {
-            ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0, true);
+            ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
+                true, false);
         }
         dlb_vec_clearz(text_rects);
         ta_font_render(quads_queue, tg_game.font, (float)text_left,
@@ -790,7 +792,7 @@ void ta_ui_test()
             SYM(status_msg), true, 0, 0);
         dlb_vec_each(ta_rect_uv *, rect, status_rects) {
             ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
-                true);
+                true, false);
         }
         dlb_vec_clearz(status_rects);
 

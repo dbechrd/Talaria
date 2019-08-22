@@ -66,7 +66,7 @@ void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color,
     float z);
 void ta_primitive_push_rect(ta_rect rect, ta_rgba color, float z);
 void ta_primitive_push_rect_uv(ta_vert_quad **queue, ta_rect_uv rect_uv,
-    ta_rgba color, float z, bool screen);
+    ta_rgba color, float z, bool screen, bool top_left);
 void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color);
 void ta_primitive_push_crosshair(s32 length, s32 thickness);
 void ta_primitive_push_axes(float scale);

@@ -22,6 +22,7 @@
 #include "ta_parse.h"
 #include "ta_symbol.h"
 #include "ta_font.h"
+#include "ta_primitive.h"
 #include "dlb/dlb_types.h"
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb/dlb_vector.h"
@@ -307,13 +308,6 @@ int main(int argc, char *argv[])
         ta_primitive_render(true, true);
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        ta_rect test1 = { 0 };
-        test1.x = 5;
-        test1.y = 5;
-        test1.w = 10;
-        test1.h = 10;
-        ta_primitive_push_rect(test1, TA_COLOR_RED, UI_LAYER_HUD);
-
         // Cursor
         ta_primitive_push_crosshair(10, 2);
 
@@ -390,50 +384,58 @@ int main(int argc, char *argv[])
         {
             static ta_rect_uv *tag_rects = 0;
             ta_rectf tag_rect = ta_font_push_text(&tag_rects, tg_game.font,
-                CSTR("Player 1\nis da best"), false, 0, 0);
-            ta_vec3 tag_offset = tg_game.camera->right;
+                CSTR("Player 1\nis da best"), true, 0, 0);
 
             ta_vec3 tag_pos = vec3_add(tg_game.player->transform.position, (ta_vec3){ 0.0f, 1.2f, 0.0f });
             ta_vec3 tag_to_cam = vec3_sub(tg_game.camera->position, tag_pos);
             tag_to_cam.z *= -1.0f;
             tag_to_cam.y *= 0.0f;
-            float tag_scalef = MAX(vec3_len(tag_to_cam) * NDC_W(1.2), NDC_W(8));
+            float tag_scalef = MAX(vec3_len(tag_to_cam), 4.0f);
 
-            // HACK: Why 4.0? Dunno proper way to center this.
-            tag_offset = vec3_scalef(tag_offset, NDC_W(tag_rect.w) * 4.0f);
-            tag_pos = vec3_sub(tag_pos, tag_offset);
+            ta_vec3 tag_offset = tag_offset = vec3_scalef(tg_game.camera->right,
+                NDC_W(tag_rect.w) / 2.0f * tag_scalef);
+            ta_vec3 tag_pos_off = vec3_sub(tag_pos, tag_offset);
 
-            ta_mat4 tag_scale = mat4_scalef(tag_scalef);
             ta_mat4 tag_rot = mat4_lookat(VEC3_ZERO, tag_to_cam, VEC3_Y);
-            ta_mat4 tag_trans = mat4_translate(tag_pos);
-            ta_mat4 tag_xform = tag_scale;
-            tag_xform = mat4_mul(&tag_rot, &tag_xform);
-            tag_xform = mat4_mul(&tag_trans, &tag_xform);
+
+            ta_mat4 tag_trans_bg = mat4_translate(tag_pos_off);
+            ta_mat4 tag_xform_bg = mat4_scalef(tag_scalef);
+            tag_xform_bg = mat4_mul(&tag_rot, &tag_xform_bg);
+            tag_xform_bg = mat4_mul(&tag_trans_bg, &tag_xform_bg);
+
+            ta_vec3 tag_pos_off_fg = tag_pos_off;
+            tag_pos_off_fg.y += NDC_H(tag_rect.h) * tag_scalef;
+            ta_mat4 tag_trans_fg = mat4_translate(tag_pos_off_fg);
+            ta_mat4 tag_xform_fg = mat4_scalef(tag_scalef);
+            //tag_xform_fg = mat4_mul(&tag_xform_fg, &tag_rot_trans);
+            tag_xform_fg = mat4_mul(&tag_rot, &tag_xform_fg);
+            tag_xform_fg = mat4_mul(&tag_trans_fg, &tag_xform_fg);
 
             // Name tag background
             ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &tg_game.camera->projection);
             ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &tg_game.camera->look_at);
-            ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform);
+            ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform_bg);
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tg_game.tex_orange->gl_id);
             ta_rect_uv tag_background = { 0 };
-            tag_background.rect.x = -4.0f;
-            tag_background.rect.w = tag_rect.w + 8.0f;
-            tag_background.rect.h = tag_rect.h; //tg_game.font->pixel_height * 1.5f;
-            ta_primitive_push_rect_uv(&quads_queue, tag_background, TA_COLOR_GRAY3A, UI_LAYER_HUD_BG, false);
+            tag_background.rect.x -= NDC_W(5.0f);
+            tag_background.rect.w = NDC_W(tag_rect.w) + NDC_W(10.0f);
+            tag_background.rect.h = NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
+            ta_primitive_push_rect_uv(&quads_queue, tag_background, TA_COLOR_GRAY3A,
+                UI_LAYER_HUD_BG, false, false);
             ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
             // Name tag text
             ta_shader_set_mat4(font_shader, SYM_U_PROJ, &tg_game.camera->projection);
             ta_shader_set_mat4(font_shader, SYM_U_VIEW, &tg_game.camera->look_at);
-            ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform);
+            ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform_fg);
 
             // TODO: Move UI_LAYER_HUD out of push_rect_uv into tag_xform, or
             //       make font_render's xform arguments stack with current value
             //       of SYM_U_MODEL.
             dlb_vec_each(ta_rect_uv *, rect, tag_rects) {
                 ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
-                    UI_LAYER_HUD, true);
+                    UI_LAYER_HUD, true, true);
             }
             dlb_vec_clearz(tag_rects);
             ta_font_render(quads_queue, tg_game.font, 0, 0, 0, true, true);
@@ -449,11 +451,15 @@ int main(int argc, char *argv[])
             frame_time_buf, len, true, 0, 0);
         dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
             ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
-                UI_LAYER_HUD, true);
+                0, true, false);
         }
         dlb_vec_clearz(frame_time_rects);
-        ta_font_render(quads_queue, tg_game.font, -130.0f, 0, UI_LAYER_HUD,
-            true, true);
+
+        ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
+        ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
+        ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
+        ta_font_render(quads_queue, tg_game.font, SCREEN_WRAP_X(-130.0f), 0,
+            UI_LAYER_HUD, true, true);
 #endif
 
         ta_window_swap();

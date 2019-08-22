@@ -1047,7 +1047,7 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     glCullFace(GL_BACK);
     //glDisable(GL_CULL_FACE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    //glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1056,10 +1056,12 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
 
+#if 1
     // TODO: Group by shader / material to minimize redundant uniform calls
     dlb_vec_each(ta_node *, node, scene->pools[TYP_NODE]) {
         ta_node_render(node, camera, alpha);
     }
+#endif
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
@@ -1084,10 +1086,10 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
         color.b = light->color.b;
         ta_primitive_push_sphere(light_pos, color);
 
-        ta_sphere light_aoe = { 0 };
-        light_aoe.center = light->position;
-        light_aoe.radius = light->shadowmap.zfar;
-        ta_primitive_push_rgb_sphere(light_aoe);
+        //ta_sphere light_aoe = { 0 };
+        //light_aoe.center = light->position;
+        //light_aoe.radius = light->shadowmap.zfar;
+        //ta_primitive_push_rgb_sphere(light_aoe);
     }
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);

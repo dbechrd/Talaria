@@ -158,7 +158,7 @@ void ta_primitive_push_line_3d(ta_line_3d line_3d, ta_rgba color0,
 }
 
 void ta_primitive_push_rect_uv(ta_vert_quad **queue, ta_rect_uv rect_uv,
-    ta_rgba color, float z, bool screen)
+    ta_rgba color, float z, bool screen, bool top_left)
 {
     // v3 _______ v2
     //    |    /|
@@ -174,6 +174,12 @@ void ta_primitive_push_rect_uv(ta_vert_quad **queue, ta_rect_uv rect_uv,
         x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
         y0 = NDC_Y(rect_uv.rect.y);
         y1 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
+        if (top_left) {
+            x0 += 1.0f;
+            x1 += 1.0f;
+            y0 -= 1.0f;
+            y1 -= 1.0f;
+        }
     } else {
         x0 = rect_uv.rect.x;
         x1 = rect_uv.rect.x + rect_uv.rect.w;

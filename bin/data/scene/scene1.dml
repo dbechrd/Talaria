@@ -73,7 +73,7 @@ ta_camera:
   znear: 0.1
 ta_camera:
   uid: "cam_freecam"
-  position: { x: 0.0, y: 3.7, z: 7.0 }
+  position: { x: 0.0, y: 2.0, z: 4.0 }
   position_smooth: 0.1
   position_target_vel: 0.2
   yaw: 90.0
@@ -95,12 +95,12 @@ ta_light:
   color: { r: 1.0, g: 1.0, b: 1.0 }
   type: 1  # TA_LIGHT_DIRECTIONAL
   directional:
-    direction: { x: -0.2, y: -1.0, z: 1.0 }
+    direction: { x: -0.2, y: 10.0, z: 1.0 }
 ta_light:
   uid: "light_point_room2"
   disabled: false
   intensity: 1.0
-  position: { x: 3.0, y: 4.0, z: 3.0 }
+  position: { x: 3.0, y: -4.0, z: 3.0 }
   color:    { r: 1.0, g: 1.0, b: 1.0 }
   type: 2  # TA_LIGHT_POINT
   shadowmap:
@@ -111,7 +111,7 @@ ta_light:
   uid: "light_point_room3"
   disabled: false
   intensity: 1.0
-  position: { x: 5.0, y: 4.0, z: -28.0 }
+  position: { x: 5.0, y: -4.0, z: -28.0 }
   color:    { r: 1.0, g: 0.1, b: 1.0 }
   type: 2  # TA_LIGHT_POINT
 ta_light:
@@ -211,7 +211,7 @@ ta_mesh_group:
 #-------------------------------------------------------------------------------
 ta_rigid_body:
   uid: "rb_node_chamber_0001"
-  position: { x: 0.0, y: 0.0, z: 1.0 }
+  position: { x: 0.0, y: -8.0, z: 1.0 }
   collider:
     type: 0  # TA_COLLIDER_PLANE
     plane:
@@ -252,6 +252,8 @@ ta_rigid_body:
 #   mass: 0.0
 ta_node:
   uid: "node_chamber_0001"
+  transform:
+    position: { x: 0.0, y: -8.0, z: 0.0 }
   material_uid: "mat_test"
   mesh_group_uid: "mesh_group_chamber_0001"
   rigid_body_uid: "rb_node_chamber_0001"
@@ -260,17 +262,17 @@ ta_node:
 
 ta_node:
   uid: "node_wakeup"
-  material_uid: "mat_cobble"
-  mesh_group_uid: "mesh_group_wakeup"
   transform:
     position: { x: 0.0, y: 8.0, z: 0.0 }
-  invisible: false
+  material_uid: "mat_cobble"
+  mesh_group_uid: "mesh_group_wakeup"
+  invisible: true
   cast_shadows: true
 
 ta_rigid_body:
   uid: "rb_button_0001"
   mass: 1.0
-  position: { x: 0.0, y: 0.0, z: 0.0 }
+  position: { x: 0.0, y: -8.0, z: 0.0 }
   trigger: true
   collider:
     type: 1  # TA_COLLIDER_SPHERE
@@ -292,7 +294,7 @@ ta_node:
 ta_rigid_body:
   uid: "rb_node_player"
   mass: 1.0
-  position: { x: 0.1, y: 3.0, z: 0.1 }
+  position: { x: 0.3, y: -5.0, z: 0.1 }
   #collider:
   #  type: 2  # TA_COLLIDER_AABB
   #    aabb:
@@ -317,7 +319,7 @@ ta_node:
 ta_rigid_body:
   uid: "rb_node_sphere1"
   mass: 1.0
-  position: { x: 0.2, y: 6.0, z: 0.2 }
+  position: { x: 0.2, y: -2.0, z: 0.2 }
   collider:
     type: 1  # TA_COLLIDER_SPHERE
       sphere:
@@ -332,7 +334,7 @@ ta_node:
 ta_rigid_body:
   uid: "rb_node_sphere2"
   mass: 1.0
-  position: { x: 0.3, y: 9.0, z: 0.3 }
+  position: { x: 0.1, y: 1.0, z: 0.3 }
   collider:
     type: 1  # TA_COLLIDER_SPHERE
       sphere:
@@ -348,7 +350,7 @@ ta_node:
   uid: "shadow_test_1"
   mesh_group_uid: "mesh_group_letter_r"
   transform:
-    position: { x: 4.5, y: 4.0, z: 0.0 }
+    position: { x: 4.5, y: -4.0, z: 0.0 }
     orientation: { x: 0.0, y: -1.0, z: 0.0, w: 1.0 }
   cast_shadows: true
 
