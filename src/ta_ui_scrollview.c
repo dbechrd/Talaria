@@ -22,10 +22,13 @@ typedef struct control_state {
     bool released;
 } control_state;
 
-//static ta_vec2i row_start;
-//static ta_vec2i row_current;
-//static int row_max_height;
-//static bool row_continue;
+typedef struct ui_style {
+    ta_size size;
+    ta_rect margin;
+    ta_rect pad;
+} ui_style;
+
+static ui_style next_frame_style;
 static control_state last_frame_state;
 static const char *status_msg;
 
@@ -127,11 +130,27 @@ static ui_frame *ui_container_last()
     return ui_container(dlb_vec_len(ui_frames));
 }
 
-void ta_ui_pad(int x, int y)
+// TODO: Replace these with ta_ui_push_style that persists until pop
+void ta_ui_next_margin(int left, int top, int right, int bottom)
 {
-    ui_frame *container = ui_container_last();
-    container->offset.x += x;
-    container->offset.y += y;
+    next_frame_style.margin.x = left;
+    next_frame_style.margin.y = top;
+    next_frame_style.margin.w = right;
+    next_frame_style.margin.h = bottom;
+}
+
+void ta_ui_next_pad(int left, int top, int right, int bottom)
+{
+    next_frame_style.pad.x = left;
+    next_frame_style.pad.y = top;
+    next_frame_style.pad.w = right;
+    next_frame_style.pad.h = bottom;
+}
+
+void ta_ui_next_size(int w, int h)
+{
+    next_frame_style.size.w = w;
+    next_frame_style.size.h = h;
 }
 
 static void ui_pop(u32 index)
@@ -167,8 +186,7 @@ static bool rect_contains_mouse(ta_rect rect)
 }
 
 // returns frame index
-static u32 ui_frame_start(ui_frame_type type, const char *name,
-    const ta_size *size, const ta_rect *margin, const ta_rect *pad)
+static u32 ui_frame_start(ui_frame_type type, const char *name)
 {
     // TODO: This probably shouldn't be here...
     glDisable(GL_SCISSOR_TEST);
@@ -177,22 +195,22 @@ static u32 ui_frame_start(ui_frame_type type, const char *name,
     ui_frame *frame = dlb_vec_alloc(ui_frames);
     frame->index = dlb_vec_len(ui_frames) - 1;
     frame->type = type;
-    if (margin) frame->margin = *margin;
-    if (pad)    frame->pad = *pad;
+    frame->margin = next_frame_style.margin;
+    frame->pad = next_frame_style.pad;
     ui_frame *container = ui_container(frame->index);
     frame->rect.x = container->rect.x + container->offset.x + frame->margin.x;
     frame->rect.y = container->rect.y + container->offset.y + frame->margin.y;
-    frame->rect.w = size->w;
-    frame->rect.h = size->h;
+    frame->rect.w = next_frame_style.size.w;
+    frame->rect.h = next_frame_style.size.h;
     frame->content_size.w = frame->pad.x + frame->pad.w;
     frame->content_size.h = frame->pad.y + frame->pad.h;
 
-    // Margin
-    //ta_ui_pad(frame->margin.x, frame->margin.y);
+    dlb_memset(&next_frame_style, 0, sizeof(next_frame_style));
 
     // Container padding
     if (type_is_container(frame->type)) {
-        ta_ui_pad(frame->pad.x, frame->pad.y);
+        frame->offset.x += frame->pad.x;
+        frame->offset.y += frame->pad.y;
     } else {
         last_frame_state.hover = false;
         last_frame_state.down = false;
@@ -269,12 +287,12 @@ static void ui_frame_end(u32 frame_idx)
     }
 }
 
-void ta_ui_window_begin(const char *name, const ta_size *size,
-    const ta_rect *pad, int *scroll_v)
+// size, pad
+void ta_ui_window_begin(const char *name, int *scroll_v)
 {
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    u32 frame_idx = ui_frame_start(UI_WINDOW, name, size, 0, pad);
+    u32 frame_idx = ui_frame_start(UI_WINDOW, name);
     UNUSED(frame_idx);
     UNUSED(scroll_v);
 
@@ -314,10 +332,9 @@ void ta_ui_window_begin(const char *name, const ta_size *size,
 #endif
 }
 
-void ta_ui_panel_begin(const char *name, const ta_size *size,
-    const ta_rect *margin, const ta_rect *pad, u32 *index)
+void ta_ui_panel_begin(const char *name, u32 *index)
 {
-    u32 frame_idx = ui_frame_start(UI_PANEL, name, size, margin, pad);
+    u32 frame_idx = ui_frame_start(UI_PANEL, name);
     if (index) *index = frame_idx;
 }
 
@@ -384,10 +401,9 @@ void ta_ui_statusbar()
         UI_LAYER_TIP_BG, true, false);
 }
 
-bool ta_ui_button(const char *name, const ta_size *size, const ta_rect *margin,
-    const ta_rect *pad, const ta_texture *tex)
+bool ta_ui_button(const char *name, const ta_texture *tex)
 {
-    u32 frame_idx = ui_frame_start(UI_BUTTON, name, size, margin, pad);
+    u32 frame_idx = ui_frame_start(UI_BUTTON, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
     ta_rgba bg_color = ui_colors[frame->type][COLOR_NONE];
@@ -415,11 +431,9 @@ bool ta_ui_button(const char *name, const ta_size *size, const ta_rect *margin,
     return last_frame_state.pressed;
 }
 
-bool ta_ui_button_toggle(const char *name, const ta_size *size,
-    const ta_rect *margin, const ta_rect *pad, const ta_texture *tex,
-    bool *active)
+bool ta_ui_button_toggle(const char *name, const ta_texture *tex, bool *active)
 {
-    u32 frame_idx = ui_frame_start(UI_BUTTON, name, size, margin, pad);
+    u32 frame_idx = ui_frame_start(UI_BUTTON, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
     ta_rgba bg_color = ui_colors[frame->type][COLOR_NONE];
@@ -452,12 +466,11 @@ bool ta_ui_button_toggle(const char *name, const ta_size *size,
     return *active;
 }
 
-bool ta_ui_label(const char *name, const ta_size *size, const ta_rect *margin,
-    const ta_rect *pad, const char *text)
+bool ta_ui_label(const char *name, const char *text)
 {
     DLB_ASSERT(text);
 
-    u32 frame_idx = ui_frame_start(UI_TEXTBOX, name, size, margin, pad);
+    u32 frame_idx = ui_frame_start(UI_TEXTBOX, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
     // Calculate text bg_rect
@@ -503,16 +516,13 @@ bool ui_textbox_filter(char c) {
     return false;
 }
 
-bool ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
-    const ta_rect *pad, text_entry_settings *text_entry)
+bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
 {
     DLB_ASSERT(text_entry);
 
-    u32 frame_idx = ui_frame_start(UI_TEXTBOX, name, size, margin, pad);
-    ui_frame *frame = &ui_frames[frame_idx];
+    ta_size *size = &next_frame_style.size;
 
     static ta_rect_uv *text_rects = 0;
-
     ta_vec2 cursor_offset = { 0 };
     if (dlb_vec_len(text_entry->buffer)) {
         // Calculate text bg_rect
@@ -520,13 +530,13 @@ bool ta_ui_textbox(const char *name, const ta_size *size, const ta_rect *margin,
             text_entry->buffer, dlb_vec_len(text_entry->buffer), true,
             text_entry->cursor, &cursor_offset);
 
-        frame->content_size.w += (int)text_rect.w;
-        frame->content_size.h += (int)text_rect.h;
-
-        // Auto-resize frame based on contents
-        frame->rect.w = MAX(frame->rect.w, frame->content_size.w);
-        frame->rect.h = MAX(frame->rect.h, frame->content_size.h);
+        // Auto-expand frame based on contents
+        size->w = MAX(size->w, (int)text_rect.w);
+        size->h = MAX(size->h, (int)text_rect.h);
     }
+
+    u32 frame_idx = ui_frame_start(UI_TEXTBOX, name);
+    ui_frame *frame = &ui_frames[frame_idx];
 
     ta_rgba bg_color = TA_COLOR_BLACK;
     if (tg_game.text_entry.entry == text_entry) {
@@ -593,26 +603,28 @@ void ta_ui_window_end()
 
 void ta_ui_hud()
 {
-    //ta_ui_pad(&TA_SIZE(10, 10));
-
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
-    ta_ui_window_begin(INTERN("hud"), &TA_SIZE(200, 40), 0, 0);
+    ta_ui_next_size(200, 40);
+    ta_ui_window_begin(INTERN("hud"), 0);
     ta_ui_row_begin();
     for (int i = 0; i < tg_game.player_ammo_max; i++) {
+        ta_ui_next_size(20, 20);
         if (i < tg_game.player_ammo) {
-            ta_ui_button(INTERN("clip_slot_full"), &TA_SIZE(20, 20), 0, 0, tg_game.tex_orange);
+            ta_ui_button(INTERN("clip_slot_full"), tg_game.tex_orange);
         } else {
-            ta_ui_button(INTERN("clip_slot_empty"), &TA_SIZE(20, 20), 0, 0, tg_game.tex_red);
+            ta_ui_button(INTERN("clip_slot_empty"), tg_game.tex_red);
         }
     }
-    ta_ui_pad(0, 4);
+    // TODO: Allow next_pad to work on rows, or introduce a panel here
+    //ta_ui_pad(0, 4);
     ta_ui_row_begin();
     for (int i = 0; i < tg_game.player_clip_max; i++) {
+        ta_ui_next_size(20, 20);
         if (i < tg_game.player_clip) {
-            ta_ui_button(INTERN("ammo_slot_full"), &TA_SIZE(20, 20), 0, 0, tg_game.tex_orange);
+            ta_ui_button(INTERN("ammo_slot_full"), tg_game.tex_orange);
         } else {
-            ta_ui_button(INTERN("ammo_slot_empty"), &TA_SIZE(20, 20), 0, 0, tg_game.tex_red);
+            ta_ui_button(INTERN("ammo_slot_empty"), tg_game.tex_red);
         }
     }
     ta_ui_window_end();
@@ -620,14 +632,15 @@ void ta_ui_hud()
     glDisable(GL_SCISSOR_TEST);
 }
 
-static const ta_rect grid_pad = { 1, 1, 1, 1 };
-
 void ui_4x4_grid(int rows, ta_texture *tex)
 {
     for (int r = 0; r < rows; r++) {
         ta_ui_row_begin();
         for (int c = 0; c < 4; c++) {
-            ta_ui_button(INTERN("4x4_cell"), &TA_SIZE(20, 20), &grid_pad, &grid_pad, tex);
+            ta_ui_next_size(20, 20);
+            ta_ui_next_margin(1, 1, 1, 1);
+            ta_ui_next_pad(1, 1, 1, 1);
+            ta_ui_button(INTERN("4x4_cell"), tex);
         }
     }
 }
@@ -654,7 +667,9 @@ void ta_ui_test()
 {
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
-    ta_ui_window_begin(INTERN("test_window"), &TA_SIZE(300, 400), &TA_RECT1(2), 0);
+    ta_ui_next_size(300, 400);
+    ta_ui_next_pad(2, 2, 2, 2);
+    ta_ui_window_begin(INTERN("test_window"), 0);
 
     static text_entry_settings text_entry[2];
 #if 0
@@ -673,10 +688,13 @@ void ta_ui_test()
 
     for (int i = 0; i < ARRAY_COUNT(text_entry); i++) {
         ta_ui_row_begin();
-        ta_ui_label(INTERN("test_label"), &TA_SIZE(30, 17), &TA_RECT(0, 0, 2, 0), 0, "Text: ");
+        ta_ui_next_size(30, 17);
+        ta_ui_next_margin(0, 0, 2, 0);
+        ta_ui_label(INTERN("test_label"), "Text: ");
         text_entry_update(&text_entry[i]);
-        if (ta_ui_textbox(INTERN("test_textbox"), &TA_SIZE(300, 17), &TA_RECT(0, 0, 0, 2), 0,
-            &text_entry[i]))
+        ta_ui_next_size(300, 17);
+        ta_ui_next_margin(0, 0, 0, 2);
+        if (ta_ui_textbox(INTERN("test_textbox"), &text_entry[i]))
         {
             tg_game.text_entry.entry = &text_entry[i];
             tg_game.text_entry.filter = &ui_textbox_filter;
@@ -706,10 +724,14 @@ void ta_ui_test()
 
     ta_ui_row_begin();
     u32 category_panel_id = (u32)-1;
-    ta_ui_panel_begin(INTERN("category_panel"), &TA_SIZE(50, 50), 0, &TA_RECT1(2), &category_panel_id);
+    ta_ui_next_size(50, 50);
+    ta_ui_next_pad(2, 2, 2, 2);
+    ta_ui_panel_begin(INTERN("category_panel"), &category_panel_id);
     for (int i = 0; i < CATEGORY_COUNT; i++) {
         ta_ui_row_begin();
-        if (ta_ui_button(INTERN("category_button"), &TA_SIZE(50, 50), 0, &TA_RECT1(2), tg_game.tex_orange)) {
+        ta_ui_next_size(50, 50);
+        ta_ui_next_pad(2, 2, 2, 2);
+        if (ta_ui_button(INTERN("category_button"), tg_game.tex_orange)) {
             category_selected = (i == category_selected ? -1 : i);
         }
         if (last_frame_state.hover) {
@@ -731,7 +753,9 @@ void ta_ui_test()
             int audio_request_idx = -1;
 
             u32 audio_panel_id = (u32)-1;
-            ta_ui_panel_begin(INTERN("sound_panel"), &TA_SIZE(50, 50), 0, &TA_RECT1(2), &audio_panel_id);
+            ta_ui_next_size(50, 50);
+            ta_ui_next_pad(2, 2, 2, 2);
+            ta_ui_panel_begin(INTERN("sound_panel"), &audio_panel_id);
 
             ta_ui_row_begin();
             for (u32 i = 0; i < buf_count; i++) {
@@ -745,14 +769,15 @@ void ta_ui_test()
                 ta_ui_button("Play");
                 ta_ui_button("Loop");
 
-                ta_ui_pad(&TA_SIZE(0, 4));
                 ta_ui_panel_end(panel_id);
 #endif
                 bool active = audio_buffers[i].uid.uid == audio_playing_uid;
                 if (active) {
                     audio_playing_idx = i;
                 }
-                ta_ui_button_toggle(INTERN("sound_button"), &TA_SIZE(36, 36), 0, &TA_RECT1(2), tg_game.tex_audio_icon, &active);
+                ta_ui_next_size(36, 36);
+                ta_ui_next_pad(2, 2, 2, 2);
+                ta_ui_button_toggle(INTERN("sound_button"), tg_game.tex_audio_icon, &active);
                 if (last_frame_state.pressed) {
                     audio_request_idx = i;
                 }
@@ -775,7 +800,9 @@ void ta_ui_test()
             break;
         } default: {
             u32 category_details_id = (u32)-1;
-            ta_ui_panel_begin(INTERN("category_details_panel"), &TA_SIZE(20, 20), 0, &grid_pad, &category_details_id);
+            ta_ui_next_size(20, 20);
+            ta_ui_next_pad(1, 1, 1, 1);
+            ta_ui_panel_begin(INTERN("category_details_panel"), &category_details_id);
             ui_4x4_grid(category_selected + 1, tg_game.tex_orange);
             ta_ui_panel_end(category_details_id);
             break;
