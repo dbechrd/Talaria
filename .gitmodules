@@ -1,3 +1,3 @@
 [submodule "include/dlb"]
 	path = include/dlb
-	url = https://github.com/dbechrd/dlb
+	url = git@github.com:dbechrd/dlb.git
