@@ -9,8 +9,14 @@
 #include "ta_buffer.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
+#include <stdlib.h>
 
-#define UI_DEBUG_CONTAINERS 0
+#define UI_DEBUG_MARGIN         1
+#define UI_DEBUG_PAD            1
+
+#define UI_DEBUG_CONTAINERS     0
+#define UI_DEBUG_NO_TEXTURES    1
+#define UI_DEBUG_RANDOM_COLORS  1
 
 #define WIDGET_PAD          1
 #define SCROLL_SPEED        20
@@ -44,6 +50,7 @@ typedef enum ui_frame_type {
 typedef struct ui_frame {
     u32 index;
     ui_frame_type type;
+    const char *name;
 
     ta_rect margin;         // external margin
     ta_rect pad;            // internal padding
@@ -61,42 +68,57 @@ static ui_frame ui_root = {
 };
 static ui_frame *ui_frames;
 
-typedef enum ui_color_type {
-    COLOR_NONE,
-    COLOR_HOVER,
-    COLOR_DOWN,
-    COLOR_ACTIVE,
-    COLOR_COUNT
-} ui_color_type;
+typedef enum ui_event_type {
+    UI_STATE_NONE,
+    UI_STATE_HOVER,
+    UI_STATE_DOWN,
+    UI_STATE_ACTIVE,
+    UI_STATE_COUNT
+} ui_event_type;
 
-static ta_rgba ui_colors[][COLOR_COUNT] = {
-    [UI_ROOT] = {
-        [COLOR_NONE]  = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED1
-        [COLOR_HOVER] = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED2
-        [COLOR_DOWN]  = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED3
-    },
-    [UI_WINDOW] = {
-        [COLOR_NONE]  = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN1
-        [COLOR_HOVER] = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN2
-        [COLOR_DOWN]  = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN3
-    },
-    [UI_PANEL] = {
-        [COLOR_NONE]  = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_RED
-        [COLOR_HOVER] = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_GREEN
-        [COLOR_DOWN]  = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_BLUE
-    },
-    [UI_TEXTBOX] = {
-        [COLOR_NONE]  = { 0.5f, 0.5f, 0.5f, 0.5f }, //TA_COLOR_GRAY2
-        [COLOR_HOVER] = { 1.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_YELLOW
-        [COLOR_DOWN]  = { 1.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_MAGENTA
-    },
-    [UI_BUTTON] = {
-        [COLOR_NONE]   = { 0.5f, 0.5f, 0.5f, 1.0f }, //TA_COLOR_GRAY2
-        [COLOR_HOVER]  = { 1.0f, 1.0f, 0.0f, 1.0f }, //TA_COLOR_YELLOW
-        [COLOR_DOWN]   = { 1.0f, 0.0f, 1.0f, 1.0f }, //TA_COLOR_MAGENTA
-        [COLOR_ACTIVE] = { 0.0f, 1.0f, 1.0f, 1.0f }, //TA_COLOR_CYAN
-    },
-};
+static ta_rgba ui_get_color(ui_frame *frame, ui_event_type event)
+{
+#if UI_DEBUG_RANDOM_COLORS
+    // HACK: Generate random colors based on name of control
+    ta_rgba color;
+    u32 hash = dlb_hash_code(SYM(frame->name));
+    color.r = ((hash >> (event     )) & 255) / 255.0f;
+    color.g = ((hash >> (event +  8)) & 255) / 255.0f;
+    color.b = ((hash >> (event + 16)) & 255) / 255.0f;
+    color.a = 1.0f;
+    return color;
+#else
+    static ta_rgba ui_colors[UI_COUNT][UI_STATE_COUNT] = {
+        [UI_ROOT] = {
+            [UI_STATE_NONE]  = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED1
+            [UI_STATE_HOVER] = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED2
+            [UI_STATE_DOWN]  = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED3
+        },
+        [UI_WINDOW] = {
+            [UI_STATE_NONE]  = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN1
+            [UI_STATE_HOVER] = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN2
+            [UI_STATE_DOWN]  = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN3
+        },
+        [UI_PANEL] = {
+            [UI_STATE_NONE]  = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_RED
+            [UI_STATE_HOVER] = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_GREEN
+            [UI_STATE_DOWN]  = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_BLUE
+        },
+        [UI_TEXTBOX] = {
+            [UI_STATE_NONE]  = { 0.5f, 0.5f, 0.5f, 0.5f }, //TA_COLOR_GRAY2
+            [UI_STATE_HOVER] = { 1.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_YELLOW
+            [UI_STATE_DOWN]  = { 1.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_MAGENTA
+        },
+        [UI_BUTTON] = {
+            [UI_STATE_NONE]   = { 0.5f, 0.5f, 0.5f, 1.0f }, //TA_COLOR_GRAY2
+            [UI_STATE_HOVER]  = { 1.0f, 1.0f, 0.0f, 1.0f }, //TA_COLOR_YELLOW
+            [UI_STATE_DOWN]   = { 1.0f, 0.0f, 1.0f, 1.0f }, //TA_COLOR_MAGENTA
+            [UI_STATE_ACTIVE] = { 0.0f, 1.0f, 1.0f, 1.0f }, //TA_COLOR_CYAN
+        },
+    };
+    return ui_colors[type][event];
+#endif
+}
 
 static bool type_is_container(ui_frame_type type)
 {
@@ -133,18 +155,22 @@ static ui_frame *ui_container_last()
 // TODO: Replace these with ta_ui_push_style that persists until pop
 void ta_ui_next_margin(int left, int top, int right, int bottom)
 {
+#if UI_DEBUG_MARGIN
     next_frame_style.margin.x = left;
     next_frame_style.margin.y = top;
     next_frame_style.margin.w = right;
     next_frame_style.margin.h = bottom;
+#endif
 }
 
 void ta_ui_next_pad(int left, int top, int right, int bottom)
 {
+#if UI_DEBUG_PAD
     next_frame_style.pad.x = left;
     next_frame_style.pad.y = top;
     next_frame_style.pad.w = right;
     next_frame_style.pad.h = bottom;
+#endif
 }
 
 void ta_ui_next_size(int w, int h)
@@ -195,6 +221,7 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
     ui_frame *frame = dlb_vec_alloc(ui_frames);
     frame->index = dlb_vec_len(ui_frames) - 1;
     frame->type = type;
+    frame->name = name;
     frame->margin = next_frame_style.margin;
     frame->pad = next_frame_style.pad;
     ui_frame *container = ui_container(frame->index);
@@ -217,16 +244,16 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
         last_frame_state.pressed = false;
         last_frame_state.released = false;
 
-        ta_rgba bg_color = ui_colors[frame->type][COLOR_NONE];
+        ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
         if (rect_contains_mouse(frame->rect))
         {
-            bg_color = ui_colors[frame->type][COLOR_HOVER];
+            bg_color = ui_get_color(frame, UI_STATE_HOVER);
             last_frame_state.hover = true;
             if (last_frame_state.hover) {
                 status_msg = name;
             }
             if (ta_button_state_down(&tg_mouse.left)) {
-                bg_color = ui_colors[frame->type][COLOR_DOWN];
+                bg_color = ui_get_color(frame, UI_STATE_DOWN);
                 last_frame_state.down = true;
                 last_frame_state.pressed = ta_button_state_pressed(&tg_mouse.left);
             } else {
@@ -403,14 +430,17 @@ void ta_ui_statusbar()
 
 bool ta_ui_button(const char *name, const ta_texture *tex)
 {
+#if UI_DEBUG_NO_TEXTURES
+    tex = 0;
+#endif
     u32 frame_idx = ui_frame_start(UI_BUTTON, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    ta_rgba bg_color = ui_colors[frame->type][COLOR_NONE];
+    ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
     if (last_frame_state.down) {
-        bg_color = ui_colors[frame->type][COLOR_DOWN];
+        bg_color = ui_get_color(frame, UI_STATE_DOWN);
     } else if (last_frame_state.hover) {
-        bg_color = ui_colors[frame->type][COLOR_HOVER];
+        bg_color = ui_get_color(frame, UI_STATE_HOVER);
     }
 
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
@@ -433,19 +463,22 @@ bool ta_ui_button(const char *name, const ta_texture *tex)
 
 bool ta_ui_button_toggle(const char *name, const ta_texture *tex, bool *active)
 {
+#if UI_DEBUG_NO_TEXTURES
+    tex = 0;
+#endif
     u32 frame_idx = ui_frame_start(UI_BUTTON, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    ta_rgba bg_color = ui_colors[frame->type][COLOR_NONE];
+    ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
     if (last_frame_state.pressed) {
         *active = !*active;
     }
     if (*active) {
-        bg_color = ui_colors[frame->type][COLOR_ACTIVE];
+        bg_color = ui_get_color(frame, UI_STATE_ACTIVE);
     } else if (last_frame_state.down) {
-        bg_color = ui_colors[frame->type][COLOR_DOWN];
+        bg_color = ui_get_color(frame, UI_STATE_DOWN);
     } else if (last_frame_state.hover) {
-        bg_color = ui_colors[frame->type][COLOR_HOVER];
+        bg_color = ui_get_color(frame, UI_STATE_HOVER);
     }
 
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
@@ -486,7 +519,7 @@ bool ta_ui_label(const char *name, const char *text)
     frame->rect.h = MAX(frame->rect.h, frame->content_size.h);
 
     // Render background
-    ta_rgba bg_color = TA_COLOR_CYAN;
+    ta_rgba bg_color = TA_COLOR_BLACK;
     ta_rect bg_rect = frame->rect;
     ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, false);
@@ -524,23 +557,34 @@ bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
 
     static ta_rect_uv *text_rects = 0;
     ta_vec2 cursor_offset = { 0 };
-    if (dlb_vec_len(text_entry->buffer)) {
-        // Calculate text bg_rect
-        ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font,
-            text_entry->buffer, dlb_vec_len(text_entry->buffer), true,
-            text_entry->cursor, &cursor_offset);
+    ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font,
+        text_entry->buffer, dlb_vec_len(text_entry->buffer), true,
+        text_entry->cursor, &cursor_offset);
 
-        // Auto-expand frame based on contents
-        size->w = MAX(size->w, (int)text_rect.w);
-        size->h = MAX(size->h, (int)text_rect.h);
-    }
+    // Auto-expand frame based on contents
+    size->w = MAX(size->w, (int)text_rect.w);
+    size->h = MAX(size->h, (int)text_rect.h);
 
     u32 frame_idx = ui_frame_start(UI_TEXTBOX, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    ta_rgba bg_color = TA_COLOR_BLACK;
+    ta_rgba bg_color = TA_COLOR_GRAY2;
     if (tg_game.text_entry.entry == text_entry) {
-        bg_color = TA_COLOR_BLUE;
+        // Deactive textbox when elsewhere clicked
+        if (ta_button_state_pressed(&tg_mouse.left) && !last_frame_state.pressed) {
+            ta_game_state_set(tg_game.state_prev);
+            tg_game.text_entry.entry = 0;
+            tg_game.text_entry.filter = 0;
+        }
+    } else if (last_frame_state.pressed) {
+        // Activate textbox when clicked
+        tg_game.text_entry.entry = text_entry;
+        tg_game.text_entry.filter = &ui_textbox_filter;
+        ta_game_state_set(TA_GAME_STATE_TEXT_ENTRY);
+    }
+
+    if (tg_game.text_entry.entry == text_entry) {
+        bg_color = TA_COLOR_GRAY3;
     }
 
     // Render background
@@ -562,17 +606,18 @@ bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
             (float)text_top, UI_LAYER_EDIT_1, true, true);
     }
 
-    // Render cursor
-    const int cursor_vert_pad = 0;
-    ta_rect cursor_rect = { 0 };
-    cursor_rect.x = text_left + (int)cursor_offset.x;
-    cursor_rect.y = text_top + (int)cursor_offset.y + cursor_vert_pad;
-    cursor_rect.w = 1;
-    cursor_rect.h = tg_game.font->line_height - (frame->pad.y + frame->pad.h) -
-        (cursor_vert_pad * 2);
-    ta_primitive_push_rect(cursor_rect, TA_COLOR_RED, UI_LAYER_EDIT_2);
-    ta_primitive_render(true, false);
-
+    // If active, render cursor
+    if (tg_game.text_entry.entry == text_entry) {
+        const int cursor_vert_pad = 0;
+        ta_rect cursor_rect = { 0 };
+        cursor_rect.x = text_left + (int)cursor_offset.x;
+        cursor_rect.y = text_top + (int)cursor_offset.y + cursor_vert_pad;
+        cursor_rect.w = 1;
+        cursor_rect.h = tg_game.font->line_height - (frame->pad.y + frame->pad.h) -
+            (cursor_vert_pad * 2);
+        ta_primitive_push_rect(cursor_rect, TA_COLOR_GRAY8, UI_LAYER_EDIT_2);
+        ta_primitive_render(true, false);
+    }
     ui_frame_end(frame_idx);
     return last_frame_state.pressed;
 }
@@ -638,8 +683,7 @@ void ui_4x4_grid(int rows, ta_texture *tex)
         ta_ui_row_begin();
         for (int c = 0; c < 4; c++) {
             ta_ui_next_size(20, 20);
-            ta_ui_next_margin(1, 1, 1, 1);
-            ta_ui_next_pad(1, 1, 1, 1);
+            ta_ui_next_margin(2, 2, 0, 0);
             ta_ui_button(INTERN("4x4_cell"), tex);
         }
     }
@@ -688,12 +732,10 @@ void ta_ui_test()
 
     for (int i = 0; i < ARRAY_COUNT(text_entry); i++) {
         ta_ui_row_begin();
-        ta_ui_next_size(30, 17);
-        ta_ui_next_margin(0, 0, 2, 0);
-        ta_ui_label(INTERN("test_label"), "Text: ");
+        ta_ui_label(INTERN("test_label"), "Text:");
         text_entry_update(&text_entry[i]);
-        ta_ui_next_size(300, 17);
-        ta_ui_next_margin(0, 0, 0, 2);
+        ta_ui_next_size(300, 0);
+        ta_ui_next_margin(4, 0, 0, 0);
         if (ta_ui_textbox(INTERN("test_textbox"), &text_entry[i]))
         {
             tg_game.text_entry.entry = &text_entry[i];
@@ -730,8 +772,8 @@ void ta_ui_test()
     for (int i = 0; i < CATEGORY_COUNT; i++) {
         ta_ui_row_begin();
         ta_ui_next_size(50, 50);
-        ta_ui_next_pad(2, 2, 2, 2);
-        if (ta_ui_button(INTERN("category_button"), tg_game.tex_orange)) {
+        ta_ui_next_margin(0, 0, 0, 2);
+        if (ta_ui_button(category_names[i], tg_game.tex_orange)) {
             category_selected = (i == category_selected ? -1 : i);
         }
         if (last_frame_state.hover) {
@@ -754,7 +796,7 @@ void ta_ui_test()
 
             u32 audio_panel_id = (u32)-1;
             ta_ui_next_size(50, 50);
-            ta_ui_next_pad(2, 2, 2, 2);
+            ta_ui_next_margin(2, 2, 0, 0);
             ta_ui_panel_begin(INTERN("sound_panel"), &audio_panel_id);
 
             ta_ui_row_begin();
@@ -776,8 +818,8 @@ void ta_ui_test()
                     audio_playing_idx = i;
                 }
                 ta_ui_next_size(36, 36);
-                ta_ui_next_pad(2, 2, 2, 2);
-                ta_ui_button_toggle(INTERN("sound_button"), tg_game.tex_audio_icon, &active);
+                ta_ui_next_margin(0, 0, 2, 0);
+                ta_ui_button_toggle(audio_buffers[i].uid.uid, tg_game.tex_audio_icon, &active);
                 if (last_frame_state.pressed) {
                     audio_request_idx = i;
                 }
@@ -801,7 +843,6 @@ void ta_ui_test()
         } default: {
             u32 category_details_id = (u32)-1;
             ta_ui_next_size(20, 20);
-            ta_ui_next_pad(1, 1, 1, 1);
             ta_ui_panel_begin(INTERN("category_details_panel"), &category_details_id);
             ui_4x4_grid(category_selected + 1, tg_game.tex_orange);
             ta_ui_panel_end(category_details_id);

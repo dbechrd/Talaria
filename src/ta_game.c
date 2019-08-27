@@ -7,6 +7,8 @@
 #include "ta_symbol.h"
 #include "ta_timer.h"
 #include "ta_button.h"
+#include "ta_collider.h"
+#include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
 ta_game tg_game;
@@ -39,50 +41,52 @@ void ta_game_init()
     //dlb_vec_reserve(tg_keybinds, 16);
 
 #define BIND1(state, e, key_state, key) \
-    ta_keybind_bind1(TA_GAME_STATE_##state, TA_EVENT_##e, TA_KEY_##key_state, \
+    ta_keybind_bind1(TA_GAME_STATE_##state, e, TA_KEY_##key_state, \
     SDL_SCANCODE_##key)
 
     //--------------------------------------------------------------------------
     // PLAY
 
-    BIND1(PLAY, GAME_QUIT,     RELEASE, ESCAPE);
-    BIND1(PLAY, GAME_FREE_CAM, RELEASE, X);
+    BIND1(PLAY, TA_EVENT_GAME_QUIT,                     RELEASE, ESCAPE);
+    BIND1(PLAY, TA_EVENT_GAME_FREE_CAM,                 RELEASE, X);
 
-    BIND1(PLAY, GAME_PLAYER_MOVE_FORWARD,  HOLD, W);
-    BIND1(PLAY, GAME_PLAYER_MOVE_BACKWARD, HOLD, S);
-    BIND1(PLAY, GAME_PLAYER_MOVE_RIGHT,    HOLD, D);
-    BIND1(PLAY, GAME_PLAYER_MOVE_LEFT,     HOLD, A);
-    BIND1(PLAY, GAME_PLAYER_JUMP,          HOLD, SPACE);
-    BIND1(PLAY, GAME_PLAYER_SHOOT,         PRESS, MOUSE_LEFT);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_FORWARD,      HOLD, W);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_BACKWARD,     HOLD, S);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_RIGHT,        HOLD, D);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_LEFT,         HOLD, A);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_JUMP,              HOLD, SPACE);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_SHOOT,             PRESS, MOUSE_LEFT);
 
-    BIND1(PLAY, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, M);
-    BIND1(PLAY, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
-    BIND1(PLAY, DEBUG_TOGGLE_BBOX,       PRESS, 1);
-    BIND1(PLAY, DEBUG_TOGGLE_NORMALS,    PRESS, 2);
+    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,       PRESS, M);
+    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,        PRESS, Z);
+    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_BBOX,             PRESS, 1);
+    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_NORMALS,          PRESS, 2);
 
     //--------------------------------------------------------------------------
     // FREE_CAM
 
-    BIND1(FREE_CAM, GAME_QUIT, RELEASE, ESCAPE);
-    BIND1(FREE_CAM, GAME_PLAY, RELEASE, X);
+    BIND1(FREE_CAM, TA_EVENT_GAME_QUIT,                 RELEASE, ESCAPE);
+    BIND1(FREE_CAM, TA_EVENT_GAME_PLAY,                 RELEASE, X);
 
-    BIND1(FREE_CAM, GAME_PLAYER_MOVE_FORWARD,  HOLD, UP);
-    BIND1(FREE_CAM, GAME_PLAYER_MOVE_BACKWARD, HOLD, DOWN);
-    BIND1(FREE_CAM, GAME_PLAYER_MOVE_RIGHT,    HOLD, RIGHT);
-    BIND1(FREE_CAM, GAME_PLAYER_MOVE_LEFT,     HOLD, LEFT);
+    BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_FORWARD,  HOLD, UP);
+    BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_BACKWARD, HOLD, DOWN);
+    BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_RIGHT,    HOLD, RIGHT);
+    BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_LEFT,     HOLD, LEFT);
+    BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_JUMP,          HOLD,  3);
 
-    BIND1(FREE_CAM, CAMERA_MOVE_FORWARD,  HOLD, W);
-    BIND1(FREE_CAM, CAMERA_MOVE_BACKWARD, HOLD, S);
-    BIND1(FREE_CAM, CAMERA_MOVE_RIGHT,    HOLD, D);
-    BIND1(FREE_CAM, CAMERA_MOVE_LEFT,     HOLD, A);
-    BIND1(FREE_CAM, CAMERA_MOVE_UP,       HOLD, SPACE);
-    BIND1(FREE_CAM, CAMERA_MOVE_DOWN,     HOLD, LSHIFT);
+    BIND1(FREE_CAM, TA_EVENT_CAMERA_MOVE_FORWARD,       HOLD, W);
+    BIND1(FREE_CAM, TA_EVENT_CAMERA_MOVE_BACKWARD,      HOLD, S);
+    BIND1(FREE_CAM, TA_EVENT_CAMERA_MOVE_RIGHT,         HOLD, D);
+    BIND1(FREE_CAM, TA_EVENT_CAMERA_MOVE_LEFT,          HOLD, A);
+    BIND1(FREE_CAM, TA_EVENT_CAMERA_MOVE_UP,            HOLD, SPACE);
+    BIND1(FREE_CAM, TA_EVENT_CAMERA_MOVE_DOWN,          HOLD, LSHIFT);
 
-    BIND1(FREE_CAM, DEBUG_TOGGLE_MOUSE_LOCK, PRESS, M);
-    BIND1(FREE_CAM, DEBUG_TOGGLE_WIREFRAME,  PRESS, Z);
-    BIND1(FREE_CAM, DEBUG_TOGGLE_BBOX,       PRESS, 1);
-    BIND1(FREE_CAM, DEBUG_TOGGLE_NORMALS,    PRESS, 2);
-    BIND1(FREE_CAM, GAME_PLAYER_JUMP,        HOLD,  3);
+    BIND1(FREE_CAM, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,   PRESS, M);
+    BIND1(FREE_CAM, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,    PRESS, Z);
+    BIND1(FREE_CAM, TA_EVENT_DEBUG_TOGGLE_BBOX,         PRESS, 1);
+    BIND1(FREE_CAM, TA_EVENT_DEBUG_TOGGLE_NORMALS,      PRESS, 2);
+
+    BIND1(FREE_CAM, TA_EVENT_EDITOR_SELECT,             PRESS, MOUSE_LEFT);
 
     //--------------------------------------------------------------------------
     // TEXT_ENTRY
@@ -431,6 +435,32 @@ void ta_game_events()
             } case TA_EVENT_DEBUG_TOGGLE_MESH: {
                 tg_game.camera->debug_no_mesh =
                     !tg_game.camera->debug_no_mesh;
+                break;
+            } case TA_EVENT_EDITOR_SELECT: {
+                ta_ray ray;
+                ray.origin = tg_game.camera->position;
+                ray.direction = tg_game.camera->front;
+
+                float t_min = 9999.0f;
+                ta_node *closest_node = 0;
+
+                dlb_vec_each(ta_node *, node, tg_game.scene->pools[TYP_NODE]) {
+                    ta_rigid_body *body = ta_node_rigid_body(node);
+                    // TODO: Handle types other than spheres
+                    if (!body || body->collider.type != TA_COLLIDER_SPHERE) {
+                        continue;
+                    }
+                    ta_sphere sphere = body->collider.data.sphere;
+                    sphere.center = vec3_add(sphere.center, body->centroid_global);
+                    float t;
+                    if (ta_intersect_ray_sphere(ray, sphere, &t)) {
+                        if (t >= 0.0f && t < t_min) {
+                            t_min = t;
+                            closest_node = node;
+                            node->invisible = true;
+                        }
+                    }
+                }
                 break;
             } default: {
                 DLB_ASSERT(!"Unhandled event type");

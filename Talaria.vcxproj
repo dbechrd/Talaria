@@ -169,6 +169,7 @@
     <ClCompile Include="src/gl3w.c" />
     <ClCompile Include="src\ta_audio.c" />
     <ClCompile Include="src\ta_button.c" />
+    <ClCompile Include="src\ta_collider.c" />
     <ClCompile Include="src\ta_font.c" />
     <ClCompile Include="src\ta_light.c" />
     <ClCompile Include="src\ta_rigid_body.c" />
