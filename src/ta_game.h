@@ -1,11 +1,5 @@
 #pragma once
-#include "ta_audio.h"
-#include "ta_scene.h"
-#include "ta_light.h"
-#include "ta_camera.h"
-#include "ta_node.h"
-#include "ta_font.h"
-#include "ta_texture.h"
+#include "dlb/dlb_types.h"
 
 typedef enum ta_game_state {
     TA_GAME_STATE_INIT,
@@ -29,22 +23,37 @@ typedef struct text_entry_settings {
 
 typedef bool text_entry_filter(char c);
 
+typedef struct ta_audio_listener ta_audio_listener;
+typedef struct ta_audio_source   ta_audio_source;
+typedef struct ta_camera         ta_camera;
+typedef struct ta_event          ta_event;
+typedef struct ta_font           ta_font;
+typedef struct ta_light          ta_light;
+typedef struct ta_node           ta_node;
+typedef struct ta_scene          ta_scene;
+typedef struct ta_texture        ta_texture;
+typedef struct ta_window         ta_window;
+
 // WARNING: Any of these pointers will be invalidated if their pool resizes
+// TODO: Replace with indexes into pool
 typedef struct ta_game {
     ta_game_state state;
     ta_game_state state_prev;
+
     ta_audio_listener *audio;
     ta_audio_source *background_music;
-    ta_font *font;
-    ta_texture *tex_orange;
-    ta_texture *tex_red;
-    ta_texture *tex_audio_icon;
-    ta_scene *scene;
-    ta_light *lights;
     ta_camera *camera;
     ta_camera *camera_player;
     ta_camera *camera_freecam;
+    ta_font *font;
+    ta_light *lights;
     ta_node *player;
+    ta_scene *scene;
+    ta_texture *tex_orange;
+    ta_texture *tex_red;
+    ta_texture *tex_audio_icon;
+    ta_window *window;
+
     int player_ammo_max;
     int player_ammo;
     int player_clip_max;
@@ -57,8 +66,7 @@ typedef struct ta_game {
 } ta_game;
 
 extern ta_game tg_game;
-extern GLenum tg_polygon_mode;
 
-void ta_game_init();
-void ta_game_state_set(ta_game_state state);
-void ta_game_events();
+void ta_game_init(ta_game *game);
+void ta_game_state_set(ta_game *game, ta_game_state state);
+void ta_game_event(ta_game *game, ta_event *event);

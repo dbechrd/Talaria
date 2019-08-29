@@ -312,14 +312,14 @@ void ta_primitive_push_plane(ta_plane plane, float radius, ta_rgba color)
 void ta_primitive_push_crosshair(s32 length, s32 thickness)
 {
     ta_rect x = { 0 };
-    x.x = tg_window.rect.w / 2 - length / 2;
-    x.y = tg_window.rect.h / 2 - thickness / 2;
+    x.x = WINDOW_W / 2 - length / 2;
+    x.y = WINDOW_H / 2 - thickness / 2;
     x.w = length;
     x.h = thickness;
 
     ta_rect y = { 0 };
-    y.x = tg_window.rect.w / 2 - thickness / 2;
-    y.y = tg_window.rect.h / 2 - length / 2;
+    y.x = WINDOW_W / 2 - thickness / 2;
+    y.y = WINDOW_H / 2 - length / 2;
     y.w = thickness;
     y.h = length;
 

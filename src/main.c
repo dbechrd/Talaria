@@ -71,13 +71,13 @@ void debug_tests() {
 void ndc_tests() {
     DLB_ASSERT(SCREEN_WRAP_X(0) == 0);
     DLB_ASSERT(SCREEN_WRAP_X(1) == 1);
-    DLB_ASSERT(SCREEN_WRAP_X(tg_window.rect.w) == tg_window.rect.w);
-    DLB_ASSERT(SCREEN_WRAP_X(-1) == tg_window.rect.w - 1);
+    DLB_ASSERT(SCREEN_WRAP_X(WINDOW_W) == WINDOW_W);
+    DLB_ASSERT(SCREEN_WRAP_X(-1) == WINDOW_W - 1);
 
     DLB_ASSERT(SCREEN_WRAP_Y(0) == 0);
     DLB_ASSERT(SCREEN_WRAP_Y(1) == 1);
-    DLB_ASSERT(SCREEN_WRAP_Y(tg_window.rect.h) == tg_window.rect.h);
-    DLB_ASSERT(SCREEN_WRAP_Y(-1) == tg_window.rect.h - 1);
+    DLB_ASSERT(SCREEN_WRAP_Y(WINDOW_H) == WINDOW_H);
+    DLB_ASSERT(SCREEN_WRAP_Y(-1) == WINDOW_H - 1);
 }
 
 // Random thoughts
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
     ta_schema_register();
 
     // TODO: Save size/position to a config file
-    ta_window_init(1600, 900, false);
+    ta_window_init(&tg_game.window, 1600, 900, false);
     ndc_tests();
     // TODO: Make sure this gets freed or handled better
     tg_game.audio = dlb_calloc(1, sizeof(ta_audio_listener));
@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     ta_keyboard_init();
     ta_render_init();
     ta_primitive_init();
-    ta_game_init();
+    ta_game_init(&tg_game);
 
     // Intro scene
     tg_game.scene = ta_scene_load_file("data/scene/scene1.dml");
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
     tg_game.player_ammo = tg_game.player_ammo_max;
     tg_game.player_clip_max = 8;
     tg_game.player_clip = MIN(tg_game.player_clip_max, tg_game.player_ammo);
-    ta_game_state_set(TA_GAME_STATE_FREE_CAM);
+    ta_game_state_set(&tg_game, TA_GAME_STATE_FREE_CAM);
 
     // Ensure we have a valid camera, player and light
     DLB_ASSERT(tg_game.camera);
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
     minimap_camera.ortho = true;
     ta_camera_init(&minimap_camera);
 
-    ta_ui_barchart chart = ta_ui_barchart_init(10, 10, tg_window.rect.w - 20, 30);
+    ta_ui_barchart chart = ta_ui_barchart_init(10, 10, WINDOW_W - 20, 30);
     UNUSED(chart);
 
     //ta_shader_set_sampler2d(tg_shader_mesh, SYM_U_TEX0, tex_test->gl_id);
@@ -217,13 +217,7 @@ int main(int argc, char *argv[])
         ms_frame_prev = ms_frame_start;
 
         // Engine events
-        ta_mouse_events();
-        ta_keyboard_events();
         ta_event_events();
-        ta_window_events();
-        // Game events
-        ta_game_events();
-        ta_camera_events();
 
         ms_frame_accum += ms_frame_delta;
 
@@ -462,12 +456,13 @@ int main(int argc, char *argv[])
             UI_LAYER_HUD, true, true);
 #endif
 
-        ta_window_swap();
+        ta_window_swap(tg_game.window);
         //ta_log_write(tg_debug_log, "Frame %llu started at %f sim time: %f\n", frame_num, ms_frame_start - ms_frame_first, ms_sim_t);
         frame_num++;
     }
 
-    ta_window_free();
+    // TODO: Free *EVERYTHING* (at least in debug mode.. to check memory leaks)
+    ta_window_free(&tg_game.window);
     ta_log_write(tg_debug_log, "Goodbye.\n\n");
     return 0;
 }

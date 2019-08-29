@@ -46,7 +46,7 @@ void ta_mouse_events()
         SDL_GetMouseState(&tg_mouse.x, &tg_mouse.y);
 
         ta_event mouse_move_evt = { 0 };
-        mouse_move_evt.type = TA_EVENT_GLOBAL_MOUSE_MOVE;
+        mouse_move_evt.type = TA_EVENT_MOUSE_MOVE;
         mouse_move_evt.data.mouse_move.dx = dx;
         mouse_move_evt.data.mouse_move.dy = dy;
         ta_event_push(&mouse_move_evt);

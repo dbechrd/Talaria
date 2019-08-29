@@ -1,13 +1,17 @@
 #include "ta_window.h"
 #include "ta_log.h"
 #include "ta_event.h"
+#include "ta_primitive.h"
 #include "dlb/dlb_types.h"
+#include "dlb/dlb_memory.h"
 #include "SDL/SDL.h"
 
-static SDL_Window *window;
-static SDL_GLContext gl_context;
-
-ta_window tg_window;
+typedef struct ta_window {
+    ta_size size;
+    float aspect;
+    SDL_Window *sdl_window;
+    SDL_GLContext gl_context;
+} ta_window;
 
 static void sdl_gl_attrib(SDL_GLattr attr, int value)
 {
@@ -19,7 +23,7 @@ static void sdl_gl_attrib(SDL_GLattr attr, int value)
     }
 }
 
-static void ta_init_sdl(int *w, int *h, bool fullscreen)
+static void ta_init_sdl(ta_window *window, bool fullscreen)
 {
     ta_log_write(tg_debug_log, "[Window] SDL_Init...\n");
     int sdl_err = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);  // SDL_INIT_TIMER
@@ -52,13 +56,14 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
     ta_log_write(tg_debug_log, "[Window] SDL_CreateWindow...\n");
     u32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
     if (fullscreen) {
-        window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
+        window->sdl_window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED, 0, 0, flags | SDL_WINDOW_FULLSCREEN_DESKTOP);
-    } else if (w && h) {
-        window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED, *w, *h, flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
+    } else if (window->size.w && window->size.h) {
+        window->sdl_window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
+            SDL_WINDOWPOS_CENTERED, window->size.w, window->size.h,
+            flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
     }
-    if (window == NULL) {
+    if (window->sdl_window == NULL) {
         ta_log_write(tg_debug_log, "[Window] SDL_CreateWindow error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_CreateWindow failed");
     }
@@ -66,16 +71,16 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
 
     // Create GL context
     ta_log_write(tg_debug_log, "[Window] SDL_GL_CreateContext...\n");
-    gl_context = SDL_GL_CreateContext(window);
-    if (gl_context == NULL) {
+    window->gl_context = SDL_GL_CreateContext(window->sdl_window);
+    if (window->gl_context == NULL) {
         ta_log_write(tg_debug_log, "[Window] SDL_GL_CreateContext error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_GL_CreateContext failed");
     }
     ta_log_write(tg_debug_log, "[Window] Success\n");
 
     // Get actual window size
-    if (fullscreen && w && h) {
-        SDL_GetWindowSize(window, w, h);
+    if (fullscreen) {
+        SDL_GetWindowSize(window->sdl_window, &window->size.w, &window->size.h);
     }
 
     // Log default VSync state
@@ -84,47 +89,68 @@ static void ta_init_sdl(int *w, int *h, bool fullscreen)
     ta_log_write(tg_debug_log, "[Window] vsync: %s\n", (swap) ? "enabled" : "disabled");
 }
 
-void ta_window_init(int w, int h, bool fullscreen)
+void ta_window_init(ta_window **ptr, int w, int h, bool fullscreen)
 {
-    ta_log_write(tg_debug_log, "[Window] Initializing window\n");
-    tg_window.rect.w = w;
-    tg_window.rect.h = h;
-    ta_init_sdl(&tg_window.rect.w, &tg_window.rect.h, fullscreen);
-    DLB_ASSERT(fullscreen || (tg_window.rect.w == w && tg_window.rect.h == h));
-    tg_window.aspect = (float)tg_window.rect.w / tg_window.rect.h;
+    ta_window *window = dlb_calloc(1, sizeof(*window));
+    ta_log_write(tg_debug_log, "[Window] Initializing ptr\n");
+    window->size.w = w;
+    window->size.h = h;
+    ta_init_sdl(window, fullscreen);
+    DLB_ASSERT(fullscreen || (window->size.w == w && window->size.h == h));
+    window->aspect = (float)window->size.w / window->size.h;
     ta_log_write(tg_debug_log, "[Window] Window initialized\n");
+    *ptr = window;
 }
 
-void ta_window_free()
+void ta_window_free(ta_window **ptr)
 {
-    SDL_GL_DeleteContext(gl_context);
-    SDL_DestroyWindow(window);
+    ta_window *window = *ptr;
+    SDL_GL_DeleteContext(window->gl_context);
+    SDL_DestroyWindow(window->sdl_window);
+    dlb_free(window);
+    *ptr = 0;
     SDL_Quit();
 }
 
-void ta_window_swap()
+ta_size ta_window_size(ta_window *window)
 {
-    SDL_GL_SwapWindow(window);
+    return window->size;
 }
 
-void ta_window_events()
+int ta_window_width(ta_window *window)
 {
-    ta_event event;
-    while (ta_event_pop(&event, TA_EVENT_QUEUE_WINDOW)) {
-        switch (event.type) {
-            case TA_EVENT_WINDOW_RESIZE: {
-                tg_window.rect.w = event.data.window_resize.width;
-                tg_window.rect.h = event.data.window_resize.height;
-                tg_window.aspect = (float)tg_window.rect.w / tg_window.rect.h;
-                break;
-            } default: {
-                DLB_ASSERT(!"Unhandled event type");
-            }
+    return window->size.w;
+}
+
+int ta_window_height(ta_window *window)
+{
+    return window->size.h;
+}
+
+float ta_window_aspect(ta_window *window)
+{
+    return (float)window->size.w / window->size.h;
+}
+
+void ta_window_swap(ta_window *window)
+{
+    SDL_GL_SwapWindow(window->sdl_window);
+}
+
+void ta_window_event(ta_window *window, ta_event *event)
+{
+    switch (event->type) {
+        case TA_EVENT_WINDOW_RESIZE: {
+            window->size.w = event->data.window_resize.width;
+            window->size.h = event->data.window_resize.height;
+            window->aspect = (float)window->size.w / window->size.h;
+            break;
         }
     }
 }
 
-int ta_window_msgbox(u32 flags, const char *title, const char *message)
+int ta_window_msgbox(ta_window *window, u32 flags, const char *title,
+    const char *message)
 {
-    return SDL_ShowSimpleMessageBox(flags, title, message, window);
+    return SDL_ShowSimpleMessageBox(flags, title, message, window->sdl_window);
 }

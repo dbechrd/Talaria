@@ -31,12 +31,17 @@ typedef struct ta_camera {
     ta_mat4 look_at;
     ta_mat4 projection;
 
+    // Temp frame buffers
+    ta_vec3 move_buffer;
+
     bool dirty;
     bool debug_wireframe;
     bool debug_normals;
     bool debug_bounding_boxes;
     bool debug_no_mesh;
 } ta_camera;
+
+typedef struct ta_event ta_event;
 
 void ta_camera_init(ta_camera *camera);
 void ta_camera_set_ortho(ta_camera *camera, bool ortho);
@@ -46,6 +51,7 @@ void ta_camera_set_target_pos_absolute(ta_camera *camera, ta_vec3 follow_target)
 void ta_camera_set_target_pos_relative(ta_camera *camera, ta_vec3 delta);
 void ta_camera_yaw(ta_camera *camera, float delta);
 void ta_camera_pitch(ta_camera *camera, float delta);
+void ta_camera_move(ta_camera *camera, ta_vec3 v);
 void ta_camera_recalc_projection(ta_camera *camera);
-void ta_camera_events();
+void ta_camera_event(ta_camera *camera, ta_event *event);
 void ta_camera_update(ta_camera *camera, double dt);

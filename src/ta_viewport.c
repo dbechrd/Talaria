@@ -1,6 +1,7 @@
 #include "ta_viewport.h"
 #include "ta_window.h"
 #include "ta_mouse.h"
+#include "ta_game.h"
 #include "misc/gl3w.h"
 
 typedef struct viewport {
@@ -30,7 +31,7 @@ void ta_viewport_bind(ta_rect parent, ta_rect rect, ta_rgba background, bool rel
     rect.y += parent.y;
 
     // Set new state
-    int inv_y = tg_window.rect.h - (rect.y + rect.h);
+    int inv_y = WINDOW_H - (rect.y + rect.h);
     if (relative) {
         glViewport(rect.x, inv_y, rect.w, rect.h);
     }

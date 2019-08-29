@@ -34,6 +34,8 @@ typedef struct ta_audio_source {
     const char *audio_buffer_uid;
 } ta_audio_source;
 
+typedef struct ta_buffer ta_buffer;
+
 void ta_audio_listener_init(ta_audio_listener *audio);
 void ta_audio_listener_set_volume(ta_audio_listener *audio, float volume);
 bool ta_audio_listener_muted(ta_audio_listener *audio);
@@ -43,7 +45,7 @@ void ta_audio_listener_toggle(ta_audio_listener *audio);
 
 void ta_audio_buffer_init(ta_audio_buffer *buffer);
 void ta_audio_buffer_load_path(ta_audio_buffer *buffer, const char *path);
-void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, struct ta_buffer *samples);
+void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, ta_buffer *samples);
 void ta_audio_buffer_load(ta_audio_buffer *buffer);
 double ta_audio_buffer_duration_ms(ta_audio_buffer *buffer);
 void ta_audio_buffer_free(ta_audio_buffer *buffer);

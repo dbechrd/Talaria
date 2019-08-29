@@ -3,6 +3,7 @@
 #include "ta_event.h"
 #include "ta_window.h"
 #include "ta_game.h"
+#include "ta_scene.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 #include <math.h>
@@ -89,66 +90,60 @@ void ta_camera_pitch(ta_camera *camera, float delta)
     camera->dirty = true;
 }
 
+void ta_camera_move(ta_camera *camera, ta_vec3 v)
+{
+    camera->move_buffer = vec3_add(camera->move_buffer, v);
+}
+
 void ta_camera_recalc_projection(ta_camera *camera)
 {
     if (camera->ortho) {
         camera->projection = mat4_ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 10.0f);
     } else {
         camera->projection =
-            mat4_perspective_inf(camera->fov, tg_window.aspect, camera->znear);
+            mat4_perspective_inf(camera->fov, WINDOW_ASPECT, camera->znear);
     }
 
 }
 
-void ta_camera_events()
+void ta_camera_event(ta_camera *camera, ta_event *event)
 {
-    ta_camera *camera = tg_game.camera;
-    ta_vec3 dir = { 0 };
-    ta_event event;
-    while (ta_event_pop(&event, TA_EVENT_QUEUE_CAMERA)) {
-        switch (event.type) {
-            case TA_EVENT_CAMERA_ASPECT_CHANGE: {
-                // Update all cameras to new aspect ratio
-                dlb_vec_each(ta_camera *, cam, tg_game.scene->pools[TYP_CAMERA]) {
-                    if (!cam->ortho) {
-                        ta_camera_recalc_projection(cam);
-                    }
+    switch (event->type) {
+        case TA_EVENT_WINDOW_RESIZE: {
+            // Update all cameras to new aspect ratio
+            dlb_vec_each(ta_camera *, cam, tg_game.scene->pools[TYP_CAMERA]) {
+                if (!cam->ortho) {
+                    ta_camera_recalc_projection(cam);
                 }
-                break;
-            } case TA_EVENT_CAMERA_MOVE_FORWARD: {
-                dir = vec3_add(dir, camera->front);
-                break;
-            } case TA_EVENT_CAMERA_MOVE_BACKWARD: {
-                dir = vec3_sub(dir, camera->front);
-                break;
-            } case TA_EVENT_CAMERA_MOVE_RIGHT: {
-                dir = vec3_add(dir, camera->right);
-                break;
-            } case TA_EVENT_CAMERA_MOVE_LEFT: {
-                dir = vec3_sub(dir, camera->right);
-                break;
-            } case TA_EVENT_CAMERA_MOVE_UP: {
-                dir = vec3_add(dir, camera->up);
-                break;
-            } case TA_EVENT_CAMERA_MOVE_DOWN: {
-                dir = vec3_sub(dir, camera->up);
-                break;
-            } case TA_EVENT_CAMERA_ROTATE: {
-                if (event.data.camera_rotate.delta_yaw) {
-                    ta_camera_yaw(camera, event.data.camera_rotate.delta_yaw);
-                }
-                if (event.data.camera_rotate.delta_pitch) {
-                    ta_camera_pitch(camera, event.data.camera_rotate.delta_pitch);
-                }
-                break;
-            } default: {
-                DLB_ASSERT(!"Unhandled event type");
             }
+            break;
+        } case TA_EVENT_CAMERA_MOVE_FORWARD: {
+            camera->move_buffer = vec3_add(camera->move_buffer, camera->front);
+            break;
+        } case TA_EVENT_CAMERA_MOVE_BACKWARD: {
+            camera->move_buffer = vec3_sub(camera->move_buffer, camera->front);
+            break;
+        } case TA_EVENT_CAMERA_MOVE_RIGHT: {
+            camera->move_buffer = vec3_add(camera->move_buffer, camera->right);
+            break;
+        } case TA_EVENT_CAMERA_MOVE_LEFT: {
+            camera->move_buffer = vec3_sub(camera->move_buffer, camera->right);
+            break;
+        } case TA_EVENT_CAMERA_MOVE_UP: {
+            camera->move_buffer = vec3_add(camera->move_buffer, camera->up);
+            break;
+        } case TA_EVENT_CAMERA_MOVE_DOWN: {
+            camera->move_buffer = vec3_sub(camera->move_buffer, camera->up);
+            break;
+        } case TA_EVENT_CAMERA_ROTATE: {
+            if (event->data.camera_rotate.delta_yaw) {
+                ta_camera_yaw(camera, event->data.camera_rotate.delta_yaw);
+            }
+            if (event->data.camera_rotate.delta_pitch) {
+                ta_camera_pitch(camera, event->data.camera_rotate.delta_pitch);
+            }
+            break;
         }
-    }
-    if (!vec3_zero(dir)) {
-        dir = vec3_normalize(dir);
-        ta_camera_set_target_pos_relative(camera, dir);
     }
 }
 
@@ -173,6 +168,14 @@ static ta_vec3 camera_fps_target(ta_camera *camera)
 void ta_camera_update(ta_camera *camera, double dt)
 {
     UNUSED(dt);
+
+    // TODO: This seems like borderline impulse physics.. should we just
+    //       add a rigid body to the camera??
+    if (!vec3_zero(camera->move_buffer)) {
+        camera->move_buffer = vec3_normalize(camera->move_buffer);
+        ta_camera_set_target_pos_relative(camera, camera->move_buffer);
+        camera->move_buffer = VEC3_ZERO;
+    }
 
     // Update position
     ta_vec3 pos_delta = vec3_sub(camera->follow_target, camera->position);

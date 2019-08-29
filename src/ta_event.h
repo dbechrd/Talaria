@@ -1,6 +1,7 @@
 #pragma once
 #include "ta_camera.h"
 
+#if 0
 typedef enum ta_event_queue_type {
     TA_EVENT_QUEUE_GLOBAL,
     TA_EVENT_QUEUE_WINDOW,
@@ -9,30 +10,22 @@ typedef enum ta_event_queue_type {
     TA_EVENT_QUEUE_TEXT_ENTRY,
     TA_EVENT_QUEUE_COUNT
 } ta_event_queue_type;
-
-#define TA_EVENT_TYPE_BITS TA_EVENT_QUEUE_COUNT
-#define TA_EVENT_TYPE_FIRST(queue) ((queue) << TA_EVENT_TYPE_BITS)
-#define TA_EVENT_TYPE_QUEUE(type) ((type) >> TA_EVENT_TYPE_BITS)
+#endif
 
 typedef enum ta_event_type {
-    // Global events
-    TA_EVENT_GLOBAL_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GLOBAL),
-    TA_EVENT_GLOBAL_WINDOW_RESIZE,
-    TA_EVENT_GLOBAL_MOUSE_MOVE,
-    //TA_EVENT_GLOBAL_MOUSE_CLICK,
-    TA_EVENT_GLOBAL_MOUSE_SCROLL,
-
     // Window events
-    TA_EVENT_WINDOW_RESIZE = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_WINDOW),
+    TA_EVENT_SHUTDOWN,
+    TA_EVENT_WINDOW_RESIZE,
+
+    // Input events
+    TA_EVENT_MOUSE_MOVE,
+    TA_EVENT_MOUSE_CLICK,
+    TA_EVENT_MOUSE_SCROLL,
 
     // Game events
-    TA_EVENT_GAME_QUIT = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_GAME),
     TA_EVENT_GAME_INIT,
     TA_EVENT_GAME_FREE_CAM,
     TA_EVENT_GAME_PLAY,
-    TA_EVENT_GAME_MOUSE_MOVE,
-    //TA_EVENT_GAME_MOUSE_CLICK,
-    //TA_EVENT_GAME_MOUSE_SCROLL,
 
     // Player events
     TA_EVENT_GAME_PLAYER_MOVE_FORWARD,
@@ -57,7 +50,6 @@ typedef enum ta_event_type {
     TA_EVENT_DEBUG_TOGGLE_MESH,
 
     // Camera events
-    TA_EVENT_CAMERA_ASPECT_CHANGE = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_CAMERA),
     TA_EVENT_CAMERA_MOVE_FORWARD,
     TA_EVENT_CAMERA_MOVE_BACKWARD,
     TA_EVENT_CAMERA_MOVE_RIGHT,
@@ -67,7 +59,7 @@ typedef enum ta_event_type {
     TA_EVENT_CAMERA_ROTATE,
 
     // Text entry events
-    TA_EVENT_TEXT_ENTRY_KEYDOWN = TA_EVENT_TYPE_FIRST(TA_EVENT_QUEUE_TEXT_ENTRY),
+    TA_EVENT_TEXT_ENTRY_KEYDOWN,
 } ta_event_type;
 
 typedef struct ta_event_window_resize_event {
@@ -111,12 +103,10 @@ typedef struct ta_event {
 typedef struct ta_event_queue {
     u32 head;  // oldest item
     u32 count;
-    u32 capacity;
     ta_event *buffer;
 } ta_event_queue;
-ta_event_queue tg_event_queues[TA_EVENT_QUEUE_COUNT];
 
 void ta_event_push(ta_event *event);
-bool ta_event_pop(ta_event *event, ta_event_queue_type queue_type);
-bool ta_event_peek(ta_event *event, ta_event_queue_type queue_type);
+bool ta_event_pop(ta_event *event);
+bool ta_event_peek(ta_event *event);
 void ta_event_events();

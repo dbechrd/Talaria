@@ -1,7 +1,6 @@
 #pragma once
-#include "dlb/dlb_types.h"
 #include "ta_uid.h"
-#include "ta_audio.h"
+#include "dlb/dlb_types.h"
 
 typedef enum e_button_state {
     TA_BUTTON_INACTIVE,
@@ -19,11 +18,13 @@ typedef struct e_button {
     const char *sfx_deactivated_uid;
 } e_button;
 
-struct ta_node;
+typedef struct ta_audio_buffer ta_audio_buffer;
+typedef struct ta_audio_source ta_audio_source;
+typedef struct ta_node ta_node;
 
 void e_button_init(e_button *button);
 ta_audio_source *e_button_audio_source(e_button *button);
 ta_audio_buffer *e_button_sfx_activated(e_button *button);
 ta_audio_buffer *e_button_sfx_active(e_button *button);
 ta_audio_buffer *e_button_sfx_deactivated(e_button *button);
-void e_button_update(struct ta_node *node);
+void e_button_update(ta_node *node);

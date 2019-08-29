@@ -7,6 +7,8 @@
 #include "ta_scene.h"
 #include "ta_game.h"
 #include "ta_buffer.h"
+#include "ta_font.h"
+#include "ta_audio.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 #include <stdlib.h>
@@ -274,7 +276,7 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
         // TODO: Should clip rect contain pad or not? Not sure.. see how it looks.
         ta_rect clip_rect = rect_shrink(frame->rect, frame->pad);
         glEnable(GL_SCISSOR_TEST);
-        int inv_y = tg_window.rect.h - (clip_rect.y + clip_rect.h);
+        int inv_y = WINDOW_H - (clip_rect.y + clip_rect.h);
         glScissor(clip_rect.x, inv_y, clip_rect.w, clip_rect.h);
     }
 
@@ -422,7 +424,7 @@ void ta_ui_statusbar()
     ta_rect_uv status_bg = { 0 };
     status_bg.rect.x = statusbar_pad;
     status_bg.rect.y = -(float)(tg_game.font->line_height + statusbar_pad);
-    status_bg.rect.w = (float)(tg_window.rect.w - statusbar_pad * 2);
+    status_bg.rect.w = (float)(WINDOW_W - statusbar_pad * 2);
     status_bg.rect.h = (float)tg_game.font->line_height;
     ta_primitive_push_rect_uv(&tooltip_bg_queue, status_bg, TA_COLOR_GRAY3A,
         UI_LAYER_TIP_BG, true, false);
@@ -572,7 +574,7 @@ bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
     if (tg_game.text_entry.entry == text_entry) {
         // Deactive textbox when elsewhere clicked
         if (ta_button_state_pressed(&tg_mouse.left) && !last_frame_state.pressed) {
-            ta_game_state_set(tg_game.state_prev);
+            ta_game_state_set(&tg_game, tg_game.state_prev);
             tg_game.text_entry.entry = 0;
             tg_game.text_entry.filter = 0;
         }
@@ -580,7 +582,7 @@ bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
         // Activate textbox when clicked
         tg_game.text_entry.entry = text_entry;
         tg_game.text_entry.filter = &ui_textbox_filter;
-        ta_game_state_set(TA_GAME_STATE_TEXT_ENTRY);
+        ta_game_state_set(&tg_game, TA_GAME_STATE_TEXT_ENTRY);
     }
 
     if (tg_game.text_entry.entry == text_entry) {
@@ -740,11 +742,11 @@ void ta_ui_test()
         {
             tg_game.text_entry.entry = &text_entry[i];
             tg_game.text_entry.filter = &ui_textbox_filter;
-            ta_game_state_set(TA_GAME_STATE_TEXT_ENTRY);
+            ta_game_state_set(&tg_game, TA_GAME_STATE_TEXT_ENTRY);
         } else if (tg_game.text_entry.entry == &text_entry[i] &&
             ta_button_state_pressed(&tg_mouse.left))
         {
-            ta_game_state_set(tg_game.state_prev);
+            ta_game_state_set(&tg_game, tg_game.state_prev);
             tg_game.text_entry.entry = 0;
             tg_game.text_entry.filter = 0;
         }
@@ -864,10 +866,10 @@ void ta_ui_test()
         }
         dlb_vec_clearz(status_rects);
 
-        int status_halfw = tg_window.rect.w / 2 - (int)status_rect.w / 2;
+        int status_halfw = WINDOW_W / 2 - (int)status_rect.w / 2;
         const int status_pad_bottom = 20;
         ta_font_render(quads_queue, tg_game.font, (float)status_halfw,
-            (float)(tg_window.rect.h - (tg_game.font->ascent + status_pad_bottom)),
+            (float)(WINDOW_H - (tg_game.font->ascent + status_pad_bottom)),
             UI_LAYER_TIP, true, true);
 
         status_msg = 0;

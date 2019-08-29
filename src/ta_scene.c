@@ -15,6 +15,7 @@
 #include "ta_game.h"
 #include "ta_window.h"
 #include "ta_file.h"
+#include "ta_audio.h"
 #include "dlb/dlb_vector.h"
 #include <stdlib.h>
 #include <float.h>
@@ -96,7 +97,7 @@ static pool_info pool_infos[] = {
     [TYP_AUDIO_BUFFER] = { sizeof(ta_audio_buffer),  ta_audio_buffer_init, 0 },
     [TYP_AUDIO_SOURCE] = { sizeof(ta_audio_source),  ta_audio_source_init, 0 },
     [TYP_RIGID_BODY]   = { sizeof(ta_rigid_body),    ta_rigid_body_init,   0 },
-    [TYP_BUTTON]       = { sizeof(e_button),        e_button_init,       0 },
+    [TYP_BUTTON]       = { sizeof(e_button),         e_button_init,        0 },
     [TYP_FONT]         = { sizeof(ta_font),          ta_font_init,         0 },
 };
 
@@ -1043,7 +1044,7 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 
 void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
 {
-    glViewport(0, 0, tg_window.rect.w, tg_window.rect.h);
+    glViewport(0, 0, WINDOW_W, WINDOW_H);
     glCullFace(GL_BACK);
     //glDisable(GL_CULL_FACE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

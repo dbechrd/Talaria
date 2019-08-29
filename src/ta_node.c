@@ -8,6 +8,10 @@
 #include "ta_material.h"
 #include "ta_texture.h"
 #include "ta_button.h"
+#include "ta_camera.h"
+#include "ta_shader.h"
+#include "ta_scene.h"
+#include "ta_light.h"
 #include "dlb/dlb_vector.h"
 
 void ta_node_init(ta_node *node)
@@ -222,6 +226,7 @@ void ta_node_render(ta_node *node, ta_camera *camera, float alpha)
         DLB_ASSERT(mesh_group);
 
         // TODO: This is going to make a zillion extranous calls
+        static GLenum tg_polygon_mode = GL_FILL;
         GLenum camera_poly_mode = camera->debug_wireframe ? GL_LINE : GL_FILL;
         if (camera_poly_mode != tg_polygon_mode) {
             glPolygonMode(GL_FRONT_AND_BACK, camera_poly_mode);

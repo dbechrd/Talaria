@@ -7,6 +7,7 @@
 #include "ta_log.h"
 #include "ta_symbol.h"
 #include "ta_window.h"
+#include "ta_shader.h"
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"

@@ -2,6 +2,8 @@
 #include "ta_game.h"
 #include "ta_event.h"
 #include "ta_rigid_body.h"
+#include "ta_scene.h"
+#include "ta_node.h"
 
 void e_button_init(e_button *button)
 {
