@@ -508,6 +508,7 @@ ta_shader:
         { name: "u_lights[7].shadowmap_zfar",  type: 2 },  # TA_GLSL_FLOAT
       ]
     },
+    { name: "u_selected", type: 0 },  # TA_GLSL_GLINT
   ]
 ta_shader:
   uid: "shader_shadow"

@@ -455,6 +455,9 @@ void ta_game_event(ta_game *game, ta_event *event)
                 !game->camera->debug_no_mesh;
             break;
         } case TA_EVENT_EDITOR_SELECT: {
+            if (!tg_mouse.captured)
+                break;
+
             ta_ray ray;
             ray.origin = game->camera->position;
             ray.direction = game->camera->front;
@@ -462,6 +465,8 @@ void ta_game_event(ta_game *game, ta_event *event)
             float t_min = 9999.0f;
             ta_node *closest_node = 0;
 
+            game->selected_node_idx = -1;
+            u32 idx = 0;
             dlb_vec_each(ta_node *, node, game->scene->pools[TYP_NODE]) {
                 ta_rigid_body *body = ta_node_rigid_body(node);
                 // TODO: Handle types other than spheres
@@ -474,10 +479,10 @@ void ta_game_event(ta_game *game, ta_event *event)
                 if (ta_intersect_ray_sphere(ray, sphere, &t)) {
                     if (t >= 0.0f && t < t_min) {
                         t_min = t;
-                        closest_node = node;
-                        node->invisible = true;
+                        game->selected_node_idx = idx;
                     }
                 }
+                idx++;
             }
             break;
         }

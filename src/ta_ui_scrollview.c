@@ -9,6 +9,7 @@
 #include "ta_buffer.h"
 #include "ta_font.h"
 #include "ta_audio.h"
+#include "ta_node.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 #include <stdlib.h>
@@ -679,18 +680,6 @@ void ta_ui_hud()
     glDisable(GL_SCISSOR_TEST);
 }
 
-static void ui_4x4_grid(int rows, ta_texture *tex)
-{
-    for (int r = 0; r < rows; r++) {
-        ta_ui_row_begin();
-        for (int c = 0; c < 4; c++) {
-            ta_ui_next_size(20, 20);
-            ta_ui_next_margin(2, 2, 0, 0);
-            ta_ui_button(INTERN("4x4_cell"), tex);
-        }
-    }
-}
-
 static void text_entry_update(text_entry_settings *text_entry)
 {
     if (!text_entry->dirty)
@@ -709,6 +698,38 @@ static void text_entry_update(text_entry_settings *text_entry)
     text_entry->dirty = false;
 }
 
+static void ui_node_panel()
+{
+    u32 node_panel_id;
+    ta_ui_next_margin(2, 2, 0, 0);
+    ta_ui_panel_begin(INTERN("node_panel"), &node_panel_id);
+
+    if (tg_game.selected_node_idx >= 0) {
+        ta_ui_row_begin();
+        ta_ui_next_size(100, 0);
+        ta_ui_label(0, "UID:");
+        ta_node *node = &((ta_node *)tg_game.scene->pools[TYP_NODE])[tg_game.selected_node_idx];
+        ta_ui_label(0, node->uid.uid);
+        ta_ui_row_begin();
+        ta_ui_next_size(100, 0);
+        ta_ui_label(0, "Position:");
+        char pos_buf[64] = { 0 };
+        int len = snprintf(pos_buf, sizeof(pos_buf), "x: %3.4f, y: %3.4f, z: %3.4f",
+            node->transform.position.x,
+            node->transform.position.y,
+            node->transform.position.z);
+        DLB_ASSERT(len < sizeof(pos_buf));
+        ta_ui_label(0, pos_buf);
+    } else {
+        ta_ui_row_begin();
+        ta_ui_next_size(100, 0);
+        ta_ui_label(0, "UID:");
+        ta_ui_label(0, "Nothing selected");
+    }
+
+    ta_ui_panel_end(node_panel_id);
+}
+
 static void ui_audio_panel()
 {
     static const char *audio_playing_uid = 0;
@@ -723,16 +744,16 @@ static void ui_audio_panel()
     ta_ui_row_begin();
     dlb_vec_each(ta_audio_buffer *, buf, tg_game.scene->pools[TYP_AUDIO_BUFFER]) {
 #if 0
-        int panel_id = -1;
-        ta_ui_panel_begin(&TA_SIZE(60 * buf_count, 60), &panel_id);
-        DLB_ASSERT(panel_id >= 0);
+        int node_panel_id = -1;
+        ta_ui_panel_begin(&TA_SIZE(60 * buf_count, 60), &node_panel_id);
+        DLB_ASSERT(node_panel_id >= 0);
 
         ta_ui_label(buf.uid.uid);
         ta_ui_row_begin();
         ta_ui_button("Play");
         ta_ui_button("Loop");
 
-        ta_ui_panel_end(panel_id);
+        ta_ui_panel_end(node_panel_id);
 #endif
         bool active = buf->uid.uid == audio_playing_uid;
         ta_ui_next_size(36, 36);
@@ -818,23 +839,23 @@ static void ui_textbox_panel()
 static void ui_editor_sidebar()
 {
     enum {
+        CATEGORY_NODE,
         CATEGORY_AUDIO,
         CATEGORY_TEXTURES,
         CATEGORY_TEXTBOX,
-        CATEGORY_NOT_USED_3,
         CATEGORY_COUNT
     };
     const char *category_names[CATEGORY_COUNT] = { 0 };
-    category_names[CATEGORY_AUDIO]      = INTERN(STRING(CATEGORY_AUDIO));
-    category_names[CATEGORY_TEXTURES]   = INTERN(STRING(CATEGORY_TEXTURES));
-    category_names[CATEGORY_TEXTBOX]    = INTERN(STRING(CATEGORY_TEXTBOX));
-    category_names[CATEGORY_NOT_USED_3] = INTERN(STRING(CATEGORY_NOT_USED_3));
-    static int category_selected = -1;
+    category_names[CATEGORY_NODE]     = INTERN(STRING(CATEGORY_NODE));
+    category_names[CATEGORY_AUDIO]    = INTERN(STRING(CATEGORY_AUDIO));
+    category_names[CATEGORY_TEXTURES] = INTERN(STRING(CATEGORY_TEXTURES));
+    category_names[CATEGORY_TEXTBOX]  = INTERN(STRING(CATEGORY_TEXTBOX));
+    static int category_selected = 0;
 
     ta_ui_row_begin();
-    u32 category_panel_id = (u32)-1;
     ta_ui_next_size(50, 50);
     ta_ui_next_pad(2, 2, 2, 2);
+    u32 category_panel_id = 0;
     ta_ui_panel_begin(INTERN("editor_sidebar"), &category_panel_id);
     for (int i = 0; i < CATEGORY_COUNT; i++) {
         ta_ui_row_begin();
@@ -850,7 +871,8 @@ static void ui_editor_sidebar()
     ta_ui_panel_end(category_panel_id);
 
     switch (category_selected) {
-        case -1: {
+        case CATEGORY_NODE: {
+            ui_node_panel();
             break;
         } case CATEGORY_AUDIO: {
             ui_audio_panel();
@@ -862,11 +884,6 @@ static void ui_editor_sidebar()
             ui_textbox_panel();
             break;
         } default: {
-            u32 category_details_id = (u32)-1;
-            ta_ui_next_size(20, 20);
-            ta_ui_panel_begin(INTERN("editor_test_grid"), &category_details_id);
-            ui_4x4_grid(category_selected + 1, tg_game.tex_orange);
-            ta_ui_panel_end(category_details_id);
             break;
         }
     }
@@ -896,11 +913,12 @@ void ui_statusbar()
     }
 }
 
-void ta_ui_test()
+void ta_ui_editor()
 {
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
     ta_ui_next_size(300, 400);
+    ta_ui_next_margin(0, 50, 0, 0);
     ta_ui_next_pad(2, 2, 2, 2);
     ta_ui_window_begin(INTERN("test_window"), 0);
     ui_editor_sidebar();

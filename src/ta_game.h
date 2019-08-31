@@ -59,6 +59,7 @@ typedef struct ta_game {
     int player_clip_max;
     int player_clip;
 
+    int selected_node_idx;
     struct {
         text_entry_settings *entry;
         text_entry_filter *filter;

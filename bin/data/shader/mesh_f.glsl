@@ -94,6 +94,8 @@ struct Light {
 uniform uint u_lights_count;
 uniform Light[8] u_lights;
 
+uniform int u_selected;
+
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 FresnelSchlick(float cosTheta, vec3 F0);

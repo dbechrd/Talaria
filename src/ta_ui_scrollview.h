@@ -4,4 +4,4 @@
 #include "ta_texture.h"
 
 void ta_ui_hud();
-void ta_ui_test();
+void ta_ui_editor();
