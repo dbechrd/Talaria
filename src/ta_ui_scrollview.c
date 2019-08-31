@@ -17,8 +17,8 @@
 #define UI_DEBUG_PAD            1
 
 #define UI_DEBUG_CONTAINERS     0
-#define UI_DEBUG_NO_TEXTURES    1
-#define UI_DEBUG_RANDOM_COLORS  1
+#define UI_DEBUG_NO_TEXTURES    0
+#define UI_DEBUG_RANDOM_COLORS  0
 
 #define WIDGET_PAD          1
 #define SCROLL_SPEED        20
@@ -118,7 +118,7 @@ static ta_rgba ui_get_color(ui_frame *frame, ui_event_type event)
             [UI_STATE_ACTIVE] = { 0.0f, 1.0f, 1.0f, 1.0f }, //TA_COLOR_CYAN
         },
     };
-    return ui_colors[type][event];
+    return ui_colors[frame->type][event];
 #endif
 }
 
@@ -679,7 +679,7 @@ void ta_ui_hud()
     glDisable(GL_SCISSOR_TEST);
 }
 
-void ui_4x4_grid(int rows, ta_texture *tex)
+static void ui_4x4_grid(int rows, ta_texture *tex)
 {
     for (int r = 0; r < rows; r++) {
         ta_ui_row_begin();
@@ -691,7 +691,7 @@ void ui_4x4_grid(int rows, ta_texture *tex)
     }
 }
 
-void text_entry_update(text_entry_settings *text_entry)
+static void text_entry_update(text_entry_settings *text_entry)
 {
     if (!text_entry->dirty)
         return;
@@ -709,14 +709,75 @@ void text_entry_update(text_entry_settings *text_entry)
     text_entry->dirty = false;
 }
 
-void ta_ui_test()
+static void ui_audio_panel()
 {
-    // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
-    //       at render time (make sure to update viewport correctly).
-    ta_ui_next_size(300, 400);
-    ta_ui_next_pad(2, 2, 2, 2);
-    ta_ui_window_begin(INTERN("test_window"), 0);
+    static const char *audio_playing_uid = 0;
 
+    u32 audio_panel_id;
+    ta_ui_next_size(50, 50);
+    ta_ui_next_margin(2, 2, 0, 0);
+    ta_ui_panel_begin(INTERN("sound_panel"), &audio_panel_id);
+
+    ta_audio_buffer *audio_request = 0;
+
+    ta_ui_row_begin();
+    dlb_vec_each(ta_audio_buffer *, buf, tg_game.scene->pools[TYP_AUDIO_BUFFER]) {
+#if 0
+        int panel_id = -1;
+        ta_ui_panel_begin(&TA_SIZE(60 * buf_count, 60), &panel_id);
+        DLB_ASSERT(panel_id >= 0);
+
+        ta_ui_label(buf.uid.uid);
+        ta_ui_row_begin();
+        ta_ui_button("Play");
+        ta_ui_button("Loop");
+
+        ta_ui_panel_end(panel_id);
+#endif
+        bool active = buf->uid.uid == audio_playing_uid;
+        ta_ui_next_size(36, 36);
+        ta_ui_next_margin(0, 0, 2, 0);
+        ta_ui_button_toggle(buf->uid.uid, tg_game.tex_audio_icon, &active);
+        if (last_frame_state.pressed) {
+            audio_request = buf;
+        }
+        if (last_frame_state.hover) {
+            ta_ui_tooltip(SYM(buf->uid.uid));
+        }
+    }
+
+    if (audio_request) {
+        ta_audio_source_stop(tg_game.background_music);
+        if (audio_request->uid.uid != audio_playing_uid) {
+            ta_audio_source_set_buffer(tg_game.background_music, audio_request);
+            ta_audio_source_play_loop(tg_game.background_music);
+            audio_playing_uid = audio_request->uid.uid;
+        } else {
+            audio_playing_uid = 0;
+        }
+    }
+
+    ta_ui_panel_end(audio_panel_id);
+}
+
+static void ui_texture_panel()
+{
+    u32 texture_panel_id;
+    ta_ui_next_margin(2, 2, 0, 0);
+    ta_ui_panel_begin(INTERN("sound_panel"), &texture_panel_id);
+    ta_ui_row_begin();
+    dlb_vec_each(ta_texture *, tex, tg_game.scene->pools[TYP_TEXTURE]) {
+        ta_ui_next_size(64, 64);
+        ta_ui_next_margin(0, 0, 2, 0);
+        ta_ui_button(tex->uid.uid, tex);
+    }
+    ta_ui_panel_end(texture_panel_id);
+}
+
+static void ui_textbox_panel()
+{
+    u32 textbox_panel_id;
+    ta_ui_panel_begin(INTERN("sound_panel"), &textbox_panel_id);
     static text_entry_settings text_entry[2];
 #if 0
     // TODO: Initialize text_entry_settings to w/e editable should be
@@ -751,18 +812,22 @@ void ta_ui_test()
             tg_game.text_entry.filter = 0;
         }
     }
+    ta_ui_panel_end(textbox_panel_id);
+}
 
+static void ui_editor_sidebar()
+{
     enum {
         CATEGORY_AUDIO,
-        CATEGORY_NOT_USED_1,
-        CATEGORY_NOT_USED_2,
+        CATEGORY_TEXTURES,
+        CATEGORY_TEXTBOX,
         CATEGORY_NOT_USED_3,
         CATEGORY_COUNT
     };
     const char *category_names[CATEGORY_COUNT] = { 0 };
     category_names[CATEGORY_AUDIO]      = INTERN(STRING(CATEGORY_AUDIO));
-    category_names[CATEGORY_NOT_USED_1] = INTERN(STRING(CATEGORY_NOT_USED_1));
-    category_names[CATEGORY_NOT_USED_2] = INTERN(STRING(CATEGORY_NOT_USED_2));
+    category_names[CATEGORY_TEXTURES]   = INTERN(STRING(CATEGORY_TEXTURES));
+    category_names[CATEGORY_TEXTBOX]    = INTERN(STRING(CATEGORY_TEXTBOX));
     category_names[CATEGORY_NOT_USED_3] = INTERN(STRING(CATEGORY_NOT_USED_3));
     static int category_selected = -1;
 
@@ -770,12 +835,12 @@ void ta_ui_test()
     u32 category_panel_id = (u32)-1;
     ta_ui_next_size(50, 50);
     ta_ui_next_pad(2, 2, 2, 2);
-    ta_ui_panel_begin(INTERN("category_panel"), &category_panel_id);
+    ta_ui_panel_begin(INTERN("editor_sidebar"), &category_panel_id);
     for (int i = 0; i < CATEGORY_COUNT; i++) {
         ta_ui_row_begin();
         ta_ui_next_size(50, 50);
         ta_ui_next_margin(0, 0, 0, 2);
-        if (ta_ui_button(category_names[i], tg_game.tex_orange)) {
+        if (ta_ui_button(category_names[i], 0)) {
             category_selected = (i == category_selected ? -1 : i);
         }
         if (last_frame_state.hover) {
@@ -788,72 +853,27 @@ void ta_ui_test()
         case -1: {
             break;
         } case CATEGORY_AUDIO: {
-            // Audio buffers
-            static const char *audio_playing_uid = 0;
-            ta_audio_buffer *audio_buffers = tg_game.scene->pools[TYP_AUDIO_BUFFER];
-            u32 buf_count = dlb_vec_len(audio_buffers);
-
-            int audio_playing_idx = -1;
-            int audio_request_idx = -1;
-
-            u32 audio_panel_id = (u32)-1;
-            ta_ui_next_size(50, 50);
-            ta_ui_next_margin(2, 2, 0, 0);
-            ta_ui_panel_begin(INTERN("sound_panel"), &audio_panel_id);
-
-            ta_ui_row_begin();
-            for (u32 i = 0; i < buf_count; i++) {
-#if 0
-                int panel_id = -1;
-                ta_ui_panel_begin(&TA_SIZE(60 * buf_count, 60), &panel_id);
-                DLB_ASSERT(panel_id >= 0);
-
-                ta_ui_label(audio_buffers[i].uid.uid);
-                ta_ui_row_begin();
-                ta_ui_button("Play");
-                ta_ui_button("Loop");
-
-                ta_ui_panel_end(panel_id);
-#endif
-                bool active = audio_buffers[i].uid.uid == audio_playing_uid;
-                if (active) {
-                    audio_playing_idx = i;
-                }
-                ta_ui_next_size(36, 36);
-                ta_ui_next_margin(0, 0, 2, 0);
-                ta_ui_button_toggle(audio_buffers[i].uid.uid, tg_game.tex_audio_icon, &active);
-                if (last_frame_state.pressed) {
-                    audio_request_idx = i;
-                }
-                if (last_frame_state.hover) {
-                    ta_ui_tooltip(SYM(audio_buffers[i].uid.uid));
-                }
-            }
-
-            if (audio_request_idx >= 0) {
-                ta_audio_source_stop(tg_game.background_music);
-                audio_playing_uid = 0;
-                if (audio_request_idx != audio_playing_idx) {
-                    ta_audio_source_set_buffer(tg_game.background_music, &audio_buffers[audio_request_idx]);
-                    ta_audio_source_play_loop(tg_game.background_music);
-                    audio_playing_uid = audio_buffers[audio_request_idx].uid.uid;
-                }
-            }
-
-            ta_ui_panel_end(audio_panel_id);
+            ui_audio_panel();
+            break;
+        } case CATEGORY_TEXTURES: {
+            ui_texture_panel();
+            break;
+        } case CATEGORY_TEXTBOX: {
+            ui_textbox_panel();
             break;
         } default: {
             u32 category_details_id = (u32)-1;
             ta_ui_next_size(20, 20);
-            ta_ui_panel_begin(INTERN("category_details_panel"), &category_details_id);
+            ta_ui_panel_begin(INTERN("editor_test_grid"), &category_details_id);
             ui_4x4_grid(category_selected + 1, tg_game.tex_orange);
             ta_ui_panel_end(category_details_id);
             break;
         }
     }
+}
 
-    ta_ui_window_end();
-
+void ui_statusbar()
+{
     if (status_msg) {
         ta_ui_statusbar();
 
@@ -874,48 +894,61 @@ void ta_ui_test()
 
         status_msg = 0;
     }
+}
+
+void ta_ui_test()
+{
+    // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
+    //       at render time (make sure to update viewport correctly).
+    ta_ui_next_size(300, 400);
+    ta_ui_next_pad(2, 2, 2, 2);
+    ta_ui_window_begin(INTERN("test_window"), 0);
+    ui_editor_sidebar();
+    ta_ui_window_end();
+
+    ui_statusbar();
 
     // Render tooltips
     ta_primitive_render_quads(tooltip_bg_queue, tg_shader_quads, true, true);
     ta_font_render(tooltip_fg_queue, tg_game.font, 0, 0, UI_LAYER_TIP, true, true);
+}
 
 #if 0
-    // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-    if (show_demo_window)
-        ImGui::ShowDemoWindow(&show_demo_window);
+// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
+if (show_demo_window)
+ImGui::ShowDemoWindow(&show_demo_window);
 
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-    {
-        static float f = 0.0f;
-        static int counter = 0;
+// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
+{
+    static float f = 0.0f;
+    static int counter = 0;
 
-        ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+    ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
-        ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-        ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-        ImGui::Checkbox("Another Window", &show_another_window);
+    ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+    ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
+    ImGui::Checkbox("Another Window", &show_another_window);
 
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+    ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+    ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
-        if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-            counter++;
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", counter);
+    if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+        counter++;
+    ImGui::SameLine();
+    ImGui::Text("counter = %d", counter);
 
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        ImGui::End();
-    }
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+    ImGui::End();
+}
 
-    // 3. Show another simple window.
-    if (show_another_window)
-    {
-        ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-        ImGui::Text("Hello from another window!");
-        if (ImGui::Button("Close Me"))
-            show_another_window = false;
-        ImGui::End();
-    }
+// 3. Show another simple window.
+if (show_another_window)
+{
+    ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+    ImGui::Text("Hello from another window!");
+    if (ImGui::Button("Close Me"))
+        show_another_window = false;
+    ImGui::End();
+}
 
 #endif
-}
