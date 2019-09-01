@@ -934,7 +934,7 @@ static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
 
     UNUSED(dt);
 
-    ta_rigid_body_pair *pairs = 0;
+    static ta_rigid_body_pair *pairs = 0;
 
 #if 1
     dlb_vec_each(ta_node *, a, scene->pools[TYP_NODE]) {
@@ -965,7 +965,8 @@ static ta_manifold *detect_collisions(ta_rigid_body_pair *pairs, double dt)
 {
     UNUSED(dt);
 
-    ta_manifold *manifolds = 0;
+    static ta_manifold *manifolds = 0;
+
     ta_manifold manifold;
     dlb_vec_each(ta_rigid_body_pair *, pair, pairs) {
         if (ta_rigid_body_intersect(pair->a, pair->b, &manifold)) {
@@ -999,8 +1000,8 @@ void ta_scene_update(ta_scene *scene, float dt)
             ta_rigid_body_resolve_collision(manifold);
             ta_rigid_body_positional_correction(manifold);
         }
-        dlb_vec_clear(manifolds);
-        dlb_vec_clear(pairs);
+        dlb_vec_clearz(manifolds);
+        dlb_vec_clearz(pairs);
     }
 
     // Update entities

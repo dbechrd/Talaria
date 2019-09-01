@@ -11,12 +11,9 @@ typedef enum ta_game_state {
 } ta_game_state;
 
 typedef struct text_entry_settings {
-    char *buffer;   // "Some text| is here"
-    char *lbuffer;  // "Some text"
-    char *rbuffer;  // "ereh si "
-    bool dirty;
-    u32 text_len;
-    u32 cursor;  // index of next character, 0 = before first char, len = after last char
+    char *buf;
+    u32 cursor;   // index of next character, 0 = before first char, len = after last char
+    u32 gap_len;  // length of gap after cursor
     u32 selection_start;
     u32 selection_len;
 } text_entry_settings;

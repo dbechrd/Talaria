@@ -88,55 +88,67 @@ static void event_sdl_poll()
                 ta_event_push(&event);
                 break;
             } case SDL_KEYDOWN: {
-                if (tg_game.text_entry.entry) {
+                text_entry_settings *textbox = tg_game.text_entry.entry;
+                if (textbox) {
                     switch (sdl_event.key.keysym.scancode) {
 #if 0
                         // NOTE: This doesn't work because it gets double processed
                         //       and the entire application exits.
                         case SDL_SCANCODE_ESCAPE: {
-                            ta_game_state_set(tg_game.text_entry.entry->prev_state);
-                            tg_game.text_entry.entry = 0;
+                            ta_game_state_set(textbox->prev_state);
+                            textbox = 0;
                             tg_game.text_entry.filter = 0;
                             break;
                         }
 #endif
                         case SDL_SCANCODE_BACKSPACE: {
-                            if (dlb_vec_len(tg_game.text_entry.entry->lbuffer)) {
-                                dlb_vec_popz(tg_game.text_entry.entry->lbuffer);
-                                tg_game.text_entry.entry->cursor--;
-                                tg_game.text_entry.entry->dirty = true;
+                            if (textbox->cursor) {
+                                textbox->cursor--;
+                                textbox->gap_len++;
                             }
                             break;
                         } case SDL_SCANCODE_DELETE: {
-                            if (dlb_vec_len(tg_game.text_entry.entry->rbuffer)) {
-                                dlb_vec_popz(tg_game.text_entry.entry->rbuffer);
-                                tg_game.text_entry.entry->dirty = true;
+                            u32 cap = dlb_vec_cap(textbox->buf);
+                            if (textbox->cursor + textbox->gap_len < cap) {
+                                textbox->gap_len++;
                             }
                             break;
                         } case SDL_SCANCODE_RIGHT: {
-                            u32 len = dlb_vec_len(tg_game.text_entry.entry->lbuffer) +
-                                      dlb_vec_len(tg_game.text_entry.entry->rbuffer);
-                            if (tg_game.text_entry.entry->cursor < len) {
-                                DLB_ASSERT(dlb_vec_len(tg_game.text_entry.entry->rbuffer));
-                                char *c = dlb_vec_last(tg_game.text_entry.entry->rbuffer);
-                                dlb_vec_push(tg_game.text_entry.entry->lbuffer, *c);
-                                dlb_vec_popz(tg_game.text_entry.entry->rbuffer);
-                                tg_game.text_entry.entry->cursor++;
+                            u32 cap = dlb_vec_cap(textbox->buf);
+                            if (textbox->cursor + textbox->gap_len < cap) {
+                                if (textbox->gap_len) {
+                                    textbox->buf[textbox->cursor] = textbox->buf[textbox->cursor + textbox->gap_len];
+                                    textbox->buf[textbox->cursor + textbox->gap_len] = 0;
+                                }
+                                textbox->cursor++;
                             }
                             break;
                         } case SDL_SCANCODE_LEFT: {
-                            if (tg_game.text_entry.entry->cursor) {
-                                DLB_ASSERT(dlb_vec_len(tg_game.text_entry.entry->lbuffer));
-                                char *c = dlb_vec_last(tg_game.text_entry.entry->lbuffer);
-                                dlb_vec_push(tg_game.text_entry.entry->rbuffer, *c);
-                                dlb_vec_popz(tg_game.text_entry.entry->lbuffer);
-                                tg_game.text_entry.entry->cursor--;
+                            if (textbox->cursor) {
+                                textbox->cursor--;
+                                if (textbox->gap_len) {
+                                    textbox->buf[textbox->cursor + textbox->gap_len] = textbox->buf[textbox->cursor];
+                                    textbox->buf[textbox->cursor] = 0;
+                                }
                             }
                             break;
                         } case SDL_SCANCODE_RETURN: {
-                            dlb_vec_push(tg_game.text_entry.entry->lbuffer, '\n');
-                            tg_game.text_entry.entry->cursor++;
-                            tg_game.text_entry.entry->dirty = true;
+                            if (!textbox->gap_len) {
+                                u32 cap = dlb_vec_cap(textbox->buf);
+                                u32 start = textbox->cursor + textbox->gap_len;
+                                dlb_vec_reserve(textbox->buf, dlb_vec_cap(textbox->buf) + 1);
+                                u32 new_cap = dlb_vec_cap(textbox->buf);
+                                textbox->gap_len = new_cap - cap;
+                                u32 len = cap - start;
+                                dlb_memcpy(
+                                    textbox->buf + textbox->cursor + textbox->gap_len,
+                                    textbox->buf + textbox->cursor,
+                                    len
+                                );
+                            }
+                            textbox->buf[textbox->cursor] = '\n';
+                            textbox->cursor++;
+                            textbox->gap_len--;
                             break;
                         }
 #if 0
@@ -156,13 +168,27 @@ static void event_sdl_poll()
                 }
                 break;
             } case SDL_TEXTINPUT: {
-                if (tg_game.text_entry.entry) {
+                text_entry_settings *textbox = tg_game.text_entry.entry;
+                if (textbox) {
                     char *c = sdl_event.text.text;
 
                     if (tg_game.text_entry.filter(*c)) {
-                        dlb_vec_push(tg_game.text_entry.entry->lbuffer, *c);
-                        tg_game.text_entry.entry->cursor++;
-                        tg_game.text_entry.entry->dirty = true;
+                        if (!textbox->gap_len) {
+                            u32 cap = dlb_vec_cap(textbox->buf);
+                            u32 start = textbox->cursor + textbox->gap_len;
+                            dlb_vec_reserve(textbox->buf, dlb_vec_cap(textbox->buf) + 1);
+                            u32 new_cap = dlb_vec_cap(textbox->buf);
+                            textbox->gap_len = new_cap - cap;
+                            u32 len = cap - start;
+                            dlb_memcpy(
+                                textbox->buf + textbox->cursor + textbox->gap_len,
+                                textbox->buf + textbox->cursor,
+                                len
+                            );
+                        }
+                        textbox->buf[textbox->cursor] = *c;
+                        textbox->cursor++;
+                        textbox->gap_len--;
                     }
 #if 0
                     while (*c) {

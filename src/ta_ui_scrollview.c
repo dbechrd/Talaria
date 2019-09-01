@@ -558,10 +558,21 @@ bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
 
     ta_size *size = &next_frame_style.size;
 
+    // DEBUG: Temp text entry debug buffer
+    char debug_text[128] = { 0 };
+    u32 idx = 0;
+    for (u32 i = 0; i < sizeof(debug_text) - 1 && i < dlb_vec_cap(text_entry->buf); i++) {
+        if (i >= text_entry->cursor && i < text_entry->cursor + text_entry->gap_len) {
+            debug_text[idx++] = '_';
+        } else {
+            debug_text[idx++] = text_entry->buf[i];
+        }
+    }
+
     static ta_rect_uv *text_rects = 0;
     ta_vec2 cursor_offset = { 0 };
     ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font,
-        text_entry->buffer, dlb_vec_len(text_entry->buffer), true,
+        debug_text, 0, true,
         text_entry->cursor, &cursor_offset);
 
     // Auto-expand frame based on contents
@@ -678,24 +689,6 @@ void ta_ui_hud()
     ta_ui_window_end();
 
     glDisable(GL_SCISSOR_TEST);
-}
-
-static void text_entry_update(text_entry_settings *text_entry)
-{
-    if (!text_entry->dirty)
-        return;
-
-    dlb_vec_clearz(text_entry->buffer);
-    int llen = dlb_vec_len(text_entry->lbuffer);
-    int rlen = dlb_vec_len(text_entry->rbuffer);
-    for (int i = 0; i < llen; ++i) {
-        dlb_vec_push(text_entry->buffer, text_entry->lbuffer[i]);
-    }
-    for (int i = rlen - 1; i >= 0; --i) {
-        dlb_vec_push(text_entry->buffer, text_entry->rbuffer[i]);
-    }
-
-    text_entry->dirty = false;
 }
 
 static void ui_node_panel()
@@ -817,7 +810,6 @@ static void ui_textbox_panel()
     for (int i = 0; i < ARRAY_COUNT(text_entry); i++) {
         ta_ui_row_begin();
         ta_ui_label(INTERN("test_label"), "Text:");
-        text_entry_update(&text_entry[i]);
         ta_ui_next_size(300, 0);
         ta_ui_next_margin(4, 0, 0, 0);
         if (ta_ui_textbox(INTERN("test_textbox"), &text_entry[i]))
