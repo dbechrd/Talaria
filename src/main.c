@@ -384,9 +384,11 @@ static void render_fps(double ms_frame_start, u64 frame_num)
 {
     // Print frame time on the screen
     double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
-    char frame_time_buf[40] = { 0 };
-    int len = snprintf(CSTR(frame_time_buf), "Frame %8llu\n%.2f ms", frame_num,
-        ms_frame_time);
+    char frame_time_buf[256] = { 0 };
+    int len = snprintf(CSTR(frame_time_buf),
+        "Frame: %8llu\n   dt:%6.2f ms\nState: %s\n Prev: %s",
+        frame_num, ms_frame_time, game_state_str(tg_game.state),
+        game_state_str(tg_game.state_prev));
 
     static ta_rect_uv *frame_time_rects = 0;
     ta_rectf tag_rect = ta_font_push_text(&frame_time_rects, tg_game.font,
@@ -395,13 +397,13 @@ static void render_fps(double ms_frame_start, u64 frame_num)
         ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
             0, true, false);
     }
-    dlb_vec_clearz(frame_time_rects);
+    dlb_vec_zero(frame_time_rects);
 
     ta_shader *font_shader = ta_font_shader(tg_game.font);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-    ta_font_render(quads_queue, tg_game.font, SCREEN_WRAP_X(-130.0f), 0,
+    ta_font_render(quads_queue, tg_game.font, SCREEN_WRAP_X(-300.0f), 0,
         UI_LAYER_HUD, true, true);
 }
 
@@ -463,6 +465,6 @@ static void debug_nametag()
         ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
             UI_LAYER_HUD, true, true);
     }
-    dlb_vec_clearz(tag_rects);
+    dlb_vec_zero(tag_rects);
     ta_font_render(quads_queue, tg_game.font, 0, 0, 0, true, true);
 }

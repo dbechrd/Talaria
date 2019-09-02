@@ -14,9 +14,13 @@
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
+bool text_entry_active(text_entry_settings *text_entry) {
+    return tg_game.text_entry.entry == text_entry;
+}
+
 ta_game tg_game;
 
-static const char *game_state_str(ta_game_state state)
+const char *game_state_str(ta_game_state state)
 {
     switch(state) {
         case TA_GAME_STATE_INIT:         return "TA_GAME_STATE_INIT";

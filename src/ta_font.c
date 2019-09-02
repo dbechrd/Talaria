@@ -161,11 +161,11 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
     u32 text_len, bool screen, u32 cursor_idx, ta_vec2 *cursor_offset)
 {
     DLB_ASSERT(rects);
+    if (text_len) {
+        dlb_vec_reserve(*rects, text_len);
+    }
 
     ta_rectf rect = { 0 };
-    rect.w = 10;
-    rect.h = (float)font->line_height;
-
     if (!text) {
         return rect;
     }
@@ -205,6 +205,7 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
             rect.w = MAX(rect.w, cur_x - rect.x);
         }
     }
+    rect.h += font->line_height;
 
     if (cursor_offset && !cursor_set) {
         cursor_offset->x = cur_x;

@@ -1000,8 +1000,8 @@ void ta_scene_update(ta_scene *scene, float dt)
             ta_rigid_body_resolve_collision(manifold);
             ta_rigid_body_positional_correction(manifold);
         }
-        dlb_vec_clearz(manifolds);
-        dlb_vec_clearz(pairs);
+        dlb_vec_zero(manifolds);
+        dlb_vec_zero(pairs);
     }
 
     // Update entities
@@ -1049,8 +1049,7 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     glCullFace(GL_BACK);
     //glDisable(GL_CULL_FACE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    //glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+    glClearColor(0.4f, 0.7f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);

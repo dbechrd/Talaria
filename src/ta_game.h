@@ -9,6 +9,7 @@ typedef enum ta_game_state {
     TA_GAME_STATE_QUIT,
     TA_GAME_STATE_COUNT
 } ta_game_state;
+const char *game_state_str(ta_game_state state);
 
 typedef struct text_entry_settings {
     char *buf;
@@ -16,7 +17,11 @@ typedef struct text_entry_settings {
     u32 gap_len;  // length of gap after cursor
     u32 selection_start;
     u32 selection_len;
+    bool focused;
+    bool validating;
 } text_entry_settings;
+
+bool text_entry_active(text_entry_settings *text_entry);
 
 typedef bool text_entry_filter(char c);
 

@@ -16,7 +16,7 @@
 
 #define UI_DEBUG_MARGIN         1
 #define UI_DEBUG_PAD            1
-
+#define UI_DEBUG_GAP_BUFFER     0
 #define UI_DEBUG_CONTAINERS     0
 #define UI_DEBUG_NO_TEXTURES    0
 #define UI_DEBUG_RANDOM_COLORS  0
@@ -29,12 +29,15 @@ typedef struct control_state {
     bool down;
     bool pressed;
     bool released;
+    bool unfocused;
 } control_state;
 
 typedef struct ui_style {
     ta_size size;
     ta_rect margin;
     ta_rect pad;
+    ta_rgba bg_color;
+    ta_rgba fg_color;
 } ui_style;
 
 static ui_style next_frame_style;
@@ -182,6 +185,22 @@ void ta_ui_next_size(int w, int h)
     next_frame_style.size.h = h;
 }
 
+void ta_ui_next_bg_color(float r, float g, float b, float a)
+{
+    next_frame_style.bg_color.r = r;
+    next_frame_style.bg_color.g = g;
+    next_frame_style.bg_color.b = b;
+    next_frame_style.bg_color.a = a;
+}
+
+void ta_ui_next_fg_color(float r, float g, float b, float a)
+{
+    next_frame_style.fg_color.r = r;
+    next_frame_style.fg_color.g = g;
+    next_frame_style.fg_color.b = b;
+    next_frame_style.fg_color.a = a;
+}
+
 static void ui_pop(u32 index)
 {
     DLB_ASSERT(dlb_vec_len(ui_frames));
@@ -228,12 +247,12 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
     frame->margin = next_frame_style.margin;
     frame->pad = next_frame_style.pad;
     ui_frame *container = ui_container(frame->index);
-    frame->rect.x = container->rect.x + container->offset.x + frame->margin.x;
-    frame->rect.y = container->rect.y + container->offset.y + frame->margin.y;
-    frame->rect.w = next_frame_style.size.w;
-    frame->rect.h = next_frame_style.size.h;
     frame->content_size.w = frame->pad.x + frame->pad.w;
     frame->content_size.h = frame->pad.y + frame->pad.h;
+    frame->rect.x = container->rect.x + container->offset.x + frame->margin.x;
+    frame->rect.y = container->rect.y + container->offset.y + frame->margin.y;
+    frame->rect.w = next_frame_style.size.w + frame->content_size.w;
+    frame->rect.h = next_frame_style.size.h + frame->content_size.h;
 
     dlb_memset(&next_frame_style, 0, sizeof(next_frame_style));
 
@@ -246,6 +265,7 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
         last_frame_state.down = false;
         last_frame_state.pressed = false;
         last_frame_state.released = false;
+        last_frame_state.unfocused = false;
 
         ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
         if (rect_contains_mouse(frame->rect))
@@ -261,6 +281,10 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
                 last_frame_state.pressed = ta_button_state_pressed(&tg_mouse.left);
             } else {
                 last_frame_state.released = ta_button_state_released(&tg_mouse.left);
+            }
+        } else {
+            if (ta_button_state_down(&tg_mouse.left)) {
+                last_frame_state.unfocused = true;
             }
         }
     }
@@ -393,6 +417,7 @@ void ta_ui_row_begin()
 
 void ta_ui_tooltip(const char *text, u32 text_len)
 {
+    // TODO: Cache tooltips
     ta_rect_uv *text_rects = 0;
     ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font,
         text, text_len, true, 0, 0);
@@ -415,7 +440,7 @@ void ta_ui_tooltip(const char *text, u32 text_len)
         ta_primitive_push_rect_uv(&tooltip_fg_queue, offset_rect, TA_COLOR_WHITE,
             UI_LAYER_TIP, true, false);
     }
-    dlb_vec_clearz(text_rects);
+    dlb_vec_zero(text_rects);
 }
 
 void ta_ui_statusbar()
@@ -506,23 +531,23 @@ bool ta_ui_label(const char *name, const char *text)
 {
     DLB_ASSERT(text);
 
+    static ta_rect_uv *text_rects = 0;
+    ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font, text, 0,
+        true, 0, 0);
+
+    // Auto-expand frame based on contents
+    next_frame_style.size.w = MAX(next_frame_style.size.w, (int)text_rect.w);
+    next_frame_style.size.h = MAX(next_frame_style.size.h, (int)text_rect.h);
+
+    ta_rgba bg_color = next_frame_style.bg_color;
+
     u32 frame_idx = ui_frame_start(UI_TEXTBOX, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    // Calculate text bg_rect
-    static ta_rect_uv *label_rects = 0;
-    ta_rectf label_rect = ta_font_push_text(&label_rects, tg_game.font, text, 0,
-        true, 0, 0);
-
-    frame->content_size.w += (int)label_rect.w;
-    frame->content_size.h += (int)label_rect.h;
-
-    // Auto-resize frame based on contents
-    frame->rect.w = MAX(frame->rect.w, frame->content_size.w);
-    frame->rect.h = MAX(frame->rect.h, frame->content_size.h);
-
     // Render background
-    ta_rgba bg_color = TA_COLOR_BLACK;
+    if (bg_color.a == 0.0f) {
+        bg_color.a = TA_EPSILON;
+    }
     ta_rect bg_rect = frame->rect;
     ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, false);
@@ -531,11 +556,11 @@ bool ta_ui_label(const char *name, const char *text)
     float text_top = (float)frame->rect.y + frame->pad.y;
 
     // Render text
-    dlb_vec_each(ta_rect_uv *, rect, label_rects) {
+    dlb_vec_each(ta_rect_uv *, rect, text_rects) {
         ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0, true,
             false);
     }
-    dlb_vec_clearz(label_rects);
+    dlb_vec_zero(text_rects);
     ta_font_render(quads_queue, tg_game.font, text_left, text_top,
         UI_LAYER_EDIT_1, true, true);
 
@@ -556,52 +581,59 @@ bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
 {
     DLB_ASSERT(text_entry);
 
-    ta_size *size = &next_frame_style.size;
+    static char *text = 0;
+    dlb_vec_reserve(text, dlb_vec_cap(text_entry->buf) + 1);
 
-    // DEBUG: Temp text entry debug buffer
-    char debug_text[128] = { 0 };
     u32 idx = 0;
-    for (u32 i = 0; i < sizeof(debug_text) - 1 && i < dlb_vec_cap(text_entry->buf); i++) {
+    for (u32 i = 0; i < dlb_vec_cap(text_entry->buf); i++) {
         if (i >= text_entry->cursor && i < text_entry->cursor + text_entry->gap_len) {
-            debug_text[idx++] = '_';
+#if UI_DEBUG_GAP_BUFFER
+            text[idx++] = '_';
+#endif
         } else {
-            debug_text[idx++] = text_entry->buf[i];
+            text[idx++] = text_entry->buf[i];
         }
     }
 
     static ta_rect_uv *text_rects = 0;
     ta_vec2 cursor_offset = { 0 };
-    ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font,
-        debug_text, 0, true,
-        text_entry->cursor, &cursor_offset);
+    ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font, text, 0,
+        true, text_entry->cursor, &cursor_offset);
+
+    dlb_vec_zero(text);
 
     // Auto-expand frame based on contents
-    size->w = MAX(size->w, (int)text_rect.w);
-    size->h = MAX(size->h, (int)text_rect.h);
+    next_frame_style.size.w = MAX(next_frame_style.size.w, (int)text_rect.w);
+    next_frame_style.size.h = MAX(next_frame_style.size.h, (int)text_rect.h);
 
     u32 frame_idx = ui_frame_start(UI_TEXTBOX, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    ta_rgba bg_color = TA_COLOR_GRAY2;
-    if (tg_game.text_entry.entry == text_entry) {
-        // Deactive textbox when elsewhere clicked
-        if (ta_button_state_pressed(&tg_mouse.left) && !last_frame_state.pressed) {
-            ta_game_state_set(&tg_game, tg_game.state_prev);
-            tg_game.text_entry.entry = 0;
-            tg_game.text_entry.filter = 0;
-        }
-    } else if (last_frame_state.pressed) {
+    if (last_frame_state.down) {
         // Activate textbox when clicked
+        text_entry->focused = true;
+    } else if (ta_button_state_pressed(&tg_mouse.left)) {
+        // Deactivate textbox when elsewhere clicked
+        text_entry->focused = false;
+    }
+
+    if (text_entry->focused && !text_entry_active(text_entry)) {
         tg_game.text_entry.entry = text_entry;
         tg_game.text_entry.filter = &ui_textbox_filter;
         ta_game_state_set(&tg_game, TA_GAME_STATE_TEXT_ENTRY);
+        text_entry->validating = false;
     }
 
-    if (tg_game.text_entry.entry == text_entry) {
-        bg_color = TA_COLOR_GRAY3;
+    if (text_entry->validating) {
+        ta_game_state_set(&tg_game, tg_game.state_prev);
+        tg_game.text_entry.entry = 0;
+        tg_game.text_entry.filter = 0;
+        text_entry->focused = false;
+        text_entry->validating = false;
     }
 
     // Render background
+    ta_rgba bg_color = text_entry->focused ? TA_COLOR_GRAY3 : TA_COLOR_GRAY2;
     ta_rect bg_rect = frame->rect;
     ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, false);
@@ -615,13 +647,13 @@ bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
             ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
                 true, false);
         }
-        dlb_vec_clearz(text_rects);
+        dlb_vec_zero(text_rects);
         ta_font_render(quads_queue, tg_game.font, (float)text_left,
             (float)text_top, UI_LAYER_EDIT_1, true, true);
     }
 
     // If active, render cursor
-    if (tg_game.text_entry.entry == text_entry) {
+    if (text_entry->focused) {
         const int cursor_vert_pad = 0;
         ta_rect cursor_rect = { 0 };
         cursor_rect.x = text_left + (int)cursor_offset.x;
@@ -633,7 +665,7 @@ bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
         ta_primitive_render(true, false);
     }
     ui_frame_end(frame_idx);
-    return last_frame_state.pressed;
+    return text_entry->focused;
 }
 
 void ta_ui_window_end()
@@ -657,7 +689,7 @@ void ta_ui_window_end()
             widget_color);
     }
 #endif
-    dlb_vec_clearz(ui_frames);
+    dlb_vec_zero(ui_frames);
 }
 
 void ta_ui_hud()
@@ -697,25 +729,62 @@ static void ui_node_panel()
     ta_ui_next_margin(2, 2, 0, 0);
     ta_ui_panel_begin(INTERN("node_panel"), &node_panel_id);
 
+    static int label_width = 150;
     if (tg_game.selected_node_idx >= 0) {
-        ta_ui_row_begin();
-        ta_ui_next_size(100, 0);
-        ta_ui_label(0, "UID:");
         ta_node *node = &((ta_node *)tg_game.scene->pools[TYP_NODE])[tg_game.selected_node_idx];
-        ta_ui_label(0, node->uid.uid);
+
         ta_ui_row_begin();
-        ta_ui_next_size(100, 0);
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, "UID:");
+        static text_entry_settings uid_editor = { 0 };
+        if (uid_editor.focused || text_entry_active(&uid_editor)) {
+            ta_ui_next_size(100, 0);
+            if (!ta_ui_textbox(0, &uid_editor)) {
+                //uid_editor.validating = true;
+            }
+            ta_ui_next_margin(4, 0, 0, 0);
+            ta_ui_next_pad(4, 0, 4, 0);
+            ta_ui_next_bg_color(0.0f, 0.8f, 0.0f, 1.0f);
+            if (ta_ui_label(0, "Save")) {
+                uid_editor.validating = true;
+            }
+        } else {
+            if (ta_ui_label(0, node->uid.uid)) {
+                u32 len = dlb_symbol_len(node->uid.uid);
+                dlb_vec_reserve(uid_editor.buf, len);
+                dlb_memcpy(uid_editor.buf, node->uid.uid, len);
+                uid_editor.focused = true;
+            }
+        }
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "Position:");
         char pos_buf[64] = { 0 };
-        int len = snprintf(pos_buf, sizeof(pos_buf), "x: %3.4f, y: %3.4f, z: %3.4f",
+        int len = snprintf(pos_buf, sizeof(pos_buf),
+            "x: %3.4f, y: %3.4f, z: %3.4f",
             node->transform.position.x,
             node->transform.position.y,
             node->transform.position.z);
         DLB_ASSERT(len < sizeof(pos_buf));
         ta_ui_label(0, pos_buf);
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, "Orientation:");
+        char orient_buf[64] = { 0 };
+        len = snprintf(orient_buf, sizeof(orient_buf),
+            "x: %3.4f, y: %3.4f, z: %3.4f, w: %3.4f",
+            node->transform.orientation.x,
+            node->transform.orientation.y,
+            node->transform.orientation.z,
+            node->transform.orientation.w);
+        DLB_ASSERT(len < sizeof(orient_buf));
+        ta_ui_label(0, orient_buf);
+
     } else {
         ta_ui_row_begin();
-        ta_ui_next_size(100, 0);
+        ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "UID:");
         ta_ui_label(0, "Nothing selected");
     }
@@ -791,6 +860,7 @@ static void ui_texture_panel()
 static void ui_textbox_panel()
 {
     u32 textbox_panel_id;
+    ta_ui_next_margin(2, 2, 0, 0);
     ta_ui_panel_begin(INTERN("sound_panel"), &textbox_panel_id);
     static text_entry_settings text_entry[2];
 #if 0
@@ -811,19 +881,8 @@ static void ui_textbox_panel()
         ta_ui_row_begin();
         ta_ui_label(INTERN("test_label"), "Text:");
         ta_ui_next_size(300, 0);
-        ta_ui_next_margin(4, 0, 0, 0);
-        if (ta_ui_textbox(INTERN("test_textbox"), &text_entry[i]))
-        {
-            tg_game.text_entry.entry = &text_entry[i];
-            tg_game.text_entry.filter = &ui_textbox_filter;
-            ta_game_state_set(&tg_game, TA_GAME_STATE_TEXT_ENTRY);
-        } else if (tg_game.text_entry.entry == &text_entry[i] &&
-            ta_button_state_pressed(&tg_mouse.left))
-        {
-            ta_game_state_set(&tg_game, tg_game.state_prev);
-            tg_game.text_entry.entry = 0;
-            tg_game.text_entry.filter = 0;
-        }
+        ta_ui_next_margin(4, 0, 0, 2);
+        ta_ui_textbox(INTERN("test_textbox"), &text_entry[i]);
     }
     ta_ui_panel_end(textbox_panel_id);
 }
@@ -893,7 +952,7 @@ void ui_statusbar()
             ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
                 true, false);
         }
-        dlb_vec_clearz(status_rects);
+        dlb_vec_zero(status_rects);
 
         int status_halfw = WINDOW_W / 2 - (int)status_rect.w / 2;
         const int status_pad_bottom = 20;

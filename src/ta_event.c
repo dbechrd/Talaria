@@ -101,6 +101,31 @@ static void event_sdl_poll()
                             break;
                         }
 #endif
+                        case SDL_SCANCODE_HOME: {
+                            if (textbox->gap_len) {
+                                while (textbox->cursor) {
+                                    textbox->cursor--;
+                                    textbox->buf[textbox->cursor + textbox->gap_len] = textbox->buf[textbox->cursor];
+                                    textbox->buf[textbox->cursor] = 0;
+                                }
+                            } else {
+                                textbox->cursor = 0;
+                            }
+                            break;
+                        }
+                        case SDL_SCANCODE_END: {
+                            u32 cap = dlb_vec_cap(textbox->buf);
+                            if (textbox->gap_len) {
+                                while (textbox->cursor + textbox->gap_len < cap) {
+                                    textbox->buf[textbox->cursor] = textbox->buf[textbox->cursor + textbox->gap_len];
+                                    textbox->buf[textbox->cursor + textbox->gap_len] = 0;
+                                    textbox->cursor++;
+                                }
+                            } else {
+                                textbox->cursor = cap - textbox->gap_len;
+                            }
+                            break;
+                        }
                         case SDL_SCANCODE_BACKSPACE: {
                             if (textbox->cursor) {
                                 textbox->cursor--;
@@ -172,7 +197,7 @@ static void event_sdl_poll()
                 if (textbox) {
                     char *c = sdl_event.text.text;
 
-                    if (tg_game.text_entry.filter(*c)) {
+                    if (tg_game.text_entry.filter && tg_game.text_entry.filter(*c)) {
                         if (!textbox->gap_len) {
                             u32 cap = dlb_vec_cap(textbox->buf);
                             u32 start = textbox->cursor + textbox->gap_len;
