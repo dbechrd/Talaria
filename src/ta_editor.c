@@ -35,7 +35,17 @@ ta_node *ta_editor_selected_node()
 {
     ta_node *node = 0;
     if (tg_editor->selected_node_uid) {
-        node = ta_scene_find(tg_game.scene, TYP_NODE, tg_editor->selected_node_uid);
+#if 1
+        node = ta_scene_exists(tg_game.scene, TYP_NODE, tg_editor->selected_node_uid, 0);
+#else
+        // TODO: Store selected_node_idx. If generation doesn't match,
+        //       ta_scene_find() should return zero.
+        node = ta_scene_find(tg_game.scene, TYP_NODE, tg_editor->selected_node_idx);
+        if (!node) {
+            // Node has been deleted
+            tg_editor->selected_node_idx = 0;
+        }
+#endif
     }
     return node;
 }

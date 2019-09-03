@@ -712,12 +712,32 @@ static void ui_node_panel()
             if (uid_editor && ta_text_entry_valid(uid_editor)) {
                 u32 text_len = 0;
                 char *text = ta_text_entry_text(uid_editor, &text_len);
-                DLB_ASSERT(1);
-                // TODO: Delete old uid from scene hash table
+
+                dlb_hash_delete(&tg_game.scene->pooled_uids[TYP_NODE],
+                    SYM(node->uid.uid));
+
+                // TODO: Replace all references to UID pointers with generational
+                // pool indexes otherwise we can never delete symbols because
+                // anything holding a pointer will be dangling.
+                // (e.g. editor->selected_node_uid)
                 //dlb_symbol_free(node->uid.uid);
-                // TODO: Add new uid to scene hash table
-                //node->uid.uid = ta_symbol_intern(text, text_len);
+
+                node->uid.uid = ta_symbol_intern(text, text_len);
+                bool found = false;
+                u32 idx = 0;
+                dlb_vec_each(ta_node *, n, tg_game.scene->pools[TYP_NODE]) {
+                    if (n == node) {
+                        found = true;
+                        break;
+                    }
+                    idx++;
+                }
+                DLB_ASSERT(found);
+                dlb_hash_insert(&tg_game.scene->pooled_uids[TYP_NODE],
+                    SYM(node->uid.uid), (void *)idx);
+
                 ta_text_entry_free(&uid_editor);
+                ta_editor_select_node(node);
             }
             if (ta_ui_label(0, node->uid.uid)) {
                 DLB_ASSERT(!uid_editor);

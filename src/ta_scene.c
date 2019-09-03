@@ -883,7 +883,8 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
     fflush(hnd);
 }
 
-void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
+void *ta_scene_exists(ta_scene *scene, ta_schema_field_type type, const char *uid,
+    bool *exists)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(type < TYP_COUNT_POOLS);
@@ -892,15 +893,32 @@ void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
     bool found = false;
     dlb_hash *hash = &scene->pooled_uids[type];
     size_t pool_idx = (size_t)dlb_hash_search(hash, SYM(uid), &found);
-    DLB_ASSERT(found);
-    size_t pool_len = dlb_vec_len(scene->pools[type]);
-    DLB_ASSERT(pool_idx < pool_len);
 
-    void *ptr = (u8 *)scene->pools[type] + (pool_idx * pool_infos[type].size);
+    void *ptr = 0;
+    if (found) {
+        size_t pool_len = dlb_vec_len(scene->pools[type]);
+        DLB_ASSERT(pool_idx < pool_len);
+        ptr = (u8 *)scene->pools[type] + (pool_idx * pool_infos[type].size);
+    }
+    if (exists) {
+        *exists = found;
+    }
     return ptr;
 }
 
-void *ta_scene_find_index(ta_scene *scene, ta_schema_field_type type, size_t idx)
+void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
+{
+    DLB_ASSERT(scene);
+    DLB_ASSERT(type < TYP_COUNT_POOLS);
+    DLB_ASSERT(uid);
+
+    bool found = false;
+    void *ptr = ta_scene_exists(scene, type, uid, &found);
+    DLB_ASSERT(found);
+    return ptr;
+}
+
+void *ta_scene_find_by_index(ta_scene *scene, ta_schema_field_type type, size_t idx)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(type < TYP_COUNT_POOLS);

@@ -31,21 +31,20 @@ static bool text_entry_filter_default(char c)
 
 ta_text_entry_filter *ta_text_entry_filter_default = &text_entry_filter_default;
 
-static void text_entry_generate_text(ta_text_entry *text_entry, u32 *len)
+static void text_entry_generate_text(ta_text_entry *text_entry)
 {
     dlb_vec_reserve(text_entry->text, dlb_vec_cap(text_entry->buf) + 1);
-    u32 idx = 0;
+    dlb_vec_zero(text_entry->text);
     for (u32 i = 0; i < dlb_vec_cap(text_entry->buf) - 1; i++) {
         if (i >= text_entry->cursor && i < text_entry->cursor + text_entry->gap_len) {
 #if DEBUG_GAP_BUFFER
-            text[idx++] = '_';
+            dlb_vec_push(text_entry->text, '_');
 #endif
         } else {
-            text_entry->text[idx++] = text_entry->buf[i];
+            dlb_vec_push(text_entry->text, text_entry->buf[i]);
         }
     }
-    text_entry->text[idx++] = 0;
-    if (len) *len = idx;
+    dlb_vec_push(text_entry->text, 0);
     text_entry->dirty = false;
 }
 
@@ -190,7 +189,7 @@ void ta_text_entry_validate(ta_text_entry *text_entry)
     if (ta_text_entry_active(text_entry)) {
         ta_editor_set_active_text_entry(0);
         text_entry->focused = false;
-        text_entry_generate_text(text_entry, 0);
+        text_entry_generate_text(text_entry);
     } else {
         DLB_ASSERT(!"How did you validate a text_entry that isn't active!?");
     }
@@ -204,7 +203,10 @@ bool ta_text_entry_valid(ta_text_entry *text_entry)
 char *ta_text_entry_text(ta_text_entry *text_entry, u32 *len)
 {
     if (text_entry->dirty) {
-        text_entry_generate_text(text_entry, len);
+        text_entry_generate_text(text_entry);
+    }
+    if (len) {
+        *len = dlb_vec_len(text_entry->text);
     }
     return text_entry->text;
 }
