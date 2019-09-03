@@ -573,8 +573,6 @@ bool ta_ui_textbox(const char *name, ta_text_entry *text_entry)
 {
     DLB_ASSERT(text_entry);
 
-    char *text = ta_text_entry_text(text_entry, 0);
-
     static ta_rect_uv *text_rects = 0;
     ta_vec2 cursor = { 0 };
     ta_rectf bounds = ta_text_entry_draw(text_entry, &text_rects, &cursor);

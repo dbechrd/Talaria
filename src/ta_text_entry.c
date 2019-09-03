@@ -5,7 +5,7 @@
 #include "ta_game.h"
 #include "dlb/dlb_vector.h"
 
-#define DEBUG_GAP_BUFFER 0
+#define DEBUG_GAP_BUFFER 1
 
 typedef struct ta_text_entry {
     char *buf;
@@ -33,18 +33,13 @@ ta_text_entry_filter *ta_text_entry_filter_default = &text_entry_filter_default;
 
 static void text_entry_generate_text(ta_text_entry *text_entry)
 {
-    dlb_vec_reserve(text_entry->text, dlb_vec_cap(text_entry->buf) + 1);
     dlb_vec_zero(text_entry->text);
-    for (u32 i = 0; i < dlb_vec_cap(text_entry->buf) - 1; i++) {
-        if (i >= text_entry->cursor && i < text_entry->cursor + text_entry->gap_len) {
-#if DEBUG_GAP_BUFFER
-            dlb_vec_push(text_entry->text, '_');
-#endif
-        } else {
+    dlb_vec_reserve(text_entry->text, dlb_vec_cap(text_entry->buf));
+    for (u32 i = 0; i < dlb_vec_cap(text_entry->buf); i++) {
+        if (i < text_entry->cursor || i >= text_entry->cursor + text_entry->gap_len) {
             dlb_vec_push(text_entry->text, text_entry->buf[i]);
         }
     }
-    dlb_vec_push(text_entry->text, 0);
     text_entry->dirty = false;
 }
 
@@ -222,19 +217,45 @@ void ta_text_entry_set_text(ta_text_entry *text_entry, const char *str, u32 len)
     if (text_entry->buf) {
         dlb_vec_zero(text_entry->buf);
     }
-    dlb_vec_reserve(text_entry->buf, len + 1);
+    dlb_vec_reserve(text_entry->buf, len);
     dlb_memcpy(text_entry->buf, str, len);
     text_entry->cursor = len;
     text_entry->gap_len = dlb_vec_cap(text_entry->buf) - len;
     text_entry->dirty = true;
 }
 
+#if DEBUG_GAP_BUFFER
+static char *text_entry_debug_text(ta_text_entry *text_entry, u32 *len)
+{
+    dlb_vec_reserve(text_entry->text, dlb_vec_cap(text_entry->buf));
+    dlb_vec_zero(text_entry->text);
+    for (u32 i = 0; i < dlb_vec_cap(text_entry->buf); i++) {
+        if (i >= text_entry->cursor && i < text_entry->cursor + text_entry->gap_len) {
+#if DEBUG_GAP_BUFFER
+            dlb_vec_push(text_entry->text, '_');
+#endif
+        } else {
+            dlb_vec_push(text_entry->text, text_entry->buf[i]);
+        }
+    }
+    if (len) {
+        *len = dlb_vec_len(text_entry->text);
+    }
+    return text_entry->text;
+}
+#endif
+
 ta_rectf ta_text_entry_draw(ta_text_entry *text_entry, ta_rect_uv **text_rects,
     ta_vec2 *cursor)
 {
-    char *text = ta_text_entry_text(text_entry, 0);
+    u32 text_len;
+#if DEBUG_GAP_BUFFER
+    char *text = text_entry_debug_text(text_entry, &text_len);
+#else
+    char *text = ta_text_entry_text(text_entry, &text_len);
+#endif
     ta_vec2 cursor_offset = { 0 };
-    ta_rectf bounds = ta_font_push_text(text_rects, tg_game.font, text, 0,
+    ta_rectf bounds = ta_font_push_text(text_rects, tg_game.font, text, text_len,
         true, text_entry->cursor, cursor);
     return bounds;
 }
