@@ -2,9 +2,10 @@
 #include "ta_keyboard.h"
 #include "ta_log.h"
 #include "ta_mouse.h"
-#include "ta_game.h"
+#include "ta_editor.h"
 #include "ta_window.h"
 #include "ta_camera.h"
+#include "ta_game.h"
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
@@ -88,92 +89,39 @@ static void event_sdl_poll()
                 ta_event_push(&event);
                 break;
             } case SDL_KEYDOWN: {
-                text_entry_settings *textbox = tg_game.text_entry.entry;
-                if (textbox) {
+                ta_text_entry *text_entry = ta_editor_active_text_entry();
+                if (text_entry) {
                     switch (sdl_event.key.keysym.scancode) {
 #if 0
                         // NOTE: This doesn't work because it gets double processed
                         //       and the entire application exits.
                         case SDL_SCANCODE_ESCAPE: {
-                            ta_game_state_set(textbox->prev_state);
-                            textbox = 0;
+                            ta_game_state_set(text_entry->prev_state);
+                            text_entry = 0;
                             tg_game.text_entry.filter = 0;
                             break;
                         }
 #endif
                         case SDL_SCANCODE_HOME: {
-                            if (textbox->gap_len) {
-                                while (textbox->cursor) {
-                                    textbox->cursor--;
-                                    textbox->buf[textbox->cursor + textbox->gap_len] = textbox->buf[textbox->cursor];
-                                    textbox->buf[textbox->cursor] = 0;
-                                }
-                            } else {
-                                textbox->cursor = 0;
-                            }
+                            ta_text_entry_cursor_bof(text_entry);
                             break;
-                        }
-                        case SDL_SCANCODE_END: {
-                            u32 cap = dlb_vec_cap(textbox->buf);
-                            if (textbox->gap_len) {
-                                while (textbox->cursor + textbox->gap_len < cap) {
-                                    textbox->buf[textbox->cursor] = textbox->buf[textbox->cursor + textbox->gap_len];
-                                    textbox->buf[textbox->cursor + textbox->gap_len] = 0;
-                                    textbox->cursor++;
-                                }
-                            } else {
-                                textbox->cursor = cap - textbox->gap_len;
-                            }
+                        } case SDL_SCANCODE_END: {
+                            ta_text_entry_cursor_eof(text_entry);
                             break;
-                        }
-                        case SDL_SCANCODE_BACKSPACE: {
-                            if (textbox->cursor) {
-                                textbox->cursor--;
-                                textbox->gap_len++;
-                            }
+                        } case SDL_SCANCODE_BACKSPACE: {
+                            ta_text_entry_backspace(text_entry);
                             break;
                         } case SDL_SCANCODE_DELETE: {
-                            u32 cap = dlb_vec_cap(textbox->buf);
-                            if (textbox->cursor + textbox->gap_len < cap) {
-                                textbox->gap_len++;
-                            }
+                            ta_text_entry_delete(text_entry);
                             break;
                         } case SDL_SCANCODE_RIGHT: {
-                            u32 cap = dlb_vec_cap(textbox->buf);
-                            if (textbox->cursor + textbox->gap_len < cap) {
-                                if (textbox->gap_len) {
-                                    textbox->buf[textbox->cursor] = textbox->buf[textbox->cursor + textbox->gap_len];
-                                    textbox->buf[textbox->cursor + textbox->gap_len] = 0;
-                                }
-                                textbox->cursor++;
-                            }
+                            ta_text_entry_cursor_right(text_entry);
                             break;
                         } case SDL_SCANCODE_LEFT: {
-                            if (textbox->cursor) {
-                                textbox->cursor--;
-                                if (textbox->gap_len) {
-                                    textbox->buf[textbox->cursor + textbox->gap_len] = textbox->buf[textbox->cursor];
-                                    textbox->buf[textbox->cursor] = 0;
-                                }
-                            }
+                            ta_text_entry_cursor_left(text_entry);
                             break;
                         } case SDL_SCANCODE_RETURN: {
-                            if (!textbox->gap_len) {
-                                u32 cap = dlb_vec_cap(textbox->buf);
-                                u32 start = textbox->cursor + textbox->gap_len;
-                                dlb_vec_reserve(textbox->buf, dlb_vec_cap(textbox->buf) + 1);
-                                u32 new_cap = dlb_vec_cap(textbox->buf);
-                                textbox->gap_len = new_cap - cap;
-                                u32 len = cap - start;
-                                dlb_memcpy(
-                                    textbox->buf + textbox->cursor + textbox->gap_len,
-                                    textbox->buf + textbox->cursor,
-                                    len
-                                );
-                            }
-                            textbox->buf[textbox->cursor] = '\n';
-                            textbox->cursor++;
-                            textbox->gap_len--;
+                            ta_text_entry_insert(text_entry, '\n');
                             break;
                         }
 #if 0
@@ -193,35 +141,15 @@ static void event_sdl_poll()
                 }
                 break;
             } case SDL_TEXTINPUT: {
-                text_entry_settings *textbox = tg_game.text_entry.entry;
-                if (textbox) {
+                ta_text_entry *text_entry = ta_editor_active_text_entry();
+                if (text_entry) {
                     char *c = sdl_event.text.text;
-
-                    if (tg_game.text_entry.filter && tg_game.text_entry.filter(*c)) {
-                        if (!textbox->gap_len) {
-                            u32 cap = dlb_vec_cap(textbox->buf);
-                            u32 start = textbox->cursor + textbox->gap_len;
-                            dlb_vec_reserve(textbox->buf, dlb_vec_cap(textbox->buf) + 1);
-                            u32 new_cap = dlb_vec_cap(textbox->buf);
-                            textbox->gap_len = new_cap - cap;
-                            u32 len = cap - start;
-                            dlb_memcpy(
-                                textbox->buf + textbox->cursor + textbox->gap_len,
-                                textbox->buf + textbox->cursor,
-                                len
-                            );
-                        }
-                        textbox->buf[textbox->cursor] = *c;
-                        textbox->cursor++;
-                        textbox->gap_len--;
-                    }
+                    ta_text_entry_insert(text_entry, *c);
 #if 0
+                    // TODO: Accept all valid chars, maybe pointer to filter
+                    //       function provided by textbox?
                     while (*c) {
-                        // TODO: Accept all valid chars, maybe pointer to filter
-                        //       function provided by textbox?
-                        if (tg_game.text_entry.filter(*c)) {
-                            dlb_vec_push(*tg_game.text_entry.buffer, *c);
-                        }
+                        ta_text_entry_insert(text_entry, *c);
                         c++;
                     }
 #endif

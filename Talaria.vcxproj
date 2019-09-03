@@ -170,6 +170,7 @@
     <ClCompile Include="src\ta_audio.c" />
     <ClCompile Include="src\ta_button.c" />
     <ClCompile Include="src\ta_collider.c" />
+    <ClCompile Include="src\ta_editor.c" />
     <ClCompile Include="src\ta_font.c" />
     <ClCompile Include="src\ta_light.c" />
     <ClCompile Include="src\ta_rigid_body.c" />
@@ -180,6 +181,7 @@
     <ClCompile Include="src\ta_scene.c" />
     <ClCompile Include="src\ta_schema.c" />
     <ClCompile Include="src\ta_symbol.c" />
+    <ClCompile Include="src\ta_text_entry.c" />
     <ClCompile Include="src\ta_ui_barchart.c" />
     <ClCompile Include="src/ta_buffer.c" />
     <ClCompile Include="src/ta_camera.c" />
@@ -202,6 +204,7 @@
     <ClCompile Include="src\ta_viewport.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\ta_editor.h" />
     <ClInclude Include="src\ta_font.h" />
     <ClInclude Include="src\ta_audio.h" />
     <ClInclude Include="src\ta_button.h" />
@@ -216,6 +219,7 @@
     <ClInclude Include="src\ta_scene.h" />
     <ClInclude Include="src\ta_schema.h" />
     <ClInclude Include="src\ta_symbol.h" />
+    <ClInclude Include="src\ta_text_entry.h" />
     <ClInclude Include="src\ta_uid.h" />
     <ClInclude Include="src\ta_ui_barchart.h" />
     <ClInclude Include="src/ta_buffer.h" />

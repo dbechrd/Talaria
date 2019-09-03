@@ -10,13 +10,14 @@
 #include "ta_font.h"
 #include "ta_audio.h"
 #include "ta_node.h"
+#include "ta_text_entry.h"
+#include "ta_editor.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 #include <stdlib.h>
 
 #define UI_DEBUG_MARGIN         1
 #define UI_DEBUG_PAD            1
-#define UI_DEBUG_GAP_BUFFER     0
 #define UI_DEBUG_CONTAINERS     0
 #define UI_DEBUG_NO_TEXTURES    0
 #define UI_DEBUG_RANDOM_COLORS  0
@@ -568,72 +569,33 @@ bool ta_ui_label(const char *name, const char *text)
     return last_frame_state.pressed;
 }
 
-bool ui_textbox_filter(char c) {
-    if ((c >= tg_game.font->first_char && c <= tg_game.font->last_char) ||
-        c == '\n')
-    {
-        return true;
-    }
-    return false;
-}
-
-bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
+bool ta_ui_textbox(const char *name, ta_text_entry *text_entry)
 {
     DLB_ASSERT(text_entry);
 
-    static char *text = 0;
-    dlb_vec_reserve(text, dlb_vec_cap(text_entry->buf) + 1);
-
-    u32 idx = 0;
-    for (u32 i = 0; i < dlb_vec_cap(text_entry->buf); i++) {
-        if (i >= text_entry->cursor && i < text_entry->cursor + text_entry->gap_len) {
-#if UI_DEBUG_GAP_BUFFER
-            text[idx++] = '_';
-#endif
-        } else {
-            text[idx++] = text_entry->buf[i];
-        }
-    }
+    char *text = ta_text_entry_text(text_entry, 0);
 
     static ta_rect_uv *text_rects = 0;
-    ta_vec2 cursor_offset = { 0 };
-    ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font, text, 0,
-        true, text_entry->cursor, &cursor_offset);
-
-    dlb_vec_zero(text);
+    ta_vec2 cursor = { 0 };
+    ta_rectf bounds = ta_text_entry_draw(text_entry, &text_rects, &cursor);
 
     // Auto-expand frame based on contents
-    next_frame_style.size.w = MAX(next_frame_style.size.w, (int)text_rect.w);
-    next_frame_style.size.h = MAX(next_frame_style.size.h, (int)text_rect.h);
+    next_frame_style.size.w = MAX(next_frame_style.size.w, (int)bounds.w);
+    next_frame_style.size.h = MAX(next_frame_style.size.h, (int)bounds.h);
 
     u32 frame_idx = ui_frame_start(UI_TEXTBOX, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
     if (last_frame_state.down) {
         // Activate textbox when clicked
-        text_entry->focused = true;
+        ta_text_entry_focus(text_entry);
     } else if (ta_button_state_pressed(&tg_mouse.left)) {
         // Deactivate textbox when elsewhere clicked
-        text_entry->focused = false;
-    }
-
-    if (text_entry->focused && !text_entry_active(text_entry)) {
-        tg_game.text_entry.entry = text_entry;
-        tg_game.text_entry.filter = &ui_textbox_filter;
-        ta_game_state_set(&tg_game, TA_GAME_STATE_TEXT_ENTRY);
-        text_entry->validating = false;
-    }
-
-    if (text_entry->validating) {
-        ta_game_state_set(&tg_game, tg_game.state_prev);
-        tg_game.text_entry.entry = 0;
-        tg_game.text_entry.filter = 0;
-        text_entry->focused = false;
-        text_entry->validating = false;
+        ta_text_entry_unfocus(text_entry);
     }
 
     // Render background
-    ta_rgba bg_color = text_entry->focused ? TA_COLOR_GRAY3 : TA_COLOR_GRAY2;
+    ta_rgba bg_color = ta_text_entry_focused(text_entry) ? TA_COLOR_GRAY3 : TA_COLOR_GRAY2;
     ta_rect bg_rect = frame->rect;
     ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, false);
@@ -653,11 +615,11 @@ bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
     }
 
     // If active, render cursor
-    if (text_entry->focused) {
+    if (ta_text_entry_focused(text_entry)) {
         const int cursor_vert_pad = 0;
         ta_rect cursor_rect = { 0 };
-        cursor_rect.x = text_left + (int)cursor_offset.x;
-        cursor_rect.y = text_top + (int)cursor_offset.y + cursor_vert_pad;
+        cursor_rect.x = text_left + (int)cursor.x;
+        cursor_rect.y = text_top + (int)cursor.y + cursor_vert_pad;
         cursor_rect.w = 1;
         cursor_rect.h = tg_game.font->line_height - (frame->pad.y + frame->pad.h) -
             (cursor_vert_pad * 2);
@@ -665,7 +627,8 @@ bool ta_ui_textbox(const char *name, text_entry_settings *text_entry)
         ta_primitive_render(true, false);
     }
     ui_frame_end(frame_idx);
-    return text_entry->focused;
+    bool valid = ta_text_entry_valid(text_entry);
+    return valid;
 }
 
 void ta_ui_window_end()
@@ -730,30 +693,37 @@ static void ui_node_panel()
     ta_ui_panel_begin(INTERN("node_panel"), &node_panel_id);
 
     static int label_width = 150;
-    if (tg_game.selected_node_idx >= 0) {
-        ta_node *node = &((ta_node *)tg_game.scene->pools[TYP_NODE])[tg_game.selected_node_idx];
-
+    ta_node *node = ta_editor_selected_node();
+    if (node) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "UID:");
-        static text_entry_settings uid_editor = { 0 };
-        if (uid_editor.focused || text_entry_active(&uid_editor)) {
+        static ta_text_entry *uid_editor = 0;
+        if (uid_editor && ta_text_entry_active(uid_editor)) {
             ta_ui_next_size(100, 0);
-            if (!ta_ui_textbox(0, &uid_editor)) {
-                //uid_editor.validating = true;
-            }
+            ta_ui_textbox(0, uid_editor);
             ta_ui_next_margin(4, 0, 0, 0);
             ta_ui_next_pad(4, 0, 4, 0);
             ta_ui_next_bg_color(0.0f, 0.8f, 0.0f, 1.0f);
             if (ta_ui_label(0, "Save")) {
-                uid_editor.validating = true;
+                ta_text_entry_validate(uid_editor);
             }
         } else {
+            if (uid_editor && ta_text_entry_valid(uid_editor)) {
+                u32 text_len = 0;
+                char *text = ta_text_entry_text(uid_editor, &text_len);
+                DLB_ASSERT(1);
+                // TODO: Delete old uid from scene hash table
+                //dlb_symbol_free(node->uid.uid);
+                // TODO: Add new uid to scene hash table
+                //node->uid.uid = ta_symbol_intern(text, text_len);
+                ta_text_entry_free(&uid_editor);
+            }
             if (ta_ui_label(0, node->uid.uid)) {
-                u32 len = dlb_symbol_len(node->uid.uid);
-                dlb_vec_reserve(uid_editor.buf, len);
-                dlb_memcpy(uid_editor.buf, node->uid.uid, len);
-                uid_editor.focused = true;
+                DLB_ASSERT(!uid_editor);
+                uid_editor = ta_text_entry_init();
+                ta_text_entry_set_text(uid_editor, SYM(node->uid.uid));
+                ta_text_entry_focus(uid_editor);
             }
         }
 
@@ -862,28 +832,17 @@ static void ui_textbox_panel()
     u32 textbox_panel_id;
     ta_ui_next_margin(2, 2, 0, 0);
     ta_ui_panel_begin(INTERN("sound_panel"), &textbox_panel_id);
-    static text_entry_settings text_entry[2];
-#if 0
-    // TODO: Initialize text_entry_settings to w/e editable should be
-    if (!text_entry[i].lbuffer) {
-        const char default_text[] = "Text: "; //|`_,_`|";
-        const char *c = default_text;
-        while (*c) {
-            dlb_vec_push(text_entry[i].lbuffer, *c);
-            c++;
-        }
-        text_entry[i].dirty = true;
-        text_entry[i].cursor = dlb_vec_len(text_entry[i].lbuffer);
-    }
-#endif
 
-    for (int i = 0; i < ARRAY_COUNT(text_entry); i++) {
-        ta_ui_row_begin();
-        ta_ui_label(INTERN("test_label"), "Text:");
-        ta_ui_next_size(300, 0);
-        ta_ui_next_margin(4, 0, 0, 2);
-        ta_ui_textbox(INTERN("test_textbox"), &text_entry[i]);
+    static ta_text_entry *text_entry = 0;
+    if (!text_entry) {
+        text_entry = ta_text_entry_init();
+        ta_text_entry_set_text(text_entry, CSTR("This is a test."));
     }
+    ta_ui_row_begin();
+    ta_ui_label(INTERN("test_label"), "Text:");
+    ta_ui_next_size(300, 0);
+    ta_ui_next_margin(4, 0, 0, 2);
+    ta_ui_textbox(INTERN("test_textbox"), text_entry);
     ta_ui_panel_end(textbox_panel_id);
 }
 

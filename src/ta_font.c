@@ -165,13 +165,13 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
         dlb_vec_reserve(*rects, text_len);
     }
 
-    ta_rectf rect = { 0 };
+    ta_rectf bounds = { 0 };
     if (!text) {
-        return rect;
+        return bounds;
     }
 
-    float cur_x = rect.x;
-    float cur_y = rect.y + font->ascent;
+    float cur_x = bounds.x;
+    float cur_y = bounds.y + font->ascent;
     bool cursor_set = false;
 
     // Loop until i == text_len or, if text_len is 0, we hit a nil character
@@ -185,9 +185,9 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
 
         if (text[i] == '\n') {
             //DLB_ASSERT(y_max <= font->pixel_height);
-            cur_x = rect.x;
+            cur_x = bounds.x;
             cur_y += font->line_height;
-            rect.h += font->line_height;
+            bounds.h += font->line_height;
         } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
             ta_rect_uv *rect_uv = dlb_vec_alloc(*rects);
             ta_baked_quad(font->chars, font->tex_w, font->tex_h,
@@ -202,16 +202,16 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
                 rect_uv->uv1.v = v;
             }
 
-            rect.w = MAX(rect.w, cur_x - rect.x);
+            bounds.w = MAX(bounds.w, cur_x - bounds.x);
         }
     }
-    rect.h += font->line_height;
+    bounds.h += font->line_height;
 
     if (cursor_offset && !cursor_set) {
         cursor_offset->x = cur_x;
         cursor_offset->y = cur_y - font->ascent;
     }
-    return rect;
+    return bounds;
 }
 
 // z postiive for screen, negative for world

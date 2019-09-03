@@ -900,6 +900,19 @@ void *ta_scene_find(ta_scene *scene, ta_schema_field_type type, const char *uid)
     return ptr;
 }
 
+void *ta_scene_find_index(ta_scene *scene, ta_schema_field_type type, size_t idx)
+{
+    DLB_ASSERT(scene);
+    DLB_ASSERT(type < TYP_COUNT_POOLS);
+
+    size_t pool_idx = idx;
+    size_t pool_len = dlb_vec_len(scene->pools[type]);
+    DLB_ASSERT(pool_idx < pool_len);
+
+    void *ptr = (u8 *)scene->pools[type] + (pool_idx * pool_infos[type].size);
+    return ptr;
+}
+
 static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
 {
     // Box2D supports 16 collision categories. For each fixture you can

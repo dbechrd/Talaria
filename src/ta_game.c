@@ -11,12 +11,9 @@
 #include "ta_scene.h"
 #include "ta_node.h"
 #include "ta_audio.h"
+#include "ta_editor.h"
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
-
-bool text_entry_active(text_entry_settings *text_entry) {
-    return tg_game.text_entry.entry == text_entry;
-}
 
 ta_game tg_game;
 
@@ -469,8 +466,6 @@ void ta_game_event(ta_game *game, ta_event *event)
             float t_min = 9999.0f;
             ta_node *closest_node = 0;
 
-            game->selected_node_idx = -1;
-            u32 idx = 0;
             dlb_vec_each(ta_node *, node, game->scene->pools[TYP_NODE]) {
                 ta_rigid_body *body = ta_node_rigid_body(node);
                 // TODO: Handle types other than spheres
@@ -483,10 +478,9 @@ void ta_game_event(ta_game *game, ta_event *event)
                 if (ta_intersect_ray_sphere(ray, sphere, &t)) {
                     if (t >= 0.0f && t < t_min) {
                         t_min = t;
-                        game->selected_node_idx = idx;
+                        ta_editor_select_node(node);
                     }
                 }
-                idx++;
             }
             break;
         }
