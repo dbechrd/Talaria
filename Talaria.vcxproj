@@ -192,7 +192,7 @@
     <ClCompile Include="src/ta_primitive.c" />
     <ClCompile Include="src/ta_render.c" />
     <ClCompile Include="src/ta_texture.c" />
-    <ClCompile Include="src/ta_ui_scrollview.c" />
+    <ClCompile Include="src\ta_ui.c" />
     <ClCompile Include="src/ta_shader.c" />
     <ClCompile Include="src/ta_timer.c" />
     <ClCompile Include="src/ta_window.c" />
@@ -230,7 +230,7 @@
     <ClInclude Include="src/ta_primitive.h" />
     <ClInclude Include="src/ta_render.h" />
     <ClInclude Include="src/ta_texture.h" />
-    <ClInclude Include="src/ta_ui_scrollview.h" />
+    <ClInclude Include="src\ta_ui.h" />
     <ClInclude Include="src/ta_shader.h" />
     <ClInclude Include="src/ta_timer.h" />
     <ClInclude Include="src/ta_window.h" />

@@ -38,9 +38,6 @@
     <ClCompile Include="src/ta_timer.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src/ta_ui_scrollview.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src/ta_texture.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -119,6 +116,9 @@
     <ClCompile Include="src\ta_editor.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ta_ui.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src/ta_window.h">
@@ -140,9 +140,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src/ta_timer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src/ta_ui_scrollview.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src/ta_texture.h">
@@ -227,6 +224,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_editor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_ui.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

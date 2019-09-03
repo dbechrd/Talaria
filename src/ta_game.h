@@ -53,3 +53,4 @@ extern ta_game tg_game;
 void ta_game_init(ta_game *game);
 void ta_game_state_set(ta_game *game, ta_game_state state);
 void ta_game_event(ta_game *game, ta_event *event);
+void ta_game_hud_draw();

@@ -6,7 +6,7 @@
 #include "ta_file.h"
 #include "ta_scene.h"
 #include "ta_shader.h"
-#include "ta_ui_scrollview.h"
+#include "ta_text_entry.h"
 #include "ta_ui_barchart.h"
 #include "ta_texture.h"
 #include "ta_mesh.h"
@@ -23,6 +23,7 @@
 #include "ta_symbol.h"
 #include "ta_font.h"
 #include "ta_primitive.h"
+#include "ta_editor.h"
 #include "dlb/dlb_types.h"
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb/dlb_vector.h"
@@ -364,8 +365,8 @@ int main(int argc, char *argv[])
 #endif
 
         debug_nametag();
-        ta_ui_hud();
-        ta_ui_editor();
+        ta_game_hud_draw();
+        ta_editor_draw();
 
         render_fps(ms_frame_start, frame_num);
 

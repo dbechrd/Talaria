@@ -12,7 +12,9 @@
 #include "ta_node.h"
 #include "ta_audio.h"
 #include "ta_editor.h"
+#include "ta_ui.h"
 #include "dlb/dlb_vector.h"
+#include "misc/gl3w.h"
 #include "SDL/SDL.h"
 
 ta_game tg_game;
@@ -368,7 +370,7 @@ void ta_game_event(ta_game *game, ta_event *event)
         } case TA_EVENT_GAME_MOUSE_SCROLL: {
             // TODO: Scroll active element being hovered, if not
             //       handled, bubble up
-            //ta_ui_scrollview_scroll(view, event->data.mouse_scroll.y *
+            //text_entry_scroll(view, event->data.mouse_scroll.y *
             //    -event->data.mouse_scroll.flipped);
             break;
 #endif
@@ -485,4 +487,35 @@ void ta_game_event(ta_game *game, ta_event *event)
             break;
         }
     }
+}
+
+void ta_game_hud_draw()
+{
+    // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
+    //       at render time (make sure to update viewport correctly).
+    ta_ui_next_size(200, 40);
+    ta_ui_window_begin(INTERN("hud"), 0);
+    ta_ui_row_begin();
+    for (int i = 0; i < tg_game.player_ammo_max; i++) {
+        ta_ui_next_size(20, 20);
+        if (i < tg_game.player_ammo) {
+            ta_ui_button(INTERN("clip_slot_full"), tg_game.tex_orange);
+        } else {
+            ta_ui_button(INTERN("clip_slot_empty"), tg_game.tex_red);
+        }
+    }
+    // TODO: Allow next_pad to work on rows, or introduce a panel here
+    //ta_ui_pad(0, 4);
+    ta_ui_row_begin();
+    for (int i = 0; i < tg_game.player_clip_max; i++) {
+        ta_ui_next_size(20, 20);
+        if (i < tg_game.player_clip) {
+            ta_ui_button(INTERN("ammo_slot_full"), tg_game.tex_orange);
+        } else {
+            ta_ui_button(INTERN("ammo_slot_empty"), tg_game.tex_red);
+        }
+    }
+    ta_ui_window_end();
+
+    glDisable(GL_SCISSOR_TEST);
 }
