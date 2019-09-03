@@ -57,7 +57,10 @@ ta_text_entry *ta_text_entry_init()
 
 void ta_text_entry_free(ta_text_entry **text_entry)
 {
-    dlb_free(*text_entry);
+    ta_text_entry *entry = *text_entry;
+    dlb_vec_free(entry->buf);
+    dlb_vec_free(entry->text);
+    dlb_free(entry);
     *text_entry = 0;
 }
 
