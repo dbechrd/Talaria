@@ -12,6 +12,7 @@
 #include "ta_shader.h"
 #include "ta_scene.h"
 #include "ta_light.h"
+#include "ta_editor.h"
 #include "dlb/dlb_vector.h"
 
 void ta_node_init(ta_node *node)
@@ -256,13 +257,15 @@ void ta_node_render(ta_node *node, ta_camera *camera, float alpha)
 
     if (camera->debug_normals || camera->debug_bounding_boxes) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &node->model);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &node->model);
         if (camera->debug_normals) {
             ta_node_push_normals(node);
         }
         if (camera->debug_bounding_boxes) {
             ta_node_push_aabb(node, TA_COLOR_RED);
         }
+    } else if (node == ta_editor_selected_node()) {
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &node->model);
+        ta_node_push_aabb(node, TA_COLOR_ORANGE);
     }
 
     ta_primitive_render(true, false);

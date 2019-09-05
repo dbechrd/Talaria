@@ -5,7 +5,7 @@
 #include "ta_game.h"
 #include "dlb/dlb_vector.h"
 
-#define DEBUG_GAP_BUFFER 1
+#define DEBUG_GAP_BUFFER 0
 
 typedef struct ta_text_entry {
     char *buf;
@@ -13,7 +13,8 @@ typedef struct ta_text_entry {
     u32 gap_len;  // length of gap after cursor
     u32 selection_start;
     u32 selection_len;
-    bool focused;
+    bool multiline;
+    bool submitted;
     bool dirty;   // true if text buffer is dirty
     char *text;   // active text (without gap buffer)
     ta_text_entry_filter *filter;
@@ -30,18 +31,6 @@ static bool text_entry_filter_default(char c)
 }
 
 ta_text_entry_filter *ta_text_entry_filter_default = &text_entry_filter_default;
-
-static void text_entry_generate_text(ta_text_entry *text_entry)
-{
-    dlb_vec_zero(text_entry->text);
-    dlb_vec_reserve(text_entry->text, dlb_vec_cap(text_entry->buf));
-    for (u32 i = 0; i < dlb_vec_cap(text_entry->buf); i++) {
-        if (i < text_entry->cursor || i >= text_entry->cursor + text_entry->gap_len) {
-            dlb_vec_push(text_entry->text, text_entry->buf[i]);
-        }
-    }
-    text_entry->dirty = false;
-}
 
 ta_text_entry *ta_text_entry_init()
 {
@@ -65,27 +54,21 @@ void ta_text_entry_set_filter(ta_text_entry *text_entry,
     text_entry->filter = filter;
 }
 
-bool ta_text_entry_active(ta_text_entry *text_entry)
-{
-    return ta_editor_active_text_entry() == text_entry;
-}
-
 void ta_text_entry_focus(ta_text_entry *text_entry)
 {
-    if (!ta_text_entry_active(text_entry)) {
-        ta_editor_set_active_text_entry(text_entry);
-    }
-    text_entry->focused = true;
+    ta_editor_set_active_text_entry(text_entry);
 }
 
 void ta_text_entry_unfocus(ta_text_entry *text_entry)
 {
-    text_entry->focused = false;
+    if (ta_text_entry_focused(text_entry)) {
+        ta_editor_set_active_text_entry(0);
+    }
 }
 
 bool ta_text_entry_focused(ta_text_entry *text_entry)
 {
-    return text_entry->focused;
+    return ta_editor_active_text_entry() == text_entry;;
 }
 
 void ta_text_entry_cursor_bof(ta_text_entry *text_entry)
@@ -158,6 +141,10 @@ void ta_text_entry_delete(ta_text_entry *text_entry)
 
 bool ta_text_entry_insert(ta_text_entry *text_entry, char c)
 {
+    if (c == '\n' && !text_entry->multiline) {
+        ta_text_entry_submit(text_entry);
+        return false;
+    }
     if (text_entry->filter && !text_entry->filter(c)) {
         return false;
     }
@@ -184,13 +171,16 @@ bool ta_text_entry_insert(ta_text_entry *text_entry, char c)
 
 void ta_text_entry_validate(ta_text_entry *text_entry)
 {
-    if (ta_text_entry_active(text_entry)) {
-        ta_editor_set_active_text_entry(0);
-        text_entry->focused = false;
-        text_entry_generate_text(text_entry);
-    } else {
-        DLB_ASSERT(!"How did you validate a text_entry that isn't active!?");
+    if (!text_entry->dirty) return;
+
+    dlb_vec_zero(text_entry->text);
+    dlb_vec_reserve(text_entry->text, dlb_vec_cap(text_entry->buf));
+    for (u32 i = 0; i < dlb_vec_cap(text_entry->buf); i++) {
+        if (i < text_entry->cursor || i >= text_entry->cursor + text_entry->gap_len) {
+            dlb_vec_push(text_entry->text, text_entry->buf[i]);
+        }
     }
+    text_entry->dirty = false;
 }
 
 bool ta_text_entry_valid(ta_text_entry *text_entry)
@@ -198,11 +188,21 @@ bool ta_text_entry_valid(ta_text_entry *text_entry)
     return !text_entry->dirty;
 }
 
+void ta_text_entry_submit(ta_text_entry *text_entry)
+{
+    ta_text_entry_validate(text_entry);
+    text_entry->submitted = true;
+    ta_text_entry_unfocus(text_entry);
+}
+
+bool ta_text_entry_submitted(ta_text_entry *text_entry)
+{
+    return text_entry->submitted;
+}
+
 char *ta_text_entry_text(ta_text_entry *text_entry, u32 *len)
 {
-    if (text_entry->dirty) {
-        text_entry_generate_text(text_entry);
-    }
+    ta_text_entry_validate(text_entry);
     if (len) {
         *len = dlb_vec_len(text_entry->text);
     }

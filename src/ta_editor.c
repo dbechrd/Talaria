@@ -11,6 +11,8 @@
 #include "ta_font.h"
 #include "ta_text_entry.h"
 #include "ta_shader.h"
+#include "ta_parse.h"
+#include "ta_rigid_body.h"
 #include "dlb/dlb_vector.h"
 
 typedef struct ta_editor {
@@ -24,6 +26,10 @@ ta_editor *tg_editor = &editor;
 
 void ta_editor_set_active_text_entry(ta_text_entry *text_entry)
 {
+    if (tg_editor->text_entry == text_entry) {
+        return;
+    }
+
     tg_editor->text_entry = text_entry;
     if (tg_editor->text_entry) {
         ta_game_state_set(&tg_game, TA_GAME_STATE_TEXT_ENTRY);
@@ -67,75 +73,113 @@ static void ui_node_panel()
     static int label_width = 150;
     ta_node *node = ta_editor_selected_node();
     if (node) {
+        ta_rigid_body *rigid_body = ta_node_rigid_body(node);
+
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "UID:");
         static ta_text_entry *uid_editor = 0;
-        if (uid_editor && ta_text_entry_active(uid_editor)) {
-            ta_ui_next_size(100, 0);
-            ta_ui_textbox(0, uid_editor);
-            ta_ui_next_margin(4, 0, 0, 0);
-            ta_ui_next_pad(4, 0, 4, 0);
-            ta_ui_next_bg_color(0.0f, 0.8f, 0.0f, 1.0f);
-            if (ta_ui_label(0, "Save")) {
-                ta_text_entry_validate(uid_editor);
-            }
-        } else {
-            if (uid_editor && ta_text_entry_valid(uid_editor)) {
+        if (uid_editor) {
+            if (ta_text_entry_focused(uid_editor)) {
+                ta_ui_next_size(100, 0);
+                ta_ui_textbox(0, uid_editor);
+                ta_ui_next_margin(4, 0, 0, 0);
+                ta_ui_next_pad(4, 0, 4, 0);
+                ta_ui_next_bg_color(0.0f, 0.8f, 0.0f, 1.0f);
+                if (ta_ui_label(0, "Save")) {
+                    ta_text_entry_validate(uid_editor);
+                }
+            } else if (ta_text_entry_valid(uid_editor)) {
                 u32 text_len = 0;
                 char *text = ta_text_entry_text(uid_editor, &text_len);
 
-                dlb_hash_delete(&tg_game.scene->pooled_uids[TYP_NODE],
-                    SYM(node->uid.uid));
+                // All of this logic is specific to changing UIDs
+                {
+                    dlb_hash_delete(&tg_game.scene->pooled_uids[TYP_NODE],
+                        SYM(node->uid.uid));
 
-                // TODO: Replace all references to UID pointers with generational
-                // pool indexes otherwise we can never delete symbols because
-                // anything holding a pointer will be dangling.
-                // (e.g. editor->selected_node_uid)
-                //dlb_symbol_free(node->uid.uid);
+                    // TODO: Replace all references to UID pointers with generational
+                    // pool indexes otherwise we can never delete symbols because
+                    // anything holding a pointer will be dangling.
+                    // (e.g. editor->selected_node_uid)
+                    //dlb_symbol_free(node->uid.uid);
 
-                node->uid.uid = ta_symbol_intern(text, text_len);
-                bool found = false;
-                u32 idx = 0;
-                dlb_vec_each(ta_node *, n, tg_game.scene->pools[TYP_NODE]) {
-                    if (n == node) {
-                        found = true;
-                        break;
+                    node->uid.uid = ta_symbol_intern(text, text_len);
+                    bool found = false;
+                    u32 idx = 0;
+                    dlb_vec_each(ta_node *, n, tg_game.scene->pools[TYP_NODE]) {
+                        if (n == node) {
+                            found = true;
+                            break;
+                        }
+                        idx++;
                     }
-                    idx++;
+                    DLB_ASSERT(found);
+                    dlb_hash_insert(&tg_game.scene->pooled_uids[TYP_NODE],
+                        SYM(node->uid.uid), (void *)idx);
+                    ta_editor_select_node(node);
                 }
-                DLB_ASSERT(found);
-                dlb_hash_insert(&tg_game.scene->pooled_uids[TYP_NODE],
-                    SYM(node->uid.uid), (void *)idx);
 
                 ta_text_entry_free(&uid_editor);
-                ta_editor_select_node(node);
             }
-            if (ta_ui_label(0, node->uid.uid)) {
-                DLB_ASSERT(!uid_editor);
-                uid_editor = ta_text_entry_init();
-                ta_text_entry_set_text(uid_editor, SYM(node->uid.uid));
-                ta_text_entry_focus(uid_editor);
+        } else if (ta_ui_label(0, node->uid.uid)) {
+            DLB_ASSERT(!uid_editor);
+            uid_editor = ta_text_entry_init();
+            ta_text_entry_set_text(uid_editor, SYM(node->uid.uid));
+            ta_text_entry_focus(uid_editor);
+        }
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        float *position = (float *)&node->transform.position;
+        if (rigid_body) {
+            ta_ui_label(0, "RB Position:");
+            position = (float *)&rigid_body->position;
+        } else {
+            ta_ui_label(0, "Position:");
+        }
+        const char *pos_labels[3] = { "x: ", " y: ", " z: " };
+        static ta_text_entry *pos_editors[3] = { 0 };
+        for (int i = 0; i < 3; i++) {
+            ta_ui_label(0, pos_labels[i]);
+            char pos_buf[10] = { 0 };
+            int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f",
+                position[i]);
+            DLB_ASSERT(len < sizeof(pos_buf));
+            if (pos_editors[i]) {
+                ta_ui_textbox(0, pos_editors[i]);
+                if (ta_text_entry_valid(pos_editors[i])) {
+                    u32 text_len = 0;
+                    char *text = ta_text_entry_text(pos_editors[i], &text_len);
+                    position[i] = parse_float(text);
+                }
+#if 0
+                ta_ui_next_margin(4, 0, 0, 0);
+                ta_ui_next_pad(4, 0, 4, 0);
+                ta_ui_next_bg_color(0.0f, 0.8f, 0.0f, 1.0f);
+                if (ta_ui_label(0, "Save")) {
+                    ta_text_entry_submit(pos_editors[i]);
+                }
+#endif
+                if (ta_text_entry_submitted(pos_editors[i])) {
+                    ta_text_entry_unfocus(pos_editors[i]);
+                    ta_text_entry_free(&pos_editors[i]);
+                }
+            } else {
+                if (ta_ui_label(0, pos_buf)) {
+                    DLB_ASSERT(!pos_editors[i]);
+                    pos_editors[i] = ta_text_entry_init();
+                    ta_text_entry_set_text(pos_editors[i], pos_buf, len);
+                    ta_text_entry_focus(pos_editors[i]);
+                }
             }
         }
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, "Position:");
-        char pos_buf[64] = { 0 };
-        int len = snprintf(pos_buf, sizeof(pos_buf),
-            "x: %3.4f, y: %3.4f, z: %3.4f",
-            node->transform.position.x,
-            node->transform.position.y,
-            node->transform.position.z);
-        DLB_ASSERT(len < sizeof(pos_buf));
-        ta_ui_label(0, pos_buf);
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "Orientation:");
         char orient_buf[64] = { 0 };
-        len = snprintf(orient_buf, sizeof(orient_buf),
+        int len = snprintf(orient_buf, sizeof(orient_buf),
             "x: %3.4f, y: %3.4f, z: %3.4f, w: %3.4f",
             node->transform.orientation.x,
             node->transform.orientation.y,

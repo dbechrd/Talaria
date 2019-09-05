@@ -1,0 +1,621 @@
+#include "ta_ui.h"
+#include "ta_primitive.h"
+#include "ta_window.h"
+#include "ta_shader.h"
+#include "ta_symbol.h"
+#include "ta_mouse.h"
+#include "ta_game.h"
+#include "ta_font.h"
+#include "ta_text_entry.h"
+#include "ta_texture.h"
+#include "dlb/dlb_vector.h"
+#include "misc/gl3w.h"
+
+#define UI_DEBUG_MARGIN         1
+#define UI_DEBUG_PAD            1
+#define UI_DEBUG_CONTAINERS     0
+#define UI_DEBUG_NO_TEXTURES    0
+#define UI_DEBUG_RANDOM_COLORS  0
+
+#define WIDGET_PAD          1
+#define SCROLL_SPEED        20
+
+typedef struct ui_style {
+    ta_size size;
+    ta_rect margin;
+    ta_rect pad;
+    ta_rgba bg_color;
+    ta_rgba fg_color;
+} ui_style;
+
+static ui_style next_frame_style;
+static ta_ui_state last_frame_state;
+
+typedef enum ui_frame_type {
+    UI_ROOT,
+    UI_WINDOW,
+    UI_PANEL,
+    UI_TEXTBOX,
+    UI_BUTTON,
+    UI_COUNT
+} ui_frame_type;
+
+typedef struct ui_frame {
+    u32 index;
+    ui_frame_type type;
+    const char *name;
+
+    ta_rect margin;         // external margin
+    ta_rect pad;            // internal padding
+    ta_rect rect;           // position & size (-margin, +pad)
+    ta_vec2i offset;        // dynamic offset for layout
+
+    int row_height;         // height of current layout row
+    bool row_continue;      // if true, next element will layout on same row
+    ta_size content_size;   // dynamic content size (-margin, +pad)
+} ui_frame;
+
+static ui_frame ui_root = {
+    .index = (u32)-1,
+    .type = UI_ROOT
+};
+static ui_frame *ui_frames;
+
+typedef enum ui_event_type {
+    UI_STATE_NONE,
+    UI_STATE_HOVER,
+    UI_STATE_DOWN,
+    UI_STATE_ACTIVE,
+    UI_STATE_COUNT
+} ui_event_type;
+
+static ta_rgba ui_get_color(ui_frame *frame, ui_event_type event)
+{
+#if UI_DEBUG_RANDOM_COLORS
+    // HACK: Generate random colors based on name of control
+    ta_rgba color;
+    u32 hash = dlb_hash_code(SYM(frame->name));
+    color.r = ((hash >> (event     )) & 255) / 255.0f;
+    color.g = ((hash >> (event +  8)) & 255) / 255.0f;
+    color.b = ((hash >> (event + 16)) & 255) / 255.0f;
+    color.a = 1.0f;
+    return color;
+#else
+    static ta_rgba ui_colors[UI_COUNT][UI_STATE_COUNT] = {
+        [UI_ROOT] = {
+            [UI_STATE_NONE]  = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED1
+            [UI_STATE_HOVER] = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED2
+            [UI_STATE_DOWN]  = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED3
+        },
+        [UI_WINDOW] = {
+            [UI_STATE_NONE]  = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN1
+            [UI_STATE_HOVER] = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN2
+            [UI_STATE_DOWN]  = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN3
+        },
+        [UI_PANEL] = {
+            [UI_STATE_NONE]  = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_RED
+            [UI_STATE_HOVER] = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_GREEN
+            [UI_STATE_DOWN]  = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_BLUE
+        },
+        [UI_TEXTBOX] = {
+            [UI_STATE_NONE]  = { 0.5f, 0.5f, 0.5f, 0.5f }, //TA_COLOR_GRAY2
+            [UI_STATE_HOVER] = { 1.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_YELLOW
+            [UI_STATE_DOWN]  = { 1.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_MAGENTA
+        },
+        [UI_BUTTON] = {
+            [UI_STATE_NONE]   = { 0.5f, 0.5f, 0.5f, 1.0f }, //TA_COLOR_GRAY2
+            [UI_STATE_HOVER]  = { 1.0f, 1.0f, 0.0f, 1.0f }, //TA_COLOR_YELLOW
+            [UI_STATE_DOWN]   = { 1.0f, 0.0f, 1.0f, 1.0f }, //TA_COLOR_MAGENTA
+            [UI_STATE_ACTIVE] = { 0.0f, 1.0f, 1.0f, 1.0f }, //TA_COLOR_CYAN
+        },
+    };
+    return ui_colors[frame->type][event];
+#endif
+}
+static bool type_is_container(ui_frame_type type)
+{
+    return (type == UI_WINDOW || type == UI_PANEL);
+}
+// returns closest parent container index
+static ui_frame *ui_container(u32 frame_idx)
+{
+    DLB_ASSERT(frame_idx <= dlb_vec_len(ui_frames));
+
+    // TODO: Could just keep track of most recent container? Idk.. this most
+    // likely only runs for 1-2 iterations worst case right now.
+    int i = frame_idx - 1;
+    for (; i >= 0; i--) {
+        if (type_is_container(ui_frames[i].type)) {
+            break;
+        }
+    }
+
+    ui_frame *frame = &ui_root;
+    if (i >= 0) {
+        DLB_ASSERT(type_is_container(ui_frames[i].type));
+        frame = &ui_frames[i];
+    }
+    return frame;
+}
+static ui_frame *ui_container_last()
+{
+    return ui_container(dlb_vec_len(ui_frames));
+}
+static void ui_pop(u32 index)
+{
+    DLB_ASSERT(dlb_vec_len(ui_frames));
+    ui_frame *frame = dlb_vec_last(ui_frames);
+    while (frame != ui_frames && frame->index != index) {
+        dlb_vec_popz(ui_frames);
+        frame--;
+    }
+    DLB_ASSERT(frame->index == index);
+    dlb_vec_popz(ui_frames);
+}
+static ta_rect rect_shrink(ta_rect orig, ta_rect shrink)
+{
+    ta_rect result = { 0 };
+    result.x = orig.x + shrink.x;
+    result.y = orig.y + shrink.y;
+    result.w = orig.w - (shrink.x + shrink.w);
+    result.h = orig.h - (shrink.w + shrink.h);
+    return result;
+}
+static bool rect_contains_mouse(ta_rect rect)
+{
+    if (tg_mouse.x >= rect.x && tg_mouse.x < rect.x + rect.w &&
+        tg_mouse.y >= rect.y && tg_mouse.y < rect.y + rect.h)
+    {
+        return true;
+    }
+    return false;
+}
+// returns frame index
+static u32 ui_frame_start(ui_frame_type type, const char *name)
+{
+    // TODO: This probably shouldn't be here...
+    glDisable(GL_SCISSOR_TEST);
+
+    // Allocate frame
+    ui_frame *frame = dlb_vec_alloc(ui_frames);
+    frame->index = dlb_vec_len(ui_frames) - 1;
+    frame->type = type;
+    frame->name = name;
+    frame->margin = next_frame_style.margin;
+    frame->pad = next_frame_style.pad;
+    ui_frame *container = ui_container(frame->index);
+    frame->content_size.w = frame->pad.x + frame->pad.w;
+    frame->content_size.h = frame->pad.y + frame->pad.h;
+    frame->rect.x = container->rect.x + container->offset.x + frame->margin.x;
+    frame->rect.y = container->rect.y + container->offset.y + frame->margin.y;
+    frame->rect.w = next_frame_style.size.w + frame->content_size.w;
+    frame->rect.h = next_frame_style.size.h + frame->content_size.h;
+
+    dlb_memset(&next_frame_style, 0, sizeof(next_frame_style));
+
+    // Container padding
+    if (type_is_container(frame->type)) {
+        frame->offset.x += frame->pad.x;
+        frame->offset.y += frame->pad.y;
+    } else {
+        last_frame_state.hover = false;
+        last_frame_state.down = false;
+        last_frame_state.pressed = false;
+        last_frame_state.released = false;
+        last_frame_state.unfocused = false;
+
+        ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
+        if (rect_contains_mouse(frame->rect))
+        {
+            bg_color = ui_get_color(frame, UI_STATE_HOVER);
+            last_frame_state.hover = true;
+            if (ta_button_state_down(&tg_mouse.left)) {
+                bg_color = ui_get_color(frame, UI_STATE_DOWN);
+                last_frame_state.down = true;
+                last_frame_state.pressed = ta_button_state_pressed(&tg_mouse.left);
+            } else {
+                last_frame_state.released = ta_button_state_released(&tg_mouse.left);
+            }
+        } else {
+            if (ta_button_state_down(&tg_mouse.left)) {
+                last_frame_state.unfocused = true;
+            }
+        }
+    }
+
+    // TODO: If we're going to render containers we need to defer *all*
+    //       rendering to e.g. container->queue until the container pops, then
+    //       render everything starting at the container for proper ordering.
+    //if (UI_DEBUG_CONTAINERS || !type_is_container(frame->type)) {
+    //    ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
+    //    ta_primitive_render(true, true);
+    //}
+
+    if (frame->type != UI_TEXTBOX) {
+        // TODO: Should clip rect contain pad or not? Not sure.. see how it looks.
+        ta_rect clip_rect = rect_shrink(frame->rect, frame->pad);
+        glEnable(GL_SCISSOR_TEST);
+        int inv_y = WINDOW_H - (clip_rect.y + clip_rect.h);
+        glScissor(clip_rect.x, inv_y, clip_rect.w, clip_rect.h);
+    }
+
+    return frame->index;
+}
+static void ui_frame_end(u32 frame_idx)
+{
+    ui_frame *container = ui_container(frame_idx);
+    ui_frame *frame = &ui_frames[frame_idx];
+
+    int frame_w = 0;
+    int frame_h = 0;
+    if (type_is_container(frame->type)) {
+        // assume all containers auto-expand for now
+        frame_w = frame->margin.x + frame->content_size.w + frame->margin.w;
+        frame_h = frame->margin.y + frame->content_size.h + frame->margin.h;
+    } else {
+        frame_w = frame->margin.x + frame->rect.w + frame->margin.w;
+        frame_h = frame->margin.y + frame->rect.h + frame->margin.h;
+    }
+
+    container->offset.x += frame_w;
+    container->row_height = MAX(container->row_height, frame_h);
+    container->content_size.w = MAX(container->content_size.w, container->offset.x);
+    container->content_size.h += container->row_height;
+
+    if (!container->row_continue) {
+        container->offset.x = container->pad.x;
+        container->offset.y += container->row_height;
+        container->row_height = 0;
+    }
+
+    // Pop container (currently required for container search to work)
+    if (type_is_container(frame->type)) {
+        ui_pop(frame->index);
+    }
+}
+
+ta_ui_state ta_ui_last_frame_state()
+{
+    return last_frame_state;
+}
+
+// TODO: Replace these with ta_ui_push_style that persists until pop
+void ta_ui_next_margin(int left, int top, int right, int bottom)
+{
+#if UI_DEBUG_MARGIN
+    next_frame_style.margin.x = left;
+    next_frame_style.margin.y = top;
+    next_frame_style.margin.w = right;
+    next_frame_style.margin.h = bottom;
+#endif
+}
+void ta_ui_next_pad(int left, int top, int right, int bottom)
+{
+#if UI_DEBUG_PAD
+    next_frame_style.pad.x = left;
+    next_frame_style.pad.y = top;
+    next_frame_style.pad.w = right;
+    next_frame_style.pad.h = bottom;
+#endif
+}
+void ta_ui_next_size(int w, int h)
+{
+    next_frame_style.size.w = w;
+    next_frame_style.size.h = h;
+}
+void ta_ui_next_bg_color(float r, float g, float b, float a)
+{
+    next_frame_style.bg_color.r = r;
+    next_frame_style.bg_color.g = g;
+    next_frame_style.bg_color.b = b;
+    next_frame_style.bg_color.a = a;
+}
+void ta_ui_next_fg_color(float r, float g, float b, float a)
+{
+    next_frame_style.fg_color.r = r;
+    next_frame_style.fg_color.g = g;
+    next_frame_style.fg_color.b = b;
+    next_frame_style.fg_color.a = a;
+}
+
+void ta_ui_window_begin(const char *name, int *scroll_v)
+{
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    u32 frame_idx = ui_frame_start(UI_WINDOW, name);
+    UNUSED(frame_idx);
+    UNUSED(scroll_v);
+
+#if 0
+    if (sv->scrollbar_y.visible) {
+        ta_ui_scrollbar *bar = &sv->scrollbar_y;
+        int offset = bar->widget.offset + scroll * SCROLL_SPEED;
+
+        if (offset < 0) {
+            offset = 0;
+        } else if (offset > sv->content->rect.h - bar->rect.h) {
+            offset = sv->content->rect.h - bar->rect.h;
+        }
+
+        bar->widget.offset = offset;
+        bar->widget.rect.y = bar->widget.offset + WIDGET_PAD;
+    }
+#endif
+
+#if 0
+    int content_w = content->rect.x + content->rect.w + CONTENT_PAD * 2;
+    int content_h = content->rect.y + content->rect.h + CONTENT_PAD * 2;
+
+    ta_ui_scrollbar *bar = &view->scrollbar_y;
+    if (content_h > view->rect.h) {
+        bar->rect.w = 10;
+        bar->rect.h = view->rect.h;
+        bar->rect.x = (view->rect.x + view->rect.w) - bar->rect.w;
+        bar->rect.y = view->rect.y;
+        bar->widget.offset = 0;
+        bar->widget.rect.x = WIDGET_PAD;
+        bar->widget.rect.y = bar->widget.offset + WIDGET_PAD;
+        bar->widget.rect.w = bar->rect.w - WIDGET_PAD*2;
+        bar->widget.rect.h = bar->rect.h*2 - view->content->rect.h - WIDGET_PAD*2;
+        bar->visible = true;
+    }
+#endif
+}
+void ta_ui_window_end()
+{
+    glDisable(GL_SCISSOR_TEST);
+
+    // TODO: Render scrollbar on top of content, don't try to pad beforehand
+    //       since we don't yet know the size.
+#if 0
+    if (sv->scrollbar_y.visible) {
+        // Scrollbar background
+        static ta_rgba scrollbar_color = { 0.5f, 0.5f, 0.5f, 0.5f };
+        ta_primitive_push_rect(parent, sv->scrollbar_y.rect, scrollbar_color);
+
+        // Scrollbar widget
+        ta_rect widget_parent = parent;
+        widget_parent.x += sv->scrollbar_y.rect.x;
+        widget_parent.y += sv->scrollbar_y.rect.y;
+        static ta_rgba widget_color = { 0.2f, 0.2f, 0.2f, 0.5f };
+        ta_primitive_push_rect(widget_parent, sv->scrollbar_y.widget.rect,
+            widget_color);
+    }
+#endif
+    dlb_vec_zero(ui_frames);
+}
+
+void ta_ui_panel_begin(const char *name, u32 *index)
+{
+    u32 frame_idx = ui_frame_start(UI_PANEL, name);
+    if (index) *index = frame_idx;
+}
+void ta_ui_panel_end(u32 index)
+{
+    ui_frame_end(index);
+}
+
+void ta_ui_row_end()
+{
+    ui_frame *container = ui_container_last();
+    if (container->row_continue) {
+        container->offset.x = container->pad.x;
+        container->offset.y += container->row_height;
+        container->row_height = 0;
+        container->row_continue = false;
+    }
+}
+void ta_ui_row_begin()
+{
+    ui_frame *container = ui_container_last();
+    ta_ui_row_end();
+    container->row_continue = true;
+}
+
+void ta_ui_tooltip(const char *text, u32 text_len)
+{
+    // TODO: Cache tooltips
+    ta_rect_uv *text_rects = 0;
+    ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font,
+        text, text_len, true, 0, 0);
+
+    float offset_x = tg_mouse.x + 10.0f;
+    float offset_y = tg_mouse.y + 20.0f;
+
+    ta_rect_uv tooltip_bg = { 0 };
+    tooltip_bg.rect.x = offset_x - 10.0f;
+    tooltip_bg.rect.y = offset_y;
+    tooltip_bg.rect.w = text_rect.w + 20.0f;
+    tooltip_bg.rect.h = text_rect.h;
+    ta_primitive_push_rect_uv(&tooltip_bg_queue, tooltip_bg, TA_COLOR_GRAY3A,
+        UI_LAYER_TIP_BG, true, false);
+
+    dlb_vec_each(ta_rect_uv *, rect, text_rects) {
+        ta_rect_uv offset_rect = *rect;
+        offset_rect.rect.x += offset_x;
+        offset_rect.rect.y += offset_y;
+        ta_primitive_push_rect_uv(&tooltip_fg_queue, offset_rect, TA_COLOR_WHITE,
+            UI_LAYER_TIP, true, false);
+    }
+    dlb_vec_zero(text_rects);
+}
+void ta_ui_statusbar()
+//void ta_ui_statusbar(int x, int y)
+{
+    const float statusbar_pad = 4;
+    ta_rect_uv status_bg = { 0 };
+    status_bg.rect.x = statusbar_pad;
+    status_bg.rect.y = -(float)(tg_game.font->line_height + statusbar_pad);
+    status_bg.rect.w = (float)(WINDOW_W - statusbar_pad * 2);
+    status_bg.rect.h = (float)tg_game.font->line_height;
+    ta_primitive_push_rect_uv(&tooltip_bg_queue, status_bg, TA_COLOR_GRAY3A,
+        UI_LAYER_TIP_BG, true, false);
+}
+bool ta_ui_button(const char *name, const ta_texture *tex)
+{
+#if UI_DEBUG_NO_TEXTURES
+    tex = 0;
+#endif
+    u32 frame_idx = ui_frame_start(UI_BUTTON, name);
+    ui_frame *frame = &ui_frames[frame_idx];
+
+    ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
+    if (last_frame_state.down) {
+        bg_color = ui_get_color(frame, UI_STATE_DOWN);
+    } else if (last_frame_state.hover) {
+        bg_color = ui_get_color(frame, UI_STATE_HOVER);
+    }
+
+    ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_render(true, true);
+
+    if (tex) {
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex->gl_id);
+        ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
+        ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+        ta_primitive_render(true, true);
+        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+    }
+    ui_frame_end(frame_idx);
+
+    return last_frame_state.pressed;
+}
+bool ta_ui_button_toggle(const char *name, const ta_texture *tex, bool *active)
+{
+#if UI_DEBUG_NO_TEXTURES
+    tex = 0;
+#endif
+    u32 frame_idx = ui_frame_start(UI_BUTTON, name);
+    ui_frame *frame = &ui_frames[frame_idx];
+
+    ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
+    if (last_frame_state.pressed) {
+        *active = !*active;
+    }
+    if (*active) {
+        bg_color = ui_get_color(frame, UI_STATE_ACTIVE);
+    } else if (last_frame_state.down) {
+        bg_color = ui_get_color(frame, UI_STATE_DOWN);
+    } else if (last_frame_state.hover) {
+        bg_color = ui_get_color(frame, UI_STATE_HOVER);
+    }
+
+    ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_render(true, true);
+
+    if (tex) {
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex->gl_id);
+        ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
+        ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+        ta_primitive_render(true, true);
+        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+    }
+    ui_frame_end(frame_idx);
+
+    return *active;
+}
+bool ta_ui_label(const char *name, const char *text)
+{
+    DLB_ASSERT(text);
+
+    static ta_rect_uv *text_rects = 0;
+    ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font, text, 0,
+        true, 0, 0);
+
+    // Auto-expand frame based on contents
+    next_frame_style.size.w = MAX(next_frame_style.size.w, (int)text_rect.w);
+    next_frame_style.size.h = MAX(next_frame_style.size.h, (int)text_rect.h);
+
+    ta_rgba bg_color = next_frame_style.bg_color;
+
+    u32 frame_idx = ui_frame_start(UI_TEXTBOX, name);
+    ui_frame *frame = &ui_frames[frame_idx];
+
+    // Render background
+    if (bg_color.a == 0.0f) {
+        bg_color.a = TA_EPSILON;
+    }
+    ta_rect bg_rect = frame->rect;
+    ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_render(true, false);
+
+    float text_left = (float)frame->rect.x + frame->pad.x;
+    float text_top = (float)frame->rect.y + frame->pad.y;
+
+    // Render text
+    dlb_vec_each(ta_rect_uv *, rect, text_rects) {
+        ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0, true,
+            false);
+    }
+    dlb_vec_zero(text_rects);
+    ta_font_render(quads_queue, tg_game.font, text_left, text_top,
+        UI_LAYER_EDIT_1, true, true);
+
+    ui_frame_end(frame_idx);
+    return last_frame_state.pressed;
+}
+bool ta_ui_textbox(const char *name, ta_text_entry *text_entry)
+{
+    DLB_ASSERT(text_entry);
+
+    static ta_rect_uv *text_rects = 0;
+    ta_vec2 cursor = { 0 };
+    ta_rectf bounds = ta_text_entry_draw(text_entry, &text_rects, &cursor);
+
+    // Auto-expand frame based on contents
+    next_frame_style.size.w = MAX(next_frame_style.size.w, (int)bounds.w);
+    next_frame_style.size.h = MAX(next_frame_style.size.h, (int)bounds.h);
+
+    u32 frame_idx = ui_frame_start(UI_TEXTBOX, name);
+    ui_frame *frame = &ui_frames[frame_idx];
+
+    if (last_frame_state.down) {
+        // Activate textbox when clicked
+        ta_text_entry_focus(text_entry);
+    } else if (ta_button_state_pressed(&tg_mouse.left)) {
+        // Deactivate textbox when elsewhere clicked
+        ta_text_entry_unfocus(text_entry);
+    }
+
+    // Render background
+    ta_rgba bg_color = ta_text_entry_focused(text_entry) ? TA_COLOR_GRAY3 : TA_COLOR_GRAY2;
+    ta_rect bg_rect = frame->rect;
+    ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_render(true, false);
+
+    int text_left = frame->rect.x + frame->pad.x;
+    int text_top = frame->rect.y + frame->pad.y;
+
+    // Render text
+    if (dlb_vec_len(text_rects)) {
+        dlb_vec_each(ta_rect_uv *, rect, text_rects) {
+            ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
+                true, false);
+        }
+        dlb_vec_zero(text_rects);
+        ta_font_render(quads_queue, tg_game.font, (float)text_left,
+            (float)text_top, UI_LAYER_EDIT_1, true, true);
+    }
+
+    // If active, render cursor
+    if (ta_text_entry_focused(text_entry)) {
+        const int cursor_vert_pad = 0;
+        ta_rect cursor_rect = { 0 };
+        cursor_rect.x = text_left + (int)cursor.x;
+        cursor_rect.y = text_top + (int)cursor.y + cursor_vert_pad;
+        cursor_rect.w = 1;
+        cursor_rect.h = tg_game.font->line_height - (frame->pad.y + frame->pad.h) -
+            (cursor_vert_pad * 2);
+        ta_primitive_push_rect(cursor_rect, TA_COLOR_GRAY8, UI_LAYER_EDIT_2);
+        ta_primitive_render(true, false);
+    }
+    ui_frame_end(frame_idx);
+    bool valid = ta_text_entry_valid(text_entry);
+    return valid;
+}
