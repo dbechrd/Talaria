@@ -1,6 +1,9 @@
 #pragma once
 #include "dlb/dlb_types.h"
 
+struct ta_size;
+struct ta_event;
+
 #define WINDOW_W ta_window_width(tg_game.window)
 #define WINDOW_H ta_window_height(tg_game.window)
 #define WINDOW_ASPECT ta_window_aspect(tg_game.window)
@@ -42,17 +45,15 @@
 #define UI_LAYER_TIP_BG     -0.0007f
 #define UI_LAYER_TIP        -0.0008f
 
-typedef struct ta_event ta_event;
-typedef struct ta_size ta_size;
 typedef struct ta_window ta_window;
 
 void ta_window_init(ta_window **ptr, int w, int h, bool fullscreen);
 void ta_window_free(ta_window **ptr);
-ta_size ta_window_size(ta_window *window);
+struct ta_size ta_window_size(ta_window *window);
 int ta_window_width(ta_window *window);
 int ta_window_height(ta_window *window);
 float ta_window_aspect(ta_window *window);
 void ta_window_swap(ta_window *window);
-void ta_window_event(ta_window *window, ta_event *event);
+void ta_window_event(ta_window *window, struct ta_event *event);
 int ta_window_msgbox(ta_window *window, u32 flags, const char *title,
     const char *message);

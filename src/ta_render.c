@@ -7,15 +7,15 @@ static void ta_render_init_gl3w(int major, int minor)
 {
     int init = gl3wInit();
     if (init) {
-        ta_log_write(tg_debug_log, "[Render] gl3wInit failed with code %d", init);
+        ta_log_write(&tg_debug_log, "[Render] gl3wInit failed with code %d", init);
         DLB_ASSERT(!"init_gl3w: failed to init gl3w");
     }
 
-    ta_log_write(tg_debug_log, "[Render] OpenGL: %s\n", glGetString(GL_VERSION));
-    ta_log_write(tg_debug_log, "[Render] GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+    ta_log_write(&tg_debug_log, "[Render] OpenGL: %s\n", glGetString(GL_VERSION));
+    ta_log_write(&tg_debug_log, "[Render] GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
     if (!gl3wIsSupported(major, minor)) {
-        ta_log_write(tg_debug_log, "[Render] OpenGL %d.%d not supported", major, minor);
+        ta_log_write(&tg_debug_log, "[Render] OpenGL %d.%d not supported", major, minor);
     }
 }
 
@@ -96,7 +96,7 @@ static void APIENTRY ta_render_gl_callback(GLenum source, GLenum type,
     static u32 gl_errors = 0;
     if (gl_errors < 10)
     {
-        ta_log_write(tg_debug_log, "[source: %s][type: %s][severity: %s][id: %d] %s\n", sourceStr, typeStr,
+        ta_log_write(&tg_debug_log, "[source: %s][type: %s][severity: %s][id: %d] %s\n", sourceStr, typeStr,
             severityStr, id, message);
         gl_errors++;
     }
@@ -108,7 +108,7 @@ static void ta_render_init_gl()
     {
         GLint gl_max_vertex_attribs;
         glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &gl_max_vertex_attribs);
-        ta_log_write(tg_debug_log, "[Render] GL_MAX_VERTEX_ATTRIBS = %d\n", gl_max_vertex_attribs);
+        ta_log_write(&tg_debug_log, "[Render] GL_MAX_VERTEX_ATTRIBS = %d\n", gl_max_vertex_attribs);
     }
 
     if (glDebugMessageCallback != NULL)
@@ -116,11 +116,11 @@ static void ta_render_init_gl()
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
         glDebugMessageCallback(ta_render_gl_callback, NULL);
         glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, 0, true);
-        ta_log_write(tg_debug_log, "[Render] Registered glDebugMessageCallback\n");
+        ta_log_write(&tg_debug_log, "[Render] Registered glDebugMessageCallback\n");
     }
     else
     {
-        ta_log_write(tg_debug_log, "[Render] glDebugMessageCallback not available\n");
+        ta_log_write(&tg_debug_log, "[Render] glDebugMessageCallback not available\n");
     }
 #endif
 

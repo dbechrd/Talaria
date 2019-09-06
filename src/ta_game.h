@@ -1,6 +1,8 @@
 #pragma once
 #include "dlb/dlb_types.h"
 
+struct ta_event;
+
 typedef enum ta_game_state {
     TA_GAME_STATE_INIT,
     TA_GAME_STATE_PLAY,
@@ -9,17 +11,6 @@ typedef enum ta_game_state {
     TA_GAME_STATE_COUNT
 } ta_game_state;
 const char *game_state_str(ta_game_state state);
-
-struct ta_audio_listener;
-struct ta_audio_source;
-struct ta_camera;
-struct ta_event;
-struct ta_font;
-struct ta_light;
-struct ta_node;
-struct ta_scene;
-struct ta_texture;
-struct ta_window;
 
 // WARNING: Any of these pointers will be invalidated if their pool resizes
 // TODO: Replace with indexes into pool
@@ -46,7 +37,6 @@ typedef struct ta_game {
     int player_clip_max;
     int player_clip;
 } ta_game;
-
 extern ta_game tg_game;
 
 void ta_game_init(ta_game *game);

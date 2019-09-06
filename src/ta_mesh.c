@@ -4,6 +4,7 @@
 #include "ta_shader.h"
 #include "ta_symbol.h"
 #include "ta_game.h"
+#include "ta_primitive.h"
 #include "dlb/dlb_vector.h"
 
 void ta_mesh_create(ta_mesh *mesh)
@@ -146,14 +147,14 @@ void ta_mesh_push_normals(ta_mesh *mesh)
 #if 0
 void ta_mesh_log_normals_dbg(ta_mesh *mesh)
 {
-    ta_log_write(tg_debug_log, "Normals:\n");
+    ta_log_write(&tg_debug_log, "Normals:\n");
     u32 normal_count = dlb_vec_len(mesh->normals);
     DLB_ASSERT(normal_count == dlb_vec_len(mesh->positions));
     for (u32 i = 0; i < normal_count; i++) {
         ta_line_3d line = { 0 };
         line.p0 = mesh->positions[i];
         line.p1 = vec3_add(mesh->positions[i], mesh->normals[i]);
-        ta_log_write(tg_debug_log, "[%d] { %f, %f, %f } -> { %f, %f, %f }\n", i,
+        ta_log_write(&tg_debug_log, "[%d] { %f, %f, %f } -> { %f, %f, %f }\n", i,
             line.p0.x, line.p0.y, line.p0.z, line.p1.x, line.p1.y, line.p1.z);
     }
 }

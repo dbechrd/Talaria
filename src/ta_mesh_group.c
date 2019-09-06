@@ -3,6 +3,7 @@
 #include "ta_primitive.h"
 #include "ta_symbol.h"
 #include "ta_file.h"
+#include "ta_buffer.h"
 #include "dlb/dlb_vector.h"
 
 #define TINYOBJ_MALLOC dlb_malloc

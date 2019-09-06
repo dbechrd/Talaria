@@ -29,7 +29,7 @@ void ta_ui_barchart_free(ta_ui_barchart *chart)
     dlb_free(chart->samples);
 }
 
-void ta_ui_barchart_draw(int x, int y, ta_ui_barchart *chart)
+void ta_ui_barchart_draw(ta_ui_barchart *chart, int x, int y)
 {
     ta_line_2d line = { 0 };
     ta_rgba color0 = { 0 };

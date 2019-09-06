@@ -3,6 +3,7 @@
 #include "ta_file.h"
 #include "ta_symbol.h"
 #include "ta_light.h"
+#include "ta_buffer.h"
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
@@ -40,13 +41,13 @@ void ta_shader_init(ta_shader *shader)
 static void show_info_log(GLuint shader, PFNGLGETSHADERIVPROC glGet__iv,
     PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
 {
-    ta_log_write(tg_debug_log, "Trying to show_info_log\n");
+    ta_log_write(&tg_debug_log, "Trying to show_info_log\n");
 
     ta_buffer buf;
     glGet__iv(shader, GL_INFO_LOG_LENGTH, (GLint *)&buf.length);
     buf.data = dlb_malloc(buf.length);
     glGet__InfoLog(shader, buf.length, NULL, (GLchar *)buf.data);
-    ta_log_write(tg_debug_log,
+    ta_log_write(&tg_debug_log,
         "\n---[OpenGL Info Log]------------------------------------------------------------\n"
         "%s\n", buf.data);
     dlb_free(buf.data);
@@ -79,7 +80,7 @@ static GLuint ta_shader_compile_file(GLenum type, const char *filename)
 
     GLint shader = ta_shader_compile(type, buf);
     if (!shader) {
-        ta_log_write(tg_debug_log, "Failed to compile shader '%s'\n", filename);
+        ta_log_write(&tg_debug_log, "Failed to compile shader '%s'\n", filename);
     }
 
     ta_buffer_free(buf);
@@ -104,7 +105,7 @@ static GLint ta_shader_attribute_location(ta_shader *shader, const char *name)
 {
     GLint location = glGetAttribLocation(shader->program_id, name);
     if (location < 0) {
-        ta_log_write(tg_debug_log,
+        ta_log_write(&tg_debug_log,
             "[Shader] Failed to locate attribute by '%s' in '%s'. "
             "Possibly optimized out.\n", name, shader->uid.uid);
     }
@@ -115,7 +116,7 @@ static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
 {
     GLint location = glGetUniformLocation(shader->program_id, name);
     if (location < 0) {
-        ta_log_write(tg_debug_log,
+        ta_log_write(&tg_debug_log,
             "[Shader] Failed to locate uniform '%s' in '%s'. "
             "Possibly optimized out.\n", name, shader->uid.uid);
     }
@@ -154,7 +155,7 @@ static void shader_print_uniforms(ta_shader *shader)
 {
     GLint count;
     glGetProgramiv(shader->program_id, GL_ACTIVE_UNIFORMS, &count);
-    ta_log_write(tg_debug_log, "[Shader]  Active uniforms: %d\n", count);
+    ta_log_write(&tg_debug_log, "[Shader]  Active uniforms: %d\n", count);
 
     GLsizei length;
     GLint size; // size of the variable
@@ -163,7 +164,7 @@ static void shader_print_uniforms(ta_shader *shader)
     for (GLint i = 0; i < count; i++) {
         glGetActiveUniform(shader->program_id, (GLuint)i,
             shader->max_uniform_name_len, &length, &size, &type, name);
-        ta_log_write(tg_debug_log, "[Shader]    Uniform #%d Name: %s Type: %u\n",
+        ta_log_write(&tg_debug_log, "[Shader]    Uniform #%d Name: %s Type: %u\n",
             i, name, type);
     }
     dlb_free(name);
@@ -185,7 +186,7 @@ void ta_shader_load(ta_shader *shader)
     DLB_ASSERT(shader->path_vert);
     DLB_ASSERT(shader->path_frag);
 
-    ta_log_write(tg_debug_log, "[Shader] Creating shader %s\n", shader->uid.uid);
+    ta_log_write(&tg_debug_log, "[Shader] Creating shader %s\n", shader->uid.uid);
 
     // Compile shaders
     GLuint vshader = ta_shader_compile_file(GL_VERTEX_SHADER, shader->path_vert);

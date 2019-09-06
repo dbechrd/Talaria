@@ -13,6 +13,7 @@
 #include "ta_audio.h"
 #include "ta_editor.h"
 #include "ta_ui.h"
+#include "ta_camera.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 #include "SDL/SDL.h"
@@ -32,7 +33,7 @@ const char *game_state_str(ta_game_state state)
 
 void ta_game_init(ta_game *game)
 {
-    ta_log_write(tg_debug_log, "[Game] Initializing game\n");
+    ta_log_write(&tg_debug_log, "[Game] Initializing game\n");
 
     // TODO: What other startup states would be useful (e.g. LOADING_MESHES)?
     //       Could use this for a progress bar during load and better logging.
@@ -40,7 +41,7 @@ void ta_game_init(ta_game *game)
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
     ta_game_state_set(game, TA_GAME_STATE_INIT);
 
-    ta_log_write(tg_debug_log, "[Game] Initializing key binds\n");
+    ta_log_write(&tg_debug_log, "[Game] Initializing key binds\n");
     // TODO: Read keybinds from file
     //dlb_vec_reserve(tg_keybinds, 16);
 
@@ -237,7 +238,7 @@ void ta_game_init(ta_game *game)
 #endif
 #undef BIND1
 
-    ta_log_write(tg_debug_log, "[Game] Game initialized\n");
+    ta_log_write(&tg_debug_log, "[Game] Game initialized\n");
 }
 
 void ta_game_state_set(ta_game *game, ta_game_state state)
@@ -248,7 +249,7 @@ void ta_game_state_set(ta_game *game, ta_game_state state)
 
     game->state_prev = game->state;
     game->state = state;
-    ta_log_write(tg_debug_log, "[Game] State = %s\n", game_state_str(state));
+    ta_log_write(&tg_debug_log, "[Game] State = %s\n", game_state_str(state));
     switch (game->state) {
         case TA_GAME_STATE_PLAY:
             game->camera = game->camera_player;

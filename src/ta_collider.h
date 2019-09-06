@@ -2,32 +2,6 @@
 #include "ta_math.h"
 #include "dlb/dlb_types.h"
 
-typedef struct ta_sphere {
-    ta_vec3 center;
-    float radius;
-} ta_sphere;
-
-typedef struct ta_aabb {
-    ta_vec3 center;
-    ta_vec3 extents;
-} ta_aabb;
-
-typedef struct ta_obb {
-    ta_vec3 center;
-    ta_vec3 extents;
-    ta_vec3 axes[3];
-} ta_obb;
-
-typedef struct ta_plane {
-    ta_vec3 center;
-    ta_vec3 normal;
-} ta_plane;
-
-typedef struct ta_ray {
-    ta_vec3 origin;
-    ta_vec3 direction;
-} ta_ray;
-
 typedef enum ta_collider_type {
     TA_COLLIDER_PLANE   = 0,
     TA_COLLIDER_SPHERE  = 1,

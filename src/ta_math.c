@@ -2,6 +2,7 @@
 #include "ta_log.h"
 #include <math.h>
 #include <float.h>
+#include <stdio.h>
 
 const ta_vec3 VEC3_ZERO = { 0.0f, 0.0f, 0.0f };
 const ta_vec3 VEC3_ONE = { 1.0f, 1.0f, 1.0f };
@@ -163,7 +164,7 @@ ta_vec3 vec3_normalize(ta_vec3 v)
     if (len) {
         result = vec3_scalef(result, 1.0f / len);
     } else {
-        ta_log_write(tg_debug_log, "[WARNING] Normalizing zero vector\n");
+        ta_log_write(&tg_debug_log, "[WARNING] Normalizing zero vector\n");
         result = VEC3_ZERO;
     }
     return result;
@@ -290,7 +291,7 @@ ta_quat quat_normalize(ta_quat q)
         result.z = q.z * inv_norm;
         result.w = q.w * inv_norm;
     } else {
-        ta_log_write(tg_debug_log, "[WARNING] Normalizing bad quaternion\n");
+        ta_log_write(&tg_debug_log, "[WARNING] Normalizing bad quaternion\n");
         result = QUAT_IDENT;
     }
 

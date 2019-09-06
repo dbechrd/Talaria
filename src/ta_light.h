@@ -1,8 +1,10 @@
 #pragma once
 #include "ta_uid.h"
 #include "ta_math.h"
-#include "ta_shader.h"
 #include "dlb/dlb_types.h"
+
+struct ta_node;
+struct ta_shader;
 
 typedef enum ta_light_type {
     TA_LIGHT_AMBIENT,
@@ -57,10 +59,8 @@ typedef struct ta_light {
     ta_light_shadowmap shadowmap;
 } ta_light;
 
-struct ta_node;
-
 const char *ta_light_type_str(int type);
 void ta_light_init(ta_light *light);
-void ta_light_shadowpass_render(ta_light *light, ta_shader *shader,
+void ta_light_shadowpass_render(ta_light *light, struct ta_shader *shader,
     float alpha, struct ta_node *entities);
 void ta_light_render_shadowmap_debug(ta_light *light);

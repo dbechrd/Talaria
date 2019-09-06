@@ -1,12 +1,11 @@
 #pragma once
 #include "ta_uid.h"
-#include "ta_mesh.h"
-#include "ta_rigid_body.h"
+#include "ta_math.h"
 
 typedef struct ta_mesh_group {
     ta_uid uid;
     const char *path;
-    ta_mesh *meshes;
+    struct ta_mesh *meshes;
     ta_aabb aabb;
 } ta_mesh_group;
 

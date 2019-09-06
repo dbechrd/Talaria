@@ -3,6 +3,8 @@
 #include "ta_math.h"
 #include "dlb/dlb_types.h"
 
+struct ta_event;
+
 typedef struct ta_camera {
     ta_uid uid;
 
@@ -41,8 +43,6 @@ typedef struct ta_camera {
     bool debug_no_mesh;
 } ta_camera;
 
-typedef struct ta_event ta_event;
-
 void ta_camera_init(ta_camera *camera);
 void ta_camera_set_ortho(ta_camera *camera, bool ortho);
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z);
@@ -53,5 +53,5 @@ void ta_camera_yaw(ta_camera *camera, float delta);
 void ta_camera_pitch(ta_camera *camera, float delta);
 void ta_camera_move(ta_camera *camera, ta_vec3 v);
 void ta_camera_recalc_projection(ta_camera *camera);
-void ta_camera_event(ta_camera *camera, ta_event *event);
+void ta_camera_event(ta_camera *camera, struct ta_event *event);
 void ta_camera_update(ta_camera *camera, double dt);

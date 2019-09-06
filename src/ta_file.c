@@ -1,5 +1,6 @@
 #include "ta_file.h"
 #include "ta_log.h"
+#include "ta_buffer.h"
 #include "dlb/dlb_memory.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -244,7 +245,7 @@ ta_buffer *ta_file_read_all(const char *filename)
     // Open file
     FILE *fs = fopen(filename, "rb");
     if (!fs) {
-        ta_log_write(tg_debug_log, "Unable to open %s for reading\n", filename);
+        ta_log_write(&tg_debug_log, "Unable to open %s for reading\n", filename);
         DLB_ASSERT(!"ta_file_read_all: failed to open file");
     }
 
@@ -252,7 +253,7 @@ ta_buffer *ta_file_read_all(const char *filename)
     fseek(fs, 0, SEEK_END);
     long tell = ftell(fs);
     if (tell < 0) {
-        ta_log_write(tg_debug_log, "Unable to determine length of %s\n", filename);
+        ta_log_write(&tg_debug_log, "Unable to determine length of %s\n", filename);
         DLB_ASSERT(!"ta_file_read_all: failed to calculate file length");
     }
     rewind(fs);

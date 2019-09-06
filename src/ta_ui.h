@@ -1,9 +1,6 @@
 #pragma once
 #include "dlb/dlb_types.h"
 
-typedef struct ta_texture ta_texture;
-typedef struct ta_text_entry ta_text_entry;
-
 typedef struct ta_ui_state {
     bool hover;
     bool down;
@@ -11,6 +8,9 @@ typedef struct ta_ui_state {
     bool released;
     bool unfocused;
 } ta_ui_state;
+
+struct ta_texture;
+struct ta_text_entry;
 
 ta_ui_state ta_ui_last_frame_state();
 
@@ -31,7 +31,7 @@ void ta_ui_row_begin();
 
 void ta_ui_tooltip(const char *text, u32 text_len);
 void ta_ui_statusbar();
-bool ta_ui_button(const char *name, const ta_texture *tex);
-bool ta_ui_button_toggle(const char *name, const ta_texture *tex, bool *active);
+bool ta_ui_button(const char *name, const struct ta_texture *tex);
+bool ta_ui_button_toggle(const char *name, const struct ta_texture *tex, bool *active);
 bool ta_ui_label(const char *name, const char *text);
-bool ta_ui_textbox(const char *name, ta_text_entry *text_entry);
+bool ta_ui_textbox(const char *name, struct ta_text_entry *text_entry);

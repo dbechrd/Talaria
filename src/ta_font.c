@@ -8,6 +8,7 @@
 #include "ta_symbol.h"
 #include "ta_window.h"
 #include "ta_shader.h"
+#include "ta_buffer.h"
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
@@ -29,7 +30,7 @@ void ta_font_load_path(ta_font *font, const char *path)
 {
     ta_buffer *buf = ta_file_read_all(path);
     if (!stbtt_InitFont(&font->font_info, buf->data, 0)) {
-        ta_log_write(tg_debug_log, "[font] Failed to initialize font %s\n", path);
+        ta_log_write(&tg_debug_log, "[font] Failed to initialize font %s\n", path);
         DLB_ASSERT(!"Failed to initialize font!");
     }
 
@@ -161,6 +162,9 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
     u32 text_len, bool screen, u32 *cursor_idx, ta_vec2 *cursor_offset,
     int mouse_x, int mouse_y)
 {
+    UNUSED(mouse_x);
+    UNUSED(mouse_y);
+
     DLB_ASSERT(rects);
     if (text_len) {
         dlb_vec_reserve(*rects, text_len);
@@ -179,7 +183,7 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
     // Loop until i == text_len or, if text_len is 0, we hit a nil character
     for (u32 i = 0; ((text_len) ? i < text_len : text[i]); i++) {
         // Save cursor position
-        if (cursor_offset && i == cursor_idx) {
+        if (cursor_offset && i == *cursor_idx) {
             cursor_offset->x = cur_x;
             cursor_offset->y = cur_y - font->ascent;
             cursor_set = true;

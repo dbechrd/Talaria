@@ -16,7 +16,8 @@ static int next = 0;
 
 // TODO: Push previously bound viewport onto stack if we want to enable nested
 //       viewports.
-void ta_viewport_bind(ta_rect parent, ta_rect rect, ta_rgba background, bool relative)
+void ta_viewport_bind(ta_rect parent, ta_rect rect, ta_rgba background,
+    bool relative)
 {
     DLB_ASSERT(next < ARRAY_COUNT(viewports));
 

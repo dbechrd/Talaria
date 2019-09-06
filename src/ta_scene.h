@@ -2,6 +2,10 @@
 #include "ta_schema.h"
 #include "dlb/dlb_hash.h"
 
+struct ta_shader;
+struct ta_file;
+struct ta_camera;
+
 typedef struct ta_scene {
     const char *filename;
     const char *name;
@@ -13,10 +17,6 @@ typedef struct ta_scene {
     void *pools[TYP_COUNT_POOLS];
     dlb_hash pooled_uids[TYP_COUNT_POOLS];
 } ta_scene;
-
-struct ta_shader;
-struct ta_file;
-struct ta_camera;
 
 void ta_scene_init(ta_scene *scene);
 ta_scene *ta_scene_load(struct ta_file *file);

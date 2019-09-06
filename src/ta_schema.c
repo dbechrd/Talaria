@@ -18,6 +18,7 @@
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_hash.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 static ta_schema tg_schemas[TYP_COUNT];
 static dlb_hash tg_schemas_by_name;

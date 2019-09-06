@@ -1,5 +1,5 @@
 #pragma once
-#include "ta_buffer.h"
+#include "dlb/dlb_types.h"
 #include <stdio.h>
 
 typedef enum ta_file_mode {
@@ -55,4 +55,4 @@ char ta_file_read(ta_file *f, char *buf, size_t count, const char *valid_chars,
     const char *delims, int *len);
 int ta_file_expect_char(ta_file *f, const char *chars, int times);
 int ta_file_allow_char(ta_file *f, const char *chars, int times);
-ta_buffer *ta_file_read_all(const char *filename);
+struct ta_buffer *ta_file_read_all(const char *filename);

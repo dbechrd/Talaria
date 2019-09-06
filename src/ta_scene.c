@@ -16,6 +16,7 @@
 #include "ta_window.h"
 #include "ta_file.h"
 #include "ta_audio.h"
+#include "ta_primitive.h"
 #include "dlb/dlb_vector.h"
 #include <stdlib.h>
 #include <float.h>
@@ -798,7 +799,7 @@ void ta_scene_init(ta_scene *scene)
 //       ta_file into ta_buffer.
 ta_scene *ta_scene_load(ta_file *file)
 {
-    ta_log_write(tg_debug_log, "[Scene] Loading %s\n", file->filename);
+    ta_log_write(&tg_debug_log, "[Scene] Loading %s\n", file->filename);
     ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
     scene->filename = file->filename;
     ta_scene_init(scene);
@@ -822,7 +823,7 @@ ta_scene *ta_scene_load(ta_file *file)
         }
     }
 
-    ta_log_write(tg_debug_log, "[Scene] Loaded successfully\n");
+    ta_log_write(&tg_debug_log, "[Scene] Loaded successfully\n");
     return scene;
 }
 

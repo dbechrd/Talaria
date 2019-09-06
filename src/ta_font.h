@@ -1,9 +1,11 @@
 #pragma once
 #include "ta_uid.h"
-#include "ta_primitive.h"
+#include "ta_math.h"
 #include "dlb/dlb_types.h"
 #include "misc/stb_truetype.h"
 #include "misc/gl3w.h"
+
+struct ta_vert_quad;
 
 typedef struct ta_font {
     ta_uid uid;
@@ -28,15 +30,13 @@ typedef struct ta_font {
     GLuint gl_id;
 } ta_font;
 
-struct ta_vert_quad;
-struct ta_rectf;
-
 void ta_font_init(ta_font *font);
 void ta_font_load_path(ta_font *font, const char *path);
 void ta_font_delete(ta_font *font);
 void ta_font_free(ta_font *font);
 struct ta_shader *ta_font_shader(ta_font *font);
 ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
-    u32 text_len, bool screen, u32 cursor_idx, ta_vec2 *cursor_offset);
-void ta_font_render(ta_vert_quad *queue, ta_font *font, float x, float y,
+    u32 text_len, bool screen, u32 *cursor_idx, ta_vec2 *cursor_offset,
+    int mouse_x, int mouse_y);
+void ta_font_render(struct ta_vert_quad *queue, ta_font *font, float x, float y,
     float z, bool clear_queues, bool reset_uniforms);

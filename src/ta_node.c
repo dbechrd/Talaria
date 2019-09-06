@@ -13,6 +13,8 @@
 #include "ta_scene.h"
 #include "ta_light.h"
 #include "ta_editor.h"
+#include "ta_rigid_body.h"
+#include "ta_primitive.h"
 #include "dlb/dlb_vector.h"
 
 void ta_node_init(ta_node *node)

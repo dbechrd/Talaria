@@ -1,5 +1,4 @@
 #pragma once
-#include "ta_math.h"
 #include "ta_primitive.h"
 #include "dlb/dlb_types.h"
 
@@ -13,4 +12,4 @@ typedef struct ta_ui_barchart {
 
 ta_ui_barchart ta_ui_barchart_init(int x, int y, int w, int h);
 void ta_ui_barchart_free(ta_ui_barchart *chart);
-void ta_ui_barchart_draw(int x, int y, ta_ui_barchart *chart);
+void ta_ui_barchart_draw(ta_ui_barchart *chart, int x, int y);

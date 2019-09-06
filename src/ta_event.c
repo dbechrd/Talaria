@@ -6,6 +6,7 @@
 #include "ta_window.h"
 #include "ta_camera.h"
 #include "ta_game.h"
+#include "ta_text_entry.h"
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
@@ -89,22 +90,27 @@ static void event_sdl_poll()
                 ta_event_push(&event);
                 break;
             } case SDL_KEYDOWN: {
-                // TODO: Queue keydown event
+                ta_event event = { 0 };
+                event.type = TA_EVENT_KEY_PRESS;
+                event.data.key_press.scancode = sdl_event.key.keysym.scancode;
+                event.data.key_press.sym = sdl_event.key.keysym.sym;
+                event.data.key_press.mod = sdl_event.key.keysym.mod;
+                ta_event_push(&event);
+                break;
+            } case SDL_KEYUP: {
+                ta_event event = { 0 };
+                event.type = TA_EVENT_KEY_RELEASE;
+                event.data.key_press.scancode = sdl_event.key.keysym.scancode;
+                event.data.key_press.sym = sdl_event.key.keysym.sym;
+                event.data.key_press.mod = sdl_event.key.keysym.mod;
+                ta_event_push(&event);
                 break;
             } case SDL_TEXTINPUT: {
-                ta_text_entry *text_entry = ta_editor_active_text_entry();
-                if (text_entry) {
-                    char *c = sdl_event.text.text;
-                    ta_text_entry_insert(text_entry, *c);
-#if 0
-                    // TODO: Accept all valid chars, maybe pointer to filter
-                    //       function provided by textbox?
-                    while (*c) {
-                        ta_text_entry_insert(text_entry, *c);
-                        c++;
-                    }
-#endif
-                }
+                ta_event event = { 0 };
+                event.type = TA_EVENT_TEXT_INPUT;
+                event.data.text_input.chr = sdl_event.text.text[0];
+                DLB_ASSERT(!sdl_event.text.text[1]);  // Unicode?
+                ta_event_push(&event);
                 break;
             }
         }
@@ -122,7 +128,14 @@ void ta_event_events()
     while (ta_event_pop(&event)) {
         // TODO: Short-circuit if event.handled = true, or handler returns true
         ta_window_event(tg_game.window, &event);
+        if (event.handled) continue;
+
+        ta_text_entry_event(&event);
+        if (event.handled) continue;
+
         ta_game_event(&tg_game, &event);
+        if (event.handled) continue;
+
         ta_camera_event(tg_game.camera, &event);
     }
 }

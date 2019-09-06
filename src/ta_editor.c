@@ -331,7 +331,7 @@ static void ui_statusbar()
 
         static ta_rect_uv *status_rects = 0;
         ta_rectf status_rect = ta_font_push_text(&status_rects, tg_game.font,
-            SYM(tg_editor->status_msg), true, 0, 0);
+            SYM(tg_editor->status_msg), true, 0, 0, 0, 0);
         dlb_vec_each(ta_rect_uv *, rect, status_rects) {
             ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
                 true, false);

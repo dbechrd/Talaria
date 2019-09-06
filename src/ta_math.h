@@ -1,5 +1,6 @@
 #pragma once
-#include <stdio.h>
+
+typedef struct _iobuf FILE;
 
 #define TA_EPSILON 0.0001f
 #define M_PI 3.14159265358979323846264338327950288
@@ -95,6 +96,62 @@ typedef struct ta_size {
     int w;
     int h;
 } ta_size;
+
+typedef struct ta_line_2d {
+    ta_vec2 p0;
+    ta_vec2 p1;
+} ta_line_2d;
+
+typedef struct ta_line_3d {
+    ta_vec3 p0;
+    ta_vec3 p1;
+} ta_line_3d;
+
+typedef struct ta_rect {
+    int x;
+    int y;
+    int w;
+    int h;
+} ta_rect;
+
+typedef struct ta_rectf {
+    float x;
+    float y;
+    float w;
+    float h;
+} ta_rectf;
+
+typedef struct ta_rect_uv {
+    ta_rectf rect;
+    ta_uv uv0;  // bottom left
+    ta_uv uv1;  // top right
+} ta_rect_uv;
+
+typedef struct ta_sphere {
+    ta_vec3 center;
+    float radius;
+} ta_sphere;
+
+typedef struct ta_aabb {
+    ta_vec3 center;
+    ta_vec3 extents;
+} ta_aabb;
+
+typedef struct ta_obb {
+    ta_vec3 center;
+    ta_vec3 extents;
+    ta_vec3 axes[3];
+} ta_obb;
+
+typedef struct ta_plane {
+    ta_vec3 center;
+    ta_vec3 normal;
+} ta_plane;
+
+typedef struct ta_ray {
+    ta_vec3 origin;
+    ta_vec3 direction;
+} ta_ray;
 
 extern const ta_vec3 VEC3_ZERO;
 extern const ta_vec3 VEC3_ONE;

@@ -10,11 +10,11 @@ void ta_mouse_init()
 {
     DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
 
-    ta_log_write(tg_debug_log, "[Mouse] Initializing mouse\n");
+    ta_log_write(&tg_debug_log, "[Mouse] Initializing mouse\n");
     tg_mouse.captured = true;
     SDL_SetRelativeMouseMode(tg_mouse.captured);
     //SDL_GetMouseState(&tg_mouse.x, &tg_mouse.y);
-    ta_log_write(tg_debug_log, "[Mouse] Mouse initialized\n");
+    ta_log_write(&tg_debug_log, "[Mouse] Mouse initialized\n");
 }
 
 void ta_mouse_toggle_capture()

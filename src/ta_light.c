@@ -3,6 +3,7 @@
 #include "ta_node.h"
 #include "ta_symbol.h"
 #include "ta_primitive.h"
+#include "ta_shader.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 

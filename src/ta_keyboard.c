@@ -3,6 +3,7 @@
 #include "ta_timer.h"
 #include "ta_log.h"
 #include "ta_game.h"
+#include "ta_event.h"
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
@@ -11,8 +12,8 @@ static ta_keybind *keybinds[TA_GAME_STATE_COUNT];
 
 void ta_keyboard_init()
 {
-    //ta_log_write(tg_debug_log, "[Keyboard] Initializing keyboard\n");
-    //ta_log_write(tg_debug_log, "[Keyboard] Keyboard initialized\n");
+    //ta_log_write(&tg_debug_log, "[Keyboard] Initializing keyboard\n");
+    //ta_log_write(&tg_debug_log, "[Keyboard] Keyboard initialized\n");
 }
 
 void ta_keybind_bind1(enum ta_game_state state_type, ta_event_type event_type,

@@ -24,6 +24,7 @@
 #include "ta_font.h"
 #include "ta_primitive.h"
 #include "ta_editor.h"
+#include "ta_rigid_body.h"
 #include "dlb/dlb_types.h"
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb/dlb_vector.h"
@@ -35,15 +36,13 @@
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
-    if (tg_debug_log) {
-        ta_log_write(tg_debug_log,
-            "\n---[DLB_ASSERT_HANDLER]-----------------\n"
-            "Source file: %s:%d\n\n"
-            "%s\n"
-            "----------------------------------------\n",
-            filename, line, expr
-        );
-    }
+    ta_log_write(&tg_debug_log,
+        "\n---[DLB_ASSERT_HANDLER]-----------------\n"
+        "Source file: %s:%d\n\n"
+        "%s\n"
+        "----------------------------------------\n",
+        filename, line, expr
+    );
 #if _DEBUG
     __debugbreak();
 #else
@@ -94,9 +93,7 @@ int main(int argc, char *argv[])
     ta_timer_init();
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
-    ta_log debug_log = { 0 };
-    ta_log_init(&debug_log, "log.txt", true);
-    tg_debug_log = &debug_log;
+    ta_log_init(&tg_debug_log, "log.txt", true);
     debug_tests();
 
     ta_symbol_init();
@@ -223,7 +220,7 @@ int main(int argc, char *argv[])
         // Prevent spiral of death
         // NOTE: This breaks determinism when simulation is under duress
         if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
-            ta_log_write(tg_debug_log,
+            ta_log_write(&tg_debug_log,
                 "[Sim] WARNING: Physics accumulator spiraling; truncating %f to %f\n",
                 ms_frame_accum, ms_sim_dt * sim_max_steps);
             ms_frame_accum = ms_sim_dt * sim_max_steps;
@@ -371,13 +368,13 @@ int main(int argc, char *argv[])
         render_fps(ms_frame_start, frame_num);
 
         ta_window_swap(tg_game.window);
-        //ta_log_write(tg_debug_log, "Frame %llu started at %f sim time: %f\n", frame_num, ms_frame_start - ms_frame_first, ms_sim_t);
+        //ta_log_write(&tg_debug_log, "Frame %llu started at %f sim time: %f\n", frame_num, ms_frame_start - ms_frame_first, ms_sim_t);
         frame_num++;
     }
 
     // TODO: Free *EVERYTHING* (at least in debug mode.. to check memory leaks)
     ta_window_free(&tg_game.window);
-    ta_log_write(tg_debug_log, "Goodbye.\n\n");
+    ta_log_write(&tg_debug_log, "Goodbye.\n\n");
     return 0;
 }
 
@@ -393,7 +390,7 @@ static void render_fps(double ms_frame_start, u64 frame_num)
 
     static ta_rect_uv *frame_time_rects = 0;
     ta_rectf tag_rect = ta_font_push_text(&frame_time_rects, tg_game.font,
-        frame_time_buf, len, true, 0, 0);
+        frame_time_buf, len, true, 0, 0, 0, 0);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
         ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
             0, true, false);
@@ -412,7 +409,7 @@ static void debug_nametag()
 {
     static ta_rect_uv *tag_rects = 0;
     ta_rectf tag_rect = ta_font_push_text(&tag_rects, tg_game.font,
-        CSTR("Player 1\nis da best"), true, 0, 0);
+        CSTR("Player 1\nis da best"), true, 0, 0, 0, 0);
 
     ta_vec3 tag_pos = vec3_add(tg_game.player->transform.position, (ta_vec3){ 0.0f, 1.2f, 0.0f });
     ta_vec3 tag_to_cam = vec3_sub(tg_game.camera->position, tag_pos);

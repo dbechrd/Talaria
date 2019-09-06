@@ -1,7 +1,6 @@
 #pragma once
 #include "ta_uid.h"
 #include "ta_math.h"
-#include "ta_collider.h"
 #include "dlb/dlb_types.h"
 
 typedef struct ta_node ta_node;
@@ -27,19 +26,19 @@ typedef struct ta_node {
     ta_node *children;
 } ta_node;
 
-typedef struct e_button        e_button;
-typedef struct ta_camera       ta_camera;
-typedef struct ta_material     ta_material;
-typedef struct ta_mesh_group   ta_mesh_group;
-typedef struct ta_rigid_body   ta_rigid_body;
-typedef struct ta_shader       ta_shader;
+struct e_button;
+struct ta_camera;
+struct ta_material;
+struct ta_mesh_group;
+struct ta_rigid_body;
+struct ta_shader;
 
 void ta_node_init(ta_node *node);
-ta_material *ta_node_material(ta_node *node);
-ta_mesh_group *ta_node_mesh_group(ta_node *node);
-ta_rigid_body *ta_node_rigid_body(ta_node *node);
-e_button *ta_node_button(ta_node *node);
+struct ta_material *ta_node_material(ta_node *node);
+struct ta_mesh_group *ta_node_mesh_group(ta_node *node);
+struct ta_rigid_body *ta_node_rigid_body(ta_node *node);
+struct e_button *ta_node_button(ta_node *node);
 void ta_node_update(ta_node *node);
-void ta_node_shadow_pass(ta_node *node, ta_shader *shader, ta_mat4 *light_pv,
-    float alpha);
-void ta_node_render(ta_node *node, ta_camera *camera, float alpha);
+void ta_node_shadow_pass(ta_node *node, struct ta_shader *shader,
+    ta_mat4 *light_pv, float alpha);
+void ta_node_render(ta_node *node, struct ta_camera *camera, float alpha);

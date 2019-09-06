@@ -1,5 +1,5 @@
 #pragma once
-#include "ta_camera.h"
+#include "dlb/dlb_types.h"
 
 #if 0
 typedef enum ta_event_queue_type {
@@ -23,6 +23,7 @@ typedef enum ta_event_type {
     TA_EVENT_MOUSE_SCROLL,
     TA_EVENT_KEY_PRESS,
     TA_EVENT_KEY_RELEASE,
+    TA_EVENT_TEXT_INPUT,
 
     // Game events
     TA_EVENT_GAME_INIT,
@@ -80,6 +81,22 @@ typedef struct ta_event_mouse_scroll_event {
     bool flipped;
 } ta_event_mouse_scroll_event;
 
+typedef struct ta_event_key_press_event {
+    s32 scancode;  /**< SDL physical key code - see ::SDL_Scancode for details */
+    s32 sym;       /**< SDL virtual key code - see ::SDL_Keycode for details */
+    u16 mod;       /**< current key modifiers */
+} ta_event_key_press_event;
+
+typedef struct ta_event_key_release_event {
+    s32 scancode;  /**< SDL physical key code - see ::SDL_Scancode for details */
+    s32 sym;       /**< SDL virtual key code - see ::SDL_Keycode for details */
+    u16 mod;       /**< current key modifiers */
+} ta_event_key_release_event;
+
+typedef struct ta_event_key_text_input_event {
+    char chr;
+} ta_event_key_text_input_event;
+
 typedef struct ta_event_camera_rotate_event {
     float delta_pitch;
     float delta_yaw;
@@ -91,10 +108,14 @@ typedef struct ta_event_button_event {
 
 typedef struct ta_event {
     ta_event_type type;
+    bool handled;
     union {
         ta_event_window_resize_event window_resize;
         ta_event_mouse_move_event mouse_move;
         ta_event_mouse_scroll_event mouse_scroll;
+        ta_event_key_press_event key_press;
+        ta_event_key_release_event key_release;
+        ta_event_key_text_input_event text_input;
 
         // TODO: Move game-specific events out of this struct?
         ta_event_camera_rotate_event camera_rotate;

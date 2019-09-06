@@ -34,7 +34,7 @@ void ta_texture_load_path(ta_texture *tex, const char *path)
     u8 *pixels = stbi_load(tex->path, &w, &h, &channels, tex->channels);
     if (!pixels) {
         const char *reason = stbi_failure_reason();
-        ta_log_write(tg_debug_log, "Failed to load tex: %s\nSTBI Reason: %s\n",
+        ta_log_write(&tg_debug_log, "Failed to load tex: %s\nSTBI Reason: %s\n",
             tex->path, reason);
         DLB_ASSERT(!"ta_texture_init: Failed to load tex");
     }

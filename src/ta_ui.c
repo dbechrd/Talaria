@@ -417,7 +417,7 @@ void ta_ui_tooltip(const char *text, u32 text_len)
     // TODO: Cache tooltips
     ta_rect_uv *text_rects = 0;
     ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font,
-        text, text_len, true, 0, 0);
+        text, text_len, true, 0, 0, 0, 0);
 
     float offset_x = tg_mouse.x + 10.0f;
     float offset_y = tg_mouse.y + 20.0f;
@@ -526,7 +526,7 @@ bool ta_ui_label(const char *name, const char *text)
 
     static ta_rect_uv *text_rects = 0;
     ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font, text, 0,
-        true, 0, 0);
+        true, 0, 0, 0, 0);
 
     // Auto-expand frame based on contents
     next_frame_style.size.w = MAX(next_frame_style.size.w, (int)text_rect.w);

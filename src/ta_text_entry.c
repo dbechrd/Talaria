@@ -5,6 +5,7 @@
 #include "ta_game.h"
 #include "ta_event.h"
 #include "dlb/dlb_vector.h"
+#include "SDL/SDL.h"
 
 #define DEBUG_GAP_BUFFER 0
 
@@ -15,7 +16,8 @@ typedef struct ta_text_entry {
     u32 selection_start;
     u32 selection_len;
     bool multiline;
-    bool submitted;
+    bool submit;  // user requested save
+    bool cancel;  // user requested discard
     bool dirty;   // true if text buffer is dirty
     char *text;   // active text (without gap buffer)
     ta_text_entry_filter *filter;
@@ -32,6 +34,108 @@ static bool text_entry_filter_default(char c)
 }
 
 ta_text_entry_filter *ta_text_entry_filter_default = &text_entry_filter_default;
+
+static void text_entry_cursor_bof(ta_text_entry *text_entry)
+{
+    if (text_entry->gap_len) {
+        while (text_entry->cursor) {
+            text_entry->cursor--;
+            text_entry->buf[text_entry->cursor + text_entry->gap_len] = text_entry->buf[text_entry->cursor];
+            text_entry->buf[text_entry->cursor] = 0;
+        }
+    } else {
+        text_entry->cursor = 0;
+    }
+}
+
+static void text_entry_cursor_bol(ta_text_entry *text_entry)
+{
+    while (text_entry->cursor &&
+        text_entry->buf[text_entry->cursor - 1] != '\n')
+    {
+        text_entry->cursor--;
+        text_entry->buf[text_entry->cursor + text_entry->gap_len] = text_entry->buf[text_entry->cursor];
+        text_entry->buf[text_entry->cursor] = 0;
+    }
+}
+
+static void text_entry_cursor_eof(ta_text_entry *text_entry)
+{
+    u32 cap = dlb_vec_cap(text_entry->buf);
+    if (text_entry->gap_len) {
+        while (text_entry->cursor + text_entry->gap_len < cap) {
+            text_entry->buf[text_entry->cursor] = text_entry->buf[text_entry->cursor + text_entry->gap_len];
+            text_entry->buf[text_entry->cursor + text_entry->gap_len] = 0;
+            text_entry->cursor++;
+        }
+    } else {
+        text_entry->cursor = cap - text_entry->gap_len;
+    }
+}
+
+static void text_entry_cursor_eol(ta_text_entry *text_entry)
+{
+    while (text_entry->cursor &&
+        text_entry->buf[text_entry->cursor - 1] != '\n')
+    {
+        text_entry->cursor--;
+        text_entry->buf[text_entry->cursor + text_entry->gap_len] = text_entry->buf[text_entry->cursor];
+        text_entry->buf[text_entry->cursor] = 0;
+    }
+}
+
+static void text_entry_cursor_right(ta_text_entry *text_entry)
+{
+    u32 cap = dlb_vec_cap(text_entry->buf);
+    if (text_entry->cursor + text_entry->gap_len < cap) {
+        if (text_entry->gap_len) {
+            text_entry->buf[text_entry->cursor] = text_entry->buf[text_entry->cursor + text_entry->gap_len];
+            text_entry->buf[text_entry->cursor + text_entry->gap_len] = 0;
+        }
+        text_entry->cursor++;
+    }
+}
+
+static void text_entry_cursor_left(ta_text_entry *text_entry)
+{
+    if (text_entry->cursor) {
+        text_entry->cursor--;
+        if (text_entry->gap_len) {
+            text_entry->buf[text_entry->cursor + text_entry->gap_len] = text_entry->buf[text_entry->cursor];
+            text_entry->buf[text_entry->cursor] = 0;
+        }
+    }
+}
+
+static void text_entry_cursor_down(ta_text_entry *text_entry)
+{
+    //TODO: Move cursor up
+    UNUSED(text_entry);
+}
+
+static void text_entry_cursor_up(ta_text_entry *text_entry)
+{
+    //TODO: Move cursor down
+    UNUSED(text_entry);
+}
+
+static void text_entry_backspace(ta_text_entry *text_entry)
+{
+    if (text_entry->cursor) {
+        text_entry->cursor--;
+        text_entry->gap_len++;
+    }
+    text_entry->dirty = true;
+}
+
+static void text_entry_delete(ta_text_entry *text_entry)
+{
+    u32 cap = dlb_vec_cap(text_entry->buf);
+    if (text_entry->cursor + text_entry->gap_len < cap) {
+        text_entry->gap_len++;
+    }
+    text_entry->dirty = true;
+}
 
 ta_text_entry *ta_text_entry_init()
 {
@@ -72,80 +176,8 @@ bool ta_text_entry_focused(ta_text_entry *text_entry)
     return ta_editor_active_text_entry() == text_entry;
 }
 
-void ta_text_entry_cursor_bof(ta_text_entry *text_entry)
+bool text_entry_insert(ta_text_entry *text_entry, char c)
 {
-    if (text_entry->gap_len) {
-        while (text_entry->cursor) {
-            text_entry->cursor--;
-            text_entry->buf[text_entry->cursor + text_entry->gap_len] = text_entry->buf[text_entry->cursor];
-            text_entry->buf[text_entry->cursor] = 0;
-        }
-    } else {
-        text_entry->cursor = 0;
-    }
-}
-
-void ta_text_entry_cursor_eof(ta_text_entry *text_entry)
-{
-    u32 cap = dlb_vec_cap(text_entry->buf);
-    if (text_entry->gap_len) {
-        while (text_entry->cursor + text_entry->gap_len < cap) {
-            text_entry->buf[text_entry->cursor] = text_entry->buf[text_entry->cursor + text_entry->gap_len];
-            text_entry->buf[text_entry->cursor + text_entry->gap_len] = 0;
-            text_entry->cursor++;
-        }
-    } else {
-        text_entry->cursor = cap - text_entry->gap_len;
-    }
-}
-
-void ta_text_entry_cursor_right(ta_text_entry *text_entry)
-{
-    u32 cap = dlb_vec_cap(text_entry->buf);
-    if (text_entry->cursor + text_entry->gap_len < cap) {
-        if (text_entry->gap_len) {
-            text_entry->buf[text_entry->cursor] = text_entry->buf[text_entry->cursor + text_entry->gap_len];
-            text_entry->buf[text_entry->cursor + text_entry->gap_len] = 0;
-        }
-        text_entry->cursor++;
-    }
-}
-
-void ta_text_entry_cursor_left(ta_text_entry *text_entry)
-{
-    if (text_entry->cursor) {
-        text_entry->cursor--;
-        if (text_entry->gap_len) {
-            text_entry->buf[text_entry->cursor + text_entry->gap_len] = text_entry->buf[text_entry->cursor];
-            text_entry->buf[text_entry->cursor] = 0;
-        }
-    }
-}
-
-void ta_text_entry_backspace(ta_text_entry *text_entry)
-{
-    if (text_entry->cursor) {
-        text_entry->cursor--;
-        text_entry->gap_len++;
-    }
-    text_entry->dirty = true;
-}
-
-void ta_text_entry_delete(ta_text_entry *text_entry)
-{
-    u32 cap = dlb_vec_cap(text_entry->buf);
-    if (text_entry->cursor + text_entry->gap_len < cap) {
-        text_entry->gap_len++;
-    }
-    text_entry->dirty = true;
-}
-
-bool ta_text_entry_insert(ta_text_entry *text_entry, char c)
-{
-    if (c == '\n' && !text_entry->multiline) {
-        ta_text_entry_submit(text_entry);
-        return false;
-    }
     if (text_entry->filter && !text_entry->filter(c)) {
         return false;
     }
@@ -194,20 +226,40 @@ bool ta_text_entry_valid(ta_text_entry *text_entry)
     return !text_entry->dirty;
 }
 
+// Save changes
 void ta_text_entry_submit(ta_text_entry *text_entry)
 {
+    DLB_ASSERT(!text_entry->submit);  // Duplicate submit?
+    DLB_ASSERT(!text_entry->cancel);  // Submit after cancel?
     ta_text_entry_validate(text_entry);
-    text_entry->submitted = true;
-}
-
-void ta_text_entry_reject(ta_text_entry *text_entry)
-{
-    text_entry->submitted = false;
+    text_entry->submit = true;
 }
 
 bool ta_text_entry_submitted(ta_text_entry *text_entry)
 {
-    return text_entry->submitted;
+    return text_entry->submit;
+}
+
+// TODO: This should probably be a validation callback or something.. could also
+//       set background color to red and maybe display a tooltip with advice how
+//       to fix the error.
+// Reject changes (e.g. reject empty UIDs)
+void ta_text_entry_reject(ta_text_entry *text_entry)
+{
+    text_entry->submit = false;
+}
+
+// Discard changes
+void ta_text_entry_cancel(ta_text_entry *text_entry)
+{
+    DLB_ASSERT(!text_entry->cancel);  // Duplicate cancel?
+    DLB_ASSERT(!text_entry->submit);  // Cancel after submit? Perhaps you meant reject?
+    text_entry->cancel = true;
+}
+
+bool ta_text_entry_canceled(ta_text_entry *text_entry)
+{
+    return text_entry->cancel;
 }
 
 char *ta_text_entry_text(ta_text_entry *text_entry, u32 *len)
@@ -219,6 +271,7 @@ char *ta_text_entry_text(ta_text_entry *text_entry, u32 *len)
     return text_entry->text;
 }
 
+// TODO: Run filter on input string.. maybe?
 void ta_text_entry_set_text(ta_text_entry *text_entry, const char *str, u32 len)
 {
     DLB_ASSERT(str);
@@ -240,7 +293,7 @@ ta_rectf ta_text_entry_draw(ta_text_entry *text_entry, ta_rect_uv **text_rects,
     u32 text_len;
     char *text = ta_text_entry_text(text_entry, &text_len);
     ta_rectf bounds = ta_font_push_text(text_rects, tg_game.font, text, text_len,
-        true, text_entry->cursor, cursor);
+        true, &text_entry->cursor, cursor, 0, 0);
     return bounds;
 }
 
@@ -249,88 +302,59 @@ void ta_text_entry_event(ta_event *event)
     ta_text_entry *text_entry = ta_editor_active_text_entry();
     if (!text_entry) return;
 
-    switch (sdl_event.key.keysym.scancode) {
-#if 0
-        // NOTE: This doesn't work because it gets double processed
-        //       and the entire application exits.
-        case SDL_SCANCODE_ESCAPE: {
-            ta_game_state_set(text_entry->prev_state);
-            text_entry = 0;
-            tg_game.text_entry.filter = 0;
-            break;
-        }
-#endif
-        case SDL_SCANCODE_HOME: {
-            ta_text_entry_cursor_bof(text_entry);
-            break;
-        } case SDL_SCANCODE_END: {
-            ta_text_entry_cursor_eof(text_entry);
-            break;
-        } case SDL_SCANCODE_BACKSPACE: {
-            ta_text_entry_backspace(text_entry);
-            break;
-        } case SDL_SCANCODE_DELETE: {
-            ta_text_entry_delete(text_entry);
-            break;
-        } case SDL_SCANCODE_RIGHT: {
-            ta_text_entry_cursor_right(text_entry);
-            break;
-        } case SDL_SCANCODE_LEFT: {
-            ta_text_entry_cursor_left(text_entry);
-            break;
-        } case SDL_SCANCODE_RETURN: {
-            ta_text_entry_insert(text_entry, '\n');
-            break;
-        }
-#if 0
-    } case SDL_SCANCODE_DOWN: {
-        break;
-    } case SDL_SCANCODE_UP: {
-        break;
-    } case SDL_SCANCODE_PAGEUP: {
-        SDL_StartTextInput();
-        break;
-    } case SDL_SCANCODE_PAGEDOWN: {
-        SDL_StopTextInput();
-        break;
-    }
-#endif
-}
-
     switch (event->type) {
-        case TA_EVENT_WINDOW_RESIZE: {
-            // Update all cameras to new aspect ratio
-            dlb_vec_each(ta_camera *, cam, tg_game.scene->pools[TYP_CAMERA]) {
-                if (!cam->ortho) {
-                    ta_camera_recalc_projection(cam);
+        case TA_EVENT_KEY_PRESS: {
+            event->handled = true;
+            switch (event->data.key_press.sym) {
+                // NOTE: This doesn't work because it gets double processed
+                //       and the entire application exits.
+                case SDLK_RETURN: {
+                    if (text_entry->multiline) {
+                        text_entry_insert(text_entry, '\n');
+                    } else {
+                        ta_text_entry_submit(text_entry);
+                    }
+                    break;
+                } case SDLK_ESCAPE: {
+                    ta_text_entry_cancel(text_entry);
+                    break;
+                } case SDLK_BACKSPACE: {
+                    text_entry_backspace(text_entry);
+                    break;
+                } case SDLK_HOME: {
+                    if (event->data.key_press.mod & KMOD_CTRL) {
+                        text_entry_cursor_bof(text_entry);
+                    } else {
+                        text_entry_cursor_bol(text_entry);
+                    }
+                    break;
+                } case SDLK_END: {
+                    if (event->data.key_press.mod & KMOD_CTRL) {
+                        text_entry_cursor_eof(text_entry);
+                    } else {
+                        text_entry_cursor_eol(text_entry);
+                    }
+                    break;
+                } case SDLK_DELETE: {
+                    text_entry_delete(text_entry);
+                    break;
+                } case SDLK_RIGHT: {
+                    text_entry_cursor_right(text_entry);
+                    break;
+                } case SDLK_LEFT: {
+                    text_entry_cursor_left(text_entry);
+                    break;
+                } case SDLK_DOWN: {
+                    text_entry_cursor_down(text_entry);
+                    break;
+                } case SDLK_UP: {
+                    text_entry_cursor_up(text_entry);
+                    break;
                 }
             }
             break;
-        } case TA_EVENT_CAMERA_MOVE_FORWARD: {
-            camera->move_buffer = vec3_add(camera->move_buffer, camera->front);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_BACKWARD: {
-            camera->move_buffer = vec3_sub(camera->move_buffer, camera->front);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_RIGHT: {
-            camera->move_buffer = vec3_add(camera->move_buffer, camera->right);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_LEFT: {
-            camera->move_buffer = vec3_sub(camera->move_buffer, camera->right);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_UP: {
-            camera->move_buffer = vec3_add(camera->move_buffer, camera->up);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_DOWN: {
-            camera->move_buffer = vec3_sub(camera->move_buffer, camera->up);
-            break;
-        } case TA_EVENT_CAMERA_ROTATE: {
-            if (event->data.camera_rotate.delta_yaw) {
-                ta_camera_yaw(camera, event->data.camera_rotate.delta_yaw);
-            }
-            if (event->data.camera_rotate.delta_pitch) {
-                ta_camera_pitch(camera, event->data.camera_rotate.delta_pitch);
-            }
+        } case TA_EVENT_KEY_RELEASE: {
+            event->handled = true;
             break;
         }
     }

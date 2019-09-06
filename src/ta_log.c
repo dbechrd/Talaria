@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 
-ta_log *tg_debug_log;
+ta_log tg_debug_log;
 
 void ta_log_init(ta_log *log, const char *filename, bool flush)
 {

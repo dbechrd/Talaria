@@ -1,6 +1,7 @@
 #pragma once
 #include "dlb/dlb_types.h"
-#include <stdio.h>
+
+typedef struct _iobuf FILE;
 
 // HACK: Need to support atomic vectors for e.g. texture->pixels
 typedef struct ta_rgba_u8 {

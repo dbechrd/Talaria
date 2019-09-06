@@ -1,6 +1,6 @@
 #pragma once
-#include "ta_primitive.h"
-#include "ta_rigid_body.h"
+#include "ta_uid.h"
+#include "ta_math.h"
 #include "misc/gl3w.h"
 
 enum {
