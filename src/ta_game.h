@@ -5,22 +5,21 @@ typedef enum ta_game_state {
     TA_GAME_STATE_INIT,
     TA_GAME_STATE_PLAY,
     TA_GAME_STATE_FREE_CAM,
-    TA_GAME_STATE_TEXT_ENTRY,
     TA_GAME_STATE_QUIT,
     TA_GAME_STATE_COUNT
 } ta_game_state;
 const char *game_state_str(ta_game_state state);
 
-typedef struct ta_audio_listener ta_audio_listener;
-typedef struct ta_audio_source   ta_audio_source;
-typedef struct ta_camera         ta_camera;
-typedef struct ta_event          ta_event;
-typedef struct ta_font           ta_font;
-typedef struct ta_light          ta_light;
-typedef struct ta_node           ta_node;
-typedef struct ta_scene          ta_scene;
-typedef struct ta_texture        ta_texture;
-typedef struct ta_window         ta_window;
+struct ta_audio_listener;
+struct ta_audio_source;
+struct ta_camera;
+struct ta_event;
+struct ta_font;
+struct ta_light;
+struct ta_node;
+struct ta_scene;
+struct ta_texture;
+struct ta_window;
 
 // WARNING: Any of these pointers will be invalidated if their pool resizes
 // TODO: Replace with indexes into pool
@@ -28,19 +27,19 @@ typedef struct ta_game {
     ta_game_state state;
     ta_game_state state_prev;
 
-    ta_audio_listener *audio;
-    ta_audio_source *background_music;
-    ta_camera *camera;
-    ta_camera *camera_player;
-    ta_camera *camera_freecam;
-    ta_font *font;
-    ta_light *lights;
-    ta_node *player;
-    ta_scene *scene;
-    ta_texture *tex_orange;
-    ta_texture *tex_red;
-    ta_texture *tex_audio_icon;
-    ta_window *window;
+    struct ta_audio_listener *audio;
+    struct ta_audio_source *background_music;
+    struct ta_camera *camera;
+    struct ta_camera *camera_player;
+    struct ta_camera *camera_freecam;
+    struct ta_font *font;
+    struct ta_light *lights;
+    struct ta_node *player;
+    struct ta_scene *scene;
+    struct ta_texture *tex_orange;
+    struct ta_texture *tex_red;
+    struct ta_texture *tex_audio_icon;
+    struct ta_window *window;
 
     int player_ammo_max;
     int player_ammo;
@@ -52,5 +51,5 @@ extern ta_game tg_game;
 
 void ta_game_init(ta_game *game);
 void ta_game_state_set(ta_game *game, ta_game_state state);
-void ta_game_event(ta_game *game, ta_event *event);
+void ta_game_event(ta_game *game, struct ta_event *event);
 void ta_game_hud_draw();

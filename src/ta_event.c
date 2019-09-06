@@ -89,56 +89,7 @@ static void event_sdl_poll()
                 ta_event_push(&event);
                 break;
             } case SDL_KEYDOWN: {
-                ta_text_entry *text_entry = ta_editor_active_text_entry();
-                if (text_entry) {
-                    switch (sdl_event.key.keysym.scancode) {
-#if 0
-                        // NOTE: This doesn't work because it gets double processed
-                        //       and the entire application exits.
-                        case SDL_SCANCODE_ESCAPE: {
-                            ta_game_state_set(text_entry->prev_state);
-                            text_entry = 0;
-                            tg_game.text_entry.filter = 0;
-                            break;
-                        }
-#endif
-                        case SDL_SCANCODE_HOME: {
-                            ta_text_entry_cursor_bof(text_entry);
-                            break;
-                        } case SDL_SCANCODE_END: {
-                            ta_text_entry_cursor_eof(text_entry);
-                            break;
-                        } case SDL_SCANCODE_BACKSPACE: {
-                            ta_text_entry_backspace(text_entry);
-                            break;
-                        } case SDL_SCANCODE_DELETE: {
-                            ta_text_entry_delete(text_entry);
-                            break;
-                        } case SDL_SCANCODE_RIGHT: {
-                            ta_text_entry_cursor_right(text_entry);
-                            break;
-                        } case SDL_SCANCODE_LEFT: {
-                            ta_text_entry_cursor_left(text_entry);
-                            break;
-                        } case SDL_SCANCODE_RETURN: {
-                            ta_text_entry_insert(text_entry, '\n');
-                            break;
-                        }
-#if 0
-                        } case SDL_SCANCODE_DOWN: {
-                            break;
-                        } case SDL_SCANCODE_UP: {
-                            break;
-                        } case SDL_SCANCODE_PAGEUP: {
-                            SDL_StartTextInput();
-                            break;
-                        } case SDL_SCANCODE_PAGEDOWN: {
-                            SDL_StopTextInput();
-                            break;
-                        }
-#endif
-                    }
-                }
+                // TODO: Queue keydown event
                 break;
             } case SDL_TEXTINPUT: {
                 ta_text_entry *text_entry = ta_editor_active_text_entry();

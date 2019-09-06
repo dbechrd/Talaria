@@ -25,7 +25,6 @@ const char *game_state_str(ta_game_state state)
         case TA_GAME_STATE_INIT:         return "TA_GAME_STATE_INIT";
         case TA_GAME_STATE_PLAY:         return "TA_GAME_STATE_PLAY";
         case TA_GAME_STATE_FREE_CAM:     return "TA_GAME_STATE_FREE_CAM";
-        case TA_GAME_STATE_TEXT_ENTRY:   return "TA_GAME_STATE_TEXT_ENTRY";
         case TA_GAME_STATE_QUIT:         return "TA_GAME_STATE_QUIT";
         default: DLB_ASSERT(!"Unknown game state");  return 0;
     }
@@ -260,9 +259,6 @@ void ta_game_state_set(ta_game *game, ta_game_state state)
                 game->camera_freecam->position = game->camera_freecam->follow_target;
             }
             game->camera = game->camera_freecam;
-            break;
-        case TA_GAME_STATE_TEXT_ENTRY:
-            // TODO: Some sort of global text entry buffer?
             break;
     }
 }

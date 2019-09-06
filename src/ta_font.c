@@ -158,7 +158,8 @@ static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
 }
 
 ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
-    u32 text_len, bool screen, u32 cursor_idx, ta_vec2 *cursor_offset)
+    u32 text_len, bool screen, u32 *cursor_idx, ta_vec2 *cursor_offset,
+    int mouse_x, int mouse_y)
 {
     DLB_ASSERT(rects);
     if (text_len) {
@@ -167,6 +168,7 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
 
     ta_rectf bounds = { 0 };
     if (!text) {
+        DLB_ASSERT(0);
         return bounds;
     }
 

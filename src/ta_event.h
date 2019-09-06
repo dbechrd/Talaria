@@ -21,6 +21,8 @@ typedef enum ta_event_type {
     TA_EVENT_MOUSE_MOVE,
     TA_EVENT_MOUSE_CLICK,
     TA_EVENT_MOUSE_SCROLL,
+    TA_EVENT_KEY_PRESS,
+    TA_EVENT_KEY_RELEASE,
 
     // Game events
     TA_EVENT_GAME_INIT,

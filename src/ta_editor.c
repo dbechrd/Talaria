@@ -26,16 +26,7 @@ ta_editor *tg_editor = &editor;
 
 void ta_editor_set_active_text_entry(ta_text_entry *text_entry)
 {
-    if (tg_editor->text_entry == text_entry) {
-        return;
-    }
-
     tg_editor->text_entry = text_entry;
-    if (tg_editor->text_entry) {
-        ta_game_state_set(&tg_game, TA_GAME_STATE_TEXT_ENTRY);
-    } else {
-        ta_game_state_set(&tg_game, tg_game.state_prev);
-    }
 }
 ta_text_entry *ta_editor_active_text_entry()
 {
@@ -80,20 +71,20 @@ static void ui_node_panel()
         ta_ui_label(0, "UID:");
         static ta_text_entry *uid_editor = 0;
         if (uid_editor) {
-            if (ta_text_entry_focused(uid_editor)) {
-                ta_ui_next_size(100, 0);
-                ta_ui_textbox(0, uid_editor);
-                ta_ui_next_margin(4, 0, 0, 0);
-                ta_ui_next_pad(4, 0, 4, 0);
-                ta_ui_next_bg_color(0.0f, 0.8f, 0.0f, 1.0f);
-                if (ta_ui_label(0, "Save")) {
-                    ta_text_entry_validate(uid_editor);
-                }
-            } else if (ta_text_entry_valid(uid_editor)) {
+            ta_ui_next_size(100, 0);
+            ta_ui_textbox(0, uid_editor);
+            ta_ui_next_margin(4, 0, 0, 0);
+            ta_ui_next_pad(4, 0, 4, 0);
+            ta_ui_next_bg_color(0.0f, 0.8f, 0.0f, 1.0f);
+            if (ta_ui_label(0, "Save")) {
+                ta_text_entry_submit(uid_editor);
+            }
+            if (ta_text_entry_submitted(uid_editor)) {
                 u32 text_len = 0;
                 char *text = ta_text_entry_text(uid_editor, &text_len);
 
                 // All of this logic is specific to changing UIDs
+                if (text_len)
                 {
                     dlb_hash_delete(&tg_game.scene->pooled_uids[TYP_NODE],
                         SYM(node->uid.uid));
@@ -118,9 +109,11 @@ static void ui_node_panel()
                     dlb_hash_insert(&tg_game.scene->pooled_uids[TYP_NODE],
                         SYM(node->uid.uid), (void *)idx);
                     ta_editor_select_node(node);
-                }
 
-                ta_text_entry_free(&uid_editor);
+                    ta_text_entry_free(&uid_editor);
+                } else {
+                    ta_text_entry_reject(uid_editor);
+                }
             }
         } else if (ta_ui_label(0, node->uid.uid)) {
             DLB_ASSERT(!uid_editor);
@@ -143,17 +136,17 @@ static void ui_node_panel()
         for (int i = 0; i < 3; i++) {
             ta_ui_label(0, pos_labels[i]);
             char pos_buf[10] = { 0 };
-            int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f",
-                position[i]);
+            int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f", position[i]);
             DLB_ASSERT(len < sizeof(pos_buf));
             if (pos_editors[i]) {
+                ta_ui_next_pad(4, 1, 4, 1);
                 ta_ui_textbox(0, pos_editors[i]);
                 if (ta_text_entry_valid(pos_editors[i])) {
                     u32 text_len = 0;
                     char *text = ta_text_entry_text(pos_editors[i], &text_len);
                     position[i] = parse_float(text);
                 }
-#if 0
+#if 1
                 ta_ui_next_margin(4, 0, 0, 0);
                 ta_ui_next_pad(4, 0, 4, 0);
                 ta_ui_next_bg_color(0.0f, 0.8f, 0.0f, 1.0f);
@@ -166,6 +159,7 @@ static void ui_node_panel()
                     ta_text_entry_free(&pos_editors[i]);
                 }
             } else {
+                ta_ui_next_pad(4, 0, 4, 0);
                 if (ta_ui_label(0, pos_buf)) {
                     DLB_ASSERT(!pos_editors[i]);
                     pos_editors[i] = ta_text_entry_init();

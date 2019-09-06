@@ -584,7 +584,7 @@ bool ta_ui_textbox(const char *name, ta_text_entry *text_entry)
     }
 
     // Render background
-    ta_rgba bg_color = ta_text_entry_focused(text_entry) ? TA_COLOR_GRAY3 : TA_COLOR_GRAY2;
+    ta_rgba bg_color = ta_text_entry_focused(text_entry) ? TA_COLOR_BLUE3 : TA_COLOR_BLUE2;
     ta_rect bg_rect = frame->rect;
     ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, false);
@@ -605,13 +605,11 @@ bool ta_ui_textbox(const char *name, ta_text_entry *text_entry)
 
     // If active, render cursor
     if (ta_text_entry_focused(text_entry)) {
-        const int cursor_vert_pad = 0;
         ta_rect cursor_rect = { 0 };
         cursor_rect.x = text_left + (int)cursor.x;
-        cursor_rect.y = text_top + (int)cursor.y + cursor_vert_pad;
+        cursor_rect.y = text_top + (int)cursor.y + 1;
         cursor_rect.w = 1;
-        cursor_rect.h = tg_game.font->line_height - (frame->pad.y + frame->pad.h) -
-            (cursor_vert_pad * 2);
+        cursor_rect.h = tg_game.font->line_height - 2;
         ta_primitive_push_rect(cursor_rect, TA_COLOR_GRAY8, UI_LAYER_EDIT_2);
         ta_primitive_render(true, false);
     }
