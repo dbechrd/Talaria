@@ -13,22 +13,33 @@ typedef enum ta_event_queue_type {
 #endif
 
 typedef enum ta_event_type {
+    TA_EVENT_NULL,
+
     // Window events
-    TA_EVENT_SHUTDOWN,
     TA_EVENT_WINDOW_RESIZE,
 
     // Input events
     TA_EVENT_MOUSE_MOVE,
-    TA_EVENT_MOUSE_CLICK,
     TA_EVENT_MOUSE_SCROLL,
     TA_EVENT_KEY_PRESS,
     TA_EVENT_KEY_RELEASE,
     TA_EVENT_TEXT_INPUT,
 
+    // Camera events
+    TA_EVENT_CAMERA_MOVE_FORWARD,
+    TA_EVENT_CAMERA_MOVE_BACKWARD,
+    TA_EVENT_CAMERA_MOVE_RIGHT,
+    TA_EVENT_CAMERA_MOVE_LEFT,
+    TA_EVENT_CAMERA_MOVE_UP,
+    TA_EVENT_CAMERA_MOVE_DOWN,
+    TA_EVENT_CAMERA_ROTATE,
+
     // Game events
-    TA_EVENT_GAME_INIT,
+    TA_EVENT_GAME_STARTUP,
     TA_EVENT_GAME_FREE_CAM,
     TA_EVENT_GAME_PLAY,
+    TA_EVENT_GAME_EDITOR,
+    TA_EVENT_GAME_SHUTDOWN,
 
     // Player events
     TA_EVENT_GAME_PLAYER_MOVE_FORWARD,
@@ -43,8 +54,6 @@ typedef enum ta_event_type {
     TA_EVENT_GAME_BUTTON_DEACTIVATED,
     TA_EVENT_GAME_BUTTON_STATE_CHANGED,
 
-    TA_EVENT_EDITOR_SELECT,
-
     // Game events for debugging
     TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,
     TA_EVENT_DEBUG_TOGGLE_WIREFRAME,
@@ -52,17 +61,22 @@ typedef enum ta_event_type {
     TA_EVENT_DEBUG_TOGGLE_BBOX,
     TA_EVENT_DEBUG_TOGGLE_MESH,
 
-    // Camera events
-    TA_EVENT_CAMERA_MOVE_FORWARD,
-    TA_EVENT_CAMERA_MOVE_BACKWARD,
-    TA_EVENT_CAMERA_MOVE_RIGHT,
-    TA_EVENT_CAMERA_MOVE_LEFT,
-    TA_EVENT_CAMERA_MOVE_UP,
-    TA_EVENT_CAMERA_MOVE_DOWN,
-    TA_EVENT_CAMERA_ROTATE,
-
-    // Text entry events
-    TA_EVENT_TEXT_ENTRY_KEYDOWN,
+    // Editor events
+    TA_EVENT_EDITOR_CLOSE,
+    TA_EVENT_EDITOR_SELECT,
+    TA_EVENT_EDITOR_TXT_NEWLINE,
+    TA_EVENT_EDITOR_TXT_SUBMIT,
+    TA_EVENT_EDITOR_TXT_CANCEL,
+    TA_EVENT_EDITOR_TXT_BACKSPACE,
+    TA_EVENT_EDITOR_TXT_DELETE,
+    TA_EVENT_EDITOR_TXT_CURSOR_RIGHT,
+    TA_EVENT_EDITOR_TXT_CURSOR_LEFT,
+    TA_EVENT_EDITOR_TXT_CURSOR_DOWN,
+    TA_EVENT_EDITOR_TXT_CURSOR_UP,
+    TA_EVENT_EDITOR_TXT_CURSOR_BOL,
+    TA_EVENT_EDITOR_TXT_CURSOR_EOL,
+    TA_EVENT_EDITOR_TXT_CURSOR_BOF,
+    TA_EVENT_EDITOR_TXT_CURSOR_EOF,
 } ta_event_type;
 
 typedef struct ta_event_window_resize_event {
@@ -71,8 +85,10 @@ typedef struct ta_event_window_resize_event {
 } ta_event_window_resize_event;
 
 typedef struct ta_event_mouse_move_event {
-    int dx;
-    int dy;
+    s32 x;
+    s32 y;
+    s32 dx;
+    s32 dy;
 } ta_event_mouse_move_event;
 
 typedef struct ta_event_mouse_scroll_event {
@@ -82,15 +98,11 @@ typedef struct ta_event_mouse_scroll_event {
 } ta_event_mouse_scroll_event;
 
 typedef struct ta_event_key_press_event {
-    s32 scancode;  /**< SDL physical key code - see ::SDL_Scancode for details */
-    s32 sym;       /**< SDL virtual key code - see ::SDL_Keycode for details */
-    u16 mod;       /**< current key modifiers */
+    s32 scancode;
 } ta_event_key_press_event;
 
 typedef struct ta_event_key_release_event {
-    s32 scancode;  /**< SDL physical key code - see ::SDL_Scancode for details */
-    s32 sym;       /**< SDL virtual key code - see ::SDL_Keycode for details */
-    u16 mod;       /**< current key modifiers */
+    s32 scancode;
 } ta_event_key_release_event;
 
 typedef struct ta_event_key_text_input_event {

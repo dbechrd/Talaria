@@ -4,6 +4,7 @@
 #include "ta_window.h"
 #include "ta_game.h"
 #include "ta_scene.h"
+#include "ta_mouse.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 #include <math.h>
@@ -109,13 +110,18 @@ void ta_camera_recalc_projection(ta_camera *camera)
 void ta_camera_event(ta_camera *camera, ta_event *event)
 {
     switch (event->type) {
-        case TA_EVENT_WINDOW_RESIZE: {
-            // Update all cameras to new aspect ratio
-            dlb_vec_each(ta_camera *, cam, tg_game.scene->pools[TYP_CAMERA]) {
-                if (!cam->ortho) {
-                    ta_camera_recalc_projection(cam);
-                }
+        case TA_EVENT_MOUSE_MOVE: {
+            ta_event cam_rotate_evt = { 0 };
+            cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
+            if (event->data.mouse_move.dx) {
+                cam_rotate_evt.data.camera_rotate.delta_yaw =
+                    (float)-event->data.mouse_move.dx;
             }
+            if (event->data.mouse_move.dy) {
+                cam_rotate_evt.data.camera_rotate.delta_pitch =
+                    (float)-event->data.mouse_move.dy;
+            }
+            ta_event_push(&cam_rotate_evt);
             break;
         } case TA_EVENT_CAMERA_MOVE_FORWARD: {
             camera->move_buffer = vec3_add(camera->move_buffer, camera->front);

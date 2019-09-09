@@ -6,7 +6,6 @@ static u64 perf_frequency;
 static double perf_frequency_ms;
 static double perf_frequency_us;
 static u64 perf_epoch;
-static u64 perf_timers[16];
 
 void ta_timer_init()
 {

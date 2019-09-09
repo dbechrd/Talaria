@@ -8,6 +8,7 @@
 #include "ta_font.h"
 #include "ta_text_entry.h"
 #include "ta_texture.h"
+#include "ta_keybind.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 
@@ -163,8 +164,8 @@ static ta_rect rect_shrink(ta_rect orig, ta_rect shrink)
 }
 static bool rect_contains_mouse(ta_rect rect)
 {
-    if (tg_mouse.x >= rect.x && tg_mouse.x < rect.x + rect.w &&
-        tg_mouse.y >= rect.y && tg_mouse.y < rect.y + rect.h)
+    if (MOUSE_X >= rect.x && MOUSE_X < rect.x + rect.w &&
+        MOUSE_Y >= rect.y && MOUSE_Y < rect.y + rect.h)
     {
         return true;
     }
@@ -205,19 +206,19 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
         last_frame_state.unfocused = false;
 
         ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
-        if (rect_contains_mouse(frame->rect))
+        if (!ta_mouse_captured() && rect_contains_mouse(frame->rect))
         {
             bg_color = ui_get_color(frame, UI_STATE_HOVER);
             last_frame_state.hover = true;
-            if (ta_button_state_down(&tg_mouse.left)) {
+            if (ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
                 bg_color = ui_get_color(frame, UI_STATE_DOWN);
                 last_frame_state.down = true;
-                last_frame_state.pressed = ta_button_state_pressed(&tg_mouse.left);
+                last_frame_state.pressed = ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT);
             } else {
-                last_frame_state.released = ta_button_state_released(&tg_mouse.left);
+                last_frame_state.released = ta_key_released(SDL_SCANCODE_MOUSE_LEFT);
             }
         } else {
-            if (ta_button_state_down(&tg_mouse.left)) {
+            if (ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
                 last_frame_state.unfocused = true;
             }
         }
@@ -419,8 +420,8 @@ void ta_ui_tooltip(const char *text, u32 text_len)
     ta_rectf text_rect = ta_font_push_text(&text_rects, tg_game.font,
         text, text_len, true, 0, 0, 0, 0);
 
-    float offset_x = tg_mouse.x + 10.0f;
-    float offset_y = tg_mouse.y + 20.0f;
+    float offset_x = MOUSE_X + 10.0f;
+    float offset_y = MOUSE_Y + 20.0f;
 
     ta_rect_uv tooltip_bg = { 0 };
     tooltip_bg.rect.x = offset_x - 10.0f;
@@ -578,7 +579,7 @@ bool ta_ui_textbox(const char *name, ta_text_entry *text_entry)
     if (last_frame_state.down) {
         // Activate textbox when clicked
         ta_text_entry_focus(text_entry);
-    } else if (ta_button_state_pressed(&tg_mouse.left)) {
+    } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
         // Deactivate textbox when elsewhere clicked
         ta_text_entry_unfocus(text_entry);
     }

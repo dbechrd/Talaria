@@ -1,27 +1,15 @@
 #pragma once
 #include "dlb/dlb_types.h"
-#include "ta_button_state.h"
 
-#define TA_SDL_NUM_SCANCODES 512
+struct ta_event;
 
-enum {
-    SDL_SCANCODE_MOUSE_LEFT = TA_SDL_NUM_SCANCODES,
-    SDL_SCANCODE_MOUSE_MIDDLE,
-    SDL_SCANCODE_MOUSE_RIGHT,
-    TA_SCANCODE_COUNT
-};
-
-typedef struct ta_mouse {
-    int x;
-    int y;
-    ta_button_state left;
-    ta_button_state middle;
-    ta_button_state right;
-    bool captured;
-} ta_mouse;
-
-extern ta_mouse tg_mouse;
+#define MOUSE_X ta_mouse_x()
+#define MOUSE_Y ta_mouse_y()
 
 void ta_mouse_init();
-void ta_mouse_toggle_capture();
-void ta_mouse_events();
+void ta_mouse_capture_set(bool capture);
+void ta_mouse_capture_toggle();
+bool ta_mouse_captured();
+int ta_mouse_x();
+int ta_mouse_y();
+void ta_mouse_event(struct ta_event *event);

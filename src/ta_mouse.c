@@ -2,67 +2,60 @@
 #include "ta_event.h"
 #include "ta_log.h"
 #include "ta_timer.h"
+#include "ta_button_state.h"
 #include "SDL/SDL.h"
 
-ta_mouse tg_mouse;
+typedef struct ta_mouse {
+    int x;
+    int y;
+    bool captured;
+} ta_mouse;
+
+static ta_mouse mouse;
 
 void ta_mouse_init()
 {
-    DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
-
     ta_log_write(&tg_debug_log, "[Mouse] Initializing mouse\n");
-    tg_mouse.captured = true;
-    SDL_SetRelativeMouseMode(tg_mouse.captured);
-    //SDL_GetMouseState(&tg_mouse.x, &tg_mouse.y);
+    SDL_GetMouseState(&mouse.x, &mouse.y);
+    mouse.captured = true;
+    SDL_SetRelativeMouseMode(mouse.captured);
     ta_log_write(&tg_debug_log, "[Mouse] Mouse initialized\n");
 }
 
-void ta_mouse_toggle_capture()
+void ta_mouse_capture_set(bool capture)
 {
-    tg_mouse.captured = !tg_mouse.captured;
-    SDL_SetRelativeMouseMode(tg_mouse.captured);
+    mouse.captured = capture;
+    SDL_SetRelativeMouseMode(mouse.captured);
 }
 
-static void mouse_update_button(ta_button_state *key_state, bool down)
+void ta_mouse_capture_toggle()
 {
-    bool old_down = key_state->down;
-    key_state->down = down;
-    key_state->changed = key_state->down != old_down;
-    if (key_state->changed) {
-        key_state->last_change_ms = ta_timer_elapsed_ms();
-    }
+    TOGGLE(mouse.captured);
+    SDL_SetRelativeMouseMode(mouse.captured);
 }
 
-void ta_mouse_events()
+bool ta_mouse_captured()
 {
-    int dx, dy;
-    u32 buttons = SDL_GetRelativeMouseState(&dx, &dy);
-    mouse_update_button(&tg_mouse.left,   (buttons & SDL_BUTTON_LMASK) > 0);
-    mouse_update_button(&tg_mouse.middle, (buttons & SDL_BUTTON_MMASK) > 0);
-    mouse_update_button(&tg_mouse.right,  (buttons & SDL_BUTTON_RMASK) > 0);
+    return mouse.captured;
+}
 
-    // Mouse move events
-    if (dx || dy) {
-        SDL_GetMouseState(&tg_mouse.x, &tg_mouse.y);
+int ta_mouse_x()
+{
+    return mouse.x;
+}
 
-        ta_event mouse_move_evt = { 0 };
-        mouse_move_evt.type = TA_EVENT_MOUSE_MOVE;
-        mouse_move_evt.data.mouse_move.dx = dx;
-        mouse_move_evt.data.mouse_move.dy = dy;
-        ta_event_push(&mouse_move_evt);
+int ta_mouse_y()
+{
+    return mouse.y;
+}
+
+void ta_mouse_event(struct ta_event *event)
+{
+    switch (event->type) {
+        case TA_EVENT_MOUSE_MOVE: {
+            mouse.x = event->data.mouse_move.x;
+            mouse.y = event->data.mouse_move.y;
+            break;
+        }
     }
-
-    // TODO (cleanup): Is this necessary on top of TA_SCANCODE_MOUSE_LEFT?
-#if 0
-    // Mouse click events
-    if (tg_mouse.left || tg_mouse.middle || tg_mouse.right) {
-
-        ta_event mouse_move_evt = { 0 };
-        mouse_move_evt.type = TA_EVENT_GLOBAL_MOUSE_CLICK;
-        mouse_move_evt.data.mouse_click.left = tg_mouse.left;
-        mouse_move_evt.data.mouse_click.middle = tg_mouse.middle;
-        mouse_move_evt.data.mouse_click.right = tg_mouse.right;
-        ta_event_push(&mouse_move_evt);
-    }
-#endif
 }

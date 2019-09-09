@@ -14,7 +14,7 @@
 #include "ta_viewport.h"
 #include "ta_event.h"
 #include "ta_game.h"
-#include "ta_keyboard.h"
+#include "ta_keybind.h"
 #include "ta_mouse.h"
 #include "ta_node.h"
 #include "ta_light.h"
@@ -54,7 +54,7 @@ DLB_ASSERT_HANDLER(handle_assert)
         "----------------------------------------\n",
         filename, line, expr
     );
-    ta_window_msgbox(SDL_MESSAGEBOX_ERROR, "ASSERT", buf);
+    ta_window_msgbox(tg_game.window, SDL_MESSAGEBOX_ERROR, "ASSERT", buf);
 #endif
     exit(-1);
 }
@@ -90,6 +90,8 @@ int main(int argc, char *argv[])
 {
     UNUSED(argc);
     UNUSED(argv);
+    DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
+
     ta_timer_init();
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
@@ -108,9 +110,9 @@ int main(int argc, char *argv[])
     //ta_audio_listener_mute(tg_game.audio);
     ta_audio_listener_set_volume(tg_game.audio, 0.5f);
     ta_mouse_init();
-    ta_keyboard_init();
     ta_render_init();
     ta_primitive_init();
+    ta_editor_init();
     ta_game_init(&tg_game);
 
     // Intro scene
@@ -207,7 +209,7 @@ int main(int argc, char *argv[])
 
     //float light_deg = 0;
 
-    while (tg_game.state != TA_GAME_STATE_QUIT) {
+    while (tg_game.state != TA_GAME_STATE_SHUTDOWN) {
         double ms_frame_start = ta_timer_elapsed_ms();
         double ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
@@ -363,7 +365,9 @@ int main(int argc, char *argv[])
 
         debug_nametag();
         ta_game_hud_draw();
-        ta_editor_draw();
+        if (tg_game.state == TA_GAME_STATE_EDITOR) {
+            ta_editor_draw();
+        }
 
         render_fps(ms_frame_start, frame_num);
 
@@ -389,7 +393,7 @@ static void render_fps(double ms_frame_start, u64 frame_num)
         game_state_str(tg_game.state_prev));
 
     static ta_rect_uv *frame_time_rects = 0;
-    ta_rectf tag_rect = ta_font_push_text(&frame_time_rects, tg_game.font,
+    ta_font_push_text(&frame_time_rects, tg_game.font,
         frame_time_buf, len, true, 0, 0, 0, 0);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
         ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,

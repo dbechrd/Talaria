@@ -2,8 +2,8 @@
 #include "dlb/dlb_types.h"
 
 typedef struct ta_button_state {
-    bool down;              // button is currently down
-    bool changed;           // state changed since last frame
+    u8 down;              // button is currently down
+    u8 changed;           // state changed since last frame
     double last_change_ms;  // time of last state change in milliseconds
 } ta_button_state;
 

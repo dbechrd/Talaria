@@ -2,8 +2,12 @@
 #include "ta_log.h"
 #include "ta_event.h"
 #include "ta_primitive.h"
+#include "ta_camera.h"
+#include "ta_game.h"
+#include "ta_scene.h"
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_memory.h"
+#include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
 typedef struct ta_window {
@@ -144,6 +148,13 @@ void ta_window_event(ta_window *window, ta_event *event)
             window->size.w = event->data.window_resize.width;
             window->size.h = event->data.window_resize.height;
             window->aspect = (float)window->size.w / window->size.h;
+
+            // Update all cameras to new aspect ratio
+            dlb_vec_each(ta_camera *, cam, tg_game.scene->pools[TYP_CAMERA]) {
+                if (!cam->ortho) {
+                    ta_camera_recalc_projection(cam);
+                }
+            }
             break;
         }
     }
@@ -152,5 +163,6 @@ void ta_window_event(ta_window *window, ta_event *event)
 int ta_window_msgbox(ta_window *window, u32 flags, const char *title,
     const char *message)
 {
-    return SDL_ShowSimpleMessageBox(flags, title, message, window->sdl_window);
+    return SDL_ShowSimpleMessageBox(flags, title, message,
+        window ? window->sdl_window : 0);
 }

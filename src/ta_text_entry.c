@@ -159,6 +159,11 @@ void ta_text_entry_set_filter(ta_text_entry *text_entry,
     text_entry->filter = filter;
 }
 
+bool ta_text_entry_multiline(ta_text_entry *text_entry)
+{
+    return text_entry->multiline;
+}
+
 void ta_text_entry_focus(ta_text_entry *text_entry)
 {
     ta_editor_set_active_text_entry(text_entry);
@@ -297,65 +302,65 @@ ta_rectf ta_text_entry_draw(ta_text_entry *text_entry, ta_rect_uv **text_rects,
     return bounds;
 }
 
-void ta_text_entry_event(ta_event *event)
+void ta_text_entry_event(ta_text_entry *text_entry, ta_event *event)
 {
-    ta_text_entry *text_entry = ta_editor_active_text_entry();
-    if (!text_entry) return;
+    bool handled = true;
 
     switch (event->type) {
-        case TA_EVENT_KEY_PRESS: {
-            event->handled = true;
-            switch (event->data.key_press.sym) {
-                // NOTE: This doesn't work because it gets double processed
-                //       and the entire application exits.
-                case SDLK_RETURN: {
-                    if (text_entry->multiline) {
-                        text_entry_insert(text_entry, '\n');
-                    } else {
-                        ta_text_entry_submit(text_entry);
-                    }
-                    break;
-                } case SDLK_ESCAPE: {
-                    ta_text_entry_cancel(text_entry);
-                    break;
-                } case SDLK_BACKSPACE: {
-                    text_entry_backspace(text_entry);
-                    break;
-                } case SDLK_HOME: {
-                    if (event->data.key_press.mod & KMOD_CTRL) {
-                        text_entry_cursor_bof(text_entry);
-                    } else {
-                        text_entry_cursor_bol(text_entry);
-                    }
-                    break;
-                } case SDLK_END: {
-                    if (event->data.key_press.mod & KMOD_CTRL) {
-                        text_entry_cursor_eof(text_entry);
-                    } else {
-                        text_entry_cursor_eol(text_entry);
-                    }
-                    break;
-                } case SDLK_DELETE: {
-                    text_entry_delete(text_entry);
-                    break;
-                } case SDLK_RIGHT: {
-                    text_entry_cursor_right(text_entry);
-                    break;
-                } case SDLK_LEFT: {
-                    text_entry_cursor_left(text_entry);
-                    break;
-                } case SDLK_DOWN: {
-                    text_entry_cursor_down(text_entry);
-                    break;
-                } case SDLK_UP: {
-                    text_entry_cursor_up(text_entry);
-                    break;
-                }
+        case TA_EVENT_EDITOR_TXT_NEWLINE: {
+            if (ta_text_entry_multiline(text_entry)) {
+                text_entry_insert(text_entry, '\n');
             }
             break;
-        } case TA_EVENT_KEY_RELEASE: {
-            event->handled = true;
+        } case TA_EVENT_EDITOR_TXT_SUBMIT: {
+            ta_text_entry_submit(text_entry);
             break;
+        } case TA_EVENT_EDITOR_TXT_CANCEL: {
+            ta_text_entry_cancel(text_entry);
+            break;
+        } case TA_EVENT_EDITOR_TXT_BACKSPACE: {
+            text_entry_backspace(text_entry);
+            break;
+        } case TA_EVENT_EDITOR_TXT_CURSOR_BOF: {
+            text_entry_cursor_bof(text_entry);
+            break;
+        } case TA_EVENT_EDITOR_TXT_CURSOR_BOL: {
+            text_entry_cursor_bol(text_entry);
+            break;
+        } case TA_EVENT_EDITOR_TXT_CURSOR_EOF: {
+            text_entry_cursor_eof(text_entry);
+            break;
+        } case TA_EVENT_EDITOR_TXT_CURSOR_EOL: {
+            text_entry_cursor_eol(text_entry);
+            break;
+        } case TA_EVENT_EDITOR_TXT_DELETE: {
+            text_entry_delete(text_entry);
+            break;
+        } case TA_EVENT_EDITOR_TXT_CURSOR_RIGHT: {
+            text_entry_cursor_right(text_entry);
+            break;
+        } case TA_EVENT_EDITOR_TXT_CURSOR_LEFT: {
+            text_entry_cursor_left(text_entry);
+            break;
+        } case TA_EVENT_EDITOR_TXT_CURSOR_DOWN: {
+            text_entry_cursor_down(text_entry);
+            break;
+        } case TA_EVENT_EDITOR_TXT_CURSOR_UP: {
+            text_entry_cursor_up(text_entry);
+            break;
+        } case TA_EVENT_TEXT_INPUT: {
+            text_entry_insert(text_entry, event->data.text_input.chr);
+            break;
+        } case TA_EVENT_KEY_PRESS: {
+            // Consume all unhandled keystrokes when text editor is active
+            break;
+        } case TA_EVENT_KEY_RELEASE: {
+            // Consume all unhandled keystrokes when text editor is active
+            break;
+        } default: {
+            handled = false;
         }
     }
+
+    event->handled = handled;
 }

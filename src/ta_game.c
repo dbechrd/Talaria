@@ -1,7 +1,7 @@
 #include "ta_game.h"
 #include "ta_event.h"
 #include "ta_mouse.h"
-#include "ta_keyboard.h"
+#include "ta_keybind.h"
 #include "ta_log.h"
 #include "ta_rigid_body.h"
 #include "ta_symbol.h"
@@ -23,10 +23,11 @@ ta_game tg_game;
 const char *game_state_str(ta_game_state state)
 {
     switch(state) {
-        case TA_GAME_STATE_INIT:         return "TA_GAME_STATE_INIT";
-        case TA_GAME_STATE_PLAY:         return "TA_GAME_STATE_PLAY";
-        case TA_GAME_STATE_FREE_CAM:     return "TA_GAME_STATE_FREE_CAM";
-        case TA_GAME_STATE_QUIT:         return "TA_GAME_STATE_QUIT";
+        case TA_GAME_STATE_STARTUP:  return "TA_GAME_STATE_STARTUP";
+        case TA_GAME_STATE_PLAY:     return "TA_GAME_STATE_PLAY";
+        case TA_GAME_STATE_FREE_CAM: return "TA_GAME_STATE_FREE_CAM";
+        case TA_GAME_STATE_EDITOR:   return "TA_GAME_STATE_EDITOR";
+        case TA_GAME_STATE_SHUTDOWN: return "TA_GAME_STATE_SHUTDOWN";
         default: DLB_ASSERT(!"Unknown game state");  return 0;
     }
 };
@@ -39,45 +40,50 @@ void ta_game_init(ta_game *game)
     //       Could use this for a progress bar during load and better logging.
     //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
-    ta_game_state_set(game, TA_GAME_STATE_INIT);
+    ta_game_state_set(game, TA_GAME_STATE_STARTUP);
 
     ta_log_write(&tg_debug_log, "[Game] Initializing key binds\n");
-    // TODO: Read keybinds from file
-    //dlb_vec_reserve(tg_keybinds, 16);
 
 #define BIND1(state, e, key_state, key) \
-    ta_keybind_bind1(TA_GAME_STATE_##state, e, TA_KEY_##key_state, \
-    SDL_SCANCODE_##key)
+    ta_keybind_bind1(&game->keybinds[TA_GAME_STATE_##state], e, \
+    TA_KEYBIND_##key_state, SDL_SCANCODE_##key)
+
+    // TODO: Read keybinds from file
+    //dlb_vec_reserve(tg_keybinds, 16);
 
     //--------------------------------------------------------------------------
     // PLAY
 
-    BIND1(PLAY, TA_EVENT_SHUTDOWN,                      RELEASE, ESCAPE);
-    BIND1(PLAY, TA_EVENT_GAME_FREE_CAM,                 RELEASE, X);
+    BIND1(PLAY, TA_EVENT_GAME_SHUTDOWN,             RELEASE, ESCAPE);
+    BIND1(PLAY, TA_EVENT_GAME_FREE_CAM,             RELEASE, X);
+    BIND1(PLAY, TA_EVENT_GAME_EDITOR,               RELEASE, F11);
 
-    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_FORWARD,      HOLD, W);
-    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_BACKWARD,     HOLD, S);
-    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_RIGHT,        HOLD, D);
-    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_LEFT,         HOLD, A);
-    BIND1(PLAY, TA_EVENT_GAME_PLAYER_JUMP,              HOLD, SPACE);
-    BIND1(PLAY, TA_EVENT_GAME_PLAYER_SHOOT,             PRESS, MOUSE_LEFT);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_FORWARD,  HOLD, W);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_BACKWARD, HOLD, S);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_RIGHT,    HOLD, D);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_LEFT,     HOLD, A);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_JUMP,          HOLD, SPACE);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_SHOOT,         PRESS, MOUSE_LEFT);
 
-    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,       PRESS, M);
-    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,        PRESS, Z);
-    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_BBOX,             PRESS, 1);
-    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_NORMALS,          PRESS, 2);
+    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,   PRESS, M);
+    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,    PRESS, Z);
+    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_BBOX,         PRESS, 1);
+    BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_NORMALS,      PRESS, 2);
 
     //--------------------------------------------------------------------------
     // FREE_CAM
 
-    BIND1(FREE_CAM, TA_EVENT_SHUTDOWN,                  RELEASE, ESCAPE);
+    // TODO: Move to camera->keybinds
+
+    BIND1(FREE_CAM, TA_EVENT_GAME_SHUTDOWN,             RELEASE, ESCAPE);
     BIND1(FREE_CAM, TA_EVENT_GAME_PLAY,                 RELEASE, X);
+    BIND1(FREE_CAM, TA_EVENT_GAME_EDITOR,               RELEASE, F11);
 
     BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_FORWARD,  HOLD, UP);
     BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_BACKWARD, HOLD, DOWN);
     BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_RIGHT,    HOLD, RIGHT);
     BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_LEFT,     HOLD, LEFT);
-    BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_JUMP,          HOLD,  3);
+    BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_JUMP,          HOLD, 3);
 
     BIND1(FREE_CAM, TA_EVENT_CAMERA_MOVE_FORWARD,       HOLD, W);
     BIND1(FREE_CAM, TA_EVENT_CAMERA_MOVE_BACKWARD,      HOLD, S);
@@ -91,151 +97,8 @@ void ta_game_init(ta_game *game)
     BIND1(FREE_CAM, TA_EVENT_DEBUG_TOGGLE_BBOX,         PRESS, 1);
     BIND1(FREE_CAM, TA_EVENT_DEBUG_TOGGLE_NORMALS,      PRESS, 2);
 
-    BIND1(FREE_CAM, TA_EVENT_EDITOR_SELECT,             PRESS, MOUSE_LEFT);
-
     //--------------------------------------------------------------------------
-    // TEXT_ENTRY
 
-#if 0
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, A);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, B);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, C);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, D);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, E);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, F);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, G);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, H);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, I);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, J);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, K);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, L);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, M);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, N);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, O);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, P);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, Q);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, R);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, S);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, T);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, U);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, V);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, W);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, X);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, Y);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, Z);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 0);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 1);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 2);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 3);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 4);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 5);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 6);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 7);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 8);
-    //BIND1(TEXT_ENTRY, TEXT_ENTRY_KEYDOWN, PRESS, 9);
-
-    SDL_SCANCODE_A = 4,
-    SDL_SCANCODE_B = 5,
-    SDL_SCANCODE_C = 6,
-    SDL_SCANCODE_D = 7,
-    SDL_SCANCODE_E = 8,
-    SDL_SCANCODE_F = 9,
-    SDL_SCANCODE_G = 10,
-    SDL_SCANCODE_H = 11,
-    SDL_SCANCODE_I = 12,
-    SDL_SCANCODE_J = 13,
-    SDL_SCANCODE_K = 14,
-    SDL_SCANCODE_L = 15,
-    SDL_SCANCODE_M = 16,
-    SDL_SCANCODE_N = 17,
-    SDL_SCANCODE_O = 18,
-    SDL_SCANCODE_P = 19,
-    SDL_SCANCODE_Q = 20,
-    SDL_SCANCODE_R = 21,
-    SDL_SCANCODE_S = 22,
-    SDL_SCANCODE_T = 23,
-    SDL_SCANCODE_U = 24,
-    SDL_SCANCODE_V = 25,
-    SDL_SCANCODE_W = 26,
-    SDL_SCANCODE_X = 27,
-    SDL_SCANCODE_Y = 28,
-    SDL_SCANCODE_Z = 29,
-
-    SDL_SCANCODE_1 = 30,
-    SDL_SCANCODE_2 = 31,
-    SDL_SCANCODE_3 = 32,
-    SDL_SCANCODE_4 = 33,
-    SDL_SCANCODE_5 = 34,
-    SDL_SCANCODE_6 = 35,
-    SDL_SCANCODE_7 = 36,
-    SDL_SCANCODE_8 = 37,
-    SDL_SCANCODE_9 = 38,
-    SDL_SCANCODE_0 = 39,
-
-    SDL_SCANCODE_RETURN = 40,
-    SDL_SCANCODE_ESCAPE = 41,
-    SDL_SCANCODE_BACKSPACE = 42,
-    SDL_SCANCODE_TAB = 43,
-    SDL_SCANCODE_SPACE = 44,
-
-    SDL_SCANCODE_MINUS = 45,
-    SDL_SCANCODE_EQUALS = 46,
-    SDL_SCANCODE_LEFTBRACKET = 47,
-    SDL_SCANCODE_RIGHTBRACKET = 48,
-    SDL_SCANCODE_BACKSLASH = 49,
-    SDL_SCANCODE_SEMICOLON = 51,
-    SDL_SCANCODE_APOSTROPHE = 52,
-    SDL_SCANCODE_GRAVE = 53,
-    SDL_SCANCODE_COMMA = 54,
-    SDL_SCANCODE_PERIOD = 55,
-    SDL_SCANCODE_SLASH = 56,
-
-    SDL_SCANCODE_F1 = 58,
-    SDL_SCANCODE_F2 = 59,
-    SDL_SCANCODE_F3 = 60,
-    SDL_SCANCODE_F4 = 61,
-    SDL_SCANCODE_F5 = 62,
-    SDL_SCANCODE_F6 = 63,
-    SDL_SCANCODE_F7 = 64,
-    SDL_SCANCODE_F8 = 65,
-    SDL_SCANCODE_F9 = 66,
-    SDL_SCANCODE_F10 = 67,
-    SDL_SCANCODE_F11 = 68,
-    SDL_SCANCODE_F12 = 69,
-
-    SDL_SCANCODE_PRINTSCREEN = 70,
-    SDL_SCANCODE_SCROLLLOCK = 71,
-    SDL_SCANCODE_PAUSE = 72,
-
-    SDL_SCANCODE_INSERT = 73,
-    SDL_SCANCODE_HOME = 74,
-    SDL_SCANCODE_PAGEUP = 75,
-    SDL_SCANCODE_DELETE = 76,
-    SDL_SCANCODE_END = 77,
-    SDL_SCANCODE_PAGEDOWN = 78,
-
-    SDL_SCANCODE_RIGHT = 79,
-    SDL_SCANCODE_LEFT = 80,
-    SDL_SCANCODE_DOWN = 81,
-    SDL_SCANCODE_UP = 82,
-
-    SDL_SCANCODE_KP_DIVIDE = 84,
-    SDL_SCANCODE_KP_MULTIPLY = 85,
-    SDL_SCANCODE_KP_MINUS = 86,
-    SDL_SCANCODE_KP_PLUS = 87,
-    SDL_SCANCODE_KP_ENTER = 88,
-    SDL_SCANCODE_KP_1 = 89,
-    SDL_SCANCODE_KP_2 = 90,
-    SDL_SCANCODE_KP_3 = 91,
-    SDL_SCANCODE_KP_4 = 92,
-    SDL_SCANCODE_KP_5 = 93,
-    SDL_SCANCODE_KP_6 = 94,
-    SDL_SCANCODE_KP_7 = 95,
-    SDL_SCANCODE_KP_8 = 96,
-    SDL_SCANCODE_KP_9 = 97,
-    SDL_SCANCODE_KP_0 = 98,
-    SDL_SCANCODE_KP_PERIOD = 99,
-#endif
 #undef BIND1
 
     ta_log_write(&tg_debug_log, "[Game] Game initialized\n");
@@ -251,25 +114,27 @@ void ta_game_state_set(ta_game *game, ta_game_state state)
     game->state = state;
     ta_log_write(&tg_debug_log, "[Game] State = %s\n", game_state_str(state));
     switch (game->state) {
-        case TA_GAME_STATE_PLAY:
+        case TA_GAME_STATE_PLAY: {
             game->camera = game->camera_player;
+            ta_mouse_capture_set(true);
             break;
-        case TA_GAME_STATE_FREE_CAM:
+        } case TA_GAME_STATE_FREE_CAM: {
             if (vec3_zero(game->camera_freecam->position)) {
                 game->camera_freecam->follow_target = game->camera_player->follow_target;
                 game->camera_freecam->position = game->camera_freecam->follow_target;
             }
             game->camera = game->camera_freecam;
+            ta_mouse_capture_set(true);
             break;
+        } case TA_GAME_STATE_EDITOR: {
+            ta_mouse_capture_set(false);
+            break;
+        }
     }
 }
 
 static void game_player_shoot(ta_game *game)
 {
-    if (!tg_mouse.captured) {
-        return;
-    }
-
     static double last_shoot_ms = 0;
     static double last_cock_ms = 0;
     static double last_oh_no_ms = 0;
@@ -325,52 +190,31 @@ static void game_player_shoot(ta_game *game)
     }
 }
 
+void ta_game_hotkeys(ta_game *game)
+{
+    ta_keybind_trigger(game->keybinds[game->state]);
+}
+
 void ta_game_event(ta_game *game, ta_event *event)
 {
+    bool handled = true;
+
     switch (event->type) {
-        case TA_EVENT_SHUTDOWN: {
-            ta_game_state_set(game, TA_GAME_STATE_QUIT);
-            break;
-        } case TA_EVENT_GAME_INIT: {
-            ta_game_state_set(game, TA_GAME_STATE_INIT);
-            break;
-        } case TA_EVENT_GAME_FREE_CAM: {
-            ta_game_state_set(game, TA_GAME_STATE_FREE_CAM);
+        case TA_EVENT_GAME_STARTUP: {
+            ta_game_state_set(game, TA_GAME_STATE_STARTUP);
             break;
         } case TA_EVENT_GAME_PLAY: {
             ta_game_state_set(game, TA_GAME_STATE_PLAY);
             break;
-        } case TA_EVENT_MOUSE_MOVE: {
-            if (!tg_mouse.captured) break;
-
-            switch (game->state) {
-                case TA_GAME_STATE_PLAY: // Intentional fall-through
-                case TA_GAME_STATE_FREE_CAM: {
-                    ta_event cam_rotate_evt = { 0 };
-                    cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
-                    if (event->data.mouse_move.dx) {
-                        cam_rotate_evt.data.camera_rotate.delta_yaw =
-                            (float)-event->data.mouse_move.dx;
-                    }
-                    if (event->data.mouse_move.dy) {
-                        cam_rotate_evt.data.camera_rotate.delta_pitch =
-                            (float)-event->data.mouse_move.dy;
-                    }
-                    ta_event_push(&cam_rotate_evt);
-                    break;
-                }
-            }
+        } case TA_EVENT_GAME_FREE_CAM: {
+            ta_game_state_set(game, TA_GAME_STATE_FREE_CAM);
             break;
-#if 0
-        } case TA_EVENT_GAME_MOUSE_CLICK: {
+        } case TA_EVENT_GAME_EDITOR: {
+            ta_game_state_set(game, TA_GAME_STATE_EDITOR);
             break;
-        } case TA_EVENT_GAME_MOUSE_SCROLL: {
-            // TODO: Scroll active element being hovered, if not
-            //       handled, bubble up
-            //text_entry_scroll(view, event->data.mouse_scroll.y *
-            //    -event->data.mouse_scroll.flipped);
+        } case TA_EVENT_GAME_SHUTDOWN: {
+            ta_game_state_set(game, TA_GAME_STATE_SHUTDOWN);
             break;
-#endif
         } case TA_EVENT_GAME_PLAYER_MOVE_FORWARD: {
             ta_vec3 dir = { 0 };
             dir.x = game->camera->front.x;
@@ -437,53 +281,26 @@ void ta_game_event(ta_game *game, ta_event *event)
         } case TA_EVENT_GAME_BUTTON_STATE_CHANGED: {
             break;
         } case TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK: {
-            ta_mouse_toggle_capture();
+            ta_mouse_capture_toggle();
             break;
         } case TA_EVENT_DEBUG_TOGGLE_WIREFRAME: {
-            game->camera->debug_wireframe =
-                !game->camera->debug_wireframe;
+            TOGGLE(game->camera->debug_wireframe);
             break;
         } case TA_EVENT_DEBUG_TOGGLE_NORMALS: {
-            game->camera->debug_normals = !game->camera->debug_normals;
+            TOGGLE(game->camera->debug_normals);
             break;
         } case TA_EVENT_DEBUG_TOGGLE_BBOX: {
-            game->camera->debug_bounding_boxes =
-                !game->camera->debug_bounding_boxes;
+            TOGGLE(game->camera->debug_bounding_boxes);
             break;
         } case TA_EVENT_DEBUG_TOGGLE_MESH: {
-            game->camera->debug_no_mesh =
-                !game->camera->debug_no_mesh;
+            TOGGLE(game->camera->debug_no_mesh);
             break;
-        } case TA_EVENT_EDITOR_SELECT: {
-            if (!tg_mouse.captured)
-                break;
-
-            ta_ray ray;
-            ray.origin = game->camera->position;
-            ray.direction = game->camera->front;
-
-            float t_min = 9999.0f;
-            ta_node *closest_node = 0;
-
-            dlb_vec_each(ta_node *, node, game->scene->pools[TYP_NODE]) {
-                ta_rigid_body *body = ta_node_rigid_body(node);
-                // TODO: Handle types other than spheres
-                if (!body || body->collider.type != TA_COLLIDER_SPHERE) {
-                    continue;
-                }
-                ta_sphere sphere = body->collider.data.sphere;
-                sphere.center = vec3_add(sphere.center, body->centroid_global);
-                float t;
-                if (ta_intersect_ray_sphere(ray, sphere, &t)) {
-                    if (t >= 0.0f && t < t_min) {
-                        t_min = t;
-                        ta_editor_select_node(node);
-                    }
-                }
-            }
-            break;
+        } default: {
+            handled = false;
         }
     }
+
+    event->handled = handled;
 }
 
 void ta_game_hud_draw()

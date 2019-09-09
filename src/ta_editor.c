@@ -13,42 +13,110 @@
 #include "ta_shader.h"
 #include "ta_parse.h"
 #include "ta_rigid_body.h"
+#include "ta_event.h"
+#include "ta_mouse.h"
+#include "ta_camera.h"
+#include "ta_keybind.h"
+#include "ta_text_entry.h"
+#include "ta_log.h"
+#include "SDL/SDL_keycode.h"
 #include "dlb/dlb_vector.h"
 
 typedef struct ta_editor {
     const char *status_msg;
     const char *selected_node_uid;
     ta_text_entry *text_entry;
+    ta_keybind *keybinds;
+    ta_keybind *keybinds_text_entry;
 } ta_editor;
 
 static ta_editor editor;
-ta_editor *tg_editor = &editor;
+
+void ta_editor_init()
+{
+    ta_log_write(&tg_debug_log, "[Editor] Initializing editor\n");
+    ta_log_write(&tg_debug_log, "[Editor] Initializing key binds\n");
+
+#undef DELETE
+#define BIND1(keybinds, e, key_state, key1) \
+    ta_keybind_bind1(&editor.keybinds, e, TA_KEYBIND_##key_state, \
+    SDL_SCANCODE_##key1)
+#define BIND2(keybinds, e, key_state, key1, key2) \
+    ta_keybind_bind2(&editor.keybinds, e, TA_KEYBIND_##key_state, \
+    SDL_SCANCODE_##key1, SDL_SCANCODE_##key2)
+
+    // TODO: Read keybinds from file
+    //dlb_vec_reserve(tg_keybinds, 16);
+
+    //--------------------------------------------------------------------------
+    // EDITOR
+
+    BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,  RELEASE, F11);
+    BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,  RELEASE, ESCAPE);
+    BIND1(keybinds, TA_EVENT_EDITOR_SELECT, PRESS, MOUSE_LEFT);
+
+    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_FORWARD,       HOLD, W);
+    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_BACKWARD,      HOLD, S);
+    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_RIGHT,         HOLD, D);
+    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_LEFT,          HOLD, A);
+    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_UP,            HOLD, E); //SPACE);
+    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_DOWN,          HOLD, Q); //LSHIFT);
+
+    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,   PRESS, M);
+    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,    PRESS, Z);
+    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_BBOX,         PRESS, 1);
+    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_NORMALS,      PRESS, 2);
+
+    //--------------------------------------------------------------------------
+    // TEXT_ENTRY
+
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_NEWLINE,      PRESS, RETURN);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_SUBMIT,       PRESS, RETURN);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CANCEL,       PRESS, ESCAPE);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_BACKSPACE,    PRESS, BACKSPACE);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_DELETE,       PRESS, DELETE);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CURSOR_RIGHT, HOLD, RIGHT);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CURSOR_LEFT,  HOLD, LEFT);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CURSOR_DOWN,  PRESS, DOWN);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CURSOR_UP,    PRESS, UP);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CURSOR_BOL,   PRESS, HOME);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CURSOR_EOL,   PRESS, END);
+    BIND2(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CURSOR_BOF,   PRESS, LSHIFT, HOME);
+    BIND2(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CURSOR_EOF,   PRESS, LSHIFT, END);
+
+    //--------------------------------------------------------------------------
+
+#undef BIND1
+#undef BIND2
+
+    ta_log_write(&tg_debug_log, "[Editor] Game initialized\n");
+}
 
 void ta_editor_set_active_text_entry(ta_text_entry *text_entry)
 {
-    tg_editor->text_entry = text_entry;
+    editor.text_entry = text_entry;
 }
 ta_text_entry *ta_editor_active_text_entry()
 {
-    return tg_editor->text_entry;
+    return editor.text_entry;
 }
 void ta_editor_select_node(ta_node *node)
 {
-    tg_editor->selected_node_uid = node->uid.uid;
+    editor.selected_node_uid = node->uid.uid;
 }
 ta_node *ta_editor_selected_node()
 {
     ta_node *node = 0;
-    if (tg_editor->selected_node_uid) {
+    if (editor.selected_node_uid) {
 #if 1
-        node = ta_scene_exists(tg_game.scene, TYP_NODE, tg_editor->selected_node_uid, 0);
+        node = ta_scene_exists(tg_game.scene, TYP_NODE, editor.selected_node_uid, 0);
 #else
         // TODO: Store selected_node_idx. If generation doesn't match,
         //       ta_scene_find() should return zero.
-        node = ta_scene_find(tg_game.scene, TYP_NODE, tg_editor->selected_node_idx);
+        node = ta_scene_find(tg_game.scene, TYP_NODE, editor.selected_node_idx);
         if (!node) {
             // Node has been deleted
-            tg_editor->selected_node_idx = 0;
+            editor.selected_node_idx = 0;
         }
 #endif
     }
@@ -92,7 +160,7 @@ static void ui_node_panel()
                     // TODO: Replace all references to UID pointers with generational
                     // pool indexes otherwise we can never delete symbols because
                     // anything holding a pointer will be dangling.
-                    // (e.g. editor->selected_node_uid)
+                    // (e.g. editor.selected_node_uid)
                     //dlb_symbol_free(node->uid.uid);
 
                     node->uid.uid = ta_symbol_intern(text, text_len);
@@ -326,12 +394,12 @@ static void ui_editor_sidebar()
 }
 static void ui_statusbar()
 {
-    if (tg_editor->status_msg) {
+    if (editor.status_msg) {
         ta_ui_statusbar();
 
         static ta_rect_uv *status_rects = 0;
         ta_rectf status_rect = ta_font_push_text(&status_rects, tg_game.font,
-            SYM(tg_editor->status_msg), true, 0, 0, 0, 0);
+            SYM(editor.status_msg), true, 0, 0, 0, 0);
         dlb_vec_each(ta_rect_uv *, rect, status_rects) {
             ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
                 true, false);
@@ -344,7 +412,7 @@ static void ui_statusbar()
             (float)(WINDOW_H - (tg_game.font->ascent + status_pad_bottom)),
             UI_LAYER_TIP, true, true);
 
-        tg_editor->status_msg = 0;
+        editor.status_msg = 0;
     }
 }
 void ta_editor_draw()
@@ -363,6 +431,73 @@ void ta_editor_draw()
     // Render tooltips
     ta_primitive_render_quads(tooltip_bg_queue, tg_shader_quads, true, true);
     ta_font_render(tooltip_fg_queue, tg_game.font, 0, 0, UI_LAYER_TIP, true, true);
+}
+
+static void editor_ray_pick()
+{
+    ta_ray ray;
+    ray.origin = tg_game.camera->position;
+    ray.direction = tg_game.camera->front;
+
+    float t_min = 9999.0f;
+    ta_node *closest_node = 0;
+
+    dlb_vec_each(ta_node *, node, tg_game.scene->pools[TYP_NODE]) {
+        ta_rigid_body *body = ta_node_rigid_body(node);
+        // TODO: Handle types other than spheres
+        if (!body || body->collider.type != TA_COLLIDER_SPHERE) {
+            continue;
+        }
+        ta_sphere sphere = body->collider.data.sphere;
+        sphere.center = vec3_add(sphere.center, body->centroid_global);
+        float t;
+        if (ta_intersect_ray_sphere(ray, sphere, &t)) {
+            if (t >= 0.0f && t < t_min) {
+                t_min = t;
+                closest_node = node;
+            }
+        }
+    }
+
+    if (closest_node) {
+        ta_editor_select_node(closest_node);
+    }
+}
+
+void ta_editor_hotkeys()
+{
+    if (editor.text_entry) {
+        ta_keybind_trigger(editor.keybinds_text_entry);
+    } else {
+        ta_keybind_trigger(editor.keybinds);
+    }
+}
+
+void ta_editor_event(ta_event *event)
+{
+    if (editor.text_entry) {
+        ta_text_entry_event(editor.text_entry, event);
+        if (event->handled) return;
+    }
+
+    bool handled = true;
+
+    switch (event->type) {
+        case TA_EVENT_EDITOR_CLOSE: {
+            ta_game_state_set(&tg_game, tg_game.state_prev);
+            break;
+        } case TA_EVENT_EDITOR_SELECT: {
+            // TODO: Move mouse capture requirement into keybind settings
+            if (ta_mouse_captured()) {
+                editor_ray_pick();
+            }
+            break;
+        } default: {
+            handled = false;
+        }
+    }
+
+    event->handled = handled;
 }
 
 #if 0

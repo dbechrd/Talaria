@@ -18,6 +18,15 @@ typedef struct ta_scene {
     dlb_hash pooled_uids[TYP_COUNT_POOLS];
 } ta_scene;
 
+/*
+typedef struct cc_vector {
+    void *begin;         // dlb_vec
+    void *end;           // dlb_vec
+    size_t capacity;     // current capacity
+    char buffer[16];     // C++: sizeof(T) * count
+} cc_vector;
+*/
+
 void ta_scene_init(ta_scene *scene);
 ta_scene *ta_scene_load(struct ta_file *file);
 ta_scene *ta_scene_load_file(const char *filename);

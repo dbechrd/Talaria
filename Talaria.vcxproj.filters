@@ -56,9 +56,6 @@
     <ClCompile Include="src\ta_event.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ta_keyboard.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ta_game.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -119,6 +116,12 @@
     <ClCompile Include="src\ta_ui.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ta_keybind.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ta_key.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src/ta_window.h">
@@ -158,9 +161,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_event.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ta_keyboard.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_game.h">
@@ -227,6 +227,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_ui.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_keybind.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_key.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

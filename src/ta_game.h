@@ -4,10 +4,11 @@
 struct ta_event;
 
 typedef enum ta_game_state {
-    TA_GAME_STATE_INIT,
+    TA_GAME_STATE_STARTUP,
     TA_GAME_STATE_PLAY,
     TA_GAME_STATE_FREE_CAM,
-    TA_GAME_STATE_QUIT,
+    TA_GAME_STATE_EDITOR,
+    TA_GAME_STATE_SHUTDOWN,
     TA_GAME_STATE_COUNT
 } ta_game_state;
 const char *game_state_str(ta_game_state state);
@@ -24,6 +25,7 @@ typedef struct ta_game {
     struct ta_camera *camera_player;
     struct ta_camera *camera_freecam;
     struct ta_font *font;
+    struct ta_keybind *keybinds[TA_GAME_STATE_COUNT];
     struct ta_light *lights;
     struct ta_node *player;
     struct ta_scene *scene;
@@ -37,9 +39,11 @@ typedef struct ta_game {
     int player_clip_max;
     int player_clip;
 } ta_game;
+
 extern ta_game tg_game;
 
 void ta_game_init(ta_game *game);
 void ta_game_state_set(ta_game *game, ta_game_state state);
+void ta_game_hotkeys(ta_game *game);
 void ta_game_event(ta_game *game, struct ta_event *event);
 void ta_game_hud_draw();
