@@ -260,6 +260,7 @@ void ta_text_entry_cancel(ta_text_entry *text_entry)
     DLB_ASSERT(!text_entry->cancel);  // Duplicate cancel?
     DLB_ASSERT(!text_entry->submit);  // Cancel after submit? Perhaps you meant reject?
     text_entry->cancel = true;
+    ta_text_entry_unfocus(text_entry);
 }
 
 bool ta_text_entry_canceled(ta_text_entry *text_entry)

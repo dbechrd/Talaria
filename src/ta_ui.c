@@ -21,33 +21,107 @@
 #define WIDGET_PAD          1
 #define SCROLL_SPEED        20
 
-typedef struct ui_style {
-    ta_size size;
-    ta_rect margin;
-    ta_rect pad;
-    ta_rgba bg_color;
-    ta_rgba fg_color;
-} ui_style;
-
-static ui_style next_frame_style;
-static ta_ui_state last_frame_state;
-
 typedef enum ui_frame_type {
     UI_ROOT,
     UI_WINDOW,
     UI_PANEL,
-    UI_TEXTBOX,
     UI_BUTTON,
+    UI_LABEL,
+    UI_TEXTBOX,
     UI_COUNT
 } ui_frame_type;
+
+typedef struct ui_style {
+    ta_rect margin;
+    ta_rect pad;
+    ta_rgba bg_color[UI_STATE_COUNT];
+    ta_rgba fg_color[UI_STATE_COUNT];
+} ui_style;
+
+static ui_style ui_default_style[UI_COUNT] = { 0 };
+
+void ta_ui_init()
+{
+    //ui_default_style[UI_ROOT].margin                      = TA_RECT_ZERO;
+    //ui_default_style[UI_ROOT].pad                         = TA_RECT_ZERO;
+    //ui_default_style[UI_ROOT].bg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
+      ui_default_style[UI_ROOT].bg_color[UI_STATE_HOVER]    = TA_RGBA(1.0f, 0.0f, 0.0f, 0.8f);
+    //ui_default_style[UI_ROOT].bg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
+    //ui_default_style[UI_ROOT].bg_color[UI_STATE_ACTIVE]   = TA_COLOR_INVIS;
+    //ui_default_style[UI_ROOT].fg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
+    //ui_default_style[UI_ROOT].fg_color[UI_STATE_HOVER]    = TA_COLOR_INVIS;
+    //ui_default_style[UI_ROOT].fg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
+    //ui_default_style[UI_ROOT].fg_color[UI_STATE_ACTIVE]   = TA_COLOR_INVIS;
+
+    //ui_default_style[UI_WINDOW].margin = TA_RECT_ZERO;
+    //ui_default_style[UI_WINDOW].pad    = TA_RECT_ZERO;
+    //ui_default_style[UI_WINDOW].bg_color[UI_STATE_NONE]   = TA_COLOR_INVIS;
+      ui_default_style[UI_WINDOW].bg_color[UI_STATE_HOVER]  = TA_RGBA(0.0f, 1.0f, 0.0f, 0.8f);
+    //ui_default_style[UI_WINDOW].bg_color[UI_STATE_DOWN]   = TA_COLOR_INVIS;
+    //ui_default_style[UI_WINDOW].bg_color[UI_STATE_ACTIVE] = TA_COLOR_INVIS;
+    //ui_default_style[UI_WINDOW].fg_color[UI_STATE_NONE]   = TA_COLOR_INVIS;
+    //ui_default_style[UI_WINDOW].fg_color[UI_STATE_HOVER]  = TA_COLOR_INVIS;
+    //ui_default_style[UI_WINDOW].fg_color[UI_STATE_DOWN]   = TA_COLOR_INVIS;
+    //ui_default_style[UI_WINDOW].fg_color[UI_STATE_ACTIVE] = TA_COLOR_INVIS;
+
+    //ui_default_style[UI_PANEL].margin                     = TA_RECT_ZERO;
+    //ui_default_style[UI_PANEL].pad                        = TA_RECT_ZERO;
+    //ui_default_style[UI_PANEL].bg_color[UI_STATE_NONE]    = TA_COLOR_INVIS;
+      ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]   = TA_RGBA(0.0f, 0.0f, 1.0f, 0.8f);
+    //ui_default_style[UI_PANEL].bg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
+    //ui_default_style[UI_PANEL].bg_color[UI_STATE_ACTIVE]  = TA_COLOR_INVIS;
+    //ui_default_style[UI_PANEL].fg_color[UI_STATE_NONE]    = TA_COLOR_INVIS;
+    //ui_default_style[UI_PANEL].fg_color[UI_STATE_HOVER]   = TA_COLOR_INVIS;
+    //ui_default_style[UI_PANEL].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
+    //ui_default_style[UI_PANEL].fg_color[UI_STATE_ACTIVE]  = TA_COLOR_INVIS;
+
+    //ui_default_style[UI_BUTTON].margin                    = TA_RECT_ZERO;
+    //ui_default_style[UI_BUTTON].pad                       = TA_RECT_ZERO;
+      ui_default_style[UI_BUTTON].bg_color[UI_STATE_NONE]   = TA_RGBA(1.0f, 1.0f, 1.0f, 0.8f);
+      ui_default_style[UI_BUTTON].bg_color[UI_STATE_HOVER]  = TA_RGBA(1.0f, 1.0f, 0.0f, 0.8f);
+      ui_default_style[UI_BUTTON].bg_color[UI_STATE_DOWN]   = TA_RGBA(1.0f, 1.0f, 0.0f, 0.8f);
+      ui_default_style[UI_BUTTON].bg_color[UI_STATE_ACTIVE] = TA_RGBA(0.0f, 1.0f, 1.0f, 0.8f);
+    //ui_default_style[UI_BUTTON].fg_color[UI_STATE_NONE]   = TA_COLOR_INVIS;
+    //ui_default_style[UI_BUTTON].fg_color[UI_STATE_HOVER]  = TA_COLOR_INVIS;
+    //ui_default_style[UI_BUTTON].fg_color[UI_STATE_DOWN]   = TA_COLOR_INVIS;
+    //ui_default_style[UI_BUTTON].fg_color[UI_STATE_ACTIVE] = TA_COLOR_INVIS;
+
+    //ui_default_style[UI_LABEL].margin                     = TA_RECT_ZERO;
+    //ui_default_style[UI_LABEL].pad                        = TA_RECT_ZERO;
+      ui_default_style[UI_LABEL].bg_color[UI_STATE_NONE]    = TA_RGBA(0.2f, 0.2f, 0.4f, 0.6f);
+      ui_default_style[UI_LABEL].bg_color[UI_STATE_HOVER]   = TA_RGBA(0.2f, 0.2f, 0.4f, 0.6f);
+      ui_default_style[UI_LABEL].bg_color[UI_STATE_DOWN]    = TA_RGBA(0.2f, 0.2f, 0.4f, 0.6f);
+      ui_default_style[UI_LABEL].bg_color[UI_STATE_ACTIVE]  = TA_RGBA(0.2f, 0.2f, 0.4f, 0.6f);
+    //ui_default_style[UI_LABEL].fg_color[UI_STATE_NONE]    = TA_COLOR_INVIS;
+    //ui_default_style[UI_LABEL].fg_color[UI_STATE_HOVER]   = TA_COLOR_INVIS;
+    //ui_default_style[UI_LABEL].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
+    //ui_default_style[UI_LABEL].fg_color[UI_STATE_ACTIVE]  = TA_COLOR_INVIS;
+
+    //ui_default_style[UI_TEXTBOX].margin                     = TA_RECT_ZERO;
+    //ui_default_style[UI_TEXTBOX].pad                        = TA_RECT_ZERO;
+      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE]    = TA_RGBA(1.0f, 1.0f, 1.0f, 0.8f);
+      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_HOVER]   = TA_RGBA(1.0f, 1.0f, 0.0f, 0.8f);
+      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_DOWN]    = TA_RGBA(1.0f, 0.0f, 1.0f, 0.8f);
+      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_ACTIVE]  = TA_RGBA(0.0f, 1.0f, 1.0f, 0.8f);
+    //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_NONE]    = TA_COLOR_INVIS;
+    //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_HOVER]   = TA_COLOR_INVIS;
+    //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
+    //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_ACTIVE]  = TA_COLOR_INVIS;
+}
+
+static ta_size next_frame_size;
+static ui_style next_frame_style;
+static ta_ui_state last_frame_state;
 
 typedef struct ui_frame {
     u32 index;
     ui_frame_type type;
     const char *name;
 
-    ta_rect margin;         // external margin
-    ta_rect pad;            // internal padding
+    ta_rect margin;
+    ta_rect pad;
+    ta_rgba bg_color;
+    ta_rgba fg_color;
     ta_rect rect;           // position & size (-margin, +pad)
     ta_vec2i offset;        // dynamic offset for layout
 
@@ -62,62 +136,25 @@ static ui_frame ui_root = {
 };
 static ui_frame *ui_frames;
 
-typedef enum ui_event_type {
-    UI_STATE_NONE,
-    UI_STATE_HOVER,
-    UI_STATE_DOWN,
-    UI_STATE_ACTIVE,
-    UI_STATE_COUNT
-} ui_event_type;
-
-static ta_rgba ui_get_color(ui_frame *frame, ui_event_type event)
+#if 0
+static ta_rgba ui_random_color(ui_frame *frame, ui_state_type state)
 {
-#if UI_DEBUG_RANDOM_COLORS
     // HACK: Generate random colors based on name of control
     ta_rgba color;
     u32 hash = dlb_hash_code(SYM(frame->name));
-    color.r = ((hash >> (event     )) & 255) / 255.0f;
-    color.g = ((hash >> (event +  8)) & 255) / 255.0f;
-    color.b = ((hash >> (event + 16)) & 255) / 255.0f;
+    color.r = ((hash >> (state     )) & 255) / 255.0f;
+    color.g = ((hash >> (state +  8)) & 255) / 255.0f;
+    color.b = ((hash >> (state + 16)) & 255) / 255.0f;
     color.a = 1.0f;
     return color;
-#else
-    static ta_rgba ui_colors[UI_COUNT][UI_STATE_COUNT] = {
-        [UI_ROOT] = {
-            [UI_STATE_NONE]  = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED1
-            [UI_STATE_HOVER] = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED2
-            [UI_STATE_DOWN]  = { 1.0f, 0.0f, 0.0f, 0.5f }, //TA_COLOR_RED3
-        },
-        [UI_WINDOW] = {
-            [UI_STATE_NONE]  = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN1
-            [UI_STATE_HOVER] = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN2
-            [UI_STATE_DOWN]  = { 0.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_GREEN3
-        },
-        [UI_PANEL] = {
-            [UI_STATE_NONE]  = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_RED
-            [UI_STATE_HOVER] = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_GREEN
-            [UI_STATE_DOWN]  = { 0.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_BLUE
-        },
-        [UI_TEXTBOX] = {
-            [UI_STATE_NONE]  = { 0.5f, 0.5f, 0.5f, 0.5f }, //TA_COLOR_GRAY2
-            [UI_STATE_HOVER] = { 1.0f, 1.0f, 0.0f, 0.5f }, //TA_COLOR_YELLOW
-            [UI_STATE_DOWN]  = { 1.0f, 0.0f, 1.0f, 0.5f }, //TA_COLOR_MAGENTA
-        },
-        [UI_BUTTON] = {
-            [UI_STATE_NONE]   = { 0.5f, 0.5f, 0.5f, 1.0f }, //TA_COLOR_GRAY2
-            [UI_STATE_HOVER]  = { 1.0f, 1.0f, 0.0f, 1.0f }, //TA_COLOR_YELLOW
-            [UI_STATE_DOWN]   = { 1.0f, 0.0f, 1.0f, 1.0f }, //TA_COLOR_MAGENTA
-            [UI_STATE_ACTIVE] = { 0.0f, 1.0f, 1.0f, 1.0f }, //TA_COLOR_CYAN
-        },
-    };
-    return ui_colors[frame->type][event];
-#endif
 }
+#endif
 static bool type_is_container(ui_frame_type type)
 {
     return (type == UI_WINDOW || type == UI_PANEL);
 }
 // returns closest parent container index
+// Pass frame_idx = 0 to find innermost container
 static ui_frame *ui_container(u32 frame_idx)
 {
     DLB_ASSERT(frame_idx <= dlb_vec_len(ui_frames));
@@ -182,36 +219,50 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
     frame->index = dlb_vec_len(ui_frames) - 1;
     frame->type = type;
     frame->name = name;
+
     frame->margin = next_frame_style.margin;
+    if (!(frame->margin.x || frame->margin.w ||
+        frame->margin.y || frame->margin.h))
+    {
+        frame->margin = ui_default_style[type].margin;
+    }
     frame->pad = next_frame_style.pad;
+    if (!(frame->pad.x || frame->pad.w ||
+        frame->pad.y || frame->pad.h))
+    {
+        frame->pad = ui_default_style[type].pad;
+    }
+
     ui_frame *container = ui_container(frame->index);
     frame->content_size.w = frame->pad.x + frame->pad.w;
     frame->content_size.h = frame->pad.y + frame->pad.h;
     frame->rect.x = container->rect.x + container->offset.x + frame->margin.x;
     frame->rect.y = container->rect.y + container->offset.y + frame->margin.y;
-    frame->rect.w = next_frame_style.size.w + frame->content_size.w;
-    frame->rect.h = next_frame_style.size.h + frame->content_size.h;
+    int want_size_w = next_frame_size.w + frame->pad.x + frame->pad.w;
+    int want_size_h = next_frame_size.h + frame->pad.y + frame->pad.h;
+    frame->rect.w = MAX(want_size_w, frame->content_size.w);
+    frame->rect.h = MAX(want_size_h, frame->content_size.h);
 
-    dlb_memset(&next_frame_style, 0, sizeof(next_frame_style));
+    ui_state_type state = UI_STATE_NONE;
 
-    // Container padding
     if (type_is_container(frame->type)) {
+        // Grow container
         frame->offset.x += frame->pad.x;
         frame->offset.y += frame->pad.y;
     } else {
+        // Updated frame states
         last_frame_state.hover = false;
         last_frame_state.down = false;
         last_frame_state.pressed = false;
         last_frame_state.released = false;
         last_frame_state.unfocused = false;
 
-        ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
         if (!ta_mouse_captured() && rect_contains_mouse(frame->rect))
         {
-            bg_color = ui_get_color(frame, UI_STATE_HOVER);
+            state = UI_STATE_HOVER;
             last_frame_state.hover = true;
             if (ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
-                bg_color = ui_get_color(frame, UI_STATE_DOWN);
+                state = UI_STATE_DOWN;
                 last_frame_state.down = true;
                 last_frame_state.pressed = ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT);
             } else {
@@ -224,6 +275,15 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
         }
     }
 
+    frame->bg_color = next_frame_style.bg_color[state];
+    if (frame->bg_color.a == 0.0f) {
+        frame->bg_color = ui_default_style[type].bg_color[state];
+    }
+    frame->fg_color = next_frame_style.fg_color[state];
+    if (frame->fg_color.a == 0.0f) {
+        frame->fg_color = ui_default_style[type].fg_color[state];
+    }
+
     // TODO: If we're going to render containers we need to defer *all*
     //       rendering to e.g. container->queue until the container pops, then
     //       render everything starting at the container for proper ordering.
@@ -232,13 +292,16 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
     //    ta_primitive_render(true, true);
     //}
 
-    if (frame->type != UI_TEXTBOX) {
+    if (frame->type != UI_TEXTBOX && frame->type != UI_LABEL) {
         // TODO: Should clip rect contain pad or not? Not sure.. see how it looks.
         ta_rect clip_rect = rect_shrink(frame->rect, frame->pad);
         glEnable(GL_SCISSOR_TEST);
         int inv_y = WINDOW_H - (clip_rect.y + clip_rect.h);
         glScissor(clip_rect.x, inv_y, clip_rect.w, clip_rect.h);
     }
+
+    next_frame_size = TA_SIZE_ZERO;
+    dlb_memset(&next_frame_style, 0, sizeof(next_frame_style));
 
     return frame->index;
 }
@@ -280,6 +343,11 @@ ta_ui_state ta_ui_last_frame_state()
     return last_frame_state;
 }
 
+void ta_ui_next_size(int w, int h)
+{
+    next_frame_size.w = w;
+    next_frame_size.h = h;
+}
 // TODO: Replace these with ta_ui_push_style that persists until pop
 void ta_ui_next_margin(int left, int top, int right, int bottom)
 {
@@ -299,24 +367,37 @@ void ta_ui_next_pad(int left, int top, int right, int bottom)
     next_frame_style.pad.h = bottom;
 #endif
 }
-void ta_ui_next_size(int w, int h)
+void ta_ui_next_bg_color(ui_state_type state, float r, float g, float b, float a)
 {
-    next_frame_style.size.w = w;
-    next_frame_style.size.h = h;
+    if (state < UI_STATE_COUNT) {
+        next_frame_style.bg_color[state].r = r;
+        next_frame_style.bg_color[state].g = g;
+        next_frame_style.bg_color[state].b = b;
+        next_frame_style.bg_color[state].a = a;
+    } else {
+        for (int i = 0; i < UI_STATE_COUNT; i++) {
+            next_frame_style.bg_color[i].r = r;
+            next_frame_style.bg_color[i].g = g;
+            next_frame_style.bg_color[i].b = b;
+            next_frame_style.bg_color[i].a = a;
+        }
+    }
 }
-void ta_ui_next_bg_color(float r, float g, float b, float a)
+void ta_ui_next_fg_color(ui_state_type state, float r, float g, float b, float a)
 {
-    next_frame_style.bg_color.r = r;
-    next_frame_style.bg_color.g = g;
-    next_frame_style.bg_color.b = b;
-    next_frame_style.bg_color.a = a;
-}
-void ta_ui_next_fg_color(float r, float g, float b, float a)
-{
-    next_frame_style.fg_color.r = r;
-    next_frame_style.fg_color.g = g;
-    next_frame_style.fg_color.b = b;
-    next_frame_style.fg_color.a = a;
+    if (state < UI_STATE_COUNT) {
+        next_frame_style.fg_color[state].r = r;
+        next_frame_style.fg_color[state].g = g;
+        next_frame_style.fg_color[state].b = b;
+        next_frame_style.fg_color[state].a = a;
+    } else {
+        for (int i = 0; i < UI_STATE_COUNT; i++) {
+            next_frame_style.fg_color[i].r = r;
+            next_frame_style.fg_color[i].g = g;
+            next_frame_style.fg_color[i].b = b;
+            next_frame_style.fg_color[i].a = a;
+        }
+    }
 }
 
 void ta_ui_window_begin(const char *name, int *scroll_v)
@@ -413,6 +494,12 @@ void ta_ui_row_begin()
     container->row_continue = true;
 }
 
+void ta_ui_spacer(int w, int h)
+{
+    ui_frame *container = ui_container(dlb_vec_len(ui_frames));
+    container->offset.x += w;
+    container->offset.y += h;
+}
 void ta_ui_tooltip(const char *text, u32 text_len)
 {
     // TODO: Cache tooltips
@@ -460,14 +547,7 @@ bool ta_ui_button(const char *name, const ta_texture *tex)
     u32 frame_idx = ui_frame_start(UI_BUTTON, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
-    if (last_frame_state.down) {
-        bg_color = ui_get_color(frame, UI_STATE_DOWN);
-    } else if (last_frame_state.hover) {
-        bg_color = ui_get_color(frame, UI_STATE_HOVER);
-    }
-
-    ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_push_rect(frame->rect, frame->bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, true);
 
     if (tex) {
@@ -492,16 +572,12 @@ bool ta_ui_button_toggle(const char *name, const ta_texture *tex, bool *active)
     u32 frame_idx = ui_frame_start(UI_BUTTON, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    ta_rgba bg_color = ui_get_color(frame, UI_STATE_NONE);
     if (last_frame_state.pressed) {
         *active = !*active;
     }
+    ta_rgba bg_color = frame->bg_color;
     if (*active) {
-        bg_color = ui_get_color(frame, UI_STATE_ACTIVE);
-    } else if (last_frame_state.down) {
-        bg_color = ui_get_color(frame, UI_STATE_DOWN);
-    } else if (last_frame_state.hover) {
-        bg_color = ui_get_color(frame, UI_STATE_HOVER);
+        bg_color = ui_default_style[frame->type].bg_color[UI_STATE_ACTIVE];
     }
 
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
@@ -530,20 +606,18 @@ bool ta_ui_label(const char *name, const char *text)
         true, 0, 0, 0, 0);
 
     // Auto-expand frame based on contents
-    next_frame_style.size.w = MAX(next_frame_style.size.w, (int)text_rect.w);
-    next_frame_style.size.h = MAX(next_frame_style.size.h, (int)text_rect.h);
+    next_frame_size.w = MAX(next_frame_size.w, (int)text_rect.w);
+    next_frame_size.h = MAX(next_frame_size.h, (int)text_rect.h);
 
-    ta_rgba bg_color = next_frame_style.bg_color;
-
-    u32 frame_idx = ui_frame_start(UI_TEXTBOX, name);
+    u32 frame_idx = ui_frame_start(UI_LABEL, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
     // Render background
-    if (bg_color.a == 0.0f) {
-        bg_color.a = TA_EPSILON;
+    if (frame->bg_color.a == 0.0f) {
+        frame->bg_color.a = TA_EPSILON;
     }
     ta_rect bg_rect = frame->rect;
-    ta_primitive_push_rect(bg_rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_push_rect(bg_rect, frame->bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render(true, false);
 
     float text_left = (float)frame->rect.x + frame->pad.x;
@@ -570,8 +644,8 @@ bool ta_ui_textbox(const char *name, ta_text_entry *text_entry)
     ta_rectf bounds = ta_text_entry_draw(text_entry, &text_rects, &cursor);
 
     // Auto-expand frame based on contents
-    next_frame_style.size.w = MAX(next_frame_style.size.w, (int)bounds.w);
-    next_frame_style.size.h = MAX(next_frame_style.size.h, (int)bounds.h);
+    next_frame_size.w = MAX(next_frame_size.w, (int)bounds.w);
+    next_frame_size.h = MAX(next_frame_size.h, (int)bounds.h);
 
     u32 frame_idx = ui_frame_start(UI_TEXTBOX, name);
     ui_frame *frame = &ui_frames[frame_idx];

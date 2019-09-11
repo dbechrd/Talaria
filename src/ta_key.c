@@ -40,8 +40,8 @@ void ta_key_event(ta_event *event)
 {
     switch (event->type) {
         case TA_EVENT_KEY_PRESS: case TA_EVENT_KEY_RELEASE: {
-            bool down = (event->type == TA_EVENT_KEY_PRESS);
-            bool changed = keys[event->data.key_press.scancode].down != down;
+            u8 down = (event->type == TA_EVENT_KEY_PRESS);
+            u8 changed = keys[event->data.key_press.scancode].down != down;
             keys[event->data.key_press.scancode].down = down;
             keys[event->data.key_press.scancode].changed = changed;
             keys[event->data.key_press.scancode].last_change_ms = ta_timer_elapsed_ms();

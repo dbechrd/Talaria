@@ -15,6 +15,7 @@ typedef struct _iobuf FILE;
 #define TA_RECT(x, y, w, h) (const ta_rect){ x, y, w, h }
 #define TA_RECT1(x) TA_RECT(x, x, x, x)
 #define TA_RECT_ZERO TA_RECT(0, 0, 0, 0)
+#define TA_RGBA(r, g, b, a) (const ta_rgba){ r, g, b, a }
 
 typedef struct ta_vec2 {
     float x;

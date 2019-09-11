@@ -363,8 +363,11 @@ int main(int argc, char *argv[])
         ta_primitive_clear();
 #endif
 
-        debug_nametag();
-        ta_game_hud_draw();
+        //debug_nametag();
+        // TODO: Make HUD drawing suck less.. way too many draw calls
+        //       Use texture atlas, batch everything into one draw call. Import
+        //       textures from Rico; stop using stupid RGB placeholders
+        //ta_game_hud_draw();
         if (tg_game.state == TA_GAME_STATE_EDITOR) {
             ta_editor_draw();
         }

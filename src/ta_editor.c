@@ -35,6 +35,8 @@ static ta_editor editor;
 void ta_editor_init()
 {
     ta_log_write(&tg_debug_log, "[Editor] Initializing editor\n");
+    ta_ui_init();
+
     ta_log_write(&tg_debug_log, "[Editor] Initializing key binds\n");
 
 #undef DELETE
@@ -51,7 +53,7 @@ void ta_editor_init()
     //--------------------------------------------------------------------------
     // EDITOR
 
-    BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,  RELEASE, F11);
+    BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,  RELEASE, F1);
     BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,  RELEASE, ESCAPE);
     BIND1(keybinds, TA_EVENT_EDITOR_SELECT, PRESS, MOUSE_LEFT);
 
@@ -59,8 +61,8 @@ void ta_editor_init()
     BIND1(keybinds, TA_EVENT_CAMERA_MOVE_BACKWARD,      HOLD, S);
     BIND1(keybinds, TA_EVENT_CAMERA_MOVE_RIGHT,         HOLD, D);
     BIND1(keybinds, TA_EVENT_CAMERA_MOVE_LEFT,          HOLD, A);
-    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_UP,            HOLD, E); //SPACE);
-    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_DOWN,          HOLD, Q); //LSHIFT);
+    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_UP,            HOLD, SPACE);
+    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_DOWN,          HOLD, LSHIFT);
 
     BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,   PRESS, M);
     BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,    PRESS, Z);
@@ -72,7 +74,7 @@ void ta_editor_init()
 
     BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_NEWLINE,      PRESS, RETURN);
     BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_SUBMIT,       PRESS, RETURN);
-    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CANCEL,       PRESS, ESCAPE);
+    BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CANCEL,       RELEASE, ESCAPE);
     BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_BACKSPACE,    PRESS, BACKSPACE);
     BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_DELETE,       PRESS, DELETE);
     BIND1(keybinds_text_entry, TA_EVENT_EDITOR_TXT_CURSOR_RIGHT, HOLD, RIGHT);
@@ -134,16 +136,18 @@ static void ui_node_panel()
     if (node) {
         ta_rigid_body *rigid_body = ta_node_rigid_body(node);
 
+        ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "UID:");
         static ta_text_entry *uid_editor = 0;
         if (uid_editor) {
             ta_ui_next_size(100, 0);
+            ta_ui_next_pad(4, 1, 4, 1);
             ta_ui_textbox(0, uid_editor);
             ta_ui_next_margin(4, 0, 0, 0);
-            ta_ui_next_pad(4, 0, 4, 0);
-            ta_ui_next_bg_color(0.0f, 0.8f, 0.0f, 1.0f);
+            ta_ui_next_pad(4, 1, 4, 1);
+            ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.8f, 0.0f, 1.0f);
             if (ta_ui_label(0, "Save")) {
                 ta_text_entry_submit(uid_editor);
             }
@@ -182,14 +186,20 @@ static void ui_node_panel()
                 } else {
                     ta_text_entry_reject(uid_editor);
                 }
+            } else if (ta_text_entry_canceled(uid_editor)) {
+                ta_text_entry_free(&uid_editor);
             }
-        } else if (ta_ui_label(0, node->uid.uid)) {
-            DLB_ASSERT(!uid_editor);
-            uid_editor = ta_text_entry_init();
-            ta_text_entry_set_text(uid_editor, SYM(node->uid.uid));
-            ta_text_entry_focus(uid_editor);
+        } else {
+            ta_ui_next_pad(4, 1, 4, 1);
+            if (ta_ui_label(0, node->uid.uid)) {
+                DLB_ASSERT(!uid_editor);
+                uid_editor = ta_text_entry_init();
+                ta_text_entry_set_text(uid_editor, SYM(node->uid.uid));
+                ta_text_entry_focus(uid_editor);
+            }
         }
 
+        ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         float *position = (float *)&node->transform.position;
@@ -216,8 +226,8 @@ static void ui_node_panel()
                 }
 #if 1
                 ta_ui_next_margin(4, 0, 0, 0);
-                ta_ui_next_pad(4, 0, 4, 0);
-                ta_ui_next_bg_color(0.0f, 0.8f, 0.0f, 1.0f);
+                ta_ui_next_pad(4, 1, 4, 1);
+                ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.8f, 0.0f, 1.0f);
                 if (ta_ui_label(0, "Save")) {
                     ta_text_entry_submit(pos_editors[i]);
                 }
@@ -225,9 +235,11 @@ static void ui_node_panel()
                 if (ta_text_entry_submitted(pos_editors[i])) {
                     ta_text_entry_unfocus(pos_editors[i]);
                     ta_text_entry_free(&pos_editors[i]);
+                } else if (ta_text_entry_canceled(pos_editors[i])) {
+                    ta_text_entry_free(&pos_editors[i]);
                 }
             } else {
-                ta_ui_next_pad(4, 0, 4, 0);
+                ta_ui_next_pad(4, 1, 4, 1);
                 if (ta_ui_label(0, pos_buf)) {
                     DLB_ASSERT(!pos_editors[i]);
                     pos_editors[i] = ta_text_entry_init();
@@ -237,6 +249,7 @@ static void ui_node_panel()
             }
         }
 
+        ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "Orientation:");
@@ -249,8 +262,8 @@ static void ui_node_panel()
             node->transform.orientation.w);
         DLB_ASSERT(len < sizeof(orient_buf));
         ta_ui_label(0, orient_buf);
-
     } else {
+        ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "UID:");
@@ -316,8 +329,9 @@ static void ui_texture_panel()
     ta_ui_panel_begin(INTERN("sound_panel"), &texture_panel_id);
     ta_ui_row_begin();
     dlb_vec_each(ta_texture *, tex, tg_game.scene->pools[TYP_TEXTURE]) {
-        ta_ui_next_size(64, 64);
+        ta_ui_next_size(68, 68);
         ta_ui_next_margin(0, 0, 2, 0);
+        ta_ui_next_pad(2, 2, 2, 2);
         ta_ui_button(tex->uid.uid, tex);
     }
     ta_ui_panel_end(texture_panel_id);
@@ -354,7 +368,7 @@ static void ui_editor_sidebar()
     category_names[CATEGORY_AUDIO]    = INTERN(STRING(CATEGORY_AUDIO));
     category_names[CATEGORY_TEXTURES] = INTERN(STRING(CATEGORY_TEXTURES));
     category_names[CATEGORY_TEXTBOX]  = INTERN(STRING(CATEGORY_TEXTBOX));
-    static int category_selected = 0;
+    static int category_selected = CATEGORY_NODE;
 
     ta_ui_row_begin();
     ta_ui_next_size(50, 50);
@@ -365,8 +379,10 @@ static void ui_editor_sidebar()
         ta_ui_row_begin();
         ta_ui_next_size(50, 50);
         ta_ui_next_margin(0, 0, 0, 2);
-        if (ta_ui_button(category_names[i], 0)) {
-            category_selected = (i == category_selected ? -1 : i);
+        bool active = (i == category_selected);
+        ta_ui_button_toggle(category_names[i], 0, &active);
+        if (active) {
+            category_selected = i;
         }
         if (ta_ui_last_frame_state().hover) {
             ta_ui_tooltip(SYM(category_names[i]));
