@@ -11,7 +11,7 @@ typedef struct ta_camera {
     ta_vec3 position;           // where the camera is
     float position_smooth;      // how fast to blend to target [0, 1]
     float position_target_vel;  // how fast to move the target
-    ta_vec3 follow_target;      // where the camera wants to be
+    ta_transform target_xform;  // where the camera wants to be
     float follow_distance;      // how far to track target
 
     float yaw;
@@ -47,7 +47,7 @@ void ta_camera_init(ta_camera *camera);
 void ta_camera_set_ortho(ta_camera *camera, bool ortho);
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z);
 void ta_camera_set_rotation(ta_camera *camera, float yaw, float pitch);
-void ta_camera_set_target_pos_absolute(ta_camera *camera, ta_vec3 follow_target);
+void ta_camera_set_target_pos_absolute(ta_camera *camera, ta_vec3 target_pos);
 void ta_camera_set_target_pos_relative(ta_camera *camera, ta_vec3 delta);
 void ta_camera_yaw(ta_camera *camera, float delta);
 void ta_camera_pitch(ta_camera *camera, float delta);

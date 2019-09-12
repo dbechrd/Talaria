@@ -13,7 +13,7 @@ void ta_camera_init(ta_camera *camera)
 {
     if (!camera->position_smooth)     camera->position_smooth = 1.0f;
     if (!camera->position_target_vel) camera->position_target_vel = 0.1f;
-    camera->follow_target =           camera->position;
+    camera->target_xform.position =   camera->position;
 
     if (!camera->yaw)                 camera->yaw = 90.0f;
     if (!camera->yaw_smooth)          camera->yaw_smooth = 1.0f;
@@ -44,7 +44,7 @@ void ta_camera_set_position(ta_camera *camera, float x, float y, float z)
     camera->position.x = x;
     camera->position.y = y;
     camera->position.z = z;
-    camera->follow_target = camera->position;
+    camera->target_xform.position = camera->position;
 }
 
 void ta_camera_set_rotation(ta_camera *camera, float yaw, float pitch)
@@ -62,16 +62,16 @@ void ta_camera_set_rotate_accel(ta_camera *camera, float yaw_accel,
 }
 #endif
 
-void ta_camera_set_target_pos_absolute(ta_camera *camera, ta_vec3 follow_target)
+void ta_camera_set_target_pos_absolute(ta_camera *camera, ta_vec3 target_pos)
 {
-    camera->follow_target = follow_target;
+    camera->target_xform.position = target_pos;
     camera->dirty = true;
 }
 
 void ta_camera_set_target_pos_relative(ta_camera *camera, ta_vec3 delta)
 {
     ta_vec3 offset = vec3_scalef(delta, camera->position_target_vel);
-    camera->follow_target = vec3_add(camera->follow_target, offset);
+    camera->target_xform.position = vec3_add(camera->target_xform.position, offset);
     camera->dirty = true;
 }
 
@@ -184,7 +184,7 @@ void ta_camera_update(ta_camera *camera, double dt)
     }
 
     // Update position
-    ta_vec3 pos_delta = vec3_sub(camera->follow_target, camera->position);
+    ta_vec3 pos_delta = vec3_sub(camera->target_xform.position, camera->position);
     if (vec3_len(pos_delta) > camera->follow_distance) {
         camera->position = vec3_add(camera->position,
             vec3_scalef(pos_delta, camera->position_smooth));

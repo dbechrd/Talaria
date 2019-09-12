@@ -62,7 +62,7 @@ void ta_game_init(ta_game *game)
     BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_BACKWARD, HOLD, S);
     BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_RIGHT,    HOLD, D);
     BIND1(PLAY, TA_EVENT_GAME_PLAYER_MOVE_LEFT,     HOLD, A);
-    BIND1(PLAY, TA_EVENT_GAME_PLAYER_JUMP,          HOLD, SPACE);
+    BIND1(PLAY, TA_EVENT_GAME_PLAYER_JUMP,          PRESS, SPACE);
     BIND1(PLAY, TA_EVENT_GAME_PLAYER_SHOOT,         PRESS, MOUSE_LEFT);
 
     BIND1(PLAY, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,   PRESS, M);
@@ -83,7 +83,7 @@ void ta_game_init(ta_game *game)
     BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_BACKWARD, HOLD, DOWN);
     BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_RIGHT,    HOLD, RIGHT);
     BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_MOVE_LEFT,     HOLD, LEFT);
-    BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_JUMP,          HOLD, 3);
+    BIND1(FREE_CAM, TA_EVENT_GAME_PLAYER_JUMP,          PRESS, 3);
 
     BIND1(FREE_CAM, TA_EVENT_CAMERA_MOVE_FORWARD,       HOLD, W);
     BIND1(FREE_CAM, TA_EVENT_CAMERA_MOVE_BACKWARD,      HOLD, S);
@@ -120,8 +120,8 @@ void ta_game_state_set(ta_game *game, ta_game_state state)
             break;
         } case TA_GAME_STATE_FREE_CAM: {
             if (vec3_zero(game->camera_freecam->position)) {
-                game->camera_freecam->follow_target = game->camera_player->follow_target;
-                game->camera_freecam->position = game->camera_freecam->follow_target;
+                game->camera_freecam->target_xform.position = game->camera_player->target_xform.position;
+                game->camera_freecam->position = game->camera_freecam->target_xform.position;
             }
             game->camera = game->camera_freecam;
             ta_mouse_capture_set(true);
@@ -220,7 +220,7 @@ void ta_game_event(ta_game *game, ta_event *event)
             dir.x = game->camera->front.x;
             dir.z = game->camera->front.z;
             dir = vec3_normalize(dir);
-            //dir = vec3_scalef(dir, 20.0f);
+            dir = vec3_scalef(dir, 0.1f);
             ta_rigid_body *player_body = ta_node_rigid_body(game->player);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
@@ -229,7 +229,7 @@ void ta_game_event(ta_game *game, ta_event *event)
             dir.x = -game->camera->front.x;
             dir.z = -game->camera->front.z;
             dir = vec3_normalize(dir);
-            //dir = vec3_scalef(dir, 20.0f);
+            dir = vec3_scalef(dir, 0.1f);
             ta_rigid_body *player_body = ta_node_rigid_body(game->player);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
@@ -238,7 +238,7 @@ void ta_game_event(ta_game *game, ta_event *event)
             dir.x = game->camera->right.x;
             dir.z = game->camera->right.z;
             dir = vec3_normalize(dir);
-            //dir = vec3_scalef(dir, 20.0f);
+            dir = vec3_scalef(dir, 0.1f);
             ta_rigid_body *player_body = ta_node_rigid_body(game->player);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
@@ -247,13 +247,15 @@ void ta_game_event(ta_game *game, ta_event *event)
             dir.x = -game->camera->right.x;
             dir.z = -game->camera->right.z;
             dir = vec3_normalize(dir);
-            //dir = vec3_scalef(dir, 20.0f);
+            dir = vec3_scalef(dir, 0.1f);
             ta_rigid_body *player_body = ta_node_rigid_body(game->player);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_JUMP: {
+            ta_vec3 dir = VEC3_Y;
+            dir = vec3_scalef(dir, 5.0f);
             ta_rigid_body *player_body = ta_node_rigid_body(game->player);
-            ta_rigid_body_apply_impulse(player_body, VEC3_Y, VEC3_ZERO);
+            ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_SHOOT: {
             game_player_shoot(game);

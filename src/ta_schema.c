@@ -215,7 +215,7 @@ void ta_schema_register()
     TYPE_START(ta_transform, TYP_TRANSFORM);
     TYPE_FIELD(ta_transform, position,    TYP_VEC3);
     TYPE_FIELD(ta_transform, orientation, TYP_QUAT);
-    TYPE_FIELD(ta_transform, scale,       TYP_VEC3);
+    //TYPE_FIELD(ta_transform, scale,       TYP_VEC3);
     TYPE_END(ta_transform);
 
     // Scene-level object types

@@ -147,6 +147,7 @@ ta_text_entry *ta_text_entry_init()
 void ta_text_entry_free(ta_text_entry **text_entry)
 {
     ta_text_entry *entry = *text_entry;
+    ta_text_entry_unfocus(entry);
     dlb_vec_free(entry->buf);
     dlb_vec_free(entry->text);
     dlb_free(entry);
@@ -260,7 +261,6 @@ void ta_text_entry_cancel(ta_text_entry *text_entry)
     DLB_ASSERT(!text_entry->cancel);  // Duplicate cancel?
     DLB_ASSERT(!text_entry->submit);  // Cancel after submit? Perhaps you meant reject?
     text_entry->cancel = true;
-    ta_text_entry_unfocus(text_entry);
 }
 
 bool ta_text_entry_canceled(ta_text_entry *text_entry)

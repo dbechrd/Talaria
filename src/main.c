@@ -198,9 +198,9 @@ int main(int argc, char *argv[])
     //
     // Randy Gaul
     // https://gamedevelopment.tutsplus.com/series/how-to-create-a-custom-physics-engine--gamedev-12715
-    const double ms_sim_dt = 10;             // fixed dt milliseconds
+    const double ms_sim_dt = 20;             // fixed dt milliseconds
     const double sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
-    const double sim_max_steps = 10;         // max simulation steps per frame
+    const double sim_max_steps = 0;          // max simulation steps per frame
     double ms_sim_t = 0;                     // current simulation time
 
     double ms_frame_first = ta_timer_elapsed_ms();
@@ -217,15 +217,19 @@ int main(int argc, char *argv[])
         // Engine events
         ta_event_events();
 
-        ms_frame_accum += ms_frame_delta;
-
-        // Prevent spiral of death
-        // NOTE: This breaks determinism when simulation is under duress
-        if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
-            ta_log_write(&tg_debug_log,
-                "[Sim] WARNING: Physics accumulator spiraling; truncating %f to %f\n",
-                ms_frame_accum, ms_sim_dt * sim_max_steps);
-            ms_frame_accum = ms_sim_dt * sim_max_steps;
+        // If sim_max_steps == 0, assume we want lockstep physics
+        if (sim_max_steps == 0) {
+            ms_frame_accum = ms_sim_dt;
+        } else {
+            ms_frame_accum += ms_frame_delta;
+            // Prevent spiral of death
+            // NOTE: This breaks determinism when simulation is under duress
+            if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
+                ta_log_write(&tg_debug_log,
+                    "[Sim] WARNING: Physics accumulator spiraling; truncating %f to %f\n",
+                    ms_frame_accum, ms_sim_dt * sim_max_steps);
+                ms_frame_accum = ms_sim_dt * sim_max_steps;
+            }
         }
 
         while (ms_frame_accum >= ms_sim_dt) {

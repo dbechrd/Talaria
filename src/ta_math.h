@@ -66,7 +66,7 @@ typedef struct ta_mat4 {
 typedef struct ta_transform {
     ta_vec3 position;
     ta_quat orientation;
-    ta_vec3 scale;
+    //ta_vec3 scale;
 } ta_transform;
 
 typedef struct ta_hsl {

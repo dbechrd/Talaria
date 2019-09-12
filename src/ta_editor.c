@@ -128,25 +128,25 @@ ta_node *ta_editor_selected_node()
 static void ui_node_panel()
 {
     u32 node_panel_id;
-    ta_ui_next_margin(2, 2, 0, 0);
-    ta_ui_panel_begin(INTERN("node_panel"), &node_panel_id);
+    //ta_ui_next_margin(2, 2, 0, 0);
+    ta_ui_panel_begin(0, &node_panel_id);
 
     static int label_width = 150;
     ta_node *node = ta_editor_selected_node();
     if (node) {
         ta_rigid_body *rigid_body = ta_node_rigid_body(node);
 
-        ta_ui_spacer(0, 2);
+        //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "UID:");
         static ta_text_entry *uid_editor = 0;
         if (uid_editor) {
             ta_ui_next_size(100, 0);
-            ta_ui_next_pad(4, 1, 4, 1);
+            //ta_ui_next_pad(4, 1, 4, 1);
             ta_ui_textbox(0, uid_editor);
-            ta_ui_next_margin(4, 0, 0, 0);
-            ta_ui_next_pad(4, 1, 4, 1);
+            //ta_ui_next_margin(4, 0, 0, 0);
+            //ta_ui_next_pad(4, 1, 4, 1);
             ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.8f, 0.0f, 1.0f);
             if (ta_ui_label(0, "Save")) {
                 ta_text_entry_submit(uid_editor);
@@ -190,7 +190,7 @@ static void ui_node_panel()
                 ta_text_entry_free(&uid_editor);
             }
         } else {
-            ta_ui_next_pad(4, 1, 4, 1);
+            //ta_ui_next_pad(4, 1, 4, 1);
             if (ta_ui_label(0, node->uid.uid)) {
                 DLB_ASSERT(!uid_editor);
                 uid_editor = ta_text_entry_init();
@@ -199,7 +199,7 @@ static void ui_node_panel()
             }
         }
 
-        ta_ui_spacer(0, 2);
+        //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         float *position = (float *)&node->transform.position;
@@ -217,7 +217,7 @@ static void ui_node_panel()
             int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f", position[i]);
             DLB_ASSERT(len < sizeof(pos_buf));
             if (pos_editors[i]) {
-                ta_ui_next_pad(4, 1, 4, 1);
+                //ta_ui_next_pad(4, 1, 4, 1);
                 ta_ui_textbox(0, pos_editors[i]);
                 if (ta_text_entry_valid(pos_editors[i])) {
                     u32 text_len = 0;
@@ -225,8 +225,8 @@ static void ui_node_panel()
                     position[i] = parse_float(text);
                 }
 #if 1
-                ta_ui_next_margin(4, 0, 0, 0);
-                ta_ui_next_pad(4, 1, 4, 1);
+               // ta_ui_next_margin(4, 0, 0, 0);
+                //ta_ui_next_pad(4, 1, 4, 1);
                 ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.8f, 0.0f, 1.0f);
                 if (ta_ui_label(0, "Save")) {
                     ta_text_entry_submit(pos_editors[i]);
@@ -239,7 +239,7 @@ static void ui_node_panel()
                     ta_text_entry_free(&pos_editors[i]);
                 }
             } else {
-                ta_ui_next_pad(4, 1, 4, 1);
+                //ta_ui_next_pad(4, 1, 4, 1);
                 if (ta_ui_label(0, pos_buf)) {
                     DLB_ASSERT(!pos_editors[i]);
                     pos_editors[i] = ta_text_entry_init();
@@ -249,7 +249,7 @@ static void ui_node_panel()
             }
         }
 
-        ta_ui_spacer(0, 2);
+        //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "Orientation:");
@@ -263,7 +263,7 @@ static void ui_node_panel()
         DLB_ASSERT(len < sizeof(orient_buf));
         ta_ui_label(0, orient_buf);
     } else {
-        ta_ui_spacer(0, 2);
+        //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "UID:");
@@ -277,9 +277,9 @@ static void ui_audio_panel()
     static const char *audio_playing_uid = 0;
 
     u32 audio_panel_id;
-    ta_ui_next_size(50, 50);
-    ta_ui_next_margin(2, 2, 0, 0);
-    ta_ui_panel_begin(INTERN("sound_panel"), &audio_panel_id);
+    //ta_ui_next_size(50, 50);
+    //ta_ui_next_margin(2, 2, 0, 0);
+    ta_ui_panel_begin(0, &audio_panel_id);
 
     ta_audio_buffer *audio_request = 0;
 
@@ -298,8 +298,8 @@ static void ui_audio_panel()
         ta_ui_panel_end(node_panel_id);
 #endif
         bool active = buf->uid.uid == audio_playing_uid;
-        ta_ui_next_size(36, 36);
-        ta_ui_next_margin(0, 0, 2, 0);
+        //ta_ui_next_size(36, 36);
+        //ta_ui_next_margin(0, 0, 2, 0);
         ta_ui_button_toggle(buf->uid.uid, tg_game.tex_audio_icon, &active);
         if (ta_ui_last_frame_state().pressed) {
             audio_request = buf;
@@ -325,13 +325,13 @@ static void ui_audio_panel()
 static void ui_texture_panel()
 {
     u32 texture_panel_id;
-    ta_ui_next_margin(2, 2, 0, 0);
-    ta_ui_panel_begin(INTERN("sound_panel"), &texture_panel_id);
+    //ta_ui_next_margin(2, 2, 0, 0);
+    ta_ui_panel_begin(0, &texture_panel_id);
     ta_ui_row_begin();
     dlb_vec_each(ta_texture *, tex, tg_game.scene->pools[TYP_TEXTURE]) {
         ta_ui_next_size(68, 68);
-        ta_ui_next_margin(0, 0, 2, 0);
-        ta_ui_next_pad(2, 2, 2, 2);
+        //ta_ui_next_margin(0, 0, 2, 0);
+        //ta_ui_next_pad(2, 2, 2, 2);
         ta_ui_button(tex->uid.uid, tex);
     }
     ta_ui_panel_end(texture_panel_id);
@@ -339,8 +339,8 @@ static void ui_texture_panel()
 static void ui_textbox_panel()
 {
     u32 textbox_panel_id;
-    ta_ui_next_margin(2, 2, 0, 0);
-    ta_ui_panel_begin(INTERN("sound_panel"), &textbox_panel_id);
+    //ta_ui_next_margin(2, 2, 0, 0);
+    ta_ui_panel_begin(0, &textbox_panel_id);
 
     static ta_text_entry *text_entry = 0;
     if (!text_entry) {
@@ -348,10 +348,10 @@ static void ui_textbox_panel()
         ta_text_entry_set_text(text_entry, CSTR("This is a test."));
     }
     ta_ui_row_begin();
-    ta_ui_label(INTERN("test_label"), "Text:");
+    ta_ui_label(0, "Text:");
     ta_ui_next_size(300, 0);
-    ta_ui_next_margin(4, 0, 0, 2);
-    ta_ui_textbox(INTERN("test_textbox"), text_entry);
+    //ta_ui_next_margin(4, 0, 0, 2);
+    ta_ui_textbox(0, text_entry);
     ta_ui_panel_end(textbox_panel_id);
 }
 static void ui_editor_sidebar()
@@ -372,13 +372,13 @@ static void ui_editor_sidebar()
 
     ta_ui_row_begin();
     ta_ui_next_size(50, 50);
-    ta_ui_next_pad(2, 2, 2, 2);
+    //ta_ui_next_pad(2, 2, 2, 2);
     u32 category_panel_id = 0;
     ta_ui_panel_begin(INTERN("editor_sidebar"), &category_panel_id);
     for (int i = 0; i < CATEGORY_COUNT; i++) {
         ta_ui_row_begin();
         ta_ui_next_size(50, 50);
-        ta_ui_next_margin(0, 0, 0, 2);
+        //ta_ui_next_margin(0, 0, 0, 2);
         bool active = (i == category_selected);
         ta_ui_button_toggle(category_names[i], 0, &active);
         if (active) {
@@ -435,9 +435,10 @@ void ta_editor_draw()
 {
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
+    ta_ui_spacer(0, 50);
     ta_ui_next_size(300, 400);
-    ta_ui_next_margin(0, 50, 0, 0);
-    ta_ui_next_pad(2, 2, 2, 2);
+    //ta_ui_next_margin(0, 50, 0, 0);
+    //ta_ui_next_pad(2, 2, 2, 2);
     ta_ui_window_begin(INTERN("test_window"), 0);
     ui_editor_sidebar();
     ta_ui_window_end();

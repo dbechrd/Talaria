@@ -22,9 +22,9 @@ void ta_node_init(ta_node *node)
     if (quat_zero(node->transform.orientation)) {
         node->transform.orientation = QUAT_IDENT;
     }
-    if (vec3_zero(node->transform.scale)) {
-        node->transform.scale = VEC3_ONE;
-    }
+    //if (vec3_zero(node->transform.scale)) {
+    //    node->transform.scale = VEC3_ONE;
+    //}
     node->transform_prev = node->transform;
     if (!node->material_uid) {
         node->material_uid = node->uid.scene->default_material_uid;
