@@ -1,0 +1,16 @@
+#-------------------------------------------------------------------------------
+# Shaders
+#-------------------------------------------------------------------------------
+ta_shader:
+  uid: "shader_editor_select"
+  path_vert: "data/shader/editor_select_v.glsl"
+  path_frag: "data/shader/editor_select_f.glsl"
+  attributes: [
+    { name: "attr_position", type: 5 },  # TA_GLSL_VEC3
+  ]
+  uniforms: [
+    { name: "u_proj",  type: 8 },  # TA_GLSL_MAT4
+    { name: "u_view",  type: 8 },  # TA_GLSL_MAT4
+    { name: "u_model", type: 8 },  # TA_GLSL_MAT4
+    { name: "u_color", type: 6 },  # TA_GLSL_VEC4
+  ]

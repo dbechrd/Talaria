@@ -211,8 +211,10 @@ void ta_node_render(ta_node *node, ta_camera *camera, float alpha)
 
     // TODO: Multiply position by parent via mat4_mul(parent, transform)
     ta_mat4 trans = mat4_translate(lerp_pos);
-    ta_mat4 orient = mat4_rotate_quat(lerp_orient);
-    node->model = mat4_mul(&trans, &orient);
+    ta_mat4 rot = mat4_rotate_quat(lerp_orient);
+    ta_mat4 scal = MAT4_IDENT;
+    node->model = mat4_mul(&rot, &scal);
+    node->model = mat4_mul(&trans, &node->model);
 
     if (!camera->debug_no_mesh) {
         ta_material *mat = ta_node_material(node);
@@ -220,22 +222,13 @@ void ta_node_render(ta_node *node, ta_camera *camera, float alpha)
         ta_texture *texture_albedo = ta_material_texture_albedo(mat);
         ta_texture *texture_metallic = ta_material_texture_metallic(mat);
         ta_mesh_group *mesh_group = ta_node_mesh_group(node);
-
-        // TODO: Allow some entities to not be renderable; skip them
         DLB_ASSERT(mat);
         DLB_ASSERT(shader);
         DLB_ASSERT(texture_albedo);
         DLB_ASSERT(texture_metallic);
         DLB_ASSERT(mesh_group);
 
-        // TODO: This is going to make a zillion extranous calls
-        static GLenum tg_polygon_mode = GL_FILL;
-        GLenum camera_poly_mode = camera->debug_wireframe ? GL_LINE : GL_FILL;
-        if (camera_poly_mode != tg_polygon_mode) {
-            glPolygonMode(GL_FRONT_AND_BACK, camera_poly_mode);
-            tg_polygon_mode = camera_poly_mode;
-        }
-
+        ta_shader_bind(shader);
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
         ta_shader_set_mat4(shader, SYM_U_MODEL, &node->model);
@@ -251,7 +244,6 @@ void ta_node_render(ta_node *node, ta_camera *camera, float alpha)
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO, texture_albedo->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_METALLIC, texture_metallic->gl_id);
-        ta_shader_bind(shader);
         ta_shader_prerender(shader);
         ta_mesh_group_render(mesh_group);
         ta_shader_unbind(shader);
@@ -271,4 +263,39 @@ void ta_node_render(ta_node *node, ta_camera *camera, float alpha)
     }
 
     ta_primitive_render(true, false);
+}
+
+void ta_node_render_shader(ta_node *node, ta_camera *camera, ta_shader *shader,
+    float alpha, float scale)
+{
+    DLB_ASSERT(shader);
+
+    ta_vec3 lerp_pos;
+    ta_quat lerp_orient;
+    ta_rigid_body *body = ta_node_rigid_body(node);
+    if (body) {
+        lerp_pos = vec3_lerp(node->transform.position, body->position, alpha);
+        lerp_orient = quat_nlerp(node->transform.orientation, body->orientation, alpha);
+    } else {
+        lerp_pos = vec3_lerp(node->transform_prev.position, node->transform.position, alpha);
+        lerp_orient = quat_nlerp(node->transform_prev.orientation, node->transform.orientation, alpha);
+    }
+
+    // TODO: Multiply position by parent via mat4_mul(parent, transform)
+    ta_mat4 trans = mat4_translate(lerp_pos);
+    ta_mat4 rot = mat4_rotate_quat(lerp_orient);
+    ta_mat4 scal = mat4_scalef(scale);
+    node->model = mat4_mul(&rot, &scal);
+    node->model = mat4_mul(&trans, &node->model);
+
+    ta_mesh_group *mesh_group = ta_node_mesh_group(node);
+    DLB_ASSERT(mesh_group);
+
+    ta_shader_bind(shader);
+    ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
+    ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
+    ta_shader_set_mat4(shader, SYM_U_MODEL, &node->model);
+    ta_shader_prerender(shader);
+    ta_mesh_group_render(mesh_group);
+    ta_shader_unbind(shader);
 }

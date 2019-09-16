@@ -124,19 +124,31 @@ static void ta_render_init_gl()
     }
 #endif
 
-    // Depth buffer
-    glDepthFunc(GL_LEQUAL);  // Default GL_LESS
-    glEnable(GL_DEPTH_TEST); // Default off
-    glEnable(GL_CULL_FACE);  // Backface culling
-    glCullFace(GL_BACK);
+    glClearColor(0.4f, 0.7f, 1.0f, 1.0f);
 
-    // Multi-sampling
-    //glEnable(GL_MULTISAMPLE);
+    // Stencil buffer
+    //glStencilMask(0x00);
+    //glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+    //glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+    GLint stencilSize = 0;
+    glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER,
+        GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &stencilSize);
+    DLB_ASSERT(stencilSize == 8);
+
+    // Depth buffer
+    glDepthFunc(GL_LEQUAL);    // Default GL_LESS
+    glEnable(GL_DEPTH_TEST);   // Default off
+    glEnable(GL_CULL_FACE);    // Backface culling
+    glCullFace(GL_BACK);
 
     // Alpha-blending
     glBlendEquation(GL_FUNC_ADD);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_BLEND);
+
+    // Multi-sampling
+    //glEnable(GL_MULTISAMPLE);
 
     // Gamma correction
     //glEnable(GL_FRAMEBUFFER_SRGB);

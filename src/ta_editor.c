@@ -28,6 +28,8 @@ typedef struct ta_editor {
     ta_text_entry *text_entry;
     ta_keybind *keybinds;
     ta_keybind *keybinds_text_entry;
+    ta_scene *scene;
+    ta_shader *shader_editor_select;
 } ta_editor;
 
 static ta_editor editor;
@@ -36,6 +38,12 @@ void ta_editor_init()
 {
     ta_log_write(&tg_debug_log, "[Editor] Initializing editor\n");
     ta_ui_init();
+
+    editor.scene = ta_scene_load_file("data/scene/editor.dml");
+    DLB_ASSERT(editor.scene);
+    editor.shader_editor_select = ta_scene_find(editor.scene, TYP_SHADER,
+        INTERN("shader_editor_select"));
+    DLB_ASSERT(editor.shader_editor_select);
 
     ta_log_write(&tg_debug_log, "[Editor] Initializing key binds\n");
 
@@ -53,7 +61,7 @@ void ta_editor_init()
     //--------------------------------------------------------------------------
     // EDITOR
 
-    BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,  RELEASE, F1);
+    BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,  RELEASE, GRAVE);
     BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,  RELEASE, ESCAPE);
     BIND1(keybinds, TA_EVENT_EDITOR_SELECT, PRESS, MOUSE_LEFT);
 
@@ -64,10 +72,16 @@ void ta_editor_init()
     BIND1(keybinds, TA_EVENT_CAMERA_MOVE_UP,            HOLD, SPACE);
     BIND1(keybinds, TA_EVENT_CAMERA_MOVE_DOWN,          HOLD, LSHIFT);
 
-    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,   PRESS, M);
-    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,    PRESS, Z);
-    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_BBOX,         PRESS, 1);
-    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_NORMALS,      PRESS, 2);
+    BIND1(keybinds, TA_EVENT_GAME_PLAYER_MOVE_FORWARD,  HOLD, I);
+    BIND1(keybinds, TA_EVENT_GAME_PLAYER_MOVE_BACKWARD, HOLD, K);
+    BIND1(keybinds, TA_EVENT_GAME_PLAYER_MOVE_RIGHT,    HOLD, L);
+    BIND1(keybinds, TA_EVENT_GAME_PLAYER_MOVE_LEFT,     HOLD, J);
+
+    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,   PRESS, 1);
+    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,    PRESS, 2);
+    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_BBOX,         PRESS, 3);
+    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_NORMALS,      PRESS, 4);
+    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_MESH,         PRESS, 5);
 
     //--------------------------------------------------------------------------
     // TEXT_ENTRY
@@ -333,6 +347,13 @@ static void ui_texture_panel()
         //ta_ui_next_margin(0, 0, 2, 0);
         //ta_ui_next_pad(2, 2, 2, 2);
         ta_ui_button(tex->uid.uid, tex);
+        if (ta_ui_last_frame_state().hover) {
+            char tex_buf[64] = { 0 };
+            int len = snprintf(tex_buf, sizeof(tex_buf), "%s (gl_id: %d)",
+                tex->uid.uid, tex->gl_id);
+            DLB_ASSERT(len < sizeof(tex_buf));
+            ta_ui_tooltip(tex_buf, len);
+        }
     }
     ta_ui_panel_end(texture_panel_id);
 }
@@ -431,8 +452,32 @@ static void ui_statusbar()
         editor.status_msg = 0;
     }
 }
-void ta_editor_draw()
+void ta_editor_draw(float alpha)
 {
+    // Stencil selected node
+    ta_node *selected_node = ta_editor_selected_node();
+    if (selected_node) {
+        glEnable(GL_STENCIL_TEST);
+        glStencilFunc(GL_ALWAYS, 1, 0xFF);
+        glStencilMask(0xFF);
+        //glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        ta_node_render(selected_node, tg_game.camera, alpha);
+    }
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    // Outline selected node
+    if (selected_node) {
+        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+        glStencilMask(0x00);
+        ta_shader_set_vec4(editor.shader_editor_select, SYM_U_COLOR,
+            (ta_vec4 *)&TA_COLOR_YELLOW);
+        ta_node_render_shader(selected_node, tg_game.camera,
+            editor.shader_editor_select, alpha, 1.1f);
+        glDisable(GL_STENCIL_TEST);
+    }
+
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
     ta_ui_spacer(0, 50);

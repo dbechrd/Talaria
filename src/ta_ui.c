@@ -71,7 +71,7 @@ void ta_ui_init()
     //ui_default_style[UI_ROOT].margin                        = TA_RECT_ZERO;
     //ui_default_style[UI_ROOT].pad                           = TA_RECT_ZERO;
     //ui_default_style[UI_ROOT].bg_color[UI_STATE_NONE]       = TA_COLOR_INVIS;
-      ui_default_style[UI_ROOT].bg_color[UI_STATE_HOVER]      = TA_RGBA(1.0f, 0.0f, 0.0f, 0.8f);
+      ui_default_style[UI_ROOT].bg_color[UI_STATE_HOVER]      = TA_RGBA(1.0f, 0.0f, 0.0f, 0.9f);
     //ui_default_style[UI_ROOT].bg_color[UI_STATE_DOWN]       = TA_COLOR_INVIS;
     //ui_default_style[UI_ROOT].bg_color[UI_STATE_ACTIVE]     = TA_COLOR_INVIS;
     //ui_default_style[UI_ROOT].fg_color[UI_STATE_NONE]       = TA_COLOR_INVIS;
@@ -82,7 +82,7 @@ void ta_ui_init()
     //ui_default_style[UI_WINDOW].margin = TA_RECT_ZERO;
     //ui_default_style[UI_WINDOW].pad    = TA_RECT_ZERO;
     //ui_default_style[UI_WINDOW].bg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
-      ui_default_style[UI_WINDOW].bg_color[UI_STATE_HOVER]    = TA_RGBA(0.0f, 1.0f, 0.0f, 0.8f);
+      ui_default_style[UI_WINDOW].bg_color[UI_STATE_HOVER]    = TA_RGBA(0.0f, 1.0f, 0.0f, 0.9f);
     //ui_default_style[UI_WINDOW].bg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
     //ui_default_style[UI_WINDOW].bg_color[UI_STATE_ACTIVE]   = TA_COLOR_INVIS;
     //ui_default_style[UI_WINDOW].fg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
@@ -93,7 +93,7 @@ void ta_ui_init()
       ui_default_style[UI_PANEL].margin                       = TA_RECT(0, 0, 0, 0);
       ui_default_style[UI_PANEL].pad                          = TA_RECT(0, 0, 0, 0);
     //ui_default_style[UI_PANEL].bg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
-      ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.0f, 0.0f, 1.0f, 0.8f);
+      ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.0f, 0.0f, 1.0f, 0.9f);
     //ui_default_style[UI_PANEL].bg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].bg_color[UI_STATE_ACTIVE]    = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
@@ -103,10 +103,10 @@ void ta_ui_init()
 
       ui_default_style[UI_BUTTON].margin                      = TA_RECT(2, 1, 0, 1);
       ui_default_style[UI_BUTTON].pad                         = TA_RECT(4, 4, 4, 4); //TA_RECT(4, 1, 4, 1);
-      ui_default_style[UI_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(1.0f, 1.0f, 1.0f, 0.8f);
-      ui_default_style[UI_BUTTON].bg_color[UI_STATE_HOVER]    = TA_RGBA(1.0f, 1.0f, 0.0f, 0.8f);
-      ui_default_style[UI_BUTTON].bg_color[UI_STATE_DOWN]     = TA_RGBA(1.0f, 1.0f, 0.0f, 0.8f);
-      ui_default_style[UI_BUTTON].bg_color[UI_STATE_ACTIVE]   = TA_RGBA(0.0f, 1.0f, 1.0f, 0.8f);
+      ui_default_style[UI_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(1.0f, 1.0f, 1.0f, 0.9f);
+      ui_default_style[UI_BUTTON].bg_color[UI_STATE_HOVER]    = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
+      ui_default_style[UI_BUTTON].bg_color[UI_STATE_DOWN]     = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
+      ui_default_style[UI_BUTTON].bg_color[UI_STATE_ACTIVE]   = TA_RGBA(0.0f, 1.0f, 1.0f, 0.9f);
     //ui_default_style[UI_BUTTON].fg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
     //ui_default_style[UI_BUTTON].fg_color[UI_STATE_HOVER]    = TA_COLOR_INVIS;
     //ui_default_style[UI_BUTTON].fg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
@@ -114,10 +114,10 @@ void ta_ui_init()
 
       ui_default_style[UI_LABEL].margin                       = TA_RECT(2, 1, 0, 1);
       ui_default_style[UI_LABEL].pad                          = TA_RECT(4, 1, 4, 1);
-      ui_default_style[UI_LABEL].bg_color[UI_STATE_NONE]      = TA_RGBA(0.2f, 0.2f, 0.4f, 0.6f);
-      ui_default_style[UI_LABEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.2f, 0.2f, 0.4f, 0.6f);
-      ui_default_style[UI_LABEL].bg_color[UI_STATE_DOWN]      = TA_RGBA(0.2f, 0.2f, 0.4f, 0.6f);
-      ui_default_style[UI_LABEL].bg_color[UI_STATE_ACTIVE]    = TA_RGBA(0.2f, 0.2f, 0.4f, 0.6f);
+      ui_default_style[UI_LABEL].bg_color[UI_STATE_NONE]      = TA_RGBA(0.2f, 0.2f, 0.4f, 0.9f);
+      ui_default_style[UI_LABEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.2f, 0.2f, 0.4f, 0.9f);
+      ui_default_style[UI_LABEL].bg_color[UI_STATE_DOWN]      = TA_RGBA(0.2f, 0.2f, 0.4f, 0.9f);
+      ui_default_style[UI_LABEL].bg_color[UI_STATE_ACTIVE]    = TA_RGBA(0.2f, 0.2f, 0.4f, 0.9f);
     //ui_default_style[UI_LABEL].fg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
     //ui_default_style[UI_LABEL].fg_color[UI_STATE_HOVER]     = TA_COLOR_INVIS;
     //ui_default_style[UI_LABEL].fg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS;
@@ -125,10 +125,10 @@ void ta_ui_init()
 
       ui_default_style[UI_TEXTBOX].margin                     = TA_RECT(2, 1, 0, 1);
       ui_default_style[UI_TEXTBOX].pad                        = TA_RECT(4, 1, 4, 1);
-      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE]    = TA_RGBA(1.0f, 1.0f, 1.0f, 0.8f);
-      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_HOVER]   = TA_RGBA(1.0f, 1.0f, 0.0f, 0.8f);
-      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_DOWN]    = TA_RGBA(1.0f, 0.0f, 1.0f, 0.8f);
-      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_ACTIVE]  = TA_RGBA(0.0f, 1.0f, 1.0f, 0.8f);
+      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE]    = TA_RGBA(1.0f, 1.0f, 1.0f, 0.9f);
+      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_HOVER]   = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
+      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_DOWN]    = TA_RGBA(1.0f, 0.0f, 1.0f, 0.9f);
+      ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_ACTIVE]  = TA_RGBA(0.0f, 1.0f, 1.0f, 0.9f);
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_NONE]    = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_HOVER]   = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;

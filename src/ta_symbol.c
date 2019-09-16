@@ -35,6 +35,7 @@ const char *SYM_ATTR_NORMAL;
 const char *SYM_U_PROJ;
 const char *SYM_U_VIEW;
 const char *SYM_U_MODEL;
+const char *SYM_U_COLOR;
 const char *SYM_U_FACE;
 const char *SYM_U_LIGHT_PVM;
 const char *SYM_U_LIGHT_POS;
@@ -85,6 +86,7 @@ void ta_symbol_init() {
     SYM_U_PROJ          = INTERN("u_proj");
     SYM_U_VIEW          = INTERN("u_view");
     SYM_U_MODEL         = INTERN("u_model");
+    SYM_U_COLOR         = INTERN("u_color");
     SYM_U_FACE          = INTERN("u_face");
     SYM_U_LIGHT_PVM     = INTERN("u_light_pvm");
     SYM_U_LIGHT_POS     = INTERN("u_light_pos");

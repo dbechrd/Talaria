@@ -42,3 +42,5 @@ void ta_node_update(ta_node *node);
 void ta_node_shadow_pass(ta_node *node, struct ta_shader *shader,
     ta_mat4 *light_pv, float alpha);
 void ta_node_render(ta_node *node, struct ta_camera *camera, float alpha);
+void ta_node_render_shader(ta_node *node, struct ta_camera *camera,
+    struct ta_shader *shader, float alpha, float scale);

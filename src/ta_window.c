@@ -9,6 +9,7 @@
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
+#include "misc/gl3w.h"
 
 typedef struct ta_window {
     ta_size size;
@@ -43,6 +44,7 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
     sdl_gl_attrib(SDL_GL_ALPHA_SIZE, 8);
     sdl_gl_attrib(SDL_GL_DOUBLEBUFFER, 1);
     sdl_gl_attrib(SDL_GL_DEPTH_SIZE, 24);
+    sdl_gl_attrib(SDL_GL_STENCIL_SIZE, 8);
     // Anti-aliasing
     sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 4);
     //sdl_gl_attrib(SDL_GL_MULTISAMPLEBUFFERS, 1);

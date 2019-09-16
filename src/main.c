@@ -303,9 +303,13 @@ int main(int argc, char *argv[])
         // World axes
         ta_primitive_push_axes(1.0f);
         ta_primitive_render(true, true);
-        glClear(GL_DEPTH_BUFFER_BIT);
+
+        if (tg_game.state == TA_GAME_STATE_EDITOR) {
+            ta_editor_draw(&tg_game, sim_alpha);
+        }
 
         // Cursor
+        glClear(GL_DEPTH_BUFFER_BIT);
         ta_primitive_push_crosshair(10, 2);
 
 #if 0
@@ -372,9 +376,6 @@ int main(int argc, char *argv[])
         //       Use texture atlas, batch everything into one draw call. Import
         //       textures from Rico; stop using stupid RGB placeholders
         //ta_game_hud_draw();
-        if (tg_game.state == TA_GAME_STATE_EDITOR) {
-            ta_editor_draw();
-        }
 
         render_fps(ms_frame_start, frame_num);
 

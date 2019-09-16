@@ -17,6 +17,7 @@
 #include "ta_file.h"
 #include "ta_audio.h"
 #include "ta_primitive.h"
+#include "ta_editor.h"
 #include "dlb/dlb_vector.h"
 #include <stdlib.h>
 #include <float.h>
@@ -1081,20 +1082,27 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     glCullFace(GL_BACK);
     //glDisable(GL_CULL_FACE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClearColor(0.4f, 0.7f, 1.0f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glStencilMask(0xFF);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glStencilMask(0x00);
+
+    // TODO: This is going to make a zillion extranous calls
+    static GLenum tg_polygon_mode = GL_FILL;
+    GLenum camera_poly_mode = camera->debug_wireframe ? GL_LINE : GL_FILL;
+    if (camera_poly_mode != tg_polygon_mode) {
+        glPolygonMode(GL_FRONT_AND_BACK, camera_poly_mode);
+        tg_polygon_mode = camera_poly_mode;
+    }
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
 
-#if 1
     // TODO: Group by shader / material to minimize redundant uniform calls
     dlb_vec_each(ta_node *, node, scene->pools[TYP_NODE]) {
         ta_node_render(node, camera, alpha);
     }
-#endif
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
