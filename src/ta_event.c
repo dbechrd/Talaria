@@ -33,6 +33,8 @@ void ta_event_push(ta_event *event)
         }
     }
     int next = (queue.head + queue.count) % cap;
+    // TODO(perf): This copy could be avoided by allocating events from a pool
+    // and passing the index to this method.
     queue.buffer[next] = *event;
     queue.count++;
 }

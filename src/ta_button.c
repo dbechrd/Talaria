@@ -11,43 +11,6 @@ void e_button_init(e_button *button)
     UNUSED(button);
 }
 
-ta_audio_source *e_button_audio_source(e_button *button)
-{
-    if (!button->audio_source_uid) return 0;
-
-    // NOTE: This could cache in button->audio_source
-    ta_audio_source *audio_source = ta_scene_find(button->uid.scene,
-        TYP_AUDIO_SOURCE, button->audio_source_uid);
-    return audio_source;
-}
-ta_audio_buffer *e_button_sfx_activated(e_button *button)
-{
-    if (!button->sfx_activated_uid) return 0;
-
-    // NOTE: This could cache in button->sfx_activated_buffer
-    ta_audio_buffer *audio_buffer = ta_scene_find(button->uid.scene,
-        TYP_AUDIO_BUFFER, button->sfx_activated_uid);
-    return audio_buffer;
-}
-ta_audio_buffer *e_button_sfx_active(e_button *button)
-{
-    if (!button->sfx_active_uid) return 0;
-
-    // NOTE: This could cache in button->sfx_active_buffer
-    ta_audio_buffer *audio_buffer = ta_scene_find(button->uid.scene,
-        TYP_AUDIO_BUFFER, button->sfx_active_uid);
-    return audio_buffer;
-}
-ta_audio_buffer *e_button_sfx_deactivated(e_button *button)
-{
-    if (!button->sfx_deactivated_uid) return 0;
-
-    // NOTE: This could cache in button->sfx_deactivated_buffer
-    ta_audio_buffer *audio_buffer = ta_scene_find(button->uid.scene,
-        TYP_AUDIO_BUFFER, button->sfx_deactivated_uid);
-    return audio_buffer;
-}
-
 static bool button_activated(e_button *button)
 {
     bool activated =
@@ -67,7 +30,7 @@ static bool button_deactivated(e_button *button)
         button->state_prev == TA_BUTTON_ACTIVE;
     return deactivated;
 }
-void e_button_update(ta_node *node)
+void e_button_update(e_button *button)
 {
     // TODO: Trigger event type = EVENT_BUTTON_ACTIVATED with uid = button.uid
     //       and have audio_buffer's play event subscribe to the button event
@@ -77,11 +40,11 @@ void e_button_update(ta_node *node)
     //       EVENT_BUTTON_DEACTIVATED
     //       EVENT_BUTTON_STATE_CHANGED
 
-    e_button *button = ta_scene_find(tg_game.scene, TYP_BUTTON, node->button_uid);
-    DLB_ASSERT(button);
+    ta_entity *entity = ta_scene_entity(tg_game.scene, button->hnd);
+    DLB_ASSERT(entity);
 
-    ta_rigid_body *button_body = ta_node_rigid_body(node);
-    ta_rigid_body *player_body = ta_node_rigid_body(tg_game.player);
+    ta_rigid_body *button_body = (void *)ta_node_component(entity, COMP_RIGID_BODY);
+    ta_rigid_body *player_body = (void *)ta_node_component(tg_game.player, COMP_RIGID_BODY);
 
     button->state_prev = button->state;
     if (ta_rigid_body_intersect(player_body, button_body, 0)) {
@@ -92,7 +55,7 @@ void e_button_update(ta_node *node)
 
     if (button_activated(button)) {
         ta_event event = { 0 };
-        event.data.button.button_uid = button->uid.uid;
+        event.data.button.button_uid = button->hnd.uid;
 
         event.type = TA_EVENT_GAME_BUTTON_ACTIVATED;
         ta_event_push(&event);
@@ -102,7 +65,7 @@ void e_button_update(ta_node *node)
 
     if (button_deactivated(button)) {
         ta_event event = { 0 };
-        event.data.button.button_uid = button->uid.uid;
+        event.data.button.button_uid = button->hnd.uid;
 
         event.type = TA_EVENT_GAME_BUTTON_DEACTIVATED;
         ta_event_push(&event);

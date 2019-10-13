@@ -3,6 +3,8 @@
 #include "ta_file.h"
 #include "ta_scene.h"
 #include "ta_buffer.h"
+#include "ta_game.h"
+#include "ta_node.h"
 #include "dlb/dlb_memory.h"
 #include "AL/al.h"
 #include "AL/alc.h"
@@ -195,9 +197,10 @@ void ta_audio_source_init(ta_audio_source *source)
     //alSourcefv(source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
 #endif
 
-    if (source->audio_buffer_uid) {
-        ta_audio_buffer *buffer = ta_scene_find(source->uid.scene,
-            TYP_AUDIO_BUFFER, source->audio_buffer_uid);
+    if (source->audio_buffer) {
+        ta_entity *e_buffer = ta_scene_entity(tg_game.scene, source->hnd_buffer);
+        ta_audio_buffer *buffer = ta_node_component(e_buffer, COMP_AUDIO_BUFFER);
+        source->hnd_buffer = buffer->hnd;
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
 }
@@ -215,13 +218,14 @@ void ta_audio_source_set_gain(ta_audio_source *source, float gain)
     source->gain = gain;
     alSourcef(source->al_source_id, AL_GAIN, source->gain);
 }
-void ta_audio_source_set_buffer(ta_audio_source *source, ta_audio_buffer *buffer)
+void ta_audio_source_set_buffer(ta_audio_source *source, ta_handle buffer)
 {
     if (ta_audio_source_get_state(source) != TA_AUDIO_STOPPED) {
         ta_audio_source_stop(source);
     }
-    if (source->audio_buffer_uid != buffer->uid.uid) {
-        source->audio_buffer_uid = buffer->uid.uid;
+    if (source->hnd_buffer.uid != buffer.uid) {
+        source->hnd_buffer = buffer;
+        ta_audio_buffer *buffer = ta_scene_entity(tg_game.scene, source->hnd_buffer);
         //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
@@ -252,8 +256,8 @@ void ta_audio_source_play(ta_audio_source *source)
     alSourcei(source->al_source_id, AL_LOOPING, AL_FALSE);
     alSourcePlay(source->al_source_id);
     ta_log_write(&tg_debug_log,
-        "[Audio] Playing source uid=%s id=%d pitch=%f gain=%f loop=%d\n",
-        source->uid.uid, source->al_source_id, source->pitch, source->gain,
+        "[Audio] Playing source hnd=%s id=%d pitch=%f gain=%f loop=%d\n",
+        source->hnd.uid, source->al_source_id, source->pitch, source->gain,
         false);
 #if AUDIO_ASSERT
     DLB_ASSERT(al_source_state(source) == AL_PLAYING);
@@ -272,8 +276,8 @@ void ta_audio_source_play_loop(ta_audio_source *source)
     alSourcei(source->al_source_id, AL_LOOPING, AL_TRUE);
     alSourcePlay(source->al_source_id);
     ta_log_write(&tg_debug_log,
-        "[Audio] Playing source uid=%s id=%d pitch=%f gain=%f loop=%d\n",
-        source->uid.uid, source->al_source_id, source->pitch, source->gain,
+        "[Audio] Playing source hnd=%s id=%d pitch=%f gain=%f loop=%d\n",
+        source->hnd.uid, source->al_source_id, source->pitch, source->gain,
         true);
 #if AUDIO_ASSERT
     DLB_ASSERT(al_source_state(source) == AL_PLAYING);

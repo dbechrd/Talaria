@@ -68,19 +68,27 @@ void ta_rigid_body_init(ta_rigid_body *body)
     switch (body->collider.type) {
         case TA_COLLIDER_PLANE: {
             body->collider.data.plane.normal = vec3_normalize(body->collider.data.plane.normal);
+            // TODO: Intialize body->aabb
             break;
         } case TA_COLLIDER_SPHERE: {
             DLB_ASSERT(body->collider.data.sphere.radius > TA_EPSILON);
+            body->aabb.center = body->collider.data.sphere.center;
+            float radius = body->collider.data.sphere.radius;
+            body->aabb.extents.x = radius;
+            body->aabb.extents.y = radius;
+            body->aabb.extents.z = radius;
             break;
         } case TA_COLLIDER_AABB: {
             DLB_ASSERT(body->collider.data.aabb.extents.x > TA_EPSILON);
             DLB_ASSERT(body->collider.data.aabb.extents.y > TA_EPSILON);
             DLB_ASSERT(body->collider.data.aabb.extents.z > TA_EPSILON);
+            body->aabb = body->collider.data.aabb;
             break;
         } case TA_COLLIDER_OBB: {
             DLB_ASSERT(body->collider.data.obb.extents.x > TA_EPSILON);
             DLB_ASSERT(body->collider.data.obb.extents.y > TA_EPSILON);
             DLB_ASSERT(body->collider.data.obb.extents.z > TA_EPSILON);
+            // TODO: Intialize body->aabb
             break;
         }
     }

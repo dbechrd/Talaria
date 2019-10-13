@@ -143,7 +143,7 @@ static void shadowmap_point_create(ta_light *light)
 // Use texture2Dproj to account for perspective-divide
 
 static void shadowpass_render_directional(ta_light *light, ta_shader *shader,
-    float alpha, ta_node *entities)
+    float alpha, ta_entity *entities)
 {
     DLB_ASSERT(light->shadowmap.framebuffer);
 
@@ -157,13 +157,13 @@ static void shadowpass_render_directional(ta_light *light, ta_shader *shader,
     ta_vec3 inv_dir = vec3_neg(light->data.directional.direction);
     ta_mat4 view = mat4_lookat(inv_dir, VEC3_ZERO, VEC3_Y);
     ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view);
-    dlb_vec_each(ta_node *, entity, entities) {
+    dlb_vec_each(ta_entity *, entity, entities) {
         ta_node_shadow_pass(entity, shader, &light_pv, alpha);
     }
 }
 
 static void shadowpass_render_point(ta_light *light, ta_shader *shader,
-    float alpha, ta_node *entities)
+    float alpha, ta_entity *entities)
 {
     DLB_ASSERT(light->shadowmap.framebuffer);
 
@@ -204,14 +204,14 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
         glClear(GL_DEPTH_BUFFER_BIT);
 
         ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view[i]);
-        dlb_vec_each(ta_node *, entity, entities) {
+        dlb_vec_each(ta_entity *, entity, entities) {
             ta_node_shadow_pass(entity, shader, &light_pv, alpha);
         }
     }
 }
 
 typedef void (* shadowpass_render)(ta_light *light, ta_shader *shader,
-    float alpha, ta_node *entities);
+    float alpha, ta_entity *entities);
 
 static shadowpass_render shadowpass_renderers[TA_LIGHT_COUNT] = {
     [TA_LIGHT_DIRECTIONAL] = shadowpass_render_directional,
@@ -219,7 +219,7 @@ static shadowpass_render shadowpass_renderers[TA_LIGHT_COUNT] = {
 };
 
 void ta_light_shadowpass_render(ta_light *light, ta_shader *shader,
-    float alpha, ta_node *entities)
+    float alpha, ta_entity *entities)
 {
     if (shadowpass_renderers[light->type]) {
         shadowpass_renderers[light->type](light, shader, alpha, entities);

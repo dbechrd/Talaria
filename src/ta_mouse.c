@@ -17,8 +17,8 @@ void ta_mouse_init()
 {
     ta_log_write(&tg_debug_log, "[Mouse] Initializing mouse\n");
     SDL_GetMouseState(&mouse.x, &mouse.y);
-    mouse.captured = true;
-    SDL_SetRelativeMouseMode(mouse.captured);
+    //mouse.captured = true;
+    //SDL_SetRelativeMouseMode(mouse.captured);
     ta_log_write(&tg_debug_log, "[Mouse] Mouse initialized\n");
 }
 

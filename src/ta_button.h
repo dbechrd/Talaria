@@ -2,29 +2,20 @@
 #include "ta_uid.h"
 #include "dlb/dlb_types.h"
 
-struct ta_audio_buffer;
-struct ta_audio_source;
-struct ta_node;
-
 typedef enum e_button_state {
     TA_BUTTON_INACTIVE,
     TA_BUTTON_ACTIVE,
 } e_button_state;
 
 typedef struct e_button {
-    ta_uid uid;
-    e_button_state state_prev;
     e_button_state state;
+    e_button_state state_prev;
 
-    const char *audio_source_uid;
-    const char *sfx_activated_uid;
-    const char *sfx_active_uid;
-    const char *sfx_deactivated_uid;
+    // TODO: Some sort of event-based sound effects handling?
+    ta_handle sfx_activated;
+    ta_handle sfx_active;
+    ta_handle sfx_deactivated;
 } e_button;
 
 void e_button_init(e_button *button);
-struct ta_audio_source *e_button_audio_source(e_button *button);
-struct ta_audio_buffer *e_button_sfx_activated(e_button *button);
-struct ta_audio_buffer *e_button_sfx_active(e_button *button);
-struct ta_audio_buffer *e_button_sfx_deactivated(e_button *button);
-void e_button_update(struct ta_node *node);
+void e_button_update(e_button *button);

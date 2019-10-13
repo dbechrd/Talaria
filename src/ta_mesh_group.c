@@ -17,7 +17,7 @@
 
 void ta_mesh_group_init(ta_mesh_group *group, const char *uid, const char *path)
 {
-    group->uid.uid = uid;
+    group->hnd.uid = uid;
     group->path = path;
 }
 
@@ -97,7 +97,7 @@ void ta_mesh_group_load(ta_mesh_group *group)
         ta_mesh_create(mesh);
 
         u32 name_len = (u32)strlen(shapes[shape_idx].name);
-        mesh->uid.uid = ta_symbol_intern(shapes[shape_idx].name, name_len);
+        mesh->hnd.uid = ta_symbol_intern(shapes[shape_idx].name, name_len);
 
         mesh->aabb.extents = vec3_scalef(vec3_sub(mesh_max, mesh_min), 0.5f);
         mesh->aabb.center = vec3_add(mesh_min, mesh->aabb.extents);
@@ -116,7 +116,7 @@ void ta_mesh_group_load(ta_mesh_group *group)
 
 #if 0
         if (!group->meshes_by_name.size) {
-            dlb_hash_init(&group->meshes_by_name, DLB_HASH_STRING, group->uid, num_shapes);
+            dlb_hash_init(&group->meshes_by_name, DLB_HASH_STRING, group->u0id, num_shapes);
             if (!group->meshes_by_name.size) {
                 DLB_ASSERT(!"Failed to initialize mesh group hash table");
             }

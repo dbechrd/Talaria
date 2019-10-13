@@ -107,7 +107,7 @@ static GLint ta_shader_attribute_location(ta_shader *shader, const char *name)
     if (location < 0) {
         ta_log_write(&tg_debug_log,
             "[Shader] Failed to locate attribute by '%s' in '%s'. "
-            "Possibly optimized out.\n", name, shader->uid.uid);
+            "Possibly optimized out.\n", name, shader->hnd.uid);
     }
     return location;
 }
@@ -118,7 +118,7 @@ static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
     if (location < 0) {
         ta_log_write(&tg_debug_log,
             "[Shader] Failed to locate uniform '%s' in '%s'. "
-            "Possibly optimized out.\n", name, shader->uid.uid);
+            "Possibly optimized out.\n", name, shader->hnd.uid);
     }
     return location;
 }
@@ -186,7 +186,7 @@ void ta_shader_load(ta_shader *shader)
     DLB_ASSERT(shader->path_vert);
     DLB_ASSERT(shader->path_frag);
 
-    ta_log_write(&tg_debug_log, "[Shader] Creating shader %s\n", shader->uid.uid);
+    ta_log_write(&tg_debug_log, "[Shader] Creating shader %s\n", shader->hnd.uid);
 
     // Compile shaders
     GLuint vshader = ta_shader_compile_file(GL_VERTEX_SHADER, shader->path_vert);

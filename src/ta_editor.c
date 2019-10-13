@@ -3,9 +3,11 @@
 #include "ta_game.h"
 #include "ta_scene.h"
 #include "ta_node.h"
+#include "ta_light.h"
 #include "ta_symbol.h"
 #include "ta_audio.h"
 #include "ta_texture.h"
+#include "ta_material.h"
 #include "ta_primitive.h"
 #include "ta_window.h"
 #include "ta_font.h"
@@ -24,7 +26,7 @@
 
 typedef struct ta_editor {
     const char *status_msg;
-    const char *selected_node_uid;
+    ta_entity_hnd selected_entity;
     ta_text_entry *text_entry;
     ta_keybind *keybinds;
     ta_keybind *keybinds_text_entry;
@@ -41,7 +43,7 @@ void ta_editor_init()
 
     editor.scene = ta_scene_load_file("data/scene/editor.dml");
     DLB_ASSERT(editor.scene);
-    editor.shader_editor_select = ta_scene_find(editor.scene, TYP_SHADER,
+    editor.shader_editor_select = ta_scene_find(editor.scene, COMP_SHADER,
         INTERN("shader_editor_select"));
     DLB_ASSERT(editor.shader_editor_select);
 
@@ -69,15 +71,17 @@ void ta_editor_init()
     BIND1(keybinds, TA_EVENT_CAMERA_MOVE_BACKWARD,      HOLD, S);
     BIND1(keybinds, TA_EVENT_CAMERA_MOVE_RIGHT,         HOLD, D);
     BIND1(keybinds, TA_EVENT_CAMERA_MOVE_LEFT,          HOLD, A);
-    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_UP,            HOLD, SPACE);
-    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_DOWN,          HOLD, LSHIFT);
+    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_UP,            HOLD, E);
+    BIND1(keybinds, TA_EVENT_CAMERA_MOVE_DOWN,          HOLD, Q);
 
     BIND1(keybinds, TA_EVENT_GAME_PLAYER_MOVE_FORWARD,  HOLD, I);
     BIND1(keybinds, TA_EVENT_GAME_PLAYER_MOVE_BACKWARD, HOLD, K);
     BIND1(keybinds, TA_EVENT_GAME_PLAYER_MOVE_RIGHT,    HOLD, L);
     BIND1(keybinds, TA_EVENT_GAME_PLAYER_MOVE_LEFT,     HOLD, J);
 
-    BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_MOUSE_LOCK,   PRESS, 1);
+    BIND1(keybinds, TA_EVENT_DEBUG_MOUSE_LOCK,          PRESS,   MOUSE_RIGHT);
+    BIND1(keybinds, TA_EVENT_DEBUG_MOUSE_UNLOCK,        RELEASE, MOUSE_RIGHT);
+    BIND1(keybinds, TA_EVENT_DEBUG_MOUSE_LOCK_TOGGLE,   PRESS, M);
     BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,    PRESS, 2);
     BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_BBOX,         PRESS, 3);
     BIND1(keybinds, TA_EVENT_DEBUG_TOGGLE_NORMALS,      PRESS, 4);
@@ -116,16 +120,16 @@ ta_text_entry *ta_editor_active_text_entry()
 {
     return editor.text_entry;
 }
-void ta_editor_select_node(ta_node *node)
+void ta_editor_select_node(struct ta_entity *entity)
 {
-    editor.selected_node_uid = node->uid.uid;
+    editor.selected_entity = entity->hnd;
 }
-ta_node *ta_editor_selected_node()
+ta_entity *ta_editor_selected_node()
 {
-    ta_node *node = 0;
-    if (editor.selected_node_uid) {
+    ta_entity *node = 0;
+    if (editor.selected_entity.uid) {
 #if 1
-        node = ta_scene_exists(tg_game.scene, TYP_NODE, editor.selected_node_uid, 0);
+        node = ta_scene_entity_try(tg_game.scene, editor.selected_entity);
 #else
         // TODO: Store selected_node_idx. If generation doesn't match,
         //       ta_scene_find() should return zero.
@@ -146,9 +150,9 @@ static void ui_node_panel()
     ta_ui_panel_begin(0, &node_panel_id);
 
     static int label_width = 150;
-    ta_node *node = ta_editor_selected_node();
+    ta_entity *node = ta_editor_selected_node();
     if (node) {
-        ta_rigid_body *rigid_body = ta_node_rigid_body(node);
+        ta_rigid_body *rigid_body = (void *)ta_node_component(node, COMP_RIGID_BODY);
 
         //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
@@ -172,19 +176,21 @@ static void ui_node_panel()
                 // All of this logic is specific to changing UIDs
                 if (text_len)
                 {
-                    dlb_hash_delete(&tg_game.scene->pooled_uids[TYP_NODE],
-                        SYM(node->uid.uid));
+#if 0
+                    dlb_hash_delete(&tg_game.scene->entities_by_uid,
+                        SYM(node->hnd.uid));
+#endif
 
                     // TODO: Replace all references to UID pointers with generational
                     // pool indexes otherwise we can never delete symbols because
                     // anything holding a pointer will be dangling.
                     // (e.g. editor.selected_node_uid)
-                    //dlb_symbol_free(node->uid.uid);
+                    //dlb_symbol_free(node->hnd.uid);
 
-                    node->uid.uid = ta_symbol_intern(text, text_len);
+                    node->hnd.uid = ta_symbol_intern(text, text_len);
                     bool found = false;
                     u32 idx = 0;
-                    dlb_vec_each(ta_node *, n, tg_game.scene->pools[TYP_NODE]) {
+                    dlb_vec_each(ta_entity *, n, tg_game.scene->entities) {
                         if (n == node) {
                             found = true;
                             break;
@@ -192,8 +198,10 @@ static void ui_node_panel()
                         idx++;
                     }
                     DLB_ASSERT(found);
-                    dlb_hash_insert(&tg_game.scene->pooled_uids[TYP_NODE],
-                        SYM(node->uid.uid), (void *)idx);
+#if 0
+                    dlb_hash_insert(&tg_game.scene->entities_by_uid,
+                        SYM(node->hnd.uid), (void *)idx);
+#endif
                     ta_editor_select_node(node);
 
                     ta_text_entry_free(&uid_editor);
@@ -205,10 +213,10 @@ static void ui_node_panel()
             }
         } else {
             //ta_ui_next_pad(4, 1, 4, 1);
-            if (ta_ui_label(0, node->uid.uid)) {
+            if (ta_ui_label(0, node->hnd.uid)) {
                 DLB_ASSERT(!uid_editor);
                 uid_editor = ta_text_entry_init();
-                ta_text_entry_set_text(uid_editor, SYM(node->uid.uid));
+                ta_text_entry_set_text(uid_editor, SYM(node->hnd.uid));
                 ta_text_entry_focus(uid_editor);
             }
         }
@@ -298,7 +306,7 @@ static void ui_audio_panel()
     ta_audio_buffer *audio_request = 0;
 
     ta_ui_row_begin();
-    dlb_vec_each(ta_audio_buffer *, buf, tg_game.scene->pools[TYP_AUDIO_BUFFER]) {
+    dlb_vec_each(ta_audio_buffer *, buf, tg_game.scene->components[COMP_AUDIO_BUFFER]) {
 #if 0
         int node_panel_id = -1;
         ta_ui_panel_begin(&TA_SIZE(60 * buf_count, 60), &node_panel_id);
@@ -311,24 +319,24 @@ static void ui_audio_panel()
 
         ta_ui_panel_end(node_panel_id);
 #endif
-        bool active = buf->uid.uid == audio_playing_uid;
+        bool active = buf->hnd.uid == audio_playing_uid;
         //ta_ui_next_size(36, 36);
         //ta_ui_next_margin(0, 0, 2, 0);
-        ta_ui_button_toggle(buf->uid.uid, tg_game.tex_audio_icon, &active);
+        ta_ui_button_toggle(buf->hnd.uid, tg_game.tex_audio_icon, &active);
         if (ta_ui_last_frame_state().pressed) {
             audio_request = buf;
         }
         if (ta_ui_last_frame_state().hover) {
-            ta_ui_tooltip(SYM(buf->uid.uid));
+            ta_ui_tooltip(SYM(buf->hnd.uid));
         }
     }
 
     if (audio_request) {
         ta_audio_source_stop(tg_game.background_music);
-        if (audio_request->uid.uid != audio_playing_uid) {
+        if (audio_request->hnd.uid != audio_playing_uid) {
             ta_audio_source_set_buffer(tg_game.background_music, audio_request);
             ta_audio_source_play_loop(tg_game.background_music);
-            audio_playing_uid = audio_request->uid.uid;
+            audio_playing_uid = audio_request->hnd.uid;
         } else {
             audio_playing_uid = 0;
         }
@@ -342,15 +350,23 @@ static void ui_texture_panel()
     //ta_ui_next_margin(2, 2, 0, 0);
     ta_ui_panel_begin(0, &texture_panel_id);
     ta_ui_row_begin();
-    dlb_vec_each(ta_texture *, tex, tg_game.scene->pools[TYP_TEXTURE]) {
+    dlb_vec_each(ta_texture *, tex, tg_game.scene->components[COMP_TEXTURE]) {
         ta_ui_next_size(68, 68);
         //ta_ui_next_margin(0, 0, 2, 0);
         //ta_ui_next_pad(2, 2, 2, 2);
-        ta_ui_button(tex->uid.uid, tex);
+        if (ta_ui_button(tex->hnd.uid, tex)) {
+            ta_entity *node = ta_editor_selected_node();
+            if (node) {
+                ta_material *mat = ta_node_component(node, COMP_MATERIAL);
+                if (mat) {
+                    mat->texture_albedo_uid = tex->hnd.uid;
+                }
+            }
+        }
         if (ta_ui_last_frame_state().hover) {
             char tex_buf[64] = { 0 };
             int len = snprintf(tex_buf, sizeof(tex_buf), "%s (gl_id: %d)",
-                tex->uid.uid, tex->gl_id);
+                tex->hnd.uid, tex->gl_id);
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
         }
@@ -455,14 +471,20 @@ static void ui_statusbar()
 void ta_editor_draw(float alpha)
 {
     // Stencil selected node
-    ta_node *selected_node = ta_editor_selected_node();
+    ta_entity *selected_node = ta_editor_selected_node();
     if (selected_node) {
         glEnable(GL_STENCIL_TEST);
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
         glStencilMask(0xFF);
-        //glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+        // Stencil the outline and any occluded fragments
         glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+        // Stencil just the outline
+        //glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+        glDepthMask(GL_FALSE);
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
         ta_node_render(selected_node, tg_game.camera, alpha);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
     }
 
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -502,10 +524,11 @@ static void editor_ray_pick()
     ray.direction = tg_game.camera->front;
 
     float t_min = 9999.0f;
-    ta_node *closest_node = 0;
+    ta_entity *closest_node = 0;
+    ta_light *closest_light = 0;  // TODO: Lights and cameras should be nodes
 
-    dlb_vec_each(ta_node *, node, tg_game.scene->pools[TYP_NODE]) {
-        ta_rigid_body *body = ta_node_rigid_body(node);
+    dlb_vec_each(ta_entity *, node, tg_game.scene->entities) {
+        ta_rigid_body *body = ta_node_component(node, COMP_RIGID_BODY);
         // TODO: Handle types other than spheres
         if (!body || body->collider.type != TA_COLLIDER_SPHERE) {
             continue;
@@ -521,8 +544,24 @@ static void editor_ray_pick()
         }
     }
 
+    dlb_vec_each(ta_light *, light, tg_game.scene->components[COMP_LIGHT]) {
+        ta_sphere sphere = { 0 };
+        sphere.center = light->position;
+        sphere.radius = 0.2f;
+        float t;
+        if (ta_intersect_ray_sphere(ray, sphere, &t)) {
+            if (t >= 0.0f && t < t_min) {
+                t_min = t;
+                closest_light = light;
+                closest_node = 0;
+            }
+        }
+    }
+
     if (closest_node) {
         ta_editor_select_node(closest_node);
+    } else if (closest_light) {
+        closest_light->disabled = !closest_light->disabled;
     }
 }
 

@@ -27,7 +27,7 @@ typedef struct ta_game {
     struct ta_font *font;
     struct ta_keybind *keybinds[TA_GAME_STATE_COUNT];
     struct ta_light *lights;
-    struct ta_node *player;
+    struct ta_entity *player;
     struct ta_scene *scene;
     struct ta_texture *tex_orange;
     struct ta_texture *tex_red;

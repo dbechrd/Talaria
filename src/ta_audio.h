@@ -13,7 +13,6 @@ typedef struct ta_audio_listener {
 } ta_audio_listener;
 
 typedef struct ta_audio_buffer {
-    ta_uid uid;
     const char *path;           // File path
     struct ta_buffer *samples;  // Audio data (if inlined instead of via path)
     ALuint al_buffer_id;        // OpenAL buffer id
@@ -26,12 +25,12 @@ typedef enum ta_audio_source_state {
 } ta_audio_source_state;
 
 typedef struct ta_audio_source {
-    ta_uid uid;
+    ta_uid audio_buffer;
+
     float pitch;
     float gain;
     bool loop;
     ALuint al_source_id;
-    const char *audio_buffer_uid;
 } ta_audio_source;
 
 typedef struct ta_buffer ta_buffer;

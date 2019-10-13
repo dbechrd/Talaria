@@ -8,10 +8,9 @@
 struct ta_vert_quad;
 
 typedef struct ta_font {
-    ta_uid uid;
     const char *path;
     float pixel_height;
-    const char *shader_uid;
+    ta_handle shader;  // TODO: Reconsider this..
 
     int first_char;
     int last_char;
@@ -34,7 +33,6 @@ void ta_font_init(ta_font *font);
 void ta_font_load_path(ta_font *font, const char *path);
 void ta_font_delete(ta_font *font);
 void ta_font_free(ta_font *font);
-struct ta_shader *ta_font_shader(ta_font *font);
 ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
     u32 text_len, bool screen, u32 *cursor_idx, ta_vec2 *cursor_offset,
     int mouse_x, int mouse_y);

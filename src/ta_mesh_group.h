@@ -3,7 +3,6 @@
 #include "ta_math.h"
 
 typedef struct ta_mesh_group {
-    ta_uid uid;
     const char *path;
     struct ta_mesh *meshes;
     ta_aabb aabb;
