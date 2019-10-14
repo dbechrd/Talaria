@@ -1,6 +1,6 @@
 #pragma once
-#include "ta_uid.h"
 #include "dlb/dlb_types.h"
+#include "dlb/dlb_pool.h"
 #include "AL/al.h"
 #include "AL/alc.h"
 
@@ -25,8 +25,7 @@ typedef enum ta_audio_source_state {
 } ta_audio_source_state;
 
 typedef struct ta_audio_source {
-    ta_uid audio_buffer;
-
+    dlb_id audio_buffer_id;
     float pitch;
     float gain;
     bool loop;
@@ -53,7 +52,7 @@ void ta_audio_source_init(ta_audio_source *source);
 void ta_audio_source_free(ta_audio_source *source);
 void ta_audio_source_set_pitch(ta_audio_source *source, float pitch);
 void ta_audio_source_set_gain(ta_audio_source *source, float gain);
-void ta_audio_source_set_buffer(ta_audio_source *source, ta_audio_buffer *buffer);
+void ta_audio_source_set_buffer(ta_audio_source *source, dlb_id buffer_id);
 ta_audio_source_state ta_audio_source_get_state(ta_audio_source *source);
 void ta_audio_source_play(ta_audio_source *source);
 void ta_audio_source_play_loop(ta_audio_source *source);

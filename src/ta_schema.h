@@ -66,29 +66,7 @@ typedef enum ta_schema_field_type {
     ATOM_ENUM,
 } ta_schema_field_type;
 
-typedef enum ta_resource_type {
-    RES_COMP_AUDIO_SOURCE,
-    RES_COMP_BUTTON,
-    RES_COMP_CAMERA,
-    RES_COMP_LIGHT,
-    RES_COMP_MODEL,
-    RES_COMP_POSITION,
-    RES_COMP_RIGID_BODY,
-    RES_COMP_COUNT,
-
-    RES_AUDIO_BUFFER = RES_COMP_COUNT,
-    RES_ENTITY,
-    RES_FONT,
-    RES_MATERIAL,
-    RES_MESH_GROUP,
-    RES_SHADER,
-    RES_TEXTURE,
-    RES_COUNT,
-} ta_resource_type;
-
 typedef const char *(enum_to_str)(int);
-
-extern ta_schema_field_type ta_resource_types[RES_COUNT];
 
 typedef struct ta_schema_field {
     ta_schema_field_type type;

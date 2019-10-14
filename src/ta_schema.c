@@ -25,24 +25,6 @@
 ta_schema tg_schemas[TYP_COUNT];
 static dlb_hash schemas_by_name;
 
-ta_schema_field_type ta_resource_types[RES_COUNT] = {
-    [RES_COMP_AUDIO_SOURCE] = TYP_AUDIO_SOURCE,
-    [RES_COMP_BUTTON      ] = TYP_BUTTON,
-    [RES_COMP_CAMERA      ] = TYP_CAMERA,
-    [RES_COMP_LIGHT       ] = TYP_LIGHT,
-    [RES_COMP_MODEL       ] = TYP_MODEL,
-    [RES_COMP_POSITION    ] = TYP_POSITION,
-    [RES_COMP_RIGID_BODY  ] = TYP_RIGID_BODY,
-
-    [RES_AUDIO_BUFFER     ] = TYP_AUDIO_BUFFER,
-    [RES_ENTITY           ] = TYP_ENTITY,
-    [RES_FONT             ] = TYP_FONT,
-    [RES_MATERIAL         ] = TYP_MATERIAL,
-    [RES_MESH_GROUP       ] = TYP_MESH_GROUP,
-    [RES_SHADER           ] = TYP_SHADER,
-    [RES_TEXTURE          ] = TYP_TEXTURE,
-};
-
 const char *ta_schema_field_type_str(ta_schema_field_type type) {
     switch(type) {
         case TYP_NULL:              return "TYP_NULL";
@@ -359,7 +341,6 @@ void ta_schema_register()
     // Entity wrapper
     //--------------------------------------------------------------------------
     TYPE_START(ta_entity, TYP_ENTITY, 0, 0);
-    TYPE_FIELD(ta_entity, uid,         ATOM_STRING);
     TYPE_VECTOR(ta_entity, components, ATOM_STRING);
     TYPE_END(ta_entity);
 

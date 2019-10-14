@@ -23,6 +23,24 @@
 #include <stdlib.h>
 #include <float.h>
 
+ta_schema_field_type ta_resource_types[RES_COUNT] = {
+    [RES_COMP_AUDIO_SOURCE] = TYP_AUDIO_SOURCE,
+    [RES_COMP_BUTTON      ] = TYP_BUTTON,
+    [RES_COMP_CAMERA      ] = TYP_CAMERA,
+    [RES_COMP_LIGHT       ] = TYP_LIGHT,
+    [RES_COMP_MODEL       ] = TYP_MODEL,
+    [RES_COMP_POSITION    ] = TYP_POSITION,
+    [RES_COMP_RIGID_BODY  ] = TYP_RIGID_BODY,
+
+    [RES_AUDIO_BUFFER     ] = TYP_AUDIO_BUFFER,
+    [RES_ENTITY           ] = TYP_ENTITY,
+    [RES_FONT             ] = TYP_FONT,
+    [RES_MATERIAL         ] = TYP_MATERIAL,
+    [RES_MESH_GROUP       ] = TYP_MESH_GROUP,
+    [RES_SHADER           ] = TYP_SHADER,
+    [RES_TEXTURE          ] = TYP_TEXTURE,
+};
+
 typedef enum token_type {
     TOKEN_UNKNOWN,
     TOKEN_EOF,
@@ -752,17 +770,30 @@ void ta_scene_init(ta_scene *scene)
         scene->name = scene->filename;
     }
 
-    // TODO: Fine-tune pool reservations (e.g. scene header)
+
+
+    // TODO(perf): Fine-tune pool reservations (e.g. scene header)
+    // TODO(perf): This is a lot of back-to-back allocations, can we avoid?
     for (int type = 0; type < RES_COUNT; type++) {
         u32 size = tg_schemas[ta_resource_types[type]].size;
+        dlb_pool_init(&scene->resource_ids[type], sizeof(ta_id), 128);
+        dlb_pool_init(&scene->resource_names[type], sizeof(const char *), 128);
         dlb_pool_init(&scene->resource_data[type], size, 128);
-        dlb_pool_init(&scene->resources[type], sizeof(ta_uid), 128);
-    }
-    for (int type = 0; type < COMP_COUNT; type++) {
-        u32 size = tg_schemas[ta_component_types[type]].size;
-        dlb_pool_init(&scene->components[type], size, 128);
-        dlb_pool_init(&scene->entities[type], sizeof(ta_uid), 128);
-        //dlb_hash_init(&scene->pooled_uids[i], DLB_HASH_STRING, scene->name, 64);
+
+        // HACK: Always reserve slot zero to make debugging more pleasant
+        ta_id *zero_id = dlb_pool_alloc(&scene->resource_ids[type]);
+        zero_id->index = 0xC0FFEE42;
+        zero_id->generation = 0xC0FFEE42;
+
+        const char *zero_name = dlb_pool_alloc(&scene->resource_names[type]);
+        zero_name = "! ZERO ! ZERO ! ZERO !";
+
+        void *zero_data = dlb_pool_alloc(&scene->resource_data[type]);
+        //dlb_memset(zero_data, 0, size);  // NOTE: already zero initialized
+
+        // TODO: Save resource names in hash table for mapping in debug builds
+        // NOTE: It may be sufficient to linear search resource_names[type]
+        //dlb_hash_init(&scene->resource_id_by_name, DLB_HASH_STRING, scene->name, 64);
     }
     scene_load_placeholders(scene);
 }
@@ -786,11 +817,12 @@ ta_scene *ta_scene_load(ta_file *file)
     tokens_parse(scene, tokens);
     dlb_vec_free(tokens);
 
-    DLB_ASSERT(ARRAY_COUNT(scene->components) == COMP_COUNT);
-    for (int type = 0; type < COMP_COUNT; type++) {
+    // Initialize resources
+    for (ta_resource_type type = 0; type < RES_COUNT; ++type) {
         if (tg_schemas[type].init) {
-            u8 *end = dlb_vec_end_size(scene->components[type], tg_schemas[type].size);
-            for (u8 *ptr = scene->components[type]; ptr != end; ptr += tg_schemas[type].size) {
+            dlb_pool *pool = &scene->resource_data[type];
+            for (int idx = 0; idx < pool->size; ++idx) {
+                void *ptr = dlb_pool_at(pool, idx);
                 tg_schemas[type].init(ptr);
             }
         }
@@ -826,18 +858,21 @@ void ta_scene_save_file(ta_scene *scene, const char *filename)
 
 void ta_scene_free(ta_scene *scene)
 {
-    DLB_ASSERT(ARRAY_COUNT(scene->components) == COMP_COUNT);
-
-    for (int type = 0; type < COMP_COUNT; type++) {
+    // Free resources
+    for (ta_resource_type type = 0; type < RES_COUNT; ++type) {
         if (tg_schemas[type].free) {
-            u8 *end = dlb_vec_end_size(scene->components[type], tg_schemas[type].size);
-            for (u8 *ptr = scene->components[type]; ptr != end; ptr += tg_schemas[type].size) {
+            dlb_pool *pool = &scene->resource_data[type];
+            for (int idx = 0; idx < pool->size; ++idx) {
+                void *ptr = dlb_pool_at(pool, idx);
                 tg_schemas[type].free(ptr);
             }
         }
-        dlb_vec_free(scene->components[type]);
-        //dlb_hash_free(&scene->pooled_uids[type]);
+        dlb_pool_free(&scene->resource_ids[type]);
+        dlb_pool_free(&scene->resource_names[type]);
+        dlb_pool_free(&scene->resource_data[type]);
+        dlb_hash_free(&scene->resource_id_by_name[type]);
     }
+
     dlb_free(scene);
 }
 
@@ -845,13 +880,15 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
 {
     fprintf(hnd, "#-------------------------------------------------------------------------------\n");
     fprintf(hnd, "# [SCENE] %s\n", scene->name);
-    for (ta_schema_field_type type = 0; type < COMP_COUNT; type++) {
+    for (ta_resource_type type = 0; type < RES_COUNT; ++type) {
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
-        fprintf(hnd, "# %s\n", ta_schema_field_type_str(type));
+        fprintf(hnd, "# %s\n", ta_schema_field_type_str(ta_resource_types[type]));
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
-        u8 *end = dlb_vec_end_size(scene->components[type], tg_schemas[type].size);
-        for (u8 *ptr = scene->components[type]; ptr != end; ptr += tg_schemas[type].size) {
-            ta_schema_print(hnd, type, ptr, 0, 0);
+
+        dlb_pool *pool = &scene->resource_data[type];
+        for (int idx = 0; idx < pool->size; ++idx) {
+            void *ptr = dlb_pool_at(pool, idx);
+            ta_schema_print(hnd, ta_resource_types[type], ptr, 0, 0);
         }
     }
     fflush(hnd);
@@ -890,35 +927,63 @@ const char *ta_scene_resource_uid(ta_scene *scene, u32 resource_uid)
 }
 #endif
 
-ta_entity *ta_scene_alloc_entity(ta_scene *scene, const char *uid)
+dlb_id ta_scene_entity_create(ta_scene *scene, const char *name)
 {
     DLB_ASSERT(scene);
-    DLB_ASSERT(uid);
+    DLB_ASSERT(name);
 
-    // TODO: Don't always append, use intrusive free list
-    ta_handle handle = { 0 };
-    handle.index = dlb_vec_len(scene->entities);
+    ta_entity *entity = 0;
+    dlb_id entity_id = dlb_pool_alloc(&scene->resource_data[RES_ENTITY], &entity);
+    DLB_ASSERT(entity);
 
-    // Allocate entity in pool
-    ta_entity *entity = dlb_vec_alloc(scene->entities);
-    entity->uid_index = dlb_vec_len(scene->entity_uids);
-    dlb_vec_push(scene->entity_uids, uid);
+    const char **name_ptr = 0;
+    dlb_id name_id = dlb_pool_alloc(&scene->resource_names[RES_ENTITY], &name_ptr);
+    DLB_ASSERT(name_ptr);
+    *name_ptr = name;
+
+    // ensure pools are still in sync
+    DLB_ASSERT(name_id.index == entity_id.index);
 
     // Insert entity UID into lookup table
-    //dlb_hash_insert(&scene->entities_by_uid, SYM(uid), (void *)index);
+    //dlb_hash_insert(&scene->resource_id_by_name, SYM(name), (void *)entity_id);
 
-    return entity;
+    return entity_id;
 }
 
-void *ta_scene_entity_add_component(ta_scene *scene, ta_entity *entity,
-    ta_component_type type)
+void ta_scene_entity_destroy(ta_scene *scene, dlb_id entity_id)
+{
+    // Delete entity components
+    ta_entity *entity = dlb_pool_retrieve(&scene->resource_data[RES_ENTITY], entity_id);
+    for (u32 type = 0; type < RES_COMP_COUNT; ++type) {
+        dlb_id component_id = entity->components[type];
+        if (component_id.index) {
+            dlb_pool_delete(&scene->resource_names[type], component_id);
+            dlb_pool_delete(&scene->resource_data[type], component_id);
+            //dlb_hash_delete(&scene->resource_id_by_name[type], ??);
+        }
+    }
+
+    // Delete entity
+    dlb_pool_delete(&scene->resource_names[RES_ENTITY], entity_id);
+    dlb_pool_delete(&scene->resource_data[RES_ENTITY], entity_id);
+    //dlb_hash_delete(&scene->resource_id_by_name[RES_ENTITY], ??);
+}
+
+void *ta_scene_add_component(ta_scene *scene, dlb_id entity_id,
+    ta_resource_type type)
 {
     DLB_ASSERT(scene);
-    DLB_ASSERT(entity->uid);
-    DLB_ASSERT(type > 0 && type < COMP_COUNT);
-    DLB_ASSERT(entity->index < dlb_vec_len(scene->entity_components[type]));
+    DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
+    ta_id *id = dlb_pool_at(&scene->resource_ids[RES_ENTITY], entity_id.index);
+    DLB_ASSERT(id->generation == entity_id.generation);
+    ta_entity *entity = dlb_pool_at(&scene->resource_data[RES_ENTITY], entity_id.index);
+
+    // TODO: Ensure all component resource pools have index 0 reserved as
+    //       placeholder or NULL.
     // Prevent adding same component twice
+    DLB_ASSERT(entity->components[type].index == 0);
+
     // TODO: memset(0) existing component and re-use?
     DLB_ASSERT(scene->entity_components[type][entity->index] == 0);
 
@@ -932,12 +997,13 @@ void *ta_scene_entity_add_component(ta_scene *scene, ta_entity *entity,
 }
 
 // If entity doesn't have component, returns NULL
-void *ta_scene_component(ta_scene *scene, ta_uid entity, ta_resource_type type)
+void *ta_scene_get_component(ta_scene *scene, dlb_id entity_id,
+    ta_resource_type type)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
-    ta_uid *uid = dlb_pool_at(&scene->resources[type], entity.index);
+    ta_uid *uid = dlb_pool_at(&scene->resource_uids[type], entity.index);
     DLB_ASSERT(uid->generation == entity.generation);
     DLB_ASSERT(uid->index < scene->resource_data[type].size);
 
@@ -954,8 +1020,8 @@ void *ta_scene_component(ta_scene *scene, ta_uid entity, ta_resource_type type)
 }
 
 // If entity doesn't have component, returns first component of given type
-void *ta_scene_entity_get_component_or_default(ta_scene *scene,
-    ta_entity *entity, ta_component_type type)
+void *ta_scene_get_component_or_default(ta_scene *scene, dlb_id entity_id,
+    ta_resource_type type)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(entity->uid);

@@ -197,12 +197,17 @@ void ta_audio_source_init(ta_audio_source *source)
     //alSourcefv(source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
 #endif
 
+    // TODO: Resolve "audio_buffer_uid" at scene load time. In DML, map string
+    // to dlb_id. In binary, serialize raw pool index (which will cause all
+    // dlb_ids to automatically compact and reset generations on save/load).
+#if 0
     if (source->audio_buffer) {
         ta_entity *e_buffer = ta_scene_entity(tg_game.scene, source->hnd_buffer);
         ta_audio_buffer *buffer = ta_node_component(e_buffer, COMP_AUDIO_BUFFER);
         source->hnd_buffer = buffer->hnd;
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
+#endif
 }
 void ta_audio_source_free(ta_audio_source *source)
 {
@@ -218,14 +223,16 @@ void ta_audio_source_set_gain(ta_audio_source *source, float gain)
     source->gain = gain;
     alSourcef(source->al_source_id, AL_GAIN, source->gain);
 }
-void ta_audio_source_set_buffer(ta_audio_source *source, ta_handle buffer)
+void ta_audio_source_set_buffer(ta_audio_source *source, dlb_id buffer_id)
 {
     if (ta_audio_source_get_state(source) != TA_AUDIO_STOPPED) {
         ta_audio_source_stop(source);
     }
-    if (source->hnd_buffer.uid != buffer.uid) {
-        source->hnd_buffer = buffer;
-        ta_audio_buffer *buffer = ta_scene_entity(tg_game.scene, source->hnd_buffer);
+    if (source->audio_buffer_id.index != buffer_id.index ||
+        source->audio_buffer_id.generation != buffer_id.generation)
+    {
+        source->audio_buffer_id = buffer_id;
+        ta_audio_buffer *buffer = dlb_pool_retrieve(&tg_game.scene->resource_data, source->audio_buffer_id);
         //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }

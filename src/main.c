@@ -129,10 +129,9 @@ int main(int argc, char *argv[])
     UNUSED(argc);
     UNUSED(argv);
     DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
-
-    ta_entity e = {0};
-    sizeof(ta_component_type);
-    ta_entity_add_component(&e, 100);
+    // NOTE: ta_uid generation field must be beyond the size needed by pool's
+    //       intrusive freelist index to ensure they don't stomp each other
+    DLB_ASSERT(OFFSETOF(ta_id, generation) >= SIZEOF_MEMBER(dlb_pool, freelist));
 
     ta_timer_init();
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
