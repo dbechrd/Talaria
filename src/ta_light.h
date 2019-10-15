@@ -61,5 +61,5 @@ typedef struct ta_light {
 const char *ta_light_type_str(int type);
 void ta_light_init(ta_light *light);
 void ta_light_shadowpass_render(ta_light *light, struct ta_shader *shader,
-    float alpha, struct ta_entity *entities);
+    float alpha, struct dlb_pool *entities);
 void ta_light_render_shadowmap_debug(ta_light *light);

@@ -4,7 +4,9 @@
 #include "ta_symbol.h"
 #include "ta_primitive.h"
 #include "ta_shader.h"
+#include "ta_entity.h"
 #include "dlb/dlb_vector.h"
+#include "dlb/dlb_pool.h"
 #include "misc/gl3w.h"
 
 #define DEFAULT_LIGHT_INTENSITY         1.0f
@@ -143,7 +145,7 @@ static void shadowmap_point_create(ta_light *light)
 // Use texture2Dproj to account for perspective-divide
 
 static void shadowpass_render_directional(ta_light *light, ta_shader *shader,
-    float alpha, ta_entity *entities)
+    float alpha, dlb_pool *entities)
 {
     DLB_ASSERT(light->shadowmap.framebuffer);
 
@@ -157,13 +159,14 @@ static void shadowpass_render_directional(ta_light *light, ta_shader *shader,
     ta_vec3 inv_dir = vec3_neg(light->data.directional.direction);
     ta_mat4 view = mat4_lookat(inv_dir, VEC3_ZERO, VEC3_Y);
     ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view);
-    dlb_vec_each(ta_entity *, entity, entities) {
+    for (u32 i = 0; i < entities->size; ++i) {
+        ta_entity *entity = dlb_pool_at(entities, i);
         ta_node_shadow_pass(entity, shader, &light_pv, alpha);
     }
 }
 
 static void shadowpass_render_point(ta_light *light, ta_shader *shader,
-    float alpha, ta_entity *entities)
+    float alpha, dlb_pool *entities)
 {
     DLB_ASSERT(light->shadowmap.framebuffer);
 
@@ -204,14 +207,16 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
         glClear(GL_DEPTH_BUFFER_BIT);
 
         ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view[i]);
-        dlb_vec_each(ta_entity *, entity, entities) {
+
+        for (u32 i = 0; i < entities->size; ++i) {
+            ta_entity *entity = dlb_pool_at(entities, i);
             ta_node_shadow_pass(entity, shader, &light_pv, alpha);
         }
     }
 }
 
 typedef void (* shadowpass_render)(ta_light *light, ta_shader *shader,
-    float alpha, ta_entity *entities);
+    float alpha, dlb_pool *entities);
 
 static shadowpass_render shadowpass_renderers[TA_LIGHT_COUNT] = {
     [TA_LIGHT_DIRECTIONAL] = shadowpass_render_directional,
@@ -219,7 +224,7 @@ static shadowpass_render shadowpass_renderers[TA_LIGHT_COUNT] = {
 };
 
 void ta_light_shadowpass_render(ta_light *light, ta_shader *shader,
-    float alpha, ta_entity *entities)
+    float alpha, dlb_pool *entities)
 {
     if (shadowpass_renderers[light->type]) {
         shadowpass_renderers[light->type](light, shader, alpha, entities);

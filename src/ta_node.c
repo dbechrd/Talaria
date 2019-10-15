@@ -15,6 +15,7 @@
 #include "ta_editor.h"
 #include "ta_rigid_body.h"
 #include "ta_primitive.h"
+#include "ta_entity.h"
 #include "dlb/dlb_vector.h"
 
 void ta_node_init(ta_entity *node)
@@ -88,16 +89,7 @@ bool ta_node_intersect(ta_node *a, ta_node *b, ta_manifold *manifold)
 
 void ta_node_update(ta_entity *node)
 {
-    node->transform_prev = node->transform;
-    ta_rigid_body *body = ta_node_component(node, COMP_RIGID_BODY);
-    if (body) {
-        node->transform.position = body->position;
-        node->transform.orientation = body->orientation;
-    }
-    e_button *button = ta_node_component(node, COMP_BUTTON);
-    if (button) {
-        e_button_update(button);
-    }
+    // TODO: delete me
 }
 
 static void ta_node_push_aabb(ta_entity *node, ta_rgba color)

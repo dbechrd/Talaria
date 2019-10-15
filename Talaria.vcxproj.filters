@@ -241,6 +241,12 @@
     <ClInclude Include="src\ta_position.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\ta_entity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_resource_type.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
