@@ -4,6 +4,7 @@
 #include "misc/gl3w.h"
 
 typedef struct ta_texture {
+    u32 id;
     const char *path;  // File path
     u8 *pixels;        // Pixel data (if inlined instead of via path)
     int width;         // Size of texture (pixels)

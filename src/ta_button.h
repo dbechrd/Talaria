@@ -8,8 +8,8 @@ typedef enum e_button_state {
 } e_button_state;
 
 typedef struct e_button {
-    u32 uid;
-    u32 entity_uid;
+    u32 id;
+    u32 entity_id;
 
     e_button_state state;
     e_button_state state_prev;

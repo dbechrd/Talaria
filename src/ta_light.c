@@ -195,9 +195,9 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
     glViewport(0, 0, light->shadowmap.resolution, light->shadowmap.resolution);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light->shadowmap.framebuffer);
 
-    for (int i = 0; i < 6; ++i ) {
+    for (int face = 0; face < 6; ++face) {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, light->shadowmap.texture, 0);
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, light->shadowmap.texture, 0);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -206,7 +206,7 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view[i]);
+        ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view[face]);
 
         for (u32 i = 0; i < entities->size; ++i) {
             ta_entity *entity = dlb_pool_at(entities, i);

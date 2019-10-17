@@ -458,13 +458,11 @@ static void tokens_parse(ta_scene *scene, token *tokens)
 {
     struct {
         int indent;
+        u32 resource_id; // 0 = not a resource (i.e. field)
         ta_schema_field_type type;
         u32 array_len;   // 0 = not array, 1 = vector, >1 = fixed array size
         u32 array_elem;  // Current element of array we're writing to
         const char *name;
-        bool is_pooled;
-        u32 name_id;
-        u32 data_id;
         void *ptr;
         u32 size;
         bool is_union_type;
@@ -590,17 +588,19 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     DLB_ASSERT(schema->size);
                     DLB_ASSERT(schema->name == tok->value.string);
 
-                    u32 name_id = dlb_pool_alloc(&scene->resource_names[res_type], 0);
-                    u32 data_id = dlb_pool_alloc(&scene->resource_data[res_type], 0);
-                    DLB_ASSERT(name_id.index == data_id.index);
+                    // TODO: Need to read ID in from scene file, otherwise no
+                    // way to know what ID to give to this object. Could hash a
+                    // UID string, but it still needs to be present before the
+                    // alloc can occur (this would require pools to use dlb_hash
+                    // instead of vector for sparse_set).
+                    u32 resource_id = DLB_ASSERT(0);
 
+                    stack[sp].resource_id = resource_id;
                     stack[sp].type = schema->type;
                     stack[sp].array_len = 0;
                     stack[sp].array_elem = 0;
                     stack[sp].name = tok->value.string;
-                    stack[sp].is_pooled = true;
-                    stack[sp].name_id = name_id;
-                    stack[sp].data_id = data_id;
+                    stack[sp].ptr = dlb_pool_alloc(&scene->resource_data[res_type], resource_id);
                     stack[sp].size = schema->size;
                     stack[sp].is_union_type = false;
                     stack[sp].is_union = false;
@@ -659,14 +659,18 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 *fp = tok->value.string;
                 if (stack[sp].name == SYM_UID) {
                     DLB_ASSERT(sp > 0);
-                    DLB_ASSERT(stack[sp-1].is_pooled);
-                    DLB_ASSERT(stack[sp-1].type < RES_COMP_COUNT);
 
-                    u32 pool_idx = stack[sp-1].name_id.index;
-                    dlb_hash_insert(&scene->id_by_name[stack[sp-1].type],
-                        tok->value.string, tok->length, (void *)pool_idx);
+                    u32 resource_id = stack[sp-1].resource_id;
+                    DLB_ASSERT(resource_id);
+
+                    ta_resource_type res_type = typ_to_res(stack[sp-1].type);
+                    DLB_ASSERT(res_type < RES_COUNT);
+
+                    stack[sp-1].ptr = dlb_pool_alloc(&scene->resource_names[res_type], resource_id);
+                    dlb_hash_insert(&scene->id_by_name[res_type],
+                        tok->value.string, tok->length, (void *)resource_id);
                 }
-#if 1
+#if 0
                 if (*fp == INTERN("tex_test_diff")) {
                     DLB_ASSERT(1);
                 }
@@ -925,6 +929,44 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
     fflush(hnd);
 }
 
+void *ta_scene_find_at(ta_scene *scene, ta_resource_type type, u32 index)
+{
+    DLB_ASSERT(scene);
+    DLB_ASSERT(type >= 0 && type < RES_COUNT);
+
+    void *resource = dlb_pool_at(&scene->resource_data[type], index);
+    return resource;
+}
+
+// If not found, returns NULL
+void *ta_scene_find_by_id_try(ta_scene *scene, ta_resource_type type, u32 id)
+{
+    DLB_ASSERT(scene);
+    DLB_ASSERT(type >= 0 && type < RES_COUNT);
+
+    void *resource = dlb_pool_by_id(&scene->resource_data[type], id);
+    return resource;
+}
+
+// If not found, ASSERT
+void *ta_scene_find_by_id(ta_scene *scene, ta_resource_type type, u32 id)
+{
+    void *resource = ta_scene_find_by_id_try(scene, type, id);
+    DLB_ASSERT(resource);
+    return resource;
+}
+
+// If not found, returns the "zero" resource
+void *ta_scene_find_by_id_or_default(ta_scene *scene, ta_resource_type type,
+    u32 id)
+{
+    void *resource = ta_scene_find_by_id_try(scene, type, id);
+    if (!resource) {
+        resource = dlb_pool_at(&scene->resource_data[type], 0);
+    }
+    return resource;
+}
+
 u32 ta_scene_entity_create(ta_scene *scene, const char *name)
 {
     DLB_ASSERT(scene);
@@ -974,7 +1016,8 @@ void *ta_scene_entity_add_component(ta_scene *scene, u32 entity_id,
     DLB_ASSERT(scene);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
-    ta_entity *entity = dlb_pool_by_id(&scene->resource_data[RES_ENTITY], entity_id);
+    ta_entity *entity = dlb_pool_by_id(&scene->resource_data[RES_ENTITY],
+        entity_id);
     DLB_ASSERT(entity->components[type] == 0);  // entity already has component
 
     u32 id = scene->next_id[type]++;
@@ -984,42 +1027,29 @@ void *ta_scene_entity_add_component(ta_scene *scene, u32 entity_id,
     return component;
 }
 
-void *ta_scene_find_at(ta_scene *scene, ta_resource_type type, u32 index)
+void *ta_scene_entity_component_try(ta_scene *scene, ta_entity *entity,
+    ta_resource_type type)
 {
     DLB_ASSERT(scene);
-    DLB_ASSERT(type >= 0 && type < RES_COUNT);
+    DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
-    void *resource = dlb_pool_at(&scene->resource_data[type], index);
-    return resource;
-}
-
-// If not found, returns NULL
-void *ta_scene_find_by_id_try(ta_scene *scene, ta_resource_type type, u32 id)
-{
-    DLB_ASSERT(scene);
-    DLB_ASSERT(type >= 0 && type < RES_COUNT);
-
-    void *resource = dlb_pool_by_id(&scene->resource_data[type], id);
-    return resource;
-}
-
-// If not found, ASSERT
-void *ta_scene_find_by_id(ta_scene *scene, ta_resource_type type, u32 id)
-{
-    void *resource = ta_scene_find_by_id_try(scene, type, id);
-    DLB_ASSERT(resource);
-    return resource;
-}
-
-// If not found, returns the "zero" resource
-void *ta_scene_find_by_id_or_default(ta_scene *scene, ta_resource_type type,
-    u32 id)
-{
-    void *resource = ta_scene_find_by_id_try(scene, type, id);
-    if (!resource) {
-        resource = dlb_pool_at(&scene->resource_data[type], 0);
+    void *component = 0;
+    u32 component_id = entity->components[type];
+    if (entity->components[type]) {
+        component = ta_scene_find_by_id(scene, type, component_id);
     }
-    return resource;
+    return component;
+}
+
+void *ta_scene_entity_component(ta_scene *scene, ta_entity *entity,
+    ta_resource_type type)
+{
+    DLB_ASSERT(scene);
+    DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
+
+    void *component = ta_scene_entity_component_try(scene, entity, type);
+    DLB_ASSERT(component);
+    return component;
 }
 
 static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
@@ -1210,7 +1240,9 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
 
     // TODO: Group by shader / material to minimize redundant uniform calls
-    dlb_vec_each(ta_entity *, entity, scene->entities) {
+    dlb_pool *entities = &scene->resource_data[RES_ENTITY];
+    for (u32 i = 0; i < entities->size; ++i) {
+        ta_entity *entity = dlb_pool_at(entities, i);
         ta_node_render(entity, camera, alpha);
     }
 
@@ -1218,16 +1250,20 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
 
 #if 1
-    dlb_vec_each(ta_camera *, cam, scene->components[COMP_CAMERA]) {
-        if (cam != tg_game.camera) {
+    dlb_pool *cameras = &scene->resource_data[RES_COMP_CAMERA];
+    for (u32 i = 0; i < cameras->size; ++i) {
+        ta_camera *camera = dlb_pool_at(cameras, i);
+        if (camera != tg_game.camera) {
             ta_sphere sphere = { 0 };
-            sphere.center = cam->position;
+            sphere.center = camera->position;
             sphere.radius = 0.2f;
             ta_primitive_push_rgb_sphere(sphere);
             //ta_primitive_push_sphere(sphere, TA_COLOR_GREEN);
         }
     }
-    dlb_vec_each(ta_light *, light, scene->components[COMP_LIGHT]) {
+    dlb_pool *lights = &scene->resource_data[RES_COMP_LIGHT];
+    for (u32 i = 0; i < lights->size; ++i) {
+        ta_light *light = dlb_pool_at(lights, i);
         ta_sphere light_pos = { 0 };
         light_pos.center = light->position;
         light_pos.radius = 0.2f;

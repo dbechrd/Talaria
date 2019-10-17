@@ -21,17 +21,18 @@
 #include "ta_keybind.h"
 #include "ta_text_entry.h"
 #include "ta_log.h"
+#include "ta_position.h"
 #include "SDL/SDL_keycode.h"
 #include "dlb/dlb_vector.h"
 
 typedef struct ta_editor {
     const char *status_msg;
-    ta_entity_hnd selected_entity;
+    u32 selected_entity_id;
     ta_text_entry *text_entry;
     ta_keybind *keybinds;
     ta_keybind *keybinds_text_entry;
     ta_scene *scene;
-    ta_shader *shader_editor_select;
+    u32 shader_editor_select_id;
 } ta_editor;
 
 static ta_editor editor;
@@ -43,9 +44,10 @@ void ta_editor_init()
 
     editor.scene = ta_scene_load_file("data/scene/editor.dml");
     DLB_ASSERT(editor.scene);
-    editor.shader_editor_select = ta_scene_find(editor.scene, COMP_SHADER,
-        INTERN("shader_editor_select"));
-    DLB_ASSERT(editor.shader_editor_select);
+
+    editor.shader_editor_select_id = (u32)dlb_hash_search(
+        &editor.scene->id_by_name[RES_SHADER], CSTR("shader_editor_select"), 0);
+    DLB_ASSERT(editor.shader_editor_select_id);
 
     ta_log_write(&tg_debug_log, "[Editor] Initializing key binds\n");
 
@@ -120,27 +122,17 @@ ta_text_entry *ta_editor_active_text_entry()
 {
     return editor.text_entry;
 }
-void ta_editor_select_node(struct ta_entity *entity)
+void ta_editor_select_node(u32 entity_id)
 {
-    editor.selected_entity = entity->hnd;
+    editor.selected_entity_id = entity_id;
 }
-ta_entity *ta_editor_selected_node()
+u32 ta_editor_selected_node()
 {
-    ta_entity *node = 0;
-    if (editor.selected_entity.uid) {
-#if 1
-        node = ta_scene_entity_try(tg_game.scene, editor.selected_entity);
-#else
-        // TODO: Store selected_node_idx. If generation doesn't match,
-        //       ta_scene_find() should return zero.
-        node = ta_scene_find(tg_game.scene, TYP_NODE, editor.selected_node_idx);
-        if (!node) {
-            // Node has been deleted
-            editor.selected_node_idx = 0;
-        }
-#endif
+    // Clear selection if entity has been deleted
+    if (!ta_scene_find_by_id_try(tg_game.scene, RES_ENTITY, editor.selected_entity_id)) {
+        editor.selected_entity_id = 0;
     }
-    return node;
+    return editor.selected_entity_id;
 }
 
 static void ui_node_panel()
@@ -150,10 +142,8 @@ static void ui_node_panel()
     ta_ui_panel_begin(0, &node_panel_id);
 
     static int label_width = 150;
-    ta_entity *node = ta_editor_selected_node();
-    if (node) {
-        ta_rigid_body *rigid_body = (void *)ta_node_component(node, COMP_RIGID_BODY);
-
+    u32 entity_id = ta_editor_selected_node();
+    if (entity_id) {
         //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
@@ -176,33 +166,17 @@ static void ui_node_panel()
                 // All of this logic is specific to changing UIDs
                 if (text_len)
                 {
-#if 0
-                    dlb_hash_delete(&tg_game.scene->entities_by_uid,
-                        SYM(node->hnd.uid));
-#endif
+                    const char **name = dlb_pool_by_id(
+                        &tg_game.scene->resource_names[RES_ENTITY], entity_id);
 
-                    // TODO: Replace all references to UID pointers with generational
-                    // pool indexes otherwise we can never delete symbols because
-                    // anything holding a pointer will be dangling.
-                    // (e.g. editor.selected_node_uid)
-                    //dlb_symbol_free(node->hnd.uid);
+                    dlb_hash_delete(&tg_game.scene->id_by_name[RES_ENTITY], SYM(*name));
+                    // NOTE: This should be safe so long as nothing else holds
+                    // pointers to resource names.
+                    dlb_symbol_free(*name);
 
-                    node->hnd.uid = ta_symbol_intern(text, text_len);
-                    bool found = false;
-                    u32 idx = 0;
-                    dlb_vec_each(ta_entity *, n, tg_game.scene->entities) {
-                        if (n == node) {
-                            found = true;
-                            break;
-                        }
-                        idx++;
-                    }
-                    DLB_ASSERT(found);
-#if 0
-                    dlb_hash_insert(&tg_game.scene->entities_by_uid,
-                        SYM(node->hnd.uid), (void *)idx);
-#endif
-                    ta_editor_select_node(node);
+                    *name = ta_symbol_intern(text, text_len);
+                    dlb_hash_insert(&tg_game.scene->id_by_name[RES_ENTITY], SYM(*name),
+                        (void *)entity_id);
 
                     ta_text_entry_free(&uid_editor);
                 } else {
@@ -213,10 +187,12 @@ static void ui_node_panel()
             }
         } else {
             //ta_ui_next_pad(4, 1, 4, 1);
-            if (ta_ui_label(0, node->hnd.uid)) {
+            const char **name = dlb_pool_by_id(
+                &tg_game.scene->resource_names[RES_ENTITY], entity_id);
+            if (ta_ui_label(0, *name)) {
                 DLB_ASSERT(!uid_editor);
                 uid_editor = ta_text_entry_init();
-                ta_text_entry_set_text(uid_editor, SYM(node->hnd.uid));
+                ta_text_entry_set_text(uid_editor, SYM(*name));
                 ta_text_entry_focus(uid_editor);
             }
         }
@@ -224,19 +200,24 @@ static void ui_node_panel()
         //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        float *position = (float *)&node->transform.position;
+
+        ta_entity *entity = ta_scene_find_by_id(tg_game.scene, RES_ENTITY, entity_id);
+        ta_position *position = ta_scene_entity_component(tg_game.scene, entity, RES_COMP_POSITION);
+        ta_rigid_body *rigid_body = ta_scene_entity_component(tg_game.scene, entity, RES_COMP_RIGID_BODY);
+        float *pos_values = 0;
         if (rigid_body) {
             ta_ui_label(0, "RB Position:");
-            position = (float *)&rigid_body->position;
+            pos_values = (float *)&rigid_body->position;
         } else {
             ta_ui_label(0, "Position:");
+            pos_values = (float *)&position->transform.position;
         }
         const char *pos_labels[3] = { "x: ", " y: ", " z: " };
         static ta_text_entry *pos_editors[3] = { 0 };
         for (int i = 0; i < 3; i++) {
             ta_ui_label(0, pos_labels[i]);
             char pos_buf[10] = { 0 };
-            int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f", position[i]);
+            int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f", pos_values[i]);
             DLB_ASSERT(len < sizeof(pos_buf));
             if (pos_editors[i]) {
                 //ta_ui_next_pad(4, 1, 4, 1);
@@ -244,7 +225,7 @@ static void ui_node_panel()
                 if (ta_text_entry_valid(pos_editors[i])) {
                     u32 text_len = 0;
                     char *text = ta_text_entry_text(pos_editors[i], &text_len);
-                    position[i] = parse_float(text);
+                    pos_values[i] = parse_float(text);
                 }
 #if 1
                // ta_ui_next_margin(4, 0, 0, 0);
@@ -278,10 +259,10 @@ static void ui_node_panel()
         char orient_buf[64] = { 0 };
         int len = snprintf(orient_buf, sizeof(orient_buf),
             "x: %3.4f, y: %3.4f, z: %3.4f, w: %3.4f",
-            node->transform.orientation.x,
-            node->transform.orientation.y,
-            node->transform.orientation.z,
-            node->transform.orientation.w);
+            position->transform.orientation.x,
+            position->transform.orientation.y,
+            position->transform.orientation.z,
+            position->transform.orientation.w);
         DLB_ASSERT(len < sizeof(orient_buf));
         ta_ui_label(0, orient_buf);
     } else {
@@ -296,17 +277,19 @@ static void ui_node_panel()
 }
 static void ui_audio_panel()
 {
-    static const char *audio_playing_uid = 0;
+    static u32 audio_playing_id = 0;
 
     u32 audio_panel_id;
     //ta_ui_next_size(50, 50);
     //ta_ui_next_margin(2, 2, 0, 0);
     ta_ui_panel_begin(0, &audio_panel_id);
 
-    ta_audio_buffer *audio_request = 0;
+    u32 audio_request_id = 0;
 
     ta_ui_row_begin();
-    dlb_vec_each(ta_audio_buffer *, buf, tg_game.scene->components[COMP_AUDIO_BUFFER]) {
+    dlb_pool *audio_buffers = &tg_game.scene->resource_data[RES_AUDIO_BUFFER];
+    for (u32 i = 0; i < audio_buffers->size; ++i) {
+        ta_audio_buffer *audio_buffer = dlb_pool_at(audio_buffers, i);
 #if 0
         int node_panel_id = -1;
         ta_ui_panel_begin(&TA_SIZE(60 * buf_count, 60), &node_panel_id);
@@ -319,26 +302,26 @@ static void ui_audio_panel()
 
         ta_ui_panel_end(node_panel_id);
 #endif
-        bool active = buf->hnd.uid == audio_playing_uid;
+        bool active = audio_buffer->id == audio_playing_id;
         //ta_ui_next_size(36, 36);
         //ta_ui_next_margin(0, 0, 2, 0);
-        ta_ui_button_toggle(buf->hnd.uid, tg_game.tex_audio_icon, &active);
+        ta_ui_button_toggle(0, tg_game.tex_audio_icon, &active);
         if (ta_ui_last_frame_state().pressed) {
-            audio_request = buf;
+            audio_request_id = audio_buffer->id;
         }
         if (ta_ui_last_frame_state().hover) {
-            ta_ui_tooltip(SYM(buf->hnd.uid));
+            ta_ui_tooltip(SYM(audio_buffer->path));
         }
     }
 
-    if (audio_request) {
+    if (audio_request_id) {
         ta_audio_source_stop(tg_game.background_music);
-        if (audio_request->hnd.uid != audio_playing_uid) {
-            ta_audio_source_set_buffer(tg_game.background_music, audio_request);
+        if (audio_request_id != audio_playing_id) {
+            ta_audio_source_set_buffer(tg_game.background_music, audio_request_id);
             ta_audio_source_play_loop(tg_game.background_music);
-            audio_playing_uid = audio_request->hnd.uid;
+            audio_playing_id = audio_request_id;
         } else {
-            audio_playing_uid = 0;
+            audio_playing_id = 0;
         }
     }
 
@@ -350,23 +333,29 @@ static void ui_texture_panel()
     //ta_ui_next_margin(2, 2, 0, 0);
     ta_ui_panel_begin(0, &texture_panel_id);
     ta_ui_row_begin();
-    dlb_vec_each(ta_texture *, tex, tg_game.scene->components[COMP_TEXTURE]) {
+    dlb_pool *textures = &tg_game.scene->resource_data[RES_TEXTURE];
+    for (u32 i = 0; i < textures->size; ++i) {
+        ta_texture *texture = dlb_pool_at(textures, i);
         ta_ui_next_size(68, 68);
         //ta_ui_next_margin(0, 0, 2, 0);
         //ta_ui_next_pad(2, 2, 2, 2);
-        if (ta_ui_button(tex->hnd.uid, tex)) {
-            ta_entity *node = ta_editor_selected_node();
-            if (node) {
-                ta_material *mat = ta_node_component(node, COMP_MATERIAL);
-                if (mat) {
-                    mat->texture_albedo_uid = tex->hnd.uid;
+        if (ta_ui_button(0, texture)) {
+            u32 entity_id = ta_editor_selected_node();
+            if (entity_id) {
+                ta_entity *entity = ta_scene_find_by_id(tg_game.scene,
+                    RES_ENTITY, entity_id);
+                u32 material_id = entity->components[RES_MATERIAL];
+                if (material_id) {
+                    ta_material *material = ta_scene_find_by_id(tg_game.scene,
+                        RES_MATERIAL, entity->components[RES_MATERIAL]);
+                    material->tex_albedo_id = texture->id;
                 }
             }
         }
         if (ta_ui_last_frame_state().hover) {
-            char tex_buf[64] = { 0 };
-            int len = snprintf(tex_buf, sizeof(tex_buf), "%s (gl_id: %d)",
-                tex->hnd.uid, tex->gl_id);
+            char tex_buf[128] = { 0 };
+            int len = snprintf(tex_buf, sizeof(tex_buf), "%s (id: %d)(gl_id: %d)",
+                texture->path, texture->id, texture->gl_id);
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
         }
@@ -471,8 +460,8 @@ static void ui_statusbar()
 void ta_editor_draw(float alpha)
 {
     // Stencil selected node
-    ta_entity *selected_node = ta_editor_selected_node();
-    if (selected_node) {
+    u32 selected_entity_id = ta_editor_selected_node();
+    if (selected_entity_id) {
         glEnable(GL_STENCIL_TEST);
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
         glStencilMask(0xFF);
@@ -482,7 +471,7 @@ void ta_editor_draw(float alpha)
         //glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
         glDepthMask(GL_FALSE);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        ta_node_render(selected_node, tg_game.camera, alpha);
+        ta_node_render(selected_entity_id, tg_game.camera, alpha);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthMask(GL_TRUE);
     }
@@ -490,13 +479,13 @@ void ta_editor_draw(float alpha)
     glClear(GL_DEPTH_BUFFER_BIT);
 
     // Outline selected node
-    if (selected_node) {
+    if (selected_entity_id) {
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
         glStencilMask(0x00);
-        ta_shader_set_vec4(editor.shader_editor_select, SYM_U_COLOR,
-            (ta_vec4 *)&TA_COLOR_YELLOW);
-        ta_node_render_shader(selected_node, tg_game.camera,
-            editor.shader_editor_select, alpha, 1.1f);
+        ta_shader *shader = ta_scene_find_by_id(editor.scene, RES_SHADER,
+            editor.shader_editor_select_id);
+        ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&TA_COLOR_YELLOW);
+        ta_node_render_shader(selected_entity_id, tg_game.camera, shader, alpha, 1.1f);
         glDisable(GL_STENCIL_TEST);
     }
 
@@ -524,27 +513,38 @@ static void editor_ray_pick()
     ray.direction = tg_game.camera->front;
 
     float t_min = 9999.0f;
-    ta_entity *closest_node = 0;
+    u32 closest_entity_id = 0;
     ta_light *closest_light = 0;  // TODO: Lights and cameras should be nodes
 
-    dlb_vec_each(ta_entity *, node, tg_game.scene->entities) {
-        ta_rigid_body *body = ta_node_component(node, COMP_RIGID_BODY);
-        // TODO: Handle types other than spheres
-        if (!body || body->collider.type != TA_COLLIDER_SPHERE) {
+    dlb_pool *entities = &tg_game.scene->resource_data[RES_ENTITY];
+    for (u32 i = 0; i < entities->size; ++i) {
+        ta_entity *entity = dlb_pool_at(entities, i);
+        u32 rigid_body_id = entity->components[RES_COMP_RIGID_BODY];
+        if (!rigid_body_id) {
             continue;
         }
+
+        // TODO: Handle types other than spheres
+        ta_rigid_body *body = ta_scene_find_by_id_try(tg_game.scene,
+            RES_COMP_RIGID_BODY, rigid_body_id);
+        if (body->collider.type != TA_COLLIDER_SPHERE) {
+            continue;
+        }
+
         ta_sphere sphere = body->collider.data.sphere;
         sphere.center = vec3_add(sphere.center, body->centroid_global);
         float t;
         if (ta_intersect_ray_sphere(ray, sphere, &t)) {
             if (t >= 0.0f && t < t_min) {
                 t_min = t;
-                closest_node = node;
+                closest_entity_id = entity->id;
             }
         }
     }
 
-    dlb_vec_each(ta_light *, light, tg_game.scene->components[COMP_LIGHT]) {
+    dlb_pool *lights = &tg_game.scene->resource_data[RES_COMP_LIGHT];
+    for (u32 i = 0; i < lights->size; ++i) {
+        ta_light *light = dlb_pool_at(lights, i);
         ta_sphere sphere = { 0 };
         sphere.center = light->position;
         sphere.radius = 0.2f;
@@ -553,13 +553,13 @@ static void editor_ray_pick()
             if (t >= 0.0f && t < t_min) {
                 t_min = t;
                 closest_light = light;
-                closest_node = 0;
+                closest_entity_id = 0;
             }
         }
     }
 
-    if (closest_node) {
-        ta_editor_select_node(closest_node);
+    if (closest_entity_id) {
+        ta_editor_select_node(closest_entity_id);
     } else if (closest_light) {
         closest_light->disabled = !closest_light->disabled;
     }

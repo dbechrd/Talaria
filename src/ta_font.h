@@ -10,7 +10,7 @@ struct ta_vert_quad;
 typedef struct ta_font {
     const char *path;
     float pixel_height;
-    ta_handle shader;  // TODO: Reconsider this..
+    u32 shader_id;  // TODO: This doesn't belong here
 
     int first_char;
     int last_char;

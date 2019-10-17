@@ -1,10 +1,10 @@
 #pragma once
-#include "ta_uid.h"
 #include "ta_math.h"
 #include "dlb/dlb_types.h"
 
 struct ta_entity;
 struct ta_shader;
+struct dlb_pool;
 
 typedef enum ta_light_type {
     TA_LIGHT_AMBIENT,
