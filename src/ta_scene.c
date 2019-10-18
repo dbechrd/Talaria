@@ -48,6 +48,7 @@ ta_schema_field_type res_to_typ(ta_resource_type type)
         case RES_TEXTURE          : schema_type = TYP_TEXTURE      ; break;
         default                   : schema_type = TYP_NULL         ; break;
     }
+    return schema_type;
 }
 
 ta_resource_type typ_to_res(ta_schema_field_type type)
@@ -983,8 +984,18 @@ void *ta_scene_find_by_id_or_default(ta_scene *scene, ta_resource_type type,
     return resource;
 }
 
+void *ta_scene_find_by_name(ta_scene *scene, ta_resource_type type,
+    const char *name)
+{
+    DLB_ASSERT(scene);
+    DLB_ASSERT(name);
+
+    void *ptr = dlb_hash_search(&scene->id_by_name[type], SYM(name), 0);
+    return ptr;
+}
+
 // TODO: Move this to ta_entity_free and call schema[type].init(ptr)
-u32 ta_scene_create(ta_scene *scene, ta_resource_type type, const char *name)
+u32 ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(name);
@@ -1033,7 +1044,7 @@ void *ta_scene_entity_add_component(ta_scene *scene, u32 entity_id,
     DLB_ASSERT(entity->id == entity_id);
     DLB_ASSERT(entity->components[type] == 0);  // entity already has component
 
-    u32 component_id = ta_scene_create(scene, type, "[component]");
+    u32 component_id = ta_scene_alloc(scene, type, "[component]");
     ta_component *component = ta_scene_find_by_id(scene, type, component_id);
     DLB_ASSERT(component);
     component->id = component_id;

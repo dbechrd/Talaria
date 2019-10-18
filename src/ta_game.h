@@ -26,7 +26,6 @@ typedef struct ta_game {
     struct ta_camera *camera_freecam;
     struct ta_font *font;
     struct ta_keybind *keybinds[TA_GAME_STATE_COUNT];
-    struct dlb_pool *lights;
     struct ta_entity *player;
     struct ta_scene *scene;
     struct ta_texture *tex_orange;

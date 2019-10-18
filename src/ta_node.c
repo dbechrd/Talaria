@@ -122,14 +122,14 @@ void ta_node_render(ta_entity *entity, ta_camera *camera, float alpha)
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
         ta_shader_set_mat4(shader, SYM_U_MODEL, &position->model);
-        ta_shader_set_uint(shader, SYM_U_LIGHTS_COUNT, dlb_vec_len(tg_game.lights));
-        int light_index = 0;
-        dlb_vec_each(ta_light *, light, tg_game.lights) {
+        dlb_pool *lights = &tg_game.scene->resource_data[RES_COMP_LIGHT];
+        ta_shader_set_uint(shader, SYM_U_LIGHTS_COUNT, lights->size);
+        for (u32 i = 0; i < lights->size; ++i) {
+            ta_light *light = dlb_pool_at(lights, i);
             if (light->disabled) {
                 continue;
             }
-            ta_shader_set_light(shader, SYM_U_LIGHTS, light_index, light);
-            light_index++;
+            ta_shader_set_light(shader, SYM_U_LIGHTS, i, light);
         }
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO, texture_albedo->gl_id);

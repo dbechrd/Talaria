@@ -152,9 +152,11 @@ void ta_window_event(ta_window *window, ta_event *event)
             window->aspect = (float)window->size.w / window->size.h;
 
             // Update all cameras to new aspect ratio
-            dlb_vec_each(ta_camera *, cam, tg_game.scene->components[COMP_CAMERA]) {
-                if (!cam->ortho) {
-                    ta_camera_recalc_projection(cam);
+            dlb_pool *cameras = &tg_game.scene->resource_data[RES_COMP_CAMERA];
+            for (u32 i = 0; i < cameras->size; ++i) {
+                ta_camera *camera = dlb_pool_at(cameras, i);
+                if (!camera->ortho) {
+                    ta_camera_recalc_projection(camera);
                 }
             }
             break;

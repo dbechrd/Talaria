@@ -71,7 +71,7 @@ void debug_tests() {
 #if _DEBUG
     parse_tests();
     dlb_hash_test();
-    dlb_bitset_test();
+    //dlb_bitset_test();
     dlb_pool_test();
     ta_math_test();
 #endif
@@ -127,10 +127,9 @@ int main(int argc, char *argv[])
     // Intro scene
     tg_game.scene = ta_scene_load_file("data/scene/scene1.dml");
     // TODO: Find closest 8 lights and store them in tg_game.lights
-    tg_game.lights = &tg_game.scene->resource_data[RES_COMP_LIGHT];
-    tg_game.camera_player   = ta_scene_entity_by_uid(tg_game.scene, INTERN("cam_player"));
-    tg_game.camera_freecam  = ta_scene_entity_by_uid(tg_game.scene, INTERN("cam_freecam"));
-    tg_game.player          = ta_scene_entity_by_uid(tg_game.scene, INTERN("node_player"));
+    tg_game.camera_player   = ta_scene_find_by_name(tg_game.scene, RES_COMP_CAMERA, INTERN("cam_player"));
+    tg_game.camera_freecam  = ta_scene_find_by_name(tg_game.scene, RES_COMP_CAMERA, INTERN("cam_freecam"));
+    tg_game.player          = ta_scene_find_by_name(tg_game.scene, RES_COMP_CAMERA, INTERN("node_player"));
     tg_game.player_ammo_max = 20;
     tg_game.player_ammo = tg_game.player_ammo_max;
     tg_game.player_clip_max = 8;
@@ -140,16 +139,15 @@ int main(int argc, char *argv[])
     // Ensure we have a valid camera, player and light
     DLB_ASSERT(tg_game.camera);
     DLB_ASSERT(tg_game.player);
-    DLB_ASSERT(tg_game.lights);
 
-    tg_game.background_music = ta_scene_entity_by_uid(tg_game.scene, INTERN("src_background_music"));
+    tg_game.background_music = ta_scene_find_by_name(tg_game.scene, RES_COMP_AUDIO_SOURCE, INTERN("src_background_music"));
     DLB_ASSERT(tg_game.background_music);
     //ta_audio_source_play_loop(tg_game.background_music);
 
-    tg_game.font            = ta_scene_entity_by_uid(tg_game.scene, INTERN("font_default"));
-    tg_game.tex_orange      = ta_scene_entity_by_uid(tg_game.scene, INTERN("tex_test_diff"));
-    tg_game.tex_red         = ta_scene_entity_by_uid(tg_game.scene, INTERN("tex_test_mrao"));
-    tg_game.tex_audio_icon  = ta_scene_entity_by_uid(tg_game.scene, INTERN("tex_audio_icon"));
+    tg_game.font            = ta_scene_find_by_name(tg_game.scene, RES_FONT, INTERN("font_default"));
+    tg_game.tex_orange      = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("tex_test_diff"));
+    tg_game.tex_red         = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("tex_test_mrao"));
+    tg_game.tex_audio_icon  = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("tex_audio_icon"));
     DLB_ASSERT(tg_game.font);
     DLB_ASSERT(tg_game.tex_orange && tg_game.tex_orange->gl_id);
     DLB_ASSERT(tg_game.tex_red && tg_game.tex_red->gl_id);
@@ -158,10 +156,10 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
     ////////////////////////////////////////////////////////////////////////////
-    tg_shader_lines     = ta_scene_entity_by_uid(tg_game.scene, INTERN("shader_lines"));
-    tg_shader_quads     = ta_scene_entity_by_uid(tg_game.scene, INTERN("shader_quads"));
-    tg_shader_cubemap   = ta_scene_entity_by_uid(tg_game.scene, INTERN("shader_cubemap"));
-    tg_shader_shadow    = ta_scene_entity_by_uid(tg_game.scene, INTERN("shader_shadow"));
+    tg_shader_lines     = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("shader_lines"));
+    tg_shader_quads     = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("shader_quads"));
+    tg_shader_cubemap   = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("shader_cubemap"));
+    tg_shader_shadow    = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("shader_shadow"));
     DLB_ASSERT(tg_shader_lines);
     DLB_ASSERT(tg_shader_quads);
     DLB_ASSERT(tg_shader_cubemap);
@@ -406,7 +404,8 @@ static void render_fps(double ms_frame_start, u64 frame_num)
     }
     dlb_vec_zero(frame_time_rects);
 
-    ta_shader *font_shader = ta_font_shader(tg_game.font);
+    ta_shader *font_shader = ta_scene_find_by_id(tg_game.scene, RES_SHADER,
+        tg_game.font->shader_id);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
@@ -420,8 +419,8 @@ static void debug_nametag()
     ta_rectf tag_rect = ta_font_push_text(&tag_rects, tg_game.font,
         CSTR("Player 1\nis da best"), true, 0, 0, 0, 0);
 
-    ta_position *player_position = ta_scene_entity_get_component(tg_game.scene,
-        tg_game.player, COMP_POSITION);
+    ta_position *player_position = ta_scene_entity_component(tg_game.scene,
+        tg_game.player, RES_COMP_POSITION);
     ta_vec3 tag_pos = vec3_add(player_position->transform.position, (ta_vec3){ 0.0f, 1.2f, 0.0f });
     ta_vec3 tag_to_cam = vec3_sub(tg_game.camera->position, tag_pos);
     tag_to_cam.z *= -1.0f;
@@ -462,7 +461,8 @@ static void debug_nametag()
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
     // Name tag text
-    ta_shader *font_shader = ta_font_shader(tg_game.font);
+    ta_shader *font_shader = ta_scene_find_by_id(tg_game.scene, RES_SHADER,
+        tg_game.font->shader_id);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &tg_game.camera->projection);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &tg_game.camera->look_at);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform_fg);

@@ -142,7 +142,7 @@ static void game_player_shoot(ta_game *game)
     static double last_oh_no_ms = 0;
 
     ta_audio_source *src_gun =
-        ta_scene_find(game->scene, COMP_AUDIO_SOURCE, INTERN("src_gun"));
+        ta_scene_find_by_name(game->scene, RES_COMP_AUDIO_SOURCE, INTERN("src_gun"));
 
     double now_ms = ta_timer_elapsed_ms();
 
@@ -155,8 +155,8 @@ static void game_player_shoot(ta_game *game)
         }
 
         ta_audio_buffer *sfx_gunshot =
-            ta_scene_find(game->scene, COMP_AUDIO_BUFFER, INTERN("sfx_gunshot"));
-        ta_audio_source_set_buffer(src_gun, sfx_gunshot);
+            ta_scene_find_by_name(game->scene, RES_AUDIO_BUFFER, INTERN("sfx_gunshot"));
+        ta_audio_source_set_buffer(src_gun, sfx_gunshot->id);
         ta_audio_source_play(src_gun);
         last_shoot_ms = ta_timer_elapsed_ms();
         game->player_clip--;
@@ -168,8 +168,8 @@ static void game_player_shoot(ta_game *game)
             }
 
             ta_audio_buffer *sfx_cock =
-                ta_scene_find(game->scene, COMP_AUDIO_BUFFER, INTERN("sfx_cock"));
-            ta_audio_source_set_buffer(src_gun, sfx_cock);
+                ta_scene_find_by_name(game->scene, RES_AUDIO_BUFFER, INTERN("sfx_cock"));
+            ta_audio_source_set_buffer(src_gun, sfx_cock->id);
             ta_audio_source_play(src_gun);
             last_cock_ms = ta_timer_elapsed_ms();
 
@@ -184,8 +184,8 @@ static void game_player_shoot(ta_game *game)
             }
 
             ta_audio_buffer *sfx_oh_no =
-                ta_scene_find(game->scene, COMP_AUDIO_BUFFER, INTERN("sfx_oh_no"));
-            ta_audio_source_set_buffer(src_gun, sfx_oh_no);
+                ta_scene_find_by_name(game->scene, RES_AUDIO_BUFFER, INTERN("sfx_oh_no"));
+            ta_audio_source_set_buffer(src_gun, sfx_oh_no->id);
             ta_audio_source_play(src_gun);
             last_oh_no_ms = ta_timer_elapsed_ms();
         }
@@ -223,7 +223,8 @@ void ta_game_event(ta_game *game, ta_event *event)
             dir.z = game->camera->front.z;
             dir = vec3_normalize(dir);
             dir = vec3_scalef(dir, 0.1f);
-            ta_rigid_body *player_body = ta_node_component(game->player, COMP_RIGID_BODY);
+            ta_rigid_body *player_body = ta_scene_entity_component(game->scene,
+                game->player, RES_COMP_RIGID_BODY);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_MOVE_BACKWARD: {
@@ -232,7 +233,8 @@ void ta_game_event(ta_game *game, ta_event *event)
             dir.z = -game->camera->front.z;
             dir = vec3_normalize(dir);
             dir = vec3_scalef(dir, 0.1f);
-            ta_rigid_body *player_body = ta_node_component(game->player, COMP_RIGID_BODY);
+            ta_rigid_body *player_body = ta_scene_entity_component(game->scene,
+                game->player, RES_COMP_RIGID_BODY);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_MOVE_RIGHT: {
@@ -241,7 +243,8 @@ void ta_game_event(ta_game *game, ta_event *event)
             dir.z = game->camera->right.z;
             dir = vec3_normalize(dir);
             dir = vec3_scalef(dir, 0.1f);
-            ta_rigid_body *player_body = ta_node_component(game->player, COMP_RIGID_BODY);
+            ta_rigid_body *player_body = ta_scene_entity_component(game->scene,
+                game->player, RES_COMP_RIGID_BODY);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_MOVE_LEFT: {
@@ -250,13 +253,15 @@ void ta_game_event(ta_game *game, ta_event *event)
             dir.z = -game->camera->right.z;
             dir = vec3_normalize(dir);
             dir = vec3_scalef(dir, 0.1f);
-            ta_rigid_body *player_body = ta_node_component(game->player, COMP_RIGID_BODY);
+            ta_rigid_body *player_body = ta_scene_entity_component(game->scene,
+                game->player, RES_COMP_RIGID_BODY);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_JUMP: {
             ta_vec3 dir = VEC3_Y;
             dir = vec3_scalef(dir, 5.0f);
-            ta_rigid_body *player_body = ta_node_component(game->player, COMP_RIGID_BODY);
+            ta_rigid_body *player_body = ta_scene_entity_component(game->scene,
+                game->player, RES_COMP_RIGID_BODY);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_SHOOT: {

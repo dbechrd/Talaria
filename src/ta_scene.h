@@ -66,13 +66,13 @@ ta_scene *ta_scene_load_file(const char *filename);
 void ta_scene_save_file(ta_scene *scene, const char *filename);
 void ta_scene_free(ta_scene *scn);
 void ta_scene_print(ta_scene *scn, FILE *hnd);
-
 void *ta_scene_find_at(ta_scene *scene, ta_resource_type type, u32 index);
 void *ta_scene_find_by_id_try(ta_scene *scene, ta_resource_type type, u32 id);
 void *ta_scene_find_by_id(ta_scene *scene, ta_resource_type type, u32 id);
 void *ta_scene_find_by_id_or_default(ta_scene *scene, ta_resource_type type,
     u32 id);
-
+void *ta_scene_find_by_name(ta_scene *scene, ta_resource_type type,
+    const char *name);
 u32 ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name);
 void ta_scene_destroy(ta_scene *scene, ta_resource_type type, u32 id);
 void *ta_scene_entity_add_component(ta_scene *scene, u32 entity_id,
@@ -81,7 +81,6 @@ void *ta_scene_entity_component_try(ta_scene *scene, struct ta_entity *entity,
     ta_resource_type type);
 void *ta_scene_entity_component(ta_scene *scene, struct ta_entity *entity,
     ta_resource_type type);
-
 //ta_entity *ta_scene_entity_by_uid_try(ta_scene *scene, const char *uid);
 //ta_entity *ta_scene_entity_by_uid(ta_scene *scene, const char *uid);
 void ta_scene_update(ta_scene *scene, float dt);
