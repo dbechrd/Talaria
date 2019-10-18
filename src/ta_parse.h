@@ -28,7 +28,10 @@
 
 #define C_IDENT             C__ALPHA_LOWER C__DIGIT "_"
 #define C_IDENT_END         ":"
-#define IDENT_UID           "uid"
+#define C_IDENT_ID_START    "["
+#define C_IDENT_ID          C__DIGIT
+#define C_IDENT_ID_END      "]"
+#define IDENT_ID            "id"
 #define KEYWORD_NULL        "null"
 #define KEYWORD_TRUE        "true"
 #define KEYWORD_FALSE       "false"

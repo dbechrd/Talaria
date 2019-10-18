@@ -40,6 +40,7 @@ typedef enum ta_schema_field_type {
     TYP_FONT,
     TYP_MATERIAL,
     TYP_MESH_GROUP,
+    TYP_MESH,
     TYP_SHADER,
     TYP_TEXTURE,
 

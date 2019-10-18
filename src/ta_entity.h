@@ -2,6 +2,11 @@
 #include "ta_resource_type.h"
 #include "dlb/dlb_types.h"
 
+typedef struct ta_component {
+    u32 id;
+    u32 entity_id;
+} ta_component;
+
 // TODO: Binary format should just store component pools as-is, with the uid
 // pool intact to map data to entity uid. This struct is for human-readable
 // scene files where we want the notion of entities being a collection of
@@ -21,3 +26,5 @@ typedef struct ta_entity {
     u32 id;
     u32 components[RES_COMP_COUNT];
 } ta_entity;
+
+void ta_entity_free(ta_entity *entity);

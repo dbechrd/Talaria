@@ -22,6 +22,7 @@
 #include "ta_text_entry.h"
 #include "ta_log.h"
 #include "ta_position.h"
+#include "ta_entity.h"
 #include "SDL/SDL_keycode.h"
 #include "dlb/dlb_vector.h"
 
@@ -462,6 +463,8 @@ void ta_editor_draw(float alpha)
     // Stencil selected node
     u32 selected_entity_id = ta_editor_selected_node();
     if (selected_entity_id) {
+        ta_entity *entity = ta_scene_find_by_id(tg_game.scene, RES_ENTITY, selected_entity_id);
+
         glEnable(GL_STENCIL_TEST);
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
         glStencilMask(0xFF);
@@ -471,22 +474,22 @@ void ta_editor_draw(float alpha)
         //glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
         glDepthMask(GL_FALSE);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        ta_node_render(selected_entity_id, tg_game.camera, alpha);
+        ta_node_render(entity, tg_game.camera, alpha);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthMask(GL_TRUE);
-    }
 
-    glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
-    // Outline selected node
-    if (selected_entity_id) {
+        // Outline selected node
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
         glStencilMask(0x00);
         ta_shader *shader = ta_scene_find_by_id(editor.scene, RES_SHADER,
             editor.shader_editor_select_id);
         ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&TA_COLOR_YELLOW);
-        ta_node_render_shader(selected_entity_id, tg_game.camera, shader, alpha, 1.1f);
+        ta_node_render_shader(entity, tg_game.camera, shader, alpha, 1.1f);
         glDisable(GL_STENCIL_TEST);
+    } else {
+        glClear(GL_DEPTH_BUFFER_BIT);
     }
 
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y

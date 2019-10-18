@@ -171,9 +171,11 @@
     <ClCompile Include="src\ta_button.c" />
     <ClCompile Include="src\ta_collider.c" />
     <ClCompile Include="src\ta_editor.c" />
+    <ClCompile Include="src\ta_entity.c" />
     <ClCompile Include="src\ta_font.c" />
     <ClCompile Include="src\ta_key.c" />
     <ClCompile Include="src\ta_light.c" />
+    <ClCompile Include="src\ta_position.c" />
     <ClCompile Include="src\ta_rigid_body.c" />
     <ClCompile Include="src\ta_node.c" />
     <ClCompile Include="src\ta_material.c" />

@@ -95,43 +95,11 @@ void ndc_tests() {
 static void render_fps(double ms_frame_start, u64 frame_num);
 static void debug_nametag();
 
-void blah()
-{
-    ta_scene *scene = tg_game.scene;
-    ta_uid entity = 143;
-    ta_position *position = ta_scene_component(scene, entity, COMP_POSITION);
-    ta_model *model = ta_scene_component(scene, entity, COMP_MODEL);
-
-    dlb_pool *positions = &scene->components[COMP_POSITION];
-    dlb_pool *entities = &scene->entities[COMP_POSITION];
-    dlb_hash *entity_names = &scene->entity_names;
-    for (u32 idx = 0; idx < positions->size; ++idx) {
-        ta_position *position = dlb_pool_at(positions, idx);
-        ta_uid entity = dlb_pool_at(entities, idx);
-        const char *name = dlb_hash_search(entity_names, entity, sizeof(entity), 0);
-        DLB_ASSERT(name);
-        ta_log_write(&tg_debug_log,
-            "Entity [uid: %d][name: %s] has position:\n"
-            "  x: %d\n"
-            "  y: %d\n"
-            "  z: %d\n",
-            entity,
-            name,
-            position->transform.position.x,
-            position->transform.position.y,
-            position->transform.position.z
-        );
-    }
-}
-
 int main(int argc, char *argv[])
 {
     UNUSED(argc);
     UNUSED(argv);
     DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
-    // NOTE: ta_uid generation field must be beyond the size needed by pool's
-    //       intrusive freelist index to ensure they don't stomp each other
-    DLB_ASSERT(OFFSETOF(ta_id, generation) >= SIZEOF_MEMBER(dlb_pool, freelist));
 
     ta_timer_init();
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
@@ -159,7 +127,7 @@ int main(int argc, char *argv[])
     // Intro scene
     tg_game.scene = ta_scene_load_file("data/scene/scene1.dml");
     // TODO: Find closest 8 lights and store them in tg_game.lights
-    tg_game.lights = tg_game.scene->components[COMP_LIGHT];
+    tg_game.lights = &tg_game.scene->resource_data[RES_COMP_LIGHT];
     tg_game.camera_player   = ta_scene_entity_by_uid(tg_game.scene, INTERN("cam_player"));
     tg_game.camera_freecam  = ta_scene_entity_by_uid(tg_game.scene, INTERN("cam_freecam"));
     tg_game.player          = ta_scene_entity_by_uid(tg_game.scene, INTERN("node_player"));
@@ -264,7 +232,7 @@ int main(int argc, char *argv[])
         while (ms_frame_accum >= ms_sim_dt) {
             // Update player camera
             // TODO: Set target entity and follow distance vector in DML
-            ta_rigid_body *player_body = ta_node_component(tg_game.player, COMP_RIGID_BODY);
+            ta_rigid_body *player_body = ta_scene_entity_component(tg_game.scene, tg_game.player, RES_COMP_RIGID_BODY);
             ta_camera_set_target_pos_absolute(tg_game.camera_player,
                 vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
             ta_camera_update(tg_game.camera_player, sim_dt);

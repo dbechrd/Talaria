@@ -122,6 +122,12 @@
     <ClCompile Include="src\ta_key.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ta_position.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ta_entity.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src/ta_window.h">

@@ -13,6 +13,7 @@ enum {
 };
 
 typedef struct ta_mesh {
+    u32 id;
     GLuint *indexes;
     ta_vec3 *positions;
     ta_vec3 *normals;

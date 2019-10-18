@@ -73,8 +73,8 @@ void *ta_scene_find_by_id(ta_scene *scene, ta_resource_type type, u32 id);
 void *ta_scene_find_by_id_or_default(ta_scene *scene, ta_resource_type type,
     u32 id);
 
-u32 ta_scene_entity_create(ta_scene *scene, const char *name);
-void ta_scene_entity_destroy(ta_scene *scene, u32 entity_id);
+u32 ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name);
+void ta_scene_destroy(ta_scene *scene, ta_resource_type type, u32 id);
 void *ta_scene_entity_add_component(ta_scene *scene, u32 entity_id,
     ta_resource_type type);
 void *ta_scene_entity_component_try(ta_scene *scene, struct ta_entity *entity,
@@ -86,4 +86,4 @@ void *ta_scene_entity_component(ta_scene *scene, struct ta_entity *entity,
 //ta_entity *ta_scene_entity_by_uid(ta_scene *scene, const char *uid);
 void ta_scene_update(ta_scene *scene, float dt);
 void ta_scene_shadow_pass(ta_scene *scene, struct ta_shader *shader, float alpha);
-void ta_scene_render(ta_scene *scene, struct ta_camera *camera, float alpha);
+void ta_scene_render(ta_scene *scene, struct ta_camera *render_camera, float alpha);

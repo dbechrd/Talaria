@@ -19,6 +19,7 @@
 #include "ta_primitive.h"
 #include "ta_editor.h"
 #include "ta_position.h"
+#include "ta_entity.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_pool.h"
 #include <stdlib.h>
@@ -42,6 +43,7 @@ ta_schema_field_type res_to_typ(ta_resource_type type)
         case RES_FONT             : schema_type = TYP_FONT         ; break;
         case RES_MATERIAL         : schema_type = TYP_MATERIAL     ; break;
         case RES_MESH_GROUP       : schema_type = TYP_MESH_GROUP   ; break;
+        case RES_MESH             : schema_type = TYP_MESH         ; break;
         case RES_SHADER           : schema_type = TYP_SHADER       ; break;
         case RES_TEXTURE          : schema_type = TYP_TEXTURE      ; break;
         default                   : schema_type = TYP_NULL         ; break;
@@ -66,6 +68,7 @@ ta_resource_type typ_to_res(ta_schema_field_type type)
         case TYP_FONT         : res_type = RES_FONT             ; break;
         case TYP_MATERIAL     : res_type = RES_MATERIAL         ; break;
         case TYP_MESH_GROUP   : res_type = RES_MESH_GROUP       ; break;
+        case TYP_MESH         : res_type = RES_MESH             ; break;
         case TYP_SHADER       : res_type = RES_SHADER           ; break;
         case TYP_TEXTURE      : res_type = RES_TEXTURE          ; break;
         default               : res_type = RES_COUNT            ; break;
@@ -133,13 +136,13 @@ static const char *token_type_str(token_type type)
 
 static token *token_read(ta_file *f, token **tokens)
 {
-    token *token = dlb_vec_alloc(*tokens);
-    token->file_pos = f->pos;
+    token *tok = dlb_vec_alloc(*tokens);
+    tok->file_pos = f->pos;
     char c = ta_file_peek(f);
     switch(c) {
         case EOF:
         {
-            token->type = TOKEN_EOF;
+            tok->type = TOKEN_EOF;
             break;
         }
         case ' ':
@@ -148,33 +151,33 @@ static token *token_read(ta_file *f, token **tokens)
             token_type prev_token_type = TOKEN_UNKNOWN;
             int tokens_len = dlb_vec_len(*tokens);
             if (tokens_len > 1) {
-                prev_token_type = (*tokens)[tokens_len - 2].type;
+                prev_token_type = (tok - 1)->type;
             }
             if (prev_token_type == TOKEN_NEWLINE ||
                 prev_token_type == TOKEN_INDENT)
             {
                 ta_file_expect_char(f, C_WHITESPACE, 1);
-                token->type = TOKEN_INDENT;
+                tok->type = TOKEN_INDENT;
             } else {
-                token->type = TOKEN_WHITESPACE;
+                tok->type = TOKEN_WHITESPACE;
             }
             break;
         }
         case '\n':
         {
-            token->type = TOKEN_NEWLINE;
+            tok->type = TOKEN_NEWLINE;
             ta_file_expect_char(f, C_NEWLINE, 1);
             break;
         }
         case '#':
         {
-            token->type = TOKEN_COMMENT;
+            tok->type = TOKEN_COMMENT;
             ta_file_expect_char(f, C_COMMENT_START, 1);
             char buf[MAX_COMMENT_LEN + 1] = { 0 };
             int len = 0;
             ta_file_read(f, buf, MAX_COMMENT_LEN, C_COMMENT, C_COMMENT_END, &len);
-            token->length = len;
-            token->value.string = ta_symbol_intern(buf, len);
+            tok->length = len;
+            tok->value.string = ta_symbol_intern(buf, len);
             break;
         }
         case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
@@ -189,20 +192,20 @@ static token *token_read(ta_file *f, token **tokens)
             char buf[MAX_IDENT_LEN + 1] = { 0 };
             int len = 0;
             ta_file_read(f, buf, MAX_IDENT_LEN, C_IDENT, 0, &len);
-            token->length = len;
-            token->value.string = ta_symbol_intern(buf, len);
+            tok->length = len;
+            tok->value.string = ta_symbol_intern(buf, len);
             if (ta_file_allow_char(f, C_IDENT_END, 1)) {
-                token->type = TOKEN_IDENTIFIER;
-            } else if (token->value.string == SYM_NULL) {
-                token->type = TOKEN_NULL;
-            } else if (token->value.string == SYM_TRUE) {
-                token->type = TOKEN_BOOL;
-                token->value.as_bool = true;
-            } else if (token->value.string == SYM_FALSE) {
-                token->type = TOKEN_BOOL;
-                token->value.as_bool = false;
+                tok->type = TOKEN_IDENTIFIER;
+            } else if (tok->value.string == SYM_NULL) {
+                tok->type = TOKEN_NULL;
+            } else if (tok->value.string == SYM_TRUE) {
+                tok->type = TOKEN_BOOL;
+                tok->value.as_bool = true;
+            } else if (tok->value.string == SYM_FALSE) {
+                tok->type = TOKEN_BOOL;
+                tok->value.as_bool = false;
             } else {
-                PANIC_FILE(f, "Expected : after identifier '%s'\n", token->value.string);
+                PANIC_FILE(f, "Expected : after identifier '%s'\n", tok->value.string);
             }
             break;
         }
@@ -217,7 +220,7 @@ static token *token_read(ta_file *f, token **tokens)
                 buf[len++] = ta_file_char(f);
                 next = ta_file_peek(f);
                 if (next == 'x') {
-                    token->type = TOKEN_FLOAT;
+                    tok->type = TOKEN_FLOAT;
                     buf[len++] = ta_file_char(f);
                     next = ta_file_read(f, buf + len, 8, C_NUMBER_HEX, 0, &read);
                     len += read;
@@ -227,33 +230,33 @@ static token *token_read(ta_file *f, token **tokens)
                         ta_file_expect_char(f, ")", 1);
                     }
                 } else if (next == 'b') {
-                    token->type = TOKEN_INT;
+                    tok->type = TOKEN_INT;
                     buf[len++] = ta_file_char(f);
                     ta_file_read(f, buf + len, 32, C_NUMBER_BINARY, 0, &read);
                     len += read;
                 }
             }
-            if (token->type == TOKEN_UNKNOWN) {
+            if (tok->type == TOKEN_UNKNOWN) {
                 ta_file_read(f, buf, 1, C_NUMBER_SIGN, 0, &read);
                 len += read;
                 ta_file_read(f, buf + len, MAX_NUMBER_LEN - len, C_NUMBER_INT, 0, &read);
                 len += read;
                 next = ta_file_peek(f);
                 if (next == '.') {
-                    token->type = TOKEN_FLOAT;
+                    tok->type = TOKEN_FLOAT;
                     ta_file_read(f, buf + len, MAX_NUMBER_LEN - len,
                         C_NUMBER_FLOAT, 0, &read);
                     len += read;
                 } else {
-                    token->type = TOKEN_INT;
+                    tok->type = TOKEN_INT;
                 }
             }
-            switch (token->type) {
+            switch (tok->type) {
                 case TOKEN_INT: {
-                    token->value.as_int = parse_int(buf);
+                    tok->value.as_int = parse_int(buf);
                     break;
                 } case TOKEN_FLOAT: {
-                    token->value.as_float = parse_float(buf);
+                    tok->value.as_float = parse_float(buf);
                     break;
                 } default: {
                     DLB_ASSERT(!"Token type could not be resolved");
@@ -263,7 +266,7 @@ static token *token_read(ta_file *f, token **tokens)
         }
         case '"':
         {
-            token->type = TOKEN_STRING;
+            tok->type = TOKEN_STRING;
             ta_file_expect_char(f, "\"", 1);
             char buf[MAX_STRING_LEN + 1] = { 0 };
             int len = 0;
@@ -278,37 +281,37 @@ static token *token_read(ta_file *f, token **tokens)
                 }
             } while (delim == '\\');
             ta_file_expect_char(f, "\"", 1);
-            token->length = len;
-            token->value.string = len ? ta_symbol_intern(buf, len) : 0;
+            tok->length = len;
+            tok->value.string = len ? ta_symbol_intern(buf, len) : 0;
             break;
         }
         case '[':
         {
-            token->type = TOKEN_ARRAY_START;
+            tok->type = TOKEN_ARRAY_START;
             ta_file_expect_char(f, C_ARRAY_START, 1);
             break;
         }
         case ']':
         {
-            token->type = TOKEN_ARRAY_END;
+            tok->type = TOKEN_ARRAY_END;
             ta_file_expect_char(f, C_ARRAY_END, 1);
             break;
         }
         case '{':
         {
-            token->type = TOKEN_OBJECT_START;
+            tok->type = TOKEN_OBJECT_START;
             ta_file_expect_char(f, C_OBJECT_START, 1);
             break;
         }
         case '}':
         {
-            token->type = TOKEN_OBJECT_END;
+            tok->type = TOKEN_OBJECT_END;
             ta_file_expect_char(f, C_OBJECT_END, 1);
             break;
         }
         case ',':
         {
-            token->type = TOKEN_LIST_SEPARATOR;
+            tok->type = TOKEN_LIST_SEPARATOR;
             ta_file_expect_char(f, C_LIST_SEPARATOR, 1);
             break;
         }
@@ -317,7 +320,7 @@ static token *token_read(ta_file *f, token **tokens)
             PANIC_FILE(f, "I don't know what's going on.. weird tokens bro.\n");
         }
     }
-    return token;
+    return tok;
 }
 
 static token *tokenize(ta_file *f)
@@ -519,6 +522,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 }
 
                 if (array) {
+                    DLB_ASSERT(stack[sp-1].ptr);
                     // NOTE: Commas allowed but not required when reading in objects
                     if (stack[sp-1].array_len) {
                         void **arr = stack[sp-1].ptr;
@@ -543,6 +547,12 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 }
 
                 if (sp) {
+                    if (!stack[sp-1].ptr) {
+                        PANIC("Parent not allocated yet. Field '%s' should be after 'id' on %s '%s'\n",
+                            tok->value.string,
+                            ta_schema_field_type_str(stack[sp-1].type),
+                            stack[sp-1].name);
+                    }
                     ta_schema_field *field = ta_schema_field_find(stack[sp-1].type,
                         tok->value.string);
                     if (!field) {
@@ -588,19 +598,10 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     DLB_ASSERT(schema->size);
                     DLB_ASSERT(schema->name == tok->value.string);
 
-                    // TODO: Need to read ID in from scene file, otherwise no
-                    // way to know what ID to give to this object. Could hash a
-                    // UID string, but it still needs to be present before the
-                    // alloc can occur (this would require pools to use dlb_hash
-                    // instead of vector for sparse_set).
-                    u32 resource_id = DLB_ASSERT(0);
-
-                    stack[sp].resource_id = resource_id;
                     stack[sp].type = schema->type;
                     stack[sp].array_len = 0;
                     stack[sp].array_elem = 0;
                     stack[sp].name = tok->value.string;
-                    stack[sp].ptr = dlb_pool_alloc(&scene->resource_data[res_type], resource_id);
                     stack[sp].size = schema->size;
                     stack[sp].is_union_type = false;
                     stack[sp].is_union = false;
@@ -639,7 +640,27 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 }
                 int *fp = stack[sp].ptr;
                 *fp = tok->value.as_int;
-                if (stack[sp].is_union_type) {
+
+                // TODO: Need to read ID in from scene file, otherwise no
+                // way to know what ID to give to this object. Could hash a
+                // UID string, but it still needs to be present before the
+                // alloc can occur (this would require pools to use dlb_hash
+                // instead of vector for sparse_set).
+                if (stack[sp].name == SYM_ID) {
+                    DLB_ASSERT(sp > 0);
+                    u32 resource_id = *fp;
+                    DLB_ASSERT(resource_id);
+                    ta_resource_type res_type = typ_to_res(stack[sp-1].type);
+                    DLB_ASSERT(res_type < RES_COUNT);
+
+                    // TODO: All resource types must start with ID field
+                    u32 *id = dlb_pool_alloc(&scene->resource_names[res_type], resource_id);
+                    *id = resource_id;
+                    stack[sp-1].ptr = id;
+                    dlb_hash_insert(&scene->id_by_name[res_type], tok->value.string, tok->length, (void *)resource_id);
+
+                    scene->next_id[res_type] = *id + 1;
+                } else if (stack[sp].is_union_type) {
                     stack[sp-1].is_union = true;
                     stack[sp-1].union_type = *fp;
                 }
@@ -657,22 +678,17 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 }
                 const char **fp = stack[sp].ptr;
                 *fp = tok->value.string;
+#if 0
                 if (stack[sp].name == SYM_UID) {
                     DLB_ASSERT(sp > 0);
-
                     u32 resource_id = stack[sp-1].resource_id;
                     DLB_ASSERT(resource_id);
-
                     ta_resource_type res_type = typ_to_res(stack[sp-1].type);
                     DLB_ASSERT(res_type < RES_COUNT);
 
                     stack[sp-1].ptr = dlb_pool_alloc(&scene->resource_names[res_type], resource_id);
                     dlb_hash_insert(&scene->id_by_name[res_type],
                         tok->value.string, tok->length, (void *)resource_id);
-                }
-#if 0
-                if (*fp == INTERN("tex_test_diff")) {
-                    DLB_ASSERT(1);
                 }
 #endif
                 break;
@@ -856,7 +872,7 @@ ta_scene *ta_scene_load(ta_file *file)
     for (ta_resource_type type = 0; type < RES_COUNT; ++type) {
         if (tg_schemas[type].init) {
             dlb_pool *pool = &scene->resource_data[type];
-            for (int idx = 0; idx < pool->size; ++idx) {
+            for (u32 idx = 0; idx < pool->size; ++idx) {
                 void *ptr = dlb_pool_at(pool, idx);
                 tg_schemas[type].init(ptr);
             }
@@ -897,7 +913,7 @@ void ta_scene_free(ta_scene *scene)
     for (ta_resource_type type = 0; type < RES_COUNT; ++type) {
         if (tg_schemas[type].free) {
             dlb_pool *pool = &scene->resource_data[type];
-            for (int idx = 0; idx < pool->size; ++idx) {
+            for (u32 idx = 0; idx < pool->size; ++idx) {
                 void *ptr = dlb_pool_at(pool, idx);
                 tg_schemas[type].free(ptr);
             }
@@ -921,7 +937,7 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
 
         dlb_pool *pool = &scene->resource_data[type];
-        for (int idx = 0; idx < pool->size; ++idx) {
+        for (u32 idx = 0; idx < pool->size; ++idx) {
             void *ptr = dlb_pool_at(pool, idx);
             ta_schema_print(hnd, res_to_typ(type), ptr, 0, 0);
         }
@@ -967,47 +983,43 @@ void *ta_scene_find_by_id_or_default(ta_scene *scene, ta_resource_type type,
     return resource;
 }
 
-u32 ta_scene_entity_create(ta_scene *scene, const char *name)
+// TODO: Move this to ta_entity_free and call schema[type].init(ptr)
+u32 ta_scene_create(ta_scene *scene, ta_resource_type type, const char *name)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(name);
 
-    u32 id = scene->next_id[RES_ENTITY]++;
+    u32 id = scene->next_id[type]++;
 
-    const char **name_ptr = dlb_pool_alloc(&scene->resource_names[RES_ENTITY], id);
+    const char **name_ptr = dlb_pool_alloc(&scene->resource_names[type], id);
     DLB_ASSERT(name_ptr);
     *name_ptr = name;
 
-    ta_entity *entity = dlb_pool_alloc(&scene->resource_data[RES_ENTITY], id);
-    DLB_ASSERT(entity);
+    u32 *data = dlb_pool_alloc(&scene->resource_data[type], id);
+    DLB_ASSERT(data);
+    *data = id;
 
-    dlb_hash_insert(&scene->id_by_name, SYM(name), (void *)id);
+    dlb_hash_insert(&scene->id_by_name[type], SYM(name), (void *)id);
     return id;
 }
 
-void ta_scene_entity_destroy(ta_scene *scene, u32 entity_id)
+void ta_scene_destroy(ta_scene *scene, ta_resource_type type, u32 id)
 {
-    const char *entity_name = dlb_pool_by_id(&scene->resource_names[RES_ENTITY],
-        entity_id);
-    ta_entity *entity = dlb_pool_by_id(&scene->resource_data[RES_ENTITY],
-        entity_id);
+    // TODO: if type is a component type, find and update parent entity:
+    // entity->components[type] = 0
+    DLB_ASSERT(type >= RES_COMP_COUNT);
 
-    // Delete entity components
-    for (u32 type = 0; type < RES_COMP_COUNT; ++type) {
-        u32 component_id = entity->components[type];
-        if (component_id) {
-            const char *component_name = dlb_pool_by_id(
-                &scene->resource_names[type], component_id);
-            dlb_pool_delete(&scene->resource_names[type], component_id);
-            dlb_pool_delete(&scene->resource_data[type], component_id);
-            dlb_hash_delete(&scene->id_by_name[type], SYM(component_name));
-        }
+    const char *name = dlb_pool_by_id(&scene->resource_names[type], id);
+    void *data = dlb_pool_by_id(&scene->resource_data[type], id);
+
+    if (tg_schemas[type].free) {
+        tg_schemas[type].free(data);
     }
 
-    // Delete entity
-    dlb_pool_delete(&scene->resource_names[RES_ENTITY], entity_id);
-    dlb_pool_delete(&scene->resource_data[RES_ENTITY], entity_id);
-    dlb_hash_delete(&scene->id_by_name[RES_ENTITY], SYM(entity_name));
+    // Delete resource
+    dlb_hash_delete(&scene->id_by_name[type], SYM(name));
+    dlb_pool_delete(&scene->resource_names[type], id);
+    dlb_pool_delete(&scene->resource_data[type], id);
 }
 
 void *ta_scene_entity_add_component(ta_scene *scene, u32 entity_id,
@@ -1018,12 +1030,15 @@ void *ta_scene_entity_add_component(ta_scene *scene, u32 entity_id,
 
     ta_entity *entity = dlb_pool_by_id(&scene->resource_data[RES_ENTITY],
         entity_id);
+    DLB_ASSERT(entity->id == entity_id);
     DLB_ASSERT(entity->components[type] == 0);  // entity already has component
 
-    u32 id = scene->next_id[type]++;
-    void *component = dlb_pool_alloc(&scene->resource_data[type], &id);
+    u32 component_id = ta_scene_create(scene, type, "[component]");
+    ta_component *component = ta_scene_find_by_id(scene, type, component_id);
     DLB_ASSERT(component);
-    entity->components[type] = id;
+    component->id = component_id;
+    component->entity_id = entity_id;
+    entity->components[type] = component_id;
     return component;
 }
 
@@ -1216,7 +1231,7 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
     ta_shader_unbind(shader);
 }
 
-void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
+void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
 {
     glViewport(0, 0, WINDOW_W, WINDOW_H);
     glCullFace(GL_BACK);
@@ -1228,22 +1243,22 @@ void ta_scene_render(ta_scene *scene, ta_camera *camera, float alpha)
 
     // TODO: This is going to make a zillion extranous calls
     static GLenum tg_polygon_mode = GL_FILL;
-    GLenum camera_poly_mode = camera->debug_wireframe ? GL_LINE : GL_FILL;
+    GLenum camera_poly_mode = render_camera->debug_wireframe ? GL_LINE : GL_FILL;
     if (camera_poly_mode != tg_polygon_mode) {
         glPolygonMode(GL_FRONT_AND_BACK, camera_poly_mode);
         tg_polygon_mode = camera_poly_mode;
     }
 
-    ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &camera->projection);
-    ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &camera->look_at);
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &render_camera->projection);
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &render_camera->look_at);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &render_camera->projection);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &render_camera->look_at);
 
     // TODO: Group by shader / material to minimize redundant uniform calls
     dlb_pool *entities = &scene->resource_data[RES_ENTITY];
     for (u32 i = 0; i < entities->size; ++i) {
-        ta_entity *entity = dlb_pool_at(entities, i);
-        ta_node_render(entity, camera, alpha);
+        ta_entity *entity = dlb_pool_at(&scene->resource_data[RES_ENTITY], i);
+        ta_node_render(entity, render_camera, alpha);
     }
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);

@@ -43,6 +43,8 @@ typedef struct ta_light_shadowmap {
 } ta_light_shadowmap;
 
 typedef struct ta_light {
+    u32 id;
+    u32 entity_id;
     bool disabled;
     float intensity;
     ta_vec3 position;

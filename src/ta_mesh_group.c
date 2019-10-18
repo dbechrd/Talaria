@@ -4,7 +4,10 @@
 #include "ta_symbol.h"
 #include "ta_file.h"
 #include "ta_buffer.h"
+#include "ta_game.h"
+#include "ta_scene.h"
 #include "dlb/dlb_vector.h"
+#include "dlb/dlb_pool.h"
 
 #define TINYOBJ_MALLOC dlb_malloc
 #define TINYOBJ_CALLOC dlb_calloc
@@ -15,9 +18,8 @@
 
 #define TA_MESH_NORMAL_LEN 0.5f
 
-void ta_mesh_group_init(ta_mesh_group *group, const char *uid, const char *path)
+void ta_mesh_group_init(ta_mesh_group *group, const char *path)
 {
-    group->hnd.uid = uid;
     group->path = path;
 }
 
@@ -59,7 +61,13 @@ void ta_mesh_group_load(ta_mesh_group *group)
     for (size_t shape_idx = 0; shape_idx < num_shapes; shape_idx++) {
         tinyobj_shape_t shape = shapes[shape_idx];
 
-        ta_mesh *mesh = dlb_vec_alloc(group->meshes);
+        u32 name_len = (u32)strlen(shapes[shape_idx].name);
+        const char *name = ta_symbol_intern(shapes[shape_idx].name, name_len);
+
+        u32 *mesh_id = dlb_vec_alloc(group->mesh_ids);
+        *mesh_id = ta_scene_alloc(tg_game.scene, RES_MESH, name);
+
+        ta_mesh *mesh = ta_scene_find_by_id(tg_game.scene, RES_MESH, *mesh_id);
 
         mesh_min = VEC3_MAX;
         mesh_max = VEC3_MIN;
@@ -95,9 +103,6 @@ void ta_mesh_group_load(ta_mesh_group *group)
         }
 
         ta_mesh_create(mesh);
-
-        u32 name_len = (u32)strlen(shapes[shape_idx].name);
-        mesh->hnd.uid = ta_symbol_intern(shapes[shape_idx].name, name_len);
 
         mesh->aabb.extents = vec3_scalef(vec3_sub(mesh_max, mesh_min), 0.5f);
         mesh->aabb.center = vec3_add(mesh_min, mesh->aabb.extents);
@@ -167,22 +172,24 @@ ta_aabb ta_mesh_group_aabb(ta_mesh_group *group)
 
 void ta_mesh_group_push_normals(ta_mesh_group *group)
 {
-    dlb_vec_each(ta_mesh *, mesh, group->meshes) {
+    dlb_vec_each(u32 *, mesh_id, group->mesh_ids) {
+        ta_mesh *mesh = ta_scene_find_by_id(tg_game.scene, RES_MESH, *mesh_id);
         ta_mesh_push_normals(mesh);
     }
 }
 
 void ta_mesh_group_render(ta_mesh_group *group)
 {
-    dlb_vec_each(ta_mesh *, mesh, group->meshes) {
+    dlb_vec_each(u32 *, mesh_id, group->mesh_ids) {
+        ta_mesh *mesh = ta_scene_find_by_id(tg_game.scene, RES_MESH, *mesh_id);
         ta_mesh_render(mesh);
     }
 }
 
 void ta_mesh_group_free(ta_mesh_group *group)
 {
-    dlb_vec_each(ta_mesh *, mesh, group->meshes) {
-        ta_mesh_free(mesh);
+    dlb_vec_each(u32 *, mesh_id, group->mesh_ids) {
+        ta_scene_destroy(tg_game.scene, RES_MESH, *mesh_id);
     }
-    dlb_vec_free(group->meshes);
+    dlb_vec_free(group->mesh_ids);
 }

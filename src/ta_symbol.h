@@ -30,7 +30,7 @@ static inline char *dlb_symbol__alloc(const char *buf, u32 len) {
 #define INTERN(s) ta_symbol_intern(CSTR(s))
 
 // Special identifiers
-extern const char *SYM_UID;
+extern const char *SYM_ID;
 
 // DML keywords
 extern const char *SYM_NULL;

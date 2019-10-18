@@ -6,12 +6,13 @@
 struct ta_event;
 
 typedef struct ta_camera {
+    u32 id;
+    u32 entity_id;
     ta_vec3 position;           // where the camera is
     float position_smooth;      // how fast to blend to target [0, 1]
     float position_target_vel;  // how fast to move the target
     ta_transform target_xform;  // where the camera wants to be
     float follow_distance;      // how far to track target
-
     float yaw;
     float yaw_smooth;
     float yaw_target;
@@ -20,7 +21,6 @@ typedef struct ta_camera {
     float pitch_min;
     float pitch_max;
     float pitch_target;
-
     float fov;                  // field of view (degrees)
     float znear;                // near clip distance
     bool ortho;                 // true if orthographic, else perspective
@@ -30,10 +30,7 @@ typedef struct ta_camera {
     ta_vec3 right;
     ta_mat4 look_at;
     ta_mat4 projection;
-
-    // Temp frame buffers
-    ta_vec3 move_buffer;
-
+    ta_vec3 move_buffer;        // Delta for current frame
     bool dirty;
     bool debug_wireframe;
     bool debug_normals;

@@ -3,6 +3,8 @@
 #include "dlb/dlb_types.h"
 
 typedef struct ta_model {
+    u32 id;
+    u32 entity_id;
     // TODO: Do I need mesh groups, or should i just have multiple mesh components?
     u32 *mesh_group_ids;
     // TODO: If I need multiple materials per mesh group, probably easier to just

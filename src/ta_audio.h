@@ -27,6 +27,7 @@ typedef enum ta_audio_source_state {
 
 typedef struct ta_audio_source {
     u32 id;
+    u32 entity_id;
     u32 audio_buffer_id;
     float pitch;
     float gain;

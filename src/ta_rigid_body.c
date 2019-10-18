@@ -68,7 +68,8 @@ void ta_rigid_body_init(ta_rigid_body *body)
     switch (body->collider.type) {
         case TA_COLLIDER_PLANE: {
             body->collider.data.plane.normal = vec3_normalize(body->collider.data.plane.normal);
-            // TODO: Intialize body->aabb
+            // Infinite AABB??
+            // TODO: Calculate AABB for plane (add TA_EPSILON depth)
             break;
         } case TA_COLLIDER_SPHERE: {
             DLB_ASSERT(body->collider.data.sphere.radius > TA_EPSILON);
@@ -88,8 +89,11 @@ void ta_rigid_body_init(ta_rigid_body *body)
             DLB_ASSERT(body->collider.data.obb.extents.x > TA_EPSILON);
             DLB_ASSERT(body->collider.data.obb.extents.y > TA_EPSILON);
             DLB_ASSERT(body->collider.data.obb.extents.z > TA_EPSILON);
-            // TODO: Intialize body->aabb
+            // TODO: Calculate AABB from OBB
+            DLB_ASSERT(!"OBB not yet supported");
             break;
+        } default: {
+            DLB_ASSERT(!"Node needs AABB for broadphase");
         }
     }
     if (body->collider.type == TA_COLLIDER_PLANE &&

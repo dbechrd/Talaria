@@ -7,6 +7,8 @@
 // http://allenchou.net/2013/12/game-physics-introduction/
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
 typedef struct ta_rigid_body {
+    u32 id;
+    u32 entity_id;
     ta_aabb aabb;
     ta_collider collider;
 

@@ -7,7 +7,7 @@
 #define TA_SYMBOL_MAX_LEN 256
 
 // Special identifiers
-const char *SYM_UID;
+const char *SYM_ID;
 
 // DML keywords
 const char *SYM_NULL;
@@ -63,7 +63,7 @@ static dlb_hash symbol_table;
 void ta_symbol_init() {
     dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 512);
 
-    SYM_UID   = INTERN(IDENT_UID);
+    SYM_ID    = INTERN(IDENT_ID);
     SYM_NULL  = INTERN(KEYWORD_NULL);
     SYM_TRUE  = INTERN(KEYWORD_TRUE);
     SYM_FALSE = INTERN(KEYWORD_FALSE);

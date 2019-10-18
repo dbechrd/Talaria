@@ -16,6 +16,7 @@ typedef enum ta_resource_type {
     RES_FONT,
     RES_MATERIAL,
     RES_MESH_GROUP,
+    RES_MESH,
     RES_SHADER,
     RES_TEXTURE,
     RES_COUNT,
