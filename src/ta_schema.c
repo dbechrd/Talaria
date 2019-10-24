@@ -17,6 +17,7 @@
 #include "ta_model.h"
 #include "ta_position.h"
 #include "ta_entity.h"
+#include "ta_player.h"
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_hash.h"
@@ -85,6 +86,62 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
             DLB_ASSERT(!"<UNKNOWN_TA_FIELD_TYPE>");
             return 0;
     }
+}
+
+ta_schema_field_type res_to_typ(ta_resource_type type)
+{
+    ta_schema_field_type schema_type;
+    switch (type) {
+        // Component types
+        case RES_COMP_AUDIO_SOURCE: schema_type = TYP_AUDIO_SOURCE ; break;
+        case RES_COMP_BUTTON      : schema_type = TYP_BUTTON       ; break;
+        case RES_COMP_CAMERA      : schema_type = TYP_CAMERA       ; break;
+        case RES_COMP_LIGHT       : schema_type = TYP_LIGHT        ; break;
+        case RES_COMP_MODEL       : schema_type = TYP_MODEL        ; break;
+        case RES_COMP_POSITION    : schema_type = TYP_POSITION     ; break;
+        case RES_COMP_RIGID_BODY  : schema_type = TYP_RIGID_BODY   ; break;
+        case RES_COMP_PLAYER      : schema_type = TYP_PLAYER       ; break;
+        case RES_COMP_GUN         : schema_type = TYP_GUN          ; break;
+        // Resource types
+        case RES_AUDIO_BUFFER     : schema_type = TYP_AUDIO_BUFFER ; break;
+        case RES_ENTITY           : schema_type = TYP_ENTITY       ; break;
+        case RES_FONT             : schema_type = TYP_FONT         ; break;
+        case RES_MATERIAL         : schema_type = TYP_MATERIAL     ; break;
+        case RES_MESH_GROUP       : schema_type = TYP_MESH_GROUP   ; break;
+        case RES_MESH             : schema_type = TYP_MESH         ; break;
+        case RES_SHADER           : schema_type = TYP_SHADER       ; break;
+        case RES_TEXTURE          : schema_type = TYP_TEXTURE      ; break;
+        default                   : schema_type = TYP_NULL         ; break;
+    }
+    return schema_type;
+}
+
+ta_resource_type typ_to_res(ta_schema_field_type type)
+{
+    ta_resource_type res_type;
+    switch (type) {
+        // Component types
+        case TYP_AUDIO_SOURCE : res_type = RES_COMP_AUDIO_SOURCE; break;
+        case TYP_BUTTON       : res_type = RES_COMP_BUTTON      ; break;
+        case TYP_CAMERA       : res_type = RES_COMP_CAMERA      ; break;
+        case TYP_LIGHT        : res_type = RES_COMP_LIGHT       ; break;
+        case TYP_MODEL        : res_type = RES_COMP_MODEL       ; break;
+        case TYP_POSITION     : res_type = RES_COMP_POSITION    ; break;
+        case TYP_RIGID_BODY   : res_type = RES_COMP_RIGID_BODY  ; break;
+        case TYP_PLAYER       : res_type = RES_COMP_PLAYER      ; break;
+        case TYP_GUN          : res_type = RES_COMP_GUN         ; break;
+        // Resource types
+        case TYP_AUDIO_BUFFER : res_type = RES_AUDIO_BUFFER     ; break;
+        case TYP_ENTITY       : res_type = RES_ENTITY           ; break;
+        case TYP_FONT         : res_type = RES_FONT             ; break;
+        case TYP_MATERIAL     : res_type = RES_MATERIAL         ; break;
+        case TYP_MESH_GROUP   : res_type = RES_MESH_GROUP       ; break;
+        case TYP_MESH         : res_type = RES_MESH             ; break;
+        case TYP_SHADER       : res_type = RES_SHADER           ; break;
+        case TYP_TEXTURE      : res_type = RES_TEXTURE          ; break;
+        default               : res_type = RES_COUNT            ; break;
+    }
+    return res_type;
 }
 
 static void type_field_add(ta_schema *schema, ta_schema_field_type type,
@@ -369,13 +426,13 @@ void ta_schema_register()
     TYPE_FIELD(ta_audio_source, loop,            ATOM_BOOL);
     TYPE_END(ta_audio_source);
 
-    TYPE_START(e_button, TYP_BUTTON, e_button_init, 0);
-    TYPE_FIELD(e_button, id,                 ATOM_UINT);
-    TYPE_FIELD(e_button, entity_id,          ATOM_UINT);
-    TYPE_FIELD(e_button, sfx_activated_id,   ATOM_STRING);
-    TYPE_FIELD(e_button, sfx_active_id,      ATOM_STRING);
-    TYPE_FIELD(e_button, sfx_deactivated_id, ATOM_STRING);
-    TYPE_END(e_button);
+    TYPE_START(ta_e_button, TYP_BUTTON, e_button_init, 0);
+    TYPE_FIELD(ta_e_button, id,                 ATOM_UINT);
+    TYPE_FIELD(ta_e_button, entity_id,          ATOM_UINT);
+    TYPE_FIELD(ta_e_button, sfx_activated_id,   ATOM_STRING);
+    TYPE_FIELD(ta_e_button, sfx_active_id,      ATOM_STRING);
+    TYPE_FIELD(ta_e_button, sfx_deactivated_id, ATOM_STRING);
+    TYPE_END(ta_e_button);
 
     TYPE_START(ta_camera, TYP_CAMERA, ta_camera_init, 0);
     TYPE_FIELD(ta_camera, id,                  ATOM_UINT);
@@ -414,7 +471,7 @@ void ta_schema_register()
     TYPE_START(ta_model, TYP_MODEL, 0, 0);
     TYPE_FIELD(ta_model, id,               ATOM_UINT);
     TYPE_FIELD(ta_model, entity_id,        ATOM_UINT);
-    TYPE_VECTOR(ta_model, mesh_group_ids,  ATOM_STRING);
+    TYPE_VECTOR(ta_model, mesh_group_ids,  ATOM_UINT);
     TYPE_FIELD(ta_model, material_id,      ATOM_STRING);
     TYPE_FIELD(ta_model, invisible,        ATOM_BOOL);
     TYPE_FIELD(ta_model, cast_shadows,     ATOM_BOOL);
@@ -436,6 +493,24 @@ void ta_schema_register()
     TYPE_FIELD(ta_rigid_body, mass,        ATOM_FLOAT);
     TYPE_FIELD(ta_rigid_body, trigger,     ATOM_BOOL);
     TYPE_END(ta_rigid_body);
+
+    TYPE_START(ta_player, TYP_PLAYER, 0, 0);
+    TYPE_FIELD(ta_player, id,        ATOM_UINT);
+    TYPE_FIELD(ta_player, entity_id, ATOM_UINT);
+    TYPE_FIELD(ta_player, gun_id,    ATOM_UINT);
+    TYPE_VECTOR(ta_player, gun_ids,  ATOM_UINT);
+    TYPE_END(ta_player);
+
+    TYPE_START(ta_gun, TYP_GUN, 0, 0);
+    TYPE_FIELD(ta_gun, id,                ATOM_UINT);
+    TYPE_FIELD(ta_gun, entity_id,         ATOM_UINT);
+    TYPE_FIELD(ta_gun, loaded_ammo,       ATOM_UINT);
+    TYPE_FIELD(ta_gun, loaded_ammo_max,   ATOM_UINT);
+    TYPE_FIELD(ta_gun, carrying_ammo,     ATOM_UINT);
+    TYPE_FIELD(ta_gun, carrying_ammo_max, ATOM_UINT);
+    TYPE_FIELD(ta_gun, sfx_bang,          ATOM_UINT);
+    TYPE_FIELD(ta_gun, sfx_reload,        ATOM_UINT);
+    TYPE_FIELD(ta_gun, sfx_empty,         ATOM_UINT);
 }
 
 #undef TYPE_START

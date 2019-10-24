@@ -133,7 +133,7 @@ ta_texture:
   linear: true
   channels: 4
 ta_texture:
-  uid: "tex_red_mrao"
+  uid: "tex_red_mrao"  # TODO: How to give this a name.. use path? "name" hack?
   pixels: [{ r: 255, g: 90, b: 0, a: 0 }]
   width: 1
   height: 1

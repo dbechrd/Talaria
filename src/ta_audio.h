@@ -7,7 +7,6 @@
 typedef struct ta_audio_listener {
     ALfloat volume;
     bool muted;
-
     ALCdevice *al_device;
     ALCcontext *al_context;
 } ta_audio_listener;
@@ -58,7 +57,9 @@ void ta_audio_source_set_gain(ta_audio_source *source, float gain);
 void ta_audio_source_set_buffer(ta_audio_source *source, u32 audio_buffer_uid);
 ta_audio_source_state ta_audio_source_get_state(ta_audio_source *source);
 void ta_audio_source_play(ta_audio_source *source);
+void ta_audio_source_play_id(ta_audio_source *source, u32 audio_buffer_id);
 void ta_audio_source_play_loop(ta_audio_source *source);
+void ta_audio_source_play_loop_id(ta_audio_source *source, u32 audio_buffer_id);
 void ta_audio_source_pause(ta_audio_source *source);
 void ta_audio_source_resume(ta_audio_source *source);
 void ta_audio_source_stop(ta_audio_source *source);

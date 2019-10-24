@@ -21,22 +21,20 @@ typedef struct ta_game {
 
     struct ta_audio_listener *audio;
     struct ta_audio_source *background_music;
-    struct ta_camera *camera;
-    struct ta_camera *camera_player;
-    struct ta_camera *camera_freecam;
     struct ta_font *font;
     struct ta_keybind *keybinds[TA_GAME_STATE_COUNT];
-    struct ta_entity *player;
     struct ta_scene *scene;
     struct ta_texture *tex_orange;
     struct ta_texture *tex_red;
     struct ta_texture *tex_audio_icon;
     struct ta_window *window;
 
-    int player_ammo_max;
-    int player_ammo;
-    int player_clip_max;
-    int player_clip;
+    u32 audio_source_background_music_id;
+    u32 camera_player_id;
+    u32 camera_freecam_id;
+    u32 camera_active_id;
+    u32 player_one_id;
+    //struct ta_entity *player;
 } ta_game;
 
 extern ta_game tg_game;

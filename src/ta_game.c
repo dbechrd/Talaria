@@ -14,6 +14,8 @@
 #include "ta_editor.h"
 #include "ta_ui.h"
 #include "ta_camera.h"
+#include "ta_entity.h"
+#include "ta_player.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 #include "SDL/SDL.h"
@@ -119,15 +121,21 @@ void ta_game_state_set(ta_game *game, ta_game_state state)
     ta_log_write(&tg_debug_log, "[Game] State = %s\n", game_state_str(state));
     switch (game->state) {
         case TA_GAME_STATE_PLAY: {
-            game->camera = game->camera_player;
+            game->camera_active_id = game->camera_player_id;
             ta_mouse_capture_set(true);
             break;
         } case TA_GAME_STATE_FREE_CAM: {
-            if (vec3_zero(game->camera_freecam->position)) {
-                game->camera_freecam->target_xform.position = game->camera_player->target_xform.position;
-                game->camera_freecam->position = game->camera_freecam->target_xform.position;
+            ta_camera *freecam = tg_scene.cameras[tg_game.camera_freecam_id];
+            ta_camera *freecam = ta_scene_find_by_id(tg_game.scene, RES_COMP_CAMERA, tg_game.camera_freecam_id);
+            ta_entity *e_player = ta_scene_find_by_id(tg_game.scene, RES_ENTITY,
+                tg_game.player_one_id);
+            ta_camera *player_cam = ta_scene_entity_component(tg_game.scene,
+                e_player, RES_COMP_CAMERA);
+            if (vec3_zero(freecam->position)) {
+                freecam->target_xform.position = player_cam->target_xform.position;
+                freecam->position = freecam->target_xform.position;
             }
-            game->camera = game->camera_freecam;
+            game->camera_active_id = game->camera_freecam_id;
             break;
         } case TA_GAME_STATE_EDITOR: {
             break;
@@ -137,57 +145,52 @@ void ta_game_state_set(ta_game *game, ta_game_state state)
 
 static void game_player_shoot(ta_game *game)
 {
-    static double last_shoot_ms = 0;
-    static double last_cock_ms = 0;
-    static double last_oh_no_ms = 0;
+    static double last_bang_ms = 0;
+    static double last_reload_ms = 0;
+    static double last_empty_ms = 0;
 
-    ta_audio_source *src_gun =
-        ta_scene_find_by_name(game->scene, RES_COMP_AUDIO_SOURCE, INTERN("src_gun"));
+    ta_entity *e_player = ta_scene_find_by_id(game->scene, RES_ENTITY, game->player_one_id);
+    ta_player *player = ta_scene_entity_component(game->scene, e_player, RES_COMP_PLAYER);
+
+    ta_entity *e_gun = ta_scene_find_by_id(game->scene, RES_ENTITY, player->gun_id);
+    ta_gun *gun = ta_scene_entity_component(game->scene, e_gun, RES_COMP_GUN);
+    ta_audio_source *src_gun = ta_scene_entity_component(game->scene, e_gun, RES_COMP_AUDIO_SOURCE);
 
     double now_ms = ta_timer_elapsed_ms();
 
-    if (game->player_clip > 0) {
-        static double after_shoot_delay_ms = 150;
-        static double after_cock_delay_ms = 1000;
-        if (now_ms < last_shoot_ms + after_shoot_delay_ms ||
-            now_ms < last_cock_ms + after_cock_delay_ms) {
+    if (gun->loaded_ammo > 0) {
+        static double after_bang_delay_ms = 150;
+        static double after_reload_delay_ms = 1000;
+        if (now_ms < last_bang_ms + after_bang_delay_ms ||
+            now_ms < last_reload_ms + after_reload_delay_ms) {
             return;
         }
 
-        ta_audio_buffer *sfx_gunshot =
-            ta_scene_find_by_name(game->scene, RES_AUDIO_BUFFER, INTERN("sfx_gunshot"));
-        ta_audio_source_set_buffer(src_gun, sfx_gunshot->id);
-        ta_audio_source_play(src_gun);
-        last_shoot_ms = ta_timer_elapsed_ms();
-        game->player_clip--;
+        ta_audio_source_play_id(src_gun, gun->sfx_bang);
+        last_bang_ms = ta_timer_elapsed_ms();
+        gun->loaded_ammo--;
     } else {
-        if (game->player_ammo) {
-            static double after_shoot_delay_ms = 750;
-            if (now_ms < last_shoot_ms + after_shoot_delay_ms) {
+        if (gun->carrying_ammo) {
+            static double after_bang_delay_ms = 750;
+            if (now_ms < last_bang_ms + after_bang_delay_ms) {
                 return;
             }
 
-            ta_audio_buffer *sfx_cock =
-                ta_scene_find_by_name(game->scene, RES_AUDIO_BUFFER, INTERN("sfx_cock"));
-            ta_audio_source_set_buffer(src_gun, sfx_cock->id);
-            ta_audio_source_play(src_gun);
-            last_cock_ms = ta_timer_elapsed_ms();
+            ta_audio_source_play_id(src_gun, gun->sfx_reload);
+            last_reload_ms = ta_timer_elapsed_ms();
 
-            game->player_clip = MIN(game->player_clip_max, game->player_ammo);
-            game->player_ammo -= game->player_clip;
+            gun->loaded_ammo = MIN(gun->loaded_ammo_max, gun->carrying_ammo);
+            gun->carrying_ammo -= gun->loaded_ammo;
         } else {
-            static double after_shoot_delay_ms = 750;
-            static double after_oh_no_delay_ms = 2000;
-            if (now_ms < last_shoot_ms + after_shoot_delay_ms ||
-                now_ms < last_oh_no_ms + after_oh_no_delay_ms) {
+            static double after_bang_delay_ms = 750;
+            static double after_empty_delay_ms = 2000;
+            if (now_ms < last_bang_ms + after_bang_delay_ms ||
+                now_ms < last_empty_ms + after_empty_delay_ms) {
                 return;
             }
 
-            ta_audio_buffer *sfx_oh_no =
-                ta_scene_find_by_name(game->scene, RES_AUDIO_BUFFER, INTERN("sfx_oh_no"));
-            ta_audio_source_set_buffer(src_gun, sfx_oh_no->id);
-            ta_audio_source_play(src_gun);
-            last_oh_no_ms = ta_timer_elapsed_ms();
+            ta_audio_source_play_id(src_gun, gun->sfx_empty);
+            last_empty_ms = ta_timer_elapsed_ms();
         }
     }
 }
@@ -218,58 +221,84 @@ void ta_game_event(ta_game *game, ta_event *event)
             ta_game_state_set(game, TA_GAME_STATE_SHUTDOWN);
             break;
         } case TA_EVENT_GAME_PLAYER_MOVE_FORWARD: {
+            ta_camera *camera = ta_scene_find_by_id(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.camera_active_id);
             ta_vec3 dir = { 0 };
-            dir.x = game->camera->front.x;
-            dir.z = game->camera->front.z;
+            dir.x = camera->front.x;
+            dir.z = camera->front.z;
             dir = vec3_normalize(dir);
             dir = vec3_scalef(dir, 0.1f);
+            ta_entity *e_player = ta_scene_find_by_id(game->scene, RES_ENTITY,
+                game->player_one_id);
             ta_rigid_body *player_body = ta_scene_entity_component(game->scene,
-                game->player, RES_COMP_RIGID_BODY);
+                e_player, RES_COMP_RIGID_BODY);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_MOVE_BACKWARD: {
+            ta_camera *camera = ta_scene_find_by_id(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.camera_active_id);
             ta_vec3 dir = { 0 };
-            dir.x = -game->camera->front.x;
-            dir.z = -game->camera->front.z;
+            dir.x = -camera->front.x;
+            dir.z = -camera->front.z;
             dir = vec3_normalize(dir);
             dir = vec3_scalef(dir, 0.1f);
+            ta_entity *e_player = ta_scene_find_by_id(game->scene, RES_ENTITY,
+                game->player_one_id);
             ta_rigid_body *player_body = ta_scene_entity_component(game->scene,
-                game->player, RES_COMP_RIGID_BODY);
+                e_player, RES_COMP_RIGID_BODY);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_MOVE_RIGHT: {
+            ta_camera *camera = ta_scene_find_by_id(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.camera_active_id);
             ta_vec3 dir = { 0 };
-            dir.x = game->camera->right.x;
-            dir.z = game->camera->right.z;
+            dir.x = camera->right.x;
+            dir.z = camera->right.z;
             dir = vec3_normalize(dir);
             dir = vec3_scalef(dir, 0.1f);
+            ta_entity *e_player = ta_scene_find_by_id(game->scene, RES_ENTITY,
+                game->player_one_id);
             ta_rigid_body *player_body = ta_scene_entity_component(game->scene,
-                game->player, RES_COMP_RIGID_BODY);
+                e_player, RES_COMP_RIGID_BODY);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_MOVE_LEFT: {
+            ta_camera *camera = ta_scene_find_by_id(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.camera_active_id);
             ta_vec3 dir = { 0 };
-            dir.x = -game->camera->right.x;
-            dir.z = -game->camera->right.z;
+            dir.x = -camera->right.x;
+            dir.z = -camera->right.z;
             dir = vec3_normalize(dir);
             dir = vec3_scalef(dir, 0.1f);
+            ta_entity *e_player = ta_scene_find_by_id(game->scene, RES_ENTITY,
+                game->player_one_id);
             ta_rigid_body *player_body = ta_scene_entity_component(game->scene,
-                game->player, RES_COMP_RIGID_BODY);
+                e_player, RES_COMP_RIGID_BODY);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_JUMP: {
             ta_vec3 dir = VEC3_Y;
             dir = vec3_scalef(dir, 5.0f);
+            ta_entity *e_player = ta_scene_find_by_id(game->scene, RES_ENTITY,
+                game->player_one_id);
             ta_rigid_body *player_body = ta_scene_entity_component(game->scene,
-                game->player, RES_COMP_RIGID_BODY);
+                e_player, RES_COMP_RIGID_BODY);
             ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
             break;
         } case TA_EVENT_GAME_PLAYER_SHOOT: {
             game_player_shoot(game);
             break;
         } case TA_EVENT_GAME_BUTTON_ACTIVATED: {
-            if (game->player_ammo == 0 && game->player_clip == 0) {
-                game->player_ammo = game->player_ammo_max;
+            ta_entity *e_player = ta_scene_find_by_id(game->scene, RES_ENTITY,
+                game->player_one_id);
+            ta_player *player = ta_scene_entity_component(game->scene,
+                e_player, RES_COMP_PLAYER);
+            ta_entity *e_gun = ta_scene_find_by_id(game->scene, RES_ENTITY,
+                player->gun_id);
+            ta_gun *gun = ta_scene_entity_component(game->scene,
+                e_gun, RES_COMP_GUN);
+            if (gun->carrying_ammo == 0 && gun->loaded_ammo == 0) {
+                gun->carrying_ammo = gun->carrying_ammo_max;
             }
 
 #if 0
@@ -299,16 +328,24 @@ void ta_game_event(ta_game *game, ta_event *event)
             ta_mouse_capture_toggle();
             break;
         } case TA_EVENT_DEBUG_TOGGLE_WIREFRAME: {
-            TOGGLE(game->camera->debug_wireframe);
+            ta_camera *camera = ta_scene_find_by_id(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.camera_active_id);
+            TOGGLE(camera->debug_wireframe);
             break;
         } case TA_EVENT_DEBUG_TOGGLE_NORMALS: {
-            TOGGLE(game->camera->debug_normals);
+            ta_camera *camera = ta_scene_find_by_id(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.camera_active_id);
+            TOGGLE(camera->debug_normals);
             break;
         } case TA_EVENT_DEBUG_TOGGLE_BBOX: {
-            TOGGLE(game->camera->debug_bounding_boxes);
+            ta_camera *camera = ta_scene_find_by_id(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.camera_active_id);
+            TOGGLE(camera->debug_bounding_boxes);
             break;
         } case TA_EVENT_DEBUG_TOGGLE_MESH: {
-            TOGGLE(game->camera->debug_no_mesh);
+            ta_camera *camera = ta_scene_find_by_id(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.camera_active_id);
+            TOGGLE(camera->debug_no_mesh);
             break;
         } default: {
             handled = false;
@@ -318,30 +355,39 @@ void ta_game_event(ta_game *game, ta_event *event)
     event->handled = handled;
 }
 
-void ta_game_hud_draw()
+void ta_game_hud_draw(ta_game *game)
 {
+    ta_entity *e_player = ta_scene_find_by_id(game->scene, RES_ENTITY,
+        game->player_one_id);
+    ta_player *player = ta_scene_entity_component(game->scene,
+        e_player, RES_COMP_PLAYER);
+    ta_entity *e_gun = ta_scene_find_by_id(game->scene, RES_ENTITY,
+        player->gun_id);
+    ta_gun *gun = ta_scene_entity_component(game->scene,
+        e_gun, RES_COMP_GUN);
+
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
     //       at render time (make sure to update viewport correctly).
     ta_ui_next_size(200, 40);
-    ta_ui_window_begin(INTERN("hud"), 0);
+    ta_ui_window_begin(0, 0);
     ta_ui_row_begin();
-    for (int i = 0; i < tg_game.player_ammo_max; i++) {
+    for (int i = 0; i < gun->carrying_ammo_max; i++) {
         ta_ui_next_size(20, 20);
-        if (i < tg_game.player_ammo) {
-            ta_ui_button(INTERN("clip_slot_full"), tg_game.tex_orange);
+        if (i < gun->carrying_ammo) {
+            ta_ui_button(0, tg_game.tex_orange);
         } else {
-            ta_ui_button(INTERN("clip_slot_empty"), tg_game.tex_red);
+            ta_ui_button(0, tg_game.tex_red);
         }
     }
     // TODO: Allow next_pad to work on rows, or introduce a panel here
     //ta_ui_pad(0, 4);
     ta_ui_row_begin();
-    for (int i = 0; i < tg_game.player_clip_max; i++) {
+    for (int i = 0; i < gun->loaded_ammo_max; i++) {
         ta_ui_next_size(20, 20);
-        if (i < tg_game.player_clip) {
-            ta_ui_button(INTERN("ammo_slot_full"), tg_game.tex_orange);
+        if (i < gun->loaded_ammo) {
+            ta_ui_button(0, tg_game.tex_orange);
         } else {
-            ta_ui_button(INTERN("ammo_slot_empty"), tg_game.tex_red);
+            ta_ui_button(0, tg_game.tex_red);
         }
     }
     ta_ui_window_end();

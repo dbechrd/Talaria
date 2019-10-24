@@ -250,7 +250,7 @@
     <ClInclude Include="src\ta_entity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ta_resource_type.h">
+    <ClInclude Include="src\ta_player.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

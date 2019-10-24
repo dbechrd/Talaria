@@ -32,8 +32,8 @@ typedef struct ta_editor {
     ta_text_entry *text_entry;
     ta_keybind *keybinds;
     ta_keybind *keybinds_text_entry;
-    ta_scene *scene;
     u32 shader_editor_select_id;
+    ta_scene *scene;
 } ta_editor;
 
 static ta_editor editor;
@@ -463,7 +463,10 @@ void ta_editor_draw(float alpha)
     // Stencil selected node
     u32 selected_entity_id = ta_editor_selected_node();
     if (selected_entity_id) {
-        ta_entity *entity = ta_scene_find_by_id(tg_game.scene, RES_ENTITY, selected_entity_id);
+        ta_entity *entity = ta_scene_find_by_id(tg_game.scene, RES_ENTITY,
+            selected_entity_id);
+        ta_camera *camera = ta_scene_find_by_id(tg_game.scene, RES_COMP_CAMERA,
+            tg_game.camera_active_id);
 
         glEnable(GL_STENCIL_TEST);
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
@@ -474,7 +477,7 @@ void ta_editor_draw(float alpha)
         //glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
         glDepthMask(GL_FALSE);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        ta_node_render(entity, tg_game.camera, alpha);
+        ta_node_render(entity, camera, alpha);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthMask(GL_TRUE);
 
@@ -486,7 +489,7 @@ void ta_editor_draw(float alpha)
         ta_shader *shader = ta_scene_find_by_id(editor.scene, RES_SHADER,
             editor.shader_editor_select_id);
         ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&TA_COLOR_YELLOW);
-        ta_node_render_shader(entity, tg_game.camera, shader, alpha, 1.1f);
+        ta_node_render_shader(entity, camera, shader, alpha, 1.1f);
         glDisable(GL_STENCIL_TEST);
     } else {
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -511,9 +514,12 @@ void ta_editor_draw(float alpha)
 
 static void editor_ray_pick()
 {
+    ta_camera *camera = ta_scene_find_by_id(tg_game.scene, RES_COMP_CAMERA,
+        tg_game.camera_active_id);
+
     ta_ray ray;
-    ray.origin = tg_game.camera->position;
-    ray.direction = tg_game.camera->front;
+    ray.origin = camera->position;
+    ray.direction = camera->front;
 
     float t_min = 9999.0f;
     u32 closest_entity_id = 0;

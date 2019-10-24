@@ -1,5 +1,5 @@
 #pragma once
-#include "ta_resource_type.h"
+#include "ta_schema.h"
 #include "dlb/dlb_types.h"
 
 typedef struct ta_component {
@@ -24,6 +24,7 @@ typedef struct ta_component {
 //
 typedef struct ta_entity {
     u32 id;
+    u32 parent_id;
     u32 components[RES_COMP_COUNT];
 } ta_entity;
 

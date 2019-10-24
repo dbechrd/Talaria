@@ -7,31 +7,31 @@
 #include "ta_entity.h"
 #include "ta_audio.h"
 
-void e_button_init(e_button *button)
+void e_button_init(ta_e_button *button)
 {
     UNUSED(button);
 }
 
-static bool button_activated(e_button *button)
+static bool button_activated(ta_e_button *button)
 {
     bool activated =
         button->state == TA_BUTTON_ACTIVE &&
         button->state_prev == TA_BUTTON_INACTIVE;
     return activated;
 }
-static bool button_active(e_button *button)
+static bool button_active(ta_e_button *button)
 {
     bool active = button->state == TA_BUTTON_ACTIVE;
     return active;
 }
-static bool button_deactivated(e_button *button)
+static bool button_deactivated(ta_e_button *button)
 {
     bool deactivated =
         button->state == TA_BUTTON_INACTIVE &&
         button->state_prev == TA_BUTTON_ACTIVE;
     return deactivated;
 }
-void e_button_update(e_button *button)
+void e_button_update(ta_e_button *button)
 {
     // TODO: Trigger event type = EVENT_BUTTON_ACTIVATED with uid = button.uid
     //       and have audio_buffer's play event subscribe to the button event
@@ -41,11 +41,12 @@ void e_button_update(e_button *button)
     //       EVENT_BUTTON_DEACTIVATED
     //       EVENT_BUTTON_STATE_CHANGED
 
-    ta_entity *entity = ta_scene_find_by_id(tg_game.scene, RES_ENTITY, button->entity_id);
-    DLB_ASSERT(entity);
-
-    ta_rigid_body *button_body = ta_scene_entity_component(tg_game.scene, entity, RES_COMP_RIGID_BODY);
-    ta_rigid_body *player_body = ta_scene_entity_component(tg_game.scene, tg_game.player, RES_COMP_RIGID_BODY);
+    ta_entity *e_button = ta_scene_find_by_id(tg_game.scene, RES_ENTITY, button->entity_id);
+    ta_entity *e_player = ta_scene_find_by_id(tg_game.scene, RES_ENTITY, tg_game.player_one_id);
+    ta_rigid_body *button_body = ta_scene_entity_component(tg_game.scene, e_button, RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = ta_scene_entity_component(tg_game.scene, e_player, RES_COMP_RIGID_BODY);
+    DLB_ASSERT(button_body);
+    DLB_ASSERT(player_body);
 
     button->state_prev = button->state;
     if (ta_rigid_body_intersect(player_body, button_body, 0)) {

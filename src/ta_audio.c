@@ -197,17 +197,12 @@ void ta_audio_source_init(ta_audio_source *source)
     //alSourcefv(source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
 #endif
 
-    // TODO: Resolve "audio_buffer_id" at scene load time. In DML, map string
-    // to dlb_id. In binary, serialize raw pool index (which will cause all
-    // dlb_ids to automatically compact and reset generations on save/load).
-#if 1
     if (source->audio_buffer_id) {
         ta_audio_buffer *buffer = ta_scene_find_by_id(tg_game.scene,
             RES_AUDIO_BUFFER, source->audio_buffer_id);
         source->audio_buffer_id = buffer->id;
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
-#endif
 }
 void ta_audio_source_free(ta_audio_source *source)
 {
@@ -231,9 +226,8 @@ void ta_audio_source_set_buffer(ta_audio_source *source, u32 audio_buffer_id)
     if (source->audio_buffer_id != audio_buffer_id)
     {
         source->audio_buffer_id = audio_buffer_id;
-        ta_audio_buffer *buffer = dlb_pool_by_id(
-            &tg_game.scene->resource_data[RES_AUDIO_BUFFER],
-            source->audio_buffer_id);
+        ta_audio_buffer *buffer = ta_scene_find_by_id(tg_game.scene,
+            RES_AUDIO_BUFFER, source->audio_buffer_id);
         //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
@@ -271,6 +265,11 @@ void ta_audio_source_play(ta_audio_source *source)
     DLB_ASSERT(al_source_state(source) == AL_PLAYING);
 #endif
 }
+void ta_audio_source_play_id(ta_audio_source *source, u32 audio_buffer_id)
+{
+    ta_audio_source_set_buffer(source, audio_buffer_id);
+    ta_audio_source_play(source);
+}
 void ta_audio_source_play_loop(ta_audio_source *source)
 {
     DLB_ASSERT(source->al_source_id);
@@ -290,6 +289,11 @@ void ta_audio_source_play_loop(ta_audio_source *source)
 #if AUDIO_ASSERT
     DLB_ASSERT(al_source_state(source) == AL_PLAYING);
 #endif
+}
+void ta_audio_source_play_loop_id(ta_audio_source *source, u32 audio_buffer_id)
+{
+    ta_audio_source_set_buffer(source, audio_buffer_id);
+    ta_audio_source_play_loop(source);
 }
 void ta_audio_source_pause(ta_audio_source *source)
 {

@@ -25,58 +25,6 @@
 #include <stdlib.h>
 #include <float.h>
 
-ta_schema_field_type res_to_typ(ta_resource_type type)
-{
-    ta_schema_field_type schema_type;
-    switch (type) {
-        // Component types
-        case RES_COMP_AUDIO_SOURCE: schema_type = TYP_AUDIO_SOURCE ; break;
-        case RES_COMP_BUTTON      : schema_type = TYP_BUTTON       ; break;
-        case RES_COMP_CAMERA      : schema_type = TYP_CAMERA       ; break;
-        case RES_COMP_LIGHT       : schema_type = TYP_LIGHT        ; break;
-        case RES_COMP_MODEL       : schema_type = TYP_MODEL        ; break;
-        case RES_COMP_POSITION    : schema_type = TYP_POSITION     ; break;
-        case RES_COMP_RIGID_BODY  : schema_type = TYP_RIGID_BODY   ; break;
-        // Resource types
-        case RES_AUDIO_BUFFER     : schema_type = TYP_AUDIO_BUFFER ; break;
-        case RES_ENTITY           : schema_type = TYP_ENTITY       ; break;
-        case RES_FONT             : schema_type = TYP_FONT         ; break;
-        case RES_MATERIAL         : schema_type = TYP_MATERIAL     ; break;
-        case RES_MESH_GROUP       : schema_type = TYP_MESH_GROUP   ; break;
-        case RES_MESH             : schema_type = TYP_MESH         ; break;
-        case RES_SHADER           : schema_type = TYP_SHADER       ; break;
-        case RES_TEXTURE          : schema_type = TYP_TEXTURE      ; break;
-        default                   : schema_type = TYP_NULL         ; break;
-    }
-    return schema_type;
-}
-
-ta_resource_type typ_to_res(ta_schema_field_type type)
-{
-    ta_resource_type res_type;
-    switch (type) {
-        // Component types
-        case TYP_AUDIO_SOURCE : res_type = RES_COMP_AUDIO_SOURCE; break;
-        case TYP_BUTTON       : res_type = RES_COMP_BUTTON      ; break;
-        case TYP_CAMERA       : res_type = RES_COMP_CAMERA      ; break;
-        case TYP_LIGHT        : res_type = RES_COMP_LIGHT       ; break;
-        case TYP_MODEL        : res_type = RES_COMP_MODEL       ; break;
-        case TYP_POSITION     : res_type = RES_COMP_POSITION    ; break;
-        case TYP_RIGID_BODY   : res_type = RES_COMP_RIGID_BODY  ; break;
-        // Resource types
-        case TYP_AUDIO_BUFFER : res_type = RES_AUDIO_BUFFER     ; break;
-        case TYP_ENTITY       : res_type = RES_ENTITY           ; break;
-        case TYP_FONT         : res_type = RES_FONT             ; break;
-        case TYP_MATERIAL     : res_type = RES_MATERIAL         ; break;
-        case TYP_MESH_GROUP   : res_type = RES_MESH_GROUP       ; break;
-        case TYP_MESH         : res_type = RES_MESH             ; break;
-        case TYP_SHADER       : res_type = RES_SHADER           ; break;
-        case TYP_TEXTURE      : res_type = RES_TEXTURE          ; break;
-        default               : res_type = RES_COUNT            ; break;
-    }
-    return res_type;
-}
-
 typedef enum token_type {
     TOKEN_UNKNOWN,
     TOKEN_EOF,
@@ -458,6 +406,29 @@ static void tokens_print_debug(FILE *f, token *tokens)
     fflush(f);
 }
 
+#define PANIC_HEADER "%s:%zd:%zd: error: "
+#define FILE_POS_ARGS scene->filename, tok->file_pos.line, tok->file_pos.column
+
+void debug_open_in_vs_code(const char *filename, int line, int column)
+{
+    DLB_ASSERT(filename);
+    char buf[512] = { 0 };
+    snprintf(buf, sizeof(buf) - 1, "start /b code -g %s:%d:%d", filename, line, column+1);
+    system(buf);
+}
+#define OPEN_VS_CODE() debug_open_in_vs_code(FILE_POS_ARGS)
+
+void bad_token(ta_scene *scene, token *tok, const char *typ, const char *arr, const char *uni) {
+    OPEN_VS_CODE();
+    PANIC(PANIC_HEADER "expected %s%s%s, found (%s) instead.\n",
+        FILE_POS_ARGS, typ, arr, uni, token_type_str(tok->type)
+    )
+}
+#define BAD_TOKEN() bad_token(scene, tok, \
+    ta_schema_field_type_str(stack[sp - (array > 0)].type), \
+    (stack[sp - (array > 0)].array_len > 0 ? " (array)" : ""), \
+    (stack[sp - (array > 0)].is_union_type > 0 ? " (union)" : ""))
+
 static void tokens_parse(ta_scene *scene, token *tokens)
 {
     struct {
@@ -481,13 +452,6 @@ static void tokens_parse(ta_scene *scene, token *tokens)
     int sp = 0;          // "Stack pointer" index into stack
     int braces = 0;      // Current level of curly braces
     int array = 0;       // Current level of square brackets
-
-#define BAD_TOKEN() PANIC("[%zd:%zd] Expected %s%s%s, found %s instead.\n", \
-    tok->file_pos.line, tok->file_pos.column, \
-    ta_schema_field_type_str(stack[sp - (array > 0)].type), \
-    stack[sp - (array > 0)].array_len > 0 ? " (array)" : "", \
-    stack[sp - (array > 0)].is_union_type > 0 ? " (union)" : "", \
-    token_type_str(tok->type))
 
     dlb_vec_each(token *, tok, tokens) {
         switch (tok->type) {
@@ -548,32 +512,26 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 }
 
                 if (sp) {
-                    if (!stack[sp-1].ptr) {
-                        PANIC("Parent not allocated yet. Field '%s' should be after 'id' on %s '%s'\n",
-                            tok->value.string,
-                            ta_schema_field_type_str(stack[sp-1].type),
-                            stack[sp-1].name);
-                    }
                     ta_schema_field *field = ta_schema_field_find(stack[sp-1].type,
                         tok->value.string);
                     if (!field) {
-                        PANIC("Unexpected field '%s' on %s '%s'\n",
-                            tok->value.string,
-                            ta_schema_field_type_str(stack[sp-1].type),
-                            stack[sp-1].name);
+                        OPEN_VS_CODE();
+                        PANIC(PANIC_HEADER "unexpected field '%s' in '%s' (%s)\n",
+                            FILE_POS_ARGS,
+                            tok->value.string, stack[sp-1].name, ta_schema_field_type_str(stack[sp-1].type));
                     }
                     if (field->in_union) {
                         if (!stack[sp-1].is_union) {
-                            PANIC("Unexpected union field '%s' before union type field found in %s '%s'\n",
-                                tok->value.string,
-                                ta_schema_field_type_str(stack[sp-1].type),
-                                stack[sp-1].name);
+                            OPEN_VS_CODE();
+                            PANIC(PANIC_HEADER "unexpected union field '%s' before union type field found in '%s' (%s)\n",
+                                FILE_POS_ARGS,
+                                tok->value.string, stack[sp-1].name, ta_schema_field_type_str(stack[sp-1].type));
                         }
                         if (field->union_type != stack[sp-1].union_type) {
-                            PANIC("Unexpected union field '%s' in %s '%s' with union_type = %d\n",
-                                tok->value.string,
-                                ta_schema_field_type_str(stack[sp-1].type),
-                                stack[sp-1].name,
+                            OPEN_VS_CODE();
+                            PANIC(PANIC_HEADER "unexpected union field '%s' in %s (%s) with union_type = %d\n",
+                                FILE_POS_ARGS,
+                                tok->value.string, stack[sp-1].name, ta_schema_field_type_str(stack[sp-1].type),
                                 stack[sp-1].union_type);
                         }
                     }
@@ -582,19 +540,35 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     stack[sp].array_len = field->array_len;
                     stack[sp].array_elem = 0;
                     stack[sp].name = field->name;
-                    stack[sp].ptr = ((u8 *)stack[sp-1].ptr + field->offset);
                     stack[sp].size = field->size;
                     stack[sp].is_union_type = field->is_union_type;
                     stack[sp].is_union = false;
                     stack[sp].union_type = 0;
+
+                    // Ensure first field of scene-level types is 'id' to allow
+                    // us to allocate the object in its pool.
+                    if (stack[sp-1].ptr) {
+                        stack[sp].ptr = ((u8 *)stack[sp-1].ptr + field->offset);
+                    } else if(tok->type == TOKEN_IDENTIFIER && tok->value.string == SYM_ID) {
+                        DLB_ASSERT(field->offset == 0);
+                    } else {
+                        OPEN_VS_CODE();
+                        PANIC(PANIC_HEADER "expected field 'id' in '%s' (%s), found '%s' instead\n",
+                            FILE_POS_ARGS,
+                            stack[sp-1].name, ta_schema_field_type_str(stack[sp-1].type), tok->value.string);
+                    }
                 } else {
                     ta_schema *schema = ta_schema_find_by_name(tok->value.string, tok->length);
                     if (!schema) {
-                        PANIC("Unexpected type name '%s'\n", tok->value.string);
+                        OPEN_VS_CODE();
+                        PANIC(PANIC_HEADER "unexpected type name '%s'\n",
+                            FILE_POS_ARGS, tok->value.string);
                     }
                     ta_resource_type res_type = typ_to_res(schema->type);
                     if (res_type == RES_COUNT) {
-                        PANIC("Type '%s' is not a scene-level resource type.\n", tok->value.string);
+                        OPEN_VS_CODE();
+                        PANIC(PANIC_HEADER "type '%s' is not a scene-level resource type.\n",
+                            FILE_POS_ARGS, tok->value.string);
                     }
                     DLB_ASSERT(schema->size);
                     DLB_ASSERT(schema->name == tok->value.string);
@@ -639,8 +613,6 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 {
                     BAD_TOKEN();
                 }
-                int *fp = stack[sp].ptr;
-                *fp = tok->value.as_int;
 
                 // TODO: Need to read ID in from scene file, otherwise no
                 // way to know what ID to give to this object. Could hash a
@@ -649,21 +621,28 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 // instead of vector for sparse_set).
                 if (stack[sp].name == SYM_ID) {
                     DLB_ASSERT(sp > 0);
-                    u32 resource_id = *fp;
+                    u32 resource_id = tok->value.as_int;
                     DLB_ASSERT(resource_id);
                     ta_resource_type res_type = typ_to_res(stack[sp-1].type);
                     DLB_ASSERT(res_type < RES_COUNT);
 
-                    // TODO: All resource types must start with ID field
+                    // NOTE: All resource types must start with ID field
                     u32 *id = dlb_pool_alloc(&scene->resource_names[res_type], resource_id);
                     *id = resource_id;
                     stack[sp-1].ptr = id;
-                    dlb_hash_insert(&scene->id_by_name[res_type], tok->value.string, tok->length, (void *)resource_id);
+                    stack[sp].ptr = stack[sp-1].ptr;
+
+                    // TODO: Add const char *name to every resource type?
+                    //dlb_hash_insert(&scene->id_by_name[res_type], tok->value.string, tok->length, (void *)resource_id);
 
                     scene->next_id[res_type] = *id + 1;
-                } else if (stack[sp].is_union_type) {
-                    stack[sp-1].is_union = true;
-                    stack[sp-1].union_type = *fp;
+                } else {
+                    int *fp = stack[sp].ptr;
+                    *fp = tok->value.as_int;
+                    if (stack[sp].is_union_type) {
+                        stack[sp-1].is_union = true;
+                        stack[sp-1].union_type = *fp;
+                    }
                 }
                 break;
             } case TOKEN_FLOAT: {
@@ -1016,6 +995,7 @@ u32 ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name)
 
 void ta_scene_destroy(ta_scene *scene, ta_resource_type type, u32 id)
 {
+    DLB_ASSERT(scene);
     // TODO: if type is a component type, find and update parent entity:
     // entity->components[type] = 0
     DLB_ASSERT(type >= RES_COMP_COUNT);
@@ -1057,6 +1037,7 @@ void *ta_scene_entity_component_try(ta_scene *scene, ta_entity *entity,
     ta_resource_type type)
 {
     DLB_ASSERT(scene);
+    DLB_ASSERT(entity);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
     void *component = 0;
@@ -1071,6 +1052,7 @@ void *ta_scene_entity_component(ta_scene *scene, ta_entity *entity,
     ta_resource_type type)
 {
     DLB_ASSERT(scene);
+    DLB_ASSERT(entity);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
     void *component = ta_scene_entity_component_try(scene, entity, type);
@@ -1199,7 +1181,7 @@ void ta_scene_update(ta_scene *scene, float dt)
     // TODO: Update components instead of "entities"? (e.g. buttons)
     dlb_pool *buttons = &scene->resource_data[RES_COMP_BUTTON];
     for (u32 i = 0; i < buttons->size; ++i) {
-        e_button *button = dlb_pool_at(buttons, i);
+        ta_e_button *button = dlb_pool_at(buttons, i);
         e_button_update(button);
     }
 
@@ -1279,7 +1261,7 @@ void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
     dlb_pool *cameras = &scene->resource_data[RES_COMP_CAMERA];
     for (u32 i = 0; i < cameras->size; ++i) {
         ta_camera *camera = dlb_pool_at(cameras, i);
-        if (camera != tg_game.camera) {
+        if (camera->id != tg_game.camera_active_id) {
             ta_sphere sphere = { 0 };
             sphere.center = camera->position;
             sphere.radius = 0.2f;

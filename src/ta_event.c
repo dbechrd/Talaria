@@ -7,6 +7,7 @@
 #include "ta_camera.h"
 #include "ta_game.h"
 #include "ta_text_entry.h"
+#include "ta_scene.h"
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
@@ -180,7 +181,9 @@ void ta_event_events()
         if (event.handled) continue;
 
         if (ta_mouse_captured()) {
-            ta_camera_event(tg_game.camera, &event);
+            ta_camera *camera = ta_scene_find_by_id(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.camera_active_id);
+            ta_camera_event(camera, &event);
         }
     }
 }

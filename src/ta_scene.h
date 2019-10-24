@@ -1,7 +1,6 @@
 #pragma once
 #include "ta_uid.h"
 #include "ta_schema.h"
-#include "ta_resource_type.h"
 #include "dlb/dlb_hash.h"
 #include "dlb/dlb_pool.h"
 
