@@ -30,6 +30,8 @@
 #include "ta_entity.h"
 #include "ta_player.h"
 #include "dlb/dlb_types.h"
+#define DLB_MURMUR3_IMPLEMENTATION
+#include "dlb/dlb_murmur3.h"
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb/dlb_vector.h"
 #define DLB_HASH_IMPLEMENTATION
