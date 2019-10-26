@@ -3,13 +3,14 @@
 #include "dlb/dlb_types.h"
 
 typedef struct ta_model {
-    u32 id;
-    u32 entity_id;
+    u32 index;
+    const char *name;
+    const char *entity_name;
     // TODO: Do I need mesh groups, or should i just have multiple mesh components?
-    u32 *mesh_group_ids;
+    const char *mesh_group_names;
     // TODO: If I need multiple materials per mesh group, probably easier to just
     //       split into multiple mesh components, with mesh/material pairs.
-    u32 material_id;
+    const char *material_name;
     bool invisible;
     bool cast_shadows;
     bool receive_shadows;  // TODO: Pass as flag to PBR shader, skip shadows if false

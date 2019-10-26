@@ -7,7 +7,7 @@
 #define TA_SYMBOL_MAX_LEN 256
 
 // Special identifiers
-const char *SYM_ID;
+const char *SYM_NAME;
 
 // DML keywords
 const char *SYM_NULL;
@@ -55,6 +55,12 @@ const char *SYM_U_LIGHTS_SHADOWMAP2D[8];
 const char *SYM_U_LIGHTS_SHADOWMAP3D[8];
 const char *SYM_U_LIGHTS_SHADOWMAP_ZFAR[8];
 
+// Constants
+const char *SYM_ENTITY_PLAYER_ONE;
+const char *SYM_ENTITY_FREECAM;
+const char *SYM_ENTITY_BACKGROUND_MUSIC;
+const char *SYM_SHADER_EDITOR_SELECT;
+
 // TODO: It may be useful to have multiple symbol tables to allow freeing
 //       symbols that are no longer in use (e.g. table per scene file). This
 //       hasn't been necessary yet, so I'm not going to do it preemptively.
@@ -63,7 +69,7 @@ static dlb_hash symbol_table;
 void ta_symbol_init() {
     dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 512);
 
-    SYM_ID    = INTERN(IDENT_ID);
+    SYM_NAME  = INTERN(IDENT_NAME);
     SYM_NULL  = INTERN(KEYWORD_NULL);
     SYM_TRUE  = INTERN(KEYWORD_TRUE);
     SYM_FALSE = INTERN(KEYWORD_FALSE);
@@ -83,92 +89,89 @@ void ta_symbol_init() {
     SYM_ATTR_UV       = INTERN("attr_uv");
     SYM_ATTR_NORMAL   = INTERN("attr_normal");
 
-    SYM_U_PROJ          = INTERN("u_proj");
-    SYM_U_VIEW          = INTERN("u_view");
-    SYM_U_MODEL         = INTERN("u_model");
-    SYM_U_COLOR         = INTERN("u_color");
-    SYM_U_FACE          = INTERN("u_face");
-    SYM_U_LIGHT_PVM     = INTERN("u_light_pvm");
-    SYM_U_LIGHT_POS     = INTERN("u_light_pos");
-    SYM_U_LIGHT_ZFAR    = INTERN("u_light_zfar");
-    SYM_U_CAMERA_POS    = INTERN("u_camera_pos");
-    SYM_U_TEX           = INTERN("u_tex");
-    SYM_U_TEX_ALBEDO    = INTERN("u_tex_albedo");
-    SYM_U_TEX_METALLIC  = INTERN("u_tex_metallic");
-    SYM_U_LIGHTS_COUNT  = INTERN("u_lights_count");
-    SYM_U_LIGHTS        = INTERN("u_lights");
+    SYM_U_PROJ         = INTERN("u_proj");
+    SYM_U_VIEW         = INTERN("u_view");
+    SYM_U_MODEL        = INTERN("u_model");
+    SYM_U_COLOR        = INTERN("u_color");
+    SYM_U_FACE         = INTERN("u_face");
+    SYM_U_LIGHT_PVM    = INTERN("u_light_pvm");
+    SYM_U_LIGHT_POS    = INTERN("u_light_pos");
+    SYM_U_LIGHT_ZFAR   = INTERN("u_light_zfar");
+    SYM_U_CAMERA_POS   = INTERN("u_camera_pos");
+    SYM_U_TEX          = INTERN("u_tex");
+    SYM_U_TEX_ALBEDO   = INTERN("u_tex_albedo");
+    SYM_U_TEX_METALLIC = INTERN("u_tex_metallic");
+    SYM_U_LIGHTS_COUNT = INTERN("u_lights_count");
+    SYM_U_LIGHTS       = INTERN("u_lights");
+    SYM_U_LIGHTS_INTENSITY[0]       = INTERN("u_lights[0].intensity");
+    SYM_U_LIGHTS_INTENSITY[1]       = INTERN("u_lights[1].intensity");
+    SYM_U_LIGHTS_INTENSITY[2]       = INTERN("u_lights[2].intensity");
+    SYM_U_LIGHTS_INTENSITY[3]       = INTERN("u_lights[3].intensity");
+    SYM_U_LIGHTS_INTENSITY[4]       = INTERN("u_lights[4].intensity");
+    SYM_U_LIGHTS_INTENSITY[5]       = INTERN("u_lights[5].intensity");
+    SYM_U_LIGHTS_INTENSITY[6]       = INTERN("u_lights[6].intensity");
+    SYM_U_LIGHTS_INTENSITY[7]       = INTERN("u_lights[7].intensity");
+    SYM_U_LIGHTS_POSITION[0]        = INTERN("u_lights[0].position");
+    SYM_U_LIGHTS_POSITION[1]        = INTERN("u_lights[1].position");
+    SYM_U_LIGHTS_POSITION[2]        = INTERN("u_lights[2].position");
+    SYM_U_LIGHTS_POSITION[3]        = INTERN("u_lights[3].position");
+    SYM_U_LIGHTS_POSITION[4]        = INTERN("u_lights[4].position");
+    SYM_U_LIGHTS_POSITION[5]        = INTERN("u_lights[5].position");
+    SYM_U_LIGHTS_POSITION[6]        = INTERN("u_lights[6].position");
+    SYM_U_LIGHTS_POSITION[7]        = INTERN("u_lights[7].position");
+    SYM_U_LIGHTS_COLOR[0]           = INTERN("u_lights[0].color");
+    SYM_U_LIGHTS_COLOR[1]           = INTERN("u_lights[1].color");
+    SYM_U_LIGHTS_COLOR[2]           = INTERN("u_lights[2].color");
+    SYM_U_LIGHTS_COLOR[3]           = INTERN("u_lights[3].color");
+    SYM_U_LIGHTS_COLOR[4]           = INTERN("u_lights[4].color");
+    SYM_U_LIGHTS_COLOR[5]           = INTERN("u_lights[5].color");
+    SYM_U_LIGHTS_COLOR[6]           = INTERN("u_lights[6].color");
+    SYM_U_LIGHTS_COLOR[7]           = INTERN("u_lights[7].color");
+    SYM_U_LIGHTS_TYPE[0]            = INTERN("u_lights[0].type");
+    SYM_U_LIGHTS_TYPE[1]            = INTERN("u_lights[1].type");
+    SYM_U_LIGHTS_TYPE[2]            = INTERN("u_lights[2].type");
+    SYM_U_LIGHTS_TYPE[3]            = INTERN("u_lights[3].type");
+    SYM_U_LIGHTS_TYPE[4]            = INTERN("u_lights[4].type");
+    SYM_U_LIGHTS_TYPE[5]            = INTERN("u_lights[5].type");
+    SYM_U_LIGHTS_TYPE[6]            = INTERN("u_lights[6].type");
+    SYM_U_LIGHTS_TYPE[7]            = INTERN("u_lights[7].type");
+    SYM_U_LIGHTS_DIRECTION[0]       = INTERN("u_lights[0].direction");
+    SYM_U_LIGHTS_DIRECTION[1]       = INTERN("u_lights[1].direction");
+    SYM_U_LIGHTS_DIRECTION[2]       = INTERN("u_lights[2].direction");
+    SYM_U_LIGHTS_DIRECTION[3]       = INTERN("u_lights[3].direction");
+    SYM_U_LIGHTS_DIRECTION[4]       = INTERN("u_lights[4].direction");
+    SYM_U_LIGHTS_DIRECTION[5]       = INTERN("u_lights[5].direction");
+    SYM_U_LIGHTS_DIRECTION[6]       = INTERN("u_lights[6].direction");
+    SYM_U_LIGHTS_DIRECTION[7]       = INTERN("u_lights[7].direction");
+    SYM_U_LIGHTS_SHADOWMAP2D[0]     = INTERN("u_lights[0].shadowmap2d");
+    SYM_U_LIGHTS_SHADOWMAP2D[1]     = INTERN("u_lights[1].shadowmap2d");
+    SYM_U_LIGHTS_SHADOWMAP2D[2]     = INTERN("u_lights[2].shadowmap2d");
+    SYM_U_LIGHTS_SHADOWMAP2D[3]     = INTERN("u_lights[3].shadowmap2d");
+    SYM_U_LIGHTS_SHADOWMAP2D[4]     = INTERN("u_lights[4].shadowmap2d");
+    SYM_U_LIGHTS_SHADOWMAP2D[5]     = INTERN("u_lights[5].shadowmap2d");
+    SYM_U_LIGHTS_SHADOWMAP2D[6]     = INTERN("u_lights[6].shadowmap2d");
+    SYM_U_LIGHTS_SHADOWMAP2D[7]     = INTERN("u_lights[7].shadowmap2d");
+    SYM_U_LIGHTS_SHADOWMAP3D[0]     = INTERN("u_lights[0].shadowmap3d");
+    SYM_U_LIGHTS_SHADOWMAP3D[1]     = INTERN("u_lights[1].shadowmap3d");
+    SYM_U_LIGHTS_SHADOWMAP3D[2]     = INTERN("u_lights[2].shadowmap3d");
+    SYM_U_LIGHTS_SHADOWMAP3D[3]     = INTERN("u_lights[3].shadowmap3d");
+    SYM_U_LIGHTS_SHADOWMAP3D[4]     = INTERN("u_lights[4].shadowmap3d");
+    SYM_U_LIGHTS_SHADOWMAP3D[5]     = INTERN("u_lights[5].shadowmap3d");
+    SYM_U_LIGHTS_SHADOWMAP3D[6]     = INTERN("u_lights[6].shadowmap3d");
+    SYM_U_LIGHTS_SHADOWMAP3D[7]     = INTERN("u_lights[7].shadowmap3d");
+    SYM_U_LIGHTS_SHADOWMAP_ZFAR[0]  = INTERN("u_lights[0].shadowmap_zfar");
+    SYM_U_LIGHTS_SHADOWMAP_ZFAR[1]  = INTERN("u_lights[1].shadowmap_zfar");
+    SYM_U_LIGHTS_SHADOWMAP_ZFAR[2]  = INTERN("u_lights[2].shadowmap_zfar");
+    SYM_U_LIGHTS_SHADOWMAP_ZFAR[3]  = INTERN("u_lights[3].shadowmap_zfar");
+    SYM_U_LIGHTS_SHADOWMAP_ZFAR[4]  = INTERN("u_lights[4].shadowmap_zfar");
+    SYM_U_LIGHTS_SHADOWMAP_ZFAR[5]  = INTERN("u_lights[5].shadowmap_zfar");
+    SYM_U_LIGHTS_SHADOWMAP_ZFAR[6]  = INTERN("u_lights[6].shadowmap_zfar");
+    SYM_U_LIGHTS_SHADOWMAP_ZFAR[7]  = INTERN("u_lights[7].shadowmap_zfar");
 
-    SYM_U_LIGHTS_INTENSITY[0] = INTERN("u_lights[0].intensity");
-    SYM_U_LIGHTS_INTENSITY[1] = INTERN("u_lights[1].intensity");
-    SYM_U_LIGHTS_INTENSITY[2] = INTERN("u_lights[2].intensity");
-    SYM_U_LIGHTS_INTENSITY[3] = INTERN("u_lights[3].intensity");
-    SYM_U_LIGHTS_INTENSITY[4] = INTERN("u_lights[4].intensity");
-    SYM_U_LIGHTS_INTENSITY[5] = INTERN("u_lights[5].intensity");
-    SYM_U_LIGHTS_INTENSITY[6] = INTERN("u_lights[6].intensity");
-    SYM_U_LIGHTS_INTENSITY[7] = INTERN("u_lights[7].intensity");
-
-    SYM_U_LIGHTS_POSITION[0] = INTERN("u_lights[0].position");
-    SYM_U_LIGHTS_POSITION[1] = INTERN("u_lights[1].position");
-    SYM_U_LIGHTS_POSITION[2] = INTERN("u_lights[2].position");
-    SYM_U_LIGHTS_POSITION[3] = INTERN("u_lights[3].position");
-    SYM_U_LIGHTS_POSITION[4] = INTERN("u_lights[4].position");
-    SYM_U_LIGHTS_POSITION[5] = INTERN("u_lights[5].position");
-    SYM_U_LIGHTS_POSITION[6] = INTERN("u_lights[6].position");
-    SYM_U_LIGHTS_POSITION[7] = INTERN("u_lights[7].position");
-
-    SYM_U_LIGHTS_COLOR[0] = INTERN("u_lights[0].color");
-    SYM_U_LIGHTS_COLOR[1] = INTERN("u_lights[1].color");
-    SYM_U_LIGHTS_COLOR[2] = INTERN("u_lights[2].color");
-    SYM_U_LIGHTS_COLOR[3] = INTERN("u_lights[3].color");
-    SYM_U_LIGHTS_COLOR[4] = INTERN("u_lights[4].color");
-    SYM_U_LIGHTS_COLOR[5] = INTERN("u_lights[5].color");
-    SYM_U_LIGHTS_COLOR[6] = INTERN("u_lights[6].color");
-    SYM_U_LIGHTS_COLOR[7] = INTERN("u_lights[7].color");
-
-    SYM_U_LIGHTS_TYPE[0] = INTERN("u_lights[0].type");
-    SYM_U_LIGHTS_TYPE[1] = INTERN("u_lights[1].type");
-    SYM_U_LIGHTS_TYPE[2] = INTERN("u_lights[2].type");
-    SYM_U_LIGHTS_TYPE[3] = INTERN("u_lights[3].type");
-    SYM_U_LIGHTS_TYPE[4] = INTERN("u_lights[4].type");
-    SYM_U_LIGHTS_TYPE[5] = INTERN("u_lights[5].type");
-    SYM_U_LIGHTS_TYPE[6] = INTERN("u_lights[6].type");
-    SYM_U_LIGHTS_TYPE[7] = INTERN("u_lights[7].type");
-
-    SYM_U_LIGHTS_DIRECTION[0] = INTERN("u_lights[0].direction");
-    SYM_U_LIGHTS_DIRECTION[1] = INTERN("u_lights[1].direction");
-    SYM_U_LIGHTS_DIRECTION[2] = INTERN("u_lights[2].direction");
-    SYM_U_LIGHTS_DIRECTION[3] = INTERN("u_lights[3].direction");
-    SYM_U_LIGHTS_DIRECTION[4] = INTERN("u_lights[4].direction");
-    SYM_U_LIGHTS_DIRECTION[5] = INTERN("u_lights[5].direction");
-    SYM_U_LIGHTS_DIRECTION[6] = INTERN("u_lights[6].direction");
-    SYM_U_LIGHTS_DIRECTION[7] = INTERN("u_lights[7].direction");
-
-    SYM_U_LIGHTS_SHADOWMAP2D[0] = INTERN("u_lights[0].shadowmap2d");
-    SYM_U_LIGHTS_SHADOWMAP2D[1] = INTERN("u_lights[1].shadowmap2d");
-    SYM_U_LIGHTS_SHADOWMAP2D[2] = INTERN("u_lights[2].shadowmap2d");
-    SYM_U_LIGHTS_SHADOWMAP2D[3] = INTERN("u_lights[3].shadowmap2d");
-    SYM_U_LIGHTS_SHADOWMAP2D[4] = INTERN("u_lights[4].shadowmap2d");
-    SYM_U_LIGHTS_SHADOWMAP2D[5] = INTERN("u_lights[5].shadowmap2d");
-    SYM_U_LIGHTS_SHADOWMAP2D[6] = INTERN("u_lights[6].shadowmap2d");
-    SYM_U_LIGHTS_SHADOWMAP2D[7] = INTERN("u_lights[7].shadowmap2d");
-
-    SYM_U_LIGHTS_SHADOWMAP3D[0] = INTERN("u_lights[0].shadowmap3d");
-    SYM_U_LIGHTS_SHADOWMAP3D[1] = INTERN("u_lights[1].shadowmap3d");
-    SYM_U_LIGHTS_SHADOWMAP3D[2] = INTERN("u_lights[2].shadowmap3d");
-    SYM_U_LIGHTS_SHADOWMAP3D[3] = INTERN("u_lights[3].shadowmap3d");
-    SYM_U_LIGHTS_SHADOWMAP3D[4] = INTERN("u_lights[4].shadowmap3d");
-    SYM_U_LIGHTS_SHADOWMAP3D[5] = INTERN("u_lights[5].shadowmap3d");
-    SYM_U_LIGHTS_SHADOWMAP3D[6] = INTERN("u_lights[6].shadowmap3d");
-    SYM_U_LIGHTS_SHADOWMAP3D[7] = INTERN("u_lights[7].shadowmap3d");
-
-    SYM_U_LIGHTS_SHADOWMAP_ZFAR[0] = INTERN("u_lights[0].shadowmap_zfar");
-    SYM_U_LIGHTS_SHADOWMAP_ZFAR[1] = INTERN("u_lights[1].shadowmap_zfar");
-    SYM_U_LIGHTS_SHADOWMAP_ZFAR[2] = INTERN("u_lights[2].shadowmap_zfar");
-    SYM_U_LIGHTS_SHADOWMAP_ZFAR[3] = INTERN("u_lights[3].shadowmap_zfar");
-    SYM_U_LIGHTS_SHADOWMAP_ZFAR[4] = INTERN("u_lights[4].shadowmap_zfar");
-    SYM_U_LIGHTS_SHADOWMAP_ZFAR[5] = INTERN("u_lights[5].shadowmap_zfar");
-    SYM_U_LIGHTS_SHADOWMAP_ZFAR[6] = INTERN("u_lights[6].shadowmap_zfar");
-    SYM_U_LIGHTS_SHADOWMAP_ZFAR[7] = INTERN("u_lights[7].shadowmap_zfar");
+    SYM_ENTITY_PLAYER_ONE       = INTERN("player_one");
+    SYM_ENTITY_FREECAM          = INTERN("freecam");
+    SYM_ENTITY_BACKGROUND_MUSIC = INTERN("background_music");
+    SYM_SHADER_EDITOR_SELECT    = INTERN("shader_editor_select");
 }
 
 const char *ta_symbol_intern(const char *s, u32 len) {

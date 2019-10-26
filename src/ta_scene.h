@@ -2,7 +2,7 @@
 #include "ta_uid.h"
 #include "ta_schema.h"
 #include "dlb/dlb_hash.h"
-#include "dlb/dlb_pool.h"
+#include "dlb/dlb_index.h"
 
 struct ta_shader;
 struct ta_file;
@@ -37,17 +37,15 @@ struct ta_entity;
 typedef struct ta_scene {
     const char *filename;
     const char *name;
-    u32 next_id[RES_COUNT];
 
     // TODO: Store ids in each resource, then this is probably redundant
     //dlb_pool resource_ids[RES_COUNT];   // vector of resource ids by type
 
     // NOTE: This could probably be a vector. We don't need generations because
-    // presence is determined by resource_names_by_name containing the index,
+    // presence is determined by index_by_name containing the index,
     // and the const char * in resource_names matching the queried name.
-    dlb_pool resource_names[RES_COUNT]; // dense set of resource names (const char **)
-    dlb_pool resource_data[RES_COUNT];  // dense set of resource data (e.g. ta_texture *)
-    dlb_hash id_by_name[RES_COUNT];     // const char *name -> resource id
+    void *resource_data[RES_COUNT];         // dense resource data (e.g. ta_texture *)
+    dlb_index index_by_name[RES_COUNT];     // name hash -> dense index
 } ta_scene;
 
 /*
@@ -66,22 +64,28 @@ void ta_scene_save_file(ta_scene *scene, const char *filename);
 void ta_scene_free(ta_scene *scn);
 void ta_scene_print(ta_scene *scn, FILE *hnd);
 void *ta_scene_find_at(ta_scene *scene, ta_resource_type type, u32 index);
-void *ta_scene_find_by_id_try(ta_scene *scene, ta_resource_type type, u32 id);
-void *ta_scene_find_by_id(ta_scene *scene, ta_resource_type type, u32 id);
-void *ta_scene_find_by_id_or_default(ta_scene *scene, ta_resource_type type,
-    u32 id);
+void *ta_scene_find_by_name_try(ta_scene *scene, ta_resource_type type,
+    const char *name);
 void *ta_scene_find_by_name(ta_scene *scene, ta_resource_type type,
     const char *name);
-u32 ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name);
-void ta_scene_destroy(ta_scene *scene, ta_resource_type type, u32 id);
+void *ta_scene_find_by_name_or_default(ta_scene *scene, ta_resource_type type,
+    const char *name);
+void *ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name);
+void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name);
 void *ta_scene_entity_add_component(ta_scene *scene, u32 entity_id,
     ta_resource_type type);
-void *ta_scene_entity_component_try(ta_scene *scene, struct ta_entity *entity,
-    ta_resource_type type);
-void *ta_scene_entity_component(ta_scene *scene, struct ta_entity *entity,
-    ta_resource_type type);
+void *ta_scene_component_try(ta_scene *scene, ta_resource_type type,
+    struct ta_entity *entity);
+void *ta_scene_component(ta_scene *scene, ta_resource_type type,
+    struct ta_entity *entity);
+void *ta_scene_component_by_entity_name_try(ta_scene *scene,
+    ta_resource_type type, const char *entity_name);
+void *ta_scene_component_by_entity_name(ta_scene *scene,
+    ta_resource_type type, const char *entity_name);
 //ta_entity *ta_scene_entity_by_uid_try(ta_scene *scene, const char *uid);
 //ta_entity *ta_scene_entity_by_uid(ta_scene *scene, const char *uid);
 void ta_scene_update(ta_scene *scene, float dt);
-void ta_scene_shadow_pass(ta_scene *scene, struct ta_shader *shader, float alpha);
-void ta_scene_render(ta_scene *scene, struct ta_camera *render_camera, float alpha);
+void ta_scene_shadow_pass(ta_scene *scene, struct ta_shader *shader,
+    float alpha);
+void ta_scene_render(ta_scene *scene, struct ta_camera *render_camera,
+    float alpha);

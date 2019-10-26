@@ -30,7 +30,7 @@ static inline char *dlb_symbol__alloc(const char *buf, u32 len) {
 #define INTERN(s) ta_symbol_intern(CSTR(s))
 
 // Special identifiers
-extern const char *SYM_ID;
+extern const char *SYM_NAME;
 
 // DML keywords
 extern const char *SYM_NULL;
@@ -77,6 +77,12 @@ extern const char *SYM_U_LIGHTS_DIRECTION[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP2D[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP3D[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP_ZFAR[8];
+
+// Constants
+extern const char *SYM_ENTITY_PLAYER_ONE;
+extern const char *SYM_ENTITY_FREECAM;
+extern const char *SYM_ENTITY_BACKGROUND_MUSIC;
+extern const char *SYM_SHADER_EDITOR_SELECT;
 
 const char *ta_symbol_intern(const char *s, u32 len);
 void ta_symbol_init();

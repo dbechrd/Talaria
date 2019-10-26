@@ -41,12 +41,10 @@ void e_button_update(ta_e_button *button)
     //       EVENT_BUTTON_DEACTIVATED
     //       EVENT_BUTTON_STATE_CHANGED
 
-    ta_entity *e_button = ta_scene_find_by_id(tg_game.scene, RES_ENTITY, button->entity_id);
-    ta_entity *e_player = ta_scene_find_by_id(tg_game.scene, RES_ENTITY, tg_game.player_one_id);
-    ta_rigid_body *button_body = ta_scene_entity_component(tg_game.scene, e_button, RES_COMP_RIGID_BODY);
-    ta_rigid_body *player_body = ta_scene_entity_component(tg_game.scene, e_player, RES_COMP_RIGID_BODY);
-    DLB_ASSERT(button_body);
-    DLB_ASSERT(player_body);
+    ta_rigid_body *button_body = ta_scene_component_by_entity_name(tg_game.scene,
+        RES_COMP_RIGID_BODY, button->entity_name);
+    ta_rigid_body *player_body = ta_scene_component_by_entity_name(tg_game.scene,
+        RES_COMP_RIGID_BODY, tg_game.e_player_one);
 
     button->state_prev = button->state;
     if (ta_rigid_body_intersect(player_body, button_body, 0)) {
@@ -57,7 +55,7 @@ void e_button_update(ta_e_button *button)
 
     if (button_activated(button)) {
         ta_event event = { 0 };
-        event.data.button.button_id = button->id;
+        event.data.button.button_name = button->name;
 
         event.type = TA_EVENT_GAME_BUTTON_ACTIVATED;
         ta_event_push(&event);
@@ -67,7 +65,7 @@ void e_button_update(ta_e_button *button)
 
     if (button_deactivated(button)) {
         ta_event event = { 0 };
-        event.data.button.button_id = button->id;
+        event.data.button.button_name = button->name;
 
         event.type = TA_EVENT_GAME_BUTTON_DEACTIVATED;
         ta_event_push(&event);

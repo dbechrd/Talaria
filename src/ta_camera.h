@@ -6,8 +6,9 @@
 struct ta_event;
 
 typedef struct ta_camera {
-    u32 id;
-    u32 entity_id;
+    u32 index;
+    const char *name;
+    const char *entity_name;
     // TODO: Replace with TA_POSITION, calculate orientation every frame
     ta_vec3 position;           // where the camera is
     float position_smooth;      // how fast to blend to target [0, 1]

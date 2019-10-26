@@ -3,9 +3,10 @@
 #include "ta_math.h"
 
 typedef struct ta_mesh_group {
-    u32 id;
+    u32 index;
+    const char *name;
     const char *path;
-    u32 *mesh_ids;
+    const char **mesh_names;
     ta_aabb aabb;
 } ta_mesh_group;
 

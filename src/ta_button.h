@@ -8,13 +8,14 @@ typedef enum e_button_state {
 } e_button_state;
 
 typedef struct ta_e_button {
-    u32 id;
-    u32 entity_id;
+    u32 index;
+    const char *name;
+    const char *entity_name;
     e_button_state state;
     e_button_state state_prev;
-    u32 sfx_activated_id;  // TODO: Some sort of event-based sound effects handling?
-    u32 sfx_active_id;
-    u32 sfx_deactivated_id;
+    u32 sfx_activated_name;  // TODO: Some sort of event-based sound effects handling?
+    u32 sfx_active_name;
+    u32 sfx_deactivated_name;
 } ta_e_button;
 
 void e_button_init(ta_e_button *button);

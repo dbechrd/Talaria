@@ -20,7 +20,6 @@ typedef struct ta_game {
     ta_game_state state_prev;
 
     struct ta_audio_listener *audio;
-    struct ta_audio_source *background_music;
     struct ta_font *font;
     struct ta_keybind *keybinds[TA_GAME_STATE_COUNT];
     struct ta_scene *scene;
@@ -29,12 +28,12 @@ typedef struct ta_game {
     struct ta_texture *tex_audio_icon;
     struct ta_window *window;
 
-    u32 audio_source_background_music_id;
-    u32 camera_player_id;
-    u32 camera_freecam_id;
-    u32 camera_active_id;
-    u32 player_one_id;
+    const char *e_background_music;
+    const char *e_freecam;
+    const char *e_player_one;
     //struct ta_entity *player;
+
+    const char *e_active_camera;
 } ta_game;
 
 extern ta_game tg_game;

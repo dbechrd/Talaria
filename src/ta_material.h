@@ -2,8 +2,9 @@
 #include "ta_uid.h"
 
 typedef struct ta_material {
-    u32 id;
-    u32 shader_id;
-    u32 tex_albedo_id;
-    u32 tex_metallic_id;
+    u32 index;
+    const char *name;
+    const char *shader_name;
+    const char *tex_albedo_name;
+    const char *tex_metallic_name;
 } ta_material;

@@ -39,9 +39,9 @@
 #include "dlb/dlb_hash.h"
 #define DLB_BITSET_TEST
 #include "dlb/dlb_bitset.h"
-#define DLB_POOL_IMPLEMENTATION
-#define DLB_POOL_TEST
-#include "dlb/dlb_pool.h"
+#define DLB_INDEX_IMPLEMENTATION
+#define DLB_INDEX_TEST
+#include "dlb/dlb_index.h"
 #include "misc/gl3w.h"
 #include "SDL/SDL.h"
 
@@ -76,7 +76,7 @@ void debug_tests() {
     parse_tests();
     dlb_hash_test();
     //dlb_bitset_test();
-    dlb_pool_test();
+    dlb_index_test();
     ta_math_test();
 #endif
 }
@@ -133,28 +133,19 @@ int main(int argc, char *argv[])
 
     // TODO: Find closest 8 lights and store them in tg_game.lights
 
-#define E_PLAYER_ONE_ID 1
-#define E_CAMERA_FREECAM_ID 1
-#define E_AUDIO_SOURCE_BACKGROUND_MUSIC_ID 1
-
     ////////////////////////////////////////////////////////////////////////////
     // Player
     ////////////////////////////////////////////////////////////////////////////
     // HACK: Find first entity with a player component, assume it's the player
-    ta_entity *e_player = ta_scene_find_by_id(tg_game.scene,
-        RES_ENTITY, E_PLAYER_ONE_ID);
-    tg_game.player_one_id = e_player->components[RES_COMP_PLAYER];
-    DLB_ASSERT(tg_game.player_one_id);
+    ta_entity *e_player = ta_scene_find_by_name(tg_game.scene, RES_ENTITY,
+        SYM_ENTITY_PLAYER_ONE);
+    tg_game.e_player_one = e_player->name;
+    DLB_ASSERT(tg_game.e_player_one);
     //ta_scene_entity_add_component(tg_game.scene, E_PLAYER_ONE_ID, RES_COMP_GUN);
     //gun->carrying_ammo_max  = 20;
     //gun->carrying_ammo      = gun->carrying_ammo_max;
     //gun->loaded_ammo_max    = 8;
     //gun->loaded_ammo        = gun->loaded_ammo_max;
-
-    ta_camera *player_cam = ta_scene_entity_component(tg_game.scene, e_player,
-        RES_COMP_CAMERA);
-    tg_game.camera_player_id = player_cam->id;
-    DLB_ASSERT(tg_game.camera_player_id);
 
     ////////////////////////////////////////////////////////////////////////////
     // Cameras
@@ -162,30 +153,34 @@ int main(int argc, char *argv[])
     // TODO: idk how best to find static resources other than by name. Maybe
     // have a lookup table in the scene file whose only purpose is to populate
     // the scene with ids of static objects (root node, free cam, player, etc.)?
-    ta_entity *e_freecam = ta_scene_find_by_id(tg_game.scene,
-        RES_ENTITY, E_CAMERA_FREECAM_ID);
-    tg_game.camera_freecam_id = e_freecam->components[RES_COMP_CAMERA];
-    DLB_ASSERT(tg_game.camera_freecam_id);
+    ta_entity *e_freecam = ta_scene_find_by_name(tg_game.scene, RES_ENTITY,
+        SYM_ENTITY_FREECAM);
+    tg_game.e_freecam = e_freecam->name;
+    DLB_ASSERT(tg_game.e_freecam);
 
-    tg_game.camera_active_id = tg_game.camera_freecam_id;
+    tg_game.e_active_camera = tg_game.e_freecam;
 
     ////////////////////////////////////////////////////////////////////////////
     // Audio
     ////////////////////////////////////////////////////////////////////////////
     // TODO: Parent this node to the active player
-    ta_entity *e_background_music = ta_scene_find_by_id(tg_game.scene,
-        RES_ENTITY, E_AUDIO_SOURCE_BACKGROUND_MUSIC_ID);
-    tg_game.audio_source_background_music_id = e_freecam->components[RES_COMP_AUDIO_SOURCE];
-    DLB_ASSERT(tg_game.audio_source_background_music_id);
-    //ta_audio_source_play_loop_id(tg_game.background_music);
+    ta_entity *e_background_music = ta_scene_find_by_name(tg_game.scene,
+        RES_ENTITY, SYM_ENTITY_BACKGROUND_MUSIC);
+    tg_game.e_background_music = e_background_music->name;
+    DLB_ASSERT(tg_game.e_background_music);
+
+    ta_audio_source *bg_music_src = ta_scene_component(tg_game.scene,
+        RES_COMP_AUDIO_SOURCE, e_background_music);
+    DLB_ASSERT(bg_music_src);
+    ta_audio_source_play_loop(bg_music_src);
 
     ////////////////////////////////////////////////////////////////////////////
     // Textures
     ////////////////////////////////////////////////////////////////////////////
-    tg_game.font            = ta_scene_find_by_name(tg_game.scene, RES_FONT, INTERN("data/font/consola.ttf"));
-    tg_game.tex_orange      = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("data/texture/pbr_default_0.png"));
-    tg_game.tex_red         = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("data/texture/pbr_default_1.png"));
-    tg_game.tex_audio_icon  = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("data/texture/audio_icon.png"));
+    tg_game.font            = ta_scene_find_by_name(tg_game.scene, RES_FONT, INTERN("consola"));
+    tg_game.tex_orange      = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("pbr_default_0"));
+    tg_game.tex_red         = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("pbr_default_1"));
+    tg_game.tex_audio_icon  = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("audio_icon"));
     DLB_ASSERT(tg_game.font);
     DLB_ASSERT(tg_game.tex_orange && tg_game.tex_orange->gl_id);
     DLB_ASSERT(tg_game.tex_red && tg_game.tex_red->gl_id);
@@ -194,10 +189,10 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
     ////////////////////////////////////////////////////////////////////////////
-    tg_shader_lines     = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("data/shader/lines_v.glsl"));
-    tg_shader_quads     = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("data/shader/quads_v.glsl"));
-    tg_shader_cubemap   = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("data/shader/cubemap_v.glsl"));
-    tg_shader_shadow    = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("data/shader/shadow_v.glsl"));
+    tg_shader_lines   = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("lines"));
+    tg_shader_quads   = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("quads"));
+    tg_shader_cubemap = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("cubemap"));
+    tg_shader_shadow  = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("shadow"));
     DLB_ASSERT(tg_shader_lines);
     DLB_ASSERT(tg_shader_quads);
     DLB_ASSERT(tg_shader_cubemap);
@@ -267,10 +262,13 @@ int main(int argc, char *argv[])
             }
         }
 
-        ta_camera *active_cam = ta_scene_find_by_id(tg_game.scene,
-            RES_COMP_CAMERA, tg_game.camera_active_id);
-        ta_rigid_body *player_body = ta_scene_entity_component(tg_game.scene,
-            e_player, RES_COMP_RIGID_BODY);
+        ta_camera *active_camera = ta_scene_component_by_entity_name(
+            tg_game.scene, RES_COMP_CAMERA, tg_game.e_active_camera);
+
+        ta_camera *player_cam = ta_scene_component(tg_game.scene,
+            RES_COMP_CAMERA, e_player);
+        ta_rigid_body *player_body = ta_scene_component(tg_game.scene,
+            RES_COMP_RIGID_BODY, e_player);
 
         while (ms_frame_accum >= ms_sim_dt) {
             // Update player camera
@@ -304,12 +302,12 @@ int main(int argc, char *argv[])
 
             // TODO: Update all cameras in a loop somewhere, this is wonky
             // Update main camera
-            ta_camera_update(active_cam, sim_dt);
+            ta_camera_update(active_camera, sim_dt);
 
             // Update minimap camera
-            ta_vec3 minimap_camera_target_pos = active_cam->position;
+            ta_vec3 minimap_camera_target_pos = active_camera->position;
             minimap_camera_target_pos.y += 50.0f;
-            minimap_camera.focal_point = active_cam->position;
+            minimap_camera.focal_point = active_camera->position;
             ta_camera_set_target_pos_absolute(&minimap_camera,
                 minimap_camera_target_pos);
             ta_camera_update(&minimap_camera, sim_dt);
@@ -324,10 +322,10 @@ int main(int argc, char *argv[])
             // TODO: Put this somewhere intelligent
             // Update audio listener position
             ta_vec3 fwd_up[2];
-            fwd_up[0] = active_cam->front;
-            fwd_up[1] = active_cam->up;
+            fwd_up[0] = active_camera->front;
+            fwd_up[1] = active_camera->up;
             alListenerfv(AL_ORIENTATION, (float *)fwd_up);
-            alListenerfv(AL_POSITION, (float *)&active_cam->position);
+            alListenerfv(AL_POSITION, (float *)&active_camera->position);
             //alListenerfv(AL_VELOCITY, (float *)&tg_game.camera->velocity);
 
             ms_sim_t += ms_sim_dt;
@@ -338,7 +336,7 @@ int main(int argc, char *argv[])
 
         // Draw models
         ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
-        ta_scene_render(tg_game.scene, active_cam, sim_alpha);
+        ta_scene_render(tg_game.scene, active_camera, sim_alpha);
 
         // World axes
         ta_primitive_push_axes(1.0f);
@@ -420,7 +418,8 @@ int main(int argc, char *argv[])
         render_fps(ms_frame_start, frame_num);
 
         ta_window_swap(tg_game.window);
-        //ta_log_write(&tg_debug_log, "Frame %llu started at %f sim time: %f\n", frame_num, ms_frame_start - ms_frame_first, ms_sim_t);
+        //ta_log_write(&tg_debug_log, "Frame %llu started at %f sim time: %f\n",
+        //    frame_num, ms_frame_start - ms_frame_first, ms_sim_t);
         frame_num++;
     }
 
@@ -449,8 +448,8 @@ static void render_fps(double ms_frame_start, u64 frame_num)
     }
     dlb_vec_zero(frame_time_rects);
 
-    ta_shader *font_shader = ta_scene_find_by_id(tg_game.scene, RES_SHADER,
-        tg_game.font->shader_id);
+    ta_shader *font_shader = ta_scene_find_by_name(tg_game.scene, RES_SHADER,
+        tg_game.font->shader_name);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
@@ -464,10 +463,8 @@ static void debug_nametag(ta_camera *camera)
     ta_rectf tag_rect = ta_font_push_text(&tag_rects, tg_game.font,
         CSTR("Player 1\nis da best"), true, 0, 0, 0, 0);
 
-    ta_entity *e_player = ta_scene_find_by_id(tg_game.scene, RES_ENTITY,
-        tg_game.player_one_id);
-    ta_position *player_pos = ta_scene_entity_component(tg_game.scene, e_player,
-        RES_COMP_POSITION);
+    ta_position *player_pos = ta_scene_component_by_entity_name(tg_game.scene,
+        RES_COMP_POSITION, tg_game.e_player_one);
 
     ta_vec3 tag_pos = vec3_add(player_pos->transform.position,
         (ta_vec3){ 0.0f, 1.2f, 0.0f });
@@ -510,8 +507,8 @@ static void debug_nametag(ta_camera *camera)
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
     // Name tag text
-    ta_shader *font_shader = ta_scene_find_by_id(tg_game.scene, RES_SHADER,
-        tg_game.font->shader_id);
+    ta_shader *font_shader = ta_scene_find_by_name(tg_game.scene, RES_SHADER,
+        tg_game.font->shader_name);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform_fg);

@@ -7,7 +7,7 @@
 #include "ta_game.h"
 #include "ta_scene.h"
 #include "dlb/dlb_vector.h"
-#include "dlb/dlb_pool.h"
+#include "dlb/dlb_index.h"
 
 #define TINYOBJ_MALLOC dlb_malloc
 #define TINYOBJ_CALLOC dlb_calloc
@@ -63,11 +63,8 @@ void ta_mesh_group_load(ta_mesh_group *group)
 
         u32 name_len = (u32)strlen(shapes[shape_idx].name);
         const char *name = ta_symbol_intern(shapes[shape_idx].name, name_len);
-
-        u32 *mesh_id = dlb_vec_alloc(group->mesh_ids);
-        *mesh_id = ta_scene_alloc(tg_game.scene, RES_MESH, name);
-
-        ta_mesh *mesh = ta_scene_find_by_id(tg_game.scene, RES_MESH, *mesh_id);
+        dlb_vec_push(group->mesh_names, name);
+        ta_mesh *mesh = ta_scene_alloc(tg_game.scene, RES_MESH, name);
 
         mesh_min = VEC3_MAX;
         mesh_max = VEC3_MIN;
@@ -172,24 +169,24 @@ ta_aabb ta_mesh_group_aabb(ta_mesh_group *group)
 
 void ta_mesh_group_push_normals(ta_mesh_group *group)
 {
-    dlb_vec_each(u32 *, mesh_id, group->mesh_ids) {
-        ta_mesh *mesh = ta_scene_find_by_id(tg_game.scene, RES_MESH, *mesh_id);
+    dlb_vec_each(const char *, name, group->mesh_names) {
+        ta_mesh *mesh = ta_scene_find_by_name(tg_game.scene, RES_MESH, name);
         ta_mesh_push_normals(mesh);
     }
 }
 
 void ta_mesh_group_render(ta_mesh_group *group)
 {
-    dlb_vec_each(u32 *, mesh_id, group->mesh_ids) {
-        ta_mesh *mesh = ta_scene_find_by_id(tg_game.scene, RES_MESH, *mesh_id);
+    dlb_vec_each(const char *, name, group->mesh_names) {
+        ta_mesh *mesh = ta_scene_find_by_name(tg_game.scene, RES_MESH, name);
         ta_mesh_render(mesh);
     }
 }
 
 void ta_mesh_group_free(ta_mesh_group *group)
 {
-    dlb_vec_each(u32 *, mesh_id, group->mesh_ids) {
-        ta_scene_destroy(tg_game.scene, RES_MESH, *mesh_id);
+    dlb_vec_each(const char *, name, group->mesh_names) {
+        ta_scene_destroy(tg_game.scene, RES_MESH, name);
     }
-    dlb_vec_free(group->mesh_ids);
+    dlb_vec_free(group->mesh_names);
 }

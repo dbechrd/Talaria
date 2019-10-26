@@ -5,6 +5,9 @@
 
 void ta_entity_free(ta_entity *entity)
 {
+    // TODO: Fix the clean up methods
+    DLB_ASSERT(0);
+#if 0
     // Delete entity components
     for (u32 type = 0; type < RES_COMP_COUNT; ++type) {
         u32 component_id = entity->components[type];
@@ -16,4 +19,5 @@ void ta_entity_free(ta_entity *entity)
             dlb_pool_delete(&tg_game.scene->resource_data[type], component_id);
         }
     }
+#endif
 }

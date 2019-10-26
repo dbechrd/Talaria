@@ -2,9 +2,15 @@
 #include "ta_schema.h"
 #include "dlb/dlb_types.h"
 
+typedef struct ta_resource {
+    u32 index;
+    const char *name;
+} ta_resource;
+
 typedef struct ta_component {
-    u32 id;
-    u32 entity_id;
+    u32 index;
+    const char *name;
+    const char *entity_name;
 } ta_component;
 
 // TODO: Binary format should just store component pools as-is, with the uid
@@ -23,8 +29,9 @@ typedef struct ta_component {
 //  }
 //
 typedef struct ta_entity {
-    u32 id;
-    u32 parent_id;
+    u32 index;
+    const char *name;
+    const char *parent_name;
     u32 components[RES_COMP_COUNT];
 } ta_entity;
 
