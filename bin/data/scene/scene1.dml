@@ -44,22 +44,14 @@ ta_audio_buffer:
 #-------------------------------------------------------------------------------
 ta_audio_source:
   name: "background_music"
+  entity_name: "background_music"
   audio_buffer: "mus_genesis"
-ta_audio_source:
-  name: "button_0001"
-ta_audio_source:
-  name: "gun"
-ta_audio_source:
-  name: "player"
-ta_audio_source:
-  name: "explosion"
-  audio_buffer: "sfx_explosion"
 
 #-------------------------------------------------------------------------------
 # Cameras
 #-------------------------------------------------------------------------------
 ta_camera:
-  name: "player"
+  name: "player_one"
   position: { x: 0.0, y: 1.7, z: 24.0 }
   position_smooth: 0.05
   position_target_vel: 0.2
@@ -209,57 +201,6 @@ ta_mesh_group:
 #-------------------------------------------------------------------------------
 # Entities
 #-------------------------------------------------------------------------------
-ta_rigid_body:
-  name: "chamber_0001"
-  position: { x: 0.0, y: -8.0, z: 1.0 }
-  collider:
-    type: 0  # TA_COLLIDER_PLANE
-    plane:
-      center: { x: 0.0, y: 0.0, z: 0.0 }
-      normal: { x: 0.0, y: 1.0, z: 0.0 }
-  mass: 0.0
-# ta_rigid_body:
-#   name: "tb_node_chamber_right"
-#   collider:
-#     type: 0  # TA_COLLIDER_PLANE
-#     plane:
-#       center: { x: 6.0, y: 0.0, z: 0.0 }
-#       normal: { x: -1.0, y: 0.0, z: 0.0 }
-#   mass: 0.0
-# ta_rigid_body:
-#   name: "tb_node_chamber_left"
-#   collider:
-#     type: 0  # TA_COLLIDER_PLANE
-#     plane:
-#       center: { x: -6.0, y: 0.0, z: 0.0 }
-#       normal: { x: 1.0, y: 0.0, z: 0.0 }
-#   mass: 0.0
-# ta_rigid_body:
-#   name: "tb_node_chamber_far"
-#   collider:
-#     type: 0  # TA_COLLIDER_PLANE
-#     plane:
-#       center: { x: 0.0, y: 0.0, z: 6.0 }
-#       normal: { x: 0.0, y: 0.0, z: -1.0 }
-#   mass: 0.0
-# ta_rigid_body:
-#   name: "tb_node_chamber_near"
-#   collider:
-#     type: 0  # TA_COLLIDER_PLANE
-#     plane:
-#       center: { x: 0.0, y: 0.0, z: -6.0 }
-#       normal: { x: 0.0, y: 0.0, z: 1.0 }
-#   mass: 0.0
-ta_entity:
-  name: "chamber_0001"
-  components: [
-    { name: "chamber_0001", type: 5 },  # TA_GLSL_VEC3
-  ]
-ta_position:
-  name: "chamber_0001"
-  entity_name: "chamber_0001"
-  transform:
-    position: { x: 0.0, y: -8.0, z: 0.0 }
 ta_model:
   name: "chamber_0001"
   entity_name: "chamber_0001"
@@ -268,18 +209,94 @@ ta_model:
   invisible: false
   cast_shadows: true
   receive_shadows: true
-
-ta_entity:
-  name: "wakeup"
+ta_position:
+  name: "chamber_0001"
+  entity_name: "chamber_0001"
   transform:
-    position: { x: 0.0, y: 8.0, z: 0.0 }
+    position: { x: 0.0, y: -8.0, z: 0.0 }
+# TODO: Make e.g. "ta_rigid_body_group" that has an array of rigid_bodies
+ta_rigid_body:
+  name: "chamber_0001"
+  entity_name: "chamber_0001"
+  position: { x: 0.0, y: -8.0, z: 1.0 }
+  collider:
+    type: 0  # TA_COLLIDER_PLANE
+    plane:
+      center: { x: 0.0, y: 0.0, z: 0.0 }
+      normal: { x: 0.0, y: 1.0, z: 0.0 }
+  mass: 0.0
+# ta_rigid_body:
+#   name: "chamber_0001_right"
+#   entity_name: "chamber_0001"
+#   collider:
+#     type: 0  # TA_COLLIDER_PLANE
+#     plane:
+#       center: { x: 6.0, y: 0.0, z: 0.0 }
+#       normal: { x: -1.0, y: 0.0, z: 0.0 }
+#   mass: 0.0
+# ta_rigid_body:
+#   name: "chamber_0001_left"
+#   entity_name: "chamber_0001"
+#   collider:
+#     type: 0  # TA_COLLIDER_PLANE
+#     plane:
+#       center: { x: -6.0, y: 0.0, z: 0.0 }
+#       normal: { x: 1.0, y: 0.0, z: 0.0 }
+#   mass: 0.0
+# ta_rigid_body:
+#   name: "chamber_0001_far"
+#   entity_name: "chamber_0001"
+#   collider:
+#     type: 0  # TA_COLLIDER_PLANE
+#     plane:
+#       center: { x: 0.0, y: 0.0, z: 6.0 }
+#       normal: { x: 0.0, y: 0.0, z: -1.0 }
+#   mass: 0.0
+# ta_rigid_body:
+#   name: "chamber_0001_near"
+#   entity_name: "chamber_0001"
+#   collider:
+#     type: 0  # TA_COLLIDER_PLANE
+#     plane:
+#       center: { x: 0.0, y: 0.0, z: -6.0 }
+#       normal: { x: 0.0, y: 0.0, z: 1.0 }
+#   mass: 0.0
+
+ta_model:
+  name: "wakeup"
+  entity_name: "wakeup"
+  mesh_groups: ["wakeup"]
   material: "cobble"
-  mesh_group: "wakeup"
   invisible: true
   cast_shadows: true
+  receive_shadows: true
+ta_position:
+  name: "wakeup"
+  entity_name: "wakeup"
+  transform:
+    position: { x: 0.0, y: 8.0, z: 0.0 }
 
+ta_audio_source:
+  name: "button_0001"
+  entity_name: "button_0001"
+ta_e_button:
+  name: "button_0001"
+  entity_name: "button_0001"
+  sfx_activated: "sfx_button_activated"
+  sfx_deactivated: "sfx_button_deactivated"
+ta_model:
+  name: "button_0001"
+  entity_name: "button_0001"
+  mesh_groups: ["button"]
+  material: "test"
+  cast_shadows: true
+  receive_shadows: true
+ta_position:
+  name: "button_0001"
+  entity_name: "button_0001"
 ta_rigid_body:
   name: "button_0001"
+  entity_name: "button_0001"
   mass: 1.0
   position: { x: 0.0, y: -8.0, z: 0.0 }
   trigger: true
@@ -287,21 +304,42 @@ ta_rigid_body:
     type: 1  # TA_COLLIDER_SPHERE
       sphere:
         radius: 0.7
-e_button:
-  name: "button_0001"
-  audio_source: "button_0001"
-  sfx_activated: "sfx_button_activated"
-  sfx_deactivated: "sfx_button_deactivated"
-ta_entity:
-  name: "button_0001"
-  material: "test"
-  mesh_group: "button"
-  rigid_body: "button_0001"
-  button: "button_0001"
-  cast_shadows: true
 
+ta_audio_source:
+  name: "gun"
+  entity_name: "gun"
+ta_gun:
+  name: "gun"
+  entity_name: "gun"
+  carrying_ammo_max: 20
+  carrying_ammo: 20
+  loaded_ammo_max: 8
+  loaded_ammo: 8
+  sfx_bang: "sfx_gunshot"
+  sfx_reload: "sfx_cock"
+  sfx_empty: "sfx_oh_no"
+
+ta_audio_source:
+  name: "player_one"
+  entity_name: "player_one"
+ta_model:
+  name: "player_one"
+  entity_name: "player_one"
+  mesh_groups: ["prim_cube"]
+  material: "cobble"
+  cast_shadows: true
+  receive_shadows: true
+ta_player:
+  name: "player_one"
+  entity_name: "player_one"
+  e_gun: "gun"
+  e_guns: ["gun"]
+ta_position:
+  name: "player_one"
+  entity_name: "player_one"
 ta_rigid_body:
-  name: "player"
+  name: "player_one"
+  entity_name: "player_one"
   mass: 1.0
   position: { x: 0.3, y: -5.0, z: 0.1 }
   #collider:
@@ -313,55 +351,60 @@ ta_rigid_body:
     type: 1  # TA_COLLIDER_SPHERE
       sphere:
         radius: 1.0
-ta_entity:
-  name: "player"
-  material: "cobble"
-  mesh_group: "prim_cube"
-  rigid_body: "player"
-  # TODO: Make player it's own class like button and handle dialogue in there
-  #audio_source: "player"
-  #dialogues: [
-  #  "sfx_oh_no"
-  #]
-  cast_shadows: true
 
+ta_model:
+  name: "sphere1"
+  entity_name: "sphere1"
+  mesh_groups: ["prim_sphere"]
+  material: "test"
+  cast_shadows: true
+  receive_shadows: true
+ta_position:
+  name: "sphere1"
+  entity_name: "sphere1"
 ta_rigid_body:
   name: "sphere1"
+  entity_name: "sphere1"
   mass: 1.0
   position: { x: 0.2, y: -2.0, z: 0.2 }
   collider:
     type: 1  # TA_COLLIDER_SPHERE
       sphere:
         radius: 1.0
-ta_entity:
-  name: "sphere1"
-  material: "test"
-  mesh_group: "prim_sphere"
-  rigid_body: "sphere1"
-  cast_shadows: true
 
+ta_model:
+  name: "sphere2"
+  entity_name: "sphere2"
+  mesh_groups: ["prim_sphere"]
+  material: "red"
+  cast_shadows: true
+  receive_shadows: true
+ta_position:
+  name: "sphere2"
+  entity_name: "sphere2"
 ta_rigid_body:
   name: "sphere2"
+  entity_name: "sphere2"
   mass: 1.0
   position: { x: 0.1, y: 1.0, z: 0.3 }
   collider:
     type: 1  # TA_COLLIDER_SPHERE
       sphere:
         radius: 1.0
-ta_entity:
-  name: "sphere2"
-  material: "red"
-  mesh_group: "prim_sphere"
-  rigid_body: "sphere2"
-  cast_shadows: true
 
-ta_entity:
+ta_model:
   name: "shadow_test_1"
-  mesh_group: "letter_r"
+  entity_name: "shadow_test_1"
+  material: "test"
+  mesh_groups: ["letter_r"]
+  cast_shadows: true
+  receive_shadows: true
+ta_position:
+  name: "shadow_test_1"
+  entity_name: "shadow_test_1"
   transform:
     position: { x: 4.5, y: -4.0, z: 0.0 }
     orientation: { x: 0.0, y: -1.0, z: 0.0, w: 1.0 }
-  cast_shadows: true
 
 #-------------------------------------------------------------------------------
 # Shaders

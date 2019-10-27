@@ -35,6 +35,17 @@ typedef enum ta_schema_field_type {
     TYP_OBB,
     TYP_COLLIDER,
 
+    // Component types
+    TYP_AUDIO_SOURCE,
+    TYP_BUTTON,
+    TYP_CAMERA,
+    TYP_GUN,
+    TYP_LIGHT,
+    TYP_MODEL,
+    TYP_PLAYER,
+    TYP_POSITION,
+    TYP_RIGID_BODY,
+
     // Resource types
     TYP_AUDIO_BUFFER,
     TYP_FONT,
@@ -44,19 +55,6 @@ typedef enum ta_schema_field_type {
     TYP_SHADER,
     TYP_TEXTURE,
 
-    // Entity wrapper
-    TYP_ENTITY,
-
-    // Component types
-    TYP_AUDIO_SOURCE,
-    TYP_BUTTON,
-    TYP_CAMERA,
-    TYP_LIGHT,
-    TYP_MODEL,
-    TYP_POSITION,
-    TYP_RIGID_BODY,
-    TYP_PLAYER,
-    TYP_GUN,
     TYP_COUNT,
 
     // Atomic types
@@ -74,16 +72,15 @@ typedef enum ta_resource_type {
     RES_COMP_AUDIO_SOURCE,
     RES_COMP_BUTTON,
     RES_COMP_CAMERA,
+    RES_COMP_GUN,
     RES_COMP_LIGHT,
     RES_COMP_MODEL,
+    RES_COMP_PLAYER,
     RES_COMP_POSITION,
     RES_COMP_RIGID_BODY,
-    RES_COMP_PLAYER,
-    RES_COMP_GUN,
     RES_COMP_COUNT,
     // Resource types
     RES_AUDIO_BUFFER = RES_COMP_COUNT,
-    RES_ENTITY,
     RES_FONT,
     RES_MATERIAL,
     RES_MESH_GROUP,

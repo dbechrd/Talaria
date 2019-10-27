@@ -3,7 +3,6 @@
 #include "ta_event.h"
 #include "ta_rigid_body.h"
 #include "ta_scene.h"
-#include "ta_node.h"
 #include "ta_entity.h"
 #include "ta_audio.h"
 
@@ -41,9 +40,9 @@ void e_button_update(ta_e_button *button)
     //       EVENT_BUTTON_DEACTIVATED
     //       EVENT_BUTTON_STATE_CHANGED
 
-    ta_rigid_body *button_body = ta_scene_component_by_entity_name(tg_game.scene,
+    ta_rigid_body *button_body = ta_scene_component(tg_game.scene,
         RES_COMP_RIGID_BODY, button->entity_name);
-    ta_rigid_body *player_body = ta_scene_component_by_entity_name(tg_game.scene,
+    ta_rigid_body *player_body = ta_scene_component(tg_game.scene,
         RES_COMP_RIGID_BODY, tg_game.e_player_one);
 
     button->state_prev = button->state;

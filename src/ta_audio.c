@@ -4,7 +4,6 @@
 #include "ta_scene.h"
 #include "ta_buffer.h"
 #include "ta_game.h"
-#include "ta_node.h"
 #include "dlb/dlb_memory.h"
 #include "AL/al.h"
 #include "AL/alc.h"

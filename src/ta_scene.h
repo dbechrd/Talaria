@@ -4,13 +4,12 @@
 #include "dlb/dlb_hash.h"
 #include "dlb/dlb_index.h"
 
-struct ta_shader;
 struct ta_file;
+struct ta_buffer;
+struct ta_shader;
 struct ta_camera;
-struct ta_entity;
 
 //|-------------------------------------------------------------------------
-//|
 //| Find all textures:
 //|
 //|   for (u32 idx = 0; idx < resource_ids[RES_TEXTURE].size; ++idx) {
@@ -37,13 +36,6 @@ struct ta_entity;
 typedef struct ta_scene {
     const char *filename;
     const char *name;
-
-    // TODO: Store ids in each resource, then this is probably redundant
-    //dlb_pool resource_ids[RES_COUNT];   // vector of resource ids by type
-
-    // NOTE: This could probably be a vector. We don't need generations because
-    // presence is determined by index_by_name containing the index,
-    // and the const char * in resource_names matching the queried name.
     void *resource_data[RES_COUNT];         // dense resource data (e.g. ta_texture *)
     dlb_index index_by_name[RES_COUNT];     // name hash -> dense index
 } ta_scene;
@@ -60,8 +52,9 @@ typedef struct cc_vector {
 void ta_scene_init(ta_scene *scene);
 ta_scene *ta_scene_load(struct ta_file *file);
 ta_scene *ta_scene_load_file(const char *filename);
-void ta_scene_save_file(ta_scene *scene, const char *filename);
 void ta_scene_free(ta_scene *scn);
+void ta_scene_save(struct ta_buffer *buffer);
+void ta_scene_save_file(ta_scene *scene, const char *filename);
 void ta_scene_print(ta_scene *scn, FILE *hnd);
 void *ta_scene_find_at(ta_scene *scene, ta_resource_type type, u32 index);
 void *ta_scene_find_by_name_try(ta_scene *scene, ta_resource_type type,
@@ -72,16 +65,12 @@ void *ta_scene_find_by_name_or_default(ta_scene *scene, ta_resource_type type,
     const char *name);
 void *ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name);
 void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name);
-void *ta_scene_entity_add_component(ta_scene *scene, ta_resource_type type,
-    const char *name);
+void *ta_scene_component_add(ta_scene *scene, ta_resource_type type,
+    const char *entity);
 void *ta_scene_component_try(ta_scene *scene, ta_resource_type type,
-    struct ta_entity *entity);
+    const char *entity);
 void *ta_scene_component(ta_scene *scene, ta_resource_type type,
-    struct ta_entity *entity);
-void *ta_scene_component_by_entity_name_try(ta_scene *scene,
-    ta_resource_type type, const char *entity_name);
-void *ta_scene_component_by_entity_name(ta_scene *scene, ta_resource_type type,
-    const char *entity_name);
+    const char *entity);
 //ta_entity *ta_scene_entity_by_uid_try(ta_scene *scene, const char *uid);
 //ta_entity *ta_scene_entity_by_uid(ta_scene *scene, const char *uid);
 void ta_scene_update(ta_scene *scene, float dt);

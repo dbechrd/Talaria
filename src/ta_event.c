@@ -181,7 +181,7 @@ void ta_event_events()
         if (event.handled) continue;
 
         if (ta_mouse_captured()) {
-            ta_camera *camera = ta_scene_component_by_entity_name(tg_game.scene,
+            ta_camera *camera = ta_scene_component(tg_game.scene,
                 RES_COMP_CAMERA, tg_game.e_active_camera);
             ta_camera_event(camera, &event);
         }

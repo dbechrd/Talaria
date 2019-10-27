@@ -6,7 +6,6 @@
 #include "ta_mesh_group.h"
 #include "ta_shader.h"
 #include "ta_texture.h"
-#include "ta_node.h"
 #include "ta_button.h"
 #include "ta_font.h"
 #include "ta_rigid_body.h"
@@ -20,6 +19,8 @@
 #include "ta_editor.h"
 #include "ta_position.h"
 #include "ta_entity.h"
+#include "ta_model.h"
+#include "ta_buffer.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_index.h"
 #include <stdlib.h>
@@ -618,38 +619,6 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     stack[sp-1].is_union = true;
                     stack[sp-1].union_type = *fp;
                 }
-#if 0
-                // TODO: Need to read ID in from scene file, otherwise no
-                // way to know what ID to give to this object. Could hash a
-                // UID string, but it still needs to be present before the
-                // alloc can occur (this would require pools to use dlb_hash
-                // instead of vector for sparse_set).
-                if (stack[sp].name == SYM_ID) {
-                    DLB_ASSERT(sp > 0);
-                    u32 resource_id = tok->value.as_int;
-                    DLB_ASSERT(resource_id);
-                    ta_resource_type res_type = typ_to_res(stack[sp-1].type);
-                    DLB_ASSERT(res_type < RES_COUNT);
-
-                    // NOTE: All resource types must start with ID field
-                    u32 *id = dlb_pool_alloc(&scene->resource_names[res_type], resource_id);
-                    *id = resource_id;
-                    stack[sp-1].ptr = id;
-                    stack[sp].ptr = stack[sp-1].ptr;
-
-                    // TODO: Add const char *name to every resource type?
-                    //dlb_hash_insert(&scene->id_by_name[res_type], tok->value.string, tok->length, (void *)resource_id);
-
-                    scene->next_id[res_type] = *id + 1;
-                } else {
-                    int *fp = stack[sp].ptr;
-                    *fp = tok->value.as_int;
-                    if (stack[sp].is_union_type) {
-                        stack[sp-1].is_union = true;
-                        stack[sp-1].union_type = *fp;
-                    }
-                }
-#endif
                 break;
             } case TOKEN_FLOAT: {
                 if (expect_array_start || stack[sp].type != ATOM_FLOAT) {
@@ -662,21 +631,29 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 if (expect_array_start || stack[sp].type != ATOM_STRING) {
                     BAD_TOKEN();
                 }
-                const char **fp = stack[sp].ptr;
-                *fp = tok->value.string;
-                if (stack[sp].name == SYM_NAME) {
-                    DLB_ASSERT(sp > 0);
+                DLB_ASSERT(sp > 0);
 
-                    // NOTE: Ignore "name" fields for non-resource types
-                    ta_resource_type res_type = typ_to_res(stack[sp-1].type);
-                    if (res_type < RES_COUNT) {
-                        ta_resource *resource = stack[sp-1].ptr;
-                        resource->index = stack[sp-1].index;
-                        DLB_ASSERT(resource->name == tok->value.string);  // TODO: Cleanup
+                if (stack[sp].array_len) {
+                    // NOTE: Fixed-sized atomic arrays not supported
+                    DLB_ASSERT(stack[sp].array_len == 1);
+                    DLB_ASSERT(stack[sp].ptr);
+                    const char ***arr = stack[sp].ptr;
+                    dlb_vec_push(*arr, tok->value.string);
+                } else {
+                    const char **fp = stack[sp].ptr;
+                    *fp = tok->value.string;
+                    if (stack[sp].name == SYM_NAME) {
+                        // NOTE: Ignore "name" fields for non-resource types
+                        ta_resource_type res_type = typ_to_res(stack[sp-1].type);
+                        if (res_type < RES_COUNT) {
+                            ta_resource *resource = stack[sp-1].ptr;
+                            resource->index = stack[sp-1].index;
+                            DLB_ASSERT(resource->name == tok->value.string);  // TODO: Cleanup
 
-                        u32 hash = dlb_murmur3(SYM(resource->name));
-                        dlb_index_insert(&scene->index_by_name[res_type], hash,
-                            resource->index);
+                            u32 hash = dlb_murmur3(SYM(resource->name));
+                            dlb_index_insert(&scene->index_by_name[res_type], hash,
+                                resource->index);
+                        }
                     }
                 }
                 break;
@@ -688,7 +665,10 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 if (stack[sp].type < TYP_COUNT) {
                     sp++;
                 } else {
-                    DLB_ASSERT(!"Atomic vectors are not currently supported");
+                    // NOTE: Only string vectors are supported for now
+                    if (stack[sp].type != ATOM_STRING) {
+                        BAD_TOKEN();
+                    }
                 }
                 break;
             } case TOKEN_LIST_SEPARATOR: {
@@ -839,10 +819,12 @@ ta_scene *ta_scene_load(ta_file *file)
     tokens_parse(scene, tokens);
     dlb_vec_free(tokens);
 
+    tg_game.scene = scene;
+
     // Initialize resources
     for (ta_resource_type res_type = 0; res_type < RES_COUNT; ++res_type) {
         ta_schema_field_type schema_type = res_to_typ(res_type);
-        if (tg_schemas[schema_type].free) {
+        if (tg_schemas[schema_type].init) {
             u32 size = tg_schemas[schema_type].size;
             void *pool = scene->resource_data[res_type];
             u8 *end = dlb_vec_end_size(pool, size);
@@ -865,21 +847,6 @@ ta_scene *ta_scene_load_file(const char *filename)
     return scene;
 }
 
-void ta_scene_save(ta_buffer *buffer)
-{
-    // TODO: Write scene to memory buffer
-    UNUSED(buffer);
-}
-
-void ta_scene_save_file(ta_scene *scene, const char *filename)
-{
-    // TODO: Alloc dynamic buffer to write arbitrary data to
-    //ta_buffer *buffer = ??
-    ta_file *file = ta_file_open(filename, FILE_WRITE);
-    ta_scene_print(scene, file->hnd);
-    ta_file_close(file);
-}
-
 void ta_scene_free(ta_scene *scene)
 {
     // Free resources
@@ -898,6 +865,22 @@ void ta_scene_free(ta_scene *scene)
     }
 
     dlb_free(scene);
+}
+
+void ta_scene_save(ta_buffer *buffer)
+{
+    UNUSED(buffer);
+    // TODO: Write scene to memory buffer
+    DLB_ASSERT(0);
+}
+
+void ta_scene_save_file(ta_scene *scene, const char *filename)
+{
+    // TODO: Alloc dynamic buffer to write arbitrary data to
+    //ta_buffer *buffer = ??
+    ta_file *file = ta_file_open(filename, FILE_WRITE);
+    ta_scene_print(scene, file->hnd);
+    ta_file_close(file);
 }
 
 void ta_scene_print(ta_scene *scene, FILE *hnd)
@@ -1030,76 +1013,42 @@ void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name)
     //dlb_vec_delete(scene->resource_data[type], index);
 }
 
-void *ta_scene_entity_add_component(ta_scene *scene, ta_resource_type type,
-    const char *name)
+void *ta_scene_component_add(ta_scene *scene, ta_resource_type type,
+    const char *entity)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
-    ta_entity *entity = ta_scene_find_by_name(scene, RES_ENTITY, name);
-    DLB_ASSERT(entity->name == name);
-    DLB_ASSERT(entity->components[type] == 0);  // check if entity has component
+    // Prevent duplicates
+    ta_component *component = ta_scene_component(scene, type, entity);
+    DLB_ASSERT(!component);
 
-    // TODO: Build better component name
-    ta_component *component = ta_scene_alloc(scene, type, "[component]");
+    // TODO: Build better component name (or guarantee name == entity_name)
+    component = ta_scene_alloc(scene, type, entity);
     DLB_ASSERT(component);
-    component->entity_name = name;
-    entity->components[type] = component->index;
+    component->entity_name = entity;
     return component;
 }
 
 void *ta_scene_component_try(ta_scene *scene, ta_resource_type type,
-    ta_entity *entity)
+    const char *entity)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(entity);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
-    void *component = 0;
-    u32 component_index = entity->components[type];
-    if (entity->components[type]) {
-        component = ta_scene_find_at(scene, type, component_index);
-    }
+    void *component = ta_scene_find_by_name_try(scene, type, entity);
     return component;
 }
 
 void *ta_scene_component(ta_scene *scene, ta_resource_type type,
-    ta_entity *entity)
+    const char *entity)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(entity);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
     void *component = ta_scene_component_try(scene, type, entity);
-    DLB_ASSERT(component);
-    return component;
-}
-
-void *ta_scene_component_by_entity_name_try(ta_scene *scene,
-    ta_resource_type type, const char *entity_name)
-{
-    DLB_ASSERT(scene);
-    DLB_ASSERT(entity_name);
-    DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
-
-    ta_entity *entity = ta_scene_find_by_name(scene, RES_ENTITY, entity_name);
-    void *component = 0;
-    u32 component_index = entity->components[type];
-    if (entity->components[type]) {
-        component = ta_scene_find_at(scene, type, component_index);
-    }
-    return component;
-}
-
-void *ta_scene_component_by_entity_name(ta_scene *scene, ta_resource_type type,
-    const char *entity_name)
-{
-    DLB_ASSERT(scene);
-    DLB_ASSERT(entity_name);
-    DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
-
-    void *component = ta_scene_component_by_entity_name_try(scene, type,
-        entity_name);
     DLB_ASSERT(component);
     return component;
 }
@@ -1140,22 +1089,18 @@ static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
 
     static ta_rigid_body_pair *pairs = 0;
 
-    ta_entity *entities = scene->resource_data[RES_ENTITY];
-    dlb_vec_each(ta_entity *, a, entities) {
-        dlb_vec_range(ta_entity *, b, a + 1, dlb_vec_end(entities)) {
-            ta_rigid_body *a_body = ta_scene_component_try(scene,
-                RES_COMP_RIGID_BODY, a);
-            if (!a_body) continue;
-
-            ta_rigid_body *b_body = ta_scene_component_try(scene,
-                RES_COMP_RIGID_BODY, b);
-            if (!b_body) continue;
-
-            if (ta_aabb_v_aabb(&a_body->aabb, &b_body->aabb, 0))
+    ta_rigid_body *rigid_bodies = scene->resource_data[RES_COMP_RIGID_BODY];
+    dlb_vec_each(ta_rigid_body *, a, rigid_bodies) {
+        dlb_vec_range(ta_rigid_body *, b, a + 1, dlb_vec_end(rigid_bodies)) {
+            // Don't let entities collide with themselves
+            if (a->entity_name == b->entity_name) {
+                continue;
+            }
+            if (ta_aabb_v_aabb(&a->aabb, &b->aabb, 0))
             {
                 ta_rigid_body_pair *pair = dlb_vec_alloc(pairs);
-                pair->a = a_body;
-                pair->b = b_body;
+                pair->a = a;
+                pair->b = b;
             }
         }
     }
@@ -1206,9 +1151,10 @@ void ta_scene_update(ta_scene *scene, float dt)
     // Update positions
     dlb_vec_each(ta_position *, position, scene->resource_data[RES_COMP_POSITION]) {
         position->transform_prev = position->transform;
-
-        ta_rigid_body *body = ta_scene_component_by_entity_name_try(scene,
-            RES_COMP_RIGID_BODY, position->entity_name);
+    }
+    dlb_vec_each(ta_rigid_body *, body, scene->resource_data[RES_COMP_RIGID_BODY]) {
+        ta_position *position = ta_scene_component(scene, RES_COMP_POSITION,
+            body->entity_name);
         position->transform.position = body->position;
         position->transform.orientation = body->orientation;
     }
@@ -1244,7 +1190,7 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
         ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &light->position);
         ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->shadowmap.zfar);
         ta_light_shadowpass_render(light, shader, alpha,
-            scene->resource_data[RES_ENTITY]);
+            scene->resource_data[RES_COMP_MODEL]);
 
         // TODO: Make button a component that an entity can have (*button_uid)
         //       instead of having it contain entity. It probably needs to have
@@ -1280,8 +1226,8 @@ void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &render_camera->look_at);
 
     // TODO: Group by shader / material to minimize redundant uniform calls
-    dlb_vec_each(ta_entity *, entity, scene->resource_data[RES_ENTITY]) {
-        ta_node_render(entity, render_camera, alpha);
+    dlb_vec_each(ta_model *, model, scene->resource_data[RES_COMP_MODEL]) {
+        ta_model_render(model, render_camera, alpha);
     }
 
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);

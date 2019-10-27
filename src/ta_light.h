@@ -2,9 +2,8 @@
 #include "ta_math.h"
 #include "dlb/dlb_types.h"
 
-struct ta_entity;
+struct ta_model;
 struct ta_shader;
-struct dlb_pool;
 
 typedef enum ta_light_type {
     TA_LIGHT_AMBIENT,
@@ -64,5 +63,5 @@ typedef struct ta_light {
 const char *ta_light_type_str(int type);
 void ta_light_init(ta_light *light);
 void ta_light_shadowpass_render(ta_light *light, struct ta_shader *shader,
-    float alpha, struct ta_entity *entities);
+    float alpha, struct ta_model *models);
 void ta_light_render_shadowmap_debug(ta_light *light);

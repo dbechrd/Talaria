@@ -2,7 +2,6 @@
 #include "ta_ui.h"
 #include "ta_game.h"
 #include "ta_scene.h"
-#include "ta_node.h"
 #include "ta_light.h"
 #include "ta_symbol.h"
 #include "ta_audio.h"
@@ -29,11 +28,11 @@
 
 typedef struct ta_editor {
     const char *status_msg;
-    const char *selected_entity_name;
+    const char *selected_entity;
     ta_text_entry *text_entry;
     ta_keybind *keybinds;
     ta_keybind *keybinds_text_entry;
-    const char *shader_editor_select_name;
+    const char *shader_editor_select;
     ta_scene *scene;
 } ta_editor;
 
@@ -47,9 +46,8 @@ void ta_editor_init()
     editor.scene = ta_scene_load_file("data/scene/editor.dml");
     DLB_ASSERT(editor.scene);
 
-
-    editor.shader_editor_select_name = SYM_SHADER_EDITOR_SELECT;
-    DLB_ASSERT(editor.shader_editor_select_name);
+    editor.shader_editor_select = SYM_SHADER_EDITOR_SELECT;
+    DLB_ASSERT(editor.shader_editor_select);
 
     ta_log_write(&tg_debug_log, "[Editor] Initializing key binds\n");
 
@@ -126,17 +124,19 @@ ta_text_entry *ta_editor_active_text_entry()
 }
 void ta_editor_select_node(const char *entity_name)
 {
-    editor.selected_entity_name = entity_name;
+    editor.selected_entity = entity_name;
 }
-const char *ta_editor_selected_node()
+const char *ta_editor_selected_entity()
 {
+#if 0
     // Clear selection if entity has been deleted
     if (!ta_scene_find_by_name_try(tg_game.scene, RES_ENTITY,
         editor.selected_entity_name))
     {
         editor.selected_entity_name = 0;
     }
-    return editor.selected_entity_name;
+#endif
+    return editor.selected_entity;
 }
 
 static void ui_node_panel()
@@ -146,7 +146,7 @@ static void ui_node_panel()
     ta_ui_panel_begin(0, &node_panel_id);
 
     static int label_width = 150;
-    const char *entity_name = ta_editor_selected_node();
+    const char *entity_name = ta_editor_selected_entity();
     if (entity_name) {
         //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
@@ -197,12 +197,10 @@ static void ui_node_panel()
             }
         } else {
             //ta_ui_next_pad(4, 1, 4, 1);
-            ta_entity *entity = ta_scene_find_by_name(tg_game.scene, RES_ENTITY,
-                entity_name);
-            if (ta_ui_label(0, entity->name)) {
+            if (ta_ui_label(0, entity_name)) {
                 DLB_ASSERT(!uid_editor);
                 uid_editor = ta_text_entry_init();
-                ta_text_entry_set_text(uid_editor, SYM(entity->name));
+                ta_text_entry_set_text(uid_editor, SYM(entity_name));
                 ta_text_entry_focus(uid_editor);
             }
         }
@@ -211,12 +209,10 @@ static void ui_node_panel()
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
 
-        ta_entity *entity = ta_scene_find_by_name(tg_game.scene, RES_ENTITY,
-            entity_name);
         ta_position *position = ta_scene_component(tg_game.scene,
-            RES_COMP_POSITION, entity);
+            RES_COMP_POSITION, entity_name);
         ta_rigid_body *rigid_body = ta_scene_component(tg_game.scene,
-            RES_COMP_RIGID_BODY, entity);
+            RES_COMP_RIGID_BODY, entity_name);
         float *pos_values = 0;
         if (rigid_body) {
             ta_ui_label(0, "RB Position:");
@@ -328,8 +324,8 @@ static void ui_audio_panel()
     }
 
     if (audio_request_name) {
-        ta_audio_source *bg_music_src = ta_scene_component_by_entity_name(
-            tg_game.scene, RES_COMP_AUDIO_SOURCE, tg_game.e_background_music);
+        ta_audio_source *bg_music_src = ta_scene_component(tg_game.scene,
+            RES_COMP_AUDIO_SOURCE, tg_game.e_background_music);
         ta_audio_source_stop(bg_music_src);
         if (audio_request_name != audio_playing_name) {
             ta_audio_source_set_buffer(bg_music_src,
@@ -354,10 +350,10 @@ static void ui_texture_panel()
         //ta_ui_next_margin(0, 0, 2, 0);
         //ta_ui_next_pad(2, 2, 2, 2);
         if (ta_ui_button(0, texture)) {
-            const char *entity_name = ta_editor_selected_node();
+            const char *entity_name = ta_editor_selected_entity();
             if (entity_name) {
-                ta_model *model = ta_scene_component_by_entity_name_try(
-                    tg_game.scene, RES_COMP_MODEL, entity_name);
+                ta_model *model = ta_scene_component_try(tg_game.scene,
+                    RES_COMP_MODEL, entity_name);
                 if (model && model->material) {
                     ta_material *material = ta_scene_find_by_name(tg_game.scene,
                         RES_MATERIAL, model->material);
@@ -473,13 +469,13 @@ static void ui_statusbar()
 }
 void ta_editor_draw(float alpha)
 {
-    // Stencil selected node
-    const char *selected_entity_name = ta_editor_selected_node();
-    if (selected_entity_name) {
-        ta_entity *entity = ta_scene_find_by_name(tg_game.scene, RES_ENTITY,
-            selected_entity_name);
-        ta_camera *camera = ta_scene_component_by_entity_name(tg_game.scene,
-            RES_COMP_CAMERA, tg_game.e_active_camera);
+    // Stencil selected entity
+    const char *selected_entity = ta_editor_selected_entity();
+    if (selected_entity) {
+        ta_camera *camera = ta_scene_component(tg_game.scene, RES_COMP_CAMERA,
+            tg_game.e_active_camera);
+        ta_model *model = ta_scene_component(editor.scene, RES_COMP_MODEL,
+            selected_entity);
 
         glEnable(GL_STENCIL_TEST);
         glStencilFunc(GL_ALWAYS, 1, 0xFF);
@@ -490,7 +486,7 @@ void ta_editor_draw(float alpha)
         //glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
         glDepthMask(GL_FALSE);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        ta_node_render(entity, camera, alpha);
+        ta_model_render(model, camera, alpha);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDepthMask(GL_TRUE);
 
@@ -500,9 +496,9 @@ void ta_editor_draw(float alpha)
         glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
         glStencilMask(0x00);
         ta_shader *shader = ta_scene_find_by_name(editor.scene, RES_SHADER,
-            editor.shader_editor_select_name);
+            editor.shader_editor_select);
         ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&TA_COLOR_YELLOW);
-        ta_node_render_shader(entity, camera, shader, alpha, 1.1f);
+        ta_model_render_shader(model, camera, shader, alpha, 1.1f);
         glDisable(GL_STENCIL_TEST);
     } else {
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -527,22 +523,21 @@ void ta_editor_draw(float alpha)
 
 static void editor_ray_pick()
 {
-    ta_camera *camera = ta_scene_component_by_entity_name(tg_game.scene,
-        RES_COMP_CAMERA, tg_game.e_active_camera);
+    ta_camera *camera = ta_scene_component(tg_game.scene, RES_COMP_CAMERA,
+        tg_game.e_active_camera);
 
     ta_ray ray;
     ray.origin = camera->position;
     ray.direction = camera->front;
 
     float t_min = 9999.0f;
-    const char *closest_entity_name = 0;
+    const char *closest_entity = 0;
     ta_light *closest_light = 0;  // TODO: Lights and cameras should be nodes
 
-    dlb_vec_each(ta_entity *, entity, tg_game.scene->resource_data[RES_ENTITY]) {
-        ta_rigid_body *body = ta_scene_component_try(tg_game.scene,
-            RES_COMP_RIGID_BODY, entity);
-        if (!body || body->collider.type != TA_COLLIDER_SPHERE) {
-            // TODO: Handle types other than spheres
+    ta_rigid_body *bodies = tg_game.scene->resource_data[RES_COMP_RIGID_BODY];
+    dlb_vec_each(ta_rigid_body *, body, bodies) {
+        // TODO: Handle types other than spheres
+        if (body->collider.type != TA_COLLIDER_SPHERE) {
             continue;
         }
 
@@ -552,12 +547,13 @@ static void editor_ray_pick()
         if (ta_intersect_ray_sphere(ray, sphere, &t)) {
             if (t >= 0.0f && t < t_min) {
                 t_min = t;
-                closest_entity_name = entity->name;
+                closest_entity = body->entity_name;
             }
         }
     }
 
-    dlb_vec_each(ta_light *, light, tg_game.scene->resource_data[RES_COMP_LIGHT]) {
+    ta_light *lights = tg_game.scene->resource_data[RES_COMP_LIGHT];
+    dlb_vec_each(ta_light *, light, lights) {
         ta_sphere sphere = { 0 };
         sphere.center = light->position;
         sphere.radius = 0.2f;
@@ -566,13 +562,13 @@ static void editor_ray_pick()
             if (t >= 0.0f && t < t_min) {
                 t_min = t;
                 closest_light = light;
-                closest_entity_name = 0;
+                closest_entity = 0;
             }
         }
     }
 
-    if (closest_entity_name) {
-        ta_editor_select_node(closest_entity_name);
+    if (closest_entity) {
+        ta_editor_select_node(closest_entity);
     } else if (closest_light) {
         closest_light->disabled = !closest_light->disabled;
     }

@@ -95,9 +95,6 @@
     <ClCompile Include="src\ta_audio.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ta_node.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ta_button.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -126,6 +123,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\ta_entity.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ta_model.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -206,9 +206,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_audio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ta_node.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_button.h">

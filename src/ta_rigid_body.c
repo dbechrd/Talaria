@@ -1,5 +1,4 @@
 #include "ta_rigid_body.h"
-#include "ta_node.h"
 #include "ta_log.h"
 #include "ta_primitive.h"
 #include "dlb/dlb_vector.h"

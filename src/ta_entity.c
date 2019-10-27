@@ -3,7 +3,7 @@
 #include "ta_scene.h"
 #include "ta_symbol.h"
 
-void ta_entity_free(ta_entity *entity)
+void ta_entity_free(const char *entity)
 {
     // TODO: Fix the clean up methods
     UNUSED(entity);
