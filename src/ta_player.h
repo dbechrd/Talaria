@@ -17,10 +17,10 @@ typedef struct ta_gun {
     u32 index;
     const char *name;
     const char *entity_name;
-    u16 carrying_ammo;       // # of rounds of extra ammo
-    u16 carrying_ammo_max;   // capacity of extra ammo that can be carried
-    u16 loaded_ammo;         // # of rounds in gun
-    u16 loaded_ammo_max;     // capacity of gun
+    u32 carrying_ammo;       // # of rounds of extra ammo
+    u32 carrying_ammo_max;   // capacity of extra ammo that can be carried
+    u32 loaded_ammo;         // # of rounds in gun
+    u32 loaded_ammo_max;     // capacity of gun
     const char *sfx_bang;    // fire a round
     const char *sfx_reload;  // reload
     const char *sfx_empty;   // out of ammo

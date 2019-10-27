@@ -139,10 +139,7 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     // HACK: Find first entity with a player component, assume it's the player
     tg_game.e_player_one = SYM_ENTITY_PLAYER_ONE;
-    //gun->carrying_ammo_max  = 20;
-    //gun->carrying_ammo      = gun->carrying_ammo_max;
-    //gun->loaded_ammo_max    = 8;
-    //gun->loaded_ammo        = gun->loaded_ammo_max;
+    DLB_ASSERT(tg_game.e_player_one);
 
     ////////////////////////////////////////////////////////////////////////////
     // Cameras
@@ -152,6 +149,8 @@ int main(int argc, char *argv[])
     // the scene with ids of static objects (root node, free cam, player, etc.)?
     tg_game.e_freecam = SYM_ENTITY_FREECAM;
     tg_game.e_active_camera = tg_game.e_freecam;
+    ta_log_write(&tg_debug_log, "Active camera: %s\n", tg_game.e_active_camera);
+    DLB_ASSERT(tg_game.e_active_camera);
 
     ////////////////////////////////////////////////////////////////////////////
     // Audio
@@ -403,7 +402,7 @@ int main(int argc, char *argv[])
         // TODO: Make HUD drawing suck less.. way too many draw calls
         //       Use texture atlas, batch everything into one draw call. Import
         //       textures from Rico; stop using stupid RGB placeholders
-        //ta_game_hud_draw();
+        ta_game_hud_draw(&tg_game);
 
         render_fps(ms_frame_start, frame_num);
 

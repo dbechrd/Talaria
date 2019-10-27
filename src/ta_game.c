@@ -348,7 +348,7 @@ void ta_game_hud_draw(ta_game *game)
     ta_ui_next_size(200, 40);
     ta_ui_window_begin(0, 0);
     ta_ui_row_begin();
-    for (int i = 0; i < gun->carrying_ammo_max; i++) {
+    for (u32 i = 0; i < gun->carrying_ammo_max; i++) {
         ta_ui_next_size(20, 20);
         if (i < gun->carrying_ammo) {
             ta_ui_button(0, tg_game.tex_orange);
@@ -359,7 +359,7 @@ void ta_game_hud_draw(ta_game *game)
     // TODO: Allow next_pad to work on rows, or introduce a panel here
     //ta_ui_pad(0, 4);
     ta_ui_row_begin();
-    for (int i = 0; i < gun->loaded_ammo_max; i++) {
+    for (u32 i = 0; i < gun->loaded_ammo_max; i++) {
         ta_ui_next_size(20, 20);
         if (i < gun->loaded_ammo) {
             ta_ui_button(0, tg_game.tex_orange);

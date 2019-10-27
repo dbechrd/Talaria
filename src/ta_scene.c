@@ -613,8 +613,29 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                     BAD_TOKEN();
                 }
 
+#if 0
+                // TODO: Need to cast *fp to u8 for this to work?
+                //if (stack[sp].type == ATOM_UINT8) {
+                //    DLB_ASSERT(1);
+                //}
+
+                switch (stack[sp].type) {
+                    case ATOM_UINT8: {
+                        u8 *fp = stack[sp].ptr;
+                        *fp = tok->value.as_int;
+                        break;
+                    } case ATOM_INT: case ATOM_UINT: case ATOM_FLOAT:
+                      case ATOM_ENUM:
+                    {
+                        int *fp = stack[sp].ptr;
+                        *fp = tok->value.as_int;
+                        break;
+                    }
+                }
+#else
                 int *fp = stack[sp].ptr;
                 *fp = tok->value.as_int;
+#endif
                 if (stack[sp].is_union_type) {
                     stack[sp-1].is_union = true;
                     stack[sp-1].union_type = *fp;

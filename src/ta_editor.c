@@ -474,7 +474,7 @@ void ta_editor_draw(float alpha)
     if (selected_entity) {
         ta_camera *camera = ta_scene_component(tg_game.scene, RES_COMP_CAMERA,
             tg_game.e_active_camera);
-        ta_model *model = ta_scene_component(editor.scene, RES_COMP_MODEL,
+        ta_model *model = ta_scene_component(tg_game.scene, RES_COMP_MODEL,
             selected_entity);
 
         glEnable(GL_STENCIL_TEST);

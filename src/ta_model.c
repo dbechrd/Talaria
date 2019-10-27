@@ -156,10 +156,10 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
                 ta_mesh_group_push_normals(mesh_group);
             }
         }
-        if (camera->debug_bounding_boxes) {
+        if (body && camera->debug_bounding_boxes) {
             ta_primitive_push_aabb(body->aabb, TA_COLOR_RED);
         }
-    } else if (model->entity_name == ta_editor_selected_entity()) {
+    } else if (body && model->entity_name == ta_editor_selected_entity()) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &position->model);
         ta_primitive_push_aabb(body->aabb, TA_COLOR_ORANGE);
     }
