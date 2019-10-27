@@ -449,7 +449,7 @@ static void render_fps(double ms_frame_start, u64 frame_num)
     dlb_vec_zero(frame_time_rects);
 
     ta_shader *font_shader = ta_scene_find_by_name(tg_game.scene, RES_SHADER,
-        tg_game.font->shader_name);
+        tg_game.font->shader);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
@@ -508,7 +508,7 @@ static void debug_nametag(ta_camera *camera)
 
     // Name tag text
     ta_shader *font_shader = ta_scene_find_by_name(tg_game.scene, RES_SHADER,
-        tg_game.font->shader_name);
+        tg_game.font->shader);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform_fg);

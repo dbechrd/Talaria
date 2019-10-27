@@ -2,8 +2,7 @@
 # Shaders
 #-------------------------------------------------------------------------------
 ta_shader:
-  id: 1
-  #name: "shader_editor_select"
+  name: "editor_select"
   path_vert: "data/shader/editor_select_v.glsl"
   path_frag: "data/shader/editor_select_f.glsl"
   attributes: [

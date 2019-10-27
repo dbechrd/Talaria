@@ -12,7 +12,7 @@ typedef struct ta_font {
     const char *name;
     const char *path;
     float pixel_height;
-    u32 shader_name;  // TODO: This doesn't belong here
+    const char *shader;  // TODO: This doesn't belong here
 
     int first_char;
     int last_char;

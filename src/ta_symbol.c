@@ -171,7 +171,7 @@ void ta_symbol_init() {
     SYM_ENTITY_PLAYER_ONE       = INTERN("player_one");
     SYM_ENTITY_FREECAM          = INTERN("freecam");
     SYM_ENTITY_BACKGROUND_MUSIC = INTERN("background_music");
-    SYM_SHADER_EDITOR_SELECT    = INTERN("shader_editor_select");
+    SYM_SHADER_EDITOR_SELECT    = INTERN("editor_select");
 }
 
 const char *ta_symbol_intern(const char *s, u32 len) {

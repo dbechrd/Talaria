@@ -666,16 +666,18 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 *fp = tok->value.string;
                 if (stack[sp].name == SYM_NAME) {
                     DLB_ASSERT(sp > 0);
+
+                    // NOTE: Ignore "name" fields for non-resource types
                     ta_resource_type res_type = typ_to_res(stack[sp-1].type);
-                    // NOTE: Could ignore "name" fields for non-resource types
-                    DLB_ASSERT(res_type < RES_COUNT);
+                    if (res_type < RES_COUNT) {
+                        ta_resource *resource = stack[sp-1].ptr;
+                        resource->index = stack[sp-1].index;
+                        DLB_ASSERT(resource->name == tok->value.string);  // TODO: Cleanup
 
-                    ta_resource *resource = stack[sp-1].ptr;
-                    resource->index = stack[sp-1].index;
-                    resource->name = tok->value.string;
-
-                    u32 hash = dlb_murmur3(SYM(resource->name));
-                    dlb_index_insert(&scene->index_by_name[res_type], hash, resource->index);
+                        u32 hash = dlb_murmur3(SYM(resource->name));
+                        dlb_index_insert(&scene->index_by_name[res_type], hash,
+                            resource->index);
+                    }
                 }
                 break;
             } case TOKEN_ARRAY_START: {
@@ -710,6 +712,7 @@ static void tokens_parse(ta_scene *scene, token *tokens)
                 if (expect_array_start) {
                     BAD_TOKEN();
                 }
+                DLB_ASSERT(sp > 0);
                 DLB_ASSERT(stack[sp-1].type >= 0);
                 DLB_ASSERT(stack[sp-1].type < TYP_COUNT);
                 braces++;
@@ -961,12 +964,12 @@ void *ta_scene_find_by_name(ta_scene *scene, ta_resource_type type,
 
 // If not found, returns the first resource of the given type
 void *ta_scene_find_by_name_or_default(ta_scene *scene, ta_resource_type type,
-    u32 id)
+    const char *name)
 {
     ta_schema_field_type schema_type = res_to_typ(type);
     u32 size = tg_schemas[schema_type].size;
 
-    void *resource = ta_scene_find_by_name_try(scene, type, id);
+    void *resource = ta_scene_find_by_name_try(scene, type, name);
     if (!resource) {
         resource = dlb_vec_index_size(scene->resource_data[type], 0, size);
     }
@@ -1088,15 +1091,15 @@ void *ta_scene_component_by_entity_name_try(ta_scene *scene,
     return component;
 }
 
-void *ta_scene_component_by_entity_name(ta_scene *scene,
-    ta_resource_type type, const char *entity_name)
+void *ta_scene_component_by_entity_name(ta_scene *scene, ta_resource_type type,
+    const char *entity_name)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(entity_name);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
-    ta_entity *entity = ta_scene_find_by_name(scene, RES_ENTITY, entity_name);
-    void *component = ta_scene_component_by_entity_name_try(scene, type, entity);
+    void *component = ta_scene_component_by_entity_name_try(scene, type,
+        entity_name);
     DLB_ASSERT(component);
     return component;
 }
@@ -1241,7 +1244,7 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
         ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &light->position);
         ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->shadowmap.zfar);
         ta_light_shadowpass_render(light, shader, alpha,
-            &scene->resource_data[RES_ENTITY]);
+            scene->resource_data[RES_ENTITY]);
 
         // TODO: Make button a component that an entity can have (*button_uid)
         //       instead of having it contain entity. It probably needs to have

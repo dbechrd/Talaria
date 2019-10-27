@@ -6,6 +6,7 @@
 void ta_entity_free(ta_entity *entity)
 {
     // TODO: Fix the clean up methods
+    UNUSED(entity);
     DLB_ASSERT(0);
 #if 0
     // Delete entity components

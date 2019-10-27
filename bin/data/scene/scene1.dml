@@ -2,64 +2,64 @@
 # Fonts
 #-------------------------------------------------------------------------------
 ta_font:
-  uid: "font_default"
+  name: "consola"
   path: "data/font/consola.ttf"
   pixel_height: 16.0
-  shader_uid: "shader_text"
+  shader: "text"
 
 #-------------------------------------------------------------------------------
 # Music / ambience
 #-------------------------------------------------------------------------------
 ta_audio_buffer:
-  uid: "mus_wakeup"
+  name: "mus_wakeup"
   path: "data/ambient/wakeup.raw"
 ta_audio_buffer:
-  uid: "mus_genesis"
+  name: "mus_genesis"
   path: "data/ambient/genesis.raw"
 
 #-------------------------------------------------------------------------------
 # Sound effects
 #-------------------------------------------------------------------------------
 ta_audio_buffer:
-  uid: "sfx_button_activated"
+  name: "sfx_button_activated"
   path: "data/sfx/button_activated.raw"
 ta_audio_buffer:
-  uid: "sfx_button_deactivated"
+  name: "sfx_button_deactivated"
   path: "data/sfx/button_deactivated.raw"
 ta_audio_buffer:
-  uid: "sfx_cock"
+  name: "sfx_cock"
   path: "data/sfx/cock.raw"
 ta_audio_buffer:
-  uid: "sfx_gunshot"
+  name: "sfx_gunshot"
   path: "data/sfx/gunshot.raw"
 ta_audio_buffer:
-  uid: "sfx_oh_no"
+  name: "sfx_oh_no"
   path: "data/sfx/oh_no.raw"
 ta_audio_buffer:
-  uid: "sfx_explosion"
+  name: "sfx_explosion"
   path: "data/sfx/explosion.raw"
 
 #-------------------------------------------------------------------------------
 # Audio sources
 #-------------------------------------------------------------------------------
 ta_audio_source:
-  uid: "src_background_music"
-  audio_buffer_uid: "mus_genesis"
+  name: "background_music"
+  audio_buffer: "mus_genesis"
 ta_audio_source:
-  uid: "src_button_0001"
+  name: "button_0001"
 ta_audio_source:
-  uid: "src_gun"
+  name: "gun"
 ta_audio_source:
-  uid: "src_player"
+  name: "player"
 ta_audio_source:
-  uid: "src_explosion"
-  audio_buffer_uid: "sfx_explosion"
+  name: "explosion"
+  audio_buffer: "sfx_explosion"
 
 #-------------------------------------------------------------------------------
 # Cameras
 #-------------------------------------------------------------------------------
 ta_camera:
-  uid: "cam_player"
+  name: "player"
   position: { x: 0.0, y: 1.7, z: 24.0 }
   position_smooth: 0.05
   position_target_vel: 0.2
@@ -72,7 +72,7 @@ ta_camera:
   fov: 65.0
   znear: 0.1
 ta_camera:
-  uid: "cam_freecam"
+  name: "freecam"
   position: { x: 0.0, y: 2.0, z: 4.0 }
   position_smooth: 0.1
   position_target_vel: 0.2
@@ -89,7 +89,7 @@ ta_camera:
 # Lights
 #-------------------------------------------------------------------------------
 ta_light:
-  uid: "light_sun"
+  name: "sun"
   disabled: true
   intensity: 1.0
   color: { r: 1.0, g: 1.0, b: 1.0 }
@@ -97,7 +97,7 @@ ta_light:
   directional:
     direction: { x: -0.2, y: 10.0, z: 1.0 }
 ta_light:
-  uid: "light_point_room2"
+  name: "point_room2"
   disabled: false
   intensity: 1.0
   position: { x: 3.0, y: -4.0, z: 3.0 }
@@ -108,14 +108,14 @@ ta_light:
     znear: 0.1
     zfar: 40.0
 ta_light:
-  uid: "light_point_room3"
+  name: "point_room3"
   disabled: false
   intensity: 1.0
   position: { x: 5.0, y: -4.0, z: -28.0 }
   color:    { r: 1.0, g: 0.1, b: 1.0 }
   type: 2  # TA_LIGHT_POINT
 ta_light:
-  uid: "light_point_attic"
+  name: "point_attic"
   disabled: false
   intensity: 1.0
   position: { x: 3.0, y: 12.0, z: 3.0 }
@@ -126,41 +126,41 @@ ta_light:
 # Textures
 #-------------------------------------------------------------------------------
 ta_texture:
-  uid: "tex_red_diff"
+  name: "red_diff"
   pixels: [{ r: 0, g: 45, b: 255, a: 255 }]
   width: 1
   height: 1
   linear: true
   channels: 4
 ta_texture:
-  uid: "tex_red_mrao"  # TODO: How to give this a name.. use path? "name" hack?
+  name: "red_mrao"  # TODO: How to give this a name.. use path? "name" hack?
   pixels: [{ r: 255, g: 90, b: 0, a: 0 }]
   width: 1
   height: 1
   linear: true
   channels: 4
 ta_texture:
-  uid: "tex_test_diff"
+  name: "test_diff"
   path: "data/texture/pbr_default_0.png"
   linear: false
   channels: 4
 ta_texture:
-  uid: "tex_test_mrao"
+  name: "test_mrao"
   path: "data/texture/pbr_default_1.png"
   linear: true
   channels: 4
 ta_texture:
-  uid: "tex_cobble_diff"
+  name: "cobble_diff"
   path: "data/texture/cobble_diff.png"
   linear: false
   channels: 4
 ta_texture:
-  uid: "tex_cobble_mrao"
+  name: "cobble_mrao"
   path: "data/texture/cobble_mrao.png"
   linear: true
   channels: 4
 ta_texture:
-  uid: "tex_audio_icon"
+  name: "audio_icon"
   path: "data/texture/audio_icon.png"
   linear: true
   channels: 4
@@ -169,48 +169,48 @@ ta_texture:
 # Materials
 #-------------------------------------------------------------------------------
 ta_material:
-  uid: "mat_red"
-  shader_uid: "shader_mesh"
-  texture_albedo_uid: "tex_red_diff"
-  texture_metallic_uid: "tex_red_mrao"
+  name: "red"
+  shader: "mesh"
+  tex_albedo: "red_diff"
+  tex_metallic: "red_mrao"
 ta_material:
-  uid: "mat_test"
-  shader_uid: "shader_mesh"
-  texture_albedo_uid: "tex_test_diff"
-  texture_metallic_uid: "tex_test_mrao"
+  name: "test"
+  shader: "mesh"
+  tex_albedo: "test_diff"
+  tex_metallic: "test_mrao"
 ta_material:
-  uid: "mat_cobble"
-  shader_uid: "shader_mesh"
-  texture_albedo_uid: "tex_cobble_diff"
-  texture_metallic_uid: "tex_cobble_mrao"
+  name: "cobble"
+  shader: "mesh"
+  tex_albedo: "cobble_diff"
+  tex_metallic: "cobble_mrao"
 
 #-------------------------------------------------------------------------------
 # Mesh groups
 #-------------------------------------------------------------------------------
 ta_mesh_group:
-  uid: "mesh_group_prim_cube"
+  name: "prim_cube"
   path: "data/mesh/prim_cube.obj"
 ta_mesh_group:
-  uid: "mesh_group_prim_sphere"
+  name: "prim_sphere"
   path: "data/mesh/prim_sphere.obj"
 ta_mesh_group:
-  uid: "mesh_group_chamber_0001"
+  name: "chamber_0001"
   path: "data/mesh/chamber0001.obj"
 ta_mesh_group:
-  uid: "mesh_group_wakeup"
+  name: "wakeup"
   path: "data/mesh/wakeup.obj"
 ta_mesh_group:
-  uid: "mesh_group_button"
+  name: "button"
   path: "data/mesh/button.obj"
 ta_mesh_group:
-  uid: "mesh_group_letter_r"
+  name: "letter_r"
   path: "data/mesh/letter_r.obj"
 
 #-------------------------------------------------------------------------------
 # Entities
 #-------------------------------------------------------------------------------
 ta_rigid_body:
-  uid: "rb_node_chamber_0001"
+  name: "chamber_0001"
   position: { x: 0.0, y: -8.0, z: 1.0 }
   collider:
     type: 0  # TA_COLLIDER_PLANE
@@ -219,7 +219,7 @@ ta_rigid_body:
       normal: { x: 0.0, y: 1.0, z: 0.0 }
   mass: 0.0
 # ta_rigid_body:
-#   uid: "tb_node_chamber_right"
+#   name: "tb_node_chamber_right"
 #   collider:
 #     type: 0  # TA_COLLIDER_PLANE
 #     plane:
@@ -227,7 +227,7 @@ ta_rigid_body:
 #       normal: { x: -1.0, y: 0.0, z: 0.0 }
 #   mass: 0.0
 # ta_rigid_body:
-#   uid: "tb_node_chamber_left"
+#   name: "tb_node_chamber_left"
 #   collider:
 #     type: 0  # TA_COLLIDER_PLANE
 #     plane:
@@ -235,7 +235,7 @@ ta_rigid_body:
 #       normal: { x: 1.0, y: 0.0, z: 0.0 }
 #   mass: 0.0
 # ta_rigid_body:
-#   uid: "tb_node_chamber_far"
+#   name: "tb_node_chamber_far"
 #   collider:
 #     type: 0  # TA_COLLIDER_PLANE
 #     plane:
@@ -243,34 +243,43 @@ ta_rigid_body:
 #       normal: { x: 0.0, y: 0.0, z: -1.0 }
 #   mass: 0.0
 # ta_rigid_body:
-#   uid: "tb_node_chamber_near"
+#   name: "tb_node_chamber_near"
 #   collider:
 #     type: 0  # TA_COLLIDER_PLANE
 #     plane:
 #       center: { x: 0.0, y: 0.0, z: -6.0 }
 #       normal: { x: 0.0, y: 0.0, z: 1.0 }
 #   mass: 0.0
-ta_node:
-  uid: "node_chamber_0001"
+ta_entity:
+  name: "chamber_0001"
+  components: [
+    { name: "chamber_0001", type: 5 },  # TA_GLSL_VEC3
+  ]
+ta_position:
+  name: "chamber_0001"
+  entity_name: "chamber_0001"
   transform:
     position: { x: 0.0, y: -8.0, z: 0.0 }
-  material_uid: "mat_test"
-  mesh_group_uid: "mesh_group_chamber_0001"
-  rigid_body_uid: "rb_node_chamber_0001"
+ta_model:
+  name: "chamber_0001"
+  entity_name: "chamber_0001"
+  mesh_groups: ["chamber_0001"]
+  material: "test"
   invisible: false
   cast_shadows: true
+  receive_shadows: true
 
-ta_node:
-  uid: "node_wakeup"
+ta_entity:
+  name: "wakeup"
   transform:
     position: { x: 0.0, y: 8.0, z: 0.0 }
-  material_uid: "mat_cobble"
-  mesh_group_uid: "mesh_group_wakeup"
+  material: "cobble"
+  mesh_group: "wakeup"
   invisible: true
   cast_shadows: true
 
 ta_rigid_body:
-  uid: "rb_button_0001"
+  name: "button_0001"
   mass: 1.0
   position: { x: 0.0, y: -8.0, z: 0.0 }
   trigger: true
@@ -279,20 +288,20 @@ ta_rigid_body:
       sphere:
         radius: 0.7
 e_button:
-  uid: "button_0001"
-  audio_source_uid: "src_button_0001"
-  sfx_activated_uid: "sfx_button_activated"
-  sfx_deactivated_uid: "sfx_button_deactivated"
-ta_node:
-  uid: "node_button_0001"
-  material_uid: "mat_test"
-  mesh_group_uid: "mesh_group_button"
-  rigid_body_uid: "rb_button_0001"
-  button_uid: "button_0001"
+  name: "button_0001"
+  audio_source: "button_0001"
+  sfx_activated: "sfx_button_activated"
+  sfx_deactivated: "sfx_button_deactivated"
+ta_entity:
+  name: "button_0001"
+  material: "test"
+  mesh_group: "button"
+  rigid_body: "button_0001"
+  button: "button_0001"
   cast_shadows: true
 
 ta_rigid_body:
-  uid: "rb_node_player"
+  name: "player"
   mass: 1.0
   position: { x: 0.3, y: -5.0, z: 0.1 }
   #collider:
@@ -304,51 +313,51 @@ ta_rigid_body:
     type: 1  # TA_COLLIDER_SPHERE
       sphere:
         radius: 1.0
-ta_node:
-  uid: "node_player"
-  material_uid: "mat_cobble"
-  mesh_group_uid: "mesh_group_prim_cube"
-  rigid_body_uid: "rb_node_player"
+ta_entity:
+  name: "player"
+  material: "cobble"
+  mesh_group: "prim_cube"
+  rigid_body: "player"
   # TODO: Make player it's own class like button and handle dialogue in there
-  #audio_source_uid: "src_player"
-  #dialogue_uids: [
+  #audio_source: "player"
+  #dialogues: [
   #  "sfx_oh_no"
   #]
   cast_shadows: true
 
 ta_rigid_body:
-  uid: "rb_node_sphere1"
+  name: "sphere1"
   mass: 1.0
   position: { x: 0.2, y: -2.0, z: 0.2 }
   collider:
     type: 1  # TA_COLLIDER_SPHERE
       sphere:
         radius: 1.0
-ta_node:
-  uid: "node_sphere1"
-  material_uid: "mat_test"
-  mesh_group_uid: "mesh_group_prim_sphere"
-  rigid_body_uid: "rb_node_sphere1"
+ta_entity:
+  name: "sphere1"
+  material: "test"
+  mesh_group: "prim_sphere"
+  rigid_body: "sphere1"
   cast_shadows: true
 
 ta_rigid_body:
-  uid: "rb_node_sphere2"
+  name: "sphere2"
   mass: 1.0
   position: { x: 0.1, y: 1.0, z: 0.3 }
   collider:
     type: 1  # TA_COLLIDER_SPHERE
       sphere:
         radius: 1.0
-ta_node:
-  uid: "node_sphere2"
-  material_uid: "mat_red"
-  mesh_group_uid: "mesh_group_prim_sphere"
-  rigid_body_uid: "rb_node_sphere2"
+ta_entity:
+  name: "sphere2"
+  material: "red"
+  mesh_group: "prim_sphere"
+  rigid_body: "sphere2"
   cast_shadows: true
 
-ta_node:
-  uid: "shadow_test_1"
-  mesh_group_uid: "mesh_group_letter_r"
+ta_entity:
+  name: "shadow_test_1"
+  mesh_group: "letter_r"
   transform:
     position: { x: 4.5, y: -4.0, z: 0.0 }
     orientation: { x: 0.0, y: -1.0, z: 0.0, w: 1.0 }
@@ -358,7 +367,7 @@ ta_node:
 # Shaders
 #-------------------------------------------------------------------------------
 ta_shader:
-  uid: "shader_lines"
+  name: "lines"
   path_vert: "data/shader/lines_v.glsl"
   path_frag: "data/shader/lines_f.glsl"
   attributes: [
@@ -371,7 +380,7 @@ ta_shader:
     { name: "u_model", type: 8 },  # TA_GLSL_MAT4
   ]
 ta_shader:
-  uid: "shader_quads"
+  name: "quads"
   path_vert: "data/shader/quads_v.glsl"
   path_frag: "data/shader/quads_f.glsl"
   attributes: [
@@ -386,7 +395,7 @@ ta_shader:
     { name: "u_tex",   type: 3 },  # TA_GLSL_SAMPLER2D
   ]
 ta_shader:
-  uid: "shader_text"
+  name: "text"
   path_vert: "data/shader/text_v.glsl"
   path_frag: "data/shader/text_f.glsl"
   attributes: [
@@ -401,7 +410,7 @@ ta_shader:
     { name: "u_tex",   type: 3 },  # TA_GLSL_SAMPLER2D
   ]
 ta_shader:
-  uid: "shader_cubemap"
+  name: "cubemap"
   path_vert: "data/shader/cubemap_v.glsl"
   path_frag: "data/shader/cubemap_f.glsl"
   attributes: [
@@ -416,7 +425,7 @@ ta_shader:
     { name: "u_tex",   type: 10 },  # TA_GLSL_SAMPLER_CUBE
   ]
 ta_shader:
-  uid: "shader_mesh"
+  name: "mesh"
   path_vert: "data/shader/mesh_v.glsl"
   path_frag: "data/shader/mesh_f.glsl"
   attributes: [
@@ -511,7 +520,7 @@ ta_shader:
     { name: "u_selected", type: 0 },  # TA_GLSL_GLINT
   ]
 ta_shader:
-  uid: "shader_shadow"
+  name: "shadow"
   path_vert: "data/shader/shadow_v.glsl"
   path_frag: "data/shader/shadow_f.glsl"
   attributes: [

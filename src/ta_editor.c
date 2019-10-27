@@ -213,10 +213,10 @@ static void ui_node_panel()
 
         ta_entity *entity = ta_scene_find_by_name(tg_game.scene, RES_ENTITY,
             entity_name);
-        ta_position *position = ta_scene_component_by_entity_name(tg_game.scene,
+        ta_position *position = ta_scene_component(tg_game.scene,
             RES_COMP_POSITION, entity);
-        ta_rigid_body *rigid_body = ta_scene_component_by_entity_name(
-            tg_game.scene, RES_COMP_RIGID_BODY, entity);
+        ta_rigid_body *rigid_body = ta_scene_component(tg_game.scene,
+            RES_COMP_RIGID_BODY, entity);
         float *pos_values = 0;
         if (rigid_body) {
             ta_ui_label(0, "RB Position:");
@@ -358,10 +358,10 @@ static void ui_texture_panel()
             if (entity_name) {
                 ta_model *model = ta_scene_component_by_entity_name_try(
                     tg_game.scene, RES_COMP_MODEL, entity_name);
-                if (model && model->material_name) {
+                if (model && model->material) {
                     ta_material *material = ta_scene_find_by_name(tg_game.scene,
-                        RES_MATERIAL, model->material_name);
-                    material->tex_albedo_name = texture->name;
+                        RES_MATERIAL, model->material);
+                    material->tex_albedo = texture->name;
                 }
             }
         }

@@ -72,16 +72,16 @@ void *ta_scene_find_by_name_or_default(ta_scene *scene, ta_resource_type type,
     const char *name);
 void *ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name);
 void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name);
-void *ta_scene_entity_add_component(ta_scene *scene, u32 entity_id,
-    ta_resource_type type);
+void *ta_scene_entity_add_component(ta_scene *scene, ta_resource_type type,
+    const char *name);
 void *ta_scene_component_try(ta_scene *scene, ta_resource_type type,
     struct ta_entity *entity);
 void *ta_scene_component(ta_scene *scene, ta_resource_type type,
     struct ta_entity *entity);
 void *ta_scene_component_by_entity_name_try(ta_scene *scene,
     ta_resource_type type, const char *entity_name);
-void *ta_scene_component_by_entity_name(ta_scene *scene,
-    ta_resource_type type, const char *entity_name);
+void *ta_scene_component_by_entity_name(ta_scene *scene, ta_resource_type type,
+    const char *entity_name);
 //ta_entity *ta_scene_entity_by_uid_try(ta_scene *scene, const char *uid);
 //ta_entity *ta_scene_entity_by_uid(ta_scene *scene, const char *uid);
 void ta_scene_update(ta_scene *scene, float dt);

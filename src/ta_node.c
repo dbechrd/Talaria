@@ -28,7 +28,7 @@ void ta_node_shadow_pass(ta_entity *entity, ta_shader *shader, ta_mat4 *light_pv
     if (model->invisible || !model->cast_shadows) {
         return;
     }
-    DLB_ASSERT(dlb_vec_len(model->mesh_group_names));
+    DLB_ASSERT(dlb_vec_len(model->mesh_groups));
 
     ta_position *position = ta_scene_component(tg_game.scene, RES_COMP_POSITION,
         entity);
@@ -60,7 +60,7 @@ void ta_node_shadow_pass(ta_entity *entity, ta_shader *shader, ta_mat4 *light_pv
     ta_mat4 light_pvm = mat4_mul(light_pv, &position->model);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
     ta_shader_prerender(shader);
-    dlb_vec_each(const char *, mesh_group_name, model->mesh_group_names) {
+    dlb_vec_each(const char *, mesh_group_name, model->mesh_groups) {
         ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
             RES_MESH_GROUP, mesh_group_name);
         ta_mesh_group_render(mesh_group);
@@ -82,12 +82,12 @@ void ta_node_render(ta_entity *entity, ta_camera *camera, float alpha)
     {
         return;
     }
-    DLB_ASSERT(dlb_vec_len(model->mesh_group_names));
+    DLB_ASSERT(dlb_vec_len(model->mesh_groups));
 
     ta_position *position = ta_scene_component(tg_game.scene, RES_COMP_POSITION,
         entity);
-    ta_rigid_body *body = ta_scene_component_by_entity_name(tg_game.scene,
-        RES_COMP_RIGID_BODY, entity);
+    ta_rigid_body *body = ta_scene_component(tg_game.scene, RES_COMP_RIGID_BODY,
+        entity);
 
     ta_vec3 lerp_pos;
     ta_quat lerp_orient;
@@ -111,13 +111,13 @@ void ta_node_render(ta_entity *entity, ta_camera *camera, float alpha)
 
     if (!camera->debug_no_mesh) {
         ta_material *material = ta_scene_find_by_name(tg_game.scene,
-            RES_MATERIAL, model->material_name);
+            RES_MATERIAL, model->material);
         ta_shader *shader = ta_scene_find_by_name(tg_game.scene,
-            RES_SHADER, material->shader_name);
+            RES_SHADER, material->shader);
         ta_texture *texture_albedo = ta_scene_find_by_name(tg_game.scene,
-            RES_SHADER, material->tex_albedo_name);
+            RES_SHADER, material->tex_albedo);
         ta_texture *texture_metallic = ta_scene_find_by_name(tg_game.scene,
-            RES_SHADER, material->tex_metallic_name);
+            RES_SHADER, material->tex_metallic);
         DLB_ASSERT(material);
         DLB_ASSERT(shader);
         DLB_ASSERT(texture_albedo);
@@ -140,7 +140,7 @@ void ta_node_render(ta_entity *entity, ta_camera *camera, float alpha)
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO, texture_albedo->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_METALLIC, texture_metallic->gl_id);
         ta_shader_prerender(shader);
-        dlb_vec_each(const char *, mesh_group_name, model->mesh_group_names) {
+        dlb_vec_each(const char *, mesh_group_name, model->mesh_groups) {
             ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
                 RES_MESH_GROUP, mesh_group_name);
             ta_mesh_group_render(mesh_group);
@@ -151,7 +151,7 @@ void ta_node_render(ta_entity *entity, ta_camera *camera, float alpha)
     if (camera->debug_normals || camera->debug_bounding_boxes) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &position->model);
         if (camera->debug_normals) {
-            dlb_vec_each(const char *, mesh_group_name, model->mesh_group_names) {
+            dlb_vec_each(const char *, mesh_group_name, model->mesh_groups) {
                 ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
                     RES_MESH_GROUP, mesh_group_name);
                 ta_mesh_group_push_normals(mesh_group);
@@ -206,7 +206,7 @@ void ta_node_render_shader(ta_entity *entity, ta_camera *camera, ta_shader *shad
     ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(shader, SYM_U_MODEL, &position->model);
     ta_shader_prerender(shader);
-    dlb_vec_each(const char *, mesh_group_name, model->mesh_group_names) {
+    dlb_vec_each(const char *, mesh_group_name, model->mesh_groups) {
         ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
             RES_MESH_GROUP, mesh_group_name);
         ta_mesh_group_render(mesh_group);

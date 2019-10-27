@@ -369,14 +369,14 @@ void ta_schema_register()
     TYPE_FIELD(ta_font, name,         ATOM_STRING);
     TYPE_FIELD(ta_font, path,         ATOM_STRING);
     TYPE_FIELD(ta_font, pixel_height, ATOM_FLOAT);
-    TYPE_FIELD(ta_font, shader_name,  ATOM_STRING);
+    TYPE_FIELD(ta_font, shader,       ATOM_STRING);
     TYPE_END(ta_font);
 
     TYPE_START(ta_material, TYP_MATERIAL, 0, 0);
-    TYPE_FIELD(ta_material, name,              ATOM_STRING);
-    TYPE_FIELD(ta_material, shader_name,       ATOM_STRING);
-    TYPE_FIELD(ta_material, tex_albedo_name,   ATOM_STRING);
-    TYPE_FIELD(ta_material, tex_metallic_name, ATOM_STRING);
+    TYPE_FIELD(ta_material, name,         ATOM_STRING);
+    TYPE_FIELD(ta_material, shader,       ATOM_STRING);
+    TYPE_FIELD(ta_material, tex_albedo,   ATOM_STRING);
+    TYPE_FIELD(ta_material, tex_metallic, ATOM_STRING);
     TYPE_END(ta_material);
 
     TYPE_START(ta_mesh_group, TYP_MESH_GROUP, ta_mesh_group_load, ta_mesh_group_free);
@@ -418,20 +418,20 @@ void ta_schema_register()
     // Component types
     //--------------------------------------------------------------------------
     TYPE_START(ta_audio_source, TYP_AUDIO_SOURCE, ta_audio_source_init, 0);
-    TYPE_FIELD(ta_audio_source, name,              ATOM_STRING);
-    TYPE_FIELD(ta_audio_source, entity_name,       ATOM_STRING);
-    TYPE_FIELD(ta_audio_source, audio_buffer_name, ATOM_STRING);
-    TYPE_FIELD(ta_audio_source, pitch,             ATOM_FLOAT);
-    TYPE_FIELD(ta_audio_source, gain,              ATOM_FLOAT);
-    TYPE_FIELD(ta_audio_source, loop,              ATOM_BOOL);
+    TYPE_FIELD(ta_audio_source, name,         ATOM_STRING);
+    TYPE_FIELD(ta_audio_source, entity_name,  ATOM_STRING);
+    TYPE_FIELD(ta_audio_source, audio_buffer, ATOM_STRING);
+    TYPE_FIELD(ta_audio_source, pitch,        ATOM_FLOAT);
+    TYPE_FIELD(ta_audio_source, gain,         ATOM_FLOAT);
+    TYPE_FIELD(ta_audio_source, loop,         ATOM_BOOL);
     TYPE_END(ta_audio_source);
 
     TYPE_START(ta_e_button, TYP_BUTTON, e_button_init, 0);
-    TYPE_FIELD(ta_e_button, name,                 ATOM_STRING);
-    TYPE_FIELD(ta_e_button, entity_name,          ATOM_STRING);
-    TYPE_FIELD(ta_e_button, sfx_activated_name,   ATOM_STRING);
-    TYPE_FIELD(ta_e_button, sfx_active_name,      ATOM_STRING);
-    TYPE_FIELD(ta_e_button, sfx_deactivated_name, ATOM_STRING);
+    TYPE_FIELD(ta_e_button, name,            ATOM_STRING);
+    TYPE_FIELD(ta_e_button, entity_name,     ATOM_STRING);
+    TYPE_FIELD(ta_e_button, sfx_activated,   ATOM_STRING);
+    TYPE_FIELD(ta_e_button, sfx_active,      ATOM_STRING);
+    TYPE_FIELD(ta_e_button, sfx_deactivated, ATOM_STRING);
     TYPE_END(ta_e_button);
 
     TYPE_START(ta_camera, TYP_CAMERA, ta_camera_init, 0);
@@ -469,19 +469,19 @@ void ta_schema_register()
     TYPE_END(ta_light);
 
     TYPE_START(ta_model, TYP_MODEL, 0, 0);
-    TYPE_FIELD(ta_model, name,              ATOM_STRING);
-    TYPE_FIELD(ta_model, entity_name,       ATOM_STRING);
-    TYPE_VECTOR(ta_model, mesh_group_names, ATOM_STRING);
-    TYPE_FIELD(ta_model, material_name,     ATOM_STRING);
-    TYPE_FIELD(ta_model, invisible,         ATOM_BOOL);
-    TYPE_FIELD(ta_model, cast_shadows,      ATOM_BOOL);
-    TYPE_FIELD(ta_model, receive_shadows,   ATOM_BOOL);
+    TYPE_FIELD(ta_model, name,            ATOM_STRING);
+    TYPE_FIELD(ta_model, entity_name,     ATOM_STRING);
+    TYPE_VECTOR(ta_model, mesh_groups,    ATOM_STRING);
+    TYPE_FIELD(ta_model, material,        ATOM_STRING);
+    TYPE_FIELD(ta_model, invisible,       ATOM_BOOL);
+    TYPE_FIELD(ta_model, cast_shadows,    ATOM_BOOL);
+    TYPE_FIELD(ta_model, receive_shadows, ATOM_BOOL);
     TYPE_END(ta_model);
 
     TYPE_START(ta_position, TYP_POSITION, ta_position_init, 0);
-    TYPE_FIELD(ta_position, name,            ATOM_STRING);
-    TYPE_FIELD(ta_position, entity_name,     ATOM_STRING);
-    TYPE_FIELD(ta_position, transform, TYP_TRANSFORM);
+    TYPE_FIELD(ta_position, name,        ATOM_STRING);
+    TYPE_FIELD(ta_position, entity_name, ATOM_STRING);
+    TYPE_FIELD(ta_position, transform,   TYP_TRANSFORM);
     TYPE_END(ta_position);
 
     TYPE_START(ta_rigid_body, TYP_RIGID_BODY, ta_rigid_body_init, 0);

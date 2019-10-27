@@ -4,7 +4,7 @@
 typedef struct ta_material {
     u32 index;
     const char *name;
-    const char *shader_name;
-    const char *tex_albedo_name;
-    const char *tex_metallic_name;
+    const char *shader;
+    const char *tex_albedo;
+    const char *tex_metallic;
 } ta_material;

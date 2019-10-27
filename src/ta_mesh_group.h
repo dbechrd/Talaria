@@ -6,7 +6,7 @@ typedef struct ta_mesh_group {
     u32 index;
     const char *name;
     const char *path;
-    const char **mesh_names;
+    const char **meshes;
     ta_aabb aabb;
 } ta_mesh_group;
 

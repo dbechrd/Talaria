@@ -29,7 +29,7 @@ typedef struct ta_audio_source {
     u32 index;
     const char *name;
     const char *entity_name;
-    const char *audio_buffer_name;
+    const char *audio_buffer;
     float pitch;
     float gain;
     bool loop;
@@ -57,14 +57,14 @@ void ta_audio_source_free(ta_audio_source *source);
 void ta_audio_source_set_pitch(ta_audio_source *source, float pitch);
 void ta_audio_source_set_gain(ta_audio_source *source, float gain);
 void ta_audio_source_set_buffer(ta_audio_source *source,
-    const char *audio_buffer_name);
+    const char *audio_buffer);
 ta_audio_source_state ta_audio_source_get_state(ta_audio_source *source);
 void ta_audio_source_play(ta_audio_source *source);
 void ta_audio_source_play_name(ta_audio_source *source,
-    const char *audio_buffer_name);
+    const char *audio_buffer);
 void ta_audio_source_play_loop(ta_audio_source *source);
 void ta_audio_source_play_loop_name(ta_audio_source *source,
-    const char *audio_buffer_name);
+    const char *audio_buffer);
 void ta_audio_source_pause(ta_audio_source *source);
 void ta_audio_source_resume(ta_audio_source *source);
 void ta_audio_source_stop(ta_audio_source *source);

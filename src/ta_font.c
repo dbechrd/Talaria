@@ -132,7 +132,7 @@ void ta_font_free(ta_font *font)
 ta_shader *ta_font_shader(ta_font *font)
 {
     ta_shader *shader = ta_scene_find_by_name(tg_game.scene, RES_SHADER,
-        font->shader_name);
+        font->shader);
     return shader;
 }
 

@@ -13,9 +13,9 @@ typedef struct ta_e_button {
     const char *entity_name;
     e_button_state state;
     e_button_state state_prev;
-    u32 sfx_activated_name;  // TODO: Some sort of event-based sound effects handling?
-    u32 sfx_active_name;
-    u32 sfx_deactivated_name;
+    u32 sfx_activated;  // TODO: Some sort of event-based sound effects handling?
+    u32 sfx_active;
+    u32 sfx_deactivated;
 } ta_e_button;
 
 void e_button_init(ta_e_button *button);

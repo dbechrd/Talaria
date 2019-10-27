@@ -117,7 +117,7 @@ typedef struct ta_event_camera_rotate_event {
 } ta_event_camera_rotate_event;
 
 typedef struct ta_event_button_event {
-    u32 button_name;
+    const char *button_name;
 } ta_event_button_event;
 
 typedef struct ta_event {

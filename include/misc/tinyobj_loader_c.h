@@ -1013,7 +1013,7 @@ typedef struct {
 	unsigned int object_name_len;
 	int pad1;
 
-	const char *material_name;
+	const char *material;
 	unsigned int material_name_len;
 	int pad2;
 
@@ -1145,7 +1145,7 @@ static int parseLine(Command * command, const char *p, size_t p_len,
 		token += 7;
 
 		skip_space(&token);
-		command->material_name = p + (token - linebuf);
+		command->material = p + (token - linebuf);
 		command->material_name_len = (unsigned int)length_until_newline(
 			token, (p_len - (size_t)(token - linebuf)) + 1);
 		command->type = COMMAND_USEMTL;
@@ -1382,11 +1382,11 @@ int tinyobj_parse_obj(tinyobj_attrib_t * attrib, tinyobj_shape_t * *shapes,
 				}
 				}
 				*/
-				if (commands[i].material_name &&
+				if (commands[i].material &&
 					commands[i].material_name_len > 0) {
 					/* Create a null terminated string */
 					char *material_name_null_term = (char *)TINYOBJ_MALLOC(commands[i].material_name_len + 1);
-					memcpy((void *)material_name_null_term, (const void *)commands[i].material_name, commands[i].material_name_len);
+					memcpy((void *)material_name_null_term, (const void *)commands[i].material, commands[i].material_name_len);
 					material_name_null_term[commands[i].material_name_len - 1] = 0;
 
 					if (hash_table_exists(material_name_null_term, &material_table))
