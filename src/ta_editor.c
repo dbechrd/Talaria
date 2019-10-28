@@ -145,13 +145,13 @@ static void ui_node_panel()
     //ta_ui_next_margin(2, 2, 0, 0);
     ta_ui_panel_begin(0, &node_panel_id);
 
-    static int label_width = 150;
+    static int label_width = 180;
     const char *entity_name = ta_editor_selected_entity();
     if (entity_name) {
         //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, "UID:");
+        ta_ui_label(0, "Name:");
         static ta_text_entry *uid_editor = 0;
         if (uid_editor) {
             ta_ui_next_size(100, 0);
@@ -209,71 +209,91 @@ static void ui_node_panel()
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
 
-        ta_position *position = ta_scene_component(tg_game.scene,
+        ta_position *position = ta_scene_component_try(tg_game.scene,
             RES_COMP_POSITION, entity_name);
-        ta_rigid_body *rigid_body = ta_scene_component(tg_game.scene,
+        ta_rigid_body *rigid_body = ta_scene_component_try(tg_game.scene,
             RES_COMP_RIGID_BODY, entity_name);
+        ta_light *light = ta_scene_component_try(tg_game.scene, RES_COMP_LIGHT,
+            entity_name);
         float *pos_values = 0;
         if (rigid_body) {
-            ta_ui_label(0, "RB Position:");
+            ta_ui_label(0, "Rigid Body Position:");
             pos_values = (float *)&rigid_body->position;
-        } else {
+        } else if (position) {
             ta_ui_label(0, "Position:");
             pos_values = (float *)&position->transform.position;
+        } else if (light) {
+            ta_ui_label(0, "Light Position:");
+            pos_values = (float *)&light->position;
         }
-        const char *pos_labels[3] = { "x: ", " y: ", " z: " };
-        static ta_text_entry *pos_editors[3] = { 0 };
-        for (int i = 0; i < 3; i++) {
-            ta_ui_label(0, pos_labels[i]);
-            char pos_buf[10] = { 0 };
-            int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f", pos_values[i]);
-            DLB_ASSERT(len < sizeof(pos_buf));
-            if (pos_editors[i]) {
-                //ta_ui_next_pad(4, 1, 4, 1);
-                ta_ui_textbox(0, pos_editors[i]);
-                if (ta_text_entry_valid(pos_editors[i])) {
-                    u32 text_len = 0;
-                    char *text = ta_text_entry_text(pos_editors[i], &text_len);
-                    pos_values[i] = parse_float(text);
-                }
-#if 1
-               // ta_ui_next_margin(4, 0, 0, 0);
-                //ta_ui_next_pad(4, 1, 4, 1);
-                ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.8f, 0.0f, 1.0f);
-                if (ta_ui_label(0, "Save")) {
-                    ta_text_entry_submit(pos_editors[i]);
-                }
-#endif
-                if (ta_text_entry_submitted(pos_editors[i])) {
-                    ta_text_entry_unfocus(pos_editors[i]);
-                    ta_text_entry_free(&pos_editors[i]);
-                } else if (ta_text_entry_canceled(pos_editors[i])) {
-                    ta_text_entry_free(&pos_editors[i]);
-                }
-            } else {
-                //ta_ui_next_pad(4, 1, 4, 1);
-                if (ta_ui_label(0, pos_buf)) {
-                    DLB_ASSERT(!pos_editors[i]);
-                    pos_editors[i] = ta_text_entry_init();
-                    ta_text_entry_set_text(pos_editors[i], pos_buf, len);
-                    ta_text_entry_focus(pos_editors[i]);
+        if (pos_values) {
+            const char *pos_labels[3] = { "x: ", " y: ", " z: " };
+            static ta_text_entry *pos_editors[3] = { 0 };
+            for (int i = 0; i < 3; i++) {
+                ta_ui_label(0, pos_labels[i]);
+                char pos_buf[10] = { 0 };
+                int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f",
+                    pos_values[i]);
+                DLB_ASSERT(len < sizeof(pos_buf));
+                if (pos_editors[i]) {
+                    //ta_ui_next_pad(4, 1, 4, 1);
+                    ta_ui_textbox(0, pos_editors[i]);
+                    if (ta_text_entry_valid(pos_editors[i])) {
+                        u32 text_len = 0;
+                        char *text = ta_text_entry_text(pos_editors[i],
+                            &text_len);
+                        pos_values[i] = parse_float(text);
+                    }
+                   // ta_ui_next_margin(4, 0, 0, 0);
+                    //ta_ui_next_pad(4, 1, 4, 1);
+                    ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.8f, 0.0f, 1.0f);
+                    if (ta_ui_label(0, "Save")) {
+                        ta_text_entry_submit(pos_editors[i]);
+                    }
+                    if (ta_text_entry_submitted(pos_editors[i])) {
+                        ta_text_entry_unfocus(pos_editors[i]);
+                        ta_text_entry_free(&pos_editors[i]);
+                    } else if (ta_text_entry_canceled(pos_editors[i])) {
+                        ta_text_entry_free(&pos_editors[i]);
+                    }
+                } else {
+                    //ta_ui_next_pad(4, 1, 4, 1);
+                    if (ta_ui_label(0, pos_buf)) {
+                        DLB_ASSERT(!pos_editors[i]);
+                        pos_editors[i] = ta_text_entry_init();
+                        ta_text_entry_set_text(pos_editors[i], pos_buf, len);
+                        ta_text_entry_focus(pos_editors[i]);
+                    }
                 }
             }
         }
 
-        //ta_ui_spacer(0, 2);
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, "Orientation:");
-        char orient_buf[64] = { 0 };
-        int len = snprintf(orient_buf, sizeof(orient_buf),
-            "x: %3.4f, y: %3.4f, z: %3.4f, w: %3.4f",
-            position->transform.orientation.x,
-            position->transform.orientation.y,
-            position->transform.orientation.z,
-            position->transform.orientation.w);
-        DLB_ASSERT(len < sizeof(orient_buf));
-        ta_ui_label(0, orient_buf);
+        if (position) {
+            //ta_ui_spacer(0, 2);
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, "Orientation:");
+            char orient_buf[64] = { 0 };
+            int len = snprintf(orient_buf, sizeof(orient_buf),
+                "x: %3.4f, y: %3.4f, z: %3.4f, w: %3.4f",
+                position->transform.orientation.x,
+                position->transform.orientation.y,
+                position->transform.orientation.z,
+                position->transform.orientation.w);
+            DLB_ASSERT(len < sizeof(orient_buf));
+            ta_ui_label(0, orient_buf);
+        }
+
+        if (light) {
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, "Enabled:");
+            if (light->disabled) {
+                if (ta_ui_label(0, "False")) { light->disabled = false; }
+            } else {
+                if (ta_ui_label(0, "True")) { light->disabled = true; }
+            }
+        }
     } else {
         //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
@@ -469,39 +489,40 @@ static void ui_statusbar()
 }
 void ta_editor_draw(float alpha)
 {
+    glClear(GL_DEPTH_BUFFER_BIT);
+
     // Stencil selected entity
     const char *selected_entity = ta_editor_selected_entity();
     if (selected_entity) {
         ta_camera *camera = ta_scene_component(tg_game.scene, RES_COMP_CAMERA,
             tg_game.e_active_camera);
-        ta_model *model = ta_scene_component(tg_game.scene, RES_COMP_MODEL,
+        ta_model *model = ta_scene_component_try(tg_game.scene, RES_COMP_MODEL,
             selected_entity);
+        if (model) {
+            glEnable(GL_STENCIL_TEST);
+            glStencilFunc(GL_ALWAYS, 1, 0xFF);
+            glStencilMask(0xFF);
+            // Stencil the outline and any occluded fragments
+            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+            // Stencil just the outline
+            //glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
+            glDepthMask(GL_FALSE);
+            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+            ta_model_render(model, camera, alpha);
+            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            glDepthMask(GL_TRUE);
 
-        glEnable(GL_STENCIL_TEST);
-        glStencilFunc(GL_ALWAYS, 1, 0xFF);
-        glStencilMask(0xFF);
-        // Stencil the outline and any occluded fragments
-        glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-        // Stencil just the outline
-        //glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
-        glDepthMask(GL_FALSE);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        ta_model_render(model, camera, alpha);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glDepthMask(GL_TRUE);
+            glClear(GL_DEPTH_BUFFER_BIT);
 
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        // Outline selected node
-        glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-        glStencilMask(0x00);
-        ta_shader *shader = ta_scene_find_by_name(editor.scene, RES_SHADER,
-            editor.shader_editor_select);
-        ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&TA_COLOR_YELLOW);
-        ta_model_render_shader(model, camera, shader, alpha, 1.1f);
-        glDisable(GL_STENCIL_TEST);
-    } else {
-        glClear(GL_DEPTH_BUFFER_BIT);
+            // Outline selected node
+            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+            glStencilMask(0x00);
+            ta_shader *shader = ta_scene_find_by_name(editor.scene, RES_SHADER,
+                editor.shader_editor_select);
+            ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&TA_COLOR_YELLOW);
+            ta_model_render_shader(model, camera, shader, alpha, 1.1f);
+            glDisable(GL_STENCIL_TEST);
+        }
     }
 
     // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
@@ -532,7 +553,6 @@ static void editor_ray_pick()
 
     float t_min = 9999.0f;
     const char *closest_entity = 0;
-    ta_light *closest_light = 0;  // TODO: Lights and cameras should be nodes
 
     ta_rigid_body *bodies = tg_game.scene->resource_data[RES_COMP_RIGID_BODY];
     dlb_vec_each(ta_rigid_body *, body, bodies) {
@@ -561,16 +581,13 @@ static void editor_ray_pick()
         if (ta_intersect_ray_sphere(ray, sphere, &t)) {
             if (t >= 0.0f && t < t_min) {
                 t_min = t;
-                closest_light = light;
-                closest_entity = 0;
+                closest_entity = light->entity_name;
             }
         }
     }
 
     if (closest_entity) {
         ta_editor_select_node(closest_entity);
-    } else if (closest_light) {
-        closest_light->disabled = !closest_light->disabled;
     }
 }
 

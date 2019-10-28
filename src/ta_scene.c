@@ -1201,6 +1201,7 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 
     ta_shader_bind(shader);
     dlb_vec_each(ta_light *, light, scene->resource_data[RES_COMP_LIGHT]) {
+        if (light->disabled) continue;
         if (light->type != TA_LIGHT_POINT) {
             // TODO: Handle shadows for other light types
             continue;

@@ -350,6 +350,7 @@ void ta_game_hud_draw(ta_game *game)
     ta_ui_row_begin();
     for (u32 i = 0; i < gun->carrying_ammo_max; i++) {
         ta_ui_next_size(20, 20);
+        ta_ui_next_pad(1, 1, 1, 1);
         if (i < gun->carrying_ammo) {
             ta_ui_button(0, tg_game.tex_orange);
         } else {
@@ -361,6 +362,7 @@ void ta_game_hud_draw(ta_game *game)
     ta_ui_row_begin();
     for (u32 i = 0; i < gun->loaded_ammo_max; i++) {
         ta_ui_next_size(20, 20);
+        ta_ui_next_pad(1, 1, 1, 1);
         if (i < gun->loaded_ammo) {
             ta_ui_button(0, tg_game.tex_orange);
         } else {

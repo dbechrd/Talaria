@@ -126,13 +126,14 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         ta_shader_set_mat4(shader, SYM_U_MODEL, &position->model);
         ta_light *lights = tg_game.scene->resource_data[RES_COMP_LIGHT];
         u32 lights_len = dlb_vec_len(lights);
-        ta_shader_set_uint(shader, SYM_U_LIGHTS_COUNT, lights_len);
+        u32 u_lights_count = 0;
         for (u32 i = 0; i < lights_len; ++i) {
-            if (lights[i].disabled) {
-                continue;
+            if (!lights[i].disabled) {
+                ta_shader_set_light(shader, SYM_U_LIGHTS, u_lights_count, &lights[i]);
+                u_lights_count++;
             }
-            ta_shader_set_light(shader, SYM_U_LIGHTS, i, &lights[i]);
         }
+        ta_shader_set_uint(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO,
             texture_albedo->gl_id);
