@@ -377,15 +377,15 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
             break;
         case TA_LIGHT_DIRECTIONAL:
             u_direction->value.vec3 = light->data.directional.direction;
-            u_shadowmap2d->value.sampler2d = light->shadowmap.texture;
+            u_shadowmap2d->value.sampler2d = light->shadowmap.texture.gl_id;
             break;
         case TA_LIGHT_POINT:
-            u_shadowmap3d->value.sampler_cube = light->shadowmap.texture;
+            u_shadowmap3d->value.sampler_cube = light->shadowmap.texture.gl_id;
             u_shadowmap_zfar->value.glfloat = light->shadowmap.zfar;
             break;
         case TA_LIGHT_SPOT:
             u_direction->value.vec3 = light->data.directional.direction;
-            u_shadowmap2d->value.sampler2d = light->shadowmap.texture;
+            u_shadowmap2d->value.sampler2d = light->shadowmap.texture.gl_id;
             DLB_ASSERT(!"Don't handle spot lights yet");
             break;
         default:

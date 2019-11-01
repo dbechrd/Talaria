@@ -407,14 +407,14 @@ static void tokens_print_debug(FILE *f, token *tokens)
     fflush(f);
 }
 
-#define PANIC_HEADER "%s:%zd:%zd: error: "
+#define PANIC_HEADER "%s:%llu:%llu: error: "
 #define FILE_POS_ARGS scene->filename, tok->file_pos.line, tok->file_pos.column
 
-void debug_open_in_vs_code(const char *filename, int line, int column)
+void debug_open_in_vs_code(const char *filename, u64 line, u64 column)
 {
     DLB_ASSERT(filename);
     char buf[512] = { 0 };
-    snprintf(buf, sizeof(buf) - 1, "start /b code -g %s:%d:%d", filename, line, column+1);
+    snprintf(buf, sizeof(buf) - 1, "start /b code -g %s:%llu:%llu", filename, line, column+1);
     system(buf);
 }
 #define OPEN_VS_CODE() debug_open_in_vs_code(FILE_POS_ARGS)

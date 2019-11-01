@@ -1,6 +1,8 @@
 #pragma once
 #include "ta_math.h"
+#include "ta_texture.h"
 #include "dlb/dlb_types.h"
+#include "misc/gl3w.h"
 
 struct ta_model;
 struct ta_shader;
@@ -32,10 +34,10 @@ typedef struct ta_light_spot {
 } ta_light_spot;
 
 typedef struct ta_light_shadowmap {
-    u32 framebuffer;
-    u32 texture;
-    u32 depthbuffer;
-    s32 resolution;
+    GLuint framebuffer;
+    ta_texture texture;
+    //u32 depthbuffer;
+    GLsizei resolution;
     float znear;
     float zfar;
     ta_mat4 projection;
@@ -64,4 +66,4 @@ const char *ta_light_type_str(int type);
 void ta_light_init(ta_light *light);
 void ta_light_shadowpass_render(ta_light *light, struct ta_shader *shader,
     float alpha, struct ta_model *models);
-void ta_light_render_shadowmap_debug(ta_light *light);
+void ta_light_render_shadowmap_debug(ta_light *light, int x, int y);

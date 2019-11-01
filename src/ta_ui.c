@@ -36,6 +36,7 @@ typedef struct ui_style {
     ta_rect pad;
     ta_rgba bg_color[UI_STATE_COUNT];
     ta_rgba fg_color[UI_STATE_COUNT];
+    bool invisible;
 } ui_style;
 
 static ui_style ui_default_style[UI_COUNT] = { 0 };
@@ -53,6 +54,7 @@ typedef struct ui_frame {
     ta_rect pad;
     ta_rgba bg_color;
     ta_rgba fg_color;
+    bool invisible;
     ta_rect rect;           // position & size (-margin, +pad)
     ta_vec2i offset;        // dynamic offset for layout
 
@@ -214,7 +216,6 @@ static bool rect_contains_mouse(ta_rect rect)
 // returns frame index
 static u32 ui_frame_start(ui_frame_type type, const char *name)
 {
-    // TODO: This probably shouldn't be here...
     glDisable(GL_SCISSOR_TEST);
 
     // Allocate frame
@@ -284,6 +285,7 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
     if (frame->fg_color.a == 0.0f) {
         frame->fg_color = ui_default_style[type].fg_color[state];
     }
+    frame->invisible = next_frame_style.invisible;
 
     // TODO: If we're going to render containers we need to defer *all*
     //       rendering to e.g. container->queue until the container pops, then
@@ -309,6 +311,8 @@ static u32 ui_frame_start(ui_frame_type type, const char *name)
 }
 static void ui_frame_end(u32 frame_idx)
 {
+    glDisable(GL_SCISSOR_TEST);
+
     ui_frame *container = ui_container(frame_idx);
     ui_frame *frame = &ui_frames[frame_idx];
 
@@ -344,12 +348,17 @@ ta_ui_state ta_ui_last_frame_state()
 {
     return last_frame_state;
 }
-
-void ta_ui_next_size(int w, int h)
+#if 0
+ta_vec2i ta_ui_container_absolute_cursor()
 {
-    next_frame_size.w = w;
-    next_frame_size.h = h;
+    ui_frame *container = ui_container_last();
+    DLB_ASSERT(container);
+    ta_vec2i result = { 0 };
+    result.x = container->rect.x + container->offset.x;
+    result.y = container->rect.y + container->offset.y;
+    return result;
 }
+#endif
 // TODO: Replace these with ta_ui_push_style that persists until pop
 void ta_ui_next_margin(int left, int top, int right, int bottom)
 {
@@ -368,6 +377,15 @@ void ta_ui_next_pad(int left, int top, int right, int bottom)
     next_frame_style.pad.w = right;
     next_frame_style.pad.h = bottom;
 #endif
+}
+void ta_ui_next_size(int w, int h)
+{
+    next_frame_size.w = w;
+    next_frame_size.h = h;
+}
+void ta_ui_next_invisible()
+{
+    next_frame_style.invisible = true;
 }
 void ta_ui_next_bg_color(ui_state_type state, float r, float g, float b, float a)
 {
@@ -544,7 +562,7 @@ void ta_ui_statusbar()
     ta_primitive_push_rect_uv(&tooltip_bg_queue, status_bg, TA_COLOR_GRAY3A,
         UI_LAYER_TIP_BG, true, false);
 }
-bool ta_ui_button(const char *name, const ta_texture *tex)
+bool ta_ui_button(const char *name, const ta_texture *tex, int face)
 {
 #if UI_DEBUG_NO_TEXTURES
     tex = 0;
@@ -559,18 +577,30 @@ bool ta_ui_button(const char *name, const ta_texture *tex)
     u32 frame_idx = ui_frame_start(UI_BUTTON, name);
     ui_frame *frame = &ui_frames[frame_idx];
 
-    ta_primitive_push_rect(frame->rect, frame->bg_color, UI_LAYER_EDIT_1_BG);
-    ta_primitive_render(true, true);
+    if (!frame->invisible) {
+        ta_primitive_push_rect(frame->rect, frame->bg_color, UI_LAYER_EDIT_1_BG);
+        ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 
-    if (tex) {
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
-        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex->gl_id);
-        ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
-        ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-        ta_primitive_render(true, true);
-        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+        if (tex) {
+            if (tex->cubemap) {
+                DLB_ASSERT(face >= 0 && face <= 6);
+                ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, tex->gl_id);
+                ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, face);
+                ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
+                ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+                ta_primitive_render_quads(quads_queue, tg_shader_cubemap, true, true);
+                ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
+            } else {
+                ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
+                ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
+                ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+                ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex->gl_id);
+                ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
+                ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+                ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
+                ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+            }
+        }
     }
     ui_frame_end(frame_idx);
 
@@ -600,7 +630,7 @@ bool ta_ui_button_toggle(const char *name, const ta_texture *tex, bool *active)
     }
 
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
-    ta_primitive_render(true, true);
+    ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 
     if (tex) {
         ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
@@ -609,7 +639,7 @@ bool ta_ui_button_toggle(const char *name, const ta_texture *tex, bool *active)
         ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex->gl_id);
         ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
         ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-        ta_primitive_render(true, true);
+        ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
         ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
     }
     ui_frame_end(frame_idx);
@@ -637,7 +667,7 @@ bool ta_ui_label(const char *name, const char *text)
     }
     ta_rect bg_rect = frame->rect;
     ta_primitive_push_rect(bg_rect, frame->bg_color, UI_LAYER_EDIT_1_BG);
-    ta_primitive_render(true, false);
+    ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 
     float text_left = (float)frame->rect.x + frame->pad.x;
     float text_top = (float)frame->rect.y + frame->pad.y;

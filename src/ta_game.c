@@ -352,9 +352,9 @@ void ta_game_hud_draw(ta_game *game)
         ta_ui_next_size(20, 20);
         ta_ui_next_pad(1, 1, 1, 1);
         if (i < gun->carrying_ammo) {
-            ta_ui_button(0, tg_game.tex_orange);
+            ta_ui_button(0, tg_game.tex_orange, 0);
         } else {
-            ta_ui_button(0, tg_game.tex_red);
+            ta_ui_button(0, tg_game.tex_red, 0);
         }
     }
     // TODO: Allow next_pad to work on rows, or introduce a panel here
@@ -364,9 +364,9 @@ void ta_game_hud_draw(ta_game *game)
         ta_ui_next_size(20, 20);
         ta_ui_next_pad(1, 1, 1, 1);
         if (i < gun->loaded_ammo) {
-            ta_ui_button(0, tg_game.tex_orange);
+            ta_ui_button(0, tg_game.tex_orange, 0);
         } else {
-            ta_ui_button(0, tg_game.tex_red);
+            ta_ui_button(0, tg_game.tex_red, 0);
         }
     }
     ta_ui_window_end();

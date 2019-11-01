@@ -5,6 +5,7 @@
 #include "ta_shader.h"
 #include "ta_entity.h"
 #include "ta_model.h"
+#include "ta_texture.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_index.h"
 #include "misc/gl3w.h"
@@ -78,11 +79,12 @@ void ta_light_init(ta_light *light)
 
 static void shadowmap_directional_create(ta_light *light)
 {
-    glGenFramebuffers(1, &light->shadowmap.framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
+    light->shadowmap.texture.width = light->shadowmap.resolution;
+    light->shadowmap.texture.height = light->shadowmap.resolution;
+    light->shadowmap.texture.cubemap = true;
 
-    glGenTextures(1, &light->shadowmap.texture);
-    glBindTexture(GL_TEXTURE_2D, light->shadowmap.texture);
+    glGenTextures(1, &light->shadowmap.texture.gl_id);
+    glBindTexture(GL_TEXTURE_2D, light->shadowmap.texture.gl_id);
     // TODO: Should internalformat be GL_DEPTH_COMPONENT16 instead?
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, light->shadowmap.resolution,
@@ -93,8 +95,10 @@ static void shadowmap_directional_create(ta_light *light)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+    glGenFramebuffers(1, &light->shadowmap.framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-        light->shadowmap.texture, 0);
+        light->shadowmap.texture.gl_id, 0);
     glDrawBuffer(GL_NONE);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -108,10 +112,12 @@ static void shadowmap_directional_create(ta_light *light)
 
 static void shadowmap_point_create(ta_light *light)
 {
-    glGenFramebuffers(1, &light->shadowmap.framebuffer);
+    light->shadowmap.texture.width = light->shadowmap.resolution;
+    light->shadowmap.texture.height = light->shadowmap.resolution;
+    light->shadowmap.texture.cubemap = true;
 
-    glGenTextures(1, &light->shadowmap.texture);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, light->shadowmap.texture);
+    glGenTextures(1, &light->shadowmap.texture.gl_id);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, light->shadowmap.texture.gl_id);
     //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -127,8 +133,10 @@ static void shadowmap_point_create(ta_light *light)
         );
     }
 
+    glGenFramebuffers(1, &light->shadowmap.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, light->shadowmap.texture, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
+        light->shadowmap.texture.gl_id, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
@@ -196,7 +204,8 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
 
     for (int face = 0; face < 6; ++face) {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, light->shadowmap.texture, 0);
+            GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
+            light->shadowmap.texture.gl_id, 0);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -231,10 +240,10 @@ void ta_light_shadowpass_render(ta_light *light, ta_shader *shader,
     }
 }
 
-void ta_light_render_shadowmap_debug(ta_light *light)
+void ta_light_render_shadowmap_debug(ta_light *light, int x, int y)
 {
     ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX,
-        light->shadowmap.texture);
+        light->shadowmap.texture.gl_id);
 
     // Render cubemap with the following layout:
     //      ------
@@ -256,12 +265,12 @@ void ta_light_render_shadowmap_debug(ta_light *light)
     s32 resolution = light->shadowmap.resolution / 10;
     for (int face = 0; face < 6; face++) {
         ta_rect rect = { 0 };
-        rect.x = resolution * face_grid[face].x;
-        rect.y = resolution * face_grid[face].y;
+        rect.x = x + resolution * face_grid[face].x;
+        rect.y = y + resolution * face_grid[face].y;
         rect.w = resolution;
         rect.h = resolution;
         ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, face);
-        ta_primitive_push_rect(rect, TA_COLOR_INVIS, UI_LAYER_HUD_BG);
+        ta_primitive_push_rect(rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
         ta_primitive_render_quads(quads_queue, tg_shader_cubemap, true, true);
     }
 

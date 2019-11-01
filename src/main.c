@@ -344,8 +344,8 @@ int main(int argc, char *argv[])
         ta_primitive_push_crosshair(10, 2);
 
 #if 0
-        ta_light *light = tg_game.scene->resource_data[RES_COMP_LIGHT];
-        ta_light_render_shadowmap_debug(&light[1]);
+        ta_light *lights = tg_game.scene->resource_data[RES_COMP_LIGHT];
+        ta_light_render_shadowmap_debug(&lights[1], 20, 20);
 #endif
 #if 0
         // Minimap

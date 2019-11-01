@@ -8,8 +8,8 @@ typedef enum ta_file_mode {
 } ta_file_mode;
 
 typedef struct ta_file_pos {
-    size_t line;
-    size_t column;
+    u64 line;
+    u64 column;
 } ta_file_pos;
 
 typedef struct ta_file {

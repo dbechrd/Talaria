@@ -1,4 +1,4 @@
-#include "ta_editor.h"
+﻿#include "ta_editor.h"
 #include "ta_ui.h"
 #include "ta_game.h"
 #include "ta_scene.h"
@@ -289,9 +289,67 @@ static void ui_node_panel()
             ta_ui_next_size(label_width, 0);
             ta_ui_label(0, "Enabled:");
             if (light->disabled) {
-                if (ta_ui_label(0, "False")) { light->disabled = false; }
+                if (ta_ui_label(0, "False")) light->disabled = false;
             } else {
-                if (ta_ui_label(0, "True")) { light->disabled = true; }
+                if (ta_ui_label(0, "True")) light->disabled = true;
+            }
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, "Shadow Map:");
+            static bool show_shadow_map = true;
+            if (show_shadow_map) {
+                if (ta_ui_label(0, "Hide")) show_shadow_map = false;
+            } else {
+                if (ta_ui_label(0, "Show")) show_shadow_map = true;
+            }
+
+            if (show_shadow_map) {
+                u32 shadowmap_panel_id;
+                ta_ui_row_begin();
+                ta_ui_next_pad(1, 1, 1, 1);
+                ta_ui_panel_begin(0, &shadowmap_panel_id);
+
+                // Render cubemap with the following layout:
+                //       ┌────┐                 ┌────┐
+                //       | +Y |                 |  2 |
+                //  ┌────┼────┼────┬────┐  ┌────┼────┼────┬────┐
+                //  | -X | -Z | +X | +Z |  |  1 |  5 |  0 |  4 |
+                //  └────┼────┼────┴────┘  └────┼────┼────┴────┘
+                //       | -Y |                 |  3 |
+                //       └────┘                 └────┘
+                s32 resolution = light->shadowmap.resolution / 10;
+
+                // TODO: Setting margin/pad to zero doesn't work because it
+                // thinks we didn't set anything and falls back on defaults
+                #define face_button(face) \
+                    ta_ui_next_size(resolution, resolution); \
+                    ta_ui_next_margin(1, 1, 1, 1); \
+                    ta_ui_next_pad(1, 1, 1, 1); \
+                    ta_ui_button(0, &light->shadowmap.texture, face);
+                #define face_pad() \
+                    ta_ui_next_size(resolution, resolution); \
+                    ta_ui_next_margin(1, 1, 1, 1); \
+                    ta_ui_next_pad(1, 1, 1, 1); \
+                    ta_ui_next_invisible(); \
+                    ta_ui_button(0, 0, 0);
+
+                ta_ui_row_begin();
+                face_pad();
+                face_button(2);
+                ta_ui_row_begin();
+                face_button(1);
+                face_button(5);
+                face_button(0);
+                face_button(4);
+                ta_ui_row_begin();
+                face_pad();
+                face_button(3);
+
+                #undef face_button
+                #undef face_pad
+
+                ta_ui_panel_end(shadowmap_panel_id);
             }
         }
     } else {
@@ -369,7 +427,8 @@ static void ui_texture_panel()
         ta_ui_next_size(68, 68);
         //ta_ui_next_margin(0, 0, 2, 0);
         //ta_ui_next_pad(2, 2, 2, 2);
-        if (ta_ui_button(0, texture)) {
+        ta_ui_next_size(texture->width, texture->height);
+        if (ta_ui_button(0, texture, 0)) {
             const char *entity_name = ta_editor_selected_entity();
             if (entity_name) {
                 ta_model *model = ta_scene_component_try(tg_game.scene,
