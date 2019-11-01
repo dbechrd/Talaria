@@ -8,12 +8,19 @@
 
 ta_log tg_debug_log;
 
-void ta_log_init(ta_log *log, const char *filename, bool flush)
+void ta_log_init(ta_log *log, FILE *stream, bool flush)
 {
+    DLB_ASSERT(log);
+    DLB_ASSERT(stream);
+    log->stream = stream;
+    log->flush = flush;
+}
+
+void ta_log_init_file(ta_log *log, const char *filename, bool flush)
+{
+    DLB_ASSERT(log);
     FILE *stream = fopen(filename, "wb");
-    if (!stream) {
-        DLB_ASSERT(!"ta_log_init: Failed to initialize log");
-    }
+    DLB_ASSERT(stream);
     log->filename = filename;
     log->stream = stream;
     log->flush = flush;
@@ -32,10 +39,10 @@ static void ta_log_write_timestamp(ta_log *log)
     ta_log_timestamp(timestamp, sizeof(timestamp));
     double elapsed_sec = ta_timer_elapsed_sec();
     fprintf(log->stream, "[%s][%.3fs] ", timestamp, elapsed_sec);
-#if _DEBUG
-    fprintf(stdout, "[%s][%.3fs] ", timestamp, elapsed_sec);
-    fflush(stdout);
-#endif
+//#if _DEBUG
+//    fprintf(stdout, "[%s][%.3fs] ", timestamp, elapsed_sec);
+//    fflush(stdout);
+//#endif
 }
 
 void ta_log_append(ta_log *log, const char* fmt, ...)
@@ -43,10 +50,10 @@ void ta_log_append(ta_log *log, const char* fmt, ...)
     va_list args;
     va_start(args, fmt);
     vfprintf(log->stream, fmt, args);
-#if _DEBUG
-    vfprintf(stdout, fmt, args);
-    fflush(stdout);
-#endif
+//#if _DEBUG
+//    vfprintf(stdout, fmt, args);
+//    fflush(stdout);
+//#endif
     va_end(args);
     if (log->flush) {
         fflush(log->stream);
@@ -59,10 +66,10 @@ void ta_log_write(ta_log *log, const char *fmt, ...)
     va_list args;
     va_start(args, fmt);
     vfprintf(log->stream, fmt, args);
-#if _DEBUG
-    vfprintf(stdout, fmt, args);
-    fflush(stdout);
-#endif
+//#if _DEBUG
+//    vfprintf(stdout, fmt, args);
+//    fflush(stdout);
+//#endif
     va_end(args);
     if (log->flush) {
         fflush(log->stream);
@@ -71,5 +78,7 @@ void ta_log_write(ta_log *log, const char *fmt, ...)
 
 void ta_log_free(ta_log *log)
 {
-    fclose(log->stream);
+    if (log->filename) {
+        fclose(log->stream);
+    }
 }

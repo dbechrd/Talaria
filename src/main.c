@@ -107,7 +107,11 @@ int main(int argc, char *argv[])
     ta_timer_init();
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
-    ta_log_init(&tg_debug_log, "log.txt", true);
+#if _DEBUG
+    ta_log_init(&tg_debug_log, stdout, false);
+#else
+    ta_log_init_file(&tg_debug_log, "log.txt", true);
+#endif
     debug_tests();
 
     ta_symbol_init();
@@ -340,7 +344,8 @@ int main(int argc, char *argv[])
         ta_primitive_push_crosshair(10, 2);
 
 #if 0
-        ta_light_render_shadowmap_debug(&tg_game.lights[1]);
+        ta_light *light = tg_game.scene->resource_data[RES_COMP_LIGHT];
+        ta_light_render_shadowmap_debug(&light[1]);
 #endif
 #if 0
         // Minimap

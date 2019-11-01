@@ -231,7 +231,7 @@ static void ui_node_panel()
             static ta_text_entry *pos_editors[3] = { 0 };
             for (int i = 0; i < 3; i++) {
                 ta_ui_label(0, pos_labels[i]);
-                char pos_buf[10] = { 0 };
+                char pos_buf[32] = { 0 };
                 int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f",
                     pos_values[i]);
                 DLB_ASSERT(len < sizeof(pos_buf));
