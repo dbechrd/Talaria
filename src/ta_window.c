@@ -138,6 +138,11 @@ float ta_window_aspect(ta_window *window)
     return (float)window->size.w / window->size.h;
 }
 
+SDL_Window *ta_window_sdl(ta_window *window)
+{
+    return window->sdl_window;
+}
+
 void ta_window_swap(ta_window *window)
 {
     SDL_GL_SwapWindow(window->sdl_window);

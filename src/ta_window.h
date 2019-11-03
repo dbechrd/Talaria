@@ -3,6 +3,7 @@
 
 struct ta_size;
 struct ta_event;
+typedef struct SDL_Window SDL_Window;
 
 #define WINDOW_W ta_window_width(tg_game.window)
 #define WINDOW_H ta_window_height(tg_game.window)
@@ -53,6 +54,7 @@ struct ta_size ta_window_size(ta_window *window);
 int ta_window_width(ta_window *window);
 int ta_window_height(ta_window *window);
 float ta_window_aspect(ta_window *window);
+SDL_Window *ta_window_sdl(ta_window *window);
 void ta_window_swap(ta_window *window);
 void ta_window_event(ta_window *window, struct ta_event *event);
 int ta_window_msgbox(ta_window *window, u32 flags, const char *title,

@@ -17,5 +17,6 @@ int ta_mouse_x();
 int ta_mouse_y();
 int ta_mouse_dx();
 int ta_mouse_dy();
-void ta_mouse_update();
+void ta_mouse_move(int x, int y);
+void ta_mouse_reset_relative();
 void ta_mouse_event(struct ta_event *event);

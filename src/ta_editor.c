@@ -174,7 +174,8 @@ static void drag_float_update(float delta)
 
     int mouse_dx = ta_mouse_dx();
     if (mouse_dx) {
-        *drag_float.value += mouse_dx * delta;
+        float acc = 1.0f + ((int)vec3_len(drag_float.cam_offset) / 10);
+        *drag_float.value += mouse_dx * delta * acc;
         drag_float.changed = true;
 
         ta_position *position = ta_scene_component_try(tg_game.scene,

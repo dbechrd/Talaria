@@ -158,6 +158,7 @@ static void event_sdl_poll()
 
 void ta_event_events()
 {
+    ta_mouse_reset_relative();
     ta_key_reset_changed();
     event_sdl_poll();
 

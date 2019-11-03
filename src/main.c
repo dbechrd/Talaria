@@ -241,7 +241,6 @@ int main(int argc, char *argv[])
         ms_frame_prev = ms_frame_start;
 
         // Engine events
-        ta_mouse_update();
         ta_event_events();
 
         // If sim_max_steps == 0, assume we want lockstep physics

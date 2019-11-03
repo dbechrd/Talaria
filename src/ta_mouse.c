@@ -3,6 +3,8 @@
 #include "ta_log.h"
 #include "ta_timer.h"
 #include "ta_button_state.h"
+#include "ta_game.h"
+#include "ta_window.h"
 #include "SDL/SDL.h"
 
 typedef struct ta_mouse {
@@ -12,6 +14,8 @@ typedef struct ta_mouse {
     int dy;
     bool captured;  // true when capture, *except* drag_float
     bool dragging;  // captured specifically for drag_float
+    int drag_x;     // x position before drag started
+    int drag_y;     // y position before drag started
 } ta_mouse;
 
 static ta_mouse mouse;
@@ -50,14 +54,19 @@ void ta_mouse_drag_begin()
 {
     DLB_ASSERT(!mouse.dragging);
     mouse.dragging = true;
+    mouse.drag_x = mouse.x;
+    mouse.drag_y = mouse.y;
     SDL_SetRelativeMouseMode(true);
 }
 
 void ta_mouse_drag_end()
 {
     DLB_ASSERT(mouse.dragging);
-    mouse.dragging = false;
     SDL_SetRelativeMouseMode(mouse.captured);
+    ta_mouse_move(mouse.drag_x, mouse.drag_y);
+    mouse.dragging = false;
+    mouse.drag_x = 0;
+    mouse.drag_y = 0;
 }
 
 bool ta_mouse_dragging()
@@ -85,7 +94,13 @@ int ta_mouse_dy()
     return mouse.dy;
 }
 
-void ta_mouse_update()
+void ta_mouse_move(int x, int y)
+{
+    SDL_Window *window = ta_window_sdl(tg_game.window);
+    SDL_WarpMouseInWindow(window, x, y);
+}
+
+void ta_mouse_reset_relative()
 {
     mouse.dx = 0;
     mouse.dy = 0;
