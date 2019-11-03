@@ -8,7 +8,10 @@
 typedef struct ta_mouse {
     int x;
     int y;
-    bool captured;
+    int dx;
+    int dy;
+    bool captured;  // true when capture, *except* drag_float
+    bool dragging;  // captured specifically for drag_float
 } ta_mouse;
 
 static ta_mouse mouse;
@@ -24,12 +27,16 @@ void ta_mouse_init()
 
 void ta_mouse_capture_set(bool capture)
 {
+    if (mouse.dragging) return;
+
     mouse.captured = capture;
     SDL_SetRelativeMouseMode(mouse.captured);
 }
 
 void ta_mouse_capture_toggle()
 {
+    if (mouse.dragging) return;
+
     TOGGLE(mouse.captured);
     SDL_SetRelativeMouseMode(mouse.captured);
 }
@@ -37,6 +44,25 @@ void ta_mouse_capture_toggle()
 bool ta_mouse_captured()
 {
     return mouse.captured;
+}
+
+void ta_mouse_drag_begin()
+{
+    DLB_ASSERT(!mouse.dragging);
+    mouse.dragging = true;
+    SDL_SetRelativeMouseMode(true);
+}
+
+void ta_mouse_drag_end()
+{
+    DLB_ASSERT(mouse.dragging);
+    mouse.dragging = false;
+    SDL_SetRelativeMouseMode(mouse.captured);
+}
+
+bool ta_mouse_dragging()
+{
+    return mouse.dragging;
 }
 
 int ta_mouse_x()
@@ -49,12 +75,30 @@ int ta_mouse_y()
     return mouse.y;
 }
 
+int ta_mouse_dx()
+{
+    return mouse.dx;
+}
+
+int ta_mouse_dy()
+{
+    return mouse.dy;
+}
+
+void ta_mouse_update()
+{
+    mouse.dx = 0;
+    mouse.dy = 0;
+}
+
 void ta_mouse_event(struct ta_event *event)
 {
     switch (event->type) {
         case TA_EVENT_MOUSE_MOVE: {
             mouse.x = event->data.mouse_move.x;
             mouse.y = event->data.mouse_move.y;
+            mouse.dx = event->data.mouse_move.dx;
+            mouse.dy = event->data.mouse_move.dy;
             break;
         }
     }

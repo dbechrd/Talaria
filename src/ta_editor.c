@@ -139,6 +139,76 @@ const char *ta_editor_selected_entity()
     return editor.selected_entity;
 }
 
+typedef struct drag_float_state {
+    float *value;       // pointer to float being dragged
+    bool changed;       // true if float has been dragged at all
+    ta_vec3 cam_offset; // offset of camera from selected object (for chase cam)
+    float cam_position_smooth;      // original position_smooth
+    float cam_position_target_vel;  // original position_target_vel
+} drag_float_state;
+static drag_float_state drag_float;
+
+static void drag_float_begin(float *f)
+{
+    drag_float.value = f;
+    drag_float.changed = false;
+    ta_position *position = ta_scene_component_try(tg_game.scene,
+        RES_COMP_POSITION, editor.selected_entity);
+    if (position) {
+        ta_camera *active_cam = ta_scene_component(tg_game.scene,
+            RES_COMP_CAMERA, tg_game.e_active_camera);
+        drag_float.cam_position_smooth = active_cam->position_smooth;
+        drag_float.cam_position_target_vel = active_cam->position_target_vel;
+        active_cam->position_smooth = 0.9f;
+        active_cam->position_target_vel = 0.9f;
+        drag_float.cam_offset = vec3_sub(active_cam->position,
+            position->transform.position);
+    } else {
+        drag_float.cam_offset = VEC3_ZERO;
+    }
+    ta_mouse_drag_begin();
+}
+static void drag_float_update(float delta)
+{
+    if (!drag_float.value) return;
+
+    int mouse_dx = ta_mouse_dx();
+    if (mouse_dx) {
+        *drag_float.value += mouse_dx * delta;
+        drag_float.changed = true;
+
+        ta_position *position = ta_scene_component_try(tg_game.scene,
+            RES_COMP_POSITION, editor.selected_entity);
+        if (position) {
+            ta_camera *active_cam = ta_scene_component(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.e_active_camera);
+            ta_vec3 cam_pos = vec3_add(position->transform.position,
+                drag_float.cam_offset);
+#if 1
+            ta_camera_set_target_pos_absolute(active_cam, cam_pos);
+#else
+            ta_camera_set_position(active_cam, cam_pos.x, cam_pos.y, cam_pos.z);
+#endif
+        }
+    }
+}
+static void drag_float_end()
+{
+    if (drag_float.value) {
+        drag_float.value = 0;
+        drag_float.changed = false;
+        drag_float.cam_offset = VEC3_ZERO;
+        if (drag_float.cam_position_smooth) {
+            ta_camera *active_cam = ta_scene_component(tg_game.scene,
+                RES_COMP_CAMERA, tg_game.e_active_camera);
+            active_cam->position_smooth = drag_float.cam_position_smooth;
+            active_cam->position_target_vel = drag_float.cam_position_target_vel;
+        }
+        drag_float.cam_position_smooth = 0.0f;
+        ta_mouse_drag_end();
+    }
+}
+
 static void ui_node_panel()
 {
     u32 node_panel_id;
@@ -259,14 +329,25 @@ static void ui_node_panel()
                 } else {
                     //ta_ui_next_pad(4, 1, 4, 1);
                     if (ta_ui_label(0, pos_buf)) {
-                        DLB_ASSERT(!pos_editors[i]);
-                        pos_editors[i] = ta_text_entry_init();
-                        ta_text_entry_set_text(pos_editors[i], pos_buf, len);
-                        ta_text_entry_focus(pos_editors[i]);
+                        drag_float_begin(&pos_values[i]);
+                    } else {
+                        if (drag_float.value == &pos_values[i] &&
+                            ta_key_released(SDL_SCANCODE_MOUSE_LEFT))
+                        {
+                            if (!drag_float.changed) {
+                                DLB_ASSERT(!pos_editors[i]);
+                                pos_editors[i] = ta_text_entry_init();
+                                ta_text_entry_set_text(pos_editors[i], pos_buf, len);
+                                ta_text_entry_focus(pos_editors[i]);
+                            }
+                            drag_float_end();
+                        }
                     }
                 }
             }
         }
+
+        drag_float_update(0.01f);
 
         if (position) {
             //ta_ui_spacer(0, 2);

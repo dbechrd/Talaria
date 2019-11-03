@@ -535,11 +535,14 @@ ta_schema_field *ta_schema_field_find(ta_schema_field_type type, const char *nam
 
 void ta_schema_print_atom(FILE *f, ta_schema_field *field, void *ptr)
 {
-    fprintf(f, "%s: ", field->name);
     switch (field->type) {
         case ATOM_BOOL: {
             bool *val = ptr;
             fprintf(f, "%s", *val ? "true" : "false");
+            break;
+        } case ATOM_UINT8: {
+            u8 *val = ptr;
+            fprintf(f, "%u", *val);
             break;
         } case ATOM_INT: {
             int *val = ptr;
@@ -600,7 +603,6 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
         if (field->array_len) {
             //DLB_ASSERT(!in_array && "Don't know how to print nested arrays");
             indent(f, level + 1);
-            fprintf(f, "%s: [\n", field->name);
 
             u8 *arr = (ptr + field->offset);
             u32 arr_len = field->array_len;
@@ -608,21 +610,27 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
                 arr = *(void **)(ptr + field->offset);
                 arr_len = dlb_vec_len(arr);
             }
-            u8 *arr_end = arr + (arr_len * field->size);
-            for (u8 *p = arr; p != arr_end; p += field->size) {
-                if (field->type < TYP_COUNT) {
-                    indent(f, level + 2);
-                    fprintf(f, "{\n");
-                    ta_schema_print(f, field->type, p, level + 2, in_array + 1);
-                    indent(f, level + 2);
-                    fprintf(f, "},\n");
-                } else {
-                    ta_schema_print_atom(f, field, p);
-                }
-            }
 
-            indent(f, level + 1);
-            fprintf(f, "]\n");
+            if (arr_len) {
+                fprintf(f, "%s: [\n", field->name);
+                u8 *arr_end = arr + (arr_len * field->size);
+                for (u8 *p = arr; p != arr_end; p += field->size) {
+                    indent(f, level + 2);
+                    if (field->type < TYP_COUNT) {
+                        fprintf(f, "{\n");
+                        ta_schema_print(f, field->type, p, level + 2, in_array + 1);
+                        indent(f, level + 2);
+                        fprintf(f, "}");
+                    } else {
+                        ta_schema_print_atom(f, field, p);
+                    }
+                    fprintf(f, ",\n");
+                }
+                indent(f, level + 1);
+                fprintf(f, "]\n");
+            } else {
+                fprintf(f, "%s: []\n", field->name);
+            }
         } else {
             indent(f, level + 1);
             if (field->type < TYP_COUNT) {
@@ -632,6 +640,7 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
                     fprintf(f, ",");
                 }
             } else {
+                fprintf(f, "%s: ", field->name);
                 ta_schema_print_atom(f, field, ptr + field->offset);
                 if (in_array) {
                     fprintf(f, ",");

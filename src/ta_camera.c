@@ -29,7 +29,6 @@ void ta_camera_init(ta_camera *camera)
     ta_camera_recalc_projection(camera);
 
     if (vec3_zero(camera->up))        camera->up = VEC3_Y;
-
     camera->dirty = true;
 }
 
@@ -37,6 +36,7 @@ void ta_camera_set_ortho(ta_camera *camera, bool ortho)
 {
     camera->ortho = ortho;
     ta_camera_recalc_projection(camera);
+    camera->dirty = true;
 }
 
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z)
@@ -45,12 +45,14 @@ void ta_camera_set_position(ta_camera *camera, float x, float y, float z)
     camera->position.y = y;
     camera->position.z = z;
     camera->target_xform.position = camera->position;
+    camera->dirty = true;
 }
 
 void ta_camera_set_rotation(ta_camera *camera, float yaw, float pitch)
 {
     camera->yaw = yaw;
     camera->pitch = pitch;
+    camera->dirty = true;
 }
 
 #if 0
@@ -59,6 +61,7 @@ void ta_camera_set_rotate_accel(ta_camera *camera, float yaw_accel,
 {
     camera->yaw_accel = yaw_accel;
     camera->pitch_accel = pitch_accel;
+    camera->dirty = true;
 }
 #endif
 
@@ -94,6 +97,7 @@ void ta_camera_pitch(ta_camera *camera, float delta)
 void ta_camera_move(ta_camera *camera, ta_vec3 v)
 {
     camera->move_buffer = vec3_add(camera->move_buffer, v);
+    camera->dirty = true;
 }
 
 void ta_camera_recalc_projection(ta_camera *camera)
@@ -104,7 +108,7 @@ void ta_camera_recalc_projection(ta_camera *camera)
         camera->projection =
             mat4_perspective_inf(camera->fov, WINDOW_ASPECT, camera->znear);
     }
-
+    camera->dirty = true;
 }
 
 void ta_camera_event(ta_camera *camera, ta_event *event)

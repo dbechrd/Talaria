@@ -20,7 +20,7 @@ void ta_texture_init(ta_texture *tex)
         DLB_ASSERT(tex->width);
         DLB_ASSERT(tex->height);
         DLB_ASSERT(tex->channels);
-        ta_texture_load(tex);
+        ta_texture_load(tex, tex->pixels);
     }
 }
 
@@ -44,16 +44,16 @@ void ta_texture_load_path(ta_texture *tex, const char *path)
     if (!tex->channels) {
         tex->channels = channels;
     }
-    tex->pixels = pixels;
-    ta_texture_load(tex);
+    ta_texture_load(tex, pixels);
+    stbi_image_free(pixels);
 }
 
-void ta_texture_load(ta_texture *tex)
+void ta_texture_load(ta_texture *tex, u8 *pixels)
 {
-    DLB_ASSERT(tex->pixels);
     DLB_ASSERT(tex->width);
     DLB_ASSERT(tex->height);
     DLB_ASSERT(tex->channels);
+    DLB_ASSERT(pixels);
 
     GLint format_internal = 0;
     GLenum format = 0;
@@ -103,7 +103,7 @@ void ta_texture_load(ta_texture *tex)
 #endif
 
     glTexImage2D(GL_TEXTURE_2D, 0, format_internal, tex->width, tex->height,
-        0, format, GL_UNSIGNED_BYTE, tex->pixels);
+        0, format, GL_UNSIGNED_BYTE, pixels);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -125,11 +125,7 @@ void ta_texture_delete(ta_texture *tex)
 
 void ta_texture_free(ta_texture *tex)
 {
-    if (tex->path) {
-        stbi_image_free(tex->pixels);
-    } else {
-        dlb_vec_free(tex->pixels);
-    }
+    dlb_vec_free(tex->pixels);
     ta_texture_delete(tex);
 
     // TODO(perf): Delete all scene textures in a single GL call by aggregating

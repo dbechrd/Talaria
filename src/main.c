@@ -136,6 +136,8 @@ int main(int argc, char *argv[])
     DLB_ASSERT(scene1);
     DLB_ASSERT(tg_game.scene == scene1);
 
+    ta_scene_save_file(scene1, "scene1.txt");
+
     // TODO: Find closest 8 lights and store them in tg_game.lights
 
     ////////////////////////////////////////////////////////////////////////////
@@ -239,6 +241,7 @@ int main(int argc, char *argv[])
         ms_frame_prev = ms_frame_start;
 
         // Engine events
+        ta_mouse_update();
         ta_event_events();
 
         // If sim_max_steps == 0, assume we want lockstep physics
