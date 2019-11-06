@@ -47,14 +47,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0xC205B002 (-33.421883)
-    y: 0x4132C3AA (11.172770)
-    z: 0x407A5244 (3.911271)
+    x: 0x3F22DA5E (0.636145)
+    y: 0xC07FF2A6 (-3.999185)
+    z: 0x411E14E8 (9.880104)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x3FD9A1A4 (1.700245)
+  yaw: 0x42C2FFC6 (97.499557)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1E666EC (-28.800255)
+  pitch: 0xC15E659B (-13.899806)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -65,22 +65,22 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0x3EF68D20 (0.481545)
-    y: 0x3F605580 (0.876305)
-    z: 0xBC6A3161 (-0.014294)
+    x: 0xBD006CD3 (-0.031354)
+    y: 0x3F7880ED (0.970717)
+    z: 0xBE73E2CC (-0.238170)
   ortho: false
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
   position:
-    x: 0xBFA277E8 (-1.269284)
-    y: 0xC0A000C8 (-5.000095)
-    z: 0x42125A9C (36.588486)
+    x: 0xC0A31820 (-5.096695)
+    y: 0xC0A000CA (-5.000096)
+    z: 0x40C21F6B (6.066335)
   position_smooth: 0x3D4CCCCD (0.050000)
   position_target_vel: 0x3E4CCCCD (0.200000)
-  yaw: 0x42B3996F (89.799675)
+  yaw: 0x41519E69 (13.101174)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xBDCC5B1B (-0.099783)
+  pitch: 0xC1299849 (-10.599679)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2960000 (-75.000000)
   pitch_max: 0x42960000 (75.000000)
@@ -91,9 +91,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0x36CC4ED7 (0.000006)
-    y: 0x3F7FFFE7 (0.999999)
-    z: 0xBAE44426 (-0.001742)
+    x: 0x3E377531 (0.179158)
+    y: 0x3F7BA1B9 (0.982936)
+    z: 0xBD2AC8A2 (-0.041695)
   ortho: false
 #-------------------------------------------------------------------------------
 # TYP_GUN
@@ -204,7 +204,7 @@ ta_model:
   mesh_groups: [
     "chamber_0001",
   ]
-  material: "test"
+  material: "chamber_0001"
   invisible: false
   cast_shadows: true
   receive_shadows: true
@@ -268,6 +268,16 @@ ta_model:
   invisible: false
   cast_shadows: true
   receive_shadows: true
+ta_model:
+  name: "column_0001"
+  entity_name: "column_0001"
+  mesh_groups: [
+    "column_0001",
+  ]
+  material: "column_0001"
+  invisible: false
+  cast_shadows: true
+  receive_shadows: true
 #-------------------------------------------------------------------------------
 # TYP_PLAYER
 #-------------------------------------------------------------------------------
@@ -325,40 +335,40 @@ ta_position:
   entity_name: "player_one"
   transform:
     position:
-      x: 0xBFA2727A (-1.269119)
+      x: 0xC0A316FE (-5.096557)
       y: 0xC0E000D2 (-7.000100)
-      z: 0x42125A74 (36.588333)
+      z: 0x40C220C9 (6.066502)
     orientation:
-      x: 0x3E410FF2 (0.188537)
-      y: 0xBECDB98A (-0.401806)
-      z: 0xBF1F185C (-0.621465)
-      w: 0xBF254560 (-0.645590)
+      x: 0xBF654C3E (-0.895695)
+      y: 0xBDE2903D (-0.110627)
+      z: 0xBED42CA2 (-0.414403)
+      w: 0xBDF04343 (-0.117316)
 ta_position:
   name: "sphere1"
   entity_name: "sphere1"
   transform:
     position:
-      x: 0xC06A10DD (-3.657279)
+      x: 0xC0427F48 (-3.039019)
       y: 0xC0E000D2 (-7.000100)
-      z: 0x4081D518 (4.057262)
+      z: 0x40B25284 (5.572573)
     orientation:
-      x: 0x3F10C975 (0.565574)
-      y: 0x356633FE (0.000001)
-      z: 0x3F10C97D (0.565574)
-      w: 0xBF19A757 (-0.600210)
+      x: 0x3F15D131 (0.585223)
+      y: 0x3AE4B27C (0.001745)
+      z: 0x3F155646 (0.583348)
+      w: 0xBF102F28 (-0.563220)
 ta_position:
   name: "sphere2"
   entity_name: "sphere2"
   transform:
     position:
-      x: 0x3F91C674 (1.138869)
+      x: 0x408CD2F6 (4.400752)
       y: 0xC0E000D2 (-7.000100)
-      z: 0xBF3D2672 (-0.738868)
+      z: 0x3E149A99 (0.145121)
     orientation:
-      x: 0xBEE92F45 (-0.455439)
-      y: 0x34B09E00 (0.000000)
-      z: 0xBEE92F88 (-0.455441)
-      w: 0x3F43D3CB (0.764950)
+      x: 0x3DBCA95D (0.092120)
+      y: 0xBEC873D8 (-0.391509)
+      z: 0xBF69E2F5 (-0.913619)
+      w: 0x3D7384BC (0.059453)
 ta_position:
   name: "shadow_test_1"
   entity_name: "shadow_test_1"
@@ -372,6 +382,19 @@ ta_position:
       y: 0xBF800000 (-1.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
+ta_position:
+  name: "column_0001"
+  entity_name: "column_0001"
+  transform:
+    position:
+      x: 0x3CD94C12 (0.026526)
+      y: 0xC0E000D2 (-7.000100)
+      z: 0xBFD42DB9 (-1.657645)
+    orientation:
+      x: 0x3E274803 (0.163361)
+      y: 0xBF7B3968 (-0.981345)
+      z: 0x3D83F98C (0.064441)
+      w: 0xBDA04251 (-0.078251)
 #-------------------------------------------------------------------------------
 # TYP_RIGID_BODY
 #-------------------------------------------------------------------------------
@@ -434,14 +457,14 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   position:
-    x: 0xBFA2727A (-1.269119)
+    x: 0xC0A316FE (-5.096557)
     y: 0xC0E000D2 (-7.000100)
-    z: 0x42125A74 (36.588333)
+    z: 0x40C220C9 (6.066502)
   orientation:
-    x: 0x3E410FF2 (0.188537)
-    y: 0xBECDB98A (-0.401806)
-    z: 0xBF1F185C (-0.621465)
-    w: 0xBF254560 (-0.645590)
+    x: 0xBF654C3E (-0.895695)
+    y: 0xBDE2903D (-0.110627)
+    z: 0xBED42CA2 (-0.414403)
+    w: 0xBDF04343 (-0.117316)
   mass: 0x3F800000 (1.000000)
   trigger: false
 ta_rigid_body:
@@ -456,14 +479,14 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   position:
-    x: 0xC06A10DD (-3.657279)
+    x: 0xC0427F48 (-3.039019)
     y: 0xC0E000D2 (-7.000100)
-    z: 0x4081D518 (4.057262)
+    z: 0x40B25284 (5.572573)
   orientation:
-    x: 0x3F10C975 (0.565574)
-    y: 0x356633FE (0.000001)
-    z: 0x3F10C97D (0.565574)
-    w: 0xBF19A757 (-0.600210)
+    x: 0x3F15D131 (0.585223)
+    y: 0x3AE4B27C (0.001745)
+    z: 0x3F155646 (0.583348)
+    w: 0xBF102F28 (-0.563220)
   mass: 0x3F800000 (1.000000)
   trigger: false
 ta_rigid_body:
@@ -478,14 +501,36 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   position:
-    x: 0x3F91C674 (1.138869)
+    x: 0x408CD2F6 (4.400752)
     y: 0xC0E000D2 (-7.000100)
-    z: 0xBF3D2672 (-0.738868)
+    z: 0x3E149A99 (0.145121)
   orientation:
-    x: 0xBEE92F45 (-0.455439)
-    y: 0x34B09E00 (0.000000)
-    z: 0xBEE92F88 (-0.455441)
-    w: 0x3F43D3CB (0.764950)
+    x: 0x3DBCA95D (0.092120)
+    y: 0xBEC873D8 (-0.391509)
+    z: 0xBF69E2F5 (-0.913619)
+    w: 0x3D7384BC (0.059453)
+  mass: 0x3F800000 (1.000000)
+  trigger: false
+ta_rigid_body:
+  name: "column_0001"
+  entity_name: "column_0001"
+  collider:
+    type: 1  # TA_COLLIDER_SHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  position:
+    x: 0x3CD94C12 (0.026526)
+    y: 0xC0E000D2 (-7.000100)
+    z: 0xBFD42DB9 (-1.657645)
+  orientation:
+    x: 0x3E274803 (0.163361)
+    y: 0xBF7B3968 (-0.981345)
+    z: 0x3D83F98C (0.064441)
+    w: 0xBDA04251 (-0.078251)
   mass: 0x3F800000 (1.000000)
   trigger: false
 #-------------------------------------------------------------------------------
@@ -541,6 +586,16 @@ ta_material:
   shader: "mesh"
   tex_albedo: "cobble_diff"
   tex_metallic: "cobble_mrao"
+ta_material:
+  name: "chamber_0001"
+  shader: "mesh"
+  tex_albedo: "test_diff"
+  tex_metallic: "test_mrao"
+ta_material:
+  name: "column_0001"
+  shader: "mesh"
+  tex_albedo: "red_diff"
+  tex_metallic: "red_mrao"
 #-------------------------------------------------------------------------------
 # TYP_MESH_GROUP
 #-------------------------------------------------------------------------------
@@ -562,6 +617,9 @@ ta_mesh_group:
 ta_mesh_group:
   name: "letter_r"
   path: "data/mesh/letter_r.obj"
+ta_mesh_group:
+  name: "column_0001"
+  path: "data/mesh/column_0001.obj"
 #-------------------------------------------------------------------------------
 # TYP_MESH
 #-------------------------------------------------------------------------------
@@ -1112,23 +1170,23 @@ ta_texture:
   path: ""
   pixels: [
     {
-      r: 0,
-      g: 45,
-      b: 255,
+      r: 255,
+      g: 0,
+      b: 0,
       a: 255,
     },
   ]
   width: 1
   height: 1
   channels: 4
-  linear: true
+  linear: false
 ta_texture:
   name: "red_mrao"
   path: ""
   pixels: [
     {
-      r: 255,
-      g: 90,
+      r: 0,
+      g: 128,
       b: 0,
       a: 0,
     },

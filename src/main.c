@@ -194,7 +194,11 @@ int main(int argc, char *argv[])
     DLB_ASSERT(tg_shader_cubemap);
     DLB_ASSERT(tg_shader_shadow);
 
+#if _DEBUG
+    ta_game_state_set(&tg_game, TA_GAME_STATE_FREE_CAM);
+#else
     ta_game_state_set(&tg_game, TA_GAME_STATE_PLAY);
+#endif
     ta_log_write(&tg_debug_log, "Active camera: %s\n", tg_game.e_active_camera);
     DLB_ASSERT(tg_game.e_active_camera);
 

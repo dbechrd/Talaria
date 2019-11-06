@@ -509,7 +509,7 @@ static void ui_texture_panel()
         ta_ui_next_size(68, 68);
         //ta_ui_next_margin(0, 0, 2, 0);
         //ta_ui_next_pad(2, 2, 2, 2);
-        ta_ui_next_size(texture->width, texture->height);
+        //ta_ui_next_size(texture->width, texture->height);
         if (ta_ui_button(0, texture, 0)) {
             const char *entity_name = ta_editor_selected_entity();
             if (entity_name) {
