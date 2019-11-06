@@ -55,7 +55,7 @@ ta_camera:
   entity_name: "freecam"
   position: { x: 0.0, y: 2.0, z: 4.0 }
   position_smooth: 0.1
-  position_target_vel: 0.2
+  position_target_vel: 0.3
   yaw: 90.0
   yaw_smooth: 0.7
   pitch: -10.0
@@ -71,20 +71,23 @@ ta_camera:
 ta_light:
   name: "sun"
   entity_name: "sun"
-  disabled: true
-  intensity: 1.0
-  color: { r: 1.0, g: 1.0, b: 1.0 }
+  disabled: false
+  cast_shadows: true
   type: 1  # TA_LIGHT_DIRECTIONAL
   directional:
-    direction: { x: -0.2, y: 10.0, z: 1.0 }
+    intensity: 1.0
+    color: { r: 1.0, g: 1.0, b: 1.0 }
+    direction: { x: -1.0, y: -1.0, z: 0.0 }
 ta_light:
   name: "point_room2"
   entity_name: "point_room2"
-  disabled: false
-  intensity: 1.0
   position: { x: 3.0, y: -4.0, z: 3.0 }
-  color:    { r: 1.0, g: 1.0, b: 1.0 }
+  disabled: true
+  cast_shadows: true
   type: 2  # TA_LIGHT_POINT
+  point:
+    intensity: 1.0
+    color: { r: 1.0, g: 1.0, b: 1.0 }
   shadowmap:
     resolution: 1024
     znear: 0.1
@@ -92,19 +95,23 @@ ta_light:
 ta_light:
   name: "point_room3"
   entity_name: "point_room3"
-  disabled: false
-  intensity: 1.0
   position: { x: 5.0, y: -4.0, z: -28.0 }
-  color:    { r: 1.0, g: 0.1, b: 1.0 }
+  disabled: true
+  cast_shadows: true
   type: 2  # TA_LIGHT_POINT
+  point:
+    intensity: 1.0
+    color:    { r: 1.0, g: 0.1, b: 1.0 }
 ta_light:
   name: "point_attic"
   entity_name: "point_attic"
-  disabled: false
-  intensity: 1.0
   position: { x: 3.0, y: 12.0, z: 3.0 }
-  color:    { r: 1.0, g: 1.0, b: 0.4 }
+  disabled: true
+  cast_shadows: true
   type: 2  # TA_LIGHT_POINT
+  point:
+    intensity: 1.0
+    color:    { r: 1.0, g: 1.0, b: 0.4 }
 
 #-------------------------------------------------------------------------------
 # Textures
@@ -540,6 +547,14 @@ ta_shader:
         { name: "u_lights[5].direction",       type: 5 },  # TA_GLSL_VEC3
         { name: "u_lights[6].direction",       type: 5 },  # TA_GLSL_VEC3
         { name: "u_lights[7].direction",       type: 5 },  # TA_GLSL_VEC3
+        { name: "u_lights[0].cast_shadows",    type: 11 },  # TA_GLSL_BOOL
+        { name: "u_lights[1].cast_shadows",    type: 11 },  # TA_GLSL_BOOL
+        { name: "u_lights[2].cast_shadows",    type: 11 },  # TA_GLSL_BOOL
+        { name: "u_lights[3].cast_shadows",    type: 11 },  # TA_GLSL_BOOL
+        { name: "u_lights[4].cast_shadows",    type: 11 },  # TA_GLSL_BOOL
+        { name: "u_lights[5].cast_shadows",    type: 11 },  # TA_GLSL_BOOL
+        { name: "u_lights[6].cast_shadows",    type: 11 },  # TA_GLSL_BOOL
+        { name: "u_lights[7].cast_shadows",    type: 11 },  # TA_GLSL_BOOL
         { name: "u_lights[0].shadowmap2d",     type: 3 },  # TA_GLSL_SAMPLER2D
         { name: "u_lights[1].shadowmap2d",     type: 3 },  # TA_GLSL_SAMPLER2D
         { name: "u_lights[2].shadowmap2d",     type: 3 },  # TA_GLSL_SAMPLER2D

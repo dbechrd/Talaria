@@ -298,7 +298,7 @@ static void ui_node_panel()
             pos_values = (float *)&light->position;
         }
         if (pos_values) {
-            const char *pos_labels[3] = { "x: ", " y: ", " z: " };
+            const char *pos_labels[3] = { "x:", "y:", "z:" };
             static ta_text_entry *pos_editors[3] = { 0 };
             for (int i = 0; i < 3; i++) {
                 ta_ui_label(0, pos_labels[i]);
@@ -551,6 +551,27 @@ static void ui_textbox_panel()
     ta_ui_textbox(0, text_entry);
     ta_ui_panel_end(textbox_panel_id);
 }
+static void ui_scene_panel()
+{
+    u32 scene_panel_id;
+    ta_ui_panel_begin(0, &scene_panel_id);
+    ta_ui_row_begin();
+
+    static save_button_hovered = false;
+    if (save_button_hovered) {
+        ta_ui_next_bg_color(UI_STATE_ALL, 1.0f, 0.0f, 0.0f, 1.0f);
+    }
+    if (ta_ui_label(0, "Save scene")) {
+        ta_scene_save_file(tg_game.scene, "data/scene/scene1_gen.dml");
+    }
+    if (ta_ui_last_frame_state().hover) {
+        save_button_hovered = true;
+    } else {
+        save_button_hovered = false;
+    }
+
+    ta_ui_panel_end(scene_panel_id);
+}
 static void ui_editor_sidebar()
 {
     enum {
@@ -558,6 +579,7 @@ static void ui_editor_sidebar()
         CATEGORY_AUDIO,
         CATEGORY_TEXTURES,
         CATEGORY_TEXTBOX,
+        CATEGORY_SCENE,
         CATEGORY_COUNT
     };
     const char *category_names[CATEGORY_COUNT] = { 0 };
@@ -565,6 +587,7 @@ static void ui_editor_sidebar()
     category_names[CATEGORY_AUDIO]    = INTERN(STRING(CATEGORY_AUDIO));
     category_names[CATEGORY_TEXTURES] = INTERN(STRING(CATEGORY_TEXTURES));
     category_names[CATEGORY_TEXTBOX]  = INTERN(STRING(CATEGORY_TEXTBOX));
+    category_names[CATEGORY_SCENE]    = INTERN(STRING(CATEGORY_SCENE));
     static int category_selected = CATEGORY_NODE;
 
     ta_ui_row_begin();
@@ -600,6 +623,8 @@ static void ui_editor_sidebar()
         } case CATEGORY_TEXTBOX: {
             ui_textbox_panel();
             break;
+        } case CATEGORY_SCENE: {
+            ui_scene_panel();
         } default: {
             break;
         }

@@ -33,8 +33,8 @@ const char *ta_light_type_str(int type)
 
 void ta_light_init(ta_light *light)
 {
-    if (!light->intensity) {
-        light->intensity = DEFAULT_LIGHT_INTENSITY;
+    if (!light->data.common.intensity) {
+        light->data.common.intensity = DEFAULT_LIGHT_INTENSITY;
     }
     if (light->type != TA_LIGHT_AMBIENT) {
         if (!light->shadowmap.resolution) {
@@ -233,6 +233,8 @@ static shadowpass_render shadowpass_renderers[TA_LIGHT_COUNT] = {
 void ta_light_shadowpass_render(ta_light *light, ta_shader *shader,
     float alpha, ta_model *models)
 {
+    if (!light->cast_shadows) return;
+
     if (shadowpass_renderers[light->type]) {
         shadowpass_renderers[light->type](light, shader, alpha, models);
     } else {

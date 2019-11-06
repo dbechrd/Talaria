@@ -127,7 +127,10 @@ static token *token_read(ta_file *f, token **tokens)
             int len = 0;
             ta_file_read(f, buf, MAX_COMMENT_LEN, C_COMMENT, C_COMMENT_END, &len);
             tok->length = len;
-            tok->value.string = ta_symbol_intern(buf, len);
+            // NOTE: Allow empty comments ('#' on a line by itself)
+            if (tok->length) {
+                tok->value.string = ta_symbol_intern(buf, len);
+            }
             break;
         }
         case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
@@ -914,6 +917,16 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
         fprintf(hnd, "# %s\n", ta_schema_field_type_str(schema_type));
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
 
+        if (res_type == RES_MESH) {
+            fprintf(hnd,
+                "#\n"
+                "# NOTE: We may have mesh properties at some point, but, for now, meshes are\n"
+                "# created at run-time via mesh_groups.\n"
+                "#\n"
+            );
+            continue;
+        }
+
         u32 size = tg_schemas[schema_type].size;
         void *pool = scene->resource_data[res_type];
         u8 *end = dlb_vec_end_size(pool, size);
@@ -1194,7 +1207,7 @@ void ta_scene_update(ta_scene *scene, float dt)
 
 void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 {
-    glEnable(GL_CULL_FACE);
+    //glDisable(GL_CULL_FACE);
     //glCullFace(GL_FRONT);
     //glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1222,6 +1235,7 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
         //ta_light_shadowpass_render(light, shader, alpha, scene->pools[TYP_BUTTON]);
     }
     ta_shader_unbind(shader);
+    //glEnable(GL_CULL_FACE);
 }
 
 void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
@@ -1275,9 +1289,9 @@ void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
             color.g = 0.5f;
             color.b = 0.5f;
         } else {
-            color.r = light->color.r;
-            color.g = light->color.g;
-            color.b = light->color.b;
+            color.r = light->data.common.color.r;
+            color.g = light->data.common.color.g;
+            color.b = light->data.common.color.b;
         }
         ta_primitive_push_sphere(light_pos, color);
 

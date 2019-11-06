@@ -24,6 +24,7 @@ typedef enum ta_glsl_type {
     TA_GLSL_MAT4         = 8,
     TA_GLSL_STRUCT       = 9,
     TA_GLSL_SAMPLER_CUBE = 10,  // TODO: Renumber these? Handle enums by string
+    TA_GLSL_BOOL         = 11,
 } ta_glsl_type;
 
 typedef struct ta_shader_attribute {
@@ -36,6 +37,7 @@ typedef struct ta_shader_uniform {
     const char *name;
     ta_glsl_type type;
     union {
+        GLboolean glbool;
         GLint glint;
         GLuint gluint;
         GLfloat glfloat;
@@ -77,6 +79,7 @@ void ta_shader_delete(ta_shader *shader);
 void ta_shader_free(ta_shader *shader);
 void ta_shader_bind(ta_shader *shader);
 void ta_shader_unbind(ta_shader *shader);
+void ta_shader_set_bool(ta_shader *shader, const char *name, GLboolean value);
 void ta_shader_set_int(ta_shader *shader, const char *name, GLint value);
 void ta_shader_set_uint(ta_shader *shader, const char *name, GLuint value);
 void ta_shader_set_float(ta_shader *shader, const char *name, GLfloat value);

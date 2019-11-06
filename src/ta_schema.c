@@ -284,16 +284,24 @@ void ta_schema_register()
     TYPE_END(ta_rgba_u8);
 
     TYPE_START(ta_light_ambient, TYP_LIGHT_AMBIENT, 0, 0);
+    TYPE_FIELD(ta_light_ambient, intensity, ATOM_FLOAT);
+    TYPE_FIELD(ta_light_ambient, color,     TYP_RGB);
     TYPE_END(ta_light_ambient);
 
     TYPE_START(ta_light_directional, TYP_LIGHT_DIRECTIONAL, 0, 0);
+    TYPE_FIELD(ta_light_directional, intensity, ATOM_FLOAT);
+    TYPE_FIELD(ta_light_directional, color,     TYP_RGB);
     TYPE_FIELD(ta_light_directional, direction, TYP_VEC3);
     TYPE_END(ta_light_directional);
 
     TYPE_START(ta_light_point, TYP_LIGHT_POINT, 0, 0);
+    TYPE_FIELD(ta_light_point, intensity, ATOM_FLOAT);
+    TYPE_FIELD(ta_light_point, color,     TYP_RGB);
     TYPE_END(ta_light_point);
 
     TYPE_START(ta_light_spot, TYP_LIGHT_SPOT, 0, 0);
+    TYPE_FIELD(ta_light_spot, intensity,     ATOM_FLOAT);
+    TYPE_FIELD(ta_light_spot, color,         TYP_RGB);
     TYPE_FIELD(ta_light_spot, direction,     TYP_VEC3);
     TYPE_FIELD(ta_light_spot, theta_cone,    ATOM_FLOAT);
     TYPE_FIELD(ta_light_spot, theta_falloff, ATOM_FLOAT);
@@ -454,12 +462,11 @@ void ta_schema_register()
     TYPE_END(ta_gun);
 
     TYPE_START(ta_light, TYP_LIGHT, ta_light_init, 0);
-    TYPE_FIELD(ta_light, name,        ATOM_STRING);
-    TYPE_FIELD(ta_light, entity_name, ATOM_STRING);
-    TYPE_FIELD(ta_light, disabled,    ATOM_BOOL);
-    TYPE_FIELD(ta_light, intensity,   ATOM_FLOAT);
-    TYPE_FIELD(ta_light, position,    TYP_VEC3);
-    TYPE_FIELD(ta_light, color,       TYP_RGB);
+    TYPE_FIELD(ta_light, name,         ATOM_STRING);
+    TYPE_FIELD(ta_light, entity_name,  ATOM_STRING);
+    TYPE_FIELD(ta_light, disabled,     ATOM_BOOL);
+    TYPE_FIELD(ta_light, cast_shadows, ATOM_BOOL);
+    TYPE_FIELD(ta_light, position,     TYP_VEC3);
     TYPE_UNION_TYPE(ta_light,  type,        ATOM_ENUM,             ta_light_type_str);
     TYPE_UNION_FIELD(ta_light, ambient,     TYP_LIGHT_AMBIENT,     data, TA_LIGHT_AMBIENT);
     TYPE_UNION_FIELD(ta_light, directional, TYP_LIGHT_DIRECTIONAL, data, TA_LIGHT_DIRECTIONAL);

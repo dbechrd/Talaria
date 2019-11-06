@@ -1,0 +1,1179 @@
+#-------------------------------------------------------------------------------
+# [SCENE] data/scene/scene1_gen.dml
+#-------------------------------------------------------------------------------
+# TYP_AUDIO_SOURCE
+#-------------------------------------------------------------------------------
+ta_audio_source:
+  name: "background_music"
+  entity_name: "background_music"
+  audio_buffer: "mus_genesis"
+  pitch: 0x3F800000 (1.000000)
+  gain: 0x3F800000 (1.000000)
+  loop: false
+ta_audio_source:
+  name: "button_0001"
+  entity_name: "button_0001"
+  audio_buffer: ""
+  pitch: 0x3F800000 (1.000000)
+  gain: 0x3F800000 (1.000000)
+  loop: false
+ta_audio_source:
+  name: "gun"
+  entity_name: "gun"
+  audio_buffer: ""
+  pitch: 0x3F800000 (1.000000)
+  gain: 0x3F800000 (1.000000)
+  loop: false
+ta_audio_source:
+  name: "player_one"
+  entity_name: "player_one"
+  audio_buffer: ""
+  pitch: 0x3F800000 (1.000000)
+  gain: 0x3F800000 (1.000000)
+  loop: false
+#-------------------------------------------------------------------------------
+# TYP_BUTTON
+#-------------------------------------------------------------------------------
+ta_e_button:
+  name: "button_0001"
+  entity_name: "button_0001"
+  sfx_activated: "sfx_button_activated"
+  sfx_active: ""
+  sfx_deactivated: "sfx_button_deactivated"
+#-------------------------------------------------------------------------------
+# TYP_CAMERA
+#-------------------------------------------------------------------------------
+ta_camera:
+  name: "freecam"
+  entity_name: "freecam"
+  position:
+    x: 0xC205B002 (-33.421883)
+    y: 0x4132C3AA (11.172770)
+    z: 0x407A5244 (3.911271)
+  position_smooth: 0x3DCCCCCD (0.100000)
+  position_target_vel: 0x3E99999A (0.300000)
+  yaw: 0x3FD9A1A4 (1.700245)
+  yaw_smooth: 0x3F333333 (0.700000)
+  pitch: 0xC1E666EC (-28.800255)
+  pitch_smooth: 0x3F333333 (0.700000)
+  pitch_min: 0xC2B40000 (-90.000000)
+  pitch_max: 0x42B40000 (90.000000)
+  fov: 0x42960000 (75.000000)
+  znear: 0x3DCCCCCD (0.100000)
+  focal_point:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+  up:
+    x: 0x3EF68D20 (0.481545)
+    y: 0x3F605580 (0.876305)
+    z: 0xBC6A3161 (-0.014294)
+  ortho: false
+ta_camera:
+  name: "player_one"
+  entity_name: "player_one"
+  position:
+    x: 0xBFA277E8 (-1.269284)
+    y: 0xC0A000C8 (-5.000095)
+    z: 0x42125A9C (36.588486)
+  position_smooth: 0x3D4CCCCD (0.050000)
+  position_target_vel: 0x3E4CCCCD (0.200000)
+  yaw: 0x42B3996F (89.799675)
+  yaw_smooth: 0x3F333333 (0.700000)
+  pitch: 0xBDCC5B1B (-0.099783)
+  pitch_smooth: 0x3F333333 (0.700000)
+  pitch_min: 0xC2960000 (-75.000000)
+  pitch_max: 0x42960000 (75.000000)
+  fov: 0x42820000 (65.000000)
+  znear: 0x3DCCCCCD (0.100000)
+  focal_point:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+  up:
+    x: 0x36CC4ED7 (0.000006)
+    y: 0x3F7FFFE7 (0.999999)
+    z: 0xBAE44426 (-0.001742)
+  ortho: false
+#-------------------------------------------------------------------------------
+# TYP_GUN
+#-------------------------------------------------------------------------------
+ta_gun:
+  name: "gun"
+  entity_name: "gun"
+  carrying_ammo: 20
+  carrying_ammo_max: 20
+  loaded_ammo: 8
+  loaded_ammo_max: 8
+  sfx_bang: "sfx_gunshot"
+  sfx_reload: "sfx_cock"
+  sfx_empty: "sfx_oh_no"
+#-------------------------------------------------------------------------------
+# TYP_LIGHT
+#-------------------------------------------------------------------------------
+ta_light:
+  name: "sun"
+  entity_name: "sun"
+  disabled: true
+  cast_shadows: true
+  position:
+    x: 0x00000000 (0.000000)
+    y: 0x40A00000 (5.000000)
+    z: 0x00000000 (0.000000)
+  type: 1  # TA_LIGHT_DIRECTIONAL
+  directional:
+    intensity: 0x3F800000 (1.000000)
+    color:
+      r: 0x3F800000 (1.000000)
+      g: 0x3F800000 (1.000000)
+      b: 0x3F800000 (1.000000)
+    direction:
+      x: 0xBF3504F4 (-0.707107)
+      y: 0xBF3504F4 (-0.707107)
+      z: 0x00000000 (0.000000)
+  shadowmap:
+    resolution: 1024
+    znear: 0x3DCCCCCD (0.100000)
+    zfar: 0x42480000 (50.000000)
+ta_light:
+  name: "point_room2"
+  entity_name: "point_room2"
+  disabled: false
+  cast_shadows: true
+  position:
+    x: 0x40400000 (3.000000)
+    y: 0xC0800000 (-4.000000)
+    z: 0x40400000 (3.000000)
+  type: 2  # TA_LIGHT_POINT
+  point:
+    intensity: 0x3F800000 (1.000000)
+    color:
+      r: 0x3F800000 (1.000000)
+      g: 0x3F800000 (1.000000)
+      b: 0x3F800000 (1.000000)
+  shadowmap:
+    resolution: 1024
+    znear: 0x3DCCCCCD (0.100000)
+    zfar: 0x42200000 (40.000000)
+ta_light:
+  name: "point_room3"
+  entity_name: "point_room3"
+  disabled: false
+  cast_shadows: true
+  position:
+    x: 0x40A00000 (5.000000)
+    y: 0xC0800000 (-4.000000)
+    z: 0xC1E00000 (-28.000000)
+  type: 2  # TA_LIGHT_POINT
+  point:
+    intensity: 0x3F800000 (1.000000)
+    color:
+      r: 0x3F800000 (1.000000)
+      g: 0x3DCCCCCD (0.100000)
+      b: 0x3F800000 (1.000000)
+  shadowmap:
+    resolution: 1024
+    znear: 0x3DCCCCCD (0.100000)
+    zfar: 0x42480000 (50.000000)
+ta_light:
+  name: "point_attic"
+  entity_name: "point_attic"
+  disabled: false
+  cast_shadows: true
+  position:
+    x: 0x40400000 (3.000000)
+    y: 0x41400000 (12.000000)
+    z: 0x40400000 (3.000000)
+  type: 2  # TA_LIGHT_POINT
+  point:
+    intensity: 0x3F800000 (1.000000)
+    color:
+      r: 0x3F800000 (1.000000)
+      g: 0x3F800000 (1.000000)
+      b: 0x3ECCCCCD (0.400000)
+  shadowmap:
+    resolution: 1024
+    znear: 0x3DCCCCCD (0.100000)
+    zfar: 0x42480000 (50.000000)
+#-------------------------------------------------------------------------------
+# TYP_MODEL
+#-------------------------------------------------------------------------------
+ta_model:
+  name: "chamber_0001"
+  entity_name: "chamber_0001"
+  mesh_groups: [
+    "chamber_0001",
+  ]
+  material: "test"
+  invisible: false
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "wakeup"
+  entity_name: "wakeup"
+  mesh_groups: [
+    "wakeup",
+  ]
+  material: "cobble"
+  invisible: true
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "button_0001"
+  entity_name: "button_0001"
+  mesh_groups: [
+    "button",
+  ]
+  material: "test"
+  invisible: false
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "player_one"
+  entity_name: "player_one"
+  mesh_groups: [
+    "prim_cube",
+  ]
+  material: "cobble"
+  invisible: false
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "sphere1"
+  entity_name: "sphere1"
+  mesh_groups: [
+    "prim_sphere",
+  ]
+  material: "test"
+  invisible: false
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "sphere2"
+  entity_name: "sphere2"
+  mesh_groups: [
+    "prim_sphere",
+  ]
+  material: "red"
+  invisible: false
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "shadow_test_1"
+  entity_name: "shadow_test_1"
+  mesh_groups: [
+    "letter_r",
+  ]
+  material: "test"
+  invisible: false
+  cast_shadows: true
+  receive_shadows: true
+#-------------------------------------------------------------------------------
+# TYP_PLAYER
+#-------------------------------------------------------------------------------
+ta_player:
+  name: "player_one"
+  entity_name: "player_one"
+  e_gun: "gun"
+  e_guns: [
+    "gun",
+  ]
+#-------------------------------------------------------------------------------
+# TYP_POSITION
+#-------------------------------------------------------------------------------
+ta_position:
+  name: "chamber_0001"
+  entity_name: "chamber_0001"
+  transform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0xC1000000 (-8.000000)
+      z: 0x3F800000 (1.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_position:
+  name: "wakeup"
+  entity_name: "wakeup"
+  transform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x41000000 (8.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_position:
+  name: "button_0001"
+  entity_name: "button_0001"
+  transform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0xC1000000 (-8.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_position:
+  name: "player_one"
+  entity_name: "player_one"
+  transform:
+    position:
+      x: 0xBFA2727A (-1.269119)
+      y: 0xC0E000D2 (-7.000100)
+      z: 0x42125A74 (36.588333)
+    orientation:
+      x: 0x3E410FF2 (0.188537)
+      y: 0xBECDB98A (-0.401806)
+      z: 0xBF1F185C (-0.621465)
+      w: 0xBF254560 (-0.645590)
+ta_position:
+  name: "sphere1"
+  entity_name: "sphere1"
+  transform:
+    position:
+      x: 0xC06A10DD (-3.657279)
+      y: 0xC0E000D2 (-7.000100)
+      z: 0x4081D518 (4.057262)
+    orientation:
+      x: 0x3F10C975 (0.565574)
+      y: 0x356633FE (0.000001)
+      z: 0x3F10C97D (0.565574)
+      w: 0xBF19A757 (-0.600210)
+ta_position:
+  name: "sphere2"
+  entity_name: "sphere2"
+  transform:
+    position:
+      x: 0x3F91C674 (1.138869)
+      y: 0xC0E000D2 (-7.000100)
+      z: 0xBF3D2672 (-0.738868)
+    orientation:
+      x: 0xBEE92F45 (-0.455439)
+      y: 0x34B09E00 (0.000000)
+      z: 0xBEE92F88 (-0.455441)
+      w: 0x3F43D3CB (0.764950)
+ta_position:
+  name: "shadow_test_1"
+  entity_name: "shadow_test_1"
+  transform:
+    position:
+      x: 0x40900000 (4.500000)
+      y: 0xC0800000 (-4.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0xBF800000 (-1.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+#-------------------------------------------------------------------------------
+# TYP_RIGID_BODY
+#-------------------------------------------------------------------------------
+ta_rigid_body:
+  name: "chamber_0001"
+  entity_name: "chamber_0001"
+  collider:
+    type: 0  # TA_COLLIDER_PLANE
+    plane:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      normal:
+        x: 0x00000000 (0.000000)
+        y: 0x3F800000 (1.000000)
+        z: 0x00000000 (0.000000)
+  position:
+    x: 0x00000000 (0.000000)
+    y: 0xC1000000 (-8.000000)
+    z: 0x3F800000 (1.000000)
+  orientation:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+    w: 0x3F800000 (1.000000)
+  mass: 0x00000000 (0.000000)
+  trigger: false
+ta_rigid_body:
+  name: "button_0001"
+  entity_name: "button_0001"
+  collider:
+    type: 1  # TA_COLLIDER_SHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F333333 (0.700000)
+  position:
+    x: 0x00000000 (0.000000)
+    y: 0xC1000000 (-8.000000)
+    z: 0x00000000 (0.000000)
+  orientation:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+    w: 0x3F800000 (1.000000)
+  mass: 0x3F800000 (1.000000)
+  trigger: true
+ta_rigid_body:
+  name: "player_one"
+  entity_name: "player_one"
+  collider:
+    type: 1  # TA_COLLIDER_SHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  position:
+    x: 0xBFA2727A (-1.269119)
+    y: 0xC0E000D2 (-7.000100)
+    z: 0x42125A74 (36.588333)
+  orientation:
+    x: 0x3E410FF2 (0.188537)
+    y: 0xBECDB98A (-0.401806)
+    z: 0xBF1F185C (-0.621465)
+    w: 0xBF254560 (-0.645590)
+  mass: 0x3F800000 (1.000000)
+  trigger: false
+ta_rigid_body:
+  name: "sphere1"
+  entity_name: "sphere1"
+  collider:
+    type: 1  # TA_COLLIDER_SHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  position:
+    x: 0xC06A10DD (-3.657279)
+    y: 0xC0E000D2 (-7.000100)
+    z: 0x4081D518 (4.057262)
+  orientation:
+    x: 0x3F10C975 (0.565574)
+    y: 0x356633FE (0.000001)
+    z: 0x3F10C97D (0.565574)
+    w: 0xBF19A757 (-0.600210)
+  mass: 0x3F800000 (1.000000)
+  trigger: false
+ta_rigid_body:
+  name: "sphere2"
+  entity_name: "sphere2"
+  collider:
+    type: 1  # TA_COLLIDER_SHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  position:
+    x: 0x3F91C674 (1.138869)
+    y: 0xC0E000D2 (-7.000100)
+    z: 0xBF3D2672 (-0.738868)
+  orientation:
+    x: 0xBEE92F45 (-0.455439)
+    y: 0x34B09E00 (0.000000)
+    z: 0xBEE92F88 (-0.455441)
+    w: 0x3F43D3CB (0.764950)
+  mass: 0x3F800000 (1.000000)
+  trigger: false
+#-------------------------------------------------------------------------------
+# TYP_AUDIO_BUFFER
+#-------------------------------------------------------------------------------
+ta_audio_buffer:
+  name: "mus_wakeup"
+  path: "data/ambient/wakeup.raw"
+ta_audio_buffer:
+  name: "mus_genesis"
+  path: "data/ambient/genesis.raw"
+ta_audio_buffer:
+  name: "sfx_button_activated"
+  path: "data/sfx/button_activated.raw"
+ta_audio_buffer:
+  name: "sfx_button_deactivated"
+  path: "data/sfx/button_deactivated.raw"
+ta_audio_buffer:
+  name: "sfx_cock"
+  path: "data/sfx/cock.raw"
+ta_audio_buffer:
+  name: "sfx_gunshot"
+  path: "data/sfx/gunshot.raw"
+ta_audio_buffer:
+  name: "sfx_oh_no"
+  path: "data/sfx/oh_no.raw"
+ta_audio_buffer:
+  name: "sfx_explosion"
+  path: "data/sfx/explosion.raw"
+#-------------------------------------------------------------------------------
+# TYP_FONT
+#-------------------------------------------------------------------------------
+ta_font:
+  name: "consola"
+  path: "data/font/consola.ttf"
+  pixel_height: 0x41800000 (16.000000)
+  shader: "text"
+#-------------------------------------------------------------------------------
+# TYP_MATERIAL
+#-------------------------------------------------------------------------------
+ta_material:
+  name: "red"
+  shader: "mesh"
+  tex_albedo: "red_diff"
+  tex_metallic: "red_mrao"
+ta_material:
+  name: "test"
+  shader: "mesh"
+  tex_albedo: "test_diff"
+  tex_metallic: "test_mrao"
+ta_material:
+  name: "cobble"
+  shader: "mesh"
+  tex_albedo: "cobble_diff"
+  tex_metallic: "cobble_mrao"
+#-------------------------------------------------------------------------------
+# TYP_MESH_GROUP
+#-------------------------------------------------------------------------------
+ta_mesh_group:
+  name: "prim_cube"
+  path: "data/mesh/prim_cube.obj"
+ta_mesh_group:
+  name: "prim_sphere"
+  path: "data/mesh/prim_sphere.obj"
+ta_mesh_group:
+  name: "chamber_0001"
+  path: "data/mesh/chamber0001.obj"
+ta_mesh_group:
+  name: "wakeup"
+  path: "data/mesh/wakeup.obj"
+ta_mesh_group:
+  name: "button"
+  path: "data/mesh/button.obj"
+ta_mesh_group:
+  name: "letter_r"
+  path: "data/mesh/letter_r.obj"
+#-------------------------------------------------------------------------------
+# TYP_MESH
+#-------------------------------------------------------------------------------
+#
+# NOTE: We may have mesh properties at some point, but, for now, meshes are
+# created at run-time via mesh_groups.
+#
+#-------------------------------------------------------------------------------
+# TYP_SHADER
+#-------------------------------------------------------------------------------
+ta_shader:
+  name: "lines"
+  path_vert: "data/shader/lines_v.glsl"
+  path_frag: "data/shader/lines_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_color",
+      type: 6,  # TA_GLSL_VEC4
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+  ]
+ta_shader:
+  name: "quads"
+  path_vert: "data/shader/quads_v.glsl"
+  path_frag: "data/shader/quads_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_color",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_uv",
+      type: 4,  # TA_GLSL_VEC2
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_tex",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+  ]
+ta_shader:
+  name: "text"
+  path_vert: "data/shader/text_v.glsl"
+  path_frag: "data/shader/text_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_color",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_uv",
+      type: 4,  # TA_GLSL_VEC2
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_tex",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+  ]
+ta_shader:
+  name: "cubemap"
+  path_vert: "data/shader/cubemap_v.glsl"
+  path_frag: "data/shader/cubemap_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_uv",
+      type: 4,  # TA_GLSL_VEC2
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_face",
+      type: 0,  # TA_GLSL_INT
+    },
+    {
+      name: "u_tex",
+      type: 10,  # TA_GLSL_SAMPLER_CUBE
+    },
+  ]
+ta_shader:
+  name: "mesh"
+  path_vert: "data/shader/mesh_v.glsl"
+  path_frag: "data/shader/mesh_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_color",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_uv",
+      type: 4,  # TA_GLSL_VEC2
+    },
+    {
+      name: "attr_normal",
+      type: 5,  # TA_GLSL_VEC3
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_camera_pos",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "u_material",
+      type: 9,  # TA_GLSL_STRUCT
+      properties: [
+        {
+          name: "u_material.tex0",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_material.tex1",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_material.tex2",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+      ]
+    },
+    {
+      name: "u_tex_albedo",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+    {
+      name: "u_tex_metallic",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+    {
+      name: "u_lights_count",
+      type: 1,  # TA_GLSL_UINT
+    },
+    {
+      name: "u_lights",
+      type: 9,  # TA_GLSL_STRUCT
+      properties: [
+        {
+          name: "u_lights[0].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[1].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[2].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[3].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[4].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[5].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[6].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[7].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[0].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[1].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[2].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[3].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[4].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[5].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[6].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[7].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[0].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[1].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[2].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[3].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[4].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[5].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[6].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[7].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[0].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[1].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[2].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[3].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[4].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[5].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[6].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[7].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[0].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[1].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[2].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[3].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[4].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[5].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[6].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[7].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[0].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[1].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[2].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[3].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[4].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[5].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[6].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[7].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[0].shadowmap2d",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_lights[1].shadowmap2d",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_lights[2].shadowmap2d",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_lights[3].shadowmap2d",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_lights[4].shadowmap2d",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_lights[5].shadowmap2d",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_lights[6].shadowmap2d",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_lights[7].shadowmap2d",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_lights[0].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[1].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[2].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[3].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[4].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[5].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[6].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[7].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[0].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[1].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[2].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[3].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[4].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[5].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[6].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[7].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+      ]
+    },
+    {
+      name: "u_selected",
+      type: 0,  # TA_GLSL_INT
+    },
+  ]
+ta_shader:
+  name: "shadow"
+  path_vert: "data/shader/shadow_v.glsl"
+  path_frag: "data/shader/shadow_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_light_pvm",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_light_pos",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "u_light_zfar",
+      type: 2,  # TA_GLSL_FLOAT
+    },
+  ]
+#-------------------------------------------------------------------------------
+# TYP_TEXTURE
+#-------------------------------------------------------------------------------
+ta_texture:
+  name: "red_diff"
+  path: ""
+  pixels: [
+    {
+      r: 0,
+      g: 45,
+      b: 255,
+      a: 255,
+    },
+  ]
+  width: 1
+  height: 1
+  channels: 4
+  linear: true
+ta_texture:
+  name: "red_mrao"
+  path: ""
+  pixels: [
+    {
+      r: 255,
+      g: 90,
+      b: 0,
+      a: 0,
+    },
+  ]
+  width: 1
+  height: 1
+  channels: 4
+  linear: true
+ta_texture:
+  name: "test_diff"
+  path: "data/texture/pbr_default_0.png"
+  pixels: []
+  width: 32
+  height: 32
+  channels: 4
+  linear: false
+ta_texture:
+  name: "test_mrao"
+  path: "data/texture/pbr_default_1.png"
+  pixels: []
+  width: 32
+  height: 32
+  channels: 4
+  linear: true
+ta_texture:
+  name: "cobble_diff"
+  path: "data/texture/cobble_diff.png"
+  pixels: []
+  width: 512
+  height: 512
+  channels: 4
+  linear: false
+ta_texture:
+  name: "cobble_mrao"
+  path: "data/texture/cobble_mrao.png"
+  pixels: []
+  width: 512
+  height: 512
+  channels: 4
+  linear: true
+ta_texture:
+  name: "audio_icon"
+  path: "data/texture/audio_icon.png"
+  pixels: []
+  width: 32
+  height: 32
+  channels: 4
+  linear: true

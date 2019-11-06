@@ -84,6 +84,7 @@ struct Light {
     vec3 position;
     vec3 color;
     int type;
+    bool cast_shadows;
     // Directional / Spot
     vec3 direction;
     sampler2D shadowmap2d;
@@ -111,9 +112,9 @@ void main()
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, mtl_albedo, mtl_metallic);
 
-    float debug_dist = 0;
-    float debug_depth = 0;
-    float debug_shadow = 0;
+    //float debug_dist = 0;
+    //float debug_depth = 0;
+    //float debug_shadow = 0;
     float foo_shadows[27];
 
     vec3 L0 = vec3(0.0);
@@ -124,6 +125,7 @@ void main()
         float shadow_darkness = 0.0;
         float dist = 0.0;
         float attenuation;
+		float shadow = 0.0;
 
         switch(u_lights[i].type) {
             case LIGHT_DIRECTIONAL: {
@@ -141,43 +143,37 @@ void main()
             } case LIGHT_POINT: {
                 fragToLight = u_lights[i].position - vertex.position;
 
-                shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
-                shadow_map_depth *= u_lights[i].shadowmap_zfar;
-                debug_depth = shadow_map_depth;
-                shadow_bias = 0.1;
-
                 dist = length(fragToLight);
                 attenuation = u_lights[i].intensity / dist * dist;
 
-                debug_dist = dist - shadow_bias;
-                debug_shadow = step(shadow_map_depth, dist - shadow_bias);
+                if (u_lights[i].cast_shadows) {
+                    shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
+                    shadow_map_depth *= u_lights[i].shadowmap_zfar;
+                    //debug_depth = shadow_map_depth;
+                    shadow_bias = 0.1;
 
-                // TODO: Clean this crap up via:
-                // https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
-		        int foo_i = 0;
-				float foo_bias = 0.04;
-				for (float x = -1.0; x <= 1.0; x += 1.0) {
-					for (float y = -1.0; y <= 1.0; y += 1.0) {
-					    for (float z = -1.0; z <= 1.0; z += 1.0) {
-							vec3 foo_offset = vec3(x, y, z) * 0.04;
-							float foo_depth = texture(u_lights[i].shadowmap3d, -fragToLight + foo_offset).r;
-							foo_depth *= u_lights[i].shadowmap_zfar;
-							foo_shadows[foo_i] = step(foo_depth, dist - foo_bias);
-							foo_i++;
+                    //debug_dist = dist - shadow_bias;
+                    //debug_shadow = step(shadow_map_depth, dist - shadow_bias);
+
+                    // TODO: Clean this crap up via:
+                    // https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
+				    float foo_bias = 0.04;
+				    for (float x = -1.0; x <= 1.0; x += 1.0) {
+					    for (float y = -1.0; y <= 1.0; y += 1.0) {
+					        for (float z = -1.0; z <= 1.0; z += 1.0) {
+							    vec3 foo_offset = vec3(x, y, z) * 0.04;
+							    float foo_depth = texture(u_lights[i].shadowmap3d, -fragToLight + foo_offset).r;
+							    foo_depth *= u_lights[i].shadowmap_zfar;
+							    float shadow_i = step(foo_depth, dist - foo_bias);
+			                    shadow += (1.0 / 27) * shadow_i;
+					        }
 					    }
-					}
-				}
+				    }
+		            shadow = smoothstep(0.01, 1.0, shadow);
+                }
                 break;
             }
         }
-
-        //float shadow = step(shadow_map_depth, dist - shadow_bias);
-		float shadow = 0.0;
-		for (int i = 0; i < 27; i++) {
-			shadow += (1.0 / 27) * foo_shadows[i];
-		}
-		shadow = smoothstep(0.01, 1.0, shadow);
-        //shadow = step(shadow_map_depth, dist - shadow_bias);
 
         vec3 radiance = u_lights[i].color * attenuation;
 

@@ -132,11 +132,13 @@ int main(int argc, char *argv[])
     ta_game_init(&tg_game);
 
     // Intro scene
+#if 0
     ta_scene *scene1 = ta_scene_load_file("data/scene/scene1.dml");
+#else
+    ta_scene *scene1 = ta_scene_load_file("data/scene/scene1_gen.dml");
+#endif
     DLB_ASSERT(scene1);
     DLB_ASSERT(tg_game.scene == scene1);
-
-    ta_scene_save_file(scene1, "scene1.txt");
 
     // TODO: Find closest 8 lights and store them in tg_game.lights
 
@@ -154,9 +156,7 @@ int main(int argc, char *argv[])
     // have a lookup table in the scene file whose only purpose is to populate
     // the scene with ids of static objects (root node, free cam, player, etc.)?
     tg_game.e_freecam = SYM_ENTITY_FREECAM;
-    tg_game.e_active_camera = tg_game.e_freecam;
-    ta_log_write(&tg_debug_log, "Active camera: %s\n", tg_game.e_active_camera);
-    DLB_ASSERT(tg_game.e_active_camera);
+    DLB_ASSERT(tg_game.e_freecam);
 
     ////////////////////////////////////////////////////////////////////////////
     // Audio
@@ -194,7 +194,9 @@ int main(int argc, char *argv[])
     DLB_ASSERT(tg_shader_cubemap);
     DLB_ASSERT(tg_shader_shadow);
 
-    ta_game_state_set(&tg_game, TA_GAME_STATE_FREE_CAM);
+    ta_game_state_set(&tg_game, TA_GAME_STATE_PLAY);
+    ta_log_write(&tg_debug_log, "Active camera: %s\n", tg_game.e_active_camera);
+    DLB_ASSERT(tg_game.e_active_camera);
 
     ////////////////////////////////////////////////////////////////////////////
     // UI

@@ -16,8 +16,9 @@ ta_shader *tg_shader_shadow;
 const char *ta_glsl_type_str(int type)
 {
     switch(type) {
-        case TA_GLSL_INT:          return "TA_GLSL_GLINT";
-        case TA_GLSL_UINT:         return "TA_GLSL_GLUINT";
+        case TA_GLSL_BOOL:         return "TA_GLSL_BOOL";
+        case TA_GLSL_INT:          return "TA_GLSL_INT";
+        case TA_GLSL_UINT:         return "TA_GLSL_UINT";
         case TA_GLSL_FLOAT:        return "TA_GLSL_FLOAT";
         case TA_GLSL_SAMPLER2D:    return "TA_GLSL_SAMPLER2D";
         case TA_GLSL_VEC2:         return "TA_GLSL_VEC2";
@@ -273,6 +274,12 @@ void ta_shader_unbind(ta_shader *shader)
     glUseProgram(0);
 }
 
+void ta_shader_set_bool(ta_shader *shader, const char *name, GLboolean value)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_BOOL);
+    u->value.glbool = value;
+}
+
 void ta_shader_set_int(ta_shader *shader, const char *name, GLint value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_INT);
@@ -353,6 +360,9 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     ta_shader_uniform *u_direction =
         find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_DIRECTION[index],
             TA_GLSL_VEC3);
+    ta_shader_uniform *u_cast_shadows =
+        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_CAST_SHADOWS[index],
+            TA_GLSL_BOOL);
     ta_shader_uniform *u_shadowmap2d =
         find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP2D[index],
             TA_GLSL_SAMPLER2D);
@@ -363,14 +373,15 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
         find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP_ZFAR[index],
             TA_GLSL_FLOAT);
 
-    u_intensity->value.glfloat = light->intensity;
-    u_color->value.rgb         = light->color;
-    u_position->value.vec3     = light->position;
-    u_type->value.glint        = light->type;
-    u_direction->value.vec3    = VEC3_ZERO;
-    u_shadowmap2d->value.sampler2d = 0;
+    u_intensity->value.glfloat        = light->data.common.intensity;
+    u_color->value.rgb                = light->data.common.color;
+    u_position->value.vec3            = light->position;
+    u_type->value.glint               = light->type;
+    u_direction->value.vec3           = VEC3_ZERO;
+    u_cast_shadows->value.glbool      = (GLboolean)light->cast_shadows;
+    u_shadowmap2d->value.sampler2d    = 0;
     u_shadowmap3d->value.sampler_cube = 0;
-    u_shadowmap_zfar->value.glfloat = 0;
+    u_shadowmap_zfar->value.glfloat   = 0;
 
     switch (light->type) {
         case TA_LIGHT_AMBIENT:
@@ -401,7 +412,10 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
         }
 
         switch (u->type) {
-            case TA_GLSL_INT: {
+            case TA_GLSL_BOOL: {
+                glUniform1i(u->location, u->value.glbool);
+                break;
+            } case TA_GLSL_INT: {
                 glUniform1i(u->location, u->value.glint);
                 break;
             } case TA_GLSL_UINT: {

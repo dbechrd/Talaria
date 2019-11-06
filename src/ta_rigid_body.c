@@ -410,7 +410,8 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
         ta_rigid_body_apply_impulse(a, vec3_neg(impulse), ra);
         ta_rigid_body_apply_impulse(b, impulse, rb);
 
-#if _DEBUG && false
+#if _DEBUG && 1
+        // Render debug primitives at collision contact points
         ta_vec3 contact_world = manifold->contacts[i];
         ta_vec3 a_impulse = vec3_scalef(impulse, a->inv_mass);
         ta_vec3 b_impulse = vec3_scalef(impulse, b->inv_mass);

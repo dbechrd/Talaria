@@ -16,18 +16,24 @@ typedef enum ta_light_type {
 } ta_light_type;
 
 typedef struct ta_light_ambient {
-    bool unused;
+    float intensity;
+    ta_rgb color;
 } ta_light_ambient;
 
 typedef struct ta_light_directional {
+    float intensity;
+    ta_rgb color;
     ta_vec3 direction;
 } ta_light_directional;
 
 typedef struct ta_light_point {
-    bool unused;
+    float intensity;
+    ta_rgb color;
 } ta_light_point;
 
 typedef struct ta_light_spot {
+    float intensity;
+    ta_rgb color;
     ta_vec3 direction;
     float theta_cone;
     float theta_falloff;
@@ -47,19 +53,21 @@ typedef struct ta_light {
     u32 index;
     const char *name;
     const char *entity_name;
+    ta_vec3 position;  // TODO: COMP_POSITION? Different from light position?
     bool disabled;
-    float intensity;
-    ta_vec3 position;
-    ta_rgb color;
+    bool cast_shadows;
+    ta_light_shadowmap shadowmap;
     ta_light_type type;
     union {
+        struct {
+            float intensity;
+            ta_rgb color;
+        } common;
         ta_light_ambient ambient;
         ta_light_directional directional;
         ta_light_point point;
         ta_light_spot spot;
     } data;
-    bool cast_shadows;
-    ta_light_shadowmap shadowmap;
 } ta_light;
 
 const char *ta_light_type_str(int type);
