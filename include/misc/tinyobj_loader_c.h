@@ -1110,6 +1110,7 @@ static int parseLine(Command * command, const char *p, size_t p_len,
 			tinyobj_vertex_index_t i1;
 			tinyobj_vertex_index_t i2 = f[1];
 
+            // NOTE: If this happens you forgot to triangulate on export
 			assert(3 * num_f < TINYOBJ_MAX_FACES_PER_F_LINE);
 
 			for (k = 2; k < num_f; k++) {
