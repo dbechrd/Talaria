@@ -60,12 +60,13 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
     ta_shader_set_mat4(shader, SYM_U_MODEL, &position->model);
     ta_mat4 light_pvm = mat4_mul(light_pv, &position->model);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
-    ta_shader_prerender(shader);
+    ta_shader_bind(shader);
     dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
         ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
             RES_MESH_GROUP, *mesh_group_name);
         ta_mesh_group_render(mesh_group);
     }
+    ta_shader_unbind(shader);
 }
 
 void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
@@ -115,12 +116,13 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
             RES_MATERIAL, model->material);
         ta_shader *shader = ta_scene_find_by_name(tg_game.scene,
             RES_SHADER, material->shader);
-        ta_texture *texture_albedo = ta_scene_find_by_name(tg_game.scene,
-            RES_TEXTURE, material->tex_albedo);
-        ta_texture *texture_metallic = ta_scene_find_by_name(tg_game.scene,
-            RES_TEXTURE, material->tex_metallic);
+        ta_texture *texture_albedo    = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_albedo    ? material->tex_albedo    : SYM_MISSING_ALBEDO);
+        ta_texture *texture_height    = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_height    ? material->tex_height    : SYM_MISSING_HEIGHT);
+        ta_texture *texture_metallic  = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_metallic  ? material->tex_metallic  : SYM_MISSING_METALLIC);
+        ta_texture *texture_normal    = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_normal    ? material->tex_normal    : SYM_MISSING_NORMAL);
+        ta_texture *texture_occlusion = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_occlusion ? material->tex_occlusion : SYM_MISSING_OCCLUSION);
+        ta_texture *texture_roughness = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_roughness ? material->tex_roughness : SYM_MISSING_ROUGHNESS);
 
-        ta_shader_bind(shader);
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
         ta_shader_set_mat4(shader, SYM_U_MODEL, &position->model);
@@ -135,11 +137,13 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         }
         ta_shader_set_uint(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO,
-            texture_albedo->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_METALLIC,
-            texture_metallic->gl_id);
-        ta_shader_prerender(shader);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO,    texture_albedo->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_HEIGHT,    texture_height->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_METALLIC,  texture_metallic->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_NORMAL,    texture_normal->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_OCCLUSION, texture_occlusion->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_ROUGHNESS, texture_roughness->gl_id);
+        ta_shader_bind(shader);
         dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
             ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
                 RES_MESH_GROUP, *mesh_group_name);
@@ -198,11 +202,10 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
     position->model = mat4_mul(&rot, &scal);
     position->model = mat4_mul(&trans, &position->model);
 
-    ta_shader_bind(shader);
     ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(shader, SYM_U_MODEL, &position->model);
-    ta_shader_prerender(shader);
+    ta_shader_bind(shader);
     dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
         ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
             RES_MESH_GROUP, *mesh_group_name);

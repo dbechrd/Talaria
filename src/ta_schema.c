@@ -377,10 +377,14 @@ void ta_schema_register()
     TYPE_END(ta_font);
 
     TYPE_START(ta_material, TYP_MATERIAL, 0, 0);
-    TYPE_FIELD(ta_material, name,         ATOM_STRING);
-    TYPE_FIELD(ta_material, shader,       ATOM_STRING);
-    TYPE_FIELD(ta_material, tex_albedo,   ATOM_STRING);
-    TYPE_FIELD(ta_material, tex_metallic, ATOM_STRING);
+    TYPE_FIELD(ta_material, name,          ATOM_STRING);
+    TYPE_FIELD(ta_material, shader,        ATOM_STRING);
+    TYPE_FIELD(ta_material, tex_albedo,    ATOM_STRING);
+    TYPE_FIELD(ta_material, tex_height,    ATOM_STRING);
+    TYPE_FIELD(ta_material, tex_metallic,  ATOM_STRING);
+    TYPE_FIELD(ta_material, tex_normal,    ATOM_STRING);
+    TYPE_FIELD(ta_material, tex_occlusion, ATOM_STRING);
+    TYPE_FIELD(ta_material, tex_roughness, ATOM_STRING);
     TYPE_END(ta_material);
 
     TYPE_START(ta_mesh_group, TYP_MESH_GROUP, ta_mesh_group_load, ta_mesh_group_free);
@@ -408,6 +412,7 @@ void ta_schema_register()
     TYPE_FIELD(ta_texture, height,   ATOM_INT);
     TYPE_FIELD(ta_texture, channels, ATOM_INT);
     TYPE_FIELD(ta_texture, linear,   ATOM_BOOL);
+    TYPE_FIELD(ta_texture, repeat,   ATOM_BOOL);
     TYPE_END(ta_texture);
 
     //--------------------------------------------------------------------------
@@ -540,7 +545,46 @@ ta_schema_field *ta_schema_field_find(ta_schema_field_type type, const char *nam
     return field;
 }
 
-void ta_schema_print_atom(FILE *f, ta_schema_field *field, void *ptr)
+static bool schema_atom_present(ta_schema_field *field, void *ptr)
+{
+    bool present = false;
+    switch (field->type) {
+        case ATOM_BOOL: {
+            bool *val = ptr;
+            if (*val) present = true;
+            break;
+        } case ATOM_UINT8: {
+            u8 *val = ptr;
+            if (*val) present = true;
+            break;
+        } case ATOM_INT: {
+            int *val = ptr;
+            if (*val) present = true;
+            break;
+        } case ATOM_UINT: {
+            u32 *val = ptr;
+            if (*val) present = true;
+            break;
+        } case ATOM_FLOAT: {
+            float *val = ptr;
+            if (*val) present = true;
+            break;
+        } case ATOM_STRING: {
+            const char **val = ptr;
+            if (*val) present = true;
+            break;
+        } case ATOM_ENUM: {
+            int *val = ptr;
+            present = true;
+            break;
+        } default: {
+            PANIC("Unexpected field type, don't know how to print");
+        }
+    }
+    return present;
+}
+
+static void schema_atom_print(FILE *f, ta_schema_field *field, void *ptr)
 {
     switch (field->type) {
         case ATOM_BOOL: {
@@ -609,7 +653,6 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
 
         if (field->array_len) {
             //DLB_ASSERT(!in_array && "Don't know how to print nested arrays");
-            indent(f, level + 1);
 
             u8 *arr = (ptr + field->offset);
             u32 arr_len = field->array_len;
@@ -619,6 +662,7 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
             }
 
             if (arr_len) {
+                indent(f, level + 1);
                 fprintf(f, "%s: [\n", field->name);
                 u8 *arr_end = arr + (arr_len * field->size);
                 for (u8 *p = arr; p != arr_end; p += field->size) {
@@ -629,38 +673,43 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
                         indent(f, level + 2);
                         fprintf(f, "}");
                     } else {
-                        ta_schema_print_atom(f, field, p);
+                        schema_atom_print(f, field, p);
                     }
                     fprintf(f, ",\n");
                 }
                 indent(f, level + 1);
                 fprintf(f, "]\n");
             } else {
-                fprintf(f, "%s: []\n", field->name);
+                // Don't print empty arrays?
+                //indent(f, level + 1);
+                //fprintf(f, "%s: []\n", field->name);
             }
         } else {
-            indent(f, level + 1);
             if (field->type < TYP_COUNT) {
+                indent(f, level + 1);
                 fprintf(f, "%s:\n", field->name);
                 ta_schema_print(f, field->type, ptr + field->offset, level + 1, 0);
                 if (in_array) {
                     fprintf(f, ",");
                 }
             } else {
-                fprintf(f, "%s: ", field->name);
-                ta_schema_print_atom(f, field, ptr + field->offset);
-                if (in_array) {
-                    fprintf(f, ",");
-                }
                 if (field->is_union_type) {
                     union_type = *(int *)(ptr + field->offset);
                 }
-                if (field->type == ATOM_ENUM && field->enum_converter) {
-                    int enum_type = *(int *)(ptr + field->offset);
-                    const char *enum_str = field->enum_converter(enum_type);
-                    fprintf(f, "  # %s", enum_str);
+                if (level || in_array || schema_atom_present(field, ptr + field->offset)) {
+                    indent(f, level + 1);
+                    fprintf(f, "%s: ", field->name);
+                    schema_atom_print(f, field, ptr + field->offset);
+                    if (in_array) {
+                        fprintf(f, ",");
+                    }
+                    if (field->type == ATOM_ENUM && field->enum_converter) {
+                        int enum_type = *(int *)(ptr + field->offset);
+                        const char *enum_str = field->enum_converter(enum_type);
+                        fprintf(f, "  # %s", enum_str);
+                    }
+                    fprintf(f, "\n");
                 }
-                fprintf(f, "\n");
             }
         }
     }

@@ -9,28 +9,21 @@ ta_audio_source:
   audio_buffer: "mus_genesis"
   pitch: 0x3F800000 (1.000000)
   gain: 0x3F800000 (1.000000)
-  loop: false
 ta_audio_source:
   name: "button_0001"
   entity_name: "button_0001"
-  audio_buffer: ""
   pitch: 0x3F800000 (1.000000)
   gain: 0x3F800000 (1.000000)
-  loop: false
 ta_audio_source:
   name: "gun"
   entity_name: "gun"
-  audio_buffer: ""
   pitch: 0x3F800000 (1.000000)
   gain: 0x3F800000 (1.000000)
-  loop: false
 ta_audio_source:
   name: "player_one"
   entity_name: "player_one"
-  audio_buffer: ""
   pitch: 0x3F800000 (1.000000)
   gain: 0x3F800000 (1.000000)
-  loop: false
 #-------------------------------------------------------------------------------
 # TYP_BUTTON
 #-------------------------------------------------------------------------------
@@ -38,7 +31,6 @@ ta_e_button:
   name: "button_0001"
   entity_name: "button_0001"
   sfx_activated: "sfx_button_activated"
-  sfx_active: ""
   sfx_deactivated: "sfx_button_deactivated"
 #-------------------------------------------------------------------------------
 # TYP_CAMERA
@@ -68,14 +60,13 @@ ta_camera:
     x: 0xBD006CD3 (-0.031354)
     y: 0x3F7880ED (0.970717)
     z: 0xBE73E2CC (-0.238170)
-  ortho: false
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
   position:
-    x: 0xC0A31820 (-5.096695)
+    x: 0xC0A31708 (-5.096561)
     y: 0xC0A000CA (-5.000096)
-    z: 0x40C21F6B (6.066335)
+    z: 0x40C220C0 (6.066498)
   position_smooth: 0x3D4CCCCD (0.050000)
   position_target_vel: 0x3E4CCCCD (0.200000)
   yaw: 0x41519E69 (13.101174)
@@ -94,7 +85,6 @@ ta_camera:
     x: 0x3E377531 (0.179158)
     y: 0x3F7BA1B9 (0.982936)
     z: 0xBD2AC8A2 (-0.041695)
-  ortho: false
 #-------------------------------------------------------------------------------
 # TYP_GUN
 #-------------------------------------------------------------------------------
@@ -138,7 +128,6 @@ ta_light:
 ta_light:
   name: "point_room2"
   entity_name: "point_room2"
-  disabled: false
   cast_shadows: true
   position:
     x: 0x40400000 (3.000000)
@@ -158,7 +147,6 @@ ta_light:
 ta_light:
   name: "point_room3"
   entity_name: "point_room3"
-  disabled: false
   cast_shadows: true
   position:
     x: 0x40A00000 (5.000000)
@@ -178,7 +166,6 @@ ta_light:
 ta_light:
   name: "point_attic"
   entity_name: "point_attic"
-  disabled: false
   cast_shadows: true
   position:
     x: 0x40400000 (3.000000)
@@ -204,8 +191,7 @@ ta_model:
   mesh_groups: [
     "chamber_0001",
   ]
-  material: "chamber_0001"
-  invisible: false
+  material: "terrazzo"
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -225,7 +211,6 @@ ta_model:
     "button",
   ]
   material: "test"
-  invisible: false
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -235,7 +220,6 @@ ta_model:
     "prim_cube",
   ]
   material: "cobble"
-  invisible: false
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -245,7 +229,6 @@ ta_model:
     "prim_sphere",
   ]
   material: "test"
-  invisible: false
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -255,7 +238,6 @@ ta_model:
     "prim_sphere",
   ]
   material: "red"
-  invisible: false
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -265,7 +247,6 @@ ta_model:
     "letter_r",
   ]
   material: "test"
-  invisible: false
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -275,7 +256,6 @@ ta_model:
     "column_0001",
   ]
   material: "column_0001"
-  invisible: false
   cast_shadows: true
   receive_shadows: true
 #-------------------------------------------------------------------------------
@@ -421,8 +401,6 @@ ta_rigid_body:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
     w: 0x3F800000 (1.000000)
-  mass: 0x00000000 (0.000000)
-  trigger: false
 ta_rigid_body:
   name: "button_0001"
   entity_name: "button_0001"
@@ -466,7 +444,6 @@ ta_rigid_body:
     z: 0xBED42CA2 (-0.414403)
     w: 0xBDF04343 (-0.117316)
   mass: 0x3F800000 (1.000000)
-  trigger: false
 ta_rigid_body:
   name: "sphere1"
   entity_name: "sphere1"
@@ -488,7 +465,6 @@ ta_rigid_body:
     z: 0x3F155646 (0.583348)
     w: 0xBF102F28 (-0.563220)
   mass: 0x3F800000 (1.000000)
-  trigger: false
 ta_rigid_body:
   name: "sphere2"
   entity_name: "sphere2"
@@ -510,7 +486,6 @@ ta_rigid_body:
     z: 0xBF69E2F5 (-0.913619)
     w: 0x3D7384BC (0.059453)
   mass: 0x3F800000 (1.000000)
-  trigger: false
 ta_rigid_body:
   name: "column_0001"
   entity_name: "column_0001"
@@ -532,7 +507,6 @@ ta_rigid_body:
     z: 0x3D83F98C (0.064441)
     w: 0xBDA04251 (-0.078251)
   mass: 0x3F800000 (1.000000)
-  trigger: false
 #-------------------------------------------------------------------------------
 # TYP_AUDIO_BUFFER
 #-------------------------------------------------------------------------------
@@ -574,8 +548,7 @@ ta_font:
 ta_material:
   name: "red"
   shader: "mesh"
-  tex_albedo: "red_diff"
-  tex_metallic: "red_mrao"
+  tex_albedo: "red_albedo"
 ta_material:
   name: "test"
   shader: "mesh"
@@ -587,15 +560,25 @@ ta_material:
   tex_albedo: "cobble_diff"
   tex_metallic: "cobble_mrao"
 ta_material:
-  name: "chamber_0001"
+  name: "terrazzo"
   shader: "mesh"
-  tex_albedo: "test_diff"
-  tex_metallic: "test_mrao"
+  tex_albedo: "terrazzo_albedo"
+  tex_height: "terrazzo_height"
+  tex_normal: "terrazzo_normal"
+  tex_occlusion: "terrazzo_occlusion"
+  tex_roughness: "terrazzo_roughness"
+ta_material:
+  name: "acoustic_foam"
+  shader: "mesh"
+  tex_albedo: "acoustic_foam_albedo"
+  tex_height: "acoustic_foam_height"
+  tex_normal: "acoustic_foam_normal"
+  tex_occlusion: "acoustic_foam_occlusion"
+  tex_roughness: "acoustic_foam_roughness"
 ta_material:
   name: "column_0001"
   shader: "mesh"
-  tex_albedo: "red_diff"
-  tex_metallic: "red_mrao"
+  tex_albedo: "red_albedo"
 #-------------------------------------------------------------------------------
 # TYP_MESH_GROUP
 #-------------------------------------------------------------------------------
@@ -828,7 +811,23 @@ ta_shader:
       type: 3,  # TA_GLSL_SAMPLER2D
     },
     {
+      name: "u_tex_height",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+    {
       name: "u_tex_metallic",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+    {
+      name: "u_tex_normal",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+    {
+      name: "u_tex_occlusion",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+    {
+      name: "u_tex_roughness",
       type: 3,  # TA_GLSL_SAMPLER2D
     },
     {
@@ -1166,8 +1165,90 @@ ta_shader:
 # TYP_TEXTURE
 #-------------------------------------------------------------------------------
 ta_texture:
-  name: "red_diff"
-  path: ""
+  name: "missing_albedo"
+  pixels: [
+    {
+      r: 255,
+      g: 0,
+      b: 255,
+      a: 255,
+    },
+  ]
+  width: 1
+  height: 1
+  channels: 4
+ta_texture:
+  name: "missing_height"
+  pixels: [
+    {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0,
+    },
+  ]
+  width: 1
+  height: 1
+  channels: 1
+  linear: true
+ta_texture:
+  name: "missing_metallic"
+  pixels: [
+    {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0,
+    },
+  ]
+  width: 1
+  height: 1
+  channels: 1
+  linear: true
+ta_texture:
+  name: "missing_normal"
+  pixels: [
+    {
+      r: 0,
+      g: 0,
+      b: 255,
+      a: 0,
+    },
+  ]
+  width: 1
+  height: 1
+  channels: 3
+  linear: true
+ta_texture:
+  name: "missing_occlusion"
+  pixels: [
+    {
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0,
+    },
+  ]
+  width: 1
+  height: 1
+  channels: 1
+  linear: true
+ta_texture:
+  name: "missing_roughness"
+  pixels: [
+    {
+      r: 127,
+      g: 0,
+      b: 0,
+      a: 0,
+    },
+  ]
+  width: 1
+  height: 1
+  channels: 1
+  linear: true
+ta_texture:
+  name: "red_albedo"
   pixels: [
     {
       r: 255,
@@ -1179,34 +1260,15 @@ ta_texture:
   width: 1
   height: 1
   channels: 4
-  linear: false
-ta_texture:
-  name: "red_mrao"
-  path: ""
-  pixels: [
-    {
-      r: 0,
-      g: 128,
-      b: 0,
-      a: 0,
-    },
-  ]
-  width: 1
-  height: 1
-  channels: 4
-  linear: true
 ta_texture:
   name: "test_diff"
   path: "data/texture/pbr_default_0.png"
-  pixels: []
   width: 32
   height: 32
   channels: 4
-  linear: false
 ta_texture:
   name: "test_mrao"
   path: "data/texture/pbr_default_1.png"
-  pixels: []
   width: 32
   height: 32
   channels: 4
@@ -1214,15 +1276,12 @@ ta_texture:
 ta_texture:
   name: "cobble_diff"
   path: "data/texture/cobble_diff.png"
-  pixels: []
   width: 512
   height: 512
   channels: 4
-  linear: false
 ta_texture:
   name: "cobble_mrao"
   path: "data/texture/cobble_mrao.png"
-  pixels: []
   width: 512
   height: 512
   channels: 4
@@ -1230,8 +1289,85 @@ ta_texture:
 ta_texture:
   name: "audio_icon"
   path: "data/texture/audio_icon.png"
-  pixels: []
   width: 32
   height: 32
   channels: 4
   linear: true
+ta_texture:
+  name: "terrazzo_albedo"
+  path: "data/texture/Terrazzo_Tiles_001_albedo.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  repeat: true
+ta_texture:
+  name: "terrazzo_height"
+  path: "data/texture/Terrazzo_Tiles_001_height.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "terrazzo_normal"
+  path: "data/texture/Terrazzo_Tiles_001_normal.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "terrazzo_occlusion"
+  path: "data/texture/Terrazzo_Tiles_001_occlusion.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "terrazzo_roughness"
+  path: "data/texture/Terrazzo_Tiles_001_roughness.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "acoustic_foam_albedo"
+  path: "data/texture/Acoustic_Foam_001_albedo.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  repeat: true
+ta_texture:
+  name: "acoustic_foam_height"
+  path: "data/texture/Acoustic_Foam_001_height.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "acoustic_foam_normal"
+  path: "data/texture/Acoustic_Foam_001_normal.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "acoustic_foam_occlusion"
+  path: "data/texture/Acoustic_Foam_001_occlusion.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "acoustic_foam_roughness"
+  path: "data/texture/Acoustic_Foam_001_roughness.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true

@@ -80,9 +80,7 @@ void ta_texture_load(ta_texture *tex, u8 *pixels)
     glCreateTextures(GL_TEXTURE_2D, 1, &tex->gl_id);
     glBindTexture(GL_TEXTURE_2D, tex->gl_id);
 
-    // GL_CLAMP_TO_EDGE
-    // GL_REPEAT
-    GLint param = GL_CLAMP_TO_EDGE;
+    GLint param = tex->repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, param);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, param);
 
@@ -94,12 +92,12 @@ void ta_texture_load(ta_texture *tex, u8 *pixels)
     // GL_LINEAR_MIPMAP_LINEAR    texel 2x2 avg, mipmap blend
 
     // TODO: Allow each texture to set its own filtering mode
-#if 1
+#if 0
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 #else
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 #endif
 
     glTexImage2D(GL_TEXTURE_2D, 0, format_internal, tex->width, tex->height,

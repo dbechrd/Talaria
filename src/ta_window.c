@@ -58,6 +58,8 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
     sdl_gl_attrib(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     sdl_gl_attrib(SDL_GL_CONTEXT_MINOR_VERSION, 2);
 
+    // TODO: Make fullscreen a borderless window because people say vsync
+    //       doesn't work in fullscreen (can we confirm this?)
     // Create window
     ta_log_write(&tg_debug_log, "[Window] SDL_CreateWindow...\n");
     u32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;

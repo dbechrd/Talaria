@@ -262,18 +262,6 @@ void ta_shader_free(ta_shader *shader)
     dlb_vec_free(shader->uniforms);
 }
 
-void ta_shader_bind(ta_shader *shader)
-{
-    DLB_ASSERT(shader->program_id);
-    glUseProgram(shader->program_id);
-}
-
-void ta_shader_unbind(ta_shader *shader)
-{
-    UNUSED(shader);
-    glUseProgram(0);
-}
-
 void ta_shader_set_bool(ta_shader *shader, const char *name, GLboolean value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_BOOL);
@@ -404,6 +392,22 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     }
 }
 
+static void shader_store_uniforms(ta_shader_uniform *store,
+    ta_shader_uniform *uniforms)
+{
+    dlb_vec_each(ta_shader_uniform *, u, uniforms) {
+        if (u->location < 0 && u->type != TA_GLSL_STRUCT) {
+            continue;
+        }
+
+        if (u->type == TA_GLSL_STRUCT) {
+            shader_store_uniforms(store, u->value.properties);
+        } else {
+            dlb_vec_push(store, *u);
+        }
+    }
+}
+
 static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
 {
     dlb_vec_each(ta_shader_uniform *, u, uniforms) {
@@ -467,8 +471,28 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
     }
 }
 
-void ta_shader_prerender(ta_shader *shader)
+ta_shader_uniform *ta_shader_state_save(ta_shader *shader)
+{
+    ta_shader_uniform *store = 0;
+    shader_store_uniforms(store, shader->uniforms);
+    return store;
+}
+
+void ta_shader_state_load(ta_shader_uniform *uniforms)
 {
     int tex_count = 0;
-    shader_bind_uniforms(shader->uniforms, &tex_count);
+    shader_bind_uniforms(uniforms, &tex_count);
+}
+
+void ta_shader_bind(ta_shader *shader)
+{
+    DLB_ASSERT(shader->program_id);
+    glUseProgram(shader->program_id);
+    ta_shader_state_load(shader->uniforms);
+}
+
+void ta_shader_unbind(ta_shader *shader)
+{
+    UNUSED(shader);
+    glUseProgram(0);
 }

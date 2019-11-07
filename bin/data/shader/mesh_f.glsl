@@ -34,11 +34,11 @@ uniform vec3 u_camera_pos;
 // indicate something covering the raw metal such as dirt.
 
 //#define mtl_albedo      pow(tex_albedo.rgb, vec3(2.2))
-#define mtl_albedo      tex_albedo.rgb
-#define mtl_opacity     tex_albedo.a
-#define mtl_metallic    tex_metallic.r
-#define mtl_roughness   tex_metallic.g
-#define mtl_ao          tex_metallic.b
+//#define mtl_albedo      tex_albedo.rgb
+//#define mtl_opacity     tex_albedo.a
+//#define mtl_metallic    tex_metallic.r
+//#define mtl_roughness   tex_metallic.g
+//#define mtl_ao          tex_metallic.b
 
 //#define mtl_albedo    texture(material.tex0, vertex.uv).rgb
 //#define mtl_opacity   texture(material.tex0, vertex.uv).a
@@ -48,6 +48,7 @@ uniform vec3 u_camera_pos;
 //#define mtl_emission  texture(material.tex2, vertex.uv).rgb
 //#define mtl_emit      step(0.01, texture(material.tex2, vertex.uv).a)
 
+// TODO: Premultiplied alpha
 struct Material {
     // rgb: metallic ? specular.rgb : albedo.rgb
     //   a: metallic ?            1 : albedo.a
@@ -65,8 +66,13 @@ struct Material {
 };
 uniform Material u_material;
 
+// TODO: Combine these as above for performance; want ease-of-use for dev
 uniform sampler2D u_tex_albedo;
+uniform sampler2D u_tex_height;
 uniform sampler2D u_tex_metallic;
+uniform sampler2D u_tex_normal;
+uniform sampler2D u_tex_occlusion;
+uniform sampler2D u_tex_roughness;
 
 #define LIGHT_AMBIENT       0
 #define LIGHT_DIRECTIONAL   1
@@ -103,8 +109,15 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0);
 
 void main()
 {
-    vec4 tex_albedo = texture(u_tex_albedo, vertex.uv);
-    vec4 tex_metallic = texture(u_tex_metallic, vertex.uv);
+    vec2 vertex_uv = vertex.uv * 4.0;
+    // TODO: Use defaults if texture not present
+    vec3  mtl_albedo    = texture(u_tex_albedo,    vertex_uv).rgb;  // default: none
+    float mtl_opacity   = texture(u_tex_albedo,    vertex_uv).a;    // default: 1.0
+    float mtl_height    = texture(u_tex_height,    vertex_uv).r;    // default: 0.0
+    float mtl_metallic  = texture(u_tex_metallic,  vertex_uv).r;    // default: 0.0
+    vec3  mtl_normal    = texture(u_tex_normal,    vertex_uv).rgb;  // default: vec3(0.0, 0.0, 1.0)
+    float mtl_occlusion = texture(u_tex_occlusion, vertex_uv).r;    // default: 0.0
+    float mtl_roughness = texture(u_tex_roughness, vertex_uv).r;    // default: 0.5
 
     vec3 N = vertex.normal;
     vec3 V = normalize(u_camera_pos - vertex.position);
@@ -199,7 +212,7 @@ void main()
         //L0 += mtl_albedo * (1.0 - shadow);
     }
 
-    vec3 ambient = vec3(0.002) * mtl_albedo * mtl_ao;
+    vec3 ambient = vec3(0.002) * mtl_albedo * mtl_occlusion;
     vec3 color = ambient + L0;
     color /= color + vec3(1.0);
     color = pow(color, vec3(1.0 / 2.2));
@@ -224,10 +237,10 @@ void main()
 	//final_color = mix(tex_albedo, vertex.color, vertex.color.a > 0);
 
     // normals
-    //final_color = vec4((vertex.normal + vec3(1.0)) / 2.0, 1.0);
+    //final_color = vec4((N * 0.5) + 0.5, 1.0);
 
     // uv coords
-    //final_color = vec4(vertex.uv.x, vertex.uv.y, 0.0, 1.0);
+    //final_color = vec4(vertex_uv.x, vertex_uv.y, 0.0, 1.0);
 
     // albedo
     //final_color = vec4(mtl_albedo, 1.0);

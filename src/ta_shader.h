@@ -77,8 +77,6 @@ void ta_shader_init(ta_shader *shader);
 void ta_shader_load(ta_shader *shader);
 void ta_shader_delete(ta_shader *shader);
 void ta_shader_free(ta_shader *shader);
-void ta_shader_bind(ta_shader *shader);
-void ta_shader_unbind(ta_shader *shader);
 void ta_shader_set_bool(ta_shader *shader, const char *name, GLboolean value);
 void ta_shader_set_int(ta_shader *shader, const char *name, GLint value);
 void ta_shader_set_uint(ta_shader *shader, const char *name, GLuint value);
@@ -92,4 +90,7 @@ void ta_shader_set_mat3(ta_shader *shader, const char *name, const ta_mat3 *m);
 void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m);
 void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     struct ta_light *light);
-void ta_shader_prerender(ta_shader *shader);
+ta_shader_uniform *ta_shader_state_save(ta_shader *shader);
+void ta_shader_state_load(ta_shader_uniform *uniforms);
+void ta_shader_bind(ta_shader *shader);
+void ta_shader_unbind(ta_shader *shader);

@@ -499,6 +499,53 @@ static void ui_audio_panel()
 
     ta_ui_panel_end(audio_panel_id);
 }
+static void ui_material_panel()
+{
+    u32 material_panel_id;
+    //ta_ui_next_margin(2, 2, 0, 0);
+    ta_ui_panel_begin(0, &material_panel_id);
+    ta_ui_row_begin();
+    dlb_vec_each(ta_material *, material, tg_game.scene->resource_data[RES_MATERIAL]) {
+        ta_ui_next_size(68, 68);
+        //ta_ui_next_margin(0, 0, 2, 0);
+        //ta_ui_next_pad(2, 2, 2, 2);
+        //ta_ui_next_size(material->width, material->height);
+        if (ta_ui_button(0, 0, 0)) {
+            const char *entity_name = ta_editor_selected_entity();
+            if (entity_name) {
+                ta_model *model = ta_scene_component_try(tg_game.scene,
+                    RES_COMP_MODEL, entity_name);
+                if (model) {
+                    model->material = material->name;
+                }
+            }
+        }
+        if (ta_ui_last_frame_state().hover) {
+            char tex_buf[1024] = { 0 };
+            int len = snprintf(tex_buf, sizeof(tex_buf),
+                "name         : %s\n"
+                "shader       : %s\n"
+                "tex_albedo   : %s\n"
+                "tex_height   : %s\n"
+                "tex_metallic : %s\n"
+                "tex_normal   : %s\n"
+                "tex_occlusion: %s\n"
+                "tex_roughness: %s",
+                material->name,
+                material->shader,
+                material->tex_albedo,
+                material->tex_height,
+                material->tex_metallic,
+                material->tex_normal,
+                material->tex_occlusion,
+                material->tex_roughness
+            );
+            DLB_ASSERT(len < sizeof(tex_buf));
+            ta_ui_tooltip(tex_buf, len);
+        }
+    }
+    ta_ui_panel_end(material_panel_id);
+}
 static void ui_texture_panel()
 {
     u32 texture_panel_id;
@@ -523,9 +570,13 @@ static void ui_texture_panel()
             }
         }
         if (ta_ui_last_frame_state().hover) {
-            char tex_buf[128] = { 0 };
+            char tex_buf[256] = { 0 };
             int len = snprintf(tex_buf, sizeof(tex_buf),
-                "%s (name: %s)(gl_id: %d)", texture->path, texture->name,
+                "name : %s\n"
+                "path : %s\n"
+                "glid: %d",
+                texture->name,
+                texture->path,
                 texture->gl_id);
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
@@ -557,7 +608,7 @@ static void ui_scene_panel()
     ta_ui_panel_begin(0, &scene_panel_id);
     ta_ui_row_begin();
 
-    static save_button_hovered = false;
+    static bool save_button_hovered = false;
     if (save_button_hovered) {
         ta_ui_next_bg_color(UI_STATE_ALL, 1.0f, 0.0f, 0.0f, 1.0f);
     }
@@ -577,17 +628,19 @@ static void ui_editor_sidebar()
     enum {
         CATEGORY_NODE,
         CATEGORY_AUDIO,
+        CATEGORY_MATERIALS,
         CATEGORY_TEXTURES,
         CATEGORY_TEXTBOX,
         CATEGORY_SCENE,
         CATEGORY_COUNT
     };
     const char *category_names[CATEGORY_COUNT] = { 0 };
-    category_names[CATEGORY_NODE]     = INTERN(STRING(CATEGORY_NODE));
-    category_names[CATEGORY_AUDIO]    = INTERN(STRING(CATEGORY_AUDIO));
-    category_names[CATEGORY_TEXTURES] = INTERN(STRING(CATEGORY_TEXTURES));
-    category_names[CATEGORY_TEXTBOX]  = INTERN(STRING(CATEGORY_TEXTBOX));
-    category_names[CATEGORY_SCENE]    = INTERN(STRING(CATEGORY_SCENE));
+    category_names[CATEGORY_NODE]      = INTERN(STRING(CATEGORY_NODE));
+    category_names[CATEGORY_AUDIO]     = INTERN(STRING(CATEGORY_AUDIO));
+    category_names[CATEGORY_MATERIALS] = INTERN(STRING(CATEGORY_MATERIALS));
+    category_names[CATEGORY_TEXTURES]  = INTERN(STRING(CATEGORY_TEXTURES));
+    category_names[CATEGORY_TEXTBOX]   = INTERN(STRING(CATEGORY_TEXTBOX));
+    category_names[CATEGORY_SCENE]     = INTERN(STRING(CATEGORY_SCENE));
     static int category_selected = CATEGORY_NODE;
 
     ta_ui_row_begin();
@@ -616,6 +669,9 @@ static void ui_editor_sidebar()
             break;
         } case CATEGORY_AUDIO: {
             ui_audio_panel();
+            break;
+        } case CATEGORY_MATERIALS: {
+            ui_material_panel();
             break;
         } case CATEGORY_TEXTURES: {
             ui_texture_panel();

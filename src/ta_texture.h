@@ -12,6 +12,7 @@ typedef struct ta_texture {
     int height;
     int channels;      // Number of color channels (1, 2, 4)
     bool linear;       // True if linear color space. E.g. metallic, etc.
+    bool repeat;       // true = REPEAT, false = CLAMP_TO_EDGE
     bool cubemap;      // True if texture is a cubemap texture
     GLuint gl_id;
 } ta_texture;

@@ -492,8 +492,6 @@ void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
 void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
     bool reset_uniforms)
 {
-
-
     u32 queue_len = dlb_vec_len(lines_queue);
     if (queue_len) {
         GLboolean cull_face = 0;
@@ -501,7 +499,6 @@ void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
         if (cull_face) glDisable(GL_CULL_FACE);
 
         ta_shader_bind(shader);
-        ta_shader_prerender(shader);
         glBindVertexArray(lines_vao);
         glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
 
@@ -543,8 +540,6 @@ void ta_primitive_render_quads(ta_vert_quad *queue, ta_shader *shader,
         if (cull_face) glDisable(GL_CULL_FACE);
 
         ta_shader_bind(shader);
-        ta_shader_prerender(shader);
-
         glBindVertexArray(quads_vao);
         glBindBuffer(GL_ARRAY_BUFFER, quads_buffer);
 

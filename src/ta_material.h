@@ -6,5 +6,9 @@ typedef struct ta_material {
     const char *name;
     const char *shader;
     const char *tex_albedo;
+    const char *tex_height;
     const char *tex_metallic;
+    const char *tex_normal;
+    const char *tex_occlusion;
+    const char *tex_roughness;
 } ta_material;
