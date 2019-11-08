@@ -8,6 +8,7 @@ typedef enum ta_shader_attr {
     TA_SHADER_ATTR_COLOR    = 1,
     TA_SHADER_ATTR_UV       = 2,
     TA_SHADER_ATTR_NORMAL   = 3,
+    TA_SHADER_ATTR_TANGENT  = 4,
     TA_SHADER_ATTR_COUNT
 } ta_shader_attr;
 

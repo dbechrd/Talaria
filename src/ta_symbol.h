@@ -53,6 +53,7 @@ extern const char *SYM_ATTR_POSITION;
 extern const char *SYM_ATTR_COLOR;
 extern const char *SYM_ATTR_UV;
 extern const char *SYM_ATTR_NORMAL;
+extern const char *SYM_ATTR_TANGENT;
 
 // Shader uniforms
 extern const char *SYM_U_PROJ;

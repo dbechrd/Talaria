@@ -8,6 +8,7 @@ enum {
     TA_MESH_BUFFER_COLOR,
     TA_MESH_BUFFER_UV,
     TA_MESH_BUFFER_NORMAL,
+    TA_MESH_BUFFER_TANGENT,
     TA_MESH_BUFFER_INDEX,
     TA_MESH_BUFFER_COUNT
 };
@@ -17,9 +18,10 @@ typedef struct ta_mesh {
     const char *name;
     GLuint *indexes;
     ta_vec3 *positions;
-    ta_vec3 *normals;
-    ta_uv *uvs;
+    ta_vec2 *uvs;
     ta_rgba *colors;
+    ta_vec3 *normals;
+    ta_vec3 *tangents;
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;
     ta_aabb aabb;

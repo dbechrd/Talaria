@@ -30,6 +30,7 @@ const char *SYM_ATTR_POSITION;
 const char *SYM_ATTR_COLOR;
 const char *SYM_ATTR_UV;
 const char *SYM_ATTR_NORMAL;
+const char *SYM_ATTR_TANGENT;
 
 // Shader uniforms
 const char *SYM_U_PROJ;
@@ -99,6 +100,7 @@ void ta_symbol_init() {
     SYM_ATTR_COLOR    = INTERN("attr_color");
     SYM_ATTR_UV       = INTERN("attr_uv");
     SYM_ATTR_NORMAL   = INTERN("attr_normal");
+    SYM_ATTR_TANGENT  = INTERN("attr_tangent");
 
     SYM_U_PROJ          = INTERN("u_proj");
     SYM_U_VIEW          = INTERN("u_view");

@@ -16,7 +16,7 @@ typedef struct ta_vert_line {
 typedef struct ta_shader_quads_vertex {
     ta_vec3 position;
     ta_rgba color;
-    ta_uv uv;
+    ta_vec2 uv;
 } ta_shader_quads_vertex;
 
 typedef struct ta_vert_quad {

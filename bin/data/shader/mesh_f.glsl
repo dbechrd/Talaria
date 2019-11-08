@@ -5,13 +5,15 @@ in vs_out {
     vec4 color;
 	vec2 uv;
 	vec3 normal;
+    vec3 tbn_position;
+    vec3 tbn_camera_pos;
+    vec3 tbn_light_pos[8];
+    vec3 tbn_light_dir[8];
 } vertex;
 
 out vec4 final_color;
 
 const float PI = 3.14159265359;
-
-uniform vec3 u_camera_pos;
 
 // https://forum.substance3d.com/index.php?topic=3243.0#msg14976
 // Albedo
@@ -101,7 +103,10 @@ struct Light {
 uniform uint u_lights_count;
 uniform Light[8] u_lights;
 
-uniform int u_selected;
+uniform vec3 u_camera_pos;
+
+// TODO: Use this to color selected object differently
+uniform bool u_selected;
 
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
@@ -111,6 +116,7 @@ void main()
 {
     vec2 vertex_uv = vertex.uv * 4.0;
     // TODO: Use defaults if texture not present
+    // NOTE: Currently implemented in ta_model.c, maybe it should stay there?
     vec3  mtl_albedo    = texture(u_tex_albedo,    vertex_uv).rgb;  // default: none
     float mtl_opacity   = texture(u_tex_albedo,    vertex_uv).a;    // default: 1.0
     float mtl_height    = texture(u_tex_height,    vertex_uv).r;    // default: 0.0
@@ -119,16 +125,11 @@ void main()
     float mtl_occlusion = texture(u_tex_occlusion, vertex_uv).r;    // default: 0.0
     float mtl_roughness = texture(u_tex_roughness, vertex_uv).r;    // default: 0.5
 
-    vec3 N = vertex.normal;
-    vec3 V = normalize(u_camera_pos - vertex.position);
+    vec3 N = normalize(mtl_normal * 2.0 - 1.0);
+    vec3 V = normalize(vertex.tbn_camera_pos - vertex.tbn_position);
 
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, mtl_albedo, mtl_metallic);
-
-    //float debug_dist = 0;
-    //float debug_depth = 0;
-    //float debug_shadow = 0;
-    float foo_shadows[27];
 
     vec3 L0 = vec3(0.0);
     for (uint i = 0U; i < u_lights_count; ++i) {
@@ -152,6 +153,8 @@ void main()
 
                 //dist = projCoords.z;
                 attenuation = u_lights[i].intensity;
+
+                fragToLight = -vertex.tbn_light_dir[i];
                 break;
             } case LIGHT_POINT: {
                 fragToLight = u_lights[i].position - vertex.position;
@@ -162,35 +165,37 @@ void main()
                 if (u_lights[i].cast_shadows) {
                     shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
                     shadow_map_depth *= u_lights[i].shadowmap_zfar;
-                    //debug_depth = shadow_map_depth;
                     shadow_bias = 0.1;
 
-                    //debug_dist = dist - shadow_bias;
-                    //debug_shadow = step(shadow_map_depth, dist - shadow_bias);
-
+                    // Soft shadows
                     // TODO: Clean this crap up via:
                     // https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
-				    float foo_bias = 0.04;
+				    float ss_bias = 0.04;
+                    float ss_count = 0.0;
 				    for (float x = -1.0; x <= 1.0; x += 1.0) {
 					    for (float y = -1.0; y <= 1.0; y += 1.0) {
 					        for (float z = -1.0; z <= 1.0; z += 1.0) {
-							    vec3 foo_offset = vec3(x, y, z) * 0.04;
-							    float foo_depth = texture(u_lights[i].shadowmap3d, -fragToLight + foo_offset).r;
-							    foo_depth *= u_lights[i].shadowmap_zfar;
-							    float shadow_i = step(foo_depth, dist - foo_bias);
-			                    shadow += (1.0 / 27) * shadow_i;
+							    vec3 ss_offset = vec3(x, y, z) * 0.04;
+							    float ss_depth = texture(u_lights[i].shadowmap3d, -fragToLight + ss_offset).r;
+							    ss_depth *= u_lights[i].shadowmap_zfar;
+							    float shadow_i = step(ss_depth, dist - ss_bias);
+			                    shadow += step(ss_depth, dist - ss_bias);
+                                ss_count += 1.0;
 					        }
 					    }
 				    }
+                    shadow /= ss_count;
 		            shadow = smoothstep(0.01, 1.0, shadow);
                 }
+
+                fragToLight = vertex.tbn_light_pos[i] - vertex.tbn_position;
                 break;
             }
         }
+        //shadow = 0.0;
 
         vec3 radiance = u_lights[i].color * attenuation;
 
-        //vec3 L = normalize(u_lights[0].position - vertex.position);
         vec3 L = normalize(fragToLight);
         vec3 H = normalize(V + L);
 
@@ -218,19 +223,6 @@ void main()
     color = pow(color, vec3(1.0 / 2.2));
 
     final_color = vec4(color, mtl_opacity);
-
-    //vec3 aa = vec3(debug_dist) / 20;
-    //vec3 bb = vec3(debug_depth) / 20;
-    //final_color = vec4(bb - aa, 1.0);
-
-    //final_color = vec4(vec3(debug_dist / 20), 1.0);
-    //final_color = vec4(vec3(debug_depth) / 20, 1.0);
-    //final_color = vec4(vec3(1 - debug_dist / 20, 1.0 - debug_depth, 0.0), 1.0);
-
-    //final_color = vec4(vec3(1.0) - vec3(debug_shadows[0], 1.0, 1.0), 1.0);
-    //final_color = vec4(vec3(1.0) - vec3(1.0, debug_shadows[1], 1.0), 1.0);
-    //final_color = vec4(vec3(1.0) - vec3(1.0, 1.0, debug_shadows[2]), 1.0);
-    //final_color = vec4(vec3(1.0) - vec3(debug_shadows[0], debug_shadows[1], debug_shadows[2]), 1.0);
 
     // vertex colors
     //final_color = vertex.color;

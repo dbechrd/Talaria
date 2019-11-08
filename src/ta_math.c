@@ -4,6 +4,16 @@
 #include <float.h>
 #include <stdio.h>
 
+const ta_vec2 VEC2_ZERO = { 0.0f, 0.0f };
+const ta_vec2 VEC2_ONE = { 1.0f, 1.0f };
+const ta_vec2 VEC2_X = { 1.0f, 0.0f };
+const ta_vec2 VEC2_Y = { 0.0f, 1.0f };
+const ta_vec2 VEC2_NX = { -1.0f, 0.0f };
+const ta_vec2 VEC2_NY = { 0.0f, -1.0f };
+const ta_vec2 VEC2_MIN = { FLT_MIN, FLT_MIN };
+const ta_vec2 VEC2_MAX = { FLT_MAX, FLT_MAX };
+const ta_vec2 VEC2_EPSILON = { TA_EPSILON, TA_EPSILON };
+
 const ta_vec3 VEC3_ZERO = { 0.0f, 0.0f, 0.0f };
 const ta_vec3 VEC3_ONE = { 1.0f, 1.0f, 1.0f };
 const ta_vec3 VEC3_X = { 1.0f, 0.0f, 0.0f };
@@ -89,6 +99,80 @@ float clampf(float f, float min, float max)
     }
 }
 
+void vec2_print(FILE *file, ta_vec2 v)
+{
+    fprintf(file, "vec2: %f %f\n", v.x, v.y);
+}
+int vec2_zero(ta_vec2 v)
+{
+    return v.x == 0.0f && v.y == 0.0f;
+}
+int vec2_tiny(ta_vec2 v)
+{
+    return fabs(v.x) < TA_EPSILON &&
+           fabs(v.y) < TA_EPSILON;
+}
+int vec2_equal(ta_vec2 a, ta_vec2 b)
+{
+    return fabs(a.x - b.x) < TA_EPSILON &&
+           fabs(a.y - b.y) < TA_EPSILON;
+}
+ta_vec2 vec2_neg(ta_vec2 v)
+{
+    ta_vec2 result;
+    result.x = -v.x;
+    result.y = -v.y;
+    return result;
+}
+ta_vec2 vec2_add(ta_vec2 a, ta_vec2 b)
+{
+    ta_vec2 result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    return result;
+}
+ta_vec2 vec2_sub(ta_vec2 a, ta_vec2 b)
+{
+    ta_vec2 result;
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    return result;
+}
+ta_vec2 vec2_scalef(ta_vec2 a, float s)
+{
+    ta_vec2 result;
+    result.x = a.x * s;
+    result.y = a.y * s;
+    return result;
+}
+float vec2_len(ta_vec2 v)
+{
+    float len = sqrtf(v.x * v.x + v.y * v.y);
+    //if (fabsf(len) < TA_EPSILON) {
+    //    len = 0.0f;
+    //}
+    return len;
+}
+float vec2_len2(ta_vec2 v)
+{
+    float len2 = v.x * v.x + v.y * v.y;
+    //if (fabsf(len2) < TA_EPSILON) {
+    //    len2 = 0.0f;
+    //}
+    return len2;
+}
+ta_vec2 vec2_normalize(ta_vec2 v)
+{
+    float len = vec2_len(v);
+    ta_vec2 result = v;
+    if (len) {
+        result = vec2_scalef(result, 1.0f / len);
+    } else {
+        ta_log_write(&tg_debug_log, "[WARNING] Normalizing zero vector\n");
+        result = VEC2_ZERO;
+    }
+    return result;
+}
 void vec3_print(FILE *file, ta_vec3 v)
 {
     fprintf(file, "vec3: %f %f %f\n", v.x, v.y, v.z);

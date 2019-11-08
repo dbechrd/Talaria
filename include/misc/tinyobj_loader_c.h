@@ -1088,7 +1088,7 @@ static int parseLine(Command * command, const char *p, size_t p_len,
 	if (token[0] == 'f' && IS_SPACE((token[1]))) {
 		size_t num_f = 0;
 
-		tinyobj_vertex_index_t f[TINYOBJ_MAX_FACES_PER_F_LINE];
+        tinyobj_vertex_index_t f[TINYOBJ_MAX_FACES_PER_F_LINE] = { 0 };
 		token += 2;
 		skip_space(&token);
 

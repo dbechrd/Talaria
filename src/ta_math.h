@@ -154,6 +154,16 @@ typedef struct ta_ray {
     ta_vec3 direction;
 } ta_ray;
 
+extern const ta_vec2 VEC2_ZERO;
+extern const ta_vec2 VEC2_ONE;
+extern const ta_vec2 VEC2_X;
+extern const ta_vec2 VEC2_Y;
+extern const ta_vec2 VEC2_NX;
+extern const ta_vec2 VEC2_NY;
+extern const ta_vec2 VEC2_MIN;
+extern const ta_vec2 VEC2_MAX;
+extern const ta_vec2 VEC2_EPSILON;
+
 extern const ta_vec3 VEC3_ZERO;
 extern const ta_vec3 VEC3_ONE;
 extern const ta_vec3 VEC3_X;
@@ -207,6 +217,18 @@ extern const ta_vec2i TA_VEC2I_ZERO;
 
 //int clamp(int d, int min, int max);
 float clampf(float f, float min, float max);
+
+void vec2_print(FILE *file, ta_vec2 v);
+int vec2_zero(ta_vec2 v);
+int vec2_tiny(ta_vec2 v);
+int vec2_equal(ta_vec2 a, ta_vec2 b);
+ta_vec2 vec2_neg(ta_vec2 v);
+ta_vec2 vec2_add(ta_vec2 a, ta_vec2 b);
+ta_vec2 vec2_sub(ta_vec2 a, ta_vec2 b);
+ta_vec2 vec2_scalef(ta_vec2 a, float s);
+float vec2_len(ta_vec2 v);
+float vec2_len2(ta_vec2 v);
+ta_vec2 vec2_normalize(ta_vec2 v);
 
 void vec3_print(FILE *file, ta_vec3 v);
 int vec3_zero(ta_vec3 v);

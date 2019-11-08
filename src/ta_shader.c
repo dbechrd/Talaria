@@ -210,6 +210,7 @@ void ta_shader_load(ta_shader *shader)
     glBindAttribLocation(program_id, TA_SHADER_ATTR_COLOR,    "attr_color");
     glBindAttribLocation(program_id, TA_SHADER_ATTR_UV,       "attr_uv");
     glBindAttribLocation(program_id, TA_SHADER_ATTR_NORMAL,   "attr_normal");
+    glBindAttribLocation(program_id, TA_SHADER_ATTR_TANGENT,  "attr_tangent");
     ta_shader_program_link(program_id);
 
     glGetProgramiv(shader->program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
@@ -230,11 +231,14 @@ void ta_shader_load(ta_shader *shader)
         find_attribute_by_name(shader, SYM_ATTR_UV,       TA_GLSL_VEC2);
     ta_shader_attribute *attr_norm =
         find_attribute_by_name(shader, SYM_ATTR_NORMAL,   TA_GLSL_VEC3);
+    ta_shader_attribute *attr_tang =
+        find_attribute_by_name(shader, SYM_ATTR_TANGENT,   TA_GLSL_VEC3);
 
     DLB_ASSERT(!attr_pos  || attr_pos->location  < 0 || attr_pos->location  == TA_SHADER_ATTR_POSITION);
     DLB_ASSERT(!attr_col  || attr_col->location  < 0 || attr_col->location  == TA_SHADER_ATTR_COLOR);
     DLB_ASSERT(!attr_uv   || attr_uv->location   < 0 || attr_uv->location   == TA_SHADER_ATTR_UV);
     DLB_ASSERT(!attr_norm || attr_norm->location < 0 || attr_norm->location == TA_SHADER_ATTR_NORMAL);
+    DLB_ASSERT(!attr_tang || attr_tang->location < 0 || attr_tang->location == TA_SHADER_ATTR_TANGENT);
 
     shader_locate_uniforms(shader, shader->uniforms);
 

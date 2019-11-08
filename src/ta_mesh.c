@@ -60,6 +60,15 @@ void ta_mesh_create(ta_mesh *mesh)
         glEnableVertexAttribArray(TA_SHADER_ATTR_NORMAL);
         glVertexAttribPointer(TA_SHADER_ATTR_NORMAL, 3, GL_FLOAT, false, 0, 0);
     }
+    if (mesh->tangents) {
+        int tangent_count = dlb_vec_len(mesh->tangents) * 3;
+        glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_TANGENT]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_TANGENT]);
+        glBufferData(GL_ARRAY_BUFFER, tangent_count * sizeof(GLfloat), mesh->tangents,
+            GL_STATIC_DRAW);
+        glEnableVertexAttribArray(TA_SHADER_ATTR_TANGENT);
+        glVertexAttribPointer(TA_SHADER_ATTR_TANGENT, 3, GL_FLOAT, false, 0, 0);
+    }
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -68,6 +77,8 @@ void ta_mesh_create(ta_mesh *mesh)
     }
 }
 
+// TODO: Should tangent generation also go here? Or should this be moved to
+// mesh_group loader?
 void ta_mesh_init_normals(ta_mesh *mesh, float scale)
 {
     DLB_ASSERT(!mesh->vertex_normals);
@@ -178,9 +189,10 @@ void ta_mesh_free(ta_mesh *mesh)
     //dlb_hash_delete(&mesh->group->meshes_by_name, SYM(mesh->name));
     dlb_vec_free(mesh->indexes);
     dlb_vec_free(mesh->positions);
-    dlb_vec_free(mesh->normals);
     dlb_vec_free(mesh->uvs);
     dlb_vec_free(mesh->colors);
+    dlb_vec_free(mesh->normals);
+    dlb_vec_free(mesh->tangents);
     glDeleteVertexArrays(1, &mesh->vao);
     // TODO: This is probably going to break, need to either use gl_ids like
     //       ta_texture_clear() or individually check if each buffer exists.

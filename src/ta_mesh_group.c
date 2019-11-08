@@ -74,29 +74,50 @@ void ta_mesh_group_load(ta_mesh_group *group)
         for (size_t f_idx = 0; f_idx < shape.length; f_idx++) {
             int face_verts = attrib.face_num_verts[shape.face_offset + f_idx];
             DLB_ASSERT(face_verts == 3);
+            ta_vec3 *positions[3] = { 0 };
+            ta_vec2 *uvs[3] = { 0 };
+
             for (int v_idx = 0; v_idx < face_verts; v_idx++) {
                 tinyobj_vertex_index_t vert = attrib.faces[shape.face_offset * 3 + f_idx * 3 + v_idx];
-                ta_vec3 *pos = dlb_vec_alloc(mesh->positions);
-                pos->x = attrib.vertices[vert.v_idx * 3];
-                pos->y = attrib.vertices[vert.v_idx * 3 + 1];
-                pos->z = attrib.vertices[vert.v_idx * 3 + 2];
-                ta_vec3 *norm = dlb_vec_alloc(mesh->normals);
-                norm->x = attrib.normals[vert.vn_idx * 3];
-                norm->y = attrib.normals[vert.vn_idx * 3 + 1];
-                norm->z = attrib.normals[vert.vn_idx * 3 + 2];
-                ta_uv *uv = dlb_vec_alloc(mesh->uvs);
-                uv->u = attrib.texcoords[vert.vt_idx * 2];
-                uv->v = attrib.texcoords[vert.vt_idx * 2 + 1];
+                ta_vec3 *position = dlb_vec_alloc(mesh->positions);
+                position->x = attrib.vertices[vert.v_idx * 3];
+                position->y = attrib.vertices[vert.v_idx * 3 + 1];
+                position->z = attrib.vertices[vert.v_idx * 3 + 2];
+                ta_vec3 *normal = dlb_vec_alloc(mesh->normals);
+                normal->x = attrib.normals[vert.vn_idx * 3];
+                normal->y = attrib.normals[vert.vn_idx * 3 + 1];
+                normal->z = attrib.normals[vert.vn_idx * 3 + 2];
+                ta_vec2 *uv = dlb_vec_alloc(mesh->uvs);
+                uv->x = attrib.texcoords[vert.vt_idx * 2];
+                uv->y = attrib.texcoords[vert.vt_idx * 2 + 1];
                 // TODO: Handle attrib.material_ids possibly for color data?
 
-                mesh_min.x = MIN(mesh_min.x, pos->x);
-                mesh_min.y = MIN(mesh_min.y, pos->y);
-                mesh_min.z = MIN(mesh_min.z, pos->z);
-                mesh_max.x = MAX(mesh_max.x, pos->x);
-                mesh_max.y = MAX(mesh_max.y, pos->y);
-                mesh_max.z = MAX(mesh_max.z, pos->z);
-                mesh_radius = MAX(mesh_radius, vec3_len(*pos));
+                positions[v_idx] = position;
+                uvs[v_idx] = uv;
+
+                mesh_min.x = MIN(mesh_min.x, position->x);
+                mesh_min.y = MIN(mesh_min.y, position->y);
+                mesh_min.z = MIN(mesh_min.z, position->z);
+                mesh_max.x = MAX(mesh_max.x, position->x);
+                mesh_max.y = MAX(mesh_max.y, position->y);
+                mesh_max.z = MAX(mesh_max.z, position->z);
+                mesh_radius = MAX(mesh_radius, vec3_len(*position));
             }
+
+            ta_vec3 edge1 = vec3_sub(*positions[1], *positions[0]);
+            ta_vec3 edge2 = vec3_sub(*positions[2], *positions[0]);
+            ta_vec2 delta_uv1 = vec2_sub(*uvs[1], *uvs[0]);
+            ta_vec2 delta_uv2 = vec2_sub(*uvs[2], *uvs[0]);
+
+            ta_vec3 tangent = { 0 };
+            float f = 1.0f / (delta_uv1.x * delta_uv2.y - delta_uv2.x * delta_uv1.y);
+            tangent.x = f * (delta_uv2.y * edge1.x - delta_uv1.y * edge2.x);
+            tangent.y = f * (delta_uv2.y * edge1.y - delta_uv1.y * edge2.y);
+            tangent.z = f * (delta_uv2.y * edge1.z - delta_uv1.y * edge2.z);
+            tangent = vec3_normalize(tangent);
+            dlb_vec_push(mesh->tangents, tangent);
+            dlb_vec_push(mesh->tangents, tangent);
+            dlb_vec_push(mesh->tangents, tangent);
         }
 
         ta_mesh_create(mesh);
