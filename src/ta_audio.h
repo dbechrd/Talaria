@@ -39,6 +39,7 @@ typedef struct ta_audio_source {
 struct ta_buffer;
 
 void ta_audio_listener_init(ta_audio_listener *audio);
+float ta_audio_listener_get_volume(ta_audio_listener *listener);
 void ta_audio_listener_set_volume(ta_audio_listener *audio, float volume);
 bool ta_audio_listener_muted(ta_audio_listener *audio);
 void ta_audio_listener_mute(ta_audio_listener *audio);

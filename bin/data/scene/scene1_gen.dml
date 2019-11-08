@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x3F22DA5E (0.636145)
-    y: 0xC07FF2A6 (-3.999185)
-    z: 0x411E14E8 (9.880104)
+    x: 0x3F7BAAA0 (0.983072)
+    y: 0xC09F9C46 (-4.987826)
+    z: 0x420B6058 (34.844086)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x42C2FFC6 (97.499557)
+  yaw: 0x42C533BF (98.601067)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC15E659B (-13.899806)
+  pitch: 0xBF667520 (-0.900225)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,9 +57,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBD006CD3 (-0.031354)
-    y: 0x3F7880ED (0.970717)
-    z: 0xBE73E2CC (-0.238170)
+    x: 0xBB19FD0B (-0.002350)
+    y: 0x3F7FF7EA (0.999877)
+    z: 0xBC7E849B (-0.015535)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
@@ -166,6 +166,7 @@ ta_light:
 ta_light:
   name: "point_attic"
   entity_name: "point_attic"
+  disabled: true
   cast_shadows: true
   position:
     x: 0x40400000 (3.000000)

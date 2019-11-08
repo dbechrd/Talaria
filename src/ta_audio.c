@@ -65,6 +65,10 @@ void ta_audio_listener_init(ta_audio_listener *listener)
     ta_audio_listener_set_volume(listener, listener->volume);
 }
 
+float ta_audio_listener_get_volume(ta_audio_listener *listener)
+{
+    return listener->volume;
+}
 void ta_audio_listener_set_volume(ta_audio_listener *listener, float volume)
 {
     listener->volume = volume;
@@ -199,6 +203,7 @@ void ta_audio_source_init(ta_audio_source *source)
     if (source->audio_buffer) {
         ta_audio_buffer *buffer = ta_scene_find_by_name(tg_game.scene,
             RES_AUDIO_BUFFER, source->audio_buffer);
+        DLB_ASSERT(buffer->al_buffer_id);
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
 }

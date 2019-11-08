@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
     tg_game.audio = dlb_calloc(1, sizeof(ta_audio_listener));
     ta_audio_listener_init(tg_game.audio);
     //ta_audio_listener_mute(tg_game.audio);
-    ta_audio_listener_set_volume(tg_game.audio, 0.5f);
+    ta_audio_listener_set_volume(tg_game.audio, 0.05f);
     ta_mouse_init();
     ta_render_init();
     ta_primitive_init();
@@ -437,9 +437,17 @@ static void render_fps(double ms_frame_start, u64 frame_num)
     double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
     char frame_time_buf[256] = { 0 };
     int len = snprintf(CSTR(frame_time_buf),
-        "Frame: %8llu\n   dt:%6.2f ms\nState: %s\n Prev: %s",
-        frame_num, ms_frame_time, game_state_str(tg_game.state),
-        game_state_str(tg_game.state_prev));
+        " Frame: %7llu\n"
+        "    dt: %3.2f ms\n"
+        " State: %s\n"
+        "  Prev: %s\n"
+        "Volume: %.2f",
+        frame_num,
+        ms_frame_time,
+        game_state_str(tg_game.state),
+        game_state_str(tg_game.state_prev),
+        ta_audio_listener_get_volume(tg_game.audio)
+    );
 
     static ta_rect_uv *frame_time_rects = 0;
     ta_font_push_text(&frame_time_rects, tg_game.font,

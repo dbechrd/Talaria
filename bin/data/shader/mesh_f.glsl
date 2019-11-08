@@ -212,7 +212,7 @@ void main()
         //L0 += mtl_albedo * (1.0 - shadow);
     }
 
-    vec3 ambient = vec3(0.002) * mtl_albedo * mtl_occlusion;
+    vec3 ambient = 0.01 * mtl_albedo * mtl_occlusion;
     vec3 color = ambient + L0;
     color /= color + vec3(1.0);
     color = pow(color, vec3(1.0 / 2.2));
@@ -253,7 +253,7 @@ void main()
     //final_color = vec4(vec3(mtl_roughness), 1.0);
 
     // ambient occlusion
-    //final_color = vec4(vec3(mtl_ao), 1.0);
+    //final_color = vec4(vec3(mtl_occlusion), 1.0);
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

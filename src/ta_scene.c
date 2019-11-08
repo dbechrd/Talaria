@@ -846,7 +846,9 @@ ta_scene *ta_scene_load(ta_file *file)
     tg_game.scene = scene;
 
     // Initialize resources
-    for (ta_resource_type res_type = 0; res_type < RES_COUNT; ++res_type) {
+    // NOTE: Iterate backward to ensure resources are initialized before any
+    // components that might depend on them.
+    for (ta_resource_type res_type = RES_COUNT - 1; res_type >= 0; --res_type) {
         ta_schema_field_type schema_type = res_to_typ(res_type);
         if (tg_schemas[schema_type].init) {
             u32 size = tg_schemas[schema_type].size;
