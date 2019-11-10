@@ -13,7 +13,7 @@
 #define DEFAULT_LIGHT_INTENSITY         1.0f
 #define DEFAULT_SHADOWMAP_RESOLUTION    1024
 #define DEFAULT_SHADOWMAP_ZNEAR         0.1f
-#define DEFAULT_SHADOWMAP_ZFAR          50.0f
+#define DEFAULT_SHADOWMAP_ZFAR          500.0f
 
 static void shadowmap_directional_create(ta_light *light);
 static void shadowmap_point_create(ta_light *light);

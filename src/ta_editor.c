@@ -808,6 +808,14 @@ static void editor_ray_pick()
         }
     }
 
+    if (!closest_entity) {
+        static const char *chamber_0001 = 0;
+        if (!chamber_0001) {
+            chamber_0001 = INTERN("chamber_0001");
+        }
+        closest_entity = chamber_0001;
+    }
+
     if (closest_entity) {
         ta_editor_select_node(closest_entity);
     }

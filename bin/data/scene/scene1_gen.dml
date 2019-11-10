@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0xBFAB7F86 (-1.339829)
-    y: 0xC09E6D76 (-4.950862)
-    z: 0x41CF5FA8 (25.921707)
+    x: 0x40F52D22 (7.661759)
+    y: 0xC0A768F2 (-5.231561)
+    z: 0x4163A6A8 (14.228188)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x42B266FE (89.201157)
+  yaw: 0x42F36781 (121.702156)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC0466B52 (-3.100300)
+  pitch: 0xC0466F30 (-3.100536)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,9 +57,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0x3A45AAB4 (0.000754)
-    y: 0x3F7FA015 (0.998536)
-    z: 0xBD5D81BA (-0.054079)
+    x: 0xBCE8D87B (-0.028424)
+    y: 0x3F7FA010 (0.998536)
+    z: 0xBD3C7D17 (-0.046018)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
@@ -130,9 +130,9 @@ ta_light:
   entity_name: "point_room2"
   cast_shadows: true
   position:
-    x: 0x40400000 (3.000000)
-    y: 0xC0800000 (-4.000000)
-    z: 0x40400000 (3.000000)
+    x: 0x40F66666 (7.700000)
+    y: 0x3FAE1479 (1.360000)
+    z: 0x40733347 (3.800005)
   type: 2  # TA_LIGHT_POINT
   point:
     intensity: 0x3F800000 (1.000000)
@@ -143,15 +143,15 @@ ta_light:
   shadowmap:
     resolution: 1024
     znear: 0x3DCCCCCD (0.100000)
-    zfar: 0x42200000 (40.000000)
+    zfar: 0x43FA0000 (500.000000)
 ta_light:
   name: "point_room3"
   entity_name: "point_room3"
   cast_shadows: true
   position:
-    x: 0x40A00000 (5.000000)
-    y: 0xC0800000 (-4.000000)
-    z: 0xC1E00000 (-28.000000)
+    x: 0x40EFAE43 (7.490022)
+    y: 0x40251EB0 (2.579998)
+    z: 0xC24E1477 (-51.519985)
   type: 2  # TA_LIGHT_POINT
   point:
     intensity: 0x3F800000 (1.000000)
@@ -162,7 +162,7 @@ ta_light:
   shadowmap:
     resolution: 1024
     znear: 0x3DCCCCCD (0.100000)
-    zfar: 0x42480000 (50.000000)
+    zfar: 0x43FA0000 (500.000000)
 ta_light:
   name: "point_attic"
   entity_name: "point_attic"
@@ -182,7 +182,7 @@ ta_light:
   shadowmap:
     resolution: 1024
     znear: 0x3DCCCCCD (0.100000)
-    zfar: 0x42480000 (50.000000)
+    zfar: 0x43FA0000 (500.000000)
 #-------------------------------------------------------------------------------
 # TYP_MODEL
 #-------------------------------------------------------------------------------
@@ -192,7 +192,7 @@ ta_model:
   mesh_groups: [
     "chamber_0001",
   ]
-  material: "terrazzo"
+  material: "metal_plate_019"
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -558,8 +558,10 @@ ta_material:
 ta_material:
   name: "cobble"
   shader: "mesh"
-  tex_albedo: "cobble_diff"
-  tex_metallic: "cobble_mrao"
+  tex_albedo: "cobble_albedo"
+  tex_normal: "cobble_normal"
+  tex_occlusion: "cobble_occlusion"
+  tex_roughness: "cobble_roughness"
 ta_material:
   name: "terrazzo"
   shader: "mesh"
@@ -568,6 +570,14 @@ ta_material:
   tex_normal: "terrazzo_normal"
   tex_occlusion: "terrazzo_occlusion"
   tex_roughness: "terrazzo_roughness"
+ta_material:
+  name: "metal_plate_019"
+  shader: "mesh"
+  tex_albedo: "metal_plate_019_albedo"
+  tex_height: "metal_plate_019_height"
+  tex_normal: "metal_plate_019_normal"
+  tex_occlusion: "metal_plate_019_occlusion"
+  tex_roughness: "metal_plate_019_roughness"
 ta_material:
   name: "acoustic_foam"
   shader: "mesh"
@@ -1182,6 +1192,7 @@ ta_texture:
   width: 1
   height: 1
   channels: 4
+  repeat: true
 ta_texture:
   name: "missing_height"
   pixels: [
@@ -1196,6 +1207,7 @@ ta_texture:
   height: 1
   channels: 1
   linear: true
+  repeat: true
 ta_texture:
   name: "missing_metallic"
   pixels: [
@@ -1210,12 +1222,13 @@ ta_texture:
   height: 1
   channels: 1
   linear: true
+  repeat: true
 ta_texture:
   name: "missing_normal"
   pixels: [
     {
-      r: 0,
-      g: 0,
+      r: 127,
+      g: 127,
       b: 255,
       a: 0,
     },
@@ -1224,6 +1237,7 @@ ta_texture:
   height: 1
   channels: 3
   linear: true
+  repeat: true
 ta_texture:
   name: "missing_occlusion"
   pixels: [
@@ -1238,6 +1252,7 @@ ta_texture:
   height: 1
   channels: 1
   linear: true
+  repeat: true
 ta_texture:
   name: "missing_roughness"
   pixels: [
@@ -1252,6 +1267,7 @@ ta_texture:
   height: 1
   channels: 1
   linear: true
+  repeat: true
 ta_texture:
   name: "red_albedo"
   pixels: [
@@ -1265,12 +1281,14 @@ ta_texture:
   width: 1
   height: 1
   channels: 4
+  repeat: true
 ta_texture:
   name: "test_diff"
   path: "data/texture/pbr_default_0.png"
   width: 32
   height: 32
   channels: 4
+  repeat: true
 ta_texture:
   name: "test_mrao"
   path: "data/texture/pbr_default_1.png"
@@ -1278,19 +1296,38 @@ ta_texture:
   height: 32
   channels: 4
   linear: true
+  repeat: true
 ta_texture:
-  name: "cobble_diff"
-  path: "data/texture/cobble_diff.png"
+  name: "cobble_albedo"
+  path: "data/texture/cobble_albedo.png"
   width: 512
   height: 512
-  channels: 4
+  channels: 3
+  repeat: true
 ta_texture:
-  name: "cobble_mrao"
-  path: "data/texture/cobble_mrao.png"
+  name: "cobble_normal"
+  path: "data/texture/cobble_normal.png"
   width: 512
   height: 512
-  channels: 4
+  channels: 3
   linear: true
+  repeat: true
+ta_texture:
+  name: "cobble_occlusion"
+  path: "data/texture/cobble_occlusion.png"
+  width: 512
+  height: 512
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "cobble_roughness"
+  path: "data/texture/cobble_roughness.png"
+  width: 512
+  height: 512
+  channels: 3
+  linear: true
+  repeat: true
 ta_texture:
   name: "audio_icon"
   path: "data/texture/audio_icon.png"
@@ -1338,6 +1375,53 @@ ta_texture:
   linear: true
   repeat: true
 ta_texture:
+  name: "metal_plate_019_albedo"
+  path: "data/texture/Metal_Plate_019_albedo.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  repeat: true
+ta_texture:
+  name: "metal_plate_019_height"
+  path: "data/texture/Metal_Plate_019_height.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "metal_plate_019_metallic"
+  path: "data/texture/Metal_Plate_019_metallic.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "metal_plate_019_normal"
+  path: "data/texture/Metal_Plate_019_normal.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "metal_plate_019_occlusion"
+  path: "data/texture/Metal_Plate_019_occlusion.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
+  name: "metal_plate_019_roughness"
+  path: "data/texture/Metal_Plate_019_roughness.png"
+  width: 1024
+  height: 1024
+  channels: 3
+  linear: true
+  repeat: true
+ta_texture:
   name: "acoustic_foam_albedo"
   path: "data/texture/Acoustic_Foam_001_albedo.png"
   width: 1024
@@ -1349,7 +1433,7 @@ ta_texture:
   path: "data/texture/Acoustic_Foam_001_height.png"
   width: 1024
   height: 1024
-  channels: 3
+  channels: 1
   linear: true
   repeat: true
 ta_texture:

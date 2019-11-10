@@ -47,14 +47,6 @@ void main()
 	vertex.color = attr_color;
 	vertex.uv = attr_uv;
 
-
-    //vec3 T = normalize(vec3(u_model * vec4(attr_tangent, 0.0)));
-    //vec3 N = normalize(vec3(u_model * vec4(attr_normal, 0.0)));
-    //T = normalize(T - dot(T, N) * N);  // re-orthogonalize T with respect to N
-    //vec3 B = cross(N, T);
-    //mat3 TBN = mat3(T, B, N);
-
-
     mat3 normal_matrix = transpose(inverse(mat3(u_model)));
     vec3 T = normalize(normal_matrix * attr_tangent);
     vec3 N = normalize(normal_matrix * attr_normal);
