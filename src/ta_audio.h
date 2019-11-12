@@ -1,6 +1,5 @@
 #pragma once
 #include "dlb/dlb_types.h"
-#include "dlb/dlb_index.h"
 #include "AL/al.h"
 #include "AL/alc.h"
 
@@ -37,6 +36,8 @@ typedef struct ta_audio_source {
 } ta_audio_source;
 
 struct ta_buffer;
+
+extern ta_audio_listener tg_audio;
 
 void ta_audio_listener_init(ta_audio_listener *audio);
 float ta_audio_listener_get_volume(ta_audio_listener *listener);

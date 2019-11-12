@@ -30,7 +30,8 @@ void ta_font_load_path(ta_font *font, const char *path)
 {
     ta_buffer *buf = ta_file_read_all(path);
     if (!stbtt_InitFont(&font->font_info, buf->data, 0)) {
-        ta_log_write(&tg_debug_log, "[font] Failed to initialize font %s\n", path);
+        ta_log_write(&tg_debug_log, "Font", "Failed to initialize font %s\n",
+            path);
         DLB_ASSERT(!"Failed to initialize font!");
     }
 

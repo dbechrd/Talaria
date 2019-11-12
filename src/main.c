@@ -46,7 +46,8 @@
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
-    ta_log_write(&tg_debug_log,
+    tg_debug_log.flush = true;
+    ta_log_write(&tg_debug_log, "ASSERT",
         "\n---[DLB_ASSERT_HANDLER]-----------------\n"
         "Source file: %s:%d\n\n"
         "%s\n"
@@ -64,7 +65,7 @@ DLB_ASSERT_HANDLER(handle_assert)
         "----------------------------------------\n",
         filename, line, expr
     );
-    ta_window_msgbox(tg_game.window, SDL_MESSAGEBOX_ERROR, "ASSERT", buf);
+    ta_window_msgbox(tg_window, SDL_MESSAGEBOX_ERROR, "ASSERT", buf);
 #endif
     exit(-1);
 }
@@ -98,6 +99,8 @@ void ndc_tests() {
 static void render_fps(double ms_frame_start, u64 frame_num);
 static void debug_nametag();
 
+#undef main
+
 int main(int argc, char *argv[])
 {
     UNUSED(argc);
@@ -105,40 +108,36 @@ int main(int argc, char *argv[])
     DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
 
     ta_timer_init();
+    ta_log_init_file(&tg_debug_log, "log.txt", false, false);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
-#if _DEBUG
-    ta_log_init(&tg_debug_log, stdout, false);
-#else
-    ta_log_init_file(&tg_debug_log, "log.txt", true);
-#endif
+    ta_log_write(&tg_debug_log, "System", "Running debug_tests...\n");
     debug_tests();
-
+    ta_log_write(&tg_debug_log, "System", "Initializing symbols...\n");
     ta_symbol_init();
+    ta_log_write(&tg_debug_log, "System", "Registering schema...\n");
     ta_schema_register();
-
     // TODO: Save size/position to a config file
-    ta_window_init(&tg_game.window, 1600, 900, false);
+    ta_log_write(&tg_debug_log, "System", "Initializing window...\n");
+    ta_window_init(tg_window, 1600, 900, false);
+    ta_log_write(&tg_debug_log, "System", "Running ndc_tests...\n");
     ndc_tests();
-    // TODO: Make sure this gets freed or handled better
-    tg_game.audio = dlb_calloc(1, sizeof(ta_audio_listener));
-    ta_audio_listener_init(tg_game.audio);
-    //ta_audio_listener_mute(tg_game.audio);
-    ta_audio_listener_set_volume(tg_game.audio, 0.05f);
+    ta_log_write(&tg_debug_log, "System", "Initializing audio...\n");
+    tg_audio.volume = 0.05f;
+    ta_audio_listener_init(&tg_audio);
+    ta_log_write(&tg_debug_log, "System", "Initializing mouse...\n");
     ta_mouse_init();
+    ta_log_write(&tg_debug_log, "System", "Initializing renderer...\n");
     ta_render_init();
+    ta_log_write(&tg_debug_log, "System", "Initializing primitives...\n");
     ta_primitive_init();
+    ta_log_write(&tg_debug_log, "System", "Initializing editor...\n");
     ta_editor_init();
+    ta_log_write(&tg_debug_log, "System", "Initializing game...\n");
     ta_game_init(&tg_game);
-
-    // Intro scene
-#if 0
-    ta_scene *scene1 = ta_scene_load_file("data/scene/scene1.dml");
-#else
+    ta_log_write(&tg_debug_log, "System", "Loading first scene...\n");
     ta_scene *scene1 = ta_scene_load_file("data/scene/scene1_gen.dml");
-#endif
-    DLB_ASSERT(scene1);
-    DLB_ASSERT(tg_game.scene == scene1);
+    DLB_ASSERT(scene1 && tg_game.scene == scene1);
 
     // TODO: Find closest 8 lights and store them in tg_game.lights
 
@@ -199,7 +198,7 @@ int main(int argc, char *argv[])
 #else
     ta_game_state_set(&tg_game, TA_GAME_STATE_PLAY);
 #endif
-    ta_log_write(&tg_debug_log, "Active camera: %s\n", tg_game.e_active_camera);
+    ta_log_write(&tg_debug_log, "System", "Active camera: %s\n", tg_game.e_active_camera);
     DLB_ASSERT(tg_game.e_active_camera);
 
     ////////////////////////////////////////////////////////////////////////////
@@ -220,7 +219,7 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     // Main loop
     ////////////////////////////////////////////////////////////////////////////
-    u64 frame_num = 0;
+    u64 frame_num = 1;
 
     // Eric Catto - Soft Constraints (GDC 2011)
     // Semi-implicit Euler will eventually blow up if you take big time steps. A
@@ -234,21 +233,20 @@ int main(int argc, char *argv[])
     const double sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
     const double sim_max_steps = 0;          // max simulation steps per frame
     double ms_sim_t = 0;                     // current simulation time
-
-    double ms_frame_first = ta_timer_elapsed_ms();
-    double ms_frame_prev = ms_frame_first;
     double ms_frame_accum = 0;
+
+    double ms_frame_timer = ta_timer_elapsed_ms();
+    double ms_frame_prev = ms_frame_timer;
+    double ms_frame_delta = ms_frame_timer - ms_frame_prev;
 
     //float light_deg = 0;
 
     while (tg_game.state != TA_GAME_STATE_SHUTDOWN) {
-        double ms_frame_start = ta_timer_elapsed_ms();
-        double ms_frame_delta = ms_frame_start - ms_frame_prev;
-        ms_frame_prev = ms_frame_start;
-
         // Engine events
+        ta_log_write(&tg_debug_log, "System", " Handling events...\n");
         ta_event_events();
 
+        ta_log_write(&tg_debug_log, "System", " Accumulating...\n");
         // If sim_max_steps == 0, assume we want lockstep physics
         if (sim_max_steps == 0) {
             ms_frame_accum = ms_sim_dt;
@@ -257,21 +255,29 @@ int main(int argc, char *argv[])
             // Prevent spiral of death
             // NOTE: This breaks determinism when simulation is under duress
             if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
-                ta_log_write(&tg_debug_log,
-                    "[Sim] WARNING: Physics accumulator spiraling; truncating %f to %f\n",
+                ta_log_write(&tg_debug_log, "System",
+                    "WARNING: Physics accumulator spiraling; truncating %f to %f\n",
                     ms_frame_accum, ms_sim_dt * sim_max_steps);
                 ms_frame_accum = ms_sim_dt * sim_max_steps;
             }
         }
 
+        ta_log_write(&tg_debug_log, "System", " Finding components...\n");
         ta_camera *active_camera = ta_scene_component(tg_game.scene,
             RES_COMP_CAMERA, tg_game.e_active_camera);
-        ta_camera *player_cam = ta_scene_component(tg_game.scene,
-            RES_COMP_CAMERA, tg_game.e_player_one);
-        ta_rigid_body *player_body = ta_scene_component(tg_game.scene,
-            RES_COMP_RIGID_BODY, tg_game.e_player_one);
+        ta_camera *player_cam = 0;
+        ta_rigid_body *player_body = 0;
+
+        if (ms_frame_accum >= ms_sim_dt) {
+            ta_log_write(&tg_debug_log, "System", " Finding sim components...\n");
+            player_cam = ta_scene_component(tg_game.scene, RES_COMP_CAMERA,
+                tg_game.e_player_one);
+            player_body = ta_scene_component(tg_game.scene, RES_COMP_RIGID_BODY,
+                tg_game.e_player_one);
+        }
 
         while (ms_frame_accum >= ms_sim_dt) {
+            ta_log_write(&tg_debug_log, "System", " Sim step...\n");
             // Update player camera
             // TODO: Set target entity and follow distance vector in DML
             ta_camera_set_target_pos_absolute(player_cam,
@@ -336,7 +342,9 @@ int main(int argc, char *argv[])
         float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
 
         // Draw models
+        ta_log_write(&tg_debug_log, "System", " Shadow pass...\n");
         ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
+        ta_log_write(&tg_debug_log, "System", " Render pass...\n");
         ta_scene_render(tg_game.scene, active_camera, sim_alpha);
 
         // World axes
@@ -344,6 +352,7 @@ int main(int argc, char *argv[])
         ta_primitive_render(true, true);
 
         if (tg_game.state == TA_GAME_STATE_EDITOR) {
+            ta_log_write(&tg_debug_log, "System", " Editor pass...\n");
             ta_editor_draw(sim_alpha);
         }
 
@@ -415,26 +424,41 @@ int main(int argc, char *argv[])
         // TODO: Make HUD drawing suck less.. way too many draw calls
         //       Use texture atlas, batch everything into one draw call. Import
         //       textures from Rico; stop using stupid RGB placeholders
+        ta_log_write(&tg_debug_log, "System", " HUD pass...\n");
         ta_game_hud_draw(&tg_game);
 
-        render_fps(ms_frame_start, frame_num);
+        ta_log_write(&tg_debug_log, "System", " FPS pass...\n");
+        ms_frame_timer = ta_timer_elapsed_ms();
+        ms_frame_delta = ms_frame_timer - ms_frame_prev;
+        ms_frame_prev = ms_frame_timer;
+        render_fps(ms_frame_delta, frame_num);
 
-        ta_window_swap(tg_game.window);
+        // NOTE: This confirms rendering is being deferred until swap buffers,
+        // but it's much slower (~5ms), so don't actually use it.
+        //ta_log_write(&tg_debug_log, "System", " glFinish...\n");
+        //glFinish();
+
+        ta_log_write(&tg_debug_log, "System", " Swap...\n");
+        ta_window_swap(tg_window);
+
+        tg_debug_log.flush = true;
+        ta_log_write(&tg_debug_log, "System", "Frame %llu displayed. delta: %5.3f\n", frame_num, ms_frame_delta);
+        tg_debug_log.flush = false;
+
         //ta_log_write(&tg_debug_log, "Frame %llu started at %f sim time: %f\n",
         //    frame_num, ms_frame_start - ms_frame_first, ms_sim_t);
         frame_num++;
     }
 
     // TODO: Free *EVERYTHING* (at least in debug mode.. to check memory leaks)
-    ta_window_free(&tg_game.window);
-    ta_log_write(&tg_debug_log, "Goodbye.\n\n");
+    ta_window_free(tg_window);
+    ta_log_write(&tg_debug_log, "System", "Goodbye.\n\n");
     return 0;
 }
 
-static void render_fps(double ms_frame_start, u64 frame_num)
+static void render_fps(double ms_frame_delta, u64 frame_num)
 {
     // Print frame time on the screen
-    double ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
     char frame_time_buf[256] = { 0 };
     int len = snprintf(CSTR(frame_time_buf),
         " Frame: %7llu\n"
@@ -443,10 +467,10 @@ static void render_fps(double ms_frame_start, u64 frame_num)
         "  Prev: %s\n"
         "Volume: %.2f",
         frame_num,
-        ms_frame_time,
+        ms_frame_delta,
         game_state_str(tg_game.state),
         game_state_str(tg_game.state_prev),
-        ta_audio_listener_get_volume(tg_game.audio)
+        ta_audio_listener_get_volume(&tg_audio)
     );
 
     static ta_rect_uv *frame_time_rects = 0;

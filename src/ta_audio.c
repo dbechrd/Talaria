@@ -11,51 +11,52 @@
 #define TA_AUDIO_SAMPLE_RATE 44100
 #define TA_AUDIO_SAMPLES_PER_MS (TA_AUDIO_SAMPLE_RATE / 1000.0)
 
+ta_audio_listener tg_audio;
+
 void ta_audio_listener_init(ta_audio_listener *listener)
 {
     if (!listener->volume) {
         listener->volume = 1.0f;
     }
 
+    ta_log_write(&tg_debug_log, "Audio", "Enumerating devices...\n");
     const char *devices = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
     const char *s = devices;
     while (*s)
     {
-        ta_log_write(&tg_debug_log, "[Audio] Device: %s\n", s);
+        ta_log_write(&tg_debug_log, "Audio", "  Device: %s\n", s);
         while (*s) { s++; }
         s++;
     }
 
     // TODO: Allow user to set which device they want to use
-    ta_log_write(&tg_debug_log, "[Audio] alcOpenDevice...\n");
+    ta_log_write(&tg_debug_log, "Audio", "alcOpenDevice...\n");
     listener->al_device = alcOpenDevice(NULL);
     if (!listener->al_device)
     {
         DLB_ASSERT(!"Failed to open listener context");
         return;
     }
-    ta_log_write(&tg_debug_log, "[Audio] Success\n");
 
     // TODO: What other attributes can I specify on a context?
+    ta_log_write(&tg_debug_log, "Audio", "alcCreateContext...\n");
     ALCint attrlist[] = { ALC_FREQUENCY, TA_AUDIO_SAMPLE_RATE, 0 };
-    ta_log_write(&tg_debug_log, "[Audio] alcCreateContext...\n");
     listener->al_context = alcCreateContext(listener->al_device, attrlist);
     if (!listener->al_context)
     {
         DLB_ASSERT(!"Failed to create listener context");
         return;
     }
-    ta_log_write(&tg_debug_log, "[Audio] Success\n");
 
     // TODO: Can I have more than one context, is that useful?
-    ta_log_write(&tg_debug_log, "[Audio] alcMakeContextCurrent...\n");
+    ta_log_write(&tg_debug_log, "Audio", "alcMakeContextCurrent...\n");
     if (!alcMakeContextCurrent(listener->al_context))
     {
         DLB_ASSERT(!"Failed to activate listener context");
         return;
     }
-    ta_log_write(&tg_debug_log, "[Audio] Success\n");
 
+    ta_log_write(&tg_debug_log, "Audio", "Checking for OpenAL errors...\n");
     ALenum err = alGetError();
     if (err) {
         DLB_ASSERT(!"OpenAL error");
@@ -261,8 +262,8 @@ void ta_audio_source_play(ta_audio_source *source)
 
     alSourcei(source->al_source_id, AL_LOOPING, AL_FALSE);
     alSourcePlay(source->al_source_id);
-    ta_log_write(&tg_debug_log,
-        "[Audio] Playing source name=%s id=%d pitch=%f gain=%f loop=%d\n",
+    ta_log_write(&tg_debug_log, "Audio",
+        "Playing source name=%s id=%d pitch=%f gain=%f loop=%d\n",
         source->name, source->al_source_id, source->pitch, source->gain,
         false);
 #if AUDIO_ASSERT
@@ -287,8 +288,8 @@ void ta_audio_source_play_loop(ta_audio_source *source)
 
     alSourcei(source->al_source_id, AL_LOOPING, AL_TRUE);
     alSourcePlay(source->al_source_id);
-    ta_log_write(&tg_debug_log,
-        "[Audio] Playing source name=%s id=%d pitch=%f gain=%f loop=%d\n",
+    ta_log_write(&tg_debug_log, "Audio",
+        "Playing source name=%s id=%d pitch=%f gain=%f loop=%d\n",
         source->name, source->al_source_id, source->pitch, source->gain,
         true);
 #if AUDIO_ASSERT

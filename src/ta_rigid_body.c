@@ -355,7 +355,8 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
     // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
     if (a->inv_mass == 0.0f && b->inv_mass == 0.0f)
     {
-        ta_log_write(&tg_debug_log, "[WARNING] Detected movement of infinite mass body\n");
+        ta_log_write(&tg_debug_log, "RigidBody",
+            "WARNING: Detected movement of infinite mass body\n");
         a->velocity = VEC3_ZERO;
         b->velocity = VEC3_ZERO;
         return;

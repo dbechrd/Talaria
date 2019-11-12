@@ -5,9 +5,9 @@ struct ta_size;
 struct ta_event;
 typedef struct SDL_Window SDL_Window;
 
-#define WINDOW_W ta_window_width(tg_game.window)
-#define WINDOW_H ta_window_height(tg_game.window)
-#define WINDOW_ASPECT ta_window_aspect(tg_game.window)
+#define WINDOW_W ta_window_width(tg_window)
+#define WINDOW_H ta_window_height(tg_window)
+#define WINDOW_ASPECT ta_window_aspect(tg_window)
 
 // Converts top-left screen x/y to normalized device coordinates:
 //
@@ -48,8 +48,10 @@ typedef struct SDL_Window SDL_Window;
 
 typedef struct ta_window ta_window;
 
-void ta_window_init(ta_window **ptr, int w, int h, bool fullscreen);
-void ta_window_free(ta_window **ptr);
+extern ta_window *tg_window;
+
+void ta_window_init(ta_window *window, int w, int h, bool fullscreen);
+void ta_window_free(ta_window *window);
 struct ta_size ta_window_size(ta_window *window);
 int ta_window_width(ta_window *window);
 int ta_window_height(ta_window *window);

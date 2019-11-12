@@ -19,14 +19,12 @@ typedef struct ta_game {
     ta_game_state state;
     ta_game_state state_prev;
 
-    struct ta_audio_listener *audio;
     struct ta_font *font;
     struct ta_keybind *keybinds[TA_GAME_STATE_COUNT];
     struct ta_scene *scene;
     struct ta_texture *tex_orange;
     struct ta_texture *tex_red;
     struct ta_texture *tex_audio_icon;
-    struct ta_window *window;
 
     const char *e_background_music;
     const char *e_freecam;

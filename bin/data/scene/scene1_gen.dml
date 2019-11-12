@@ -1284,179 +1284,110 @@ ta_texture:
   repeat: true
 ta_texture:
   name: "test_diff"
-  path: "data/texture/pbr_default_0.png"
-  width: 32
-  height: 32
-  channels: 4
+  path: "data/texture/pbr_default_0.tga"
   repeat: true
 ta_texture:
   name: "test_mrao"
-  path: "data/texture/pbr_default_1.png"
-  width: 32
-  height: 32
-  channels: 4
+  path: "data/texture/pbr_default_1.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "cobble_albedo"
-  path: "data/texture/cobble_albedo.png"
-  width: 512
-  height: 512
-  channels: 3
+  path: "data/texture/cobble_albedo.tga"
   repeat: true
 ta_texture:
   name: "cobble_normal"
-  path: "data/texture/cobble_normal.png"
-  width: 512
-  height: 512
-  channels: 3
+  path: "data/texture/cobble_normal.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "cobble_occlusion"
-  path: "data/texture/cobble_occlusion.png"
-  width: 512
-  height: 512
-  channels: 3
+  path: "data/texture/cobble_occlusion.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "cobble_roughness"
-  path: "data/texture/cobble_roughness.png"
-  width: 512
-  height: 512
-  channels: 3
+  path: "data/texture/cobble_roughness.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "audio_icon"
-  path: "data/texture/audio_icon.png"
-  width: 32
-  height: 32
-  channels: 4
+  path: "data/texture/audio_icon.tga"
   linear: true
 ta_texture:
   name: "terrazzo_albedo"
-  path: "data/texture/Terrazzo_Tiles_001_albedo.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Terrazzo_Tiles_001_albedo.tga"
   repeat: true
 ta_texture:
   name: "terrazzo_height"
-  path: "data/texture/Terrazzo_Tiles_001_height.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Terrazzo_Tiles_001_height.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "terrazzo_normal"
-  path: "data/texture/Terrazzo_Tiles_001_normal.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Terrazzo_Tiles_001_normal.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "terrazzo_occlusion"
-  path: "data/texture/Terrazzo_Tiles_001_occlusion.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "terrazzo_roughness"
-  path: "data/texture/Terrazzo_Tiles_001_roughness.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Terrazzo_Tiles_001_roughness.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "metal_plate_019_albedo"
-  path: "data/texture/Metal_Plate_019_albedo.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Metal_Plate_019_albedo.tga"
   repeat: true
 ta_texture:
   name: "metal_plate_019_height"
-  path: "data/texture/Metal_Plate_019_height.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Metal_Plate_019_height.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "metal_plate_019_metallic"
-  path: "data/texture/Metal_Plate_019_metallic.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Metal_Plate_019_metallic.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "metal_plate_019_normal"
-  path: "data/texture/Metal_Plate_019_normal.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Metal_Plate_019_normal.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "metal_plate_019_occlusion"
-  path: "data/texture/Metal_Plate_019_occlusion.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Metal_Plate_019_occlusion.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "metal_plate_019_roughness"
-  path: "data/texture/Metal_Plate_019_roughness.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Metal_Plate_019_roughness.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "acoustic_foam_albedo"
-  path: "data/texture/Acoustic_Foam_001_albedo.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Acoustic_Foam_001_albedo.tga"
   repeat: true
 ta_texture:
   name: "acoustic_foam_height"
-  path: "data/texture/Acoustic_Foam_001_height.png"
-  width: 1024
-  height: 1024
-  channels: 1
+  path: "data/texture/Acoustic_Foam_001_height.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "acoustic_foam_normal"
-  path: "data/texture/Acoustic_Foam_001_normal.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Acoustic_Foam_001_normal.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "acoustic_foam_occlusion"
-  path: "data/texture/Acoustic_Foam_001_occlusion.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Acoustic_Foam_001_occlusion.tga"
   linear: true
   repeat: true
 ta_texture:
   name: "acoustic_foam_roughness"
-  path: "data/texture/Acoustic_Foam_001_roughness.png"
-  width: 1024
-  height: 1024
-  channels: 3
+  path: "data/texture/Acoustic_Foam_001_roughness.tga"
   linear: true
   repeat: true

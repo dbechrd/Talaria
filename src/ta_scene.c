@@ -828,7 +828,7 @@ void ta_scene_init(ta_scene *scene)
 //       ta_file into ta_buffer.
 ta_scene *ta_scene_load(ta_file *file)
 {
-    ta_log_write(&tg_debug_log, "[Scene] Loading %s\n", file->filename);
+    ta_log_write(&tg_debug_log, "Scene", "Loading %s\n", file->filename);
     ta_scene *scene = dlb_calloc(1, sizeof(ta_scene));
     scene->filename = file->filename;
     scene->name = file->filename;  // TODO: Load name from scene file
@@ -851,6 +851,8 @@ ta_scene *ta_scene_load(ta_file *file)
     for (ta_resource_type res_type = RES_COUNT - 1; res_type >= 0; --res_type) {
         ta_schema_field_type schema_type = res_to_typ(res_type);
         if (tg_schemas[schema_type].init) {
+            ta_log_write(&tg_debug_log, "Scene", "Initializing %s\n",
+                ta_schema_field_type_str(schema_type));
             u32 size = tg_schemas[schema_type].size;
             void *pool = scene->resource_data[res_type];
             u8 *end = dlb_vec_end_size(pool, size);
@@ -860,7 +862,6 @@ ta_scene *ta_scene_load(ta_file *file)
         }
     }
 
-    ta_log_write(&tg_debug_log, "[Scene] Loaded successfully\n");
     return scene;
 }
 

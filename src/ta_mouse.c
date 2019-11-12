@@ -22,11 +22,9 @@ static ta_mouse mouse;
 
 void ta_mouse_init()
 {
-    ta_log_write(&tg_debug_log, "[Mouse] Initializing mouse\n");
     SDL_GetMouseState(&mouse.x, &mouse.y);
     //mouse.captured = true;
     //SDL_SetRelativeMouseMode(mouse.captured);
-    ta_log_write(&tg_debug_log, "[Mouse] Mouse initialized\n");
 }
 
 void ta_mouse_capture_set(bool capture)
@@ -96,7 +94,7 @@ int ta_mouse_dy()
 
 void ta_mouse_move(int x, int y)
 {
-    SDL_Window *window = ta_window_sdl(tg_game.window);
+    SDL_Window *window = ta_window_sdl(tg_window);
     SDL_WarpMouseInWindow(window, x, y);
 }
 

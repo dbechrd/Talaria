@@ -35,15 +35,14 @@ const char *game_state_str(ta_game_state state)
 
 void ta_game_init(ta_game *game)
 {
-    ta_log_write(&tg_debug_log, "[Game] Initializing game\n");
-
+    ta_log_write(&tg_debug_log, "Game", "Setting state to startup...\n");
     // TODO: What other startup states would be useful (e.g. LOADING_MESHES)?
     //       Could use this for a progress bar during load and better logging.
     //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
     ta_game_state_set(game, TA_GAME_STATE_STARTUP);
 
-    ta_log_write(&tg_debug_log, "[Game] Initializing key binds\n");
+    ta_log_write(&tg_debug_log, "Game", "Initializing key binds\n");
 
 #define BIND1(state, e, key_state, key) \
     ta_keybind_bind1(&game->keybinds[TA_GAME_STATE_##state], e, \
@@ -105,8 +104,6 @@ void ta_game_init(ta_game *game)
     //--------------------------------------------------------------------------
 
 #undef BIND1
-
-    ta_log_write(&tg_debug_log, "[Game] Game initialized\n");
 }
 
 void ta_game_state_set(ta_game *game, ta_game_state state)
@@ -117,7 +114,7 @@ void ta_game_state_set(ta_game *game, ta_game_state state)
 
     game->state_prev = game->state;
     game->state = state;
-    ta_log_write(&tg_debug_log, "[Game] State = %s\n", game_state_str(state));
+    ta_log_write(&tg_debug_log, "Game", "State = %s\n", game_state_str(state));
     switch (game->state) {
         case TA_GAME_STATE_PLAY: {
             game->e_active_camera = game->e_player_one;

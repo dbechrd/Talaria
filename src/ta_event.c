@@ -172,7 +172,7 @@ void ta_event_events()
 
     ta_event event;
     while (ta_event_pop(&event)) {
-        ta_window_event(tg_game.window, &event);
+        ta_window_event(tg_window, &event);
         if (event.handled) continue;
 
         ta_editor_event(&event);

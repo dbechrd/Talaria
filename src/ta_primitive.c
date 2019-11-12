@@ -68,7 +68,9 @@ static void ta_primitive_init_quads()
 }
 void ta_primitive_init()
 {
+    ta_log_write(&tg_debug_log, "Primitive", "Initializing lines...\n");
     ta_primitive_init_lines();
+    ta_log_write(&tg_debug_log, "Primitive", "Initializing quads...\n");
     ta_primitive_init_quads();
 }
 

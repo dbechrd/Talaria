@@ -40,16 +40,15 @@ static ta_editor editor;
 
 void ta_editor_init()
 {
-    ta_log_write(&tg_debug_log, "[Editor] Initializing editor\n");
+    ta_log_write(&tg_debug_log, "Editor", "Initializing UI styles\n");
     ta_ui_init();
 
+    ta_log_write(&tg_debug_log, "Editor", "Loading editor scene\n");
     editor.scene = ta_scene_load_file("data/scene/editor.dml");
+    editor.shader_editor_select = SYM_SHADER_EDITOR_SELECT;
     DLB_ASSERT(editor.scene);
 
-    editor.shader_editor_select = SYM_SHADER_EDITOR_SELECT;
-    DLB_ASSERT(editor.shader_editor_select);
-
-    ta_log_write(&tg_debug_log, "[Editor] Initializing key binds\n");
+    ta_log_write(&tg_debug_log, "Editor", "Initializing key binds\n");
 
 #undef DELETE
 #define BIND1(keybinds, e, key_state, key1) \
@@ -110,8 +109,6 @@ void ta_editor_init()
 
 #undef BIND1
 #undef BIND2
-
-    ta_log_write(&tg_debug_log, "[Editor] Game initialized\n");
 }
 
 void ta_editor_set_active_text_entry(ta_text_entry *text_entry)
@@ -551,8 +548,11 @@ static void ui_texture_panel()
     u32 texture_panel_id;
     //ta_ui_next_margin(2, 2, 0, 0);
     ta_ui_panel_begin(0, &texture_panel_id);
-    ta_ui_row_begin();
+    int count = 0;
     dlb_vec_each(ta_texture *, texture, tg_game.scene->resource_data[RES_TEXTURE]) {
+        if (count % 8 == 0) {
+            ta_ui_row_begin();
+        }
         ta_ui_next_size(68, 68);
         //ta_ui_next_margin(0, 0, 2, 0);
         //ta_ui_next_pad(2, 2, 2, 2);
@@ -581,6 +581,7 @@ static void ui_texture_panel()
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
         }
+        count++;
     }
     ta_ui_panel_end(texture_panel_id);
 }

@@ -17,6 +17,7 @@
 #include "ta_position.h"
 #include "ta_entity.h"
 #include "ta_player.h"
+#include "ta_log.h"
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_hash.h"

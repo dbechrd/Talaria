@@ -114,7 +114,7 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0);
 
 void main()
 {
-    vec2 vertex_uv = vertex.uv * 16.0;
+    vec2 vertex_uv = vertex.uv * 1.0;
     // TODO: Use defaults if texture not present
     // NOTE: Currently implemented in ta_model.c, maybe it should stay there?
     vec3  mtl_albedo    = texture(u_tex_albedo,    vertex_uv).rgb;  // default: none
@@ -124,7 +124,6 @@ void main()
     vec3  mtl_normal    = texture(u_tex_normal,    vertex_uv).rgb;  // default: vec3(0.0, 0.0, 1.0)
     float mtl_occlusion = texture(u_tex_occlusion, vertex_uv).r;    // default: 0.0
     float mtl_roughness = texture(u_tex_roughness, vertex_uv).r;    // default: 0.5
-    mtl_roughness = max(mtl_roughness, 0.01);
 
     vec3 N = normalize(mtl_normal * 2.0 - 1.0);
     vec3 V = normalize(vertex.tbn_camera_pos - vertex.tbn_position);
@@ -137,7 +136,6 @@ void main()
         vec3 fragToLight;
         float shadow_map_depth = 0.0;
         float shadow_bias = 0.0;
-        float shadow_darkness = 0.0;
         float dist = 0.0;
         float attenuation;
 		float shadow = 0.0;
