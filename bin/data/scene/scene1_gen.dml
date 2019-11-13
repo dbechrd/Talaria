@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x40F52D22 (7.661759)
-    y: 0xC0A768F2 (-5.231561)
-    z: 0x4163A6A8 (14.228188)
+    x: 0x408AC626 (4.336688)
+    y: 0xC093653C (-4.606108)
+    z: 0x4101E766 (8.118994)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x42F36781 (121.702156)
+  yaw: 0x42F033CE (120.101181)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC0466F30 (-3.100536)
+  pitch: 0xC1500316 (-13.000753)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,16 +57,16 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBCE8D87B (-0.028424)
-    y: 0x3F7FA010 (0.998536)
-    z: 0xBD3C7D17 (-0.046018)
+    x: 0xBDE7113B (-0.112826)
+    y: 0x3F797021 (0.974367)
+    z: 0xBE474BE8 (-0.194625)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
   position:
-    x: 0xC0A31708 (-5.096561)
-    y: 0xC0A000CA (-5.000096)
-    z: 0x40C220C0 (6.066498)
+    x: 0xBFFEEDDA (-1.991634)
+    y: 0xC0A000C8 (-5.000095)
+    z: 0x3F662D0E (0.899125)
   position_smooth: 0x3D4CCCCD (0.050000)
   position_target_vel: 0x3E4CCCCD (0.200000)
   yaw: 0x41519E69 (13.101174)
@@ -259,6 +259,15 @@ ta_model:
   material: "column_0001"
   cast_shadows: true
   receive_shadows: true
+ta_model:
+  name: "star_0001"
+  entity_name: "star_0001"
+  mesh_groups: [
+    "star_0001",
+  ]
+  material: "star_0001"
+  cast_shadows: true
+  receive_shadows: true
 #-------------------------------------------------------------------------------
 # TYP_PLAYER
 #-------------------------------------------------------------------------------
@@ -316,14 +325,14 @@ ta_position:
   entity_name: "player_one"
   transform:
     position:
-      x: 0xC0A316FE (-5.096557)
+      x: 0xBFFEF07F (-1.991714)
       y: 0xC0E000D2 (-7.000100)
-      z: 0x40C220C9 (6.066502)
+      z: 0x3F66200D (0.898927)
     orientation:
-      x: 0xBF654C3E (-0.895695)
-      y: 0xBDE2903D (-0.110627)
-      z: 0xBED42CA2 (-0.414403)
-      w: 0xBDF04343 (-0.117316)
+      x: 0xBF5E1DE1 (-0.867643)
+      y: 0x3E9E7459 (0.309481)
+      z: 0x3EB26B93 (0.348477)
+      w: 0xBE314DB3 (-0.173148)
 ta_position:
   name: "sphere1"
   entity_name: "sphere1"
@@ -342,14 +351,14 @@ ta_position:
   entity_name: "sphere2"
   transform:
     position:
-      x: 0x408CD2F6 (4.400752)
+      x: 0x408FCF3E (4.494048)
       y: 0xC0E000D2 (-7.000100)
-      z: 0x3E149A99 (0.145121)
+      z: 0xC08EAE44 (-4.458773)
     orientation:
-      x: 0x3DBCA95D (0.092120)
-      y: 0xBEC873D8 (-0.391509)
-      z: 0xBF69E2F5 (-0.913619)
-      w: 0x3D7384BC (0.059453)
+      x: 0xBDF75D6A (-0.120784)
+      y: 0xBF3A5C44 (-0.727970)
+      z: 0x3F2BA519 (0.670488)
+      w: 0x3D9D871C (0.076918)
 ta_position:
   name: "shadow_test_1"
   entity_name: "shadow_test_1"
@@ -368,14 +377,27 @@ ta_position:
   entity_name: "column_0001"
   transform:
     position:
-      x: 0x3CD94C12 (0.026526)
-      y: 0xC0E000D2 (-7.000100)
-      z: 0xBFD42DB9 (-1.657645)
+      x: 0xC005AAA3 (-2.088540)
+      y: 0xC0FEB93A (-7.960111)
+      z: 0xBFD42EC9 (-1.657678)
     orientation:
-      x: 0x3E274803 (0.163361)
-      y: 0xBF7B3968 (-0.981345)
-      z: 0x3D83F98C (0.064441)
-      w: 0xBDA04251 (-0.078251)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_position:
+  name: "star_0001"
+  entity_name: "star_0001"
+  transform:
+    position:
+      x: 0xBF3C76CA (-0.736188)
+      y: 0xC0F000D2 (-7.500100)
+      z: 0xC024AED1 (-2.573170)
+    orientation:
+      x: 0x3DC88338 (0.097907)
+      y: 0x3F4CA437 (0.799381)
+      z: 0xBECA34BC (-0.394934)
+      w: 0xBEE257F0 (-0.442077)
 #-------------------------------------------------------------------------------
 # TYP_RIGID_BODY
 #-------------------------------------------------------------------------------
@@ -436,14 +458,14 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   position:
-    x: 0xC0A316FE (-5.096557)
+    x: 0xBFFEF07F (-1.991714)
     y: 0xC0E000D2 (-7.000100)
-    z: 0x40C220C9 (6.066502)
+    z: 0x3F66200D (0.898927)
   orientation:
-    x: 0xBF654C3E (-0.895695)
-    y: 0xBDE2903D (-0.110627)
-    z: 0xBED42CA2 (-0.414403)
-    w: 0xBDF04343 (-0.117316)
+    x: 0xBF5E1DE1 (-0.867643)
+    y: 0x3E9E7459 (0.309481)
+    z: 0x3EB26B93 (0.348477)
+    w: 0xBE314DB3 (-0.173148)
   mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "sphere1"
@@ -478,14 +500,14 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   position:
-    x: 0x408CD2F6 (4.400752)
+    x: 0x408FCF3E (4.494048)
     y: 0xC0E000D2 (-7.000100)
-    z: 0x3E149A99 (0.145121)
+    z: 0xC08EAE44 (-4.458773)
   orientation:
-    x: 0x3DBCA95D (0.092120)
-    y: 0xBEC873D8 (-0.391509)
-    z: 0xBF69E2F5 (-0.913619)
-    w: 0x3D7384BC (0.059453)
+    x: 0xBDF75D6A (-0.120784)
+    y: 0xBF3A5C44 (-0.727970)
+    z: 0x3F2BA519 (0.670488)
+    w: 0x3D9D871C (0.076918)
   mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "column_0001"
@@ -495,19 +517,40 @@ ta_rigid_body:
     sphere:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x00000000 (0.000000)
+        y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   position:
-    x: 0x3CD94C12 (0.026526)
-    y: 0xC0E000D2 (-7.000100)
-    z: 0xBFD42DB9 (-1.657645)
+    x: 0xC005AAA3 (-2.088540)
+    y: 0xC0FEB93A (-7.960111)
+    z: 0xBFD42EC9 (-1.657678)
   orientation:
-    x: 0x3E274803 (0.163361)
-    y: 0xBF7B3968 (-0.981345)
-    z: 0x3D83F98C (0.064441)
-    w: 0xBDA04251 (-0.078251)
-  mass: 0x3F800000 (1.000000)
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+    w: 0x3F800000 (1.000000)
+  mass: 0x461C3C00 (9999.000000)
+ta_rigid_body:
+  name: "star_0001"
+  entity_name: "star_0001"
+  collider:
+    type: 1  # TA_COLLIDER_SHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F000000 (0.500000)
+  position:
+    x: 0xBF3C76CA (-0.736188)
+    y: 0xC0F000D2 (-7.500100)
+    z: 0xC024AED1 (-2.573170)
+  orientation:
+    x: 0x3DC88338 (0.097907)
+    y: 0x3F4CA437 (0.799381)
+    z: 0xBECA34BC (-0.394934)
+    w: 0xBEE257F0 (-0.442077)
+  mass: 0x3E4CCCCD (0.200000)
 #-------------------------------------------------------------------------------
 # TYP_AUDIO_BUFFER
 #-------------------------------------------------------------------------------
@@ -590,6 +633,10 @@ ta_material:
   name: "column_0001"
   shader: "mesh"
   tex_albedo: "red_albedo"
+ta_material:
+  name: "star_0001"
+  shader: "mesh"
+  tex_albedo: "star_albedo"
 #-------------------------------------------------------------------------------
 # TYP_MESH_GROUP
 #-------------------------------------------------------------------------------
@@ -614,6 +661,9 @@ ta_mesh_group:
 ta_mesh_group:
   name: "column_0001"
   path: "data/mesh/column_0001.obj"
+ta_mesh_group:
+  name: "star_0001"
+  path: "data/mesh/star.obj"
 #-------------------------------------------------------------------------------
 # TYP_MESH
 #-------------------------------------------------------------------------------
@@ -1285,109 +1335,185 @@ ta_texture:
 ta_texture:
   name: "test_diff"
   path: "data/texture/pbr_default_0.tga"
+  width: 32
+  height: 32
+  channels: 3
   repeat: true
 ta_texture:
   name: "test_mrao"
   path: "data/texture/pbr_default_1.tga"
+  width: 32
+  height: 32
+  channels: 3
   linear: true
   repeat: true
 ta_texture:
   name: "cobble_albedo"
   path: "data/texture/cobble_albedo.tga"
+  width: 512
+  height: 512
+  channels: 3
   repeat: true
 ta_texture:
   name: "cobble_normal"
   path: "data/texture/cobble_normal.tga"
+  width: 512
+  height: 512
+  channels: 3
   linear: true
   repeat: true
 ta_texture:
   name: "cobble_occlusion"
   path: "data/texture/cobble_occlusion.tga"
+  width: 512
+  height: 512
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "cobble_roughness"
   path: "data/texture/cobble_roughness.tga"
+  width: 512
+  height: 512
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "audio_icon"
   path: "data/texture/audio_icon.tga"
+  width: 32
+  height: 32
+  channels: 4
   linear: true
 ta_texture:
   name: "terrazzo_albedo"
   path: "data/texture/Terrazzo_Tiles_001_albedo.tga"
+  width: 1024
+  height: 1024
+  channels: 3
   repeat: true
 ta_texture:
   name: "terrazzo_height"
   path: "data/texture/Terrazzo_Tiles_001_height.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "terrazzo_normal"
   path: "data/texture/Terrazzo_Tiles_001_normal.tga"
+  width: 1024
+  height: 1024
+  channels: 3
   linear: true
   repeat: true
 ta_texture:
   name: "terrazzo_occlusion"
   path: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "terrazzo_roughness"
   path: "data/texture/Terrazzo_Tiles_001_roughness.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "metal_plate_019_albedo"
   path: "data/texture/Metal_Plate_019_albedo.tga"
+  width: 1024
+  height: 1024
+  channels: 3
   repeat: true
 ta_texture:
   name: "metal_plate_019_height"
   path: "data/texture/Metal_Plate_019_height.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "metal_plate_019_metallic"
   path: "data/texture/Metal_Plate_019_metallic.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "metal_plate_019_normal"
   path: "data/texture/Metal_Plate_019_normal.tga"
+  width: 1024
+  height: 1024
+  channels: 3
   linear: true
   repeat: true
 ta_texture:
   name: "metal_plate_019_occlusion"
   path: "data/texture/Metal_Plate_019_occlusion.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "metal_plate_019_roughness"
   path: "data/texture/Metal_Plate_019_roughness.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "acoustic_foam_albedo"
   path: "data/texture/Acoustic_Foam_001_albedo.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   repeat: true
 ta_texture:
   name: "acoustic_foam_height"
   path: "data/texture/Acoustic_Foam_001_height.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "acoustic_foam_normal"
   path: "data/texture/Acoustic_Foam_001_normal.tga"
+  width: 1024
+  height: 1024
+  channels: 3
   linear: true
   repeat: true
 ta_texture:
   name: "acoustic_foam_occlusion"
   path: "data/texture/Acoustic_Foam_001_occlusion.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   linear: true
   repeat: true
 ta_texture:
   name: "acoustic_foam_roughness"
   path: "data/texture/Acoustic_Foam_001_roughness.tga"
+  width: 1024
+  height: 1024
+  channels: 1
   linear: true
+  repeat: true
+ta_texture:
+  name: "star_albedo"
+  path: "data/texture/star_albedo.tga"
+  width: 1024
+  height: 1024
+  channels: 3
   repeat: true

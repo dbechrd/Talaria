@@ -164,8 +164,11 @@ void main()
                 if (u_lights[i].cast_shadows) {
                     shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
                     shadow_map_depth *= u_lights[i].shadowmap_zfar;
-                    shadow_bias = 0.1;
+                    shadow_bias = 0.003;
 
+#if 1
+		            shadow = step(shadow_map_depth, dist - shadow_bias);
+#else
                     // Soft shadows
                     // TODO: Clean this crap up via:
                     // https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
@@ -177,7 +180,6 @@ void main()
 							    vec3 ss_offset = vec3(x, y, z) * 0.04;
 							    float ss_depth = texture(u_lights[i].shadowmap3d, -fragToLight + ss_offset).r;
 							    ss_depth *= u_lights[i].shadowmap_zfar;
-							    float shadow_i = step(ss_depth, dist - ss_bias);
 			                    shadow += step(ss_depth, dist - ss_bias);
                                 ss_count += 1.0;
 					        }
@@ -185,6 +187,7 @@ void main()
 				    }
                     shadow /= ss_count;
 		            shadow = smoothstep(0.01, 1.0, shadow);
+#endif
                 }
 
                 fragToLight = vertex.tbn_light_pos[i] - vertex.tbn_position;

@@ -1045,7 +1045,8 @@ void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name)
     u32 index = 0000000;
     dlb_index_delete(store, hash, index);
 
-    // TODO: Remove data from pool
+    // TODO: Remove data from pool (swap last element into empty slot, then
+    // update index for the moved element)
     DLB_ASSERT(0);
     //dlb_vec_delete(scene->resource_data[type], index);
 }
@@ -1210,8 +1211,10 @@ void ta_scene_update(ta_scene *scene, float dt)
 
 void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
 {
-    //glDisable(GL_CULL_FACE);
-    //glCullFace(GL_FRONT);
+    // TODO: Try VSM, then CSM.
+    // NOTE: If we switch to back face culling it will prevent light leaks, but
+    // cause a lot more jitter on the lit side. :(
+    glCullFace(GL_FRONT);
     //glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -1238,13 +1241,13 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
         //ta_light_shadowpass_render(light, shader, alpha, scene->pools[TYP_BUTTON]);
     }
     ta_shader_unbind(shader);
-    //glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glViewport(0, 0, WINDOW_W, WINDOW_H);
 }
 
 void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
 {
-    glViewport(0, 0, WINDOW_W, WINDOW_H);
-    glCullFace(GL_BACK);
+    //glCullFace(GL_BACK);
     //glDisable(GL_CULL_FACE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glStencilMask(0xFF);

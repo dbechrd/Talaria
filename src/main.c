@@ -139,6 +139,8 @@ int main(int argc, char *argv[])
     ta_scene *scene1 = ta_scene_load_file("data/scene/scene1_gen.dml");
     DLB_ASSERT(scene1 && tg_game.scene == scene1);
 
+    tg_game.simulate = 1;
+
     // TODO: Find closest 8 lights and store them in tg_game.lights
 
     ////////////////////////////////////////////////////////////////////////////
@@ -239,26 +241,26 @@ int main(int argc, char *argv[])
     double ms_frame_prev = ms_frame_timer;
     double ms_frame_delta = ms_frame_timer - ms_frame_prev;
 
-    //float light_deg = 0;
-
     while (tg_game.state != TA_GAME_STATE_SHUTDOWN) {
         // Engine events
         ta_log_write(&tg_debug_log, "System", " Handling events...\n");
         ta_event_events();
 
-        ta_log_write(&tg_debug_log, "System", " Accumulating...\n");
-        // If sim_max_steps == 0, assume we want lockstep physics
-        if (sim_max_steps == 0) {
-            ms_frame_accum = ms_sim_dt;
-        } else {
-            ms_frame_accum += ms_frame_delta;
-            // Prevent spiral of death
-            // NOTE: This breaks determinism when simulation is under duress
-            if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
-                ta_log_write(&tg_debug_log, "System",
-                    "WARNING: Physics accumulator spiraling; truncating %f to %f\n",
-                    ms_frame_accum, ms_sim_dt * sim_max_steps);
-                ms_frame_accum = ms_sim_dt * sim_max_steps;
+        if (tg_game.simulate) {
+            ta_log_write(&tg_debug_log, "System", " Accumulating...\n");
+            if (sim_max_steps == 0) {
+                // If sim_max_steps == 0, assume we want lockstep physics
+                ms_frame_accum = ms_sim_dt;
+            } else {
+                ms_frame_accum += ms_frame_delta;
+                // Prevent spiral of death
+                // NOTE: This breaks determinism when simulation is under duress
+                if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
+                    ta_log_write(&tg_debug_log, "System",
+                        "WARNING: Physics accumulator spiraling; truncating %f to %f\n",
+                        ms_frame_accum, ms_sim_dt * sim_max_steps);
+                    ms_frame_accum = ms_sim_dt * sim_max_steps;
+                }
             }
         }
 
@@ -290,13 +292,15 @@ int main(int argc, char *argv[])
                 mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
 #endif
 
-#if 0
+#if 1
             // HACK: Make point light rotate in a circle
-            light_deg += 0.005f;
+            static float light_deg = 0.0f;
+            light_deg += 0.01f;
             if (light_deg >= 360.0f) light_deg = 0.0f;
 
-            tg_game.lights[1].position.x = cosf(light_deg) * 4.0f;
-            tg_game.lights[1].position.z = sinf(light_deg) * 4.0f;
+            ta_light *lights = tg_game.scene->resource_data[RES_COMP_LIGHT];
+            lights[1].position.x = cosf(light_deg) * 16.0f;
+            lights[1].position.z = sinf(light_deg) * 16.0f;
 #elif 0
             // HACK: Make point light follow player camera
             tg_game.lights[1]->position = tg_game.camera_player->position;
@@ -310,14 +314,6 @@ int main(int argc, char *argv[])
             // TODO: Update all cameras in a loop somewhere, this is wonky
             // Update main camera
             ta_camera_update(active_camera, sim_dt);
-
-            // Update minimap camera
-            ta_vec3 minimap_camera_target_pos = active_camera->position;
-            minimap_camera_target_pos.y += 50.0f;
-            minimap_camera.focal_point = active_camera->position;
-            ta_camera_set_target_pos_absolute(&minimap_camera,
-                minimap_camera_target_pos);
-            ta_camera_update(&minimap_camera, sim_dt);
 
             // Update player
             //ta_rigid_body *player_body = ta_node_rigid_body(tg_game.player);
@@ -360,57 +356,41 @@ int main(int argc, char *argv[])
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_primitive_push_crosshair(10, 2);
 
-#if 0
-        ta_light *lights = tg_game.scene->resource_data[RES_COMP_LIGHT];
-        ta_light_render_shadowmap_debug(&lights[1], 20, 20);
-#endif
-#if 0
-        // Minimap
-        ta_viewport minimap_viewport = ta_viewport_init(TA_SIZE(200, 200),
-            (ta_rgba) { 0.1f, 0.1f, 0.2f, 1.0f });
-        ta_viewport_bind(&minimap_viewport, TA_POSITION(10, 50), true);
-        {
-            // TODO: Mesh selector, highlight and rotate mesh while mouse hover
-            //ta_mat4 model = mat4_rotate_y(model_deg);
-            //model_deg += 1.0f;
-            //if (model_deg >= 360.0f) {
-            //    model_deg = 0.0f;
-            //}
+#if 1
+        // Update minimap camera
+        ta_vec3 minimap_camera_target_pos = active_camera->position;
+        minimap_camera_target_pos.y += 50.0f;
+        minimap_camera.focal_point = active_camera->position;
+        ta_camera_set_target_pos_absolute(&minimap_camera,
+            minimap_camera_target_pos);
+        ta_camera_update(&minimap_camera, sim_dt);
 
-            // Draw models
-            ta_scene_render(tg_game.scene, &minimap_camera, sim_alpha);
+        // Render minimap
+        ta_rect map_rect = { 10, 50, 200, 200 };
+        ta_viewport_bind(map_rect, TA_COLOR_GRAY7, true);
+        ta_scene_render(tg_game.scene, &minimap_camera, sim_alpha);
+        ta_viewport_unbind();
+        ta_primitive_render(true, true);
 
-            ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
-            ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
-            ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
-
-            // Red dot on map
-            ta_rect parent = minimap_viewport.rect;
-            parent.x = minimap_viewport.rect.w / 2 - 2;
-            parent.y = minimap_viewport.rect.h / 2 - 2;
-            ta_primitive_push_rect(parent, (ta_rect) { 0, 0, 4, 4 },
-                TA_COLOR_RED);
-
-            ta_primitive_render();
-            ta_primitive_clear();
-#elif 0
-            ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex_test->gl_id);
-            ta_rect parent = { 0 };
-            parent.w = tex_test->width;
-            parent.h = tex_test->height;
-            ta_rect child = { 0 };
-            child.w = tex_test->width;
-            child.h = tex_test->height;
-
-            ta_primitive_push_rect(parent, child, TA_COLOR_INVIS);
-            ta_primitive_render();
-            ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
-            ta_primitive_clear();
-        }
-        ta_viewport_unbind(&minimap_viewport);
+        // Red dot on map
+        int dot_radius = 2;
+        ta_rect dot_rect = { 0 };
+        dot_rect.x = map_rect.x + map_rect.w / 2 - dot_radius;
+        dot_rect.y = map_rect.y + map_rect.h / 2 - dot_radius;
+        dot_rect.w = dot_radius * 2;
+        dot_rect.h = dot_radius * 2;
+        ta_primitive_push_rect(dot_rect, TA_COLOR_RED, UI_LAYER_HUD);
+        ta_primitive_render(true, true);
 #endif
 
 #if 0
+        // TODO: Mesh selector, highlight and rotate mesh while mouse hover
+        //ta_mat4 model = mat4_rotate_y(model_deg);
+        //model_deg += 1.0f;
+        //if (model_deg >= 360.0f) {
+        //    model_deg = 0.0f;
+        //}
+
         // Barchart
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
