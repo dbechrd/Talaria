@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
     ta_scene *scene1 = ta_scene_load_file("data/scene/scene1_gen.dml");
     DLB_ASSERT(scene1 && tg_game.scene == scene1);
 
-    tg_game.simulate = 1;
+    tg_game.simulate = -1;
 
     // TODO: Find closest 8 lights and store them in tg_game.lights
 
@@ -246,21 +246,19 @@ int main(int argc, char *argv[])
         ta_log_write(&tg_debug_log, "System", " Handling events...\n");
         ta_event_events();
 
-        if (tg_game.simulate) {
-            ta_log_write(&tg_debug_log, "System", " Accumulating...\n");
-            if (sim_max_steps == 0) {
-                // If sim_max_steps == 0, assume we want lockstep physics
-                ms_frame_accum = ms_sim_dt;
-            } else {
-                ms_frame_accum += ms_frame_delta;
-                // Prevent spiral of death
-                // NOTE: This breaks determinism when simulation is under duress
-                if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
-                    ta_log_write(&tg_debug_log, "System",
-                        "WARNING: Physics accumulator spiraling; truncating %f to %f\n",
-                        ms_frame_accum, ms_sim_dt * sim_max_steps);
-                    ms_frame_accum = ms_sim_dt * sim_max_steps;
-                }
+        ta_log_write(&tg_debug_log, "System", " Accumulating...\n");
+        if (sim_max_steps == 0) {
+            // If sim_max_steps == 0, assume we want lockstep physics
+            ms_frame_accum = ms_sim_dt;
+        } else {
+            ms_frame_accum += ms_frame_delta;
+            // Prevent spiral of death
+            // NOTE: This breaks determinism when simulation is under duress
+            if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
+                ta_log_write(&tg_debug_log, "System",
+                    "WARNING: Physics accumulator spiraling; truncating %f to %f\n",
+                    ms_frame_accum, ms_sim_dt * sim_max_steps);
+                ms_frame_accum = ms_sim_dt * sim_max_steps;
             }
         }
 
@@ -280,47 +278,54 @@ int main(int argc, char *argv[])
 
         while (ms_frame_accum >= ms_sim_dt) {
             ta_log_write(&tg_debug_log, "System", " Sim step...\n");
-            // Update player camera
-            // TODO: Set target entity and follow distance vector in DML
+            // Target player camera
             ta_camera_set_target_pos_absolute(player_cam,
                 vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
-            ta_camera_update(player_cam, sim_dt);
 
+            // Target minimap camera
+            ta_vec3 minimap_camera_target_pos = active_camera->position;
+            minimap_camera_target_pos.y += 50.0f;
+            minimap_camera.focal_point = active_camera->position;
+            ta_camera_set_target_pos_absolute(&minimap_camera,
+                minimap_camera_target_pos);
+
+            // Update cameras
+            dlb_vec_each(ta_camera *, cam, tg_game.scene->resource_data[RES_COMP_CAMERA]) {
+                ta_camera_update(cam, sim_dt);
+            }
+
+            if (tg_game.simulate) {
+                if (tg_game.simulate > 0) {
+                    tg_game.simulate--;
+                }
 #if 0
-            ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
-            tg_game.sun->data.sun.direction =
-                mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
+                ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
+                tg_game.sun->data.sun.direction =
+                    mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
 #endif
 
 #if 1
-            // HACK: Make point light rotate in a circle
-            static float light_deg = 0.0f;
-            light_deg += 0.01f;
-            if (light_deg >= 360.0f) light_deg = 0.0f;
+                // HACK: Make point light rotate in a circle
+                static float light_deg = 0.0f;
+                light_deg += 0.01f;
+                if (light_deg >= 360.0f) light_deg = 0.0f;
 
-            ta_light *lights = tg_game.scene->resource_data[RES_COMP_LIGHT];
-            lights[1].position.x = cosf(light_deg) * 16.0f;
-            lights[1].position.z = sinf(light_deg) * 16.0f;
-#elif 0
-            // HACK: Make point light follow player camera
-            tg_game.lights[1]->position = tg_game.camera_player->position;
-            // HACK: Make point light follow camera
-            tg_game.lights[1]->position = vec3_add(
-                tg_game.camera_freecam->position,
-                tg_game.camera_freecam->front
-            );
+                ta_light *lights = tg_game.scene->resource_data[RES_COMP_LIGHT];
+                lights[1].position.x = cosf(light_deg) * 16.0f;
+                lights[1].position.z = sinf(light_deg) * 16.0f;
+#else
+                // HACK: Make point light follow player camera
+                lights[1]->position = tg_game.camera_player->position;
+                // HACK: Make point light follow camera
+                lights[1]->position = vec3_add(
+                    tg_game.camera_freecam->position,
+                    tg_game.camera_freecam->front
+                );
 #endif
 
-            // TODO: Update all cameras in a loop somewhere, this is wonky
-            // Update main camera
-            ta_camera_update(active_camera, sim_dt);
-
-            // Update player
-            //ta_rigid_body *player_body = ta_node_rigid_body(tg_game.player);
-            //player_body->transform.position = tg_game.camera->position;
-
-            // Update scene
-            ta_scene_update(tg_game.scene, (float)sim_dt);
+                // Update scene
+                ta_scene_update(tg_game.scene, (float)sim_dt);
+            }
 
             // TODO: Put this somewhere intelligent
             // Update audio listener position
@@ -356,15 +361,7 @@ int main(int argc, char *argv[])
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_primitive_push_crosshair(10, 2);
 
-#if 1
-        // Update minimap camera
-        ta_vec3 minimap_camera_target_pos = active_camera->position;
-        minimap_camera_target_pos.y += 50.0f;
-        minimap_camera.focal_point = active_camera->position;
-        ta_camera_set_target_pos_absolute(&minimap_camera,
-            minimap_camera_target_pos);
-        ta_camera_update(&minimap_camera, sim_dt);
-
+#if 0
         // Render minimap
         ta_rect map_rect = { 10, 50, 200, 200 };
         ta_viewport_bind(map_rect, TA_COLOR_GRAY7, true);

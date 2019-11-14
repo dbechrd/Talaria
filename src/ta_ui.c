@@ -395,7 +395,7 @@ void ta_ui_next_bg_color(ui_state_type state, float r, float g, float b, float a
         next_frame_style.bg_color[state].b = b;
         next_frame_style.bg_color[state].a = a;
     } else {
-        for (int i = 0; i < UI_STATE_COUNT; i++) {
+        for (int i = 1; i < UI_STATE_COUNT; i++) {
             next_frame_style.bg_color[i].r = r;
             next_frame_style.bg_color[i].g = g;
             next_frame_style.bg_color[i].b = b;
@@ -519,7 +519,7 @@ void ta_ui_row_begin()
 
 void ta_ui_spacer(int w, int h)
 {
-    ui_frame *container = ui_container(dlb_vec_len(ui_frames));
+    ui_frame *container = ui_container_last();
     container->offset.x += w;
     container->offset.y += h;
 }

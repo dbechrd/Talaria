@@ -607,19 +607,48 @@ static void ui_scene_panel()
 {
     u32 scene_panel_id;
     ta_ui_panel_begin(0, &scene_panel_id);
-    ta_ui_row_begin();
 
-    static bool save_button_hovered = false;
-    if (save_button_hovered) {
-        ta_ui_next_bg_color(UI_STATE_ALL, 1.0f, 0.0f, 0.0f, 1.0f);
-    }
-    if (ta_ui_label(0, "Save scene")) {
+    ta_ui_row_begin();
+    ta_ui_next_size(80, 17);
+    ta_ui_label(0, "Scene:");
+    ta_ui_spacer(2, 0);
+    ta_ui_next_size(60, 17);
+    ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+    ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.7f, 0.0f, 0.9f);
+    if (ta_ui_label(0, "Save")) {
         ta_scene_save_file(tg_game.scene, "data/scene/scene1_gen.dml");
     }
-    if (ta_ui_last_frame_state().hover) {
-        save_button_hovered = true;
+
+    ta_ui_spacer(0, 4);
+    ta_ui_row_begin();
+    ta_ui_next_size(80, 17);
+    ta_ui_label(0, "Simulate:");
+    ta_ui_spacer(2, 0);
+    ta_ui_next_size(60, 17);
+    if (tg_game.simulate) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_label(0, "Pause")) {
+            tg_game.simulate = 0;
+        }
     } else {
-        save_button_hovered = false;
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.7f, 0.0f, 0.9f);
+        if (ta_ui_label(0, "Resume")) {
+            tg_game.simulate = -1;
+        }
+        ta_ui_spacer(2, 0);
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.4f, 0.0f, 0.9f);
+        if (ta_ui_label(0, "Next (1)")) {
+            tg_game.simulate = 1;
+        }
+        ta_ui_spacer(2, 0);
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.4f, 0.0f, 0.9f);
+        if (ta_ui_label(0, "Next (10)")) {
+            tg_game.simulate = 10;
+        }
     }
 
     ta_ui_panel_end(scene_panel_id);
