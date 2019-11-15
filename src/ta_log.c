@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <time.h>
 
+ta_log_level tg_log_level;
 ta_log tg_debug_log;
 
 void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo)

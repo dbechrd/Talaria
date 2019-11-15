@@ -124,6 +124,7 @@ void main()
     vec3  mtl_normal    = texture(u_tex_normal,    vertex_uv).rgb;  // default: vec3(0.0, 0.0, 1.0)
     float mtl_occlusion = texture(u_tex_occlusion, vertex_uv).r;    // default: 0.0
     float mtl_roughness = texture(u_tex_roughness, vertex_uv).r;    // default: 0.5
+    mtl_roughness = max(mtl_roughness, 0.001);
 
     vec3 N = normalize(mtl_normal * 2.0 - 1.0);
     vec3 V = normalize(vertex.tbn_camera_pos - vertex.tbn_position);

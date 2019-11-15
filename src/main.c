@@ -96,16 +96,22 @@ void ndc_tests() {
 // Random thoughts
 // https://en.wikipedia.org/wiki/Accumulator_(energy)
 
-static void render_fps(double ms_frame_start, u64 frame_num);
+static void render_frame_info(u64 frame_num, double ms_frame_time,
+    double ms_frame_delta, u64 sim_step);
 static void debug_nametag();
 
-#undef main
+// NOTE: Only works in Subsystem:Console mode?
+//#undef main
 
 int main(int argc, char *argv[])
 {
     UNUSED(argc);
     UNUSED(argv);
     DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
+
+    tg_log_level.event = 0;
+    tg_log_level.window = 0;
+    tg_log_level.system = 0;
 
     ta_timer_init();
     ta_log_init_file(&tg_debug_log, "log.txt", false, false);
@@ -221,7 +227,8 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     // Main loop
     ////////////////////////////////////////////////////////////////////////////
-    u64 frame_num = 1;
+    u64 frame_num = 0;
+    u64 sim_step = 0;
 
     // Eric Catto - Soft Constraints (GDC 2011)
     // Semi-implicit Euler will eventually blow up if you take big time steps. A
@@ -237,17 +244,23 @@ int main(int argc, char *argv[])
     double ms_sim_t = 0;                     // current simulation time
     double ms_frame_accum = 0;
 
-    double ms_frame_timer = ta_timer_elapsed_ms();
-    double ms_frame_prev = ms_frame_timer;
-    double ms_frame_delta = ms_frame_timer - ms_frame_prev;
+    double ms_frame_prev = 0;   // Last frame started
+    double ms_frame_start;      // This frame started
+    double ms_frame_delta;      // Total delta time (including v-sync)
+    double ms_frame_time;       // Actual frame time before v-sync
 
     while (tg_game.state != TA_GAME_STATE_SHUTDOWN) {
+        ms_frame_start = ta_timer_elapsed_ms();
+        ms_frame_delta = ms_frame_start - ms_frame_prev;
+        ms_frame_prev = ms_frame_start;
+
         // Engine events
-        ta_log_write(&tg_debug_log, "System", " Handling events...\n");
+        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Handling events...\n");
         ta_event_events();
 
-        ta_log_write(&tg_debug_log, "System", " Accumulating...\n");
+        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Accumulating...\n");
         if (sim_max_steps == 0) {
+            // TODO: This *requires* vsync to work correctly!
             // If sim_max_steps == 0, assume we want lockstep physics
             ms_frame_accum = ms_sim_dt;
         } else {
@@ -262,14 +275,14 @@ int main(int argc, char *argv[])
             }
         }
 
-        ta_log_write(&tg_debug_log, "System", " Finding components...\n");
+        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Finding components...\n");
         ta_camera *active_camera = ta_scene_component(tg_game.scene,
             RES_COMP_CAMERA, tg_game.e_active_camera);
         ta_camera *player_cam = 0;
         ta_rigid_body *player_body = 0;
 
         if (ms_frame_accum >= ms_sim_dt) {
-            ta_log_write(&tg_debug_log, "System", " Finding sim components...\n");
+            if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Finding sim components...\n");
             player_cam = ta_scene_component(tg_game.scene, RES_COMP_CAMERA,
                 tg_game.e_player_one);
             player_body = ta_scene_component(tg_game.scene, RES_COMP_RIGID_BODY,
@@ -277,7 +290,7 @@ int main(int argc, char *argv[])
         }
 
         while (ms_frame_accum >= ms_sim_dt) {
-            ta_log_write(&tg_debug_log, "System", " Sim step...\n");
+            if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Sim step...\n");
             // Target player camera
             ta_camera_set_target_pos_absolute(player_cam,
                 vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
@@ -325,6 +338,7 @@ int main(int argc, char *argv[])
 
                 // Update scene
                 ta_scene_update(tg_game.scene, (float)sim_dt);
+                sim_step++;
             }
 
             // TODO: Put this somewhere intelligent
@@ -343,9 +357,9 @@ int main(int argc, char *argv[])
         float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
 
         // Draw models
-        ta_log_write(&tg_debug_log, "System", " Shadow pass...\n");
+        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Shadow pass...\n");
         ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
-        ta_log_write(&tg_debug_log, "System", " Render pass...\n");
+        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Render pass...\n");
         ta_scene_render(tg_game.scene, active_camera, sim_alpha);
 
         // World axes
@@ -353,7 +367,7 @@ int main(int argc, char *argv[])
         ta_primitive_render(true, true);
 
         if (tg_game.state == TA_GAME_STATE_EDITOR) {
-            ta_log_write(&tg_debug_log, "System", " Editor pass...\n");
+            if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Editor pass...\n");
             ta_editor_draw(sim_alpha);
         }
 
@@ -401,50 +415,61 @@ int main(int argc, char *argv[])
         // TODO: Make HUD drawing suck less.. way too many draw calls
         //       Use texture atlas, batch everything into one draw call. Import
         //       textures from Rico; stop using stupid RGB placeholders
-        ta_log_write(&tg_debug_log, "System", " HUD pass...\n");
+        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " HUD pass...\n");
         ta_game_hud_draw(&tg_game);
 
-        ta_log_write(&tg_debug_log, "System", " FPS pass...\n");
-        ms_frame_timer = ta_timer_elapsed_ms();
-        ms_frame_delta = ms_frame_timer - ms_frame_prev;
-        ms_frame_prev = ms_frame_timer;
-        render_fps(ms_frame_delta, frame_num);
+        ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
+        frame_num++;
+        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " FPS pass...\n");
+        render_frame_info(frame_num, ms_frame_time, ms_frame_delta, sim_step);
 
         // NOTE: This confirms rendering is being deferred until swap buffers,
         // but it's much slower (~5ms), so don't actually use it.
         //ta_log_write(&tg_debug_log, "System", " glFinish...\n");
         //glFinish();
 
-        ta_log_write(&tg_debug_log, "System", " Swap...\n");
+        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Swap...\n");
         ta_window_swap(tg_window);
 
         tg_debug_log.flush = true;
-        ta_log_write(&tg_debug_log, "System", "Frame %llu displayed. delta: %5.3f\n", frame_num, ms_frame_delta);
+        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System",
+            "Frame %llu displayed. time: %5.3f delta: %5.3f\n", frame_num,
+            ms_frame_time, ms_frame_delta);
         tg_debug_log.flush = false;
 
-        //ta_log_write(&tg_debug_log, "Frame %llu started at %f sim time: %f\n",
-        //    frame_num, ms_frame_start - ms_frame_first, ms_sim_t);
-        frame_num++;
+        if (ms_frame_time > 16) {
+            if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", "!!!!!!!! LONG_FRAME !!!!!!!!\n");
+            __debugbreak();
+        }
     }
 
     // TODO: Free *EVERYTHING* (at least in debug mode.. to check memory leaks)
     ta_window_free(tg_window);
-    ta_log_write(&tg_debug_log, "System", "Goodbye.\n\n");
+    if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", "Goodbye.\n\n");
     return 0;
 }
 
-static void render_fps(double ms_frame_delta, u64 frame_num)
+static void render_frame_info(u64 frame_num, double ms_frame_time,
+    double ms_frame_delta, u64 sim_step)
 {
     // Print frame time on the screen
     char frame_time_buf[256] = { 0 };
     int len = snprintf(CSTR(frame_time_buf),
-        " Frame: %7llu\n"
-        "    dt: %3.2f ms\n"
-        " State: %s\n"
-        "  Prev: %s\n"
-        "Volume: %.2f",
+        "Frame\n"
+        "  count: %08llu\n"
+        "  time : %5.2f ms\n"
+        "  delta: %5.2f ms (v-sync: %s)\n"
+        "Game\n"
+        "  sim step: %08llu\n"
+        "  state   : %s\n"
+        "  prev    : %s\n"
+        "Audio\n"
+        "  master volume: %.2f",
         frame_num,
+        ms_frame_time,
         ms_frame_delta,
+        tg_game.vsync ? "On" : "Off",
+        sim_step,
         game_state_str(tg_game.state),
         game_state_str(tg_game.state_prev),
         ta_audio_listener_get_volume(&tg_audio)

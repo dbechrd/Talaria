@@ -518,7 +518,7 @@ void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
 
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        ta_shader_unbind(shader);
+        ta_shader_unbind();
 
         if (cull_face) glEnable(GL_CULL_FACE);
     }
@@ -559,7 +559,7 @@ void ta_primitive_render_quads(ta_vert_quad *queue, ta_shader *shader,
 
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        ta_shader_unbind(shader);
+        ta_shader_unbind();
 
         if (cull_face) glEnable(GL_CULL_FACE);
     }

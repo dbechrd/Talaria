@@ -11,6 +11,13 @@ typedef struct ta_log {
     double last_write_ms;
 } ta_log;
 
+typedef struct ta_log_level {
+    u8 event;
+    u8 system;
+    u8 window;
+} ta_log_level;
+
+extern ta_log_level tg_log_level;
 extern ta_log tg_debug_log;
 
 void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo);

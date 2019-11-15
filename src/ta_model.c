@@ -66,7 +66,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
             RES_MESH_GROUP, *mesh_group_name);
         ta_mesh_group_render(mesh_group);
     }
-    ta_shader_unbind(shader);
+    ta_shader_unbind();
 }
 
 void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
@@ -149,7 +149,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
                 RES_MESH_GROUP, *mesh_group_name);
             ta_mesh_group_render(mesh_group);
         }
-        ta_shader_unbind(shader);
+        ta_shader_unbind();
     }
 
     if (camera->debug_normals || camera->debug_bounding_boxes) {
@@ -211,5 +211,5 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
             RES_MESH_GROUP, *mesh_group_name);
         ta_mesh_group_render(mesh_group);
     }
-    ta_shader_unbind(shader);
+    ta_shader_unbind();
 }

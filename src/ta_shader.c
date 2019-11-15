@@ -417,6 +417,8 @@ static void shader_store_uniforms(ta_shader_uniform *store,
 
 static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
 {
+    // TODO: Track dirty uniforms and only update those
+
     dlb_vec_each(ta_shader_uniform *, u, uniforms) {
         if (u->location < 0 && u->type != TA_GLSL_STRUCT) {
             continue;
@@ -491,15 +493,21 @@ void ta_shader_state_load(ta_shader_uniform *uniforms)
     shader_bind_uniforms(uniforms, &tex_count);
 }
 
+static GLuint bound_program_id = 0;
 void ta_shader_bind(ta_shader *shader)
 {
     DLB_ASSERT(shader->program_id);
-    glUseProgram(shader->program_id);
+    if (bound_program_id != shader->program_id) {
+        glUseProgram(shader->program_id);
+        bound_program_id = shader->program_id;
+    }
     ta_shader_state_load(shader->uniforms);
 }
 
-void ta_shader_unbind(ta_shader *shader)
+void ta_shader_unbind()
 {
-    UNUSED(shader);
+#if 1  // TODO: Test turning this off
     glUseProgram(0);
+    bound_program_id = 0;
+#endif
 }

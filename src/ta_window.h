@@ -57,6 +57,7 @@ int ta_window_width(ta_window *window);
 int ta_window_height(ta_window *window);
 float ta_window_aspect(ta_window *window);
 SDL_Window *ta_window_sdl(ta_window *window);
+void ta_window_set_vsync(bool vsync);
 void ta_window_swap(ta_window *window);
 void ta_window_event(ta_window *window, struct ta_event *event);
 int ta_window_msgbox(ta_window *window, u32 flags, const char *title,

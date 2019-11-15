@@ -19,6 +19,7 @@ typedef struct ta_game {
     ta_game_state state;
     ta_game_state state_prev;
     int simulate;  // -1 = on, 0 = off, 1+ = simulate N frames
+    bool vsync;
 
     struct ta_font *font;
     struct ta_keybind *keybinds[TA_GAME_STATE_COUNT];

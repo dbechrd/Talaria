@@ -1240,7 +1240,7 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
         //       which defaults to entity->rigid_body on initialization.
         //ta_light_shadowpass_render(light, shader, alpha, scene->pools[TYP_BUTTON]);
     }
-    ta_shader_unbind(shader);
+    ta_shader_unbind();
     glCullFace(GL_BACK);
     glViewport(0, 0, WINDOW_W, WINDOW_H);
 }

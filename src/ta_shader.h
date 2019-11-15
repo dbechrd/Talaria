@@ -94,4 +94,4 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
 ta_shader_uniform *ta_shader_state_save(ta_shader *shader);
 void ta_shader_state_load(ta_shader_uniform *uniforms);
 void ta_shader_bind(ta_shader *shader);
-void ta_shader_unbind(ta_shader *shader);
+void ta_shader_unbind();

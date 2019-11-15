@@ -608,11 +608,14 @@ static void ui_scene_panel()
     u32 scene_panel_id;
     ta_ui_panel_begin(0, &scene_panel_id);
 
+    int col1_w = 90;
+    int col2_w = 70;
+
     ta_ui_row_begin();
-    ta_ui_next_size(80, 17);
-    ta_ui_label(0, "Scene:");
+    ta_ui_next_size(col1_w, 17);
+    ta_ui_label(0, "     Scene");
     ta_ui_spacer(2, 0);
-    ta_ui_next_size(60, 17);
+    ta_ui_next_size(col2_w, 17);
     ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
     ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.7f, 0.0f, 0.9f);
     if (ta_ui_label(0, "Save")) {
@@ -621,20 +624,20 @@ static void ui_scene_panel()
 
     ta_ui_spacer(0, 4);
     ta_ui_row_begin();
-    ta_ui_next_size(80, 17);
-    ta_ui_label(0, "Simulate:");
+    ta_ui_next_size(col1_w, 17);
+    ta_ui_label(0, "Simulation");
     ta_ui_spacer(2, 0);
-    ta_ui_next_size(60, 17);
+    ta_ui_next_size(col2_w, 17);
     if (tg_game.simulate) {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.0f, 0.0f, 0.9f);
-        if (ta_ui_label(0, "Pause")) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.7f, 0.0f, 0.9f);
+        if (ta_ui_label(0, "Running")) {
             tg_game.simulate = 0;
         }
     } else {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.7f, 0.0f, 0.9f);
-        if (ta_ui_label(0, "Resume")) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_label(0, "Paused")) {
             tg_game.simulate = -1;
         }
         ta_ui_spacer(2, 0);
@@ -648,6 +651,27 @@ static void ui_scene_panel()
         ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.4f, 0.0f, 0.9f);
         if (ta_ui_label(0, "Next (10)")) {
             tg_game.simulate = 10;
+        }
+    }
+
+    ta_ui_spacer(0, 4);
+    ta_ui_row_begin();
+    ta_ui_next_size(col1_w, 17);
+    ta_ui_label(0, "    V-Sync");
+    ta_ui_spacer(2, 0);
+    ta_ui_next_size(col2_w, 17);
+    if (tg_game.vsync) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.7f, 0.0f, 0.9f);
+        if (ta_ui_label(0, "On")) {
+            ta_window_set_vsync(false);
+        }
+    } else {
+
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_label(0, "Off")) {
+            ta_window_set_vsync(true);
         }
     }
 

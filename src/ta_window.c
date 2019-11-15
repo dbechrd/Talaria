@@ -93,10 +93,9 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
     }
 
     // Log default VSync state
-    //SDL_GL_SetSwapInterval(1);
-    int swap = SDL_GL_GetSwapInterval();
+    tg_game.vsync = SDL_GL_GetSwapInterval();
     ta_log_write(&tg_debug_log, "Window", "w: %d, h: %d, vsync: %s\n",
-        window->size.w, window->size.h, swap ? "on" : "off");
+        window->size.w, window->size.h, tg_game.vsync ? "on" : "off");
 }
 
 void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
@@ -138,6 +137,14 @@ float ta_window_aspect(ta_window *window)
 SDL_Window *ta_window_sdl(ta_window *window)
 {
     return window->sdl_window;
+}
+
+void ta_window_set_vsync(bool vsync)
+{
+    if (tg_game.vsync != vsync) {
+        SDL_GL_SetSwapInterval(vsync ? 1 : 0);
+        tg_game.vsync = vsync;
+    }
 }
 
 void ta_window_swap(ta_window *window)
