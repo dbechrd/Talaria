@@ -223,8 +223,6 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     // Main loop
     ////////////////////////////////////////////////////////////////////////////
-    u64 frame_num = 0;
-    u64 sim_step = 0;
 
     // Eric Catto - Soft Constraints (GDC 2011)
     // Semi-implicit Euler will eventually blow up if you take big time steps. A
@@ -334,7 +332,7 @@ int main(int argc, char *argv[])
 
                 // Update scene
                 ta_scene_update(tg_game.scene, (float)sim_dt);
-                sim_step++;
+                tg_game.sim_step++;
             }
 
             // TODO: Put this somewhere intelligent
@@ -354,7 +352,7 @@ int main(int argc, char *argv[])
 
         // Draw models
         ta_log_write(&tg_debug_log, SRC_SYSTEM, " Shadow pass...\n");
-        //ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
+        ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
         ta_log_write(&tg_debug_log, SRC_SYSTEM, " Render pass...\n");
         ta_scene_render(tg_game.scene, active_camera, sim_alpha);
 
@@ -415,9 +413,10 @@ int main(int argc, char *argv[])
         ta_game_hud_draw(&tg_game);
 
         ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
-        frame_num++;
+        tg_game.frame_num++;
         ta_log_write(&tg_debug_log, SRC_SYSTEM, " FPS pass...\n");
-        render_frame_info(frame_num, ms_frame_time, ms_frame_delta, sim_step);
+        render_frame_info(tg_game.frame_num, ms_frame_time, ms_frame_delta,
+            tg_game.sim_step);
 
         // NOTE: This confirms rendering is being deferred until swap buffers,
         // but it's much slower (~5ms), so don't actually use it.
@@ -428,8 +427,8 @@ int main(int argc, char *argv[])
         ta_window_swap(tg_window);
 
         ta_log_write(&tg_debug_log, SRC_SYSTEM,
-            "Frame %llu displayed. time: %5.3f delta: %5.3f\n", frame_num,
-            ms_frame_time, ms_frame_delta);
+            "Frame %llu displayed. time: %5.3f delta: %5.3f\n",
+            tg_game.frame_num, ms_frame_time, ms_frame_delta);
 
         if (ms_frame_time > 16) {
             ta_log_write(&tg_debug_log, SRC_SYSTEM, "!!!!!!!! LONG_FRAME !!!!!!!!\n");

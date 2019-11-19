@@ -64,9 +64,14 @@ void ta_editor_init()
     //--------------------------------------------------------------------------
     // EDITOR
 
-    BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,  RELEASE, GRAVE);
-    BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,  RELEASE, ESCAPE);
-    BIND1(keybinds, TA_EVENT_EDITOR_SELECT, PRESS, MOUSE_LEFT);
+    BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,              RELEASE, GRAVE);
+    BIND1(keybinds, TA_EVENT_EDITOR_CLOSE,              RELEASE, ESCAPE);
+    BIND1(keybinds, TA_EVENT_EDITOR_SELECT,             PRESS, MOUSE_LEFT);
+    BIND1(keybinds, TA_EVENT_EDITOR_SIM_PAUSE,          PRESS, F5);
+    BIND1(keybinds, TA_EVENT_EDITOR_SIM_RESUME,         PRESS, F5);
+    BIND1(keybinds, TA_EVENT_EDITOR_SIM_NEXT,           PRESS, F6);
+    BIND1(keybinds, TA_EVENT_EDITOR_SIM_NEXT_10,        PRESS, F7);
+    BIND1(keybinds, TA_EVENT_EDITOR_SIM_WHILE_HELD,     HOLD, F8);
 
     BIND1(keybinds, TA_EVENT_CAMERA_MOVE_FORWARD,       HOLD, W);
     BIND1(keybinds, TA_EVENT_CAMERA_MOVE_BACKWARD,      HOLD, S);
@@ -892,6 +897,7 @@ void ta_editor_event(ta_event *event)
     }
 
     bool handled = true;
+    static u64 sim_last_changed = 0;  // frame number of last simulate hotkey
 
     switch (event->type) {
         case TA_EVENT_EDITOR_CLOSE: {
@@ -902,6 +908,30 @@ void ta_editor_event(ta_event *event)
             if (ta_mouse_captured()) {
                 editor_ray_pick();
             }
+            break;
+        } case TA_EVENT_EDITOR_SIM_PAUSE: {
+            if (tg_game.simulate && tg_game.frame_num != sim_last_changed) {
+                tg_game.simulate = 0;
+                sim_last_changed = tg_game.frame_num;
+            }
+            break;
+        } case TA_EVENT_EDITOR_SIM_RESUME: {
+            if (!tg_game.simulate && tg_game.frame_num != sim_last_changed) {
+                tg_game.simulate = -1;
+            }
+            break;
+        } case TA_EVENT_EDITOR_SIM_NEXT: {
+            if (!tg_game.simulate && tg_game.frame_num != sim_last_changed) {
+                tg_game.simulate = 1;
+            }
+            break;
+        } case TA_EVENT_EDITOR_SIM_NEXT_10: {
+            if (!tg_game.simulate && tg_game.frame_num != sim_last_changed) {
+                tg_game.simulate = 10;
+            }
+            break;
+        } case TA_EVENT_EDITOR_SIM_WHILE_HELD: {
+            tg_game.simulate = 1;
             break;
         } default: {
             handled = false;
