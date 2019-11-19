@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
 
         if (ms_frame_time > 16) {
             ta_log_write(&tg_debug_log, SRC_SYSTEM, "!!!!!!!! LONG_FRAME !!!!!!!!\n");
-            //__debugbreak();
+            __debugbreak();
         }
     }
 
@@ -484,7 +484,7 @@ static void render_frame_info(u64 frame_num, double ms_frame_time,
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-    ta_font_render(quads_queue, tg_game.font, SCREEN_WRAP_X(-300.0f), 0,
+    ta_font_render(quads_queue, tg_game.font, SCREEN_WRAP_X(-310.0f), 0,
         UI_LAYER_HUD, true, true);
 }
 
