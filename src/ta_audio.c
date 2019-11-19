@@ -19,18 +19,18 @@ void ta_audio_listener_init(ta_audio_listener *listener)
         listener->volume = 1.0f;
     }
 
-    ta_log_write(&tg_debug_log, "Audio", "Enumerating devices...\n");
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "Enumerating devices...\n");
     const char *devices = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
     const char *s = devices;
     while (*s)
     {
-        ta_log_write(&tg_debug_log, "Audio", "  Device: %s\n", s);
+        ta_log_write(&tg_debug_log, SRC_AUDIO, "  Device: %s\n", s);
         while (*s) { s++; }
         s++;
     }
 
     // TODO: Allow user to set which device they want to use
-    ta_log_write(&tg_debug_log, "Audio", "alcOpenDevice...\n");
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "alcOpenDevice...\n");
     listener->al_device = alcOpenDevice(NULL);
     if (!listener->al_device)
     {
@@ -39,7 +39,7 @@ void ta_audio_listener_init(ta_audio_listener *listener)
     }
 
     // TODO: What other attributes can I specify on a context?
-    ta_log_write(&tg_debug_log, "Audio", "alcCreateContext...\n");
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "alcCreateContext...\n");
     ALCint attrlist[] = { ALC_FREQUENCY, TA_AUDIO_SAMPLE_RATE, 0 };
     listener->al_context = alcCreateContext(listener->al_device, attrlist);
     if (!listener->al_context)
@@ -49,14 +49,14 @@ void ta_audio_listener_init(ta_audio_listener *listener)
     }
 
     // TODO: Can I have more than one context, is that useful?
-    ta_log_write(&tg_debug_log, "Audio", "alcMakeContextCurrent...\n");
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "alcMakeContextCurrent...\n");
     if (!alcMakeContextCurrent(listener->al_context))
     {
         DLB_ASSERT(!"Failed to activate listener context");
         return;
     }
 
-    ta_log_write(&tg_debug_log, "Audio", "Checking for OpenAL errors...\n");
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "Checking for OpenAL errors...\n");
     ALenum err = alGetError();
     if (err) {
         DLB_ASSERT(!"OpenAL error");
@@ -262,7 +262,7 @@ void ta_audio_source_play(ta_audio_source *source)
 
     alSourcei(source->al_source_id, AL_LOOPING, AL_FALSE);
     alSourcePlay(source->al_source_id);
-    ta_log_write(&tg_debug_log, "Audio",
+    ta_log_write(&tg_debug_log, SRC_AUDIO,
         "Playing source name=%s id=%d pitch=%f gain=%f loop=%d\n",
         source->name, source->al_source_id, source->pitch, source->gain,
         false);
@@ -288,7 +288,7 @@ void ta_audio_source_play_loop(ta_audio_source *source)
 
     alSourcei(source->al_source_id, AL_LOOPING, AL_TRUE);
     alSourcePlay(source->al_source_id);
-    ta_log_write(&tg_debug_log, "Audio",
+    ta_log_write(&tg_debug_log, SRC_AUDIO,
         "Playing source name=%s id=%d pitch=%f gain=%f loop=%d\n",
         source->name, source->al_source_id, source->pitch, source->gain,
         true);

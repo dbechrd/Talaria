@@ -131,7 +131,7 @@ void ta_texture_load_path(ta_texture *tex, const char *path)
 {
     tex->path = path;
 
-    ta_log_write(&tg_debug_log, "Texture", "Loading texture from disk %s...\n",
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Loading texture from disk %s...\n",
         path);
     // Load pixel data from file
     int w, h, channels;
@@ -140,7 +140,7 @@ void ta_texture_load_path(ta_texture *tex, const char *path)
     u8 *pixels = stbi_load(tex->path, &w, &h, &channels, tex->channels);
     if (!pixels) {
         const char *reason = stbi_failure_reason();
-        ta_log_write(&tg_debug_log, "Texture",
+        ta_log_write(&tg_debug_log, SRC_TEXTURE,
             "Failed to load tex: %s\nSTBI Reason: %s\n", tex->path, reason);
         DLB_ASSERT(!"ta_texture_init: Failed to load tex");
     }
@@ -153,7 +153,7 @@ void ta_texture_load_path(ta_texture *tex, const char *path)
 #else
     u8 *pixels = read_tga(path, &w, &h, &channels);
     if (!pixels) {
-        ta_log_write(&tg_debug_log, "Texture", "Failed to load tex: %s\n",
+        ta_log_write(&tg_debug_log, SRC_TEXTURE, "Failed to load tex: %s\n",
             tex->path);
         DLB_ASSERT(!"ta_texture_init: Failed to load tex");
     }
@@ -173,7 +173,7 @@ void ta_texture_load(ta_texture *tex, u8 *pixels, GLenum format)
     DLB_ASSERT(tex->channels);
     DLB_ASSERT(pixels);
 
-    ta_log_write(&tg_debug_log, "Texture",
+    ta_log_write(&tg_debug_log, SRC_TEXTURE,
         "Creating OpenGL texture w: %d, h: %d, channels: %d...\n",
         tex->width, tex->height, tex->channels);
 

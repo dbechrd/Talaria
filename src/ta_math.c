@@ -168,7 +168,7 @@ ta_vec2 vec2_normalize(ta_vec2 v)
     if (len) {
         result = vec2_scalef(result, 1.0f / len);
     } else {
-        ta_log_write(&tg_debug_log, "Math", "WARNING: Normalizing zero vector\n");
+        ta_log_write(&tg_debug_log, SRC_MATH, "WARNING: Normalizing zero vector\n");
         result = VEC2_ZERO;
     }
     return result;
@@ -248,7 +248,7 @@ ta_vec3 vec3_normalize(ta_vec3 v)
     if (len) {
         result = vec3_scalef(result, 1.0f / len);
     } else {
-        ta_log_write(&tg_debug_log, "Math", "WARNING: Normalizing zero vector\n");
+        ta_log_write(&tg_debug_log, SRC_MATH, "WARNING: Normalizing zero vector\n");
         result = VEC3_ZERO;
     }
     return result;
@@ -375,7 +375,7 @@ ta_quat quat_normalize(ta_quat q)
         result.z = q.z * inv_norm;
         result.w = q.w * inv_norm;
     } else {
-        ta_log_write(&tg_debug_log, "Math", "WARNING: Normalizing bad quaternion\n");
+        ta_log_write(&tg_debug_log, SRC_MATH, "WARNING: Normalizing bad quaternion\n");
         result = QUAT_IDENT;
     }
 

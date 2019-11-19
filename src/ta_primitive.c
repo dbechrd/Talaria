@@ -68,9 +68,9 @@ static void ta_primitive_init_quads()
 }
 void ta_primitive_init()
 {
-    ta_log_write(&tg_debug_log, "Primitive", "Initializing lines...\n");
+    ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing lines...\n");
     ta_primitive_init_lines();
-    ta_log_write(&tg_debug_log, "Primitive", "Initializing quads...\n");
+    ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing quads...\n");
     ta_primitive_init_quads();
 }
 
@@ -505,12 +505,12 @@ void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,
         glBindBuffer(GL_ARRAY_BUFFER, lines_buffer);
 
         // Update buffer (resize if necessary)
-        int queue_size = dlb_vec_size(lines_queue);
-        if (queue_size > lines_buffer_size) {
-            glNamedBufferData(lines_buffer, queue_size, lines_queue, GL_DYNAMIC_DRAW);
-            lines_buffer_size = queue_size;
+        int queue_bytes = dlb_vec_used_bytes(lines_queue);
+        if (queue_bytes > lines_buffer_size) {
+            glNamedBufferData(lines_buffer, queue_bytes, lines_queue, GL_DYNAMIC_DRAW);
+            lines_buffer_size = queue_bytes;
         } else {
-            glNamedBufferSubData(lines_buffer, 0, queue_size, lines_queue);
+            glNamedBufferSubData(lines_buffer, 0, queue_bytes, lines_queue);
         }
 
         // Draw lines
@@ -546,12 +546,12 @@ void ta_primitive_render_quads(ta_vert_quad *queue, ta_shader *shader,
         glBindBuffer(GL_ARRAY_BUFFER, quads_buffer);
 
         // Update buffer (resize if necessary)
-        int queue_size = dlb_vec_size(queue);
-        if (queue_size > quads_buffer_size) {
-            glNamedBufferData(quads_buffer, queue_size, queue, GL_DYNAMIC_DRAW);
-            quads_buffer_size = queue_size;
+        int queue_bytes = dlb_vec_used_bytes(queue);
+        if (queue_bytes > quads_buffer_size) {
+            glNamedBufferData(quads_buffer, queue_bytes, queue, GL_DYNAMIC_DRAW);
+            quads_buffer_size = queue_bytes;
         } else {
-            glNamedBufferSubData(quads_buffer, 0, queue_size, queue);
+            glNamedBufferSubData(quads_buffer, 0, queue_bytes, queue);
         }
 
         // Draw quads

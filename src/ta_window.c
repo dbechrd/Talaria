@@ -25,21 +25,21 @@ static void sdl_gl_attrib(SDL_GLattr attr, int value)
     int sdl_err = SDL_GL_SetAttribute(attr, value);
     if (sdl_err < 0)
     {
-        ta_log_write(&tg_debug_log, "Window", "SDL_GL_SetAttribute %d error: %s\n", attr, SDL_GetError());
+        ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_GL_SetAttribute %d error: %s\n", attr, SDL_GetError());
         DLB_ASSERT(!"sdl_gl_attrib: error");
     }
 }
 
 static void ta_init_sdl(ta_window *window, bool fullscreen)
 {
-    ta_log_write(&tg_debug_log, "Window", "SDL_Init...\n");
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_Init...\n");
     int sdl_err = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);  // SDL_INIT_TIMER
     if (sdl_err < 0) {
-        ta_log_write(&tg_debug_log, "Window", "SDL_Init error: %s\n", SDL_GetError());
+        ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_Init error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_Init failed");
     }
 
-    ta_log_write(&tg_debug_log, "Window", "Setting SDL GL attributes\n");
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "Setting SDL GL attributes\n");
     sdl_gl_attrib(SDL_GL_RED_SIZE, 8);
     sdl_gl_attrib(SDL_GL_GREEN_SIZE, 8);
     sdl_gl_attrib(SDL_GL_BLUE_SIZE, 8);
@@ -63,7 +63,7 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
     // TODO: Make fullscreen a borderless window because people say vsync
     //       doesn't work in fullscreen (can we confirm this?)
     // Create window
-    ta_log_write(&tg_debug_log, "Window", "SDL_CreateWindow...\n");
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_CreateWindow...\n");
     u32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
     if (fullscreen) {
         window->sdl_window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
@@ -74,27 +74,27 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
             flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
     }
     if (window->sdl_window == NULL) {
-        ta_log_write(&tg_debug_log, "Window", "SDL_CreateWindow error: %s\n", SDL_GetError());
+        ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_CreateWindow error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_CreateWindow failed");
     }
 
     // Create GL context
-    ta_log_write(&tg_debug_log, "Window", "SDL_GL_CreateContext...\n");
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_GL_CreateContext...\n");
     window->gl_context = SDL_GL_CreateContext(window->sdl_window);
     if (window->gl_context == NULL) {
-        ta_log_write(&tg_debug_log, "Window", "SDL_GL_CreateContext error: %s\n", SDL_GetError());
+        ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_GL_CreateContext error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_GL_CreateContext failed");
     }
 
     // Get actual window size
-    ta_log_write(&tg_debug_log, "Window", "Get window size / swap interval\n");
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "Get window size / swap interval\n");
     if (fullscreen) {
         SDL_GetWindowSize(window->sdl_window, &window->size.w, &window->size.h);
     }
 
     // Log default VSync state
     tg_game.vsync = SDL_GL_GetSwapInterval();
-    ta_log_write(&tg_debug_log, "Window", "w: %d, h: %d, vsync: %s\n",
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "w: %d, h: %d, vsync: %s\n",
         window->size.w, window->size.h, tg_game.vsync ? "on" : "off");
 }
 

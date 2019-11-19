@@ -8,20 +8,71 @@ typedef struct ta_log {
     FILE *stream;
     bool flush;
     bool echo;
+    u32 src_filter;         // 0 = ignore, 1 = log
+    u32 level_filter;
     double last_write_ms;
 } ta_log;
 
-typedef struct ta_log_level {
-    u8 event;
-    u8 system;
-    u8 window;
+// TODO: Actually use this
+typedef enum ta_log_level {
+    LEVEL_NONE  = 0x00000000,
+    LEVEL_DEBUG = 0x00000001,
+    LEVEL_INFO  = 0x00000002,
+    LEVEL_WARN  = 0x00000004,
+    LEVEL_ERROR = 0x00000008,
+    LEVEL_FATAL = 0x00000010,
 } ta_log_level;
 
-extern ta_log_level tg_log_level;
+typedef enum ta_log_source {
+    SRC_NONE       = 0x00000000,
+    SRC_ASSERT     = 0x00000001,
+    SRC_AUDIO      = 0x00000002,
+    SRC_EDITOR     = 0x00000004,
+    SRC_EVENT      = 0x00000008,
+    SRC_FILE       = 0x00000010,
+    SRC_FONT       = 0x00000020,
+    SRC_GAME       = 0x00000040,
+    SRC_MATH       = 0x00000080,
+    SRC_OPENGL     = 0x00000100,
+    SRC_PRIMITIVE  = 0x00000200,
+    SRC_SYSTEM     = 0x00000400,
+    SRC_RENDER     = 0x00000800,
+    SRC_RIGID_BODY = 0x00001000,
+    SRC_SCENE      = 0x00002000,
+    SRC_SHADER     = 0x00004000,
+    SRC_TEXTURE    = 0x00008000,
+    SRC_WINDOW     = 0x00010000,
+
+    //...
+    //SRC_LAST              = 0x8fffffff
+
+    SRC_ALL = SRC_ASSERT
+            | SRC_AUDIO
+            | SRC_EDITOR
+            | SRC_EVENT
+            | SRC_FILE
+            | SRC_FONT
+            | SRC_GAME
+            | SRC_MATH
+            | SRC_OPENGL
+            | SRC_PRIMITIVE
+            | SRC_SYSTEM
+            | SRC_RENDER
+            | SRC_RIGID_BODY
+            | SRC_SCENE
+            | SRC_SHADER
+            | SRC_TEXTURE
+            | SRC_WINDOW
+} ta_log_source;
+
 extern ta_log tg_debug_log;
 
-void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo);
-void ta_log_init_file(ta_log *log, const char *filename, bool flush, bool echo);
-void ta_log_write(ta_log *log, const char *src, const char *fmt, ...);
+const char *ta_log_source_str(ta_log_source src);
+void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
+    u32 src_filter);
+void ta_log_init_file(ta_log *log, const char *filename, bool flush, bool echo,
+    u32 src_filter);
+void ta_log_flush(ta_log *log);
+void ta_log_write(ta_log *log, u32 src, const char *fmt, ...);
 void ta_log_append(ta_log *log, const char* fmt, ...);
 //void ta_log_free(ta_log *log);

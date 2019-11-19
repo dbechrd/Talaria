@@ -93,14 +93,14 @@ TA_SDL_WaitEventTimeout(SDL_Event * event, int timeout)
 {
     Uint32 expiration = 0;
 
-    ta_log_write(&tg_debug_log, "Event", "   WaitEventTimeout - GetTicks\n");
+    ta_log_write(&tg_debug_log, SRC_EVENT, "   WaitEventTimeout - GetTicks\n");
     if (timeout > 0)
         expiration = SDL_GetTicks() + timeout;
 
     for (;;) {
-        ta_log_write(&tg_debug_log, "Event", "   WaitEventTimeout - PumpEvents\n");
+        ta_log_write(&tg_debug_log, SRC_EVENT, "   WaitEventTimeout - PumpEvents\n");
         SDL_PumpEvents();
-        ta_log_write(&tg_debug_log, "Event", "   WaitEventTimeout - PeepEvents\n");
+        ta_log_write(&tg_debug_log, SRC_EVENT, "   WaitEventTimeout - PeepEvents\n");
         switch (SDL_PeepEvents(event, 1, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT)) {
             case -1:
                 return 0;
@@ -113,7 +113,7 @@ TA_SDL_WaitEventTimeout(SDL_Event * event, int timeout)
                     /* Timeout expired and no events */
                     return 0;
                 }
-                ta_log_write(&tg_debug_log, "Event", "   WaitEventTimeout - Delay\n");
+                ta_log_write(&tg_debug_log, SRC_EVENT, "   WaitEventTimeout - Delay\n");
                 SDL_Delay(1);
                 break;
             default:
@@ -135,7 +135,7 @@ static void event_sdl_poll()
     SDL_Event sdl_event;
     //while (TA_SDL_PollEvent(&sdl_event)) {
     while (SDL_PollEvent(&sdl_event)) {
-        if (tg_log_level.event) ta_log_write(&tg_debug_log, "Event", "  SDL event type = %d\n", sdl_event.type);
+        ta_log_write(&tg_debug_log, SRC_EVENT, "  SDL event type = %d\n", sdl_event.type);
         ta_event event = { 0 };
         switch (sdl_event.type) {
             case SDL_QUIT: {
@@ -194,7 +194,7 @@ static void event_sdl_poll()
             }
         }
         if (event.type) {
-            if (tg_log_level.event) ta_log_write(&tg_debug_log, "Event", "  TA event type = %d\n", event.type);
+            ta_log_write(&tg_debug_log, SRC_EVENT, "  TA event type = %d\n", event.type);
             ta_event_push(&event);
             ta_key_event(&event);
             ta_mouse_event(&event);
@@ -204,38 +204,38 @@ static void event_sdl_poll()
 
 void ta_event_events()
 {
-    //ta_log_write(&tg_debug_log, "Event", "  mouse reset relative...\n");
+    ta_log_write(&tg_debug_log, SRC_EVENT, "  mouse reset relative...\n");
     ta_mouse_reset_relative();
-    //ta_log_write(&tg_debug_log, "Event", "  key reset changed...\n");
+    ta_log_write(&tg_debug_log, SRC_EVENT, "  key reset changed...\n");
     ta_key_reset_changed();
-    if (tg_log_level.event) ta_log_write(&tg_debug_log, "Event", "  SDL poll...\n");
+    ta_log_write(&tg_debug_log, SRC_EVENT, "  SDL poll...\n");
     event_sdl_poll();
-    if (tg_log_level.event) ta_log_write(&tg_debug_log, "Event", "  SDL poll end\n");
+    ta_log_write(&tg_debug_log, SRC_EVENT, "  SDL poll end\n");
 
     if (tg_game.state == TA_GAME_STATE_EDITOR) {
-        //ta_log_write(&tg_debug_log, "Event", "  editor hotkeys...\n");
+        ta_log_write(&tg_debug_log, SRC_EVENT, "  editor hotkeys...\n");
         ta_editor_hotkeys();
     } else {
-        //ta_log_write(&tg_debug_log, "Event", "  game hotkeys...\n");
+        ta_log_write(&tg_debug_log, SRC_EVENT, "  game hotkeys...\n");
         ta_game_hotkeys(&tg_game);
     }
 
-    //ta_log_write(&tg_debug_log, "Event", "  event pop loop...\n");
+    ta_log_write(&tg_debug_log, SRC_EVENT, "  event pop loop...\n");
     ta_event event;
     while (ta_event_pop(&event)) {
-        //ta_log_write(&tg_debug_log, "Event", "   window event...\n");
+        //ta_log_write(&tg_debug_log, SRC_EVENT, "   window event...\n");
         ta_window_event(tg_window, &event);
         if (event.handled) continue;
 
-        //ta_log_write(&tg_debug_log, "Event", "   editor event...\n");
+        ta_log_write(&tg_debug_log, SRC_EVENT, "   editor event...\n");
         ta_editor_event(&event);
         if (event.handled) continue;
 
-        //ta_log_write(&tg_debug_log, "Event", "   game event...\n");
+        ta_log_write(&tg_debug_log, SRC_EVENT, "   game event...\n");
         ta_game_event(&tg_game, &event);
         if (event.handled) continue;
 
-        //ta_log_write(&tg_debug_log, "Event", "   camera event...\n");
+        ta_log_write(&tg_debug_log, SRC_EVENT, "   camera event...\n");
         if (ta_mouse_captured()) {
             ta_camera *camera = ta_scene_component(tg_game.scene,
                 RES_COMP_CAMERA, tg_game.e_active_camera);

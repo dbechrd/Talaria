@@ -47,7 +47,7 @@
 DLB_ASSERT_HANDLER(handle_assert)
 {
     tg_debug_log.flush = true;
-    ta_log_write(&tg_debug_log, "ASSERT",
+    ta_log_write(&tg_debug_log, SRC_ASSERT,
         "\n---[DLB_ASSERT_HANDLER]-----------------\n"
         "Source file: %s:%d\n\n"
         "%s\n"
@@ -109,39 +109,35 @@ int main(int argc, char *argv[])
     UNUSED(argv);
     DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
 
-    tg_log_level.event = 0;
-    tg_log_level.window = 0;
-    tg_log_level.system = 0;
-
     ta_timer_init();
-    ta_log_init_file(&tg_debug_log, "log.txt", false, false);
+    ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_SYSTEM | SRC_EVENT);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
-    ta_log_write(&tg_debug_log, "System", "Running debug_tests...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
     debug_tests();
-    ta_log_write(&tg_debug_log, "System", "Initializing symbols...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing symbols...\n");
     ta_symbol_init();
-    ta_log_write(&tg_debug_log, "System", "Registering schema...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Registering schema...\n");
     ta_schema_register();
     // TODO: Save size/position to a config file
-    ta_log_write(&tg_debug_log, "System", "Initializing window...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing window...\n");
     ta_window_init(tg_window, 1600, 900, false);
-    ta_log_write(&tg_debug_log, "System", "Running ndc_tests...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running ndc_tests...\n");
     ndc_tests();
-    ta_log_write(&tg_debug_log, "System", "Initializing audio...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing audio...\n");
     tg_audio.volume = 0.05f;
     ta_audio_listener_init(&tg_audio);
-    ta_log_write(&tg_debug_log, "System", "Initializing mouse...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing mouse...\n");
     ta_mouse_init();
-    ta_log_write(&tg_debug_log, "System", "Initializing renderer...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing renderer...\n");
     ta_render_init();
-    ta_log_write(&tg_debug_log, "System", "Initializing primitives...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing primitives...\n");
     ta_primitive_init();
-    ta_log_write(&tg_debug_log, "System", "Initializing editor...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing editor...\n");
     ta_editor_init();
-    ta_log_write(&tg_debug_log, "System", "Initializing game...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing game...\n");
     ta_game_init(&tg_game);
-    ta_log_write(&tg_debug_log, "System", "Loading first scene...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Loading first scene...\n");
     ta_scene *scene1 = ta_scene_load_file("data/scene/scene1_gen.dml");
     DLB_ASSERT(scene1 && tg_game.scene == scene1);
 
@@ -206,7 +202,7 @@ int main(int argc, char *argv[])
 #else
     ta_game_state_set(&tg_game, TA_GAME_STATE_PLAY);
 #endif
-    ta_log_write(&tg_debug_log, "System", "Active camera: %s\n", tg_game.e_active_camera);
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Active camera: %s\n", tg_game.e_active_camera);
     DLB_ASSERT(tg_game.e_active_camera);
 
     ////////////////////////////////////////////////////////////////////////////
@@ -255,10 +251,10 @@ int main(int argc, char *argv[])
         ms_frame_prev = ms_frame_start;
 
         // Engine events
-        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Handling events...\n");
+        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Handling events...\n");
         ta_event_events();
 
-        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Accumulating...\n");
+        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Accumulating...\n");
         if (sim_max_steps == 0) {
             // TODO: This *requires* vsync to work correctly!
             // If sim_max_steps == 0, assume we want lockstep physics
@@ -268,21 +264,21 @@ int main(int argc, char *argv[])
             // Prevent spiral of death
             // NOTE: This breaks determinism when simulation is under duress
             if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
-                ta_log_write(&tg_debug_log, "System",
+                ta_log_write(&tg_debug_log, SRC_SYSTEM,
                     "WARNING: Physics accumulator spiraling; truncating %f to %f\n",
                     ms_frame_accum, ms_sim_dt * sim_max_steps);
                 ms_frame_accum = ms_sim_dt * sim_max_steps;
             }
         }
 
-        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Finding components...\n");
+        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Finding components...\n");
         ta_camera *active_camera = ta_scene_component(tg_game.scene,
             RES_COMP_CAMERA, tg_game.e_active_camera);
         ta_camera *player_cam = 0;
         ta_rigid_body *player_body = 0;
 
         if (ms_frame_accum >= ms_sim_dt) {
-            if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Finding sim components...\n");
+            ta_log_write(&tg_debug_log, SRC_SYSTEM, " Finding sim components...\n");
             player_cam = ta_scene_component(tg_game.scene, RES_COMP_CAMERA,
                 tg_game.e_player_one);
             player_body = ta_scene_component(tg_game.scene, RES_COMP_RIGID_BODY,
@@ -290,7 +286,7 @@ int main(int argc, char *argv[])
         }
 
         while (ms_frame_accum >= ms_sim_dt) {
-            if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Sim step...\n");
+            ta_log_write(&tg_debug_log, SRC_SYSTEM, " Sim step...\n");
             // Target player camera
             ta_camera_set_target_pos_absolute(player_cam,
                 vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
@@ -357,9 +353,9 @@ int main(int argc, char *argv[])
         float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
 
         // Draw models
-        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Shadow pass...\n");
-        ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
-        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Render pass...\n");
+        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Shadow pass...\n");
+        //ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
+        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Render pass...\n");
         ta_scene_render(tg_game.scene, active_camera, sim_alpha);
 
         // World axes
@@ -367,7 +363,7 @@ int main(int argc, char *argv[])
         ta_primitive_render(true, true);
 
         if (tg_game.state == TA_GAME_STATE_EDITOR) {
-            if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Editor pass...\n");
+            ta_log_write(&tg_debug_log, SRC_SYSTEM, " Editor pass...\n");
             ta_editor_draw(sim_alpha);
         }
 
@@ -415,37 +411,37 @@ int main(int argc, char *argv[])
         // TODO: Make HUD drawing suck less.. way too many draw calls
         //       Use texture atlas, batch everything into one draw call. Import
         //       textures from Rico; stop using stupid RGB placeholders
-        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " HUD pass...\n");
+        ta_log_write(&tg_debug_log, SRC_SYSTEM, " HUD pass...\n");
         ta_game_hud_draw(&tg_game);
 
         ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
         frame_num++;
-        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " FPS pass...\n");
+        ta_log_write(&tg_debug_log, SRC_SYSTEM, " FPS pass...\n");
         render_frame_info(frame_num, ms_frame_time, ms_frame_delta, sim_step);
 
         // NOTE: This confirms rendering is being deferred until swap buffers,
         // but it's much slower (~5ms), so don't actually use it.
-        //ta_log_write(&tg_debug_log, "System", " glFinish...\n");
+        //ta_log_write(&tg_debug_log, SRC_SYSTEM, " glFinish...\n");
         //glFinish();
 
-        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", " Swap...\n");
+        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Swap...\n");
         ta_window_swap(tg_window);
 
-        tg_debug_log.flush = true;
-        if (tg_log_level.system) ta_log_write(&tg_debug_log, "System",
+        ta_log_write(&tg_debug_log, SRC_SYSTEM,
             "Frame %llu displayed. time: %5.3f delta: %5.3f\n", frame_num,
             ms_frame_time, ms_frame_delta);
-        tg_debug_log.flush = false;
 
         if (ms_frame_time > 16) {
-            if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", "!!!!!!!! LONG_FRAME !!!!!!!!\n");
-            __debugbreak();
+            ta_log_write(&tg_debug_log, SRC_SYSTEM, "!!!!!!!! LONG_FRAME !!!!!!!!\n");
+            //__debugbreak();
         }
     }
 
+    ta_log_flush(&tg_debug_log);
+
     // TODO: Free *EVERYTHING* (at least in debug mode.. to check memory leaks)
     ta_window_free(tg_window);
-    if (tg_log_level.system) ta_log_write(&tg_debug_log, "System", "Goodbye.\n\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Goodbye.\n\n");
     return 0;
 }
 

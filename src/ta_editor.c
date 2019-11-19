@@ -40,15 +40,15 @@ static ta_editor editor;
 
 void ta_editor_init()
 {
-    ta_log_write(&tg_debug_log, "Editor", "Initializing UI styles\n");
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing UI styles\n");
     ta_ui_init();
 
-    ta_log_write(&tg_debug_log, "Editor", "Loading editor scene\n");
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "Loading editor scene\n");
     editor.scene = ta_scene_load_file("data/scene/editor.dml");
     editor.shader_editor_select = SYM_SHADER_EDITOR_SELECT;
     DLB_ASSERT(editor.scene);
 
-    ta_log_write(&tg_debug_log, "Editor", "Initializing key binds\n");
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing key binds\n");
 
 #undef DELETE
 #define BIND1(keybinds, e, key_state, key1) \

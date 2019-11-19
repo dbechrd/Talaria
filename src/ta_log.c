@@ -6,27 +6,62 @@
 #include <stdio.h>
 #include <time.h>
 
-ta_log_level tg_log_level;
 ta_log tg_debug_log;
 
-void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo)
+const char *ta_log_source_str(ta_log_source src) {
+    switch(src) {
+        case SRC_ASSERT:     return "ASSERT";
+        case SRC_AUDIO:      return "AUDIO";
+        case SRC_EDITOR:     return "EDITOR";
+        case SRC_EVENT:      return "EVENT";
+        case SRC_FILE:       return "FILE";
+        case SRC_FONT:       return "FONT";
+        case SRC_GAME:       return "GAME";
+        case SRC_MATH:       return "MATH";
+        case SRC_OPENGL:     return "OPENGL";
+        case SRC_PRIMITIVE:  return "PRIMITIVE";
+        case SRC_SYSTEM:     return "SYSTEM";
+        case SRC_RENDER:     return "RENDER";
+        case SRC_RIGID_BODY: return "RIGID_BODY";
+        case SRC_SCENE:      return "SCENE";
+        case SRC_SHADER:     return "SHADER";
+        case SRC_TEXTURE:    return "TEXTURE";
+        case SRC_WINDOW:     return "WINDOW";
+        default:
+            DLB_ASSERT(!"<UNKNOWN_SRC_TYPE>");
+            return 0;
+    }
+}
+
+void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
+    u32 src_filter)
 {
     DLB_ASSERT(log);
     DLB_ASSERT(stream);
     log->stream = stream;
     log->flush = flush;
     log->echo = echo;
+    log->src_filter = src_filter;
     log->last_write_ms = ta_timer_elapsed_ms();
     fprintf(log->stream,
-        "[     Timestamp     ][  Elapsed  ][   Delta   ][ Source  ][       Message       ]\n"
-        "---------------------------------------------------------------------------------\n");
+        "[     Timestamp     ][  Elapsed  ][  Delta   ][ Source  ][       Message       ]\n"
+        "--------------------------------------------------------------------------------\n");
 }
 
-void ta_log_init_file(ta_log *log, const char *filename, bool flush, bool echo)
+void ta_log_init_file(ta_log *log, const char *filename, bool flush, bool echo,
+    u32 src_filter)
 {
     FILE *stream = fopen(filename, "wb");
-    ta_log_init(log, stream, flush, echo);
+    ta_log_init(log, stream, flush, echo, src_filter);
     log->filename = filename;
+}
+
+void ta_log_flush(ta_log *log)
+{
+    fflush(log->stream);
+    if (log->echo) {
+        fflush(stdout);
+    }
 }
 
 static void ta_log_timestamp(char *buf, int len)
@@ -36,7 +71,7 @@ static void ta_log_timestamp(char *buf, int len)
     strftime(buf, len, "%F %T", date);
 }
 
-static void ta_log_write_timestamp(ta_log *log, const char *src)
+static void ta_log_write_timestamp(ta_log *log, u32 src)
 {
     char timestamp[] = "1970-01-01 00:00:00";
     ta_log_timestamp(timestamp, sizeof(timestamp));
@@ -45,11 +80,11 @@ static void ta_log_write_timestamp(ta_log *log, const char *src)
     double ms_since_last_write = elapsed_ms - log->last_write_ms;
     log->last_write_ms = elapsed_ms;
 
-    fprintf(log->stream, "[%s][%10.3fs][%7.3fms][ %8s] ", timestamp, elapsed_sec,
-        ms_since_last_write, src);
+    fprintf(log->stream, "[%s][%10.3fs][%7.3fms][ %10s] ", timestamp, elapsed_sec,
+        ms_since_last_write, ta_log_source_str(src));
     if (log->echo) {
-        fprintf(stdout, "[%s][%10.3fs][%9.3fms][ %8s] ", timestamp, elapsed_sec,
-            ms_since_last_write, src);
+        fprintf(stdout, "[%s][%10.3fs][%9.3fms][ %10s] ", timestamp, elapsed_sec,
+            ms_since_last_write, ta_log_source_str(src));
     }
 }
 
@@ -63,27 +98,23 @@ void ta_log_append(ta_log *log, const char* fmt, ...)
     }
     va_end(args);
     if (log->flush) {
-        fflush(log->stream);
-        if (log->echo) {
-            fflush(stdout);
-        }
+        ta_log_flush(log);
     }
 }
 
-void ta_log_write(ta_log *log, const char *src, const char *fmt, ...)
+void ta_log_write(ta_log *log, u32 src, const char *fmt, ...)
 {
-    ta_log_write_timestamp(log, src);
-    va_list args;
-    va_start(args, fmt);
-    vfprintf(log->stream, fmt, args);
-    if (log->echo) {
-        vfprintf(stdout, fmt, args);
-    }
-    va_end(args);
-    if (log->flush) {
-        fflush(log->stream);
+    if (log->src_filter & src) {
+        ta_log_write_timestamp(log, src);
+        va_list args;
+        va_start(args, fmt);
+        vfprintf(log->stream, fmt, args);
         if (log->echo) {
-            fflush(stdout);
+            vfprintf(stdout, fmt, args);
+        }
+        va_end(args);
+        if (log->flush) {
+            ta_log_flush(log);
         }
     }
 }
