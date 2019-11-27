@@ -248,11 +248,13 @@ ta_vec3 vec3_rotate_quat(ta_vec3 v, ta_quat q);
 
 void vec4_print(FILE *file, ta_vec4 v);
 int vec4_zero(ta_vec4 v);
+int vec4_tiny(ta_vec4 v);
+int vec4_equal(ta_vec4 a, ta_vec4 b);
 
 void quat_print(FILE *file, ta_quat q);
 int quat_zero(ta_quat v);
 int quat_ident(ta_quat q);
-int quat_equals(ta_quat a, ta_quat b);
+int quat_equal(ta_quat a, ta_quat b);
 ta_quat quat_from_axis_angle(ta_vec3 axis, float deg);
 ta_quat quat_from_vec_vec(ta_vec3 from, ta_vec3 to);
 float quat_norm_sq(ta_quat q);
@@ -270,6 +272,7 @@ ta_mat3 mat3_init(
     float m00, float m01, float m02,
     float m10, float m11, float m12,
     float m20, float m21, float m22);
+int mat3_equal(const ta_mat3 *a, const ta_mat3 *b);
 ta_mat3 mat3_transpose(const ta_mat3 *m);
 ta_mat3 mat3_rotate_x(float deg);
 ta_mat3 mat3_rotate_y(float deg);
@@ -282,12 +285,12 @@ ta_mat3 mat3_hue_rotation(float degrees);
 float mat3_deter(const ta_mat3 *m);
 
 void mat4_print(FILE *file, const ta_mat4 *m);
-ta_mat4 mat4_mul(const ta_mat4 *a, const ta_mat4 *b);
 ta_mat4 mat4_init(
     float m00, float m01, float m02, float m03,
     float m10, float m11, float m12, float m13,
     float m20, float m21, float m22, float m23,
     float m30, float m31, float m32, float m33);
+int mat4_equal(const ta_mat4 *a, const ta_mat4 *b);
 ta_mat4 mat4_transpose(const ta_mat4 *m);
 ta_mat4 mat4_translate(ta_vec3 v);
 ta_mat4 mat4_scale(ta_vec3 s);
@@ -296,6 +299,7 @@ ta_mat4 mat4_rotate_x(float deg);
 ta_mat4 mat4_rotate_y(float deg);
 ta_mat4 mat4_rotate_z(float deg);
 ta_mat4 mat4_rotate_quat(ta_quat q);
+ta_mat4 mat4_mul(const ta_mat4 *a, const ta_mat4 *b);
 float mat4_det(const ta_mat4 *mat);
 int mat4_inverse(const ta_mat4 *m, ta_mat4 *result);
 ta_mat4 mat4_perspective(float fov_deg, float aspect, float znear, float zfar);

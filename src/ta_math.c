@@ -303,6 +303,20 @@ int vec4_zero(ta_vec4 v)
 {
     return v.x == 0.0f && v.y == 0.0f && v.z == 0.0f && v.w == 0.0f;
 }
+int vec4_tiny(ta_vec4 v)
+{
+    return fabs(v.x) < TA_EPSILON &&
+           fabs(v.y) < TA_EPSILON &&
+           fabs(v.z) < TA_EPSILON &&
+           fabs(v.w) < TA_EPSILON;
+}
+int vec4_equal(ta_vec4 a, ta_vec4 b)
+{
+    return fabs(a.x - b.x) < TA_EPSILON &&
+           fabs(a.y - b.y) < TA_EPSILON &&
+           fabs(a.z - b.z) < TA_EPSILON &&
+           fabs(a.w - b.w) < TA_EPSILON;
+}
 
 void quat_print(FILE *file, ta_quat q)
 {
@@ -316,7 +330,7 @@ int quat_ident(ta_quat q)
 {
     return q.x == 0.0f && q.y == 0.0f && q.z == 0.0f && q.w == 1.0f;
 }
-int quat_equals(ta_quat a, ta_quat b)
+int quat_equal(ta_quat a, ta_quat b)
 {
     return
         fabs(a.x - b.x) < TA_EPSILON &&
@@ -484,6 +498,15 @@ ta_mat3 mat3_init(
     result.data.f[2][2] = m22;
     return result;
 }
+int mat3_equal(const ta_mat3 *a, const ta_mat3 *b)
+{
+    for (int i = 0; i < 9; ++i) {
+        if (a->data.arr[i] != b->data.arr[i]) {
+            return 0;
+        }
+    }
+    return 1;
+}
 ta_mat3 mat3_transpose(const ta_mat3 *m)
 {
     ta_mat3 result = mat3_init(
@@ -531,7 +554,7 @@ ta_mat3 mat3_rotate_z(float deg)
 }
 ta_mat3 mat3_rotate_quat(ta_quat q)
 {
-    DLB_ASSERT(quat_equals(q, quat_normalize(q)));
+    DLB_ASSERT(quat_equal(q, quat_normalize(q)));
 
     float xx = q.x * q.x;
     float yy = q.y * q.y;
@@ -700,6 +723,15 @@ ta_mat4 mat4_init(
     result.data.f[3][3] = m33;
     return result;
 }
+int mat4_equal(const ta_mat4 *a, const ta_mat4 *b)
+{
+    for (int i = 0; i < 16; ++i) {
+        if (a->data.arr[i] != b->data.arr[i]) {
+            return 0;
+        }
+    }
+    return 1;
+}
 ta_mat4 mat4_transpose(const ta_mat4 *m)
 {
     ta_mat4 result = mat4_init(
@@ -781,7 +813,7 @@ ta_mat4 mat4_rotate_z(float deg)
 }
 ta_mat4 mat4_rotate_quat(ta_quat q)
 {
-    DLB_ASSERT(quat_equals(q, quat_normalize(q)));
+    DLB_ASSERT(quat_equal(q, quat_normalize(q)));
 
     float xx = q.x * q.x;
     float yy = q.y * q.y;

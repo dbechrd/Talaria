@@ -174,14 +174,15 @@ static void shader_print_uniforms(ta_shader *shader)
     dlb_free(name);
 }
 
-static void shader_locate_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
+static void shader_init_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
 {
     dlb_vec_each(ta_shader_uniform *, uniform, uniforms) {
         if (uniform->type == TA_GLSL_STRUCT) {
-            shader_locate_uniforms(shader, uniform->value.properties);
+            shader_init_uniforms(shader, uniform->value.properties);
         } else {
             uniform->location = ta_shader_uniform_location(shader, uniform->name);
         }
+        uniform->dirty = true;
     }
 }
 
@@ -243,7 +244,7 @@ void ta_shader_load(ta_shader *shader)
     DLB_ASSERT(!attr_norm || attr_norm->location < 0 || attr_norm->location == TA_SHADER_ATTR_NORMAL);
     DLB_ASSERT(!attr_tang || attr_tang->location < 0 || attr_tang->location == TA_SHADER_ATTR_TANGENT);
 
-    shader_locate_uniforms(shader, shader->uniforms);
+    shader_init_uniforms(shader, shader->uniforms);
 
 #if _DEBUG
     shader_print_uniforms(shader);
@@ -272,75 +273,124 @@ void ta_shader_free(ta_shader *shader)
 void ta_shader_set_bool(ta_shader *shader, const char *name, GLboolean value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_BOOL);
-    u->value.glbool = value;
+    if (u->value.glbool != value) {
+        u->value.glbool = value;
+        u->dirty = true;
+    }
 }
 
 void ta_shader_set_int(ta_shader *shader, const char *name, GLint value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_INT);
-    u->value.glint = value;
+    if (u->value.glint != value) {
+        u->value.glint = value;
+        u->dirty = true;
+    }
 }
 
 void ta_shader_set_uint(ta_shader *shader, const char *name, GLuint value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_UINT);
-    u->value.gluint = value;
+    if (u->value.gluint != value) {
+        u->value.gluint = value;
+        u->dirty = true;
+    }
 }
 
 void ta_shader_set_float(ta_shader *shader, const char *name, GLfloat value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_FLOAT);
-    u->value.glfloat = value;
+    if (u->value.glfloat != value) {
+        u->value.glfloat = value;
+        u->dirty = true;
+    }
 }
 
 void ta_shader_set_sampler2d(ta_shader *shader, const char *name, GLuint tex_id)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D);
+#if 0
+    // NOTE: This doesn't work for some reason, probably related to tex_id == 0
+    if (u->value.sampler2d != tex_id) {
+        u->value.sampler2d = tex_id;
+        u->dirty = true;
+    }
+#else
     u->value.sampler2d = tex_id;
+    u->dirty = true;
+#endif
 }
 
 void ta_shader_set_sampler_cube(ta_shader *shader, const char *name, GLuint tex_id)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER_CUBE);
+#if 0
+    // NOTE: This doesn't work for some reason, probably related to tex_id == 0
+    if (u->value.sampler_cube != tex_id) {
+        u->value.sampler_cube = tex_id;
+        u->dirty = true;
+    }
+#else
     u->value.sampler_cube = tex_id;
+    u->dirty = true;
+#endif
 }
 
 void ta_shader_set_vec2(ta_shader *shader, const char *name, const ta_vec2 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC2);
-    u->value.vec2 = *v;
+    if (!vec2_equal(u->value.vec2, *v)) {
+        u->value.vec2 = *v;
+        u->dirty = true;
+    }
 }
 
 void ta_shader_set_vec3(ta_shader *shader, const char *name, const ta_vec3 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC3);
-    u->value.vec3 = *v;
+    if (!vec3_equal(u->value.vec3, *v)) {
+        u->value.vec3 = *v;
+        u->dirty = true;
+    }
 }
 
 void ta_shader_set_vec4(ta_shader *shader, const char *name, const ta_vec4 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC4);
-    u->value.vec4 = *v;
+    if (!vec4_equal(u->value.vec4, *v)) {
+        u->value.vec4 = *v;
+        u->dirty = true;
+    }
 }
 
 void ta_shader_set_mat3(ta_shader *shader, const char *name, const ta_mat3 *m)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT3);
-    u->value.mat3 = *m;
+    if (!mat3_equal(&u->value.mat3, m)) {
+        u->value.mat3 = *m;
+        u->dirty = true;
+    }
 }
 
 void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT4);
-    u->value.mat4 = *m;
+    //u->value.mat4 = *m;
+    //u->dirty = true;
+    if (!mat4_equal(&u->value.mat4, m)) {
+        u->value.mat4 = *m;
+        u->dirty = true;
+    }
 }
 
 void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     ta_light *light)
 {
+    // TODO: Use the other set calls above to eliminate duplicate sets once
+    // that's implemented for the basic types.
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
 
-    ta_shader_uniform *u_intensity=
+    ta_shader_uniform *u_intensity =
         find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_INTENSITY[index],
             TA_GLSL_FLOAT);
     ta_shader_uniform *u_position =
@@ -397,6 +447,17 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
         default:
             DLB_ASSERT(!"Don't know how to initialize this type of light");
     }
+
+    u->dirty = true;
+    u_intensity->dirty = true;
+    u_color->dirty = true;
+    u_position->dirty = true;
+    u_type->dirty = true;
+    u_direction->dirty = true;
+    u_cast_shadows->dirty = true;
+    u_shadowmap2d->dirty = true;
+    u_shadowmap3d->dirty = true;
+    u_shadowmap_zfar->dirty = true;
 }
 
 static void shader_store_uniforms(ta_shader_uniform *store,
@@ -417,10 +478,8 @@ static void shader_store_uniforms(ta_shader_uniform *store,
 
 static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
 {
-    // TODO: Track dirty uniforms and only update those
-
     dlb_vec_each(ta_shader_uniform *, u, uniforms) {
-        if (u->location < 0 && u->type != TA_GLSL_STRUCT) {
+        if (!u->dirty || (u->location < 0 && u->type != TA_GLSL_STRUCT)) {
             continue;
         }
 
@@ -477,6 +536,8 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
                 DLB_ASSERT(!"Unexpected GLSL type");
             }
         }
+
+        u->dirty = false;
     }
 }
 
@@ -506,7 +567,7 @@ void ta_shader_bind(ta_shader *shader)
 
 void ta_shader_unbind()
 {
-#if 1  // TODO: Test turning this off
+#if 0  // TODO: Test turning this off
     glUseProgram(0);
     bound_program_id = 0;
 #endif

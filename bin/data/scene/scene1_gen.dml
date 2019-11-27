@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x408AC626 (4.336688)
-    y: 0xC093653C (-4.606108)
-    z: 0x4101E766 (8.118994)
+    x: 0x40891220 (4.283463)
+    y: 0xC09FFE7C (-4.999815)
+    z: 0x40CA45B0 (6.321007)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x42F033CE (120.101181)
+  yaw: 0x42F46741 (122.201668)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1500316 (-13.000753)
+  pitch: 0xC0B66D66 (-5.700854)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,9 +57,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBDE7113B (-0.112826)
-    y: 0x3F797021 (0.974367)
-    z: 0xBE474BE8 (-0.194625)
+    x: 0xBD58D2E8 (-0.052936)
+    y: 0x3F7EBBE0 (0.995054)
+    z: 0xBDAC24E2 (-0.084055)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
@@ -130,9 +130,9 @@ ta_light:
   entity_name: "point_room2"
   cast_shadows: true
   position:
-    x: 0x4034EFA7 (2.827127)
+    x: 0xC0A2DA3A (-5.089139)
     y: 0x3FAE1479 (1.360000)
-    z: 0xC17BF8D4 (-15.748249)
+    z: 0x4172B482 (15.169069)
   type: 2  # TA_LIGHT_POINT
   point:
     intensity: 0x3F800000 (1.000000)
@@ -256,7 +256,7 @@ ta_model:
   mesh_groups: [
     "column_0001",
   ]
-  material: "column_0001"
+  material: "terrazzo"
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -316,10 +316,10 @@ ta_position:
       y: 0xC1000000 (-8.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x00000000 (0.000000)
+      x: 0x3EE4F92E (0.447214)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
+      w: 0x3F64F92E (0.894427)
 ta_position:
   name: "player_one"
   entity_name: "player_one"
@@ -329,10 +329,10 @@ ta_position:
       y: 0xC0E000D2 (-7.000100)
       z: 0x3F66200D (0.898927)
     orientation:
-      x: 0xBF5E1DDF (-0.867643)
-      y: 0x3E9E7458 (0.309481)
-      z: 0x3EB26B92 (0.348477)
-      w: 0xBE314DB2 (-0.173148)
+      x: 0xBF5E1DE1 (-0.867643)
+      y: 0x3E9E7459 (0.309481)
+      z: 0x3EB26B93 (0.348477)
+      w: 0xBE314DB3 (-0.173148)
 ta_position:
   name: "sphere1"
   entity_name: "sphere1"
@@ -440,10 +440,10 @@ ta_rigid_body:
     y: 0xC1000000 (-8.000000)
     z: 0x00000000 (0.000000)
   orientation:
-    x: 0x00000000 (0.000000)
+    x: 0x3EE4F92E (0.447214)
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
-    w: 0x3F800000 (1.000000)
+    w: 0x3F64F92E (0.894427)
   mass: 0x3F800000 (1.000000)
   trigger: true
 ta_rigid_body:
@@ -462,10 +462,10 @@ ta_rigid_body:
     y: 0xC0E000D2 (-7.000100)
     z: 0x3F66200D (0.898927)
   orientation:
-    x: 0xBF5E1DDF (-0.867643)
-    y: 0x3E9E7458 (0.309481)
-    z: 0x3EB26B92 (0.348477)
-    w: 0xBE314DB2 (-0.173148)
+    x: 0xBF5E1DE1 (-0.867643)
+    y: 0x3E9E7459 (0.309481)
+    z: 0x3EB26B93 (0.348477)
+    w: 0xBE314DB3 (-0.173148)
   mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "sphere1"

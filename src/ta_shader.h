@@ -52,6 +52,7 @@ typedef struct ta_shader_uniform {
         struct ta_shader_uniform *properties;  // for structs
     } value;
     GLint location;
+    bool dirty;
 } ta_shader_uniform;
 
 typedef struct ta_shader {

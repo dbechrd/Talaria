@@ -132,6 +132,8 @@ void main()
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, mtl_albedo, mtl_metallic);
 
+    float shadows[8];
+
     vec3 L0 = vec3(0.0);
     for (uint i = 0U; i < u_lights_count; ++i) {
         vec3 fragToLight;
@@ -165,10 +167,11 @@ void main()
                 if (u_lights[i].cast_shadows) {
                     shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
                     shadow_map_depth *= u_lights[i].shadowmap_zfar;
-                    shadow_bias = 0.003;
+                    shadow_bias = 0.001;
 
 #if 1
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
+                    shadows[i] = shadow;
 #else
                     // Soft shadows
                     // TODO: Clean this crap up via:
@@ -218,6 +221,8 @@ void main()
         //L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
         L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
         //L0 += mtl_albedo * (1.0 - shadow);
+
+        final_color = vec4(vec3(shadow), 1.0);
     }
 
     vec3 ambient = 0.01 * mtl_albedo * mtl_occlusion;
@@ -226,6 +231,9 @@ void main()
     color = pow(color, vec3(1.0 / 2.2));
 
     final_color = vec4(color, mtl_opacity);
+
+    //final_color = vec4(vec3(1.0 - shadows[0]), 1.0);
+    //final_color = vec4(vec3(1.0 - shadows[1]), 1.0);
 
     // vertex colors
     //final_color = vertex.color;

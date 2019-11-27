@@ -178,7 +178,7 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     }
 
     // Update global tensor when orientation changes
-    if (!quat_equals(body->tensor_orientation, body->orientation)) {
+    if (!quat_equal(body->tensor_orientation, body->orientation)) {
         // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf p. D14
         // I_global = R * I_body * R^T
         ta_mat3 rot = mat3_rotate_quat(body->orientation);

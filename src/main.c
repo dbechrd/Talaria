@@ -432,7 +432,7 @@ int main(int argc, char *argv[])
 
         if (ms_frame_time > 16) {
             ta_log_write(&tg_debug_log, SRC_SYSTEM, "!!!!!!!! LONG_FRAME !!!!!!!!\n");
-            __debugbreak();
+            //__debugbreak();
         }
     }
 
