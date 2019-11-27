@@ -7,6 +7,8 @@
 #include "dlb/dlb_memory.h"
 #include "AL/al.h"
 #include "AL/alc.h"
+#include "AL/alext.h"
+#include <string.h>
 
 #define TA_AUDIO_SAMPLE_RATE 44100
 #define TA_AUDIO_SAMPLES_PER_MS (TA_AUDIO_SAMPLE_RATE / 1000.0)
@@ -22,16 +24,20 @@ void ta_audio_listener_init(ta_audio_listener *listener)
     ta_log_write(&tg_debug_log, SRC_AUDIO, "Enumerating devices...\n");
     const char *devices = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
     const char *s = devices;
+    const char *desired_device = 0;
     while (*s)
     {
         ta_log_write(&tg_debug_log, SRC_AUDIO, "  Device: %s\n", s);
+        if (!strcmp(s, "OpenAL Soft on Speakers (High Definition Audio Device)")) {
+            desired_device = s;
+        }
         while (*s) { s++; }
         s++;
     }
 
     // TODO: Allow user to set which device they want to use
     ta_log_write(&tg_debug_log, SRC_AUDIO, "alcOpenDevice...\n");
-    listener->al_device = alcOpenDevice(NULL);
+    listener->al_device = alcOpenDevice(desired_device);
     if (!listener->al_device)
     {
         DLB_ASSERT(!"Failed to open listener context");
@@ -40,7 +46,11 @@ void ta_audio_listener_init(ta_audio_listener *listener)
 
     // TODO: What other attributes can I specify on a context?
     ta_log_write(&tg_debug_log, SRC_AUDIO, "alcCreateContext...\n");
-    ALCint attrlist[] = { ALC_FREQUENCY, TA_AUDIO_SAMPLE_RATE, 0 };
+    ALCint attrlist[] = {
+        ALC_FREQUENCY, TA_AUDIO_SAMPLE_RATE,
+        ALC_HRTF_SOFT, ALC_TRUE,
+        0
+    };
     listener->al_context = alcCreateContext(listener->al_device, attrlist);
     if (!listener->al_context)
     {
@@ -62,6 +72,15 @@ void ta_audio_listener_init(ta_audio_listener *listener)
         DLB_ASSERT(!"OpenAL error");
         //DLB_ASSERT(!"OpenAL error: %s\n", err);
     }
+
+    // ALC_HRTF_DISABLED_SOFT                   0x0000
+    // ALC_HRTF_ENABLED_SOFT                    0x0001
+    // ALC_HRTF_DENIED_SOFT                     0x0002
+    // ALC_HRTF_REQUIRED_SOFT                   0x0003
+    // ALC_HRTF_HEADPHONES_DETECTED_SOFT        0x0004
+    // ALC_HRTF_UNSUPPORTED_FORMAT_SOFT         0x0005
+    int hrtf_value = 0;
+    alcGetIntegerv(listener->al_device, ALC_HRTF_STATUS_SOFT, 1, &hrtf_value);
 
     ta_audio_listener_set_volume(listener, listener->volume);
 }
@@ -193,8 +212,8 @@ void ta_audio_source_init(ta_audio_source *source)
     // TODO: Attach rico_audio to objects which auto-update this stuff
 #if 0
     vec3 src_pos = VEC3(0.0f, 1.5f, 0.0f);
-    alSourcefv(audio_source, AL_POSITION, (float *)&src_pos);
-    alSourcefv(audio_source, AL_VELOCITY, (float *)&VEC3_ZERO);
+    alSourcefv(source->al_source_id, AL_POSITION, (float *)&src_pos);
+    alSourcefv(source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
 #else
     alSourcei(source->al_source_id, AL_SOURCE_RELATIVE, AL_TRUE);
     //alSourcefv(source->al_source_id, AL_POSITION, (float *)&VEC3_ZERO);
@@ -283,7 +302,7 @@ void ta_audio_source_play_loop(ta_audio_source *source)
     alGetSourcef(source->al_source_id, AL_GAIN, &gain);
     DLB_ASSERT(gain == source->gain);
     float pitch;
-    alGetSourcef(source->al_source_id, AL_GAIN, &pitch);
+    alGetSourcef(source->al_source_id, AL_PITCH, &pitch);
     DLB_ASSERT(pitch == source->pitch);
 
     alSourcei(source->al_source_id, AL_LOOPING, AL_TRUE);

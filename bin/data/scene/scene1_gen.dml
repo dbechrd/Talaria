@@ -6,9 +6,9 @@
 ta_audio_source:
   name: "background_music"
   entity_name: "background_music"
-  audio_buffer: "mus_genesis"
+  audio_buffer: "mus_cello"
   pitch: 0x3F800000 (1.000000)
-  gain: 0x3F800000 (1.000000)
+  gain: 0x41200000 (10.000000)
 ta_audio_source:
   name: "button_0001"
   entity_name: "button_0001"
@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x40891220 (4.283463)
-    y: 0xC09FFE7C (-4.999815)
-    z: 0x40CA45B0 (6.321007)
+    x: 0xC1258F98 (-10.347557)
+    y: 0xC08FA85A (-4.489301)
+    z: 0x40C9CE62 (6.306443)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x42F46741 (122.201668)
+  yaw: 0x422001E9 (40.001865)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC0B66D66 (-5.700854)
+  pitch: 0x3ECC4C14 (0.399018)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,9 +57,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBD58D2E8 (-0.052936)
-    y: 0x3F7EBBE0 (0.995054)
-    z: 0xBDAC24E2 (-0.084055)
+    x: 0xBBAECE8B (-0.005335)
+    y: 0x3F7FFE69 (0.999976)
+    z: 0x3B92B0A5 (0.004477)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
@@ -130,9 +130,9 @@ ta_light:
   entity_name: "point_room2"
   cast_shadows: true
   position:
-    x: 0xC0A2DA3A (-5.089139)
+    x: 0x4161220A (14.070810)
     y: 0x3FAE1479 (1.360000)
-    z: 0x4172B482 (15.169069)
+    z: 0xC0F3BB08 (-7.616581)
   type: 2  # TA_LIGHT_POINT
   point:
     intensity: 0x3F800000 (1.000000)
@@ -316,10 +316,10 @@ ta_position:
       y: 0xC1000000 (-8.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EE4F92E (0.447214)
+      x: 0x3EE4F930 (0.447214)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F64F92E (0.894427)
+      w: 0x3F64F930 (0.894427)
 ta_position:
   name: "player_one"
   entity_name: "player_one"
@@ -329,10 +329,10 @@ ta_position:
       y: 0xC0E000D2 (-7.000100)
       z: 0x3F66200D (0.898927)
     orientation:
-      x: 0xBF5E1DE1 (-0.867643)
-      y: 0x3E9E7459 (0.309481)
-      z: 0x3EB26B93 (0.348477)
-      w: 0xBE314DB3 (-0.173148)
+      x: 0xBF5E1DDF (-0.867643)
+      y: 0x3E9E7458 (0.309481)
+      z: 0x3EB26B92 (0.348477)
+      w: 0xBE314DB2 (-0.173148)
 ta_position:
   name: "sphere1"
   entity_name: "sphere1"
@@ -440,10 +440,10 @@ ta_rigid_body:
     y: 0xC1000000 (-8.000000)
     z: 0x00000000 (0.000000)
   orientation:
-    x: 0x3EE4F92E (0.447214)
+    x: 0x3EE4F930 (0.447214)
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
-    w: 0x3F64F92E (0.894427)
+    w: 0x3F64F930 (0.894427)
   mass: 0x3F800000 (1.000000)
   trigger: true
 ta_rigid_body:
@@ -462,10 +462,10 @@ ta_rigid_body:
     y: 0xC0E000D2 (-7.000100)
     z: 0x3F66200D (0.898927)
   orientation:
-    x: 0xBF5E1DE1 (-0.867643)
-    y: 0x3E9E7459 (0.309481)
-    z: 0x3EB26B93 (0.348477)
-    w: 0xBE314DB3 (-0.173148)
+    x: 0xBF5E1DDF (-0.867643)
+    y: 0x3E9E7458 (0.309481)
+    z: 0x3EB26B92 (0.348477)
+    w: 0xBE314DB2 (-0.173148)
   mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "sphere1"
@@ -556,10 +556,16 @@ ta_rigid_body:
 #-------------------------------------------------------------------------------
 ta_audio_buffer:
   name: "mus_wakeup"
-  path: "data/ambient/wakeup.raw"
+  path: "data/music/wakeup.raw"
 ta_audio_buffer:
   name: "mus_genesis"
-  path: "data/ambient/genesis.raw"
+  path: "data/music/genesis.raw"
+ta_audio_buffer:
+  name: "mus_overture"
+  path: "data/music/william_tell_overture.raw"
+ta_audio_buffer:
+  name: "mus_cello"
+  path: "data/music/kevin_olusola_beatbox_cello.raw"
 ta_audio_buffer:
   name: "sfx_button_activated"
   path: "data/sfx/button_activated.raw"

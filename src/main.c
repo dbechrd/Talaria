@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
 
     ta_timer_init();
-    ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_SYSTEM | SRC_EVENT);
+    ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_AUDIO);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
@@ -125,7 +125,6 @@ int main(int argc, char *argv[])
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running ndc_tests...\n");
     ndc_tests();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing audio...\n");
-    tg_audio.volume = 0.05f;
     ta_audio_listener_init(&tg_audio);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing mouse...\n");
     ta_mouse_init();
@@ -164,6 +163,8 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     // Audio
     ////////////////////////////////////////////////////////////////////////////
+    ta_audio_listener_set_volume(&tg_audio, 1.0f);
+
     // TODO: Parent this node to the active player
     tg_game.e_background_music = SYM_ENTITY_BACKGROUND_MUSIC;
     DLB_ASSERT(tg_game.e_background_music);
@@ -314,12 +315,24 @@ int main(int argc, char *argv[])
 #if 1
                 // HACK: Make point light rotate in a circle
                 static float light_deg = 0.0f;
-                light_deg += 0.01f;
+                light_deg += 0.005f;
                 if (light_deg >= 360.0f) light_deg = 0.0f;
 
                 ta_light *lights = tg_game.scene->resource_data[RES_COMP_LIGHT];
                 lights[1].position.x = cosf(light_deg) * 16.0f;
                 lights[1].position.z = sinf(light_deg) * 16.0f;
+
+                ta_audio_source *bg_source = ta_scene_component_try(
+                    tg_game.scene, RES_COMP_AUDIO_SOURCE,
+                    tg_game.e_background_music);
+                alSourcei(bg_source->al_source_id, AL_SOURCE_RELATIVE, AL_FALSE);
+#if 1
+                alSourcefv(bg_source->al_source_id, AL_POSITION, (float *)&lights[1].position);
+#else
+                alSourcefv(bg_source->al_source_id, AL_POSITION, (float *)&VEC3_ZERO);
+#endif
+                alSourcefv(bg_source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
+
 #else
                 // HACK: Make point light follow player camera
                 lights[1]->position = tg_game.camera_player->position;

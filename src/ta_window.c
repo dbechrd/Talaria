@@ -48,7 +48,7 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
     sdl_gl_attrib(SDL_GL_DEPTH_SIZE, 24);
     sdl_gl_attrib(SDL_GL_STENCIL_SIZE, 8);
     // Anti-aliasing
-    sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 4);
+    sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 16);
     //sdl_gl_attrib(SDL_GL_MULTISAMPLEBUFFERS, 1);
     //sdl_gl_attrib(SDL_GL_ACCELERATED_VISUAL, 1);
     int context_flags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;

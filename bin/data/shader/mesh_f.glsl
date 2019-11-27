@@ -114,7 +114,7 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0);
 
 void main()
 {
-    vec2 vertex_uv = vertex.uv * 1.0;
+    vec2 vertex_uv = vertex.uv * 8.0;
     // TODO: Use defaults if texture not present
     // NOTE: Currently implemented in ta_model.c, maybe it should stay there?
     vec3  mtl_albedo    = texture(u_tex_albedo,    vertex_uv).rgb;  // default: none
