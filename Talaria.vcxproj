@@ -100,7 +100,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -118,7 +118,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -140,7 +140,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -162,7 +162,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib</AdditionalDependencies>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -173,6 +173,8 @@
     <ClCompile Include="src\ta_editor.c" />
     <ClCompile Include="src\ta_entity.c" />
     <ClCompile Include="src\ta_font.c" />
+    <ClCompile Include="src\ta_gltf.c" />
+    <ClCompile Include="src\ta_json.c" />
     <ClCompile Include="src\ta_key.c" />
     <ClCompile Include="src\ta_light.c" />
     <ClCompile Include="src\ta_position.c" />
@@ -214,6 +216,8 @@
     <ClInclude Include="src\ta_button.h" />
     <ClInclude Include="src\ta_button_state.h" />
     <ClInclude Include="src\ta_collider.h" />
+    <ClInclude Include="src\ta_gltf.h" />
+    <ClInclude Include="src\ta_json.h" />
     <ClInclude Include="src\ta_key.h" />
     <ClInclude Include="src\ta_light.h" />
     <ClInclude Include="src\ta_model.h" />

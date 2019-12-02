@@ -28,6 +28,7 @@
 #include "ta_model.h"
 #include "ta_entity.h"
 #include "ta_player.h"
+#include "ta_gltf.h"
 #include "dlb/dlb_types.h"
 #define DLB_MURMUR3_IMPLEMENTATION
 #include "dlb/dlb_murmur3.h"
@@ -113,6 +114,8 @@ int main(int argc, char *argv[])
     ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_AUDIO);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
+    ta_gltf_test();
+
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
     debug_tests();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing symbols...\n");
@@ -164,6 +167,7 @@ int main(int argc, char *argv[])
     // Audio
     ////////////////////////////////////////////////////////////////////////////
     ta_audio_listener_set_volume(&tg_audio, 1.0f);
+    ta_audio_listener_mute(&tg_audio);
 
     // TODO: Parent this node to the active player
     tg_game.e_background_music = SYM_ENTITY_BACKGROUND_MUSIC;
@@ -472,7 +476,7 @@ static void render_frame_info(u64 frame_num, double ms_frame_time,
         "  state   : %s\n"
         "  prev    : %s\n"
         "Audio\n"
-        "  master volume: %.2f",
+        "  master volume: %.2f%s",
         frame_num,
         ms_frame_time,
         ms_frame_delta,
@@ -480,7 +484,8 @@ static void render_frame_info(u64 frame_num, double ms_frame_time,
         sim_step,
         game_state_str(tg_game.state),
         game_state_str(tg_game.state_prev),
-        ta_audio_listener_get_volume(&tg_audio)
+        ta_audio_listener_get_volume(&tg_audio),
+        ta_audio_listener_muted(&tg_audio) ? " (muted)" : ""
     );
 
     static ta_rect_uv *frame_time_rects = 0;
