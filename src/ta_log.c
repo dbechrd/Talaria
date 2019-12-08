@@ -17,14 +17,16 @@ const char *ta_log_source_str(ta_log_source src) {
         case SRC_FILE:       return "FILE";
         case SRC_FONT:       return "FONT";
         case SRC_GAME:       return "GAME";
+        case SRC_GLTF:       return "GLTF";
+        case SRC_JSON:       return "JSON";
         case SRC_MATH:       return "MATH";
         case SRC_OPENGL:     return "OPENGL";
         case SRC_PRIMITIVE:  return "PRIMITIVE";
-        case SRC_SYSTEM:     return "SYSTEM";
         case SRC_RENDER:     return "RENDER";
         case SRC_RIGID_BODY: return "RIGID_BODY";
         case SRC_SCENE:      return "SCENE";
         case SRC_SHADER:     return "SHADER";
+        case SRC_SYSTEM:     return "SYSTEM";
         case SRC_TEXTURE:    return "TEXTURE";
         case SRC_WINDOW:     return "WINDOW";
         default:
@@ -34,14 +36,15 @@ const char *ta_log_source_str(ta_log_source src) {
 }
 
 void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
-    u32 src_filter)
+    u32 src_include, u32 src_exclude)
 {
     DLB_ASSERT(log);
     DLB_ASSERT(stream);
     log->stream = stream;
     log->flush = flush;
     log->echo = echo;
-    log->src_filter = src_filter;
+    log->src_include = src_include;
+    log->src_exclude = src_exclude;
     log->last_write_ms = ta_timer_elapsed_ms();
     fprintf(log->stream,
         "[     Timestamp     ][  Elapsed  ][  Delta   ][ Source  ][       Message       ]\n"
@@ -49,10 +52,10 @@ void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
 }
 
 void ta_log_init_file(ta_log *log, const char *filename, bool flush, bool echo,
-    u32 src_filter)
+    u32 src_include, u32 src_exclude)
 {
     FILE *stream = fopen(filename, "wb");
-    ta_log_init(log, stream, flush, echo, src_filter);
+    ta_log_init(log, stream, flush, echo, src_include, src_exclude);
     log->filename = filename;
 }
 
@@ -104,7 +107,7 @@ void ta_log_append(ta_log *log, const char* fmt, ...)
 
 void ta_log_write(ta_log *log, u32 src, const char *fmt, ...)
 {
-    if (log->src_filter & src) {
+    if (log->src_include & src && !(log->src_exclude & src)) {
         ta_log_write_timestamp(log, src);
         va_list args;
         va_start(args, fmt);

@@ -28,13 +28,14 @@ void ta_font_init(ta_font *font)
 
 void ta_font_load_path(ta_font *font, const char *path)
 {
-    ta_buffer *buf = ta_file_read_all(path);
-    if (!stbtt_InitFont(&font->font_info, buf->data, 0)) {
+    ta_buffer buf = ta_file_read_all(path);
+    DLB_ASSERT(buf.length);
+
+    if (!stbtt_InitFont(&font->font_info, buf.data, 0)) {
         ta_log_write(&tg_debug_log, SRC_FONT, "Failed to initialize font %s\n",
             path);
         DLB_ASSERT(!"Failed to initialize font!");
     }
-
 
     font->tex_w = 512;
     font->tex_h = 512;

@@ -215,7 +215,7 @@ extern const ta_rgba TA_COLOR_SHADOW;
 extern const ta_size TA_SIZE_ZERO;
 extern const ta_vec2i TA_VEC2I_ZERO;
 
-//int clamp(int d, int min, int max);
+int clamp(int d, int min, int max);
 float clampf(float f, float min, float max);
 
 void vec2_print(FILE *file, ta_vec2 v);

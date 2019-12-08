@@ -39,35 +39,34 @@ void ta_shader_init(ta_shader *shader)
     ta_shader_load(shader);
 }
 
-static void show_info_log(GLuint shader, PFNGLGETSHADERIVPROC glGet__iv,
-    PFNGLGETSHADERINFOLOGPROC glGet__InfoLog)
+static void show_info_log(GLuint shader)
 {
     ta_log_write(&tg_debug_log, SRC_SHADER, "Trying to show_info_log\n");
 
-    ta_buffer buf;
-    glGet__iv(shader, GL_INFO_LOG_LENGTH, (GLint *)&buf.length);
-    buf.data = dlb_malloc(buf.length);
-    glGet__InfoLog(shader, buf.length, NULL, (GLchar *)buf.data);
+    GLint length = 0;
+    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+    ta_buffer buf = ta_buffer_init(length);
+    glGetShaderInfoLog(shader, buf.length, NULL, (GLchar *)buf.data);
     ta_log_write(&tg_debug_log, SRC_SHADER,
         "\n---[OpenGL Info Log]------------------------------------------------------------\n"
         "%s\n", buf.data);
-    dlb_free(buf.data);
+    ta_buffer_free(buf);
     DLB_ASSERT(!"show_info_log: GL error occurred");
 };
 
-static GLuint ta_shader_compile(GLenum type, ta_buffer *buf)
+static GLuint ta_shader_compile(GLenum type, ta_buffer buf)
 {
     GLuint shader = glCreateShader(type);
 
     // Read shader source
-    glShaderSource(shader, 1, &(GLchar *)buf->data, (GLint *)&buf->length);
+    glShaderSource(shader, 1, &(GLchar *)buf.data, (GLint *)&buf.length);
 
     // Compile shader
     GLint status;
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (!status) {
-        show_info_log(shader, glGetShaderiv, glGetShaderInfoLog);
+        show_info_log(shader);
         glDeleteShader(shader);
         return 0;
     }
@@ -77,7 +76,7 @@ static GLuint ta_shader_compile(GLenum type, ta_buffer *buf)
 
 static GLuint ta_shader_compile_file(GLenum type, const char *filename)
 {
-    ta_buffer *buf = ta_file_read_all(filename);
+    ta_buffer buf = ta_file_read_all(filename);
 
     GLint shader = ta_shader_compile(type, buf);
     if (!shader) {
@@ -97,7 +96,7 @@ static void ta_shader_program_link(GLuint program)
     glGetProgramiv(program, GL_LINK_STATUS, &status);
     if (status == GL_FALSE)
     {
-        show_info_log(program, glGetProgramiv, glGetProgramInfoLog);
+        show_info_log(program);
         glDeleteProgram(program);
         DLB_ASSERT(!"ta_shader_program_link: failed to link shader program");
     }

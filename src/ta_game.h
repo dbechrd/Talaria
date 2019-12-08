@@ -13,8 +13,6 @@ typedef enum ta_game_state {
 } ta_game_state;
 const char *game_state_str(ta_game_state state);
 
-// WARNING: Any of these pointers will be invalidated if their pool resizes
-// TODO: Replace with indexes into pool
 typedef struct ta_game {
     ta_game_state state;
     ta_game_state state_prev;
@@ -23,12 +21,15 @@ typedef struct ta_game {
     u64 frame_num;
     u64 sim_step;
 
-    struct ta_font *font;
+    // WARNING: These pointers will be invalidated if their pool resizes
+    // TODO: Replace with uid strings
     struct ta_keybind *keybinds[TA_GAME_STATE_COUNT];
     struct ta_scene *scene;
-    struct ta_texture *tex_orange;
-    struct ta_texture *tex_red;
-    struct ta_texture *tex_audio_icon;
+
+    const char *font;
+    const char *tex_orange;
+    const char *tex_red;
+    const char *tex_audio_icon;
 
     const char *e_background_music;
     const char *e_freecam;

@@ -55,4 +55,4 @@ char ta_file_read(ta_file *f, char *buf, size_t count, const char *valid_chars,
     const char *delims, int *len);
 int ta_file_expect_char(ta_file *f, const char *chars, int times);
 int ta_file_allow_char(ta_file *f, const char *chars, int times);
-struct ta_buffer *ta_file_read_all(const char *filename);
+struct ta_buffer ta_file_read_all(const char *filename);

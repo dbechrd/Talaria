@@ -857,6 +857,9 @@ ta_scene *ta_scene_load(ta_file *file)
             void *pool = scene->resource_data[res_type];
             u8 *end = dlb_vec_end_size(pool, size);
             for (u8 *ptr = pool; ptr != end; ptr += size) {
+                if (res_type == RES_SHADER) {
+                    DLB_ASSERT(1);
+                }
                 tg_schemas[schema_type].init(ptr);
             }
         }

@@ -8,7 +8,8 @@ typedef struct ta_log {
     FILE *stream;
     bool flush;
     bool echo;
-    u32 src_filter;         // 0 = ignore, 1 = log
+    u32 src_include;         // 1 = log this source
+    u32 src_exclude;         // 1 = exclude this source (overrides include)
     u32 level_filter;
     double last_write_ms;
 } ta_log;
@@ -32,16 +33,18 @@ typedef enum ta_log_source {
     SRC_FILE       = 0x00000010,
     SRC_FONT       = 0x00000020,
     SRC_GAME       = 0x00000040,
-    SRC_MATH       = 0x00000080,
-    SRC_OPENGL     = 0x00000100,
-    SRC_PRIMITIVE  = 0x00000200,
-    SRC_SYSTEM     = 0x00000400,
-    SRC_RENDER     = 0x00000800,
-    SRC_RIGID_BODY = 0x00001000,
-    SRC_SCENE      = 0x00002000,
-    SRC_SHADER     = 0x00004000,
-    SRC_TEXTURE    = 0x00008000,
-    SRC_WINDOW     = 0x00010000,
+    SRC_GLTF       = 0x00000080,
+    SRC_JSON       = 0x00000100,
+    SRC_MATH       = 0x00000200,
+    SRC_OPENGL     = 0x00000400,
+    SRC_PRIMITIVE  = 0x00000800,
+    SRC_RENDER     = 0x00001000,
+    SRC_RIGID_BODY = 0x00002000,
+    SRC_SCENE      = 0x00004000,
+    SRC_SHADER     = 0x00008000,
+    SRC_SYSTEM     = 0x00010000,
+    SRC_TEXTURE    = 0x00020000,
+    SRC_WINDOW     = 0x00040000,
 
     //...
     //SRC_LAST              = 0x8fffffff
@@ -53,6 +56,8 @@ typedef enum ta_log_source {
             | SRC_FILE
             | SRC_FONT
             | SRC_GAME
+            | SRC_GLTF
+            | SRC_JSON
             | SRC_MATH
             | SRC_OPENGL
             | SRC_PRIMITIVE
@@ -69,9 +74,9 @@ extern ta_log tg_debug_log;
 
 const char *ta_log_source_str(ta_log_source src);
 void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
-    u32 src_filter);
+    u32 src_include, u32 src_exclude);
 void ta_log_init_file(ta_log *log, const char *filename, bool flush, bool echo,
-    u32 src_filter);
+    u32 src_include, u32 src_exclude);
 void ta_log_flush(ta_log *log);
 void ta_log_write(ta_log *log, u32 src, const char *fmt, ...);
 void ta_log_append(ta_log *log, const char* fmt, ...);

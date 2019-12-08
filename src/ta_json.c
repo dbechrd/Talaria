@@ -4,8 +4,9 @@
 #include "dlb/dlb_vector.h"
 #define JSMN_IMPLEMENTATION
 #include "misc/jsmn.h"
+//#include "misc/cgltf.h"
 
-static int json_dump(u8 *js, jsmntok_t *t, size_t count, int indent) {
+int ta_json_dump(const u8 *js, jsmntok_t *t, size_t count, int indent) {
     jsmntok_t *key;
     if (count == 0) {
         return 0;
@@ -25,10 +26,10 @@ static int json_dump(u8 *js, jsmntok_t *t, size_t count, int indent) {
                     printf("  ");
                 }
                 key = t + 1 + j;
-                j += json_dump(js, key, count - j, indent + 1);
+                j += ta_json_dump(js, key, count - j, indent + 1);
                 if (key->size > 0) {
                     printf(": ");
-                    j += json_dump(js, t + 1 + j, count - j, indent + 1);
+                    j += ta_json_dump(js, t + 1 + j, count - j, indent + 1);
                 }
                 printf("\n");
             }
@@ -41,7 +42,7 @@ static int json_dump(u8 *js, jsmntok_t *t, size_t count, int indent) {
                     printf("  ");
                 }
                 printf("   - ");
-                j += json_dump(js, t + 1 + j, count - j, indent + 1);
+                j += ta_json_dump(js, t + 1 + j, count - j, indent + 1);
                 printf("\n");
             }
             return j + 1;
@@ -110,14 +111,14 @@ ta_json_result ta_json_parse(const u8* json_data, size_t json_len,
 
 void ta_json_test()
 {
-    ta_buffer *test_json = ta_file_read_all("test.json");
-    DLB_ASSERT(test_json);
+    ta_buffer test_json = ta_file_read_all("test.json");
+    DLB_ASSERT(test_json.length);
 
     jsmntok_t *tokens = 0;
-    ta_json_parse(test_json->data, test_json->length, &tokens);
+    ta_json_parse(test_json.data, test_json.length, &tokens);
     DLB_ASSERT(tokens);
 
-    json_dump(test_json->data, tokens, dlb_vec_len(tokens), 0);
+    ta_json_dump(test_json.data, tokens, dlb_vec_len(tokens), 0);
 
     dlb_vec_free(tokens);
     ta_buffer_free(test_json);

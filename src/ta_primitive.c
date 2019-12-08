@@ -18,7 +18,7 @@ static GLuint quads_vao;
 static GLuint quads_buffer;
 static GLint quads_buffer_size;
 
-// TODO: This is getting messy, optionally sort by depth before rendering, maybe
+// TODO: This is getting messy, optionally sort by layer before rendering, maybe
 //       on insert?
 ta_vert_quad *tooltip_bg_queue;
 ta_vert_quad *tooltip_fg_queue;
@@ -234,8 +234,8 @@ void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color,
 
     float x0 = NDC_X(rect.x);
     float x1 = NDC_X(rect.x + rect.w);
-    float y0 = NDC_Y(rect.y);
-    float y1 = NDC_Y(rect.y + rect.h);
+    float y1 = NDC_Y(rect.y);
+    float y0 = NDC_Y(rect.y + rect.h);
 
     ta_vert_quad quad = { 0 };
     quad.verts[0].position.x = x0;  // v0 (0,0)

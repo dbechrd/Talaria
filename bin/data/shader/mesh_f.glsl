@@ -117,8 +117,9 @@ void main()
     vec2 vertex_uv = vertex.uv * 8.0;
     // TODO: Use defaults if texture not present
     // NOTE: Currently implemented in ta_model.c, maybe it should stay there?
-    vec3  mtl_albedo    = texture(u_tex_albedo,    vertex_uv).rgb;  // default: none
-    float mtl_opacity   = texture(u_tex_albedo,    vertex_uv).a;    // default: 1.0
+    vec4  tex_albedo    = texture(u_tex_albedo,    vertex_uv);
+    vec3  mtl_albedo    = tex_albedo.rgb;                           // default: none
+    float mtl_opacity   = tex_albedo.a;                             // default: 1.0
     float mtl_height    = texture(u_tex_height,    vertex_uv).r;    // default: 0.0
     float mtl_metallic  = texture(u_tex_metallic,  vertex_uv).r;    // default: 0.0
     vec3  mtl_normal    = texture(u_tex_normal,    vertex_uv).rgb;  // default: vec3(0.0, 0.0, 1.0)

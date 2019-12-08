@@ -4,6 +4,7 @@
 #include "ta_font.h"
 #include "ta_game.h"
 #include "ta_event.h"
+#include "ta_scene.h"
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
@@ -25,7 +26,8 @@ typedef struct ta_text_entry {
 
 static bool text_entry_filter_default(char c)
 {
-    if ((c >= tg_game.font->first_char && c <= tg_game.font->last_char) ||
+    ta_font *font = ta_scene_find_by_name(tg_game.scene, RES_FONT, tg_game.font);
+    if ((c >= font->first_char && c <= font->last_char) ||
         c == '\n')
     {
         return true;
@@ -296,10 +298,11 @@ void ta_text_entry_set_text(ta_text_entry *text_entry, const char *str, u32 len)
 ta_rectf ta_text_entry_draw(ta_text_entry *text_entry, ta_rect_uv **text_rects,
     ta_vec2 *cursor)
 {
+    ta_font *font = ta_scene_find_by_name(tg_game.scene, RES_FONT, tg_game.font);
     u32 text_len;
     char *text = ta_text_entry_text(text_entry, &text_len);
-    ta_rectf bounds = ta_font_push_text(text_rects, tg_game.font, text, text_len,
-        true, &text_entry->cursor, cursor, 0, 0);
+    ta_rectf bounds = ta_font_push_text(text_rects, font, text, text_len, true,
+        &text_entry->cursor, cursor, 0, 0);
     return bounds;
 }
 

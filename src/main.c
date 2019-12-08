@@ -1,3 +1,8 @@
+/* JSMN_PARENT_LINKS is necessary to make parsing large structures linear in input size */
+#define JSMN_PARENT_LINKS
+/* JSMN_STRICT is necessary to reject invalid JSON documents */
+#define JSMN_STRICT
+
 #include "ta_timer.h"
 #include "ta_log.h"
 #include "ta_window.h"
@@ -29,6 +34,7 @@
 #include "ta_entity.h"
 #include "ta_player.h"
 #include "ta_gltf.h"
+
 #include "dlb/dlb_types.h"
 #define DLB_MURMUR3_IMPLEMENTATION
 #include "dlb/dlb_murmur3.h"
@@ -111,7 +117,8 @@ int main(int argc, char *argv[])
     DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
 
     ta_timer_init();
-    ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_AUDIO);
+    ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_ALL,
+        SRC_EVENT | SRC_SYSTEM);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
     ta_gltf_test();
@@ -181,18 +188,15 @@ int main(int argc, char *argv[])
     ////////////////////////////////////////////////////////////////////////////
     // Textures
     ////////////////////////////////////////////////////////////////////////////
-    tg_game.font            = ta_scene_find_by_name(tg_game.scene, RES_FONT, INTERN("consola"));
-    tg_game.tex_orange      = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("test_diff"));
-    tg_game.tex_red         = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("test_mrao"));
-    tg_game.tex_audio_icon  = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, INTERN("audio_icon"));
-    DLB_ASSERT(tg_game.font);
-    DLB_ASSERT(tg_game.tex_orange && tg_game.tex_orange->gl_id);
-    DLB_ASSERT(tg_game.tex_red && tg_game.tex_red->gl_id);
-    DLB_ASSERT(tg_game.tex_audio_icon && tg_game.tex_audio_icon->gl_id);
+    tg_game.font            = INTERN("consola");
+    tg_game.tex_orange      = INTERN("test_diff");
+    tg_game.tex_red         = INTERN("test_mrao");
+    tg_game.tex_audio_icon  = INTERN("audio_icon");
 
     ////////////////////////////////////////////////////////////////////////////
     // Shaders
     ////////////////////////////////////////////////////////////////////////////
+    // TODO: Move these to shaders.dml, they're not scene-specific
     tg_shader_lines   = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("lines"));
     tg_shader_quads   = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("quads"));
     tg_shader_cubemap = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("cubemap"));
@@ -448,7 +452,9 @@ int main(int argc, char *argv[])
             tg_game.frame_num, ms_frame_time, ms_frame_delta);
 
         if (ms_frame_time > 16) {
+            // TODO: Debug more long frames (turn on SRC_SYSTEM logging)
             ta_log_write(&tg_debug_log, SRC_SYSTEM, "!!!!!!!! LONG_FRAME !!!!!!!!\n");
+            ta_log_flush(&tg_debug_log);
             //__debugbreak();
         }
     }
@@ -489,8 +495,8 @@ static void render_frame_info(u64 frame_num, double ms_frame_time,
     );
 
     static ta_rect_uv *frame_time_rects = 0;
-    ta_font_push_text(&frame_time_rects, tg_game.font,
-        frame_time_buf, len, true, 0, 0, 0, 0);
+    ta_font *font = ta_scene_find_by_name(tg_game.scene, RES_FONT, tg_game.font);
+    ta_font_push_text(&frame_time_rects, font, frame_time_buf, len, true, 0, 0, 0, 0);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
         ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
             0, true, false);
@@ -498,18 +504,19 @@ static void render_frame_info(u64 frame_num, double ms_frame_time,
     dlb_vec_zero(frame_time_rects);
 
     ta_shader *font_shader = ta_scene_find_by_name(tg_game.scene, RES_SHADER,
-        tg_game.font->shader);
+        font->shader);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-    ta_font_render(quads_queue, tg_game.font, SCREEN_WRAP_X(-310.0f), 0,
+    ta_font_render(quads_queue, font, SCREEN_WRAP_X(-310.0f), 0,
         UI_LAYER_HUD, true, true);
 }
 
 static void debug_nametag(ta_camera *camera)
 {
+    ta_font *font = ta_scene_find_by_name(tg_game.scene, RES_FONT, tg_game.font);
     static ta_rect_uv *tag_rects = 0;
-    ta_rectf tag_rect = ta_font_push_text(&tag_rects, tg_game.font,
+    ta_rectf tag_rect = ta_font_push_text(&tag_rects, font,
         CSTR("Player 1\nis da best"), true, 0, 0, 0, 0);
 
     ta_position *player_pos = ta_scene_component(tg_game.scene,
@@ -545,7 +552,9 @@ static void debug_nametag(ta_camera *camera)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform_bg);
-    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tg_game.tex_orange->gl_id);
+    ta_texture *tex_orange = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE,
+        tg_game.tex_orange);
+    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex_orange->gl_id);
     ta_rect_uv tag_background = { 0 };
     tag_background.rect.x -= NDC_W(5.0f);
     tag_background.rect.w = NDC_W(tag_rect.w) + NDC_W(10.0f);
@@ -557,7 +566,7 @@ static void debug_nametag(ta_camera *camera)
 
     // Name tag text
     ta_shader *font_shader = ta_scene_find_by_name(tg_game.scene, RES_SHADER,
-        tg_game.font->shader);
+        font->shader);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform_fg);
@@ -570,5 +579,5 @@ static void debug_nametag(ta_camera *camera)
             UI_LAYER_HUD, true, true);
     }
     dlb_vec_zero(tag_rects);
-    ta_font_render(quads_queue, tg_game.font, 0, 0, 0, true, true);
+    ta_font_render(quads_queue, font, 0, 0, 0, true, true);
 }

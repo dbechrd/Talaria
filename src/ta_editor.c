@@ -214,246 +214,239 @@ static void drag_float_end()
 
 static void ui_node_panel()
 {
-    u32 node_panel_id;
     //ta_ui_next_margin(2, 2, 0, 0);
-    ta_ui_panel_begin(0, &node_panel_id);
+    static ta_ui_panel_state node_panel = { 0 };
+    ta_ui_panel_begin(0, &node_panel, TA_UI_AUTOSIZE);
 
     static int label_width = 180;
     const char *entity_name = ta_editor_selected_entity();
-    if (entity_name) {
-        //ta_ui_spacer(0, 2);
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, "Name:");
-        static ta_text_entry *uid_editor = 0;
-        if (uid_editor) {
-            ta_ui_next_size(100, 0);
-            //ta_ui_next_pad(4, 1, 4, 1);
-            ta_ui_textbox(0, uid_editor);
-            //ta_ui_next_margin(4, 0, 0, 0);
-            //ta_ui_next_pad(4, 1, 4, 1);
-            ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.8f, 0.0f, 1.0f);
-            if (ta_ui_label(0, "Save")) {
-                ta_text_entry_submit(uid_editor);
-            }
-            if (ta_text_entry_submitted(uid_editor)) {
-                u32 text_len = 0;
-                char *text = ta_text_entry_text(uid_editor, &text_len);
-
-#if 0
-                // All of this logic is specific to changing UIDs
-                if (text_len)
-                {
-                    const char **name = dlb_pool_by_id(
-                        &tg_game.scene->resource_names[RES_ENTITY], entity_id);
-
-                    dlb_hash_delete(&tg_game.scene->id_by_name[RES_ENTITY], SYM(*name));
-                    // NOTE: This should be safe so long as nothing else holds
-                    // pointers to resource names.
-                    dlb_symbol_free(*name);
-
-                    *name = ta_symbol_intern(text, text_len);
-                    dlb_hash_insert(&tg_game.scene->id_by_name[RES_ENTITY], SYM(*name),
-                        (void *)entity_id);
-
-                    ta_text_entry_free(&uid_editor);
-                } else {
-                    ta_text_entry_reject(uid_editor);
-                }
-#else
-                // TODO: Find some way to persist name changes.. we can't let
-                // the user change a GUID that everything else holds a ptr to.
-                ta_text_entry_free(&uid_editor);
-#endif
-            } else if (ta_text_entry_canceled(uid_editor)) {
-                ta_text_entry_free(&uid_editor);
-            }
-        } else {
-            //ta_ui_next_pad(4, 1, 4, 1);
-            if (ta_ui_label(0, entity_name)) {
-                DLB_ASSERT(!uid_editor);
-                uid_editor = ta_text_entry_init();
-                ta_text_entry_set_text(uid_editor, SYM(entity_name));
-                ta_text_entry_focus(uid_editor);
-            }
-        }
-
-        //ta_ui_spacer(0, 2);
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-
-        ta_position *position = ta_scene_component_try(tg_game.scene,
-            RES_COMP_POSITION, entity_name);
-        ta_rigid_body *rigid_body = ta_scene_component_try(tg_game.scene,
-            RES_COMP_RIGID_BODY, entity_name);
-        ta_light *light = ta_scene_component_try(tg_game.scene, RES_COMP_LIGHT,
-            entity_name);
-        float *pos_values = 0;
-        if (rigid_body) {
-            ta_ui_label(0, "Rigid Body Position:");
-            pos_values = (float *)&rigid_body->position;
-        } else if (position) {
-            ta_ui_label(0, "Position:");
-            pos_values = (float *)&position->transform.position;
-        } else if (light) {
-            ta_ui_label(0, "Light Position:");
-            pos_values = (float *)&light->position;
-        }
-        if (pos_values) {
-            const char *pos_labels[3] = { "x:", "y:", "z:" };
-            static ta_text_entry *pos_editors[3] = { 0 };
-            for (int i = 0; i < 3; i++) {
-                ta_ui_label(0, pos_labels[i]);
-                char pos_buf[32] = { 0 };
-                int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f",
-                    pos_values[i]);
-                DLB_ASSERT(len < sizeof(pos_buf));
-                if (pos_editors[i]) {
-                    //ta_ui_next_pad(4, 1, 4, 1);
-                    ta_ui_textbox(0, pos_editors[i]);
-                    if (ta_text_entry_valid(pos_editors[i])) {
-                        u32 text_len = 0;
-                        char *text = ta_text_entry_text(pos_editors[i],
-                            &text_len);
-                        pos_values[i] = parse_float(text);
-                    }
-                   // ta_ui_next_margin(4, 0, 0, 0);
-                    //ta_ui_next_pad(4, 1, 4, 1);
-                    ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.8f, 0.0f, 1.0f);
-                    if (ta_ui_label(0, "Save")) {
-                        ta_text_entry_submit(pos_editors[i]);
-                    }
-                    if (ta_text_entry_submitted(pos_editors[i])) {
-                        ta_text_entry_unfocus(pos_editors[i]);
-                        ta_text_entry_free(&pos_editors[i]);
-                    } else if (ta_text_entry_canceled(pos_editors[i])) {
-                        ta_text_entry_free(&pos_editors[i]);
-                    }
-                } else {
-                    //ta_ui_next_pad(4, 1, 4, 1);
-                    if (ta_ui_label(0, pos_buf)) {
-                        drag_float_begin(&pos_values[i]);
-                    } else {
-                        if (drag_float.value == &pos_values[i] &&
-                            ta_key_released(SDL_SCANCODE_MOUSE_LEFT))
-                        {
-                            if (!drag_float.changed) {
-                                DLB_ASSERT(!pos_editors[i]);
-                                pos_editors[i] = ta_text_entry_init();
-                                ta_text_entry_set_text(pos_editors[i], pos_buf, len);
-                                ta_text_entry_focus(pos_editors[i]);
-                            }
-                            drag_float_end();
-                        }
-                    }
-                }
-            }
-        }
-
-        drag_float_update(0.01f);
-
-        if (position) {
-            //ta_ui_spacer(0, 2);
-            ta_ui_row_begin();
-            ta_ui_next_size(label_width, 0);
-            ta_ui_label(0, "Orientation:");
-            char orient_buf[64] = { 0 };
-            int len = snprintf(orient_buf, sizeof(orient_buf),
-                "x: %3.4f, y: %3.4f, z: %3.4f, w: %3.4f",
-                position->transform.orientation.x,
-                position->transform.orientation.y,
-                position->transform.orientation.z,
-                position->transform.orientation.w);
-            DLB_ASSERT(len < sizeof(orient_buf));
-            ta_ui_label(0, orient_buf);
-        }
-
-        if (light) {
-            ta_ui_row_begin();
-            ta_ui_next_size(label_width, 0);
-            ta_ui_label(0, "Enabled:");
-            if (light->disabled) {
-                if (ta_ui_label(0, "False")) light->disabled = false;
-            } else {
-                if (ta_ui_label(0, "True")) light->disabled = true;
-            }
-
-            ta_ui_row_begin();
-            ta_ui_next_size(label_width, 0);
-            ta_ui_label(0, "Shadow Map:");
-            static bool show_shadow_map = true;
-            if (show_shadow_map) {
-                if (ta_ui_label(0, "Hide")) show_shadow_map = false;
-            } else {
-                if (ta_ui_label(0, "Show")) show_shadow_map = true;
-            }
-
-            if (show_shadow_map) {
-                u32 shadowmap_panel_id;
-                ta_ui_row_begin();
-                ta_ui_next_pad(1, 1, 1, 1);
-                ta_ui_panel_begin(0, &shadowmap_panel_id);
-
-                // Render cubemap with the following layout:
-                //       ┌────┐                 ┌────┐
-                //       | +Y |                 |  2 |
-                //  ┌────┼────┼────┬────┐  ┌────┼────┼────┬────┐
-                //  | -X | -Z | +X | +Z |  |  1 |  5 |  0 |  4 |
-                //  └────┼────┼────┴────┘  └────┼────┼────┴────┘
-                //       | -Y |                 |  3 |
-                //       └────┘                 └────┘
-                s32 resolution = light->shadowmap.resolution / 10;
-
-                // TODO: Setting margin/pad to zero doesn't work because it
-                // thinks we didn't set anything and falls back on defaults
-                #define face_button(face) \
-                    ta_ui_next_size(resolution, resolution); \
-                    ta_ui_next_margin(1, 1, 1, 1); \
-                    ta_ui_next_pad(1, 1, 1, 1); \
-                    ta_ui_button(0, &light->shadowmap.texture, face);
-                #define face_pad() \
-                    ta_ui_next_size(resolution, resolution); \
-                    ta_ui_next_margin(1, 1, 1, 1); \
-                    ta_ui_next_pad(1, 1, 1, 1); \
-                    ta_ui_next_invisible(); \
-                    ta_ui_button(0, 0, 0);
-
-                ta_ui_row_begin();
-                face_pad();
-                face_button(2);
-                ta_ui_row_begin();
-                face_button(1);
-                face_button(5);
-                face_button(0);
-                face_button(4);
-                ta_ui_row_begin();
-                face_pad();
-                face_button(3);
-
-                #undef face_button
-                #undef face_pad
-
-                ta_ui_panel_end(shadowmap_panel_id);
-            }
-        }
-    } else {
+    if (!entity_name) {
         //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, "UID:");
         ta_ui_label(0, "Nothing selected");
+        ta_ui_panel_end();
+        return;
     }
 
-    ta_ui_panel_end(node_panel_id);
+    //ta_ui_spacer(0, 2);
+    ta_ui_row_begin();
+    ta_ui_next_size(label_width, 0);
+    ta_ui_label(0, "Name:");
+    static ta_text_entry *uid_editor = 0;
+    if (uid_editor) {
+        ta_ui_next_size(100, 0);
+        //ta_ui_next_pad(4, 1, 4, 1);
+        ta_ui_textbox(0, uid_editor);
+        //ta_ui_next_margin(4, 0, 0, 0);
+        //ta_ui_next_pad(4, 1, 4, 1);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.8f, 0.0f, 1.0f);
+        if (ta_ui_label(0, "Save")) {
+            ta_text_entry_submit(uid_editor);
+        }
+        if (ta_text_entry_submitted(uid_editor)) {
+            u32 text_len = 0;
+            char *text = ta_text_entry_text(uid_editor, &text_len);
+
+#if 0
+            // All of this logic is specific to changing UIDs
+            if (text_len)
+            {
+                const char **name = dlb_pool_by_id(
+                    &tg_game.scene->resource_names[RES_ENTITY], entity_id);
+
+                dlb_hash_delete(&tg_game.scene->id_by_name[RES_ENTITY], SYM(*name));
+                // NOTE: This should be safe so long as nothing else holds
+                // pointers to resource names.
+                dlb_symbol_free(*name);
+
+                *name = ta_symbol_intern(text, text_len);
+                dlb_hash_insert(&tg_game.scene->id_by_name[RES_ENTITY], SYM(*name),
+                    (void *)entity_id);
+
+                ta_text_entry_free(&uid_editor);
+            } else {
+                ta_text_entry_reject(uid_editor);
+            }
+#else
+            // TODO: Find some way to persist name changes.. we can't let
+            // the user change a GUID that everything else holds a ptr to.
+            ta_text_entry_free(&uid_editor);
+#endif
+        } else if (ta_text_entry_canceled(uid_editor)) {
+            ta_text_entry_free(&uid_editor);
+        }
+    } else {
+        //ta_ui_next_pad(4, 1, 4, 1);
+        if (ta_ui_label(0, entity_name)) {
+            DLB_ASSERT(!uid_editor);
+            uid_editor = ta_text_entry_init();
+            ta_text_entry_set_text(uid_editor, SYM(entity_name));
+            ta_text_entry_focus(uid_editor);
+        }
+    }
+
+    //ta_ui_spacer(0, 2);
+    ta_ui_row_begin();
+    ta_ui_next_size(label_width, 0);
+
+    ta_position *position = ta_scene_component_try(tg_game.scene,
+        RES_COMP_POSITION, entity_name);
+    ta_rigid_body *rigid_body = ta_scene_component_try(tg_game.scene,
+        RES_COMP_RIGID_BODY, entity_name);
+    ta_light *light = ta_scene_component_try(tg_game.scene, RES_COMP_LIGHT,
+        entity_name);
+    float *pos_values = 0;
+    if (rigid_body) {
+        ta_ui_label(0, "Rigid Body Position:");
+        pos_values = (float *)&rigid_body->position;
+    } else if (position) {
+        ta_ui_label(0, "Position:");
+        pos_values = (float *)&position->transform.position;
+    } else if (light) {
+        ta_ui_label(0, "Light Position:");
+        pos_values = (float *)&light->position;
+    }
+    if (pos_values) {
+        const char *pos_labels[3] = { "x:", "y:", "z:" };
+        static ta_text_entry *pos_editors[3] = { 0 };
+        for (int i = 0; i < 3; i++) {
+            ta_ui_label(0, pos_labels[i]);
+            char pos_buf[32] = { 0 };
+            int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f",
+                pos_values[i]);
+            DLB_ASSERT(len < sizeof(pos_buf));
+            if (pos_editors[i]) {
+                //ta_ui_next_pad(4, 1, 4, 1);
+                ta_ui_textbox(0, pos_editors[i]);
+                if (ta_text_entry_valid(pos_editors[i])) {
+                    u32 text_len = 0;
+                    char *text = ta_text_entry_text(pos_editors[i],
+                        &text_len);
+                    pos_values[i] = parse_float(text);
+                }
+                // ta_ui_next_margin(4, 0, 0, 0);
+                //ta_ui_next_pad(4, 1, 4, 1);
+                ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.8f, 0.0f, 1.0f);
+                if (ta_ui_label(0, "Save")) {
+                    ta_text_entry_submit(pos_editors[i]);
+                }
+                if (ta_text_entry_submitted(pos_editors[i])) {
+                    ta_text_entry_unfocus(pos_editors[i]);
+                    ta_text_entry_free(&pos_editors[i]);
+                } else if (ta_text_entry_canceled(pos_editors[i])) {
+                    ta_text_entry_free(&pos_editors[i]);
+                }
+            } else {
+                //ta_ui_next_pad(4, 1, 4, 1);
+                if (ta_ui_label(0, pos_buf)) {
+                    drag_float_begin(&pos_values[i]);
+                } else {
+                    if (drag_float.value == &pos_values[i] &&
+                        ta_key_released(SDL_SCANCODE_MOUSE_LEFT))
+                    {
+                        if (!drag_float.changed) {
+                            DLB_ASSERT(!pos_editors[i]);
+                            pos_editors[i] = ta_text_entry_init();
+                            ta_text_entry_set_text(pos_editors[i], pos_buf, len);
+                            ta_text_entry_focus(pos_editors[i]);
+                        }
+                        drag_float_end();
+                    }
+                }
+            }
+        }
+    }
+
+    drag_float_update(0.01f);
+
+    if (position) {
+        //ta_ui_spacer(0, 2);
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, "Orientation:");
+        char orient_buf[64] = { 0 };
+        int len = snprintf(orient_buf, sizeof(orient_buf),
+            "x: %3.4f, y: %3.4f, z: %3.4f, w: %3.4f",
+            position->transform.orientation.x,
+            position->transform.orientation.y,
+            position->transform.orientation.z,
+            position->transform.orientation.w);
+        DLB_ASSERT(len < sizeof(orient_buf));
+        ta_ui_label(0, orient_buf);
+    }
+
+    if (light) {
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, "Enabled:");
+        if (light->disabled) {
+            if (ta_ui_label(0, "False")) light->disabled = false;
+        } else {
+            if (ta_ui_label(0, "True")) light->disabled = true;
+        }
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, "Shadow Map:");
+        static bool show_shadow_map = true;
+        if (show_shadow_map) {
+            if (ta_ui_label(0, "Hide")) show_shadow_map = false;
+        } else {
+            if (ta_ui_label(0, "Show")) show_shadow_map = true;
+        }
+
+        if (show_shadow_map) {
+            ta_ui_row_begin();
+            ta_ui_next_pad(1, 1, 1, 1);
+            static ta_ui_panel_state shadowmap_panel = { 0 };
+            ta_ui_panel_begin(0, &shadowmap_panel, TA_UI_AUTOSIZE);
+
+            // Render cubemap with the following layout:
+            //       ┌────┐                 ┌────┐
+            //       | +Y |                 |  2 |
+            //  ┌────┼────┼────┬────┐  ┌────┼────┼────┬────┐
+            //  | -X | -Z | +X | +Z |  |  1 |  5 |  0 |  4 |
+            //  └────┼────┼────┴────┘  └────┼────┼────┴────┘
+            //       | -Y |                 |  3 |
+            //       └────┘                 └────┘
+            s32 resolution = light->shadowmap.resolution / 10;
+
+            #define face_image(face) \
+                ta_ui_next_size(resolution, resolution); \
+                ta_ui_next_margin(0, 0, 0, 0); \
+                ta_ui_next_pad(0, 0, 0, 0); \
+                ta_ui_texture(0, &light->shadowmap.texture, face);
+
+            ta_ui_row_begin();
+            ta_ui_spacer(resolution, 0);
+            face_image(2);
+            ta_ui_row_begin();
+            face_image(1);
+            face_image(5);
+            face_image(0);
+            face_image(4);
+            ta_ui_row_begin();
+            ta_ui_spacer(resolution, 0);
+            face_image(3);
+
+            #undef face_image
+
+            ta_ui_panel_end();
+        }
+    }
+
+    ta_ui_panel_end();
 }
 static void ui_audio_panel()
 {
     static const char *audio_playing_name = 0;
 
-    u32 audio_panel_id;
     //ta_ui_next_size(50, 50);
     //ta_ui_next_margin(2, 2, 0, 0);
-    ta_ui_panel_begin(0, &audio_panel_id);
+    static ta_ui_panel_state audio_panel = { 0 };
+    ta_ui_panel_begin(0, &audio_panel, TA_UI_AUTOSIZE);
 
     const char *audio_request_name = 0;
 
@@ -476,7 +469,9 @@ static void ui_audio_panel()
         bool active = audio_buffer->name == audio_playing_name;
         //ta_ui_next_size(36, 36);
         //ta_ui_next_margin(0, 0, 2, 0);
-        ta_ui_button_toggle(0, tg_game.tex_audio_icon, &active);
+        ta_ui_button_toggle_begin(0, TA_UI_AUTOSIZE);
+        ta_ui_image(0, tg_game.tex_audio_icon, 0);
+        ta_ui_button_toggle_end(&active);
         if (ta_ui_last_frame_state().pressed) {
             audio_request_name = audio_buffer->name;
         }
@@ -499,20 +494,20 @@ static void ui_audio_panel()
         }
     }
 
-    ta_ui_panel_end(audio_panel_id);
+    ta_ui_panel_end();
 }
 static void ui_material_panel()
 {
-    u32 material_panel_id;
     //ta_ui_next_margin(2, 2, 0, 0);
-    ta_ui_panel_begin(0, &material_panel_id);
+    static ta_ui_panel_state material_panel = { 0 };
+    ta_ui_panel_begin(0, &material_panel, TA_UI_AUTOSIZE);
     ta_ui_row_begin();
     dlb_vec_each(ta_material *, material, tg_game.scene->resource_data[RES_MATERIAL]) {
         ta_ui_next_size(68, 68);
         //ta_ui_next_margin(0, 0, 2, 0);
         //ta_ui_next_pad(2, 2, 2, 2);
         //ta_ui_next_size(material->width, material->height);
-        if (ta_ui_button(0, 0, 0)) {
+        if (ta_ui_button(0)) {
             const char *entity_name = ta_editor_selected_entity();
             if (entity_name) {
                 ta_model *model = ta_scene_component_try(tg_game.scene,
@@ -546,23 +541,27 @@ static void ui_material_panel()
             ta_ui_tooltip(tex_buf, len);
         }
     }
-    ta_ui_panel_end(material_panel_id);
+    ta_ui_panel_end();
 }
 static void ui_texture_panel()
 {
-    u32 texture_panel_id;
     //ta_ui_next_margin(2, 2, 0, 0);
-    ta_ui_panel_begin(0, &texture_panel_id);
+    static ta_ui_panel_state texture_panel = { 0 };
+    ta_ui_next_size(0, 400);
+    ta_ui_panel_begin(0, &texture_panel, TA_UI_AUTOSIZE_W);
     int count = 0;
     dlb_vec_each(ta_texture *, texture, tg_game.scene->resource_data[RES_TEXTURE]) {
-        if (count % 8 == 0) {
+        if (count % 4 == 0) {
             ta_ui_row_begin();
         }
         ta_ui_next_size(68, 68);
         //ta_ui_next_margin(0, 0, 2, 0);
-        //ta_ui_next_pad(2, 2, 2, 2);
+        ta_ui_next_pad(2, 2, 2, 2);
         //ta_ui_next_size(texture->width, texture->height);
-        if (ta_ui_button(0, texture, 0)) {
+        ta_ui_button_begin(0, 0);
+        ta_ui_next_size(68, 68);
+        ta_ui_image(0, texture->name, 0);
+        if (ta_ui_button_end()) {
             const char *entity_name = ta_editor_selected_entity();
             if (entity_name) {
                 ta_model *model = ta_scene_component_try(tg_game.scene,
@@ -588,13 +587,13 @@ static void ui_texture_panel()
         }
         count++;
     }
-    ta_ui_panel_end(texture_panel_id);
+    ta_ui_panel_end();
 }
 static void ui_textbox_panel()
 {
-    u32 textbox_panel_id;
     //ta_ui_next_margin(2, 2, 0, 0);
-    ta_ui_panel_begin(0, &textbox_panel_id);
+    static ta_ui_panel_state textbox_panel = { 0 };
+    ta_ui_panel_begin(0, &textbox_panel, TA_UI_AUTOSIZE);
 
     static ta_text_entry *text_entry = 0;
     if (!text_entry) {
@@ -606,12 +605,12 @@ static void ui_textbox_panel()
     ta_ui_next_size(300, 0);
     //ta_ui_next_margin(4, 0, 0, 2);
     ta_ui_textbox(0, text_entry);
-    ta_ui_panel_end(textbox_panel_id);
+    ta_ui_panel_end();
 }
 static void ui_scene_panel()
 {
-    u32 scene_panel_id;
-    ta_ui_panel_begin(0, &scene_panel_id);
+    static ta_ui_panel_state scene_panel = { 0 };
+    ta_ui_panel_begin(0, &scene_panel, TA_UI_AUTOSIZE);
 
     int col1_w = 90;
     int col2_w = 70;
@@ -619,68 +618,79 @@ static void ui_scene_panel()
     ta_ui_row_begin();
     ta_ui_next_size(col1_w, 17);
     ta_ui_label(0, "     Scene");
-    ta_ui_spacer(2, 0);
     ta_ui_next_size(col2_w, 17);
     ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-    ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.7f, 0.0f, 0.9f);
+    ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
     if (ta_ui_label(0, "Save")) {
         ta_scene_save_file(tg_game.scene, "data/scene/scene1_gen.dml");
     }
 
-    ta_ui_spacer(0, 4);
     ta_ui_row_begin();
     ta_ui_next_size(col1_w, 17);
     ta_ui_label(0, "Simulation");
-    ta_ui_spacer(2, 0);
     ta_ui_next_size(col2_w, 17);
     if (tg_game.simulate) {
         ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.7f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
         if (ta_ui_label(0, "Running")) {
             tg_game.simulate = 0;
         }
     } else {
         ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
         if (ta_ui_label(0, "Paused")) {
             tg_game.simulate = -1;
         }
-        ta_ui_spacer(2, 0);
         ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.4f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.4f, 0.0f, 0.9f);
         if (ta_ui_label(0, "Next (1)")) {
             tg_game.simulate = 1;
         }
-        ta_ui_spacer(2, 0);
         ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.4f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.4f, 0.0f, 0.9f);
         if (ta_ui_label(0, "Next (10)")) {
             tg_game.simulate = 10;
         }
     }
 
-    ta_ui_spacer(0, 4);
     ta_ui_row_begin();
     ta_ui_next_size(col1_w, 17);
     ta_ui_label(0, "    V-Sync");
-    ta_ui_spacer(2, 0);
     ta_ui_next_size(col2_w, 17);
     if (tg_game.vsync) {
         ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.7f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
         if (ta_ui_label(0, "On")) {
             ta_window_set_vsync(false);
         }
     } else {
 
         ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.9f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
         if (ta_ui_label(0, "Off")) {
             ta_window_set_vsync(true);
         }
     }
 
-    ta_ui_panel_end(scene_panel_id);
+    ta_ui_row_begin();
+    ta_ui_next_size(col1_w, 17);
+    ta_ui_label(0, "     Audio");
+    ta_ui_next_size(col2_w, 17);
+    if (tg_audio.muted) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+        if (ta_ui_label(0, "Unmute")) {
+            ta_audio_listener_unmute(&tg_audio);
+        }
+    } else {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_label(0, "Mute")) {
+            ta_audio_listener_mute(&tg_audio);
+        }
+    }
+
+    ta_ui_panel_end();
 }
 static void ui_editor_sidebar()
 {
@@ -703,24 +713,26 @@ static void ui_editor_sidebar()
     static int category_selected = CATEGORY_NODE;
 
     ta_ui_row_begin();
-    ta_ui_next_size(50, 50);
+
+    //ta_ui_next_size(50, 50);
     //ta_ui_next_pad(2, 2, 2, 2);
-    u32 category_panel_id = 0;
-    ta_ui_panel_begin(INTERN("editor_sidebar"), &category_panel_id);
+    static ta_ui_panel_state category_panel = { 0 };
+    ta_ui_panel_begin(INTERN("editor_sidebar"), &category_panel, TA_UI_AUTOSIZE);
     for (int i = 0; i < CATEGORY_COUNT; i++) {
         ta_ui_row_begin();
         ta_ui_next_size(50, 50);
         //ta_ui_next_margin(0, 0, 0, 2);
         bool active = (i == category_selected);
-        ta_ui_button_toggle(category_names[i], 0, &active);
+        ta_ui_button_toggle(category_names[i], &active);
         if (active) {
             category_selected = i;
         }
         if (ta_ui_last_frame_state().hover) {
             ta_ui_tooltip(SYM(category_names[i]));
+
         }
     }
-    ta_ui_panel_end(category_panel_id);
+    ta_ui_panel_end();
 
     switch (category_selected) {
         case CATEGORY_NODE: {
@@ -745,13 +757,14 @@ static void ui_editor_sidebar()
         }
     }
 }
+// TODO: Move this to ta_ui_statusbar
 static void ui_statusbar()
 {
     if (editor.status_msg) {
-        ta_ui_statusbar();
-
         static ta_rect_uv *status_rects = 0;
-        ta_rectf status_rect = ta_font_push_text(&status_rects, tg_game.font,
+        ta_font *font = ta_scene_find_by_name(tg_game.scene, RES_FONT,
+            tg_game.font);
+        ta_rectf status_rect = ta_font_push_text(&status_rects, font,
             SYM(editor.status_msg), true, 0, 0, 0, 0);
         dlb_vec_each(ta_rect_uv *, rect, status_rects) {
             ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
@@ -761,8 +774,8 @@ static void ui_statusbar()
 
         int status_halfw = WINDOW_W / 2 - (int)status_rect.w / 2;
         const int status_pad_bottom = 20;
-        ta_font_render(quads_queue, tg_game.font, (float)status_halfw,
-            (float)(WINDOW_H - (tg_game.font->ascent + status_pad_bottom)),
+        ta_font_render(quads_queue, font, (float)status_halfw,
+            (float)(WINDOW_H - (font->ascent + status_pad_bottom)),
             UI_LAYER_TIP, true, true);
 
         editor.status_msg = 0;
@@ -770,8 +783,7 @@ static void ui_statusbar()
 }
 void ta_editor_draw(float alpha)
 {
-    glClear(GL_DEPTH_BUFFER_BIT);
-
+    // TODO: Render as yellow wireframe
     // Stencil selected entity
     const char *selected_entity = ta_editor_selected_entity();
     if (selected_entity) {
@@ -806,21 +818,55 @@ void ta_editor_draw(float alpha)
         }
     }
 
-    // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
-    //       at render time (make sure to update viewport correctly).
+    // TODO: Pass x,y at render time (for e.g. window position)
+#if 1
     ta_ui_spacer(0, 50);
-    ta_ui_next_size(300, 400);
-    //ta_ui_next_margin(0, 50, 0, 0);
+    //ta_ui_next_size(400, 400);
+    ta_ui_next_margin(0, 50, 0, 0);
     //ta_ui_next_pad(2, 2, 2, 2);
-    ta_ui_window_begin(INTERN("test_window"), 0);
+    static ta_ui_window_state window = { 0 };
+    ta_ui_window_begin(INTERN("test_window"), &window, TA_UI_AUTOSIZE);
     ui_editor_sidebar();
     ta_ui_window_end();
+#else
+    ta_ui_next_size(400, 400);
+    ta_ui_next_margin(0, 50, 0, 0);
+    static ta_ui_window_state window = { 0 };
+    ta_ui_window_begin(INTERN("test_window"), &window, 0);
 
-    ui_statusbar();
+    //ta_ui_row_begin();
 
-    // Render tooltips
-    ta_primitive_render_quads(tooltip_bg_queue, tg_shader_quads, true, true);
-    ta_font_render(tooltip_fg_queue, tg_game.font, 0, 0, UI_LAYER_TIP, true, true);
+    ta_ui_next_pad(8, 8, 8, 8);
+    ta_ui_next_size(20, 20);
+    ta_ui_button_begin(0, TA_UI_AUTOSIZE);
+    ta_ui_image(0, tg_game.tex_orange, 0);
+    ta_ui_button_end();
+
+    ta_ui_next_pad(8, 8, 8, 8);
+    ta_ui_next_size(20, 20);
+    ta_ui_button_begin(0, TA_UI_AUTOSIZE);
+    ta_ui_image(0, tg_game.tex_orange, 0);
+    ta_ui_button_end();
+
+    ta_ui_next_pad(8, 8, 8, 8);
+    ta_ui_next_size(20, 20);
+    ta_ui_button_begin(0, TA_UI_AUTOSIZE);
+    ta_ui_image(0, tg_game.tex_orange, 0);
+    ta_ui_button_end();
+
+    //ta_ui_row_end();
+
+    ta_ui_next_pad(8, 8, 8, 8);
+    ta_ui_next_size(20, 20);
+    ta_ui_button_begin(0, TA_UI_AUTOSIZE);
+    ta_ui_image(0, tg_game.tex_orange, 0);
+    ta_ui_button_end();
+
+    ta_ui_window_end();
+#endif
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+    ta_ui_render();
 }
 
 static void editor_ray_pick()

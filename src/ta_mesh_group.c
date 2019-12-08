@@ -30,8 +30,8 @@ void ta_mesh_group_load(ta_mesh_group *group)
     // Load OBJ file
     // =========================================================================
 
-    ta_buffer *buf = ta_file_read_all(group->path);
-    if (!buf) {
+    ta_buffer buf = ta_file_read_all(group->path);
+    if (!buf.length) {
         DLB_ASSERT(!"ta_mesh_init: Failed to read obj file");
     }
 
@@ -43,7 +43,7 @@ void ta_mesh_group_load(ta_mesh_group *group)
 
     unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
     int ret = tinyobj_parse_obj(&attrib, &shapes, &num_shapes, &materials,
-        &num_materials, (char *)buf->data, buf->length, flags);
+        &num_materials, (char *)buf.data, buf.length, flags);
     if (ret != TINYOBJ_SUCCESS) {
         DLB_ASSERT(!"ta_mesh_init: Failed to parse obj file");
     }

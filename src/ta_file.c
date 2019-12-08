@@ -240,7 +240,7 @@ int ta_file_allow_char(ta_file *f, const char *chars, int times) {
     return count;
 }
 
-ta_buffer *ta_file_read_all(const char *filename)
+ta_buffer ta_file_read_all(const char *filename)
 {
     // Open file
     FILE *fs = fopen(filename, "rb");
@@ -261,16 +261,13 @@ ta_buffer *ta_file_read_all(const char *filename)
     rewind(fs);
 
     // Allocate buffer
-    ta_buffer *buffer = dlb_malloc(sizeof(ta_buffer) + tell + 1);
-    buffer->length = tell + 1;
-    buffer->data = (u8 *)buffer + sizeof(ta_buffer);
+    ta_buffer buffer = ta_buffer_init(tell + 1);
 
     // Read into buffer, null-terminate
-    fread(buffer->data, 1, tell, fs);
-    buffer->data[tell] = 0;
+    fread(buffer.data, 1, tell, fs);
+    buffer.data[tell] = 0;
 
     // Close file
     fclose(fs);
-
     return buffer;
 }

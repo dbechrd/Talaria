@@ -131,8 +131,8 @@ void ta_audio_buffer_init(ta_audio_buffer *buffer)
 {
     if (buffer->path) {
         ta_audio_buffer_load_path(buffer, buffer->path);
-    } else if(buffer->samples->data) {
-        DLB_ASSERT(buffer->samples->length);
+    } else if(buffer->samples.data) {
+        DLB_ASSERT(buffer->samples.length);
         ta_audio_buffer_load(buffer);
     }
 }
@@ -141,21 +141,19 @@ void ta_audio_buffer_load_path(ta_audio_buffer *buffer, const char *path)
     buffer->path = path;
 
     // Load sample data from file
-    ta_buffer *samples = ta_file_read_all(buffer->path);
+    ta_buffer samples = ta_file_read_all(buffer->path);
     ta_audio_buffer_set_samples(buffer, samples);
     ta_audio_buffer_load(buffer);
 }
-void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, ta_buffer *samples)
+void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, ta_buffer samples)
 {
-    DLB_ASSERT(!buffer->samples);
     buffer->samples = samples;
 }
 #include <math.h>
 void ta_audio_buffer_load(ta_audio_buffer *buffer)
 {
-    DLB_ASSERT(buffer->samples);
-    DLB_ASSERT(buffer->samples->data);
-    DLB_ASSERT(buffer->samples->length);
+    DLB_ASSERT(buffer->samples.data);
+    DLB_ASSERT(buffer->samples.length);
 
     alGenBuffers(1, &buffer->al_buffer_id);
 #if 0
@@ -180,14 +178,13 @@ void ta_audio_buffer_load(ta_audio_buffer *buffer)
     // TODO: Allow caller to specify format (and maybe sample rate, but that's
     //       specified in the context attributes as well so I'm not sure if
     //       we can set a different value here).
-    alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, buffer->samples->data,
-        buffer->samples->length - 1, TA_AUDIO_SAMPLE_RATE);
+    alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, buffer->samples.data,
+        buffer->samples.length - 1, TA_AUDIO_SAMPLE_RATE);
 #endif
 }
 double ta_audio_buffer_duration_ms(ta_audio_buffer *buffer)
 {
-    DLB_ASSERT(buffer->samples);
-    double duration_ms = buffer->samples->length / TA_AUDIO_SAMPLES_PER_MS;
+    double duration_ms = buffer->samples.length / TA_AUDIO_SAMPLES_PER_MS;
     return duration_ms;
 }
 void ta_audio_buffer_free(ta_audio_buffer *buffer)

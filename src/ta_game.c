@@ -340,33 +340,29 @@ void ta_game_hud_draw(ta_game *game)
         game->e_player_one);
     ta_gun *gun = ta_scene_component(game->scene, RES_COMP_GUN, player->e_gun);
 
-    // TODO: Remove x,y coords from init() methods and only store size. Pass x,y
-    //       at render time (make sure to update viewport correctly).
-    ta_ui_next_size(200, 40);
-    ta_ui_window_begin(0, 0);
+    static ta_ui_window_state window = { 0 };
+    ta_ui_window_begin(0, &window, TA_UI_AUTOSIZE);
     ta_ui_row_begin();
     for (u32 i = 0; i < gun->carrying_ammo_max; i++) {
         ta_ui_next_size(20, 20);
-        ta_ui_next_pad(1, 1, 1, 1);
+        ta_ui_next_pad(2, 2, 2, 2);
         if (i < gun->carrying_ammo) {
-            ta_ui_button(0, tg_game.tex_orange, 0);
+            ta_ui_image(0, tg_game.tex_orange, 0);
         } else {
-            ta_ui_button(0, tg_game.tex_red, 0);
+            ta_ui_image(0, tg_game.tex_red, 0);
         }
     }
-    // TODO: Allow next_pad to work on rows, or introduce a panel here
     //ta_ui_pad(0, 4);
     ta_ui_row_begin();
     for (u32 i = 0; i < gun->loaded_ammo_max; i++) {
         ta_ui_next_size(20, 20);
-        ta_ui_next_pad(1, 1, 1, 1);
+        ta_ui_next_pad(2, 2, 2, 2);
         if (i < gun->loaded_ammo) {
-            ta_ui_button(0, tg_game.tex_orange, 0);
+            ta_ui_image(0, tg_game.tex_orange, 0);
         } else {
-            ta_ui_button(0, tg_game.tex_red, 0);
+            ta_ui_image(0, tg_game.tex_red, 0);
         }
     }
     ta_ui_window_end();
-
-    glDisable(GL_SCISSOR_TEST);
+    ta_ui_render();
 }

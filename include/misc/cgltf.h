@@ -625,6 +625,7 @@ cgltf_result cgltf_copy_extras_json(const cgltf_data* data, const cgltf_extras* 
 #include <stdio.h>  /* For fopen */
 #include <limits.h> /* For UINT_MAX etc */
 
+#if 0
 /* JSMN_PARENT_LINKS is necessary to make parsing large structures linear in input size */
 #define JSMN_PARENT_LINKS
 
@@ -670,6 +671,7 @@ static int jsmn_parse(jsmn_parser *parser, const char *js, size_t len, jsmntok_t
 /*
  * -- jsmn.h end --
  */
+#endif
 
 
 static const cgltf_size GlbHeaderSize = 12;
@@ -4488,6 +4490,7 @@ static int cgltf_fixup_pointers(cgltf_data* data)
 	return 0;
 }
 
+#if 0
 /*
  * -- jsmn.c start --
  * Source: https://github.com/zserge/jsmn
@@ -4828,6 +4831,7 @@ static void jsmn_init(jsmn_parser *parser) {
 /*
  * -- jsmn.c end --
  */
+#endif
 
 #endif /* #ifdef CGLTF_IMPLEMENTATION */
 

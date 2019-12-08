@@ -1,13 +1,15 @@
 #include "ta_buffer.h"
 #include "dlb/dlb_memory.h"
 
-void ta_buffer_init(ta_buffer *buffer, u32 len)
+ta_buffer ta_buffer_init(u32 len)
 {
-    buffer->data = dlb_calloc(1, len);
-    DLB_ASSERT(buffer->data);
-    buffer->length = len;
+    ta_buffer buffer = { 0 };
+    buffer.length = len;
+    buffer.data = dlb_calloc(1, buffer.length);
+    DLB_ASSERT(buffer.data);
+    return buffer;
 }
-void ta_buffer_free(ta_buffer *buffer)
+void ta_buffer_free(ta_buffer buffer)
 {
-    dlb_free(buffer);
+    dlb_free(buffer.data);
 }

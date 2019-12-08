@@ -12,6 +12,8 @@ typedef struct ta_mouse {
     int y;
     int dx;
     int dy;
+    int scroll_dx;
+    int scroll_dy;
     bool captured;  // true when capture, *except* drag_float
     bool dragging;  // captured specifically for drag_float
     int drag_x;     // x position before drag started
@@ -92,6 +94,16 @@ int ta_mouse_dy()
     return mouse.dy;
 }
 
+int ta_mouse_scroll_dx()
+{
+    return mouse.scroll_dx;
+}
+
+int ta_mouse_scroll_dy()
+{
+    return mouse.scroll_dy;
+}
+
 void ta_mouse_move(int x, int y)
 {
     SDL_Window *window = ta_window_sdl(tg_window);
@@ -102,6 +114,8 @@ void ta_mouse_reset_relative()
 {
     mouse.dx = 0;
     mouse.dy = 0;
+    mouse.scroll_dx = 0;
+    mouse.scroll_dy = 0;
 }
 
 void ta_mouse_event(struct ta_event *event)
@@ -113,6 +127,10 @@ void ta_mouse_event(struct ta_event *event)
             mouse.dx = event->data.mouse_move.dx;
             mouse.dy = event->data.mouse_move.dy;
             break;
+        } case TA_EVENT_MOUSE_SCROLL: {
+            mouse.scroll_dx = event->data.mouse_scroll.x;
+            mouse.scroll_dy = event->data.mouse_scroll.y;
+            if (!event->data.mouse_scroll.flipped) mouse.scroll_dy *= -1;
         }
     }
 }

@@ -66,7 +66,7 @@ enum jsmnerr {
  * start	start position in JSON data string
  * end		end position in JSON data string
  */
-typedef struct {
+typedef struct jsmntok_t {
   jsmntype_t type;
   int start;
   int end;
