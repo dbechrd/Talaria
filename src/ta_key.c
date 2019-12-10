@@ -39,8 +39,8 @@ void ta_key_reset_changed()
 void ta_key_event(ta_event *event)
 {
     switch (event->type) {
-        case TA_EVENT_KEY_PRESS: case TA_EVENT_KEY_RELEASE: {
-            u8 down = (event->type == TA_EVENT_KEY_PRESS);
+        case INPUT_EVENT_KEY_PRESS: case INPUT_EVENT_KEY_RELEASE: {
+            u8 down = (event->type == INPUT_EVENT_KEY_PRESS);
             u8 changed = keys[event->data.key_press.scancode].down != down;
             keys[event->data.key_press.scancode].down = down;
             keys[event->data.key_press.scancode].changed = changed;

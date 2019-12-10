@@ -118,18 +118,18 @@ void ta_mouse_reset_relative()
     mouse.scroll_dy = 0;
 }
 
-void ta_mouse_event(struct ta_event *event)
+void ta_mouse_event(ta_event *event)
 {
     switch (event->type) {
-        case TA_EVENT_MOUSE_MOVE: {
+        case INPUT_EVENT_MOUSE_MOVE: {
             mouse.x = event->data.mouse_move.x;
             mouse.y = event->data.mouse_move.y;
-            mouse.dx = event->data.mouse_move.dx;
-            mouse.dy = event->data.mouse_move.dy;
+            mouse.dx += event->data.mouse_move.dx;
+            mouse.dy += event->data.mouse_move.dy;
             break;
-        } case TA_EVENT_MOUSE_SCROLL: {
-            mouse.scroll_dx = event->data.mouse_scroll.x;
-            mouse.scroll_dy = event->data.mouse_scroll.y;
+        } case INPUT_EVENT_MOUSE_SCROLL: {
+            mouse.scroll_dx += event->data.mouse_scroll.x;
+            mouse.scroll_dy += event->data.mouse_scroll.y;
             if (!event->data.mouse_scroll.flipped) mouse.scroll_dy *= -1;
         }
     }

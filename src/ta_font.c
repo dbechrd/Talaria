@@ -133,8 +133,8 @@ void ta_font_free(ta_font *font)
 
 ta_shader *ta_font_shader(ta_font *font)
 {
-    ta_shader *shader = ta_scene_find_by_name(tg_game.scene, RES_SHADER,
-        font->shader);
+    // TODO: Fonts probably don't belong in the game scene..
+    ta_shader *shader = ta_game_by_name(RES_SHADER, font->shader);
     return shader;
 }
 

@@ -1,8 +1,6 @@
 #include "ta_window.h"
 #include "ta_log.h"
 #include "ta_event.h"
-#include "ta_primitive.h"
-#include "ta_camera.h"
 #include "ta_game.h"
 #include "ta_scene.h"
 #include "dlb/dlb_types.h"
@@ -12,10 +10,11 @@
 #include "misc/gl3w.h"
 
 typedef struct ta_window {
-    ta_size size;
-    float aspect;
+    int width;
+    int height;
     SDL_Window *sdl_window;
     SDL_GLContext gl_context;
+    bool vsync;
 } ta_window;
 static ta_window internal_window;
 ta_window *tg_window = &internal_window;
@@ -48,7 +47,7 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
     sdl_gl_attrib(SDL_GL_DEPTH_SIZE, 24);
     sdl_gl_attrib(SDL_GL_STENCIL_SIZE, 8);
     // Anti-aliasing
-    sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 16);
+    //sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 16);
     //sdl_gl_attrib(SDL_GL_MULTISAMPLEBUFFERS, 1);
     //sdl_gl_attrib(SDL_GL_ACCELERATED_VISUAL, 1);
     int context_flags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
@@ -68,9 +67,9 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
     if (fullscreen) {
         window->sdl_window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED, 0, 0, flags | SDL_WINDOW_FULLSCREEN_DESKTOP);
-    } else if (window->size.w && window->size.h) {
+    } else if (window->width && window->height) {
         window->sdl_window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED, window->size.w, window->size.h,
+            SDL_WINDOWPOS_CENTERED, window->width, window->height,
             flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
     }
     if (window->sdl_window == NULL) {
@@ -89,22 +88,21 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
     // Get actual window size
     ta_log_write(&tg_debug_log, SRC_WINDOW, "Get window size / swap interval\n");
     if (fullscreen) {
-        SDL_GetWindowSize(window->sdl_window, &window->size.w, &window->size.h);
+        SDL_GetWindowSize(window->sdl_window, &window->width, &window->height);
     }
 
     // Log default VSync state
-    tg_game.vsync = SDL_GL_GetSwapInterval();
+    window->vsync = SDL_GL_GetSwapInterval();
     ta_log_write(&tg_debug_log, SRC_WINDOW, "w: %d, h: %d, vsync: %s\n",
-        window->size.w, window->size.h, tg_game.vsync ? "on" : "off");
+        window->width, window->height, window->vsync ? "on" : "off");
 }
 
 void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 {
-    window->size.w = w;
-    window->size.h = h;
+    window->width = w;
+    window->height = h;
     ta_init_sdl(window, fullscreen);
-    DLB_ASSERT(fullscreen || (window->size.w == w && window->size.h == h));
-    window->aspect = (float)window->size.w / window->size.h;
+    DLB_ASSERT(fullscreen || (window->width == w && window->height == h));
 }
 
 void ta_window_free(ta_window *window)
@@ -114,24 +112,19 @@ void ta_window_free(ta_window *window)
     SDL_Quit();
 }
 
-ta_size ta_window_size(ta_window *window)
-{
-    return window->size;
-}
-
 int ta_window_width(ta_window *window)
 {
-    return window->size.w;
+    return window->width;
 }
 
 int ta_window_height(ta_window *window)
 {
-    return window->size.h;
+    return window->height;
 }
 
 float ta_window_aspect(ta_window *window)
 {
-    return (float)window->size.w / window->size.h;
+    return (float)window->width / window->height;
 }
 
 SDL_Window *ta_window_sdl(ta_window *window)
@@ -139,11 +132,15 @@ SDL_Window *ta_window_sdl(ta_window *window)
     return window->sdl_window;
 }
 
-void ta_window_set_vsync(bool vsync)
+bool ta_window_vsync(ta_window *window)
 {
-    if (tg_game.vsync != vsync) {
+    return window->vsync;
+}
+void ta_window_set_vsync(ta_window *window, bool vsync)
+{
+    if (window->vsync != vsync) {
         SDL_GL_SetSwapInterval(vsync ? 1 : 0);
-        tg_game.vsync = vsync;
+        window->vsync = vsync;
     }
 }
 
@@ -155,19 +152,10 @@ void ta_window_swap(ta_window *window)
 void ta_window_event(ta_window *window, ta_event *event)
 {
     switch (event->type) {
-        case TA_EVENT_WINDOW_RESIZE: {
-            window->size.w = event->data.window_resize.width;
-            window->size.h = event->data.window_resize.height;
-            window->aspect = (float)window->size.w / window->size.h;
-
-            // Update all cameras to new aspect ratio
-            dlb_vec_each(ta_camera *, camera,
-                tg_game.scene->resource_data[RES_COMP_CAMERA])
-            {
-                if (!camera->ortho) {
-                    ta_camera_recalc_projection(camera);
-                }
-            }
+        case WINDOW_EVENT_RESIZE: {
+            window->width = event->data.window_resize.width;
+            window->height = event->data.window_resize.height;
+            ta_game_window_resize();
             break;
         }
     }

@@ -6,61 +6,53 @@
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
 
-void ta_keybind_bind1(ta_keybind **keybinds, ta_event_type event_type,
-    u32 triggers, ta_key key1)
+void ta_keybind_init1(ta_keybind *keybind, u32 triggers, ta_key key1)
 {
     DLB_ASSERT(key1 < TA_SCANCODE_COUNT);
-
-    ta_keybind *bind = dlb_vec_alloc(*keybinds);
-    bind->event_type = event_type;
-    bind->triggers = triggers;
-    bind->keys[0] = key1;
+    keybind->triggers = triggers;
+    keybind->keys[0] = key1;
 }
 
-void ta_keybind_bind2(ta_keybind **keybinds, ta_event_type event_type,
-    u32 triggers, ta_key key1, ta_key key2)
+void ta_keybind_init2(ta_keybind *keybind, u32 triggers, ta_key key1,
+    ta_key key2)
 {
     DLB_ASSERT(key1 < TA_SCANCODE_COUNT);
     DLB_ASSERT(key2 < TA_SCANCODE_COUNT);
-
-    ta_keybind *bind = dlb_vec_alloc(*keybinds);
-    bind->event_type = event_type;
-    bind->triggers = triggers;
-    bind->keys[0] = key1;
-    bind->keys[1] = key2;
+    keybind->triggers = triggers;
+    keybind->keys[0] = key1;
+    keybind->keys[1] = key2;
 }
 
-void ta_keybind_bind3(ta_keybind **keybinds, ta_event_type event_type,
-    u32 triggers, ta_key key1, ta_key key2, ta_key key3)
+void ta_keybind_init3(ta_keybind *keybind, u32 triggers, ta_key key1,
+    ta_key key2, ta_key key3)
 {
     DLB_ASSERT(key1 < TA_SCANCODE_COUNT);
     DLB_ASSERT(key2 < TA_SCANCODE_COUNT);
     DLB_ASSERT(key3 < TA_SCANCODE_COUNT);
-
-    ta_keybind *bind = dlb_vec_alloc(*keybinds);
-    bind->event_type = event_type;
-    bind->triggers = triggers;
-    bind->keys[0] = key1;
-    bind->keys[1] = key2;
-    bind->keys[2] = key3;
+    keybind->triggers = triggers;
+    keybind->keys[0] = key1;
+    keybind->keys[1] = key2;
+    keybind->keys[2] = key3;
 }
 
-static bool ta_keybind_down(ta_keybind *keybind)
+bool ta_keybind_down(ta_keybind *keybind)
 {
     return keybind->key_state.down;
 }
 
-static bool ta_keybind_pressed(ta_keybind *keybind)
+bool ta_keybind_pressed(ta_keybind *keybind)
 {
+    // TODO: Make "pressed" a state that lasts until end of frame, then is
+    // manually cleared in case we get a DOWN and an UP event in the same frame.
     return keybind->key_state.down && keybind->key_state.changed;
 }
 
-static bool ta_keybind_released(ta_keybind *keybind)
+bool ta_keybind_released(ta_keybind *keybind)
 {
     return !keybind->key_state.down && keybind->key_state.changed;
 }
 
-static bool ta_keybind_triggered(ta_keybind *keybind)
+bool ta_keybind_triggered(ta_keybind *keybind)
 {
     bool triggered =
         (!keybind->triggers) ||
@@ -70,7 +62,9 @@ static bool ta_keybind_triggered(ta_keybind *keybind)
     return triggered;
 }
 
-static void keybind_update(ta_keybind *keybind)
+// TODO: Make this happen for all keybinds immediately after SDL keyboard events
+// are handled.
+void ta_keybind_update(ta_keybind *keybind)
 {
     bool old_down = keybind->key_state.down;
     keybind->key_state.down =
@@ -80,17 +74,5 @@ static void keybind_update(ta_keybind *keybind)
     keybind->key_state.changed = keybind->key_state.down != old_down;
     if (keybind->key_state.changed) {
         keybind->key_state.last_change_ms = ta_timer_elapsed_ms();
-    }
-}
-
-void ta_keybind_trigger(ta_keybind *keybinds)
-{
-    dlb_vec_each(ta_keybind *, bind, keybinds) {
-        keybind_update(bind);
-        if (ta_keybind_triggered(bind)) {
-            ta_event event = { 0 };
-            event.type = bind->event_type;
-            ta_event_push(&event);
-        }
     }
 }

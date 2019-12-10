@@ -27,10 +27,10 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
     }
     DLB_ASSERT(dlb_vec_len(model->mesh_groups));
 
-    ta_position *position = ta_scene_component(tg_game.scene, RES_COMP_POSITION,
+    ta_position *position = ta_game_component(RES_COMP_POSITION,
         model->entity_name);
-    ta_rigid_body *body = ta_scene_component_try(tg_game.scene,
-        RES_COMP_RIGID_BODY, model->entity_name);
+    ta_rigid_body *body = ta_game_component_try(RES_COMP_RIGID_BODY,
+        model->entity_name);
 
     ta_vec3 lerp_pos;
     ta_quat lerp_orient;
@@ -62,8 +62,8 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
     ta_shader_bind(shader);
     dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-        ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
-            RES_MESH_GROUP, *mesh_group_name);
+        ta_mesh_group *mesh_group = ta_game_by_name(RES_MESH_GROUP,
+            *mesh_group_name);
         ta_mesh_group_render(mesh_group);
     }
     ta_shader_unbind();
@@ -85,10 +85,8 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
     }
     DLB_ASSERT(dlb_vec_len(model->mesh_groups));
 
-    ta_position *position = ta_scene_component(tg_game.scene, RES_COMP_POSITION,
-        model->entity_name);
-    ta_rigid_body *body = ta_scene_component_try(tg_game.scene,
-        RES_COMP_RIGID_BODY, model->entity_name);
+    ta_position *position = ta_game_component(RES_COMP_POSITION, model->entity_name);
+    ta_rigid_body *body = ta_game_component_try(RES_COMP_RIGID_BODY, model->entity_name);
 
     ta_vec3 lerp_pos;
     ta_quat lerp_orient;
@@ -112,21 +110,19 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
     position->model = mat4_mul(&trans, &position->model);
 
     if (!camera->debug_no_mesh) {
-        ta_material *material = ta_scene_find_by_name(tg_game.scene,
-            RES_MATERIAL, model->material);
-        ta_shader *shader = ta_scene_find_by_name(tg_game.scene,
-            RES_SHADER, material->shader);
-        ta_texture *texture_albedo    = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_albedo    ? material->tex_albedo    : SYM_MISSING_ALBEDO);
-        ta_texture *texture_height    = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_height    ? material->tex_height    : SYM_MISSING_HEIGHT);
-        ta_texture *texture_metallic  = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_metallic  ? material->tex_metallic  : SYM_MISSING_METALLIC);
-        ta_texture *texture_normal    = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_normal    ? material->tex_normal    : SYM_MISSING_NORMAL);
-        ta_texture *texture_occlusion = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_occlusion ? material->tex_occlusion : SYM_MISSING_OCCLUSION);
-        ta_texture *texture_roughness = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE, material->tex_roughness ? material->tex_roughness : SYM_MISSING_ROUGHNESS);
+        ta_material *material = ta_game_by_name(RES_MATERIAL, model->material);
+        ta_shader *shader = ta_game_by_name(RES_SHADER, material->shader);
+        ta_texture *texture_albedo    = ta_game_by_name(RES_TEXTURE, material->tex_albedo    ? material->tex_albedo    : SYM_MISSING_ALBEDO);
+        ta_texture *texture_height    = ta_game_by_name(RES_TEXTURE, material->tex_height    ? material->tex_height    : SYM_MISSING_HEIGHT);
+        ta_texture *texture_metallic  = ta_game_by_name(RES_TEXTURE, material->tex_metallic  ? material->tex_metallic  : SYM_MISSING_METALLIC);
+        ta_texture *texture_normal    = ta_game_by_name(RES_TEXTURE, material->tex_normal    ? material->tex_normal    : SYM_MISSING_NORMAL);
+        ta_texture *texture_occlusion = ta_game_by_name(RES_TEXTURE, material->tex_occlusion ? material->tex_occlusion : SYM_MISSING_OCCLUSION);
+        ta_texture *texture_roughness = ta_game_by_name(RES_TEXTURE, material->tex_roughness ? material->tex_roughness : SYM_MISSING_ROUGHNESS);
 
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
         ta_shader_set_mat4(shader, SYM_U_MODEL, &position->model);
-        ta_light *lights = tg_game.scene->resource_data[RES_COMP_LIGHT];
+        ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
         u32 lights_len = dlb_vec_len(lights);
         u32 u_lights_count = 0;
         for (u32 i = 0; i < lights_len; ++i) {
@@ -145,8 +141,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ROUGHNESS, texture_roughness->gl_id);
         ta_shader_bind(shader);
         dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-            ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
-                RES_MESH_GROUP, *mesh_group_name);
+            ta_mesh_group *mesh_group = ta_game_by_name(RES_MESH_GROUP, *mesh_group_name);
             ta_mesh_group_render(mesh_group);
         }
         ta_shader_unbind();
@@ -156,8 +151,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &position->model);
         if (camera->debug_normals) {
             dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-                ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
-                    RES_MESH_GROUP, *mesh_group_name);
+                ta_mesh_group *mesh_group = ta_game_by_name(RES_MESH_GROUP, *mesh_group_name);
                 ta_mesh_group_push_normals(mesh_group);
             }
         }
@@ -176,10 +170,8 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
     DLB_ASSERT(camera);
     DLB_ASSERT(shader);
 
-    ta_position *position = ta_scene_component(tg_game.scene, RES_COMP_POSITION,
-        model->entity_name);
-    ta_rigid_body *body = ta_scene_component_try(tg_game.scene,
-        RES_COMP_RIGID_BODY, model->entity_name);
+    ta_position *position = ta_game_component(RES_COMP_POSITION, model->entity_name);
+    ta_rigid_body *body = ta_game_component_try(RES_COMP_RIGID_BODY, model->entity_name);
 
     ta_vec3 lerp_pos;
     ta_quat lerp_orient;
@@ -207,8 +199,7 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
     ta_shader_set_mat4(shader, SYM_U_MODEL, &position->model);
     ta_shader_bind(shader);
     dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-        ta_mesh_group *mesh_group = ta_scene_find_by_name(tg_game.scene,
-            RES_MESH_GROUP, *mesh_group_name);
+        ta_mesh_group *mesh_group = ta_game_by_name(RES_MESH_GROUP, *mesh_group_name);
         ta_mesh_group_render(mesh_group);
     }
     ta_shader_unbind();

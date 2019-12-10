@@ -1,7 +1,6 @@
 #pragma once
 #include "dlb/dlb_types.h"
 
-struct ta_size;
 struct ta_event;
 typedef struct SDL_Window SDL_Window;
 
@@ -53,12 +52,12 @@ extern ta_window *tg_window;
 
 void ta_window_init(ta_window *window, int w, int h, bool fullscreen);
 void ta_window_free(ta_window *window);
-struct ta_size ta_window_size(ta_window *window);
 int ta_window_width(ta_window *window);
 int ta_window_height(ta_window *window);
 float ta_window_aspect(ta_window *window);
 SDL_Window *ta_window_sdl(ta_window *window);
-void ta_window_set_vsync(bool vsync);
+bool ta_window_vsync(ta_window *window);
+void ta_window_set_vsync(ta_window *window, bool vsync);
 void ta_window_swap(ta_window *window);
 void ta_window_event(ta_window *window, struct ta_event *event);
 int ta_window_msgbox(ta_window *window, u32 flags, const char *title,

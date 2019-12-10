@@ -93,7 +93,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <DisableSpecificWarnings>4101;4127;4189;4700;6011;26451</DisableSpecificWarnings>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>false</ExceptionHandling>
@@ -111,7 +111,7 @@
       <AdditionalIncludeDirectories>$(ProjectDir)include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NOMINMAX;</PreprocessorDefinitions>
       <CompileAs>CompileAsC</CompileAs>
-      <TreatWarningAsError>true</TreatWarningAsError>
+      <TreatWarningAsError>false</TreatWarningAsError>
       <DisableSpecificWarnings>4101;4127;4189;4700;6011;26451</DisableSpecificWarnings>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>false</ExceptionHandling>
@@ -186,7 +186,7 @@
     <ClCompile Include="src\ta_scene.c" />
     <ClCompile Include="src\ta_schema.c" />
     <ClCompile Include="src\ta_symbol.c" />
-    <ClCompile Include="src\ta_text_entry.c" />
+    <ClCompile Include="src\ta_token.c" />
     <ClCompile Include="src\ta_ui_barchart.c" />
     <ClCompile Include="src/ta_buffer.c" />
     <ClCompile Include="src/ta_camera.c" />
@@ -230,7 +230,7 @@
     <ClInclude Include="src\ta_scene.h" />
     <ClInclude Include="src\ta_schema.h" />
     <ClInclude Include="src\ta_symbol.h" />
-    <ClInclude Include="src\ta_text_entry.h" />
+    <ClInclude Include="src\ta_token.h" />
     <ClInclude Include="src\ta_uid.h" />
     <ClInclude Include="src\ta_ui_barchart.h" />
     <ClInclude Include="src/ta_buffer.h" />

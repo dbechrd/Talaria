@@ -2,6 +2,18 @@
 #include "dlb/dlb_types.h"
 
 struct ta_event;
+struct ta_player;
+enum ta_resource_type;
+
+extern const char *tg_font;
+extern const char *tg_tex_orange;
+extern const char *tg_tex_red;
+extern const char *tg_tex_audio_icon;
+
+extern const char *tg_e_background_music;
+extern const char *tg_e_freecam;
+extern const char *tg_e_player_one;
+extern const char *tg_e_active_camera;
 
 typedef enum ta_game_state {
     TA_GAME_STATE_STARTUP,
@@ -13,36 +25,38 @@ typedef enum ta_game_state {
 } ta_game_state;
 const char *game_state_str(ta_game_state state);
 
-typedef struct ta_game {
-    ta_game_state state;
-    ta_game_state state_prev;
-    int simulate;  // -1 = on, 0 = off, 1+ = simulate N frames
-    bool vsync;
-    u64 frame_num;
-    u64 sim_step;
+#if 0
+// TODO: Pass these around instead of having to explicitly say the resource type
+// every time you want to request a component.
+typedef struct ta_component {
+    ta_resource_type type;
+    const char *entity_name;
+} ta_component;
+#endif
 
-    // WARNING: These pointers will be invalidated if their pool resizes
-    // TODO: Replace with uid strings
-    struct ta_keybind *keybinds[TA_GAME_STATE_COUNT];
-    struct ta_scene *scene;
-
-    const char *font;
-    const char *tex_orange;
-    const char *tex_red;
-    const char *tex_audio_icon;
-
-    const char *e_background_music;
-    const char *e_freecam;
-    const char *e_player_one;
-    //struct ta_entity *player;
-
-    const char *e_active_camera;
-} ta_game;
-
-extern ta_game tg_game;
-
-void ta_game_init(ta_game *game);
-void ta_game_state_set(ta_game *game, ta_game_state state);
-void ta_game_hotkeys(ta_game *game);
-void ta_game_event(ta_game *game, struct ta_event *event);
-void ta_game_hud_draw(ta_game *game);
+void ta_game_init();
+ta_game_state ta_game_state_current();
+ta_game_state ta_game_state_prev();
+void ta_game_state_set(ta_game_state state);
+void *ta_game_alloc(enum ta_resource_type type, const char *name);
+void ta_game_destroy(enum ta_resource_type type, const char *name);
+void *ta_game_by_name(enum ta_resource_type type, const char *name);
+void *ta_game_by_name_try(enum ta_resource_type type, const char *name);
+void *ta_game_by_name_or_default(enum ta_resource_type type, const char *name);
+void *ta_game_component(enum ta_resource_type type, const char *entity);
+void *ta_game_component_try(enum ta_resource_type type, const char *entity);
+void *ta_game_resource_pool(enum ta_resource_type type);
+struct ta_camera *ta_game_camera();
+struct ta_player *ta_game_player();
+void ta_game_sim_pause();
+void ta_game_sim_resume();
+void ta_game_sim_step_n_frames(int frames);
+bool ta_game_sim_running();
+bool ta_game_sim_paused();
+u64 ta_game_sim_step();
+u64 ta_game_frame_num();
+void ta_game_window_resize();
+void ta_game_loop();
+void ta_game_hotkeys();
+void ta_game_event(struct ta_event *event);
+void ta_game_save();

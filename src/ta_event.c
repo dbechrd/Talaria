@@ -6,7 +6,6 @@
 #include "ta_window.h"
 #include "ta_camera.h"
 #include "ta_game.h"
-#include "ta_text_entry.h"
 #include "ta_scene.h"
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL.h"
@@ -139,12 +138,12 @@ static void event_sdl_poll()
         ta_event event = { 0 };
         switch (sdl_event.type) {
             case SDL_QUIT: {
-                event.type = TA_EVENT_GAME_SHUTDOWN;
+                event.type = GAME_EVENT_SHUTDOWN;
                 break;
             } case SDL_WINDOWEVENT: {
                 switch (sdl_event.window.event) {
                     case SDL_WINDOWEVENT_RESIZED: {
-                        event.type = TA_EVENT_WINDOW_RESIZE;
+                        event.type = WINDOW_EVENT_RESIZE;
                         event.data.window_resize.width = sdl_event.window.data1;
                         event.data.window_resize.height = sdl_event.window.data2;
                         break;
@@ -152,20 +151,20 @@ static void event_sdl_poll()
                 }
                 break;
             } case SDL_KEYDOWN: {
-                event.type = TA_EVENT_KEY_PRESS;
+                event.type = INPUT_EVENT_KEY_PRESS;
                 event.data.key_press.scancode = sdl_event.key.keysym.scancode;
                 break;
             } case SDL_KEYUP: {
-                event.type = TA_EVENT_KEY_RELEASE;
+                event.type = INPUT_EVENT_KEY_RELEASE;
                 event.data.key_press.scancode = sdl_event.key.keysym.scancode;
                 break;
             } case SDL_TEXTINPUT: {
-                event.type = TA_EVENT_TEXT_INPUT;
+                event.type = INPUT_EVENT_TEXT_INPUT;
                 event.data.text_input.chr = sdl_event.text.text[0];
                 DLB_ASSERT(!sdl_event.text.text[1]);  // Unicode?
                 break;
             } case SDL_MOUSEMOTION: {
-                event.type = TA_EVENT_MOUSE_MOVE;
+                event.type = INPUT_EVENT_MOUSE_MOVE;
                 event.data.mouse_move.x  = sdl_event.motion.x;
                 event.data.mouse_move.y  = sdl_event.motion.y;
                 event.data.mouse_move.dx = sdl_event.motion.xrel;
@@ -174,19 +173,19 @@ static void event_sdl_poll()
             } case SDL_MOUSEBUTTONDOWN: {
                 s32 scancode = mouse_button_scancode(sdl_event.button.button);
                 if (scancode) {
-                    event.type = TA_EVENT_KEY_PRESS;
+                    event.type = INPUT_EVENT_KEY_PRESS;
                     event.data.key_press.scancode = scancode;
                 }
                 break;
             } case SDL_MOUSEBUTTONUP: {
                 s32 scancode = mouse_button_scancode(sdl_event.button.button);
                 if (scancode) {
-                    event.type = TA_EVENT_KEY_RELEASE;
+                    event.type = INPUT_EVENT_KEY_RELEASE;
                     event.data.key_press.scancode = scancode;
                 }
                 break;
             } case SDL_MOUSEWHEEL: {
-                event.type = TA_EVENT_MOUSE_SCROLL;
+                event.type = INPUT_EVENT_MOUSE_SCROLL;
                 event.data.mouse_scroll.x = sdl_event.wheel.x;
                 event.data.mouse_scroll.y = sdl_event.wheel.y;
                 event.data.mouse_scroll.flipped = (u8)sdl_event.wheel.direction;
@@ -212,12 +211,12 @@ void ta_event_events()
     event_sdl_poll();
     ta_log_write(&tg_debug_log, SRC_EVENT, "  SDL poll end\n");
 
-    if (tg_game.state == TA_GAME_STATE_EDITOR) {
+    if (ta_game_state_current() == TA_GAME_STATE_EDITOR) {
         ta_log_write(&tg_debug_log, SRC_EVENT, "  editor hotkeys...\n");
         ta_editor_hotkeys();
     } else {
         ta_log_write(&tg_debug_log, SRC_EVENT, "  game hotkeys...\n");
-        ta_game_hotkeys(&tg_game);
+        ta_game_hotkeys();
     }
 
     ta_log_write(&tg_debug_log, SRC_EVENT, "  event pop loop...\n");
@@ -232,14 +231,7 @@ void ta_event_events()
         if (event.handled) continue;
 
         ta_log_write(&tg_debug_log, SRC_EVENT, "   game event...\n");
-        ta_game_event(&tg_game, &event);
+        ta_game_event(&event);
         if (event.handled) continue;
-
-        ta_log_write(&tg_debug_log, SRC_EVENT, "   camera event...\n");
-        if (ta_mouse_captured()) {
-            ta_camera *camera = ta_scene_component(tg_game.scene,
-                RES_COMP_CAMERA, tg_game.e_active_camera);
-            ta_camera_event(camera, &event);
-        }
     }
 }

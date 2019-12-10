@@ -218,8 +218,8 @@ void ta_audio_source_init(ta_audio_source *source)
 #endif
 
     if (source->audio_buffer) {
-        ta_audio_buffer *buffer = ta_scene_find_by_name(tg_game.scene,
-            RES_AUDIO_BUFFER, source->audio_buffer);
+        ta_audio_buffer *buffer = ta_game_by_name(RES_AUDIO_BUFFER,
+            source->audio_buffer);
         DLB_ASSERT(buffer->al_buffer_id);
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
@@ -247,8 +247,8 @@ void ta_audio_source_set_buffer(ta_audio_source *source,
     if (source->audio_buffer != audio_buffer)
     {
         source->audio_buffer = audio_buffer;
-        ta_audio_buffer *buffer = ta_scene_find_by_name(tg_game.scene,
-            RES_AUDIO_BUFFER, source->audio_buffer);
+        ta_audio_buffer *buffer = ta_game_by_name(RES_AUDIO_BUFFER,
+            source->audio_buffer);
         //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }

@@ -15,6 +15,7 @@ enum {
     SDL_SCANCODE_MOUSE_X2,
     TA_SCANCODE_COUNT
 };
+#define TA_KEY(code) SDL_SCANCODE_##code
 
 typedef s32 ta_key;
 

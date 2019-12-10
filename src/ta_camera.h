@@ -50,5 +50,4 @@ void ta_camera_yaw(ta_camera *camera, float delta);
 void ta_camera_pitch(ta_camera *camera, float delta);
 void ta_camera_move(ta_camera *camera, ta_vec3 v);
 void ta_camera_recalc_projection(ta_camera *camera);
-void ta_camera_event(ta_camera *camera, struct ta_event *event);
 void ta_camera_update(ta_camera *camera, double dt);

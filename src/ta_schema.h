@@ -90,6 +90,19 @@ typedef enum ta_resource_type {
     RES_COUNT,
 } ta_resource_type;
 
+// All resource structs must start with this header
+typedef struct ta_resource {
+    u32 index;
+    const char *name;
+} ta_resource;
+
+// All component structs must start with this header
+typedef struct ta_component {
+    u32 index;
+    const char *name;
+    const char *entity_name;
+} ta_component;
+
 ta_schema_field_type res_to_typ(ta_resource_type type);
 ta_resource_type typ_to_res(ta_schema_field_type type);
 

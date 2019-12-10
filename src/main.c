@@ -11,7 +11,6 @@
 #include "ta_file.h"
 #include "ta_scene.h"
 #include "ta_shader.h"
-#include "ta_text_entry.h"
 #include "ta_ui_barchart.h"
 #include "ta_texture.h"
 #include "ta_mesh.h"
@@ -103,8 +102,6 @@ void ndc_tests() {
 // Random thoughts
 // https://en.wikipedia.org/wiki/Accumulator_(energy)
 
-static void render_frame_info(u64 frame_num, double ms_frame_time,
-    double ms_frame_delta, u64 sim_step);
 static void debug_nametag();
 
 // NOTE: Only works in Subsystem:Console mode?
@@ -142,322 +139,18 @@ int main(int argc, char *argv[])
     ta_render_init();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing primitives...\n");
     ta_primitive_init();
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing game...\n");
+    ta_game_init();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing editor...\n");
     ta_editor_init();
-    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing game...\n");
-    ta_game_init(&tg_game);
-    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Loading first scene...\n");
-    ta_scene *scene1 = ta_scene_load_file("data/scene/scene1_gen.dml");
-    DLB_ASSERT(scene1 && tg_game.scene == scene1);
 
-    tg_game.simulate = -1;
-
-    // TODO: Find closest 8 lights and store them in tg_game.lights
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Player
-    ////////////////////////////////////////////////////////////////////////////
-    // HACK: Find first entity with a player component, assume it's the player
-    tg_game.e_player_one = SYM_ENTITY_PLAYER_ONE;
-    DLB_ASSERT(tg_game.e_player_one);
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Cameras
-    ////////////////////////////////////////////////////////////////////////////
-    // TODO: idk how best to find static resources other than by name. Maybe
-    // have a lookup table in the scene file whose only purpose is to populate
-    // the scene with ids of static objects (root node, free cam, player, etc.)?
-    tg_game.e_freecam = SYM_ENTITY_FREECAM;
-    DLB_ASSERT(tg_game.e_freecam);
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Audio
-    ////////////////////////////////////////////////////////////////////////////
-    ta_audio_listener_set_volume(&tg_audio, 1.0f);
-    ta_audio_listener_mute(&tg_audio);
-
-    // TODO: Parent this node to the active player
-    tg_game.e_background_music = SYM_ENTITY_BACKGROUND_MUSIC;
-    DLB_ASSERT(tg_game.e_background_music);
-
-    ta_audio_source *bg_music_src = ta_scene_component(tg_game.scene,
-        RES_COMP_AUDIO_SOURCE, tg_game.e_background_music);
-    DLB_ASSERT(bg_music_src);
-    ta_audio_source_play_loop(bg_music_src);
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Textures
-    ////////////////////////////////////////////////////////////////////////////
-    tg_game.font            = INTERN("consola");
-    tg_game.tex_orange      = INTERN("test_diff");
-    tg_game.tex_red         = INTERN("test_mrao");
-    tg_game.tex_audio_icon  = INTERN("audio_icon");
-
-    ////////////////////////////////////////////////////////////////////////////
-    // Shaders
-    ////////////////////////////////////////////////////////////////////////////
-    // TODO: Move these to shaders.dml, they're not scene-specific
-    tg_shader_lines   = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("lines"));
-    tg_shader_quads   = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("quads"));
-    tg_shader_cubemap = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("cubemap"));
-    tg_shader_shadow  = ta_scene_find_by_name(tg_game.scene, RES_SHADER, INTERN("shadow"));
-    DLB_ASSERT(tg_shader_lines);
-    DLB_ASSERT(tg_shader_quads);
-    DLB_ASSERT(tg_shader_cubemap);
-    DLB_ASSERT(tg_shader_shadow);
-
-#if _DEBUG
-    ta_game_state_set(&tg_game, TA_GAME_STATE_FREE_CAM);
-#else
-    ta_game_state_set(&tg_game, TA_GAME_STATE_PLAY);
-#endif
-    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Active camera: %s\n", tg_game.e_active_camera);
-    DLB_ASSERT(tg_game.e_active_camera);
-
-    ////////////////////////////////////////////////////////////////////////////
-    // UI
-    ////////////////////////////////////////////////////////////////////////////
-    // TODO: Move this to DML (e.g. editor.dml)
-    ta_camera minimap_camera = { 0 };
-    minimap_camera.fov = 90.0f;
-    minimap_camera.up = VEC3_NZ;
-    minimap_camera.ortho = true;
-    ta_camera_init(&minimap_camera);
-
+    // TODO: Cleanup
     ta_ui_barchart chart = ta_ui_barchart_init(10, 10, WINDOW_W - 20, 30);
     UNUSED(chart);
 
     //ta_shader_set_sampler2d(tg_shader_mesh, SYM_U_TEX0, tex_test->gl_id);
 
-    ////////////////////////////////////////////////////////////////////////////
-    // Main loop
-    ////////////////////////////////////////////////////////////////////////////
-
-    // Eric Catto - Soft Constraints (GDC 2011)
-    // Semi-implicit Euler will eventually blow up if you take big time steps. A
-    // general rule is to take at least 4 time steps per period of oscillation.
-    // For example, if the oscillation frequency is 60Hz, then you shouldn’t
-    // take time steps slower than 15Hz.
-    //
-    // Randy Gaul
-    // https://gamedevelopment.tutsplus.com/series/how-to-create-a-custom-physics-engine--gamedev-12715
-    const double ms_sim_dt = 20;             // fixed dt milliseconds
-    const double sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
-    const double sim_max_steps = 0;          // max simulation steps per frame
-    double ms_sim_t = 0;                     // current simulation time
-    double ms_frame_accum = 0;
-
-    double ms_frame_prev = 0;   // Last frame started
-    double ms_frame_start;      // This frame started
-    double ms_frame_delta;      // Total delta time (including v-sync)
-    double ms_frame_time;       // Actual frame time before v-sync
-
-    while (tg_game.state != TA_GAME_STATE_SHUTDOWN) {
-        ms_frame_start = ta_timer_elapsed_ms();
-        ms_frame_delta = ms_frame_start - ms_frame_prev;
-        ms_frame_prev = ms_frame_start;
-
-        // Engine events
-        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Handling events...\n");
-        ta_event_events();
-
-        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Accumulating...\n");
-        if (sim_max_steps == 0) {
-            // TODO: This *requires* vsync to work correctly!
-            // If sim_max_steps == 0, assume we want lockstep physics
-            ms_frame_accum = ms_sim_dt;
-        } else {
-            ms_frame_accum += ms_frame_delta;
-            // Prevent spiral of death
-            // NOTE: This breaks determinism when simulation is under duress
-            if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
-                ta_log_write(&tg_debug_log, SRC_SYSTEM,
-                    "WARNING: Physics accumulator spiraling; truncating %f to %f\n",
-                    ms_frame_accum, ms_sim_dt * sim_max_steps);
-                ms_frame_accum = ms_sim_dt * sim_max_steps;
-            }
-        }
-
-        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Finding components...\n");
-        ta_camera *active_camera = ta_scene_component(tg_game.scene,
-            RES_COMP_CAMERA, tg_game.e_active_camera);
-        ta_camera *player_cam = 0;
-        ta_rigid_body *player_body = 0;
-
-        if (ms_frame_accum >= ms_sim_dt) {
-            ta_log_write(&tg_debug_log, SRC_SYSTEM, " Finding sim components...\n");
-            player_cam = ta_scene_component(tg_game.scene, RES_COMP_CAMERA,
-                tg_game.e_player_one);
-            player_body = ta_scene_component(tg_game.scene, RES_COMP_RIGID_BODY,
-                tg_game.e_player_one);
-        }
-
-        while (ms_frame_accum >= ms_sim_dt) {
-            ta_log_write(&tg_debug_log, SRC_SYSTEM, " Sim step...\n");
-            // Target player camera
-            ta_camera_set_target_pos_absolute(player_cam,
-                vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
-
-            // Target minimap camera
-            ta_vec3 minimap_camera_target_pos = active_camera->position;
-            minimap_camera_target_pos.y += 50.0f;
-            minimap_camera.focal_point = active_camera->position;
-            ta_camera_set_target_pos_absolute(&minimap_camera,
-                minimap_camera_target_pos);
-
-            // Update cameras
-            dlb_vec_each(ta_camera *, cam, tg_game.scene->resource_data[RES_COMP_CAMERA]) {
-                ta_camera_update(cam, sim_dt);
-            }
-
-            if (tg_game.simulate) {
-                if (tg_game.simulate > 0) {
-                    tg_game.simulate--;
-                }
-#if 0
-                ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
-                tg_game.sun->data.sun.direction =
-                    mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
-#endif
-
-#if 1
-                // HACK: Make point light rotate in a circle
-                static float light_deg = 0.0f;
-                light_deg += 0.005f;
-                if (light_deg >= 360.0f) light_deg = 0.0f;
-
-                ta_light *lights = tg_game.scene->resource_data[RES_COMP_LIGHT];
-                lights[1].position.x = cosf(light_deg) * 16.0f;
-                lights[1].position.z = sinf(light_deg) * 16.0f;
-
-                ta_audio_source *bg_source = ta_scene_component_try(
-                    tg_game.scene, RES_COMP_AUDIO_SOURCE,
-                    tg_game.e_background_music);
-                alSourcei(bg_source->al_source_id, AL_SOURCE_RELATIVE, AL_FALSE);
-#if 1
-                alSourcefv(bg_source->al_source_id, AL_POSITION, (float *)&lights[1].position);
-#else
-                alSourcefv(bg_source->al_source_id, AL_POSITION, (float *)&VEC3_ZERO);
-#endif
-                alSourcefv(bg_source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
-
-#else
-                // HACK: Make point light follow player camera
-                lights[1]->position = tg_game.camera_player->position;
-                // HACK: Make point light follow camera
-                lights[1]->position = vec3_add(
-                    tg_game.camera_freecam->position,
-                    tg_game.camera_freecam->front
-                );
-#endif
-
-                // Update scene
-                ta_scene_update(tg_game.scene, (float)sim_dt);
-                tg_game.sim_step++;
-            }
-
-            // TODO: Put this somewhere intelligent
-            // Update audio listener position
-            ta_vec3 fwd_up[2];
-            fwd_up[0] = active_camera->front;
-            fwd_up[1] = active_camera->up;
-            alListenerfv(AL_ORIENTATION, (float *)fwd_up);
-            alListenerfv(AL_POSITION, (float *)&active_camera->position);
-            //alListenerfv(AL_VELOCITY, (float *)&tg_game.camera->velocity);
-
-            ms_sim_t += ms_sim_dt;
-            ms_frame_accum -= ms_sim_dt;
-        }
-
-        float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
-
-        // Draw models
-        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Shadow pass...\n");
-        ta_scene_shadow_pass(tg_game.scene, tg_shader_shadow, sim_alpha);
-        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Render pass...\n");
-        ta_scene_render(tg_game.scene, active_camera, sim_alpha);
-
-        // World axes
-        ta_primitive_push_axes(1.0f);
-        ta_primitive_render(true, true);
-
-        if (tg_game.state == TA_GAME_STATE_EDITOR) {
-            ta_log_write(&tg_debug_log, SRC_SYSTEM, " Editor pass...\n");
-            ta_editor_draw(sim_alpha);
-        }
-
-        // Cursor
-        glClear(GL_DEPTH_BUFFER_BIT);
-        ta_primitive_push_crosshair(10, 2);
-
-#if 0
-        // Render minimap
-        ta_rect map_rect = { 10, 50, 200, 200 };
-        ta_viewport_bind(map_rect, TA_COLOR_GRAY7, true);
-        ta_scene_render(tg_game.scene, &minimap_camera, sim_alpha);
-        ta_viewport_unbind();
-        ta_primitive_render(true, true);
-
-        // Red dot on map
-        int dot_radius = 2;
-        ta_rect dot_rect = { 0 };
-        dot_rect.x = map_rect.x + map_rect.w / 2 - dot_radius;
-        dot_rect.y = map_rect.y + map_rect.h / 2 - dot_radius;
-        dot_rect.w = dot_radius * 2;
-        dot_rect.h = dot_radius * 2;
-        ta_primitive_push_rect(dot_rect, TA_COLOR_RED, UI_LAYER_HUD);
-        ta_primitive_render(true, true);
-#endif
-
-#if 0
-        // TODO: Mesh selector, highlight and rotate mesh while mouse hover
-        //ta_mat4 model = mat4_rotate_y(model_deg);
-        //model_deg += 1.0f;
-        //if (model_deg >= 360.0f) {
-        //    model_deg = 0.0f;
-        //}
-
-        // Barchart
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-        ta_ui_barchart_draw(0, 0, &chart);
-        ta_primitive_render();
-        ta_primitive_clear();
-#endif
-
-        //debug_nametag(active_cam);
-        // TODO: Make HUD drawing suck less.. way too many draw calls
-        //       Use texture atlas, batch everything into one draw call. Import
-        //       textures from Rico; stop using stupid RGB placeholders
-        ta_log_write(&tg_debug_log, SRC_SYSTEM, " HUD pass...\n");
-        ta_game_hud_draw(&tg_game);
-
-        ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
-        tg_game.frame_num++;
-        ta_log_write(&tg_debug_log, SRC_SYSTEM, " FPS pass...\n");
-        render_frame_info(tg_game.frame_num, ms_frame_time, ms_frame_delta,
-            tg_game.sim_step);
-
-        // NOTE: This confirms rendering is being deferred until swap buffers,
-        // but it's much slower (~5ms), so don't actually use it.
-        //ta_log_write(&tg_debug_log, SRC_SYSTEM, " glFinish...\n");
-        //glFinish();
-
-        ta_log_write(&tg_debug_log, SRC_SYSTEM, " Swap...\n");
-        ta_window_swap(tg_window);
-
-        ta_log_write(&tg_debug_log, SRC_SYSTEM,
-            "Frame %llu displayed. time: %5.3f delta: %5.3f\n",
-            tg_game.frame_num, ms_frame_time, ms_frame_delta);
-
-        if (ms_frame_time > 16) {
-            // TODO: Debug more long frames (turn on SRC_SYSTEM logging)
-            ta_log_write(&tg_debug_log, SRC_SYSTEM, "!!!!!!!! LONG_FRAME !!!!!!!!\n");
-            ta_log_flush(&tg_debug_log);
-            //__debugbreak();
-        }
-    }
+    ta_game_loop();
 
     ta_log_flush(&tg_debug_log);
 
@@ -467,60 +160,14 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-static void render_frame_info(u64 frame_num, double ms_frame_time,
-    double ms_frame_delta, u64 sim_step)
-{
-    // Print frame time on the screen
-    char frame_time_buf[256] = { 0 };
-    int len = snprintf(CSTR(frame_time_buf),
-        "Frame\n"
-        "  count: %08llu\n"
-        "  time : %5.2f ms\n"
-        "  delta: %5.2f ms (v-sync: %s)\n"
-        "Game\n"
-        "  sim step: %08llu\n"
-        "  state   : %s\n"
-        "  prev    : %s\n"
-        "Audio\n"
-        "  master volume: %.2f%s",
-        frame_num,
-        ms_frame_time,
-        ms_frame_delta,
-        tg_game.vsync ? "On" : "Off",
-        sim_step,
-        game_state_str(tg_game.state),
-        game_state_str(tg_game.state_prev),
-        ta_audio_listener_get_volume(&tg_audio),
-        ta_audio_listener_muted(&tg_audio) ? " (muted)" : ""
-    );
-
-    static ta_rect_uv *frame_time_rects = 0;
-    ta_font *font = ta_scene_find_by_name(tg_game.scene, RES_FONT, tg_game.font);
-    ta_font_push_text(&frame_time_rects, font, frame_time_buf, len, true, 0, 0, 0, 0);
-    dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
-        ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
-            0, true, false);
-    }
-    dlb_vec_zero(frame_time_rects);
-
-    ta_shader *font_shader = ta_scene_find_by_name(tg_game.scene, RES_SHADER,
-        font->shader);
-    ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
-    ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
-    ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-    ta_font_render(quads_queue, font, SCREEN_WRAP_X(-310.0f), 0,
-        UI_LAYER_HUD, true, true);
-}
-
 static void debug_nametag(ta_camera *camera)
 {
-    ta_font *font = ta_scene_find_by_name(tg_game.scene, RES_FONT, tg_game.font);
+    ta_font *font = ta_game_by_name(RES_FONT, tg_font);
     static ta_rect_uv *tag_rects = 0;
     ta_rectf tag_rect = ta_font_push_text(&tag_rects, font,
         CSTR("Player 1\nis da best"), true, 0, 0, 0, 0);
 
-    ta_position *player_pos = ta_scene_component(tg_game.scene,
-        RES_COMP_POSITION, tg_game.e_player_one);
+    ta_position *player_pos = ta_game_component(RES_COMP_POSITION, tg_e_player_one);
 
     ta_vec3 tag_pos = vec3_add(player_pos->transform.position,
         (ta_vec3){ 0.0f, 1.2f, 0.0f });
@@ -552,8 +199,7 @@ static void debug_nametag(ta_camera *camera)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform_bg);
-    ta_texture *tex_orange = ta_scene_find_by_name(tg_game.scene, RES_TEXTURE,
-        tg_game.tex_orange);
+    ta_texture *tex_orange = ta_game_by_name(RES_TEXTURE, tg_tex_orange);
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex_orange->gl_id);
     ta_rect_uv tag_background = { 0 };
     tag_background.rect.x -= NDC_W(5.0f);
@@ -565,8 +211,7 @@ static void debug_nametag(ta_camera *camera)
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
     // Name tag text
-    ta_shader *font_shader = ta_scene_find_by_name(tg_game.scene, RES_SHADER,
-        font->shader);
+    ta_shader *font_shader = ta_game_by_name(RES_SHADER, font->shader);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform_fg);

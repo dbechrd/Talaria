@@ -111,52 +111,6 @@ void ta_camera_recalc_projection(ta_camera *camera)
     camera->dirty = true;
 }
 
-void ta_camera_event(ta_camera *camera, ta_event *event)
-{
-    switch (event->type) {
-        case TA_EVENT_MOUSE_MOVE: {
-            ta_event cam_rotate_evt = { 0 };
-            cam_rotate_evt.type = TA_EVENT_CAMERA_ROTATE;
-            if (event->data.mouse_move.dx) {
-                cam_rotate_evt.data.camera_rotate.delta_yaw =
-                    (float)-event->data.mouse_move.dx;
-            }
-            if (event->data.mouse_move.dy) {
-                cam_rotate_evt.data.camera_rotate.delta_pitch =
-                    (float)-event->data.mouse_move.dy;
-            }
-            ta_event_push(&cam_rotate_evt);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_FORWARD: {
-            camera->move_buffer = vec3_add(camera->move_buffer, camera->front);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_BACKWARD: {
-            camera->move_buffer = vec3_sub(camera->move_buffer, camera->front);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_RIGHT: {
-            camera->move_buffer = vec3_add(camera->move_buffer, camera->right);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_LEFT: {
-            camera->move_buffer = vec3_sub(camera->move_buffer, camera->right);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_UP: {
-            camera->move_buffer = vec3_add(camera->move_buffer, camera->up);
-            break;
-        } case TA_EVENT_CAMERA_MOVE_DOWN: {
-            camera->move_buffer = vec3_sub(camera->move_buffer, camera->up);
-            break;
-        } case TA_EVENT_CAMERA_ROTATE: {
-            if (event->data.camera_rotate.delta_yaw) {
-                ta_camera_yaw(camera, event->data.camera_rotate.delta_yaw);
-            }
-            if (event->data.camera_rotate.delta_pitch) {
-                ta_camera_pitch(camera, event->data.camera_rotate.delta_pitch);
-            }
-            break;
-        }
-    }
-}
-
 static ta_vec3 camera_fps_target(ta_camera *camera)
 {
     // Prevent pathological orientations

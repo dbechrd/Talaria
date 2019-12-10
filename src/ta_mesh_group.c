@@ -22,7 +22,6 @@ void ta_mesh_group_init(ta_mesh_group *group, const char *path)
 {
     group->path = path;
 }
-
 void ta_mesh_group_load(ta_mesh_group *group)
 {
     DLB_ASSERT(group->path);
@@ -64,7 +63,7 @@ void ta_mesh_group_load(ta_mesh_group *group)
         u32 name_len = (u32)strlen(shapes[shape_idx].name);
         const char *name = ta_symbol_intern(shapes[shape_idx].name, name_len);
         dlb_vec_push(group->meshes, name);
-        ta_mesh *mesh = ta_scene_alloc(tg_game.scene, RES_MESH, name);
+        ta_mesh *mesh = ta_game_alloc(RES_MESH, name);
 
         mesh_min = VEC3_MAX;
         mesh_max = VEC3_MIN;
@@ -158,6 +157,27 @@ void ta_mesh_group_load(ta_mesh_group *group)
     tinyobj_materials_free(materials, num_materials);
     ta_buffer_free(buf);
 }
+void ta_mesh_group_push_normals(ta_mesh_group *group)
+{
+    dlb_vec_each(const char **, name, group->meshes) {
+        ta_mesh *mesh = ta_game_by_name(RES_MESH, *name);
+        ta_mesh_push_normals(mesh);
+    }
+}
+void ta_mesh_group_render(ta_mesh_group *group)
+{
+    dlb_vec_each(const char **, name, group->meshes) {
+        ta_mesh *mesh = ta_game_by_name(RES_MESH, *name);
+        ta_mesh_render(mesh);
+    }
+}
+void ta_mesh_group_free(ta_mesh_group *group)
+{
+    dlb_vec_each(const char **, name, group->meshes) {
+        ta_game_destroy(RES_MESH, *name);
+    }
+    dlb_vec_free(group->meshes);
+}
 
 #if 0
 ta_aabb ta_mesh_group_aabb(ta_mesh_group *group)
@@ -187,27 +207,3 @@ ta_aabb ta_mesh_group_aabb(ta_mesh_group *group)
     return aabb;
 }
 #endif
-
-void ta_mesh_group_push_normals(ta_mesh_group *group)
-{
-    dlb_vec_each(const char **, name, group->meshes) {
-        ta_mesh *mesh = ta_scene_find_by_name(tg_game.scene, RES_MESH, *name);
-        ta_mesh_push_normals(mesh);
-    }
-}
-
-void ta_mesh_group_render(ta_mesh_group *group)
-{
-    dlb_vec_each(const char **, name, group->meshes) {
-        ta_mesh *mesh = ta_scene_find_by_name(tg_game.scene, RES_MESH, *name);
-        ta_mesh_render(mesh);
-    }
-}
-
-void ta_mesh_group_free(ta_mesh_group *group)
-{
-    dlb_vec_each(const char **, name, group->meshes) {
-        ta_scene_destroy(tg_game.scene, RES_MESH, *name);
-    }
-    dlb_vec_free(group->meshes);
-}

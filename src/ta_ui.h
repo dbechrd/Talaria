@@ -2,8 +2,8 @@
 #include "dlb/dlb_types.h"
 #include "ta_math.h"
 
+struct ta_font;
 struct ta_texture;
-struct ta_text_entry;
 
 typedef enum ui_state_type {
     UI_STATE_NONE,
@@ -34,33 +34,53 @@ typedef struct ta_ui_state {
     bool down;
     bool pressed;
     bool released;
-    bool focused;   // only works for text_entry, requires persistent state
-    bool checked;   // only works for toggle buttons, requires persistent state
+
+    // these require persistent state
+    bool checked;   // toggle button
+    bool focused;   // text entry - has focus
+    bool submit;    // text entry - user requested save
+    bool cancel;    // text entry - user requested discard
 } ta_ui_state;
+
+typedef struct ta_ui_scroll_state {
+    ta_vec2 scroll_pct;  // scroll as percentage of scrollable area (0.0 - 1.0)
+} ta_ui_scroll_state;
 
 typedef struct ta_ui_window_state {
     // TODO: Allow window move. (If you can nest windows inside other controls,
     // this needs to be a relative offset, rather than absolute location.
-    //ta_vec2i location;
+    ta_vec2i location;
 
     // TODO: Allow window resize. Once this has been set, it should override
     // AUTOSIZE flag.
-    //ta_vec2i size;
+    ta_vec2i size;
 
-    ta_vec2 scroll_offset;
+    ta_ui_scroll_state scroll;
 } ta_ui_window_state;
 
+typedef bool ta_textbox_filter(char c);
+ta_textbox_filter *ta_textbox_filter_default;
+
 typedef struct ta_ui_panel_state {
-    ta_vec2 scroll_offset;
+    ta_ui_scroll_state scroll;
 } ta_ui_panel_state;
 
+typedef struct ta_ui_textbox_state {
+    char *buffer;  // vector
+    u32 cursor;    // index of next character, 0 = before first char, len = after last char
+    u32 selection_start;
+    u32 selection_len;
+    //bool multiline;
+    ta_textbox_filter *filter;
+    ta_ui_scroll_state scroll;
+} ta_ui_textbox_state;
+
 // container flags
-#define TA_UI_AUTOSIZE_W      0x00000002  // auto-grow container to fit contents
-#define TA_UI_AUTOSIZE_H      0x00000004  // auto-grow container to fit contents
+#define TA_UI_AUTOSIZE_W      0x00000001  // auto-grow container to fit contents
+#define TA_UI_AUTOSIZE_H      0x00000002  // auto-grow container to fit contents
 #define TA_UI_AUTOSIZE        (TA_UI_AUTOSIZE_W | TA_UI_AUTOSIZE_H)
 
-void ta_ui_init();
-
+void ta_ui_init(struct ta_font *font);
 void ta_ui_next_margin(int left, int top, int right, int bottom);
 void ta_ui_next_pad(int left, int top, int right, int bottom);
 void ta_ui_next_offset(int x, int y);
@@ -68,27 +88,26 @@ void ta_ui_next_size(int w, int h);
 void ta_ui_next_invisible();
 void ta_ui_next_bg_color(ui_state_type state, float r, float g, float b, float a);
 void ta_ui_next_fg_color(ui_state_type state, float r, float g, float b, float a);
-
 ta_ui_state ta_ui_last_frame_state();
 
 void ta_ui_row_begin();
 void ta_ui_row_end();
-
 void ta_ui_spacer(int w, int h);
-void ta_ui_window_begin(const char *name, ta_ui_window_state *state, u32 container_flags);
+void ta_ui_window_begin(const char *name, ta_ui_window_state *window, u32 flags);
 void ta_ui_window_end();
-void ta_ui_panel_begin(const char *name, ta_ui_panel_state *state, u32 container_flags);
+void ta_ui_panel_begin(const char *name, ta_ui_panel_state *panel, u32 flags);
 void ta_ui_panel_end();
-void ta_ui_button_begin(const char *name, u32 container_flags);
+void ta_ui_button_begin(const char *name, u32 flags);
 bool ta_ui_button_end();
 bool ta_ui_button(const char *name);
-void ta_ui_button_toggle_begin(const char *name, u32 container_flags);
+void ta_ui_button_toggle_begin(const char *name, u32 flags);
 bool ta_ui_button_toggle_end(bool *checked);
 bool ta_ui_button_toggle(const char *name, bool *checked);
-bool ta_ui_image(const char *name, const char *texture, int face);
-bool ta_ui_texture(const char *name, struct ta_texture *texture, int face);
-bool ta_ui_label(const char *name, const char *text);
-bool ta_ui_textbox(const char *name, struct ta_text_entry *text_entry);
+bool ta_ui_image(const char *name, struct ta_texture *texture, int face);
+bool ta_ui_label(const char *name, const char *text, u32 text_len);
+bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
+    ta_ui_textbox_state *textbox, u32 flags);
+bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c);
 void ta_ui_tooltip(const char *text, u32 text_len);
 void ta_ui_tooltip_begin(const char *name);
 void ta_ui_tooltip_end(const char *name);
