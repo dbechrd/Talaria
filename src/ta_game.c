@@ -35,7 +35,7 @@ const char *tg_e_freecam;
 const char *tg_e_player_one;
 const char *tg_e_active_camera;
 
-typedef enum ta_game_command_type {
+typedef enum game_command {
     // Game events
     GAME_COMMAND_PLAY,
     GAME_COMMAND_FREE_CAM,
@@ -68,7 +68,7 @@ typedef enum ta_game_command_type {
     GAME_COMMAND_DEBUG_TOGGLE_MESH,
 
     GAME_COMMAND_COUNT
-} ta_game_command_type;
+} game_command;
 
 typedef struct ta_game {
     ta_game_state state;
@@ -901,7 +901,7 @@ void ta_game_hotkeys()
         [GAME_COMMAND_DEBUG_TOGGLE_MESH]       = game_command_debug_toggle_mesh,
     };
 
-    for (ta_game_command_type cmd = 0; cmd < GAME_COMMAND_COUNT; ++cmd) {
+    for (game_command cmd = 0; cmd < GAME_COMMAND_COUNT; ++cmd) {
         ta_keybind_update(&game.keybinds[game.state][cmd]);
         if (ta_keybind_triggered(&game.keybinds[game.state][cmd])) {
             commands[cmd]();

@@ -61,11 +61,6 @@ static struct {
     bool invisible;
 } next_frame_dirty;
 
-typedef struct ui_scrollbar {
-    ta_rect rect;    // scrollbar background rect
-    ta_rect widget;  // scroll widget
-} ui_scrollbar;
-
 typedef struct ui_frame {
     u32 index;
     ui_frame_type type;
@@ -83,9 +78,6 @@ typedef struct ui_frame {
     int row_height;         // height of current layout row
     bool row_continue;      // if true, next element will layout on same row
     ta_size content_size;   // dynamic content size (-margin, +pad)
-    ui_scrollbar scroll_h;  // horizontal scrollbar
-    ui_scrollbar scroll_v;  // vertical scrollbar
-    ta_vec2i scroll_offset;  // absolute offset for just this frame, include parents
     ta_rect clip_rect;
 
     ta_rect_uv *text_rects; // vector, must be freed!
@@ -109,23 +101,22 @@ typedef struct ui_frame {
 
 static ui_frame *ui_frames;
 
-enum {
-    TEXTBOX_EVENT_NEWLINE,
-    TEXTBOX_EVENT_SUBMIT,
-    TEXTBOX_EVENT_CANCEL,
-    TEXTBOX_EVENT_BACKSPACE,
-    TEXTBOX_EVENT_DELETE,
-    TEXTBOX_EVENT_CURSOR_RIGHT,
-    TEXTBOX_EVENT_CURSOR_LEFT,
-    TEXTBOX_EVENT_CURSOR_DOWN,
-    TEXTBOX_EVENT_CURSOR_UP,
-    TEXTBOX_EVENT_CURSOR_BOL,
-    TEXTBOX_EVENT_CURSOR_EOL,
-    TEXTBOX_EVENT_CURSOR_BOF,
-    TEXTBOX_EVENT_CURSOR_EOF,
-    TEXTBOX_EVENT_COUNT
-};
-static ta_keybind textbox_keybinds[TEXTBOX_EVENT_COUNT] = { 0 };
+typedef enum ui_textbox_command {
+    TEXTBOX_COMMAND_CURSOR_RIGHT,
+    TEXTBOX_COMMAND_CURSOR_LEFT,
+    TEXTBOX_COMMAND_CURSOR_DOWN,
+    TEXTBOX_COMMAND_CURSOR_UP,
+    TEXTBOX_COMMAND_CURSOR_BOL,
+    TEXTBOX_COMMAND_CURSOR_EOL,
+    TEXTBOX_COMMAND_CURSOR_BOF,
+    TEXTBOX_COMMAND_CURSOR_EOF,
+    TEXTBOX_COMMAND_DELETE,
+    TEXTBOX_COMMAND_BACKSPACE,
+    TEXTBOX_COMMAND_SUBMIT,
+    TEXTBOX_COMMAND_CANCEL,
+    TEXTBOX_COMMAND_COUNT
+} ui_textbox_command;
+static ta_keybind textbox_keybinds[TEXTBOX_COMMAND_COUNT] = { 0 };
 
 static void ui_row_end(ui_frame *container);
 
@@ -213,19 +204,18 @@ void ta_ui_init(ta_font *font)
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_ACTIVE]  = TA_COLOR_INVIS;
 
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_NEWLINE],      TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_SUBMIT],       TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_CANCEL],       TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_BACKSPACE],    TA_KEYBIND_PRESS,   SDL_SCANCODE_BACKSPACE);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_DELETE],       TA_KEYBIND_PRESS,   SDL_SCANCODE_DELETE);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_RIGHT], TA_KEYBIND_HOLD,    SDL_SCANCODE_RIGHT);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_LEFT],  TA_KEYBIND_HOLD,    SDL_SCANCODE_LEFT);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_DOWN],  TA_KEYBIND_PRESS,   SDL_SCANCODE_DOWN);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_UP],    TA_KEYBIND_PRESS,   SDL_SCANCODE_UP);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_BOL],   TA_KEYBIND_PRESS,   SDL_SCANCODE_HOME);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_EOL],   TA_KEYBIND_PRESS,   SDL_SCANCODE_END);
-    ta_keybind_init2(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_BOF],   TA_KEYBIND_PRESS,   SDL_SCANCODE_LSHIFT, SDL_SCANCODE_HOME);
-    ta_keybind_init2(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_EOF],   TA_KEYBIND_PRESS,   SDL_SCANCODE_LSHIFT, SDL_SCANCODE_END);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_RIGHT],  TA_KEYBIND_HOLD,    SDL_SCANCODE_RIGHT);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_LEFT],   TA_KEYBIND_HOLD,    SDL_SCANCODE_LEFT);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_DOWN],   TA_KEYBIND_PRESS,   SDL_SCANCODE_DOWN);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_UP],     TA_KEYBIND_PRESS,   SDL_SCANCODE_UP);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOL],    TA_KEYBIND_PRESS,   SDL_SCANCODE_HOME);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOL],    TA_KEYBIND_PRESS,   SDL_SCANCODE_END);
+    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOF],    TA_KEYBIND_PRESS,   SDL_SCANCODE_LSHIFT, SDL_SCANCODE_HOME);
+    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOF],    TA_KEYBIND_PRESS,   SDL_SCANCODE_LSHIFT, SDL_SCANCODE_END);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_DELETE],        TA_KEYBIND_PRESS,   SDL_SCANCODE_DELETE);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_BACKSPACE],     TA_KEYBIND_PRESS,   SDL_SCANCODE_BACKSPACE);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT],        TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL],        TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
 }
 
 #if 1
@@ -320,9 +310,25 @@ static bool rect_contains_mouse(ta_rect rect)
     }
     return false;
 }
-// returns frame index
-static void ui_frame_begin(ui_frame_type type, const char *name,
-    void *data, u32 flags)
+static ta_ui_scroll_state *ui_scroll_state(ui_frame *frame)
+{
+    ta_ui_scroll_state *scroll = 0;
+    switch (frame->type) {
+        case UI_WINDOW: {
+            scroll = &frame->data.window->scroll;
+            break;
+        } case UI_PANEL: {
+            scroll = &frame->data.panel->scroll;
+            break;
+        } case UI_TEXTBOX: {
+            scroll = &frame->data.textbox->scroll;
+            break;
+        }
+    }
+    return scroll;
+}
+static void ui_frame_begin(ui_frame_type type, const char *name, void *data,
+    u32 flags)
 {
     // Allocate frame
     ui_frame *frame = dlb_vec_alloc(ui_frames);
@@ -355,6 +361,11 @@ static void ui_frame_begin(ui_frame_type type, const char *name,
     frame->content_size.w = frame->rect.w;
     frame->content_size.h = frame->rect.h;
 
+    ta_ui_scroll_state *scroll = ui_scroll_state(frame->container);
+    if (scroll) {
+        frame->rect.y -= scroll->pixels.y;
+    }
+
     if (next_frame_dirty.size) {
         frame->rect.w = frame->pad.x + next_frame_size.w + frame->pad.w;
         frame->rect.h = frame->pad.y + next_frame_size.h + frame->pad.h;
@@ -374,105 +385,6 @@ static void ui_frame_begin(ui_frame_type type, const char *name,
     next_frame_size = TA_SIZE_ZERO;
     dlb_memset(&next_frame_style, 0, sizeof(next_frame_style));
     dlb_memset(&next_frame_dirty, 0, sizeof(next_frame_dirty));
-}
-static ta_ui_scroll_state *ui_scroll_state(ui_frame *frame)
-{
-    ta_ui_scroll_state *scroll = 0;
-    switch (frame->type) {
-        case UI_WINDOW: {
-            scroll = &frame->data.window->scroll;
-            break;
-        } case UI_PANEL: {
-            scroll = &frame->data.panel->scroll;
-            break;
-        } case UI_TEXTBOX: {
-            scroll = &frame->data.textbox->scroll;
-            break;
-        }
-    }
-    return scroll;
-}
-static void ui_frame_scrollbars(ui_frame *frame)
-{
-    DLB_ASSERT(frame);
-
-    ta_ui_scroll_state *scroll = ui_scroll_state(frame);
-    if (!scroll) {
-        return;
-    }
-
-    dlb_memset(&frame->scroll_h, 0, sizeof(frame->scroll_h));
-    dlb_memset(&frame->scroll_v, 0, sizeof(frame->scroll_v));
-
-    int overflow_x = frame->content_size.w - frame->rect.w;
-    int overflow_y = frame->content_size.h - frame->rect.h;
-
-    // TODO: Scroll acceleration might be nice (for scroll wheel, not mouse drag)
-
-    // TODO: Horizontal scrollbar
-    if (overflow_x > 0) {
-
-    }
-
-    // Vertical scrollbar
-    if (overflow_y > 0) {
-        frame->scroll_v.rect.x = frame->rect.x + frame->content_size.w;
-        frame->scroll_v.rect.y = frame->rect.y;
-        frame->scroll_v.rect.w = SCROLL_WIDGET_THICKNESS;
-        frame->scroll_v.rect.h = frame->rect.h;
-
-        float widget_h_pct = (float)frame->rect.h / frame->content_size.h;
-        int widget_h = (int)(frame->rect.h * widget_h_pct);
-        int scroll_space_v = frame->rect.h - widget_h;
-        int scroll_v = (int)(scroll->scroll_pct.y * scroll_space_v);
-
-        frame->scroll_v.widget.x = frame->rect.x + frame->content_size.w;
-        frame->scroll_v.widget.w = SCROLL_WIDGET_THICKNESS;
-        frame->scroll_v.widget.y = frame->rect.y + scroll_v;
-        frame->scroll_v.widget.h = widget_h;
-    }
-
-    // If mouse is captured we're not scrolling
-    if (!ta_mouse_captured()) {
-        // TODO: Horizontal scrolling
-        if (overflow_x > 0) {
-
-        }
-
-        if (overflow_y > 0) {
-            static bool dragging_v = false;
-            int delta_y = 0;
-
-            if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT) && rect_contains_mouse(frame->scroll_v.widget)) {
-                // Mouse drag
-                //scrollbar_y_frame_idx = frame->index;
-                dragging_v = true;
-                ta_mouse_drag_begin();
-            } else if (!dragging_v && rect_contains_mouse(frame->rect)) {
-                // Scroll wheel
-                delta_y = ta_mouse_scroll_dy() * SCROLL_WHEEL_SPEED;
-            } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
-                // Not dragging
-                if (dragging_v) {
-                    dragging_v = false;
-                    ta_mouse_drag_end();
-                }
-            }
-
-            if (dragging_v) {
-                delta_y = ta_mouse_dy();
-            }
-
-            if (delta_y) {
-                int scroll_space_v = frame->rect.h - frame->scroll_v.widget.h;
-                scroll->scroll_pct.y += (float)delta_y / scroll_space_v;
-                scroll->scroll_pct.y = clampf(scroll->scroll_pct.y, 0.0f, 1.0f);
-            }
-        }
-    }
-
-    frame->scroll_offset.x = (int)(scroll->scroll_pct.x * overflow_x);
-    frame->scroll_offset.y = (int)(scroll->scroll_pct.y * overflow_y);
 }
 static ui_frame *ui_frame_end(ui_frame_type type)
 {
@@ -521,8 +433,6 @@ static ui_frame *ui_frame_end(ui_frame_type type)
             ui_row_end(frame->container);
         }
     }
-
-    ui_frame_scrollbars(frame);
 
     // Updated frame states
     ui_state_type state = UI_STATE_NONE;
@@ -789,27 +699,6 @@ static bool textbox_filter_default(char c)
     }
     return false;
 }
-static void textbox_cursor_bof(ta_ui_textbox_state *textbox)
-{
-    textbox->cursor = 0;
-}
-static void textbox_cursor_bol(ta_ui_textbox_state *textbox)
-{
-    while (textbox->cursor && textbox->buffer[textbox->cursor - 1] != '\n') {
-        textbox->cursor--;
-    }
-}
-static void textbox_cursor_eof(ta_ui_textbox_state *textbox)
-{
-    u32 len = dlb_vec_len(textbox->buffer);
-    textbox->cursor = len;
-}
-static void textbox_cursor_eol(ta_ui_textbox_state *textbox)
-{
-    while (textbox->cursor && textbox->buffer[textbox->cursor + 1] != '\n') {
-        textbox->cursor++;
-    }
-}
 static void textbox_cursor_right(ta_ui_textbox_state *textbox)
 {
     u32 len = dlb_vec_len(textbox->buffer);
@@ -833,6 +722,27 @@ static void textbox_cursor_up(ta_ui_textbox_state *textbox)
     //TODO: Move cursor down
     UNUSED(textbox);
 }
+static void textbox_cursor_bof(ta_ui_textbox_state *textbox)
+{
+    textbox->cursor = 0;
+}
+static void textbox_cursor_bol(ta_ui_textbox_state *textbox)
+{
+    while (textbox->cursor && textbox->buffer[textbox->cursor - 1] != '\n') {
+        textbox->cursor--;
+    }
+}
+static void textbox_cursor_eof(ta_ui_textbox_state *textbox)
+{
+    u32 len = dlb_vec_len(textbox->buffer);
+    textbox->cursor = len;
+}
+static void textbox_cursor_eol(ta_ui_textbox_state *textbox)
+{
+    while (textbox->cursor && textbox->buffer[textbox->cursor + 1] != '\n') {
+        textbox->cursor++;
+    }
+}
 static void textbox_delete(ta_ui_textbox_state *textbox)
 {
     // TODO: dlb_vec_remove_at
@@ -854,6 +764,16 @@ static void textbox_backspace(ta_ui_textbox_state *textbox)
         textbox_delete(textbox);
     }
 }
+static void textbox_submit(ta_ui_textbox_state *textbox)
+{
+    textbox->submit = true;
+    textbox->cancel = false;
+}
+static void textbox_cancel(ta_ui_textbox_state *textbox)
+{
+    textbox->submit = false;
+    textbox->cancel = true;
+}
 // TODO: Run filter on input string.. maybe?
 static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text, u32 text_len)
 {
@@ -874,6 +794,21 @@ ta_textbox_filter *ta_textbox_filter_default = &textbox_filter_default;
 bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ta_ui_textbox_state *textbox, u32 flags)
 {
+    static void (*commands[TEXTBOX_COMMAND_COUNT])(ta_ui_textbox_state *textbox) = {
+        [TEXTBOX_COMMAND_CURSOR_RIGHT]  = textbox_cursor_right,
+        [TEXTBOX_COMMAND_CURSOR_LEFT]   = textbox_cursor_left,
+        [TEXTBOX_COMMAND_CURSOR_DOWN]   = textbox_cursor_down,
+        [TEXTBOX_COMMAND_CURSOR_UP]     = textbox_cursor_up,
+        [TEXTBOX_COMMAND_CURSOR_BOL]    = textbox_cursor_bof,
+        [TEXTBOX_COMMAND_CURSOR_EOL]    = textbox_cursor_bol,
+        [TEXTBOX_COMMAND_CURSOR_BOF]    = textbox_cursor_eof,
+        [TEXTBOX_COMMAND_CURSOR_EOF]    = textbox_cursor_eol,
+        [TEXTBOX_COMMAND_DELETE]        = textbox_delete,
+        [TEXTBOX_COMMAND_BACKSPACE]     = textbox_backspace,
+        [TEXTBOX_COMMAND_SUBMIT]        = textbox_submit,
+        [TEXTBOX_COMMAND_CANCEL]        = textbox_cancel,
+    };
+
     DLB_ASSERT(text);
     DLB_ASSERT(text_len);
     DLB_ASSERT(textbox);
@@ -890,55 +825,29 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ui_frame_begin(UI_TEXTBOX, name, textbox, flags);
     ui_frame *frame = ui_frame_end(UI_TEXTBOX);
 
-    // Textbox is in edit mode
     if (textbox->buffer) {
-        if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_NEWLINE])) {
-            // TODO: Handle multiline correctly, can't be same hotkey as submit
-            //if (textbox->multiline) {
-            //    textbox_insert(textbox, '\n');
-            //}
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_SUBMIT])) {
-            //ta_textbox_submit(textbox);
-            frame->state.submit = true;
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_CANCEL])) {
-            //ta_textbox_cancel(textbox);
-            frame->state.cancel = true;
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_BACKSPACE])) {
-            textbox_backspace(textbox);
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_BOF])) {
-            textbox_cursor_bof(textbox);
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_BOL])) {
-            textbox_cursor_bol(textbox);
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_EOF])) {
-            textbox_cursor_eof(textbox);
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_EOL])) {
-            textbox_cursor_eol(textbox);
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_DELETE])) {
-            textbox_delete(textbox);
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_RIGHT])) {
-            textbox_cursor_right(textbox);
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_LEFT])) {
-            textbox_cursor_left(textbox);
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_DOWN])) {
-            textbox_cursor_down(textbox);
-        } else if (ta_keybind_down(&textbox_keybinds[TEXTBOX_EVENT_CURSOR_UP])) {
-            textbox_cursor_up(textbox);
+        // Textbox is in edit mode
+        for (ui_textbox_command cmd = 0; cmd < TEXTBOX_COMMAND_COUNT; ++cmd) {
+            ta_keybind_update(&textbox_keybinds[cmd]);
+            if (ta_keybind_triggered(&textbox_keybinds[cmd])) {
+                commands[cmd](textbox);
+            }
         }
-    } else if (frame->state.down) {
+    } else if (frame->state.pressed) {
         // Enter edit mode
         textbox_set_text(textbox, text, text_len);
     }
 
     // Focus/unfocus textbox
-    if (frame->state.down) {
-        frame->state.focused = true;
+    if (frame->state.pressed) {
+        frame->data.textbox->focused = true;
     } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
-        frame->state.focused = false;  // User clicked elsewhere
+        frame->data.textbox->focused = false;  // User clicked elsewhere
     }
 
     frame->text_rects = text_rects;
     frame->cursor = cursor;
-    return frame->state.submit;
+    return frame->data.textbox->submit;
 }
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
 {
@@ -1122,7 +1031,7 @@ static void ui_render_label(ui_frame *frame)
 static void ui_render_textbox(ui_frame *frame)
 {
     // Render background
-    ta_rgba bg_color = frame->state.focused ? TA_COLOR_BLUE3 : TA_COLOR_BLUE2;
+    ta_rgba bg_color = frame->data.textbox->focused ? TA_COLOR_BLUE3 : TA_COLOR_BLUE2;
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 
@@ -1132,7 +1041,7 @@ static void ui_render_textbox(ui_frame *frame)
     ui_render_text((float)x, (float)y, frame->text_rects);
 
     // If active, render cursor
-    if (frame->state.focused) {
+    if (frame->data.textbox->focused) {
         ta_rect cursor_rect = { 0 };
         cursor_rect.x = x + (int)frame->cursor.x;
         cursor_rect.y = y + (int)frame->cursor.y + 1;
@@ -1144,23 +1053,82 @@ static void ui_render_textbox(ui_frame *frame)
 }
 static void ui_render_scrollbars(ui_frame *frame)
 {
-    if (frame->scroll_h.rect.h) {
-        ta_primitive_push_rect(frame->scroll_h.rect, TA_COLOR_BLUE,
-            UI_LAYER_EDIT_1);
-        ta_primitive_push_rect(frame->scroll_h.widget, (ta_rgba){ 0.6f, 0.0f, 0.0f, 1.0f },
-            UI_LAYER_EDIT_1);
-        ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
+    DLB_ASSERT(frame);
+
+    ta_ui_scroll_state *scroll = ui_scroll_state(frame);
+    if (!scroll) {
+        return;
     }
 
-    if (frame->scroll_v.rect.w) {
-        ta_primitive_push_rect(frame->scroll_v.rect, TA_COLOR_BLUE,
-            UI_LAYER_EDIT_1);
-        ta_primitive_push_rect(frame->scroll_v.widget, (ta_rgba){ 0.6f, 0.0f, 0.0f, 1.0f },
-            UI_LAYER_EDIT_1);
+    int overflow_x = frame->content_size.w - frame->rect.w;
+    int overflow_y = frame->content_size.h - frame->rect.h;
+
+    // TODO: Scroll acceleration might be nice (for scroll wheel, not mouse drag)
+
+    // Horizontal scrollbar
+    if (overflow_x > 0) {
+        // TODO: Calc horiz scrollbar
+    }
+
+    // Vertical scrollbar
+    if (overflow_y > 0) {
+        ta_rect scroll_v_rect = { 0 };
+        scroll_v_rect.x = frame->rect.x + frame->content_size.w;
+        scroll_v_rect.y = frame->rect.y;
+        scroll_v_rect.w = SCROLL_WIDGET_THICKNESS;
+        scroll_v_rect.h = frame->rect.h;
+
+        float widget_h_pct = (float)frame->rect.h / frame->content_size.h;
+        int widget_h = (int)(frame->rect.h * widget_h_pct);
+        int scroll_space_v = frame->rect.h - widget_h;
+        int scroll_v = (int)(scroll->percent.y * scroll_space_v);
+
+        ta_rect scroll_v_widget = { 0 };
+        scroll_v_widget.x = frame->rect.x + frame->content_size.w;
+        scroll_v_widget.w = SCROLL_WIDGET_THICKNESS;
+        scroll_v_widget.y = frame->rect.y + scroll_v;
+        scroll_v_widget.h = widget_h;
+
+        ta_primitive_push_rect(scroll_v_rect, TA_COLOR_BLUE, UI_LAYER_EDIT_1);
+        ta_primitive_push_rect(scroll_v_widget,
+            (ta_rgba){ 0.6f, 0.0f, 0.0f, 1.0f }, UI_LAYER_EDIT_1);
         ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
+
+        // Update scroll state for next frame
+        if (!ta_mouse_captured()) {
+            static bool dragging_v = false;
+            int delta_y = 0;
+
+            if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT) &&
+                rect_contains_mouse(scroll_v_widget))
+            {
+                // Mouse drag
+                //scrollbar_y_frame_idx = frame->index;
+                dragging_v = true;
+                ta_mouse_drag_begin();
+            } else if (!dragging_v && rect_contains_mouse(frame->rect)) {
+                // Scroll wheel
+                delta_y = ta_mouse_scroll_dy() * SCROLL_WHEEL_SPEED;
+            } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
+                // Not dragging
+                if (dragging_v) {
+                    dragging_v = false;
+                    ta_mouse_drag_end();
+                }
+            }
+
+            if (dragging_v) {
+                delta_y = ta_mouse_dy();
+            }
+
+            if (delta_y) {
+                scroll->percent.y += (float)delta_y / scroll_space_v;
+                scroll->percent.y = clampf(scroll->percent.y, 0.0f, 1.0f);
+                scroll->pixels.y = (int)(scroll->percent.y * overflow_y);
+            }
+        }
     }
 }
-
 void ta_ui_render()
 {
     static void (*ui_renderers[])(ui_frame *frame) = {
@@ -1193,18 +1161,11 @@ void ta_ui_render()
         //frame->rect.x -= scroll_offset.x;
         //frame->rect.y -= scroll_offset.y;
 
-        // should be 464, but is 528
-
         frame->clip_rect = TA_RECT_ZERO;
         frame->clip_rect.w = WINDOW_W;
         frame->clip_rect.h = WINDOW_H;
         ui_frame *f = frame->container;
         while(f->index) {
-            if (f->data.ptr) {
-                int overflow_y = f->rect.h - f->content_size.h;
-                ta_ui_scroll_state *scroll = ui_scroll_state(f);
-                frame->rect.y += (int)(scroll->scroll_pct.y * overflow_y);
-            }
             frame->clip_rect = rect_intersect(frame->clip_rect, f->rect);
             f = f->container;
             DLB_ASSERT(f->index < dlb_vec_len(ui_frames));

@@ -24,7 +24,7 @@
 #include "SDL/SDL_keycode.h"
 #include "dlb/dlb_vector.h"
 
-typedef enum editor_command_type {
+typedef enum editor_command {
     EDITOR_COMMAND_CLOSE,
     EDITOR_COMMAND_SELECT,
     EDITOR_COMMAND_SIM_PAUSE_RESUME,
@@ -32,7 +32,7 @@ typedef enum editor_command_type {
     EDITOR_COMMAND_SIM_NEXT_10,
     EDITOR_COMMAND_SIM_WHILE_HELD,
     EDITOR_COMMAND_COUNT
-} editor_command_type;
+} editor_command;
 
 typedef struct ta_editor {
     const char *status_msg;
@@ -71,8 +71,8 @@ void ta_editor_init()
 
     // TODO: How to handle mapping multiple keybinds to the same event type? We
     // may be able to just handle escape key as special case?
-    //ta_keybind_init1(&keybinds[EDITOR_EVENT_CLOSE         ], TA_KEYBIND_RELEASE, ESCAPE);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE           ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
+    //ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE           ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE           ], TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SELECT          ], TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_PAUSE_RESUME], TA_KEYBIND_PRESS,   SDL_SCANCODE_F5);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT        ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F6);
@@ -260,12 +260,10 @@ static void ui_node_panel()
         static ta_ui_textbox_state entry_x = { 0 };
         ta_ui_textbox(0, x_str, x_len, &entry_x, 0);
 
-        if (ta_ui_last_frame_state().focused) {
+        if (entry_x.focused) {
             editor.active_textbox = &entry_x;
-        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
-            if (editor.active_textbox == &entry_x) {
-                editor.active_textbox = 0;
-            }
+        } else if (editor.active_textbox == &entry_x) {
+            editor.active_textbox = 0;
         }
 
         char y_str[16] = { 0 };
@@ -564,12 +562,12 @@ static void ui_textbox_panel()
     static ta_ui_panel_state textbox_panel = { 0 };
     ta_ui_panel_begin(0, &textbox_panel, TA_UI_AUTOSIZE);
 
-    static ta_ui_textbox_state *textbox = 0;
+    static ta_ui_textbox_state textbox = { 0 };
     ta_ui_row_begin();
     ta_ui_label(0, CSTR("Text:"));
     ta_ui_next_size(300, 0);
     //ta_ui_next_margin(4, 0, 0, 2);
-    ta_ui_textbox(0, CSTR("This is a test."), textbox, 0);
+    ta_ui_textbox(0, CSTR("This is a test."), &textbox, 0);
     ta_ui_panel_end();
 }
 static void ui_scene_panel()
@@ -902,7 +900,7 @@ void ta_editor_hotkeys()
         [EDITOR_COMMAND_SIM_WHILE_HELD]   = editor_command_sim_while_held,
     };
 
-    for (editor_command_type cmd = 0; cmd < EDITOR_COMMAND_COUNT; ++cmd) {
+    for (editor_command cmd = 0; cmd < EDITOR_COMMAND_COUNT; ++cmd) {
         ta_keybind_update(&editor.keybinds[cmd]);
         if (ta_keybind_triggered(&editor.keybinds[cmd])) {
             commands[cmd]();

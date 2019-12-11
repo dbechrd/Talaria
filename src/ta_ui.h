@@ -37,13 +37,11 @@ typedef struct ta_ui_state {
 
     // these require persistent state
     bool checked;   // toggle button
-    bool focused;   // text entry - has focus
-    bool submit;    // text entry - user requested save
-    bool cancel;    // text entry - user requested discard
 } ta_ui_state;
 
 typedef struct ta_ui_scroll_state {
-    ta_vec2 scroll_pct;  // scroll as percentage of scrollable area (0.0 - 1.0)
+    ta_vec2 percent;  // scroll as percentage of scrollable area (0.0 - 1.0)
+    ta_vec2i pixels;  // amount of overflow in pixels last frame
 } ta_ui_scroll_state;
 
 typedef struct ta_ui_window_state {
@@ -71,6 +69,9 @@ typedef struct ta_ui_textbox_state {
     u32 selection_start;
     u32 selection_len;
     //bool multiline;
+    bool focused;   // has focus
+    bool submit;    // user requested save
+    bool cancel;    // user requested discard
     ta_textbox_filter *filter;
     ta_ui_scroll_state scroll;
 } ta_ui_textbox_state;
