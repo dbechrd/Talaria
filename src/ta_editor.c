@@ -24,22 +24,21 @@
 #include "SDL/SDL_keycode.h"
 #include "dlb/dlb_vector.h"
 
-enum {
-    EDITOR_EVENT_CLOSE,
-    EDITOR_EVENT_SELECT,
-    EDITOR_EVENT_SIM_PAUSE,
-    EDITOR_EVENT_SIM_RESUME,
-    EDITOR_EVENT_SIM_NEXT,
-    EDITOR_EVENT_SIM_NEXT_10,
-    EDITOR_EVENT_SIM_WHILE_HELD,
-    EDITOR_EVENT_COUNT
-};
+typedef enum editor_command_type {
+    EDITOR_COMMAND_CLOSE,
+    EDITOR_COMMAND_SELECT,
+    EDITOR_COMMAND_SIM_PAUSE_RESUME,
+    EDITOR_COMMAND_SIM_NEXT,
+    EDITOR_COMMAND_SIM_NEXT_10,
+    EDITOR_COMMAND_SIM_WHILE_HELD,
+    EDITOR_COMMAND_COUNT
+} editor_command_type;
 
 typedef struct ta_editor {
     const char *status_msg;
     const char *selected_entity;
     ta_ui_textbox_state *active_textbox;
-    ta_keybind keybinds[EDITOR_EVENT_COUNT];
+    ta_keybind keybinds[EDITOR_COMMAND_COUNT];
     const char *shader_editor_select;
     ta_scene scene;
 } ta_editor;
@@ -73,38 +72,12 @@ void ta_editor_init()
     // TODO: How to handle mapping multiple keybinds to the same event type? We
     // may be able to just handle escape key as special case?
     //ta_keybind_init1(&keybinds[EDITOR_EVENT_CLOSE         ], TA_KEYBIND_RELEASE, ESCAPE);
-    ta_keybind_init1(&editor.keybinds[EDITOR_EVENT_CLOSE         ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
-    ta_keybind_init1(&editor.keybinds[EDITOR_EVENT_SELECT        ], TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
-    ta_keybind_init1(&editor.keybinds[EDITOR_EVENT_SIM_PAUSE     ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F5);
-    ta_keybind_init1(&editor.keybinds[EDITOR_EVENT_SIM_RESUME    ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F5);
-    ta_keybind_init1(&editor.keybinds[EDITOR_EVENT_SIM_NEXT      ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F6);
-    ta_keybind_init1(&editor.keybinds[EDITOR_EVENT_SIM_NEXT_10   ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F7);
-    ta_keybind_init1(&editor.keybinds[EDITOR_EVENT_SIM_WHILE_HELD], TA_KEYBIND_HOLD,    SDL_SCANCODE_F8);
-
-#if 0
-    // TODO: How to handle remapping game event hotkeys to be different while
-    // the editor is open? Should we even allow these to happen?
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_CAMERA_MOVE_FORWARD,       TA_KEYBIND_HOLD,    SDL_SCANCODE_W);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_CAMERA_MOVE_BACKWARD,      TA_KEYBIND_HOLD,    SDL_SCANCODE_S);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_CAMERA_MOVE_RIGHT,         TA_KEYBIND_HOLD,    SDL_SCANCODE_D);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_CAMERA_MOVE_LEFT,          TA_KEYBIND_HOLD,    SDL_SCANCODE_A);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_CAMERA_MOVE_UP,            TA_KEYBIND_HOLD,    SDL_SCANCODE_E);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_CAMERA_MOVE_DOWN,          TA_KEYBIND_HOLD,    SDL_SCANCODE_Q);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_GAME_PLAYER_MOVE_FORWARD,  TA_KEYBIND_HOLD,    SDL_SCANCODE_I);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_GAME_PLAYER_MOVE_BACKWARD, TA_KEYBIND_HOLD,    SDL_SCANCODE_K);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_GAME_PLAYER_MOVE_RIGHT,    TA_KEYBIND_HOLD,    SDL_SCANCODE_L);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_GAME_PLAYER_MOVE_LEFT,     TA_KEYBIND_HOLD,    SDL_SCANCODE_J);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_DEBUG_MOUSE_LOCK,          TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_RIGHT);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_DEBUG_MOUSE_UNLOCK,        TA_KEYBIND_RELEASE, SDL_SCANCODE_MOUSE_RIGHT);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_DEBUG_MOUSE_LOCK_TOGGLE,   TA_KEYBIND_PRESS,   SDL_SCANCODE_M);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_DEBUG_TOGGLE_WIREFRAME,    TA_KEYBIND_PRESS,   SDL_SCANCODE_2);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_DEBUG_TOGGLE_BBOX,         TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_DEBUG_TOGGLE_NORMALS,      TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
-    ta_keybind_init1(&editor.keybinds, TA_EVENT_DEBUG_TOGGLE_MESH,         TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
-#endif
-
-#undef BIND1
-#undef BIND2
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE           ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SELECT          ], TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_PAUSE_RESUME], TA_KEYBIND_PRESS,   SDL_SCANCODE_F5);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT        ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F6);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT_10     ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F7);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_WHILE_HELD  ], TA_KEYBIND_HOLD,    SDL_SCANCODE_F8);
 }
 void ta_editor_select_node(const char *entity_name)
 {
@@ -818,8 +791,6 @@ void ta_editor_draw(float alpha)
         }
     }
 
-    // TODO: Pass x,y at render time (for e.g. window position)
-#if 1
     ta_ui_spacer(0, 50);
     //ta_ui_next_size(400, 400);
     ta_ui_next_margin(0, 50, 0, 0);
@@ -828,55 +799,20 @@ void ta_editor_draw(float alpha)
     ta_ui_window_begin(INTERN("test_window"), &window, TA_UI_AUTOSIZE);
     ui_editor_sidebar();
     ta_ui_window_end();
-#else
-    ta_ui_next_size(0, 400);
-    ta_ui_next_margin(0, 60, 0, 0);
-    static ta_ui_settings window = { 0 };
-    ta_ui_window_begin(INTERN("test_window"), &window, TA_UI_AUTOSIZE_W);
-
-    ta_ui_row_begin();
-
-    //ta_ui_next_pad(4, 4, 4, 4);
-    ta_ui_next_size(300, 800);
-    ta_ui_button_begin(0, TA_UI_AUTOSIZE);
-    ta_ui_image(0, tg_game.tex_orange, 0);
-    ta_ui_button_end();
-
-    //ta_ui_next_pad(4, 4, 4, 4);
-    //ta_ui_next_size(300, 300);
-    //ta_ui_button_begin(0, TA_UI_AUTOSIZE);
-    //ta_ui_image(0, tg_game.tex_orange, 0);
-    //ta_ui_button_end();
-    //
-    //ta_ui_row_begin();
-    //
-    //ta_ui_next_pad(4, 4, 4, 4);
-    //ta_ui_next_size(300, 300);
-    //ta_ui_button_begin(0, TA_UI_AUTOSIZE);
-    //ta_ui_image(0, tg_game.tex_orange, 0);
-    //ta_ui_button_end();
-    //
-    //ta_ui_next_pad(4, 4, 4, 4);
-    //ta_ui_next_size(300, 300);
-    //ta_ui_button_begin(0, TA_UI_AUTOSIZE);
-    //ta_ui_image(0, tg_game.tex_orange, 0);
-    //ta_ui_button_end();
-
-    ta_ui_window_end();
-#endif
-
-    //char tex_buf[32] = { 0 };
-    //int len = snprintf(tex_buf, sizeof(tex_buf), "%d, %d",
-    //    ta_mouse_x(), ta_mouse_y());
-    //DLB_ASSERT(len < sizeof(tex_buf));
-    //ta_ui_tooltip(tex_buf, len);
 
     glClear(GL_DEPTH_BUFFER_BIT);
     ta_ui_render();
 }
 
-static void editor_ray_pick()
+void editor_command_close()
 {
+    ta_game_state_set(ta_game_state_prev());
+}
+void editor_command_select()
+{
+    if (!ta_mouse_captured())
+        return;
+
     ta_camera *camera = ta_game_camera();
     ta_ray ray;
     ray.origin = camera->position;
@@ -929,44 +865,48 @@ static void editor_ray_pick()
         ta_editor_select_node(closest_entity);
     }
 }
-
+void editor_command_sim_pause_resume()
+{
+    if (ta_game_sim_running()) {
+        ta_game_sim_pause();
+    } else {
+        ta_game_sim_resume();
+    }
+}
+void editor_command_sim_next()
+{
+    if (ta_game_sim_paused()) {
+        ta_game_sim_step_n_frames(1);
+    }
+}
+void editor_command_sim_next_ten()
+{
+    if (ta_game_sim_paused()) {
+        ta_game_sim_step_n_frames(10);
+    }
+}
+void editor_command_sim_while_held()
+{
+    if (ta_game_sim_paused()) {
+        ta_game_sim_step_n_frames(1);
+    }
+}
 void ta_editor_hotkeys()
 {
-    for (u32 event_type = 0; event_type < EDITOR_EVENT_COUNT; ++event_type) {
-        ta_keybind_update(&editor.keybinds[event_type]);
-    }
+    static void (*commands[EDITOR_COMMAND_COUNT])() = {
+        [EDITOR_COMMAND_CLOSE]            = editor_command_close,
+        [EDITOR_COMMAND_SELECT]           = editor_command_select,
+        [EDITOR_COMMAND_SIM_PAUSE_RESUME] = editor_command_sim_pause_resume,
+        [EDITOR_COMMAND_SIM_NEXT]         = editor_command_sim_next,
+        [EDITOR_COMMAND_SIM_NEXT_10]      = editor_command_sim_next_ten,
+        [EDITOR_COMMAND_SIM_WHILE_HELD]   = editor_command_sim_while_held,
+    };
 
-    static u64 sim_last_changed = 0;  // frame number of last simulate hotkey
-
-    if (ta_keybind_triggered(&editor.keybinds[EDITOR_EVENT_CLOSE])) {
-        ta_game_state_set(ta_game_state_prev());
-    } else if (ta_keybind_triggered(&editor.keybinds[EDITOR_EVENT_SELECT]) &&
-        ta_mouse_captured())
-    {
-        editor_ray_pick();
-    } else if (ta_keybind_triggered(&editor.keybinds[EDITOR_EVENT_SIM_PAUSE])) {
-        u64 frame_num = ta_game_frame_num();
-        if (ta_game_sim_running() && frame_num != sim_last_changed) {
-            ta_game_sim_pause();
-            sim_last_changed = frame_num;
+    for (editor_command_type cmd = 0; cmd < EDITOR_COMMAND_COUNT; ++cmd) {
+        ta_keybind_update(&editor.keybinds[cmd]);
+        if (ta_keybind_triggered(&editor.keybinds[cmd])) {
+            commands[cmd]();
         }
-    } else if (ta_keybind_triggered(&editor.keybinds[EDITOR_EVENT_SIM_RESUME])) {
-        u64 frame_num = ta_game_frame_num();
-        if (!ta_game_sim_running() && frame_num != sim_last_changed) {
-            ta_game_sim_resume();
-        }
-    } else if (ta_keybind_triggered(&editor.keybinds[EDITOR_EVENT_SIM_NEXT])) {
-        u64 frame_num = ta_game_frame_num();
-        if (!ta_game_sim_running() && frame_num != sim_last_changed) {
-            ta_game_sim_step_n_frames(1);
-        }
-    } else if (ta_keybind_triggered(&editor.keybinds[EDITOR_EVENT_SIM_NEXT_10])) {
-        u64 frame_num = ta_game_frame_num();
-        if (!ta_game_sim_running() && frame_num != sim_last_changed) {
-            ta_game_sim_step_n_frames(10);
-        }
-    } else if (ta_keybind_triggered(&editor.keybinds[EDITOR_EVENT_SIM_WHILE_HELD])) {
-        ta_game_sim_step_n_frames(1);
     }
 }
 

@@ -31,15 +31,6 @@ typedef enum ta_event_type {
     INPUT_EVENT_KEY_RELEASE,
     INPUT_EVENT_TEXT_INPUT,
 
-    // Debug events
-    DEBUG_EVENT_MOUSE_LOCK,
-    DEBUG_EVENT_MOUSE_UNLOCK,
-    DEBUG_EVENT_MOUSE_LOCK_TOGGLE,
-    DEBUG_EVENT_TOGGLE_WIREFRAME,
-    DEBUG_EVENT_TOGGLE_NORMALS,
-    DEBUG_EVENT_TOGGLE_BBOX,
-    DEBUG_EVENT_TOGGLE_MESH,
-
     TA_EVENT_COUNT
 } ta_event_type;
 
@@ -98,12 +89,6 @@ typedef struct ta_event {
         ta_event_button_event button;
     } data;
 } ta_event;
-
-typedef struct ta_event_queue {
-    u32 head;  // oldest item
-    u32 count;
-    ta_event *buffer;
-} ta_event_queue;
 
 void ta_event_push(ta_event *event);
 bool ta_event_pop(ta_event *event);

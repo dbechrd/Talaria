@@ -8,6 +8,7 @@
 
 void ta_keybind_init1(ta_keybind *keybind, u32 triggers, ta_key key1)
 {
+    DLB_ASSERT(triggers);
     DLB_ASSERT(key1 < TA_SCANCODE_COUNT);
     keybind->triggers = triggers;
     keybind->keys[0] = key1;
@@ -16,6 +17,7 @@ void ta_keybind_init1(ta_keybind *keybind, u32 triggers, ta_key key1)
 void ta_keybind_init2(ta_keybind *keybind, u32 triggers, ta_key key1,
     ta_key key2)
 {
+    DLB_ASSERT(triggers);
     DLB_ASSERT(key1 < TA_SCANCODE_COUNT);
     DLB_ASSERT(key2 < TA_SCANCODE_COUNT);
     keybind->triggers = triggers;
@@ -26,6 +28,7 @@ void ta_keybind_init2(ta_keybind *keybind, u32 triggers, ta_key key1,
 void ta_keybind_init3(ta_keybind *keybind, u32 triggers, ta_key key1,
     ta_key key2, ta_key key3)
 {
+    DLB_ASSERT(triggers);
     DLB_ASSERT(key1 < TA_SCANCODE_COUNT);
     DLB_ASSERT(key2 < TA_SCANCODE_COUNT);
     DLB_ASSERT(key3 < TA_SCANCODE_COUNT);
@@ -55,7 +58,6 @@ bool ta_keybind_released(ta_keybind *keybind)
 bool ta_keybind_triggered(ta_keybind *keybind)
 {
     bool triggered =
-        (!keybind->triggers) ||
         ((keybind->triggers & TA_KEYBIND_HOLD) && ta_keybind_down(keybind)) ||
         ((keybind->triggers & TA_KEYBIND_PRESS) && ta_keybind_pressed(keybind)) ||
         ((keybind->triggers & TA_KEYBIND_RELEASE) && ta_keybind_released(keybind));

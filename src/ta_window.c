@@ -1,8 +1,6 @@
 #include "ta_window.h"
 #include "ta_log.h"
 #include "ta_event.h"
-#include "ta_game.h"
-#include "ta_scene.h"
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
@@ -155,7 +153,6 @@ void ta_window_event(ta_window *window, ta_event *event)
         case WINDOW_EVENT_RESIZE: {
             window->width = event->data.window_resize.width;
             window->height = event->data.window_resize.height;
-            ta_game_window_resize();
             break;
         }
     }

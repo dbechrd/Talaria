@@ -340,6 +340,7 @@ static void ui_frame_begin(ui_frame_type type, const char *name,
         : ui_default_style[type].pad;
 
     frame->container = ui_container(frame->index);
+    DLB_ASSERT(frame->container->index < dlb_vec_len(ui_frames));
 
     ta_vec2i offset = frame->container->offset;
     if (next_frame_dirty.pos_relative) {
@@ -387,8 +388,6 @@ static ta_ui_scroll_state *ui_scroll_state(ui_frame *frame)
         } case UI_TEXTBOX: {
             scroll = &frame->data.textbox->scroll;
             break;
-        } default: {
-            DLB_ASSERT(!"You need to handle this, bro.");
         }
     }
     return scroll;
@@ -1208,6 +1207,7 @@ void ta_ui_render()
             }
             frame->clip_rect = rect_intersect(frame->clip_rect, f->rect);
             f = f->container;
+            DLB_ASSERT(f->index < dlb_vec_len(ui_frames));
         }
         int inv_y = WINDOW_H - (frame->clip_rect.y + frame->clip_rect.h);
         glScissor(frame->clip_rect.x, inv_y, frame->clip_rect.w, frame->clip_rect.h);

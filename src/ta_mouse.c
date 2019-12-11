@@ -14,7 +14,9 @@ typedef struct ta_mouse {
     int dy;
     int scroll_dx;
     int scroll_dy;
-    bool captured;  // true when capture, *except* drag_float
+    bool captured;  // true when captured, *except* drag_float
+    int capture_x;
+    int capture_y;
     bool dragging;  // captured specifically for drag_float
     int drag_x;     // x position before drag started
     int drag_y;     // y position before drag started
@@ -33,16 +35,27 @@ void ta_mouse_capture_set(bool capture)
 {
     if (mouse.dragging) return;
 
+#if 0
     mouse.captured = capture;
     SDL_SetRelativeMouseMode(mouse.captured);
+#else
+    mouse.captured = capture;
+    if (mouse.captured) {
+        mouse.capture_x = mouse.x;
+        mouse.capture_y = mouse.y;
+        SDL_SetRelativeMouseMode(true);
+    } else {
+        SDL_SetRelativeMouseMode(mouse.captured);
+        ta_mouse_move(mouse.capture_x, mouse.capture_y);
+        mouse.capture_x = 0;
+        mouse.capture_y = 0;
+    }
+#endif
 }
 
 void ta_mouse_capture_toggle()
 {
-    if (mouse.dragging) return;
-
-    TOGGLE(mouse.captured);
-    SDL_SetRelativeMouseMode(mouse.captured);
+    ta_mouse_capture_set(!mouse.captured);
 }
 
 bool ta_mouse_captured()
