@@ -63,9 +63,9 @@ static struct {
 
 typedef struct ui_frame {
     u32 index;
+    u32 container_idx;
     ui_frame_type type;
     const char *name;
-    struct ui_frame *container;
 
     ta_rect margin;
     ta_rect pad;
@@ -240,34 +240,34 @@ static ta_rgba ui_random_color(u32 frame_idx, ui_state_type state)
 }
 #endif
 // returns closest parent container index
-static ui_frame *ui_container(u32 frame_idx)
+static u32 ui_container(u32 frame_idx)
 {
     DLB_ASSERT(dlb_vec_len(ui_frames));
     DLB_ASSERT(frame_idx <= dlb_vec_len(ui_frames));
 
-    // note: UI_ROOT is its own parent
-    if (!frame_idx) {
-        return &ui_frames[0];
-    }
-
-    // TODO: Could just keep track of most recent container? Idk.. this most
-    // likely only runs for 1-2 iterations worst case right now.
     int idx = 0;
-    for (int i = frame_idx - 1; i >= 0; i--) {
-        if (ui_frames[i].internal_flags & TA_UI_CONTAINER &&
-            !(ui_frames[i].internal_flags & TA_UI_CONTAINER_ENDED))
-        {
-            idx = i;
-            break;
+
+    // note: UI_ROOT is its own parent
+    if (frame_idx) {
+        // TODO: Could just keep track of most recent container? Idk.. this most
+        // likely only runs for 1-2 iterations worst case right now.
+        for (int i = frame_idx - 1; i >= 0; i--) {
+            if (ui_frames[i].internal_flags & TA_UI_CONTAINER &&
+                !(ui_frames[i].internal_flags & TA_UI_CONTAINER_ENDED))
+            {
+                idx = i;
+                break;
+            }
         }
     }
-    ui_frame *frame = &ui_frames[idx];
-    DLB_ASSERT(frame);
-    return frame;
+
+    DLB_ASSERT(idx >= 0 && idx < (int)dlb_vec_len(ui_frames));
+    return idx;
 }
-static ui_frame *ui_container_last()
+static inline ui_frame *ui_container_last()
 {
-    return ui_container(dlb_vec_len(ui_frames));
+    u32 container_idx = ui_container(dlb_vec_len(ui_frames));
+    return &ui_frames[container_idx];
 }
 static void ui_pop(u32 frame_idx)
 {
@@ -345,23 +345,23 @@ static void ui_frame_begin(ui_frame_type type, const char *name, void *data,
         ? next_frame_style.pad
         : ui_default_style[type].pad;
 
-    frame->container = ui_container(frame->index);
-    DLB_ASSERT(frame->container->index < dlb_vec_len(ui_frames));
+    frame->container_idx = ui_container(frame->index);
+    ui_frame *container = &ui_frames[frame->container_idx];
 
-    ta_vec2i offset = frame->container->offset;
+    ta_vec2i offset = container->offset;
     if (next_frame_dirty.pos_relative) {
         offset = next_frame_pos_relative;
         frame->skip_flow = next_frame_dirty.pos_relative;
     }
 
-    frame->rect.x = frame->container->rect.x + offset.x + frame->margin.x;
-    frame->rect.y = frame->container->rect.y + offset.y + frame->margin.y;
+    frame->rect.x = container->rect.x + offset.x + frame->margin.x;
+    frame->rect.y = container->rect.y + offset.y + frame->margin.y;
     frame->rect.w = frame->pad.x + frame->pad.w;
     frame->rect.h = frame->pad.y + frame->pad.h;
     frame->content_size.w = frame->rect.w;
     frame->content_size.h = frame->rect.h;
 
-    ta_ui_scroll_state *scroll = ui_scroll_state(frame->container);
+    ta_ui_scroll_state *scroll = ui_scroll_state(container);
     if (scroll) {
         frame->rect.y -= scroll->pixels.y;
     }
@@ -424,13 +424,14 @@ static ui_frame *ui_frame_end(ui_frame_type type)
     // NOTE: Setting offset manually is like position: relative. May want to
     // have a position: absolute that also doesn't affect flow.
     if (!frame->skip_flow) {
+        ui_frame *container = &ui_frames[frame->container_idx];
         int frame_w = frame->margin.x + frame->rect.w + frame->margin.w;
         int frame_h = frame->margin.y + frame->rect.h + frame->margin.h;
-        frame->container->offset.x += frame_w;
-        frame->container->row_height = MAX(frame->container->row_height, frame_h);
+        container->offset.x += frame_w;
+        container->row_height = MAX(container->row_height, frame_h);
 
-        if (!frame->container->row_continue) {
-            ui_row_end(frame->container);
+        if (!container->row_continue) {
+            ui_row_end(container);
         }
     }
 
@@ -1164,11 +1165,12 @@ void ta_ui_render()
         frame->clip_rect = TA_RECT_ZERO;
         frame->clip_rect.w = WINDOW_W;
         frame->clip_rect.h = WINDOW_H;
-        ui_frame *f = frame->container;
-        while(f->index) {
-            frame->clip_rect = rect_intersect(frame->clip_rect, f->rect);
-            f = f->container;
-            DLB_ASSERT(f->index < dlb_vec_len(ui_frames));
+        u32 container_idx = frame->container_idx;
+        while(container_idx) {
+            DLB_ASSERT(container_idx < dlb_vec_len(ui_frames));
+            ui_frame *container = &ui_frames[container_idx];
+            frame->clip_rect = rect_intersect(frame->clip_rect, container->rect);
+            container_idx = container->container_idx;
         }
         int inv_y = WINDOW_H - (frame->clip_rect.y + frame->clip_rect.h);
         glScissor(frame->clip_rect.x, inv_y, frame->clip_rect.w, frame->clip_rect.h);

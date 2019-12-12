@@ -87,11 +87,24 @@ static void event_sdl_poll()
                 break;
             } case SDL_WINDOWEVENT: {
                 switch (sdl_event.window.event) {
-                    case SDL_WINDOWEVENT_RESIZED: {
+                    case SDL_WINDOWEVENT_RESIZED: {        /**< Window has been resized to data1xdata2 */
                         event.type = WINDOW_EVENT_RESIZE;
                         event.data.window_resize.width = sdl_event.window.data1;
                         event.data.window_resize.height = sdl_event.window.data2;
                         break;
+                    } case SDL_WINDOWEVENT_SHOWN: {         /* Window has been shown */
+                    } case SDL_WINDOWEVENT_MOVED: {         /* Window has been moved to data1, data2 */
+                    } case SDL_WINDOWEVENT_SIZE_CHANGED: {  /* The window size has changed, either as a result of an API call or through the system or user changing the window size. */
+                    } case SDL_WINDOWEVENT_MINIMIZED: {     /* Window has been minimized */
+                    } case SDL_WINDOWEVENT_MAXIMIZED: {     /* Window has been maximized */
+                    } case SDL_WINDOWEVENT_RESTORED: {      /* Window has been restored to normal size and position */
+                    } case SDL_WINDOWEVENT_ENTER: {         /* Window has gained mouse focus */
+                    } case SDL_WINDOWEVENT_LEAVE: {         /* Window has lost mouse focus */
+                    } case SDL_WINDOWEVENT_FOCUS_GAINED: {  /* Window has gained keyboard focus */
+                    } case SDL_WINDOWEVENT_FOCUS_LOST: {    /* Window has lost keyboard focus */
+                    } case SDL_WINDOWEVENT_CLOSE: {         /* The window manager requests that the window be closed */
+                    } case SDL_WINDOWEVENT_TAKE_FOCUS: {    /* Window is being offered a focus (should SetWindowInputFocus() on itself or a subwindow, or ignore) */
+                    } case SDL_WINDOWEVENT_HIT_TEST: {      /* Window had a hit test that wasn't SDL_HITTEST_NORMAL. */
                     } default: {
                         handled = false;
                     }

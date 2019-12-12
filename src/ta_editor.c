@@ -660,9 +660,8 @@ static void ui_scene_panel()
 
     ta_ui_row_begin();
     ta_ui_label(0, CSTR("    Volume"));
-    if (tg_audio.muted) {
-        ta_ui_label(0, tex_buf, len);
-    }
+    // TODO: Make this a drag float
+    ta_ui_label(0, tex_buf, len);
 
     ta_ui_panel_end();
 }

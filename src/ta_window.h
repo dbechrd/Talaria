@@ -54,6 +54,7 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen);
 void ta_window_free(ta_window *window);
 int ta_window_width(ta_window *window);
 int ta_window_height(ta_window *window);
+void ta_window_sdl_size(ta_window *window, int *w, int *h);
 float ta_window_aspect(ta_window *window);
 SDL_Window *ta_window_sdl(ta_window *window);
 bool ta_window_vsync(ta_window *window);

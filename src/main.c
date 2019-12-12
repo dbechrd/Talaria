@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     ta_editor_init();
 
     // TODO: Cleanup
-    ta_ui_barchart chart = ta_ui_barchart_init(10, 10, WINDOW_W - 20, 30);
+    ta_ui_barchart chart = ta_ui_barchart_init(10, 10, MAX(0, WINDOW_W - 20), 30);
     UNUSED(chart);
 
     //ta_shader_set_sampler2d(tg_shader_mesh, SYM_U_TEX0, tex_test->gl_id);

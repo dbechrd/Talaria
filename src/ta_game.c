@@ -206,9 +206,6 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // Audio
     //--------------------------------------------------------------------------
-    ta_audio_listener_set_volume(&tg_audio, 1.0f);
-    ta_audio_listener_mute(&tg_audio);
-
     // TODO: Parent this node to the active player
     tg_e_background_music = SYM_ENTITY_BACKGROUND_MUSIC;
     DLB_ASSERT(tg_e_background_music);
@@ -216,6 +213,9 @@ void ta_game_init()
     ta_audio_source *bg_music_src = ta_game_component(RES_COMP_AUDIO_SOURCE,
         tg_e_background_music);
     DLB_ASSERT(bg_music_src);
+
+    ta_audio_listener_set_volume(&tg_audio, 1.0f);
+    ta_audio_listener_mute(&tg_audio);
     ta_audio_source_play_loop(bg_music_src);
 
     //--------------------------------------------------------------------------
@@ -367,19 +367,28 @@ void ta_game_window_resize()
 static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     double ms_frame_delta, u64 sim_step)
 {
+    ta_size window_size = { 0 };
+    ta_window_sdl_size(tg_window, &window_size.w, &window_size.h);
+
+    ta_camera *camera = ta_game_camera();
+
     // Print frame time on the screen
-    char frame_time_buf[256] = { 0 };
-    int len = snprintf(CSTR(frame_time_buf),
+    char frame_info[512] = { 0 };
+    int len = snprintf(CSTR(frame_info),
         "Frame\n"
         "  count: %08llu\n"
-        "  time : %5.2f ms\n"
+        "  time:  %5.2f ms\n"
         "  delta: %5.2f ms (v-sync: %s)\n"
         "Game\n"
-        "  sim step: %08llu\n"
-        "  state   : %s\n"
-        "  prev    : %s\n"
+        "  step:  %08llu\n"
+        "  state: %s\n"
+        "  prev:  %s\n"
         "Audio\n"
-        "  master volume: %.2f%s",
+        "  volume: %.2f%s\n"
+        "Camera\n"
+        "  fov: %.2f\n"
+        "Display\n"
+        "  resolution: %d x %d",
         frame_num,
         ms_frame_time,
         ms_frame_delta,
@@ -388,12 +397,16 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
         game_state_str(ta_game_state_current()),
         game_state_str(ta_game_state_prev()),
         ta_audio_listener_get_volume(&tg_audio),
-        ta_audio_listener_muted(&tg_audio) ? " (muted)" : ""
+        ta_audio_listener_muted(&tg_audio) ? " (muted)" : "",
+        camera->fov,
+        window_size.w,
+        window_size.h
     );
+    DLB_ASSERT(len < sizeof(frame_info));
 
     static ta_rect_uv *frame_time_rects = 0;
     ta_font *font = ta_game_by_name(RES_FONT, tg_font);
-    ta_font_push_text(&frame_time_rects, font, frame_time_buf, len, true, 0, 0, 0, 0);
+    ta_font_push_text(&frame_time_rects, font, CSTR(frame_info), true, 0, 0, 0, 0);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
         ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
             0, true, false);
@@ -404,7 +417,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-    ta_font_render(quads_queue, font, SCREEN_WRAP_X(-310.0f), 0,
+    ta_font_render(quads_queue, font, SCREEN_WRAP_X(-320.0f), 0,
         UI_LAYER_HUD, true, true);
 }
 static void game_draw_hud()

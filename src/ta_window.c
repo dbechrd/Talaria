@@ -29,6 +29,10 @@ static void sdl_gl_attrib(SDL_GLattr attr, int value)
 
 static void ta_init_sdl(ta_window *window, bool fullscreen)
 {
+    // Make sure we don't have just width or just height
+    DLB_ASSERT((window->width && window->height) ||
+              !(window->width || window->height));
+
     ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_Init...\n");
     int sdl_err = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);  // SDL_INIT_TIMER
     if (sdl_err < 0) {
@@ -45,7 +49,7 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
     sdl_gl_attrib(SDL_GL_DEPTH_SIZE, 24);
     sdl_gl_attrib(SDL_GL_STENCIL_SIZE, 8);
     // Anti-aliasing
-    //sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 16);
+    sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 16);
     //sdl_gl_attrib(SDL_GL_MULTISAMPLEBUFFERS, 1);
     //sdl_gl_attrib(SDL_GL_ACCELERATED_VISUAL, 1);
     int context_flags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
@@ -63,13 +67,22 @@ static void ta_init_sdl(ta_window *window, bool fullscreen)
     ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_CreateWindow...\n");
     u32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
     if (fullscreen) {
-        window->sdl_window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED, 0, 0, flags | SDL_WINDOW_FULLSCREEN_DESKTOP);
-    } else if (window->width && window->height) {
-        window->sdl_window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED, window->width, window->height,
-            flags | SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED);
+        SDL_Rect rect = { 0 };
+        SDL_GetDisplayBounds(0, &rect);
+        window->width = rect.w;
+        window->height = rect.h;
+#if 0
+        flags |= SDL_WINDOW_BORDERLESS;
+#else
+        flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+#endif
+    } else {
+        // Allowing resizable doesn't set the resolution properly
+        flags |= SDL_WINDOW_RESIZABLE;
     }
+    window->sdl_window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED, window->width, window->height,
+        flags);
     if (window->sdl_window == NULL) {
         ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_CreateWindow error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_CreateWindow failed");
@@ -118,6 +131,11 @@ int ta_window_width(ta_window *window)
 int ta_window_height(ta_window *window)
 {
     return window->height;
+}
+
+void ta_window_sdl_size(ta_window *window, int *w, int *h)
+{
+    SDL_GetWindowSize(window->sdl_window, w, h);
 }
 
 float ta_window_aspect(ta_window *window)
