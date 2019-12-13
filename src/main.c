@@ -165,7 +165,7 @@ static void debug_nametag(ta_camera *camera)
     ta_font *font = ta_game_by_name(RES_FONT, tg_font);
     static ta_rect_uv *tag_rects = 0;
     ta_rectf tag_rect = ta_font_push_text(&tag_rects, font,
-        CSTR("Player 1\nis da best"), true, 0, 0, 0, 0);
+        CSTR("Player 1\nis da best"), true, 0, 0, 0);
 
     ta_position *player_pos = ta_game_component(RES_COMP_POSITION, tg_e_player_one);
 

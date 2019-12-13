@@ -175,19 +175,22 @@ void ta_event_events()
     if (ta_game_state_current() == TA_GAME_STATE_EDITOR) {
         ta_log_write(&tg_debug_log, SRC_EVENT, "  editor hotkeys...\n");
         ta_editor_hotkeys();
+    } else {
+        ta_log_write(&tg_debug_log, SRC_EVENT, "  game hotkeys...\n");
+        ta_game_hotkeys();
     }
-    ta_log_write(&tg_debug_log, SRC_EVENT, "  game hotkeys...\n");
-    ta_game_hotkeys();
 
     ta_log_write(&tg_debug_log, SRC_EVENT, "  event pop loop...\n");
     ta_event event;
     while (ta_event_pop(&event)) {
-        //ta_log_write(&tg_debug_log, SRC_EVENT, "   window event...\n");
-        ta_window_event(tg_window, &event);
-        if (event.handled) continue;
+        if (ta_game_state_current() == TA_GAME_STATE_EDITOR) {
+            ta_log_write(&tg_debug_log, SRC_EVENT, "   editor event...\n");
+            ta_editor_event(&event);
+            if (event.handled) continue;
+        }
 
-        ta_log_write(&tg_debug_log, SRC_EVENT, "   editor event...\n");
-        ta_editor_event(&event);
+        ta_log_write(&tg_debug_log, SRC_EVENT, "   window event...\n");
+        ta_window_event(tg_window, &event);
         if (event.handled) continue;
 
         ta_log_write(&tg_debug_log, SRC_EVENT, "   game event...\n");

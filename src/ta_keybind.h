@@ -23,8 +23,8 @@ void ta_keybind_init2(ta_keybind *keybind, u32 triggers, ta_key key1,
     ta_key key2);
 void ta_keybind_init3(ta_keybind *keybind, u32 triggers, ta_key key1,
     ta_key key2, ta_key key3);
-bool ta_keybind_down(ta_keybind *keybind);
-bool ta_keybind_pressed(ta_keybind *keybind);
-bool ta_keybind_released(ta_keybind *keybind);
-bool ta_keybind_triggered(ta_keybind *keybind);
+bool ta_keybind_down(const ta_keybind *keybind);
+bool ta_keybind_pressed(const ta_keybind *keybind);
+bool ta_keybind_released(const ta_keybind *keybind);
+bool ta_keybind_triggered(const ta_keybind *keybind);
 void ta_keybind_update(ta_keybind *keybind);

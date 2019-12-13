@@ -69,6 +69,11 @@ typedef struct ta_ui_textbox_state {
     u32 selection_start;
     u32 selection_len;
     //bool multiline;
+    bool clicked;
+    bool double_clicked;
+    ta_vec2i clicked_coords;
+    double last_clicked_ms;
+    bool focus_changed;  // HACK: Don't render cursor first frame, wrong index
     bool focused;   // has focus
     bool submit;    // user requested save
     bool cancel;    // user requested discard
@@ -81,7 +86,7 @@ typedef struct ta_ui_textbox_state {
 #define TA_UI_AUTOSIZE_H      0x00000002  // auto-grow container to fit contents
 #define TA_UI_AUTOSIZE        (TA_UI_AUTOSIZE_W | TA_UI_AUTOSIZE_H)
 
-void ta_ui_init(struct ta_font *font);
+void ta_ui_init(struct ta_font *font, ta_ui_textbox_state **active_textbox);
 void ta_ui_next_margin(int left, int top, int right, int bottom);
 void ta_ui_next_pad(int left, int top, int right, int bottom);
 void ta_ui_next_offset(int x, int y);

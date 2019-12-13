@@ -58,7 +58,7 @@ void ta_editor_init()
 {
     ta_font *font = ta_game_by_name(RES_FONT, tg_font);
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing UI styles\n");
-    ta_ui_init(font);
+    ta_ui_init(font, &editor.active_textbox);
 
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Loading editor scene\n");
     ta_scene_load_file(&editor.scene, "data/scene/editor.dml");
@@ -254,28 +254,31 @@ static void ui_node_panel()
     if (pos_values) {
         // TODO: Refactor this into ta_ui_vec3
         char x_str[16] = { 0 };
-        int x_len = snprintf(x_str, sizeof(x_str), "%3.4f", pos_values->x);
-        DLB_ASSERT(x_len < sizeof(x_str));
+        int x_len = snprintf(CSTR(x_str), "%3.4f", pos_values->x);
         ta_ui_label(0, CSTR("x:"));
         static ta_ui_textbox_state entry_x = { 0 };
         ta_ui_textbox(0, x_str, x_len, &entry_x, 0);
-
-        if (entry_x.focused) {
-            editor.active_textbox = &entry_x;
-        } else if (editor.active_textbox == &entry_x) {
-            editor.active_textbox = 0;
+        if (!entry_x.submit && entry_x.buffer) {
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.8f, 0.0f, 1.0f);
+            if (ta_ui_label(0, CSTR("Save"))) {
+                entry_x.submit = true;
+            }
+        }
+        if (entry_x.submit) {
+            DLB_ASSERT(entry_x.buffer);
+            pos_values->x = parse_float(entry_x.buffer);
+            dlb_vec_free(entry_x.buffer);
+            entry_x.submit = false;
         }
 
         char y_str[16] = { 0 };
-        int y_len = snprintf(y_str, sizeof(y_str), "%3.4f", pos_values->y);
-        DLB_ASSERT(y_len < sizeof(y_str));
+        int y_len = snprintf(CSTR(y_str), "%3.4f", pos_values->y);
         ta_ui_label(0, CSTR("y:"));
         static ta_ui_textbox_state entry_y = { 0 };
         ta_ui_textbox(0, y_str, y_len, &entry_y, 0);
 
         char z_str[16] = { 0 };
-        int z_len = snprintf(z_str, sizeof(z_str), "%3.4f", pos_values->z);
-        DLB_ASSERT(z_len < sizeof(z_str));
+        int z_len = snprintf(CSTR(z_str), "%3.4f", pos_values->z);
         ta_ui_label(0, CSTR("z:"));
         static ta_ui_textbox_state entry_z = { 0 };
         ta_ui_textbox(0, z_str, z_len, &entry_z, 0);
@@ -562,12 +565,27 @@ static void ui_textbox_panel()
     static ta_ui_panel_state textbox_panel = { 0 };
     ta_ui_panel_begin(0, &textbox_panel, TA_UI_AUTOSIZE);
 
-    static ta_ui_textbox_state textbox = { 0 };
     ta_ui_row_begin();
     ta_ui_label(0, CSTR("Text:"));
     ta_ui_next_size(300, 0);
     //ta_ui_next_margin(4, 0, 0, 2);
-    ta_ui_textbox(0, CSTR("This is a test."), &textbox, 0);
+    static ta_ui_textbox_state textbox = { 0 };
+    ta_ui_textbox(0, CSTR("TEST"), &textbox, 0);
+    if (textbox.focused) {
+        editor.active_textbox = &textbox;
+    } else if (editor.active_textbox == &textbox) {
+        editor.active_textbox = 0;
+    }
+    ta_ui_row_end();
+
+    char tb_buffer[20] = { 0 };
+    snprintf(CSTR(tb_buffer), "Length: %d", dlb_vec_len(textbox.buffer));
+    ta_ui_label(0, CSTR(tb_buffer));
+
+    char tb_cursor[20] = { 0 };
+    snprintf(CSTR(tb_cursor), "Cursor: %d", textbox.cursor);
+    ta_ui_label(0, CSTR(tb_cursor));
+
     ta_ui_panel_end();
 }
 static void ui_scene_panel()
@@ -737,7 +755,7 @@ static void ui_statusbar()
         static ta_rect_uv *status_rects = 0;
         ta_font *font = ta_game_by_name(RES_FONT, tg_font);
         ta_rectf status_rect = ta_font_push_text(&status_rects, font,
-            SYM(editor.status_msg), true, 0, 0, 0, 0);
+            SYM(editor.status_msg), true, 0, 0, 0);
         dlb_vec_each(ta_rect_uv *, rect, status_rects) {
             ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
                 true, false);
@@ -890,6 +908,10 @@ void editor_command_sim_while_held()
 }
 void ta_editor_hotkeys()
 {
+    // Don't trigger any hotkeys while a textbox is focused
+    if (editor.active_textbox)
+        return;
+
     static void (*commands[EDITOR_COMMAND_COUNT])() = {
         [EDITOR_COMMAND_CLOSE]            = editor_command_close,
         [EDITOR_COMMAND_SELECT]           = editor_command_select,
@@ -905,6 +927,9 @@ void ta_editor_hotkeys()
             commands[cmd]();
         }
     }
+
+    // Allow game hotkeys to be triggered in editor mode as well
+    ta_game_hotkeys();
 }
 
 static bool ta_editor_textbox_event(ta_event *event)
@@ -918,6 +943,9 @@ static bool ta_editor_textbox_event(ta_event *event)
             break;
         } case INPUT_EVENT_KEY_PRESS: {
             // Consume all unhandled keystrokes when text editor is active
+            //if (event->data.key_press.scancode == SDL_SCANCODE_RETURN) {
+            //    ta_ui_textbox_insert(editor.active_textbox, '\n');
+            //}
             handled = true;
             break;
         } case INPUT_EVENT_KEY_RELEASE: {

@@ -163,11 +163,8 @@ static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
 
 ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
     u32 text_len, bool screen, u32 *cursor_idx, ta_vec2 *cursor_offset,
-    int mouse_x, int mouse_y)
+    const ta_vec2i *clicked_coords)
 {
-    UNUSED(mouse_x);
-    UNUSED(mouse_y);
-
     DLB_ASSERT(rects);
     if (text_len) {
         dlb_vec_reserve(*rects, text_len);
@@ -179,28 +176,31 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
         return bounds;
     }
 
-    float cur_x = bounds.x;
-    float cur_y = bounds.y + font->ascent;
+    ta_vec2 position = { 0 };
+    position.x = 0.0f;
+    position.y = (float)font->ascent;
+    ta_vec2 cursor = position;
     bool cursor_set = false;
 
     // Loop until i == text_len or, if text_len is 0, we hit a nil character
-    for (u32 i = 0; ((text_len) ? i < text_len : text[i]); i++) {
-        // Save cursor position
-        if (cursor_offset && i == *cursor_idx) {
-            cursor_offset->x = cur_x;
-            cursor_offset->y = cur_y - font->ascent;
+    u32 i = 0;
+    for (; ((text_len) ? i < text_len : text[i]); i++) {
+        if (!cursor_set && !clicked_coords && cursor_idx && *cursor_idx == i) {
+            cursor = position;
             cursor_set = true;
         }
 
         if (text[i] == '\n') {
             //DLB_ASSERT(y_max <= font->pixel_height);
-            cur_x = bounds.x;
-            cur_y += font->line_height;
+            position.x = bounds.x;
+            position.y += font->line_height;
             bounds.h += font->line_height;
         } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
+            ta_vec2 baked_pos = position;
             ta_rect_uv *rect_uv = dlb_vec_alloc(*rects);
             ta_baked_quad(font->chars, font->tex_w, font->tex_h,
-                text[i] - 32, &cur_x, &cur_y, rect_uv);
+                text[i] - 32, &baked_pos.x, &baked_pos.y, rect_uv);
+            bounds.w = MAX(bounds.w, baked_pos.x - bounds.x);
 
             // HACK: Flip world text upside down.. this is super gross,
             //       surely there's a better way?
@@ -211,14 +211,46 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
                 rect_uv->uv1.v = v;
             }
 
-            bounds.w = MAX(bounds.w, cur_x - bounds.x);
+            if (!cursor_set && clicked_coords && screen) {
+                float x_advance = baked_pos.x - position.x;
+                float y_top = position.y - font->ascent;
+
+                // Check if user clicked on this character
+                if (clicked_coords->x >= position.x &&
+                    clicked_coords->x <= position.x + x_advance &&
+                    clicked_coords->y >= y_top &&
+                    clicked_coords->y <= y_top + font->line_height)
+                {
+                    // If click on left half of char rect, use previous position
+                    if (clicked_coords->x < position.x + x_advance/2) {
+                        cursor = position;
+                        if (cursor_idx) {
+                            *cursor_idx = i;
+                        }
+                    } else {
+                        cursor = baked_pos;
+                        if (cursor_idx) {
+                            *cursor_idx = i + 1;
+                        }
+                    }
+                    cursor_set = true;
+                }
+            }
+
+            position = baked_pos;
         }
     }
     bounds.h += font->line_height;
 
-    if (cursor_offset && !cursor_set) {
-        cursor_offset->x = cur_x;
-        cursor_offset->y = cur_y - font->ascent;
+    if (cursor_offset) {
+        if (!cursor_set) {
+            cursor = position;
+            if (cursor_idx) {
+                *cursor_idx = i;
+            }
+        }
+        cursor_offset->x = cursor.x;
+        cursor_offset->y = cursor.y - font->ascent;
     }
     return bounds;
 }

@@ -406,7 +406,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
 
     static ta_rect_uv *frame_time_rects = 0;
     ta_font *font = ta_game_by_name(RES_FONT, tg_font);
-    ta_font_push_text(&frame_time_rects, font, CSTR(frame_info), true, 0, 0, 0, 0);
+    ta_font_push_text(&frame_time_rects, font, CSTR(frame_info), true, 0, 0, 0);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
         ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
             0, true, false);

@@ -38,24 +38,24 @@ void ta_keybind_init3(ta_keybind *keybind, u32 triggers, ta_key key1,
     keybind->keys[2] = key3;
 }
 
-bool ta_keybind_down(ta_keybind *keybind)
+bool ta_keybind_down(const ta_keybind *keybind)
 {
     return keybind->key_state.down;
 }
 
-bool ta_keybind_pressed(ta_keybind *keybind)
+bool ta_keybind_pressed(const ta_keybind *keybind)
 {
     // TODO: Make "pressed" a state that lasts until end of frame, then is
     // manually cleared in case we get a DOWN and an UP event in the same frame.
     return keybind->key_state.down && keybind->key_state.changed;
 }
 
-bool ta_keybind_released(ta_keybind *keybind)
+bool ta_keybind_released(const ta_keybind *keybind)
 {
     return !keybind->key_state.down && keybind->key_state.changed;
 }
 
-bool ta_keybind_triggered(ta_keybind *keybind)
+bool ta_keybind_triggered(const ta_keybind *keybind)
 {
     bool triggered =
         ((keybind->triggers & TA_KEYBIND_HOLD) && ta_keybind_down(keybind)) ||
