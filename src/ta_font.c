@@ -23,6 +23,9 @@ void ta_font_init(ta_font *font)
     }
     if (font->path) {
         ta_font_load_path(font, font->path);
+        if (!font->name) {
+            font->name = font->path;
+        }
     }
 }
 
@@ -48,7 +51,18 @@ void ta_font_load_path(ta_font *font, const char *path)
     font->chars = dlb_calloc(num_chars, sizeof(*font->chars));
     DLB_ASSERT(font->chars);
 
+    //float scales[32] = { 0 };
+    //for (int i = 0; i < ARRAY_COUNT(scales); i++) {
+    //    scales[i] = stbtt_ScaleForPixelHeight(&font->font_info, (float)i);
+    //}
+
     font->scale = stbtt_ScaleForPixelHeight(&font->font_info, font->pixel_height);
+    //font->scale = font->pixel_height / 1000.0f;
+    //font->scale = 12.0f / 1000.0f;
+    //
+    //int metrics[3] = { 0 };
+    //stbtt_GetFontVMetrics(&font->font_info, &metrics[0], &metrics[2], &metrics[2]);
+    //font->scale = font->pixel_height / (metrics[0] - metrics[1]);
 
     int x = 1;
     int y = 1;

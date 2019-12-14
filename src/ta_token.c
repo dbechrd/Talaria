@@ -234,7 +234,7 @@ token *tokenize(ta_file *f)
     while (token_read(f, &tokens)->type != TOKEN_EOF) {}
     return tokens;
 }
-static void tokens_print(FILE *f, token *tokens)
+void tokens_print(FILE *f, token *tokens)
 {
     dlb_vec_each(token *, tok, tokens) {
         switch (tok->type) {
@@ -301,7 +301,7 @@ static void tokens_print(FILE *f, token *tokens)
     fprintf(f, "\n");
     fflush(f);
 }
-static void tokens_print_debug(FILE *f, token *tokens)
+void tokens_print_debug(FILE *f, token *tokens)
 {
     dlb_vec_each(token *, tok, tokens) {
         fprintf(f, "%-16s", token_type_str(tok->type));
@@ -486,6 +486,9 @@ void tokens_parse(ta_scene *scene, token *tokens)
                         }
                     }
                     DLB_ASSERT(field->type);
+                    if (field->type == TYP_FONT) {
+                        DLB_ASSERT(1);
+                    }
                     stack[sp].type = field->type;
                     stack[sp].array_len = field->array_len;
                     stack[sp].array_elem = 0;
@@ -549,7 +552,6 @@ void tokens_parse(ta_scene *scene, token *tokens)
                 if (expect_array_start || (stack[sp].type != ATOM_UINT8 &&
                     stack[sp].type != ATOM_INT &&
                     stack[sp].type != ATOM_UINT &&
-                    stack[sp].type != ATOM_FLOAT &&
                     stack[sp].type != ATOM_ENUM))
                 {
                     BAD_TOKEN();

@@ -124,7 +124,7 @@ void ta_scene_load(ta_scene *scene, ta_file *file)
     token *tokens = tokenize(file);
 
     //tokens_print(tg_debug_log->stream, tokens);
-    //tokens_print_debug(tg_debug_log->stream, tokens);
+    tokens_print_debug(tg_debug_log.stream, tokens);
     tokens_parse(scene, tokens);
     dlb_vec_free(tokens);
 

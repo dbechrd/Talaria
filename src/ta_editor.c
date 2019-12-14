@@ -570,7 +570,7 @@ static void ui_textbox_panel()
     ta_ui_next_size(300, 0);
     //ta_ui_next_margin(4, 0, 0, 2);
     static ta_ui_textbox_state textbox = { 0 };
-    ta_ui_textbox(0, CSTR("TEST"), &textbox, 0);
+    ta_ui_textbox(0, CSTR("The quick brown fox jumps over the lazy dog. 1234567890 |||"), &textbox, 0);
     if (textbox.focused) {
         editor.active_textbox = &textbox;
     } else if (editor.active_textbox == &textbox) {
@@ -748,29 +748,6 @@ static void ui_editor_sidebar()
         }
     }
 }
-// TODO: Move this to ta_ui_statusbar
-static void ui_statusbar()
-{
-    if (editor.status_msg) {
-        static ta_rect_uv *status_rects = 0;
-        ta_font *font = ta_game_by_name(RES_FONT, tg_font);
-        ta_rectf status_rect = ta_font_push_text(&status_rects, font,
-            SYM(editor.status_msg), true, 0, 0, 0);
-        dlb_vec_each(ta_rect_uv *, rect, status_rects) {
-            ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
-                true, false);
-        }
-        dlb_vec_zero(status_rects);
-
-        int status_halfw = WINDOW_W / 2 - (int)status_rect.w / 2;
-        const int status_pad_bottom = 20;
-        ta_font_render(quads_queue, font, (float)status_halfw,
-            (float)(WINDOW_H - (font->ascent + status_pad_bottom)),
-            UI_LAYER_TIP, true, true);
-
-        editor.status_msg = 0;
-    }
-}
 void ta_editor_draw(float alpha)
 {
     // TODO: Render as yellow wireframe
@@ -813,6 +790,44 @@ void ta_editor_draw(float alpha)
     static ta_ui_window_state window = { 0 };
     ta_ui_window_begin(INTERN("test_window"), &window, TA_UI_AUTOSIZE);
     ui_editor_sidebar();
+
+#if 1
+    // Font selector (for trying a lot of fonts quickly)
+    ta_ui_row_begin();
+    static int cur_font_idx = 0;
+    ta_font *fonts = ta_game_resource_pool(RES_FONT);
+    int fonts_count = dlb_vec_len(fonts);
+    cur_font_idx = MIN(cur_font_idx, fonts_count - 1);
+
+    ta_font *font_current = &fonts[cur_font_idx];
+    ta_ui_set_font(font_current);
+    ta_ui_row_begin();
+    ta_ui_label(0, CSTR("Font:"));
+    ta_ui_label(0, SYM(font_current->name));
+
+    ta_ui_row_begin();
+    ta_ui_next_size(160, 34);
+    ta_ui_button_begin(0, 0);
+    ta_ui_label(0, CSTR("Prev Font"));
+    if (ta_ui_button_end()) {
+        if (cur_font_idx) {
+            cur_font_idx--;
+        } else {
+            cur_font_idx = fonts_count - 1;
+        }
+    }
+    ta_ui_next_size(160, 34);
+    ta_ui_button_begin(0, 0);
+    ta_ui_label(0, CSTR("Next Font"));
+    if (ta_ui_button_end()) {
+        if (cur_font_idx < fonts_count - 1) {
+            cur_font_idx++;
+        } else {
+            cur_font_idx = 0;
+        }
+    }
+#endif
+
     ta_ui_window_end();
 
     glClear(GL_DEPTH_BUFFER_BIT);

@@ -87,6 +87,8 @@ typedef struct ta_ui_textbox_state {
 #define TA_UI_AUTOSIZE        (TA_UI_AUTOSIZE_W | TA_UI_AUTOSIZE_H)
 
 void ta_ui_init(struct ta_font *font, ta_ui_textbox_state **active_textbox);
+void ta_ui_set_font(struct ta_font *font);
+
 void ta_ui_next_margin(int left, int top, int right, int bottom);
 void ta_ui_next_pad(int left, int top, int right, int bottom);
 void ta_ui_next_offset(int x, int y);
@@ -94,8 +96,8 @@ void ta_ui_next_size(int w, int h);
 void ta_ui_next_invisible();
 void ta_ui_next_bg_color(ui_state_type state, float r, float g, float b, float a);
 void ta_ui_next_fg_color(ui_state_type state, float r, float g, float b, float a);
-ta_ui_state ta_ui_last_frame_state();
 
+ta_ui_state ta_ui_last_frame_state();
 void ta_ui_row_begin();
 void ta_ui_row_end();
 void ta_ui_spacer(int w, int h);

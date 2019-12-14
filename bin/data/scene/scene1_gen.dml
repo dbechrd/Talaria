@@ -587,11 +587,8 @@ ta_audio_buffer:
 #-------------------------------------------------------------------------------
 # TYP_FONT
 #-------------------------------------------------------------------------------
-ta_font:
-  name: "consola"
-  path: "data/font/consola.ttf"
-  pixel_height: 0x41800000 (16.000000)
-  shader: "text"
+ta_font: { name: "ubuntumono", path: "data/font/UbuntuMono-Regular.ttf", pixel_height: 18.0, shader: "text" }
+ta_font: { name: "lexenddeca", path: "data/font/LexendDeca-Regular.ttf", pixel_height: 18.0, shader: "text" }
 #-------------------------------------------------------------------------------
 # TYP_MATERIAL
 #-------------------------------------------------------------------------------

@@ -40,3 +40,5 @@ typedef struct token {
 
 token *tokenize(ta_file *f);
 void tokens_parse(struct ta_scene *scene, token *tokens);
+void tokens_print(FILE *f, token *tokens);
+void tokens_print_debug(FILE *f, token *tokens);

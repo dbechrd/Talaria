@@ -221,7 +221,7 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // Textures
     //--------------------------------------------------------------------------
-    tg_font            = INTERN("consola");
+    tg_font            = INTERN("ubuntumono");
     tg_tex_orange      = INTERN("test_diff");
     tg_tex_red         = INTERN("test_mrao");
     tg_tex_audio_icon  = INTERN("audio_icon");

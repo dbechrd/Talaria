@@ -230,6 +230,11 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT],       TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL],       TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
 }
+void ta_ui_set_font(ta_font *font)
+{
+    DLB_ASSERT(font);
+    ui_font = font;
+}
 
 #if 1
 static ta_rgba ui_random_color(u32 frame_idx, ui_state_type state)
@@ -560,7 +565,6 @@ ta_ui_state ta_ui_last_frame_state()
     }
     return state;
 }
-
 static void ui_row_end(ui_frame *container)
 {
     // Update content size
@@ -1044,9 +1048,9 @@ void ta_ui_tooltip(const char *text, u32 text_len)
     float offset_y = MOUSE_Y + 20.0f;
 
     ta_rect_uv tooltip_bg = { 0 };
-    tooltip_bg.rect.x = offset_x - 10.0f;
+    tooltip_bg.rect.x = offset_x - 4.0f;
     tooltip_bg.rect.y = offset_y;
-    tooltip_bg.rect.w = text_rect.w + 20.0f;
+    tooltip_bg.rect.w = text_rect.w + 4.0f;
     tooltip_bg.rect.h = text_rect.h;
     ta_primitive_push_rect_uv(&tooltip_bg_queue, tooltip_bg, TA_COLOR_GRAY3A,
         UI_LAYER_TIP_BG, true, false);
@@ -1077,14 +1081,12 @@ void ta_ui_tooltip_end(const char *name)
 // rects going into tooltip_bg queue? Might want a statusbar but NotLikeThis.
 void ta_ui_statusbar()
 {
-    // TODO: Move this font to editor.dml or font.dml
-    ta_font *font = ta_game_by_name(RES_FONT, tg_font);
     const float statusbar_pad = 4;
     ta_rect_uv status_bg = { 0 };
     status_bg.rect.x = statusbar_pad;
-    status_bg.rect.y = -(float)(font->line_height + statusbar_pad);
+    status_bg.rect.y = -(float)(ui_font->line_height + statusbar_pad);
     status_bg.rect.w = (float)(WINDOW_W - statusbar_pad * 2);
-    status_bg.rect.h = (float)font->line_height;
+    status_bg.rect.h = (float)ui_font->line_height;
     ta_primitive_push_rect_uv(&tooltip_bg_queue, status_bg, TA_COLOR_GRAY3A,
         UI_LAYER_TIP_BG, true, false);
 }
@@ -1267,6 +1269,36 @@ static void ui_render_scrollbars(ui_frame *frame)
         }
     }
 }
+static void ui_render_tooltips()
+{
+    ta_primitive_render_quads(tooltip_bg_queue, tg_shader_quads, true, true);
+    ta_font_render(tooltip_fg_queue, ui_font, 0, 0, UI_LAYER_TIP, true, true);
+}
+#if 0
+// TODO: Move this to ta_ui_statusbar
+static void ta_ui_render_statusbar()
+{
+    if (editor.status_msg) {
+        static ta_rect_uv *status_rects = 0;
+        ta_font *font = ta_game_by_name(RES_FONT, tg_font);
+        ta_rectf status_rect = ta_font_push_text(&status_rects, font,
+            SYM(editor.status_msg), true, 0, 0, 0);
+        dlb_vec_each(ta_rect_uv *, rect, status_rects) {
+            ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
+                true, false);
+        }
+        dlb_vec_zero(status_rects);
+
+        int status_halfw = WINDOW_W / 2 - (int)status_rect.w / 2;
+        const int status_pad_bottom = 20;
+        ta_font_render(quads_queue, font, (float)status_halfw,
+            (float)(WINDOW_H - (font->ascent + status_pad_bottom)),
+            UI_LAYER_TIP, true, true);
+
+        editor.status_msg = 0;
+    }
+}
+#endif
 void ta_ui_render()
 {
     static void (*ui_renderers[])(ui_frame *frame) = {
@@ -1321,9 +1353,7 @@ void ta_ui_render()
 
     glDisable(GL_SCISSOR_TEST);
 
-    // Render tooltips
-    ta_primitive_render_quads(tooltip_bg_queue, tg_shader_quads, true, true);
-    ta_font_render(tooltip_fg_queue, ui_font, 0, 0, UI_LAYER_TIP, true, true);
+    ui_render_tooltips();
 
     last_frame_state = 0;
     dlb_vec_zero(ui_frames);
