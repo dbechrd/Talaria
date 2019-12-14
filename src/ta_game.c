@@ -387,7 +387,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
         "  volume: %.2f%s\n"
         "Camera\n"
         "  fov: %.2f\n"
-        "Display\n"
+        "Window\n"
         "  resolution: %d x %d",
         frame_num,
         ms_frame_time,

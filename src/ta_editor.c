@@ -260,7 +260,7 @@ static void ui_node_panel()
         ta_ui_textbox(0, x_str, x_len, &entry_x, 0);
         if (!entry_x.submit && entry_x.buffer) {
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.8f, 0.0f, 1.0f);
-            if (ta_ui_label(0, CSTR("Save"))) {
+            if (ta_ui_button(0, CSTR("Save"))) {
                 entry_x.submit = true;
             }
         }
@@ -352,9 +352,9 @@ static void ui_node_panel()
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, CSTR("Enabled:"));
         if (light->disabled) {
-            if (ta_ui_label(0, CSTR("False"))) light->disabled = false;
+            if (ta_ui_button(0, CSTR("False"))) light->disabled = false;
         } else {
-            if (ta_ui_label(0, CSTR("True"))) light->disabled = true;
+            if (ta_ui_button(0, CSTR("True"))) light->disabled = true;
         }
 
         ta_ui_row_begin();
@@ -362,9 +362,9 @@ static void ui_node_panel()
         ta_ui_label(0, CSTR("Shadow Map:"));
         static bool show_shadow_map = true;
         if (show_shadow_map) {
-            if (ta_ui_label(0, CSTR("Hide"))) show_shadow_map = false;
+            if (ta_ui_button(0, CSTR("Hide"))) show_shadow_map = false;
         } else {
-            if (ta_ui_label(0, CSTR("Show"))) show_shadow_map = true;
+            if (ta_ui_button(0, CSTR("Show"))) show_shadow_map = true;
         }
 
         if (show_shadow_map) {
@@ -439,10 +439,9 @@ static void ui_audio_panel()
         bool active = audio_buffer->name == audio_playing_name;
         //ta_ui_next_size(36, 36);
         //ta_ui_next_margin(0, 0, 2, 0);
-        ta_ui_button_toggle_begin(0, TA_UI_AUTOSIZE);
+        ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
         ta_ui_image(0, ta_game_by_name(RES_TEXTURE, tg_tex_audio_icon), 0);
-        ta_ui_button_toggle_end(&active);
-        if (ta_ui_last_frame_state().pressed) {
+        if (ta_ui_toggle_button_end(&active)) {
             audio_request_name = audio_buffer->name;
         }
         if (ta_ui_last_frame_state().hover) {
@@ -475,9 +474,9 @@ static void ui_material_panel()
     dlb_vec_each(ta_material *, material, ta_game_resource_pool(RES_MATERIAL)) {
         ta_ui_next_size(68, 68);
         //ta_ui_next_margin(0, 0, 2, 0);
-        //ta_ui_next_pad(2, 2, 2, 2);
+        ta_ui_next_pad(4, 4, 4, 4);
         //ta_ui_next_size(material->width, material->height);
-        if (ta_ui_button(0)) {
+        if (ta_ui_button(0, SYM(material->name))) {
             const char *entity_name = ta_editor_selected_entity();
             if (entity_name) {
                 ta_model *model = ta_game_component_try(RES_COMP_MODEL,
@@ -526,7 +525,7 @@ static void ui_texture_panel()
         }
         ta_ui_next_size(68, 68);
         //ta_ui_next_margin(0, 0, 2, 0);
-        ta_ui_next_pad(2, 2, 2, 2);
+        ta_ui_next_pad(4, 4, 4, 4);
         //ta_ui_next_size(texture->width, texture->height);
         ta_ui_button_begin(0, 0);
         ta_ui_next_size(68, 68);
@@ -546,8 +545,8 @@ static void ui_texture_panel()
         if (ta_ui_last_frame_state().hover) {
             char tex_buf[256] = { 0 };
             int len = snprintf(tex_buf, sizeof(tex_buf),
-                "name : %s\n"
-                "path : %s\n"
+                "name: %s\n"
+                "path: %s\n"
                 "glid: %d",
                 texture->name,
                 texture->path,
@@ -593,6 +592,93 @@ static void ui_scene_panel()
     static ta_ui_panel_state scene_panel = { 0 };
     ta_ui_panel_begin(0, &scene_panel, TA_UI_AUTOSIZE);
 
+#if 1
+    ta_ui_row_begin();
+
+    static ta_ui_panel_state label_panel = { 0 };
+    ta_ui_panel_begin(0, &label_panel, TA_UI_AUTOSIZE);
+    ta_ui_label(0, CSTR("Scene"));
+    ta_ui_label(0, CSTR("Simulation"));
+    ta_ui_label(0, CSTR("V-Sync"));
+    ta_ui_label(0, CSTR("Audio"));
+    ta_ui_label(0, CSTR("Volume"));
+    ta_ui_panel_end();
+
+    static ta_ui_panel_state button_panel = { 0 };
+    ta_ui_panel_begin(0, &button_panel, TA_UI_AUTOSIZE);
+
+    ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+    ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+    if (ta_ui_button(0, CSTR("Save"))) {
+        ta_game_save();
+    }
+
+    ta_ui_row_begin();
+    if (ta_game_sim_running()) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Running"))) {
+            ta_game_sim_pause();
+        }
+    } else {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Paused"))) {
+            ta_game_sim_resume();
+        }
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.4f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Next (1)"))) {
+            ta_game_sim_step_n_frames(1);
+        }
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.4f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Next (10)"))) {
+            ta_game_sim_step_n_frames(10);
+        }
+    }
+
+    ta_ui_row_begin();
+    if (ta_window_vsync(tg_window)) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("On"))) {
+            ta_window_set_vsync(tg_window, false);
+        }
+    } else {
+
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Off"))) {
+            ta_window_set_vsync(tg_window, true);
+        }
+    }
+
+    ta_ui_row_begin();
+    if (tg_audio.muted) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Unmute"))) {
+            ta_audio_listener_unmute(&tg_audio);
+        }
+    } else {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Mute"))) {
+            ta_audio_listener_mute(&tg_audio);
+        }
+    }
+
+    ta_ui_row_begin();
+    // TODO: Make this a drag float
+    char tex_buf[16] = { 0 };
+    int len = snprintf(tex_buf, sizeof(tex_buf), "%.2f",
+        ta_audio_listener_get_volume(&tg_audio));
+    DLB_ASSERT(len < sizeof(tex_buf));
+    ta_ui_label(0, tex_buf, len);
+
+    ta_ui_panel_end();
+#else
     int col1_w = 90;
     int col2_w = 70;
 
@@ -680,6 +766,7 @@ static void ui_scene_panel()
     ta_ui_label(0, CSTR("    Volume"));
     // TODO: Make this a drag float
     ta_ui_label(0, tex_buf, len);
+#endif
 
     ta_ui_panel_end();
 }
@@ -714,7 +801,7 @@ static void ui_editor_sidebar()
         ta_ui_next_size(50, 50);
         //ta_ui_next_margin(0, 0, 0, 2);
         bool active = (i == category_selected);
-        ta_ui_button_toggle(category_names[i], &active);
+        ta_ui_toggle_button(category_names[i], &active);
         if (active) {
             category_selected = i;
         }
@@ -791,7 +878,7 @@ void ta_editor_draw(float alpha)
     ta_ui_window_begin(INTERN("test_window"), &window, TA_UI_AUTOSIZE);
     ui_editor_sidebar();
 
-#if 1
+#if 0
     // Font selector (for trying a lot of fonts quickly)
     ta_ui_row_begin();
     static int cur_font_idx = 0;
@@ -806,7 +893,7 @@ void ta_editor_draw(float alpha)
     ta_ui_label(0, SYM(font_current->name));
 
     ta_ui_row_begin();
-    ta_ui_next_size(160, 34);
+    ta_ui_next_size(120, 28);
     ta_ui_button_begin(0, 0);
     ta_ui_label(0, CSTR("Prev Font"));
     if (ta_ui_button_end()) {
@@ -816,7 +903,7 @@ void ta_editor_draw(float alpha)
             cur_font_idx = fonts_count - 1;
         }
     }
-    ta_ui_next_size(160, 34);
+    ta_ui_next_size(120, 28);
     ta_ui_button_begin(0, 0);
     ta_ui_label(0, CSTR("Next Font"));
     if (ta_ui_button_end()) {

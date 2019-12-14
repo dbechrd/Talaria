@@ -18,11 +18,9 @@
 #include "misc/gl3w.h"
 #include "SDL/SDL_keyboard.h"
 
-#define UI_DEBUG_MARGIN         1
-#define UI_DEBUG_PAD            1
 #define UI_DEBUG_PANEL          0
 #define UI_DEBUG_NO_TEXTURES    0
-#define UI_DEBUG_RANDOM_COLORS  1
+#define UI_DEBUG_RANDOM_COLORS  0
 
 #define WIDGET_PAD              1
 #define SCROLL_WIDGET_THICKNESS 8
@@ -65,8 +63,8 @@ typedef struct ui_frame {
 
     ta_rect margin;
     ta_rect pad;
-    ta_rgba bg_color;
-    ta_rgba fg_color;
+    ta_rgba bg_color[UI_STATE_COUNT];
+    ta_rgba fg_color[UI_STATE_COUNT];
     ta_rect rect;           // position & size (-margin, +pad)
     ta_vec2i offset;        // dynamic offset for layout
     bool skip_flow;         // if true, doesn't affect flow of parent container
@@ -83,6 +81,7 @@ typedef struct ui_frame {
 
     // Consolidate this and all bools into a single flags bitmap
     ta_ui_state state;
+    ui_state_type state_type;
 
     // TA_UI_INVISIBLE
     u32 internal_flags;
@@ -140,23 +139,12 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
     // Reserve element zero for UI_ROOT
     dlb_vec_alloc(ui_frames);
 
-    //ui_default_style[UI_ROOT].margin                        = TA_RECT_ZERO;
-    //ui_default_style[UI_ROOT].pad                           = TA_RECT_ZERO;
-    //ui_default_style[UI_ROOT].bg_color[UI_STATE_NONE]       = TA_COLOR_INVIS;
-    ui_default_style[UI_ROOT].bg_color[UI_STATE_HOVER]      = TA_RGBA(1.0f, 0.0f, 0.0f, 0.9f);
-    //ui_default_style[UI_ROOT].bg_color[UI_STATE_DOWN]       = TA_COLOR_INVIS;
-    //ui_default_style[UI_ROOT].bg_color[UI_STATE_ACTIVE]     = TA_COLOR_INVIS;
-    //ui_default_style[UI_ROOT].fg_color[UI_STATE_NONE]       = TA_COLOR_INVIS;
-    //ui_default_style[UI_ROOT].fg_color[UI_STATE_HOVER]      = TA_COLOR_INVIS;
-    //ui_default_style[UI_ROOT].fg_color[UI_STATE_DOWN]       = TA_COLOR_INVIS;
-    //ui_default_style[UI_ROOT].fg_color[UI_STATE_ACTIVE]     = TA_COLOR_INVIS;
-
     //ui_default_style[UI_WINDOW].margin                      = TA_RECT_ZERO;
     ui_default_style[UI_WINDOW].pad                         = TA_RECT(4, 4, 4, 4);
-    //ui_default_style[UI_WINDOW].bg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
-    ui_default_style[UI_WINDOW].bg_color[UI_STATE_HOVER]    = TA_RGBA(0.0f, 1.0f, 0.0f, 0.9f);
-    //ui_default_style[UI_WINDOW].bg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
-    //ui_default_style[UI_WINDOW].bg_color[UI_STATE_ACTIVE]   = TA_COLOR_INVIS;
+    ui_default_style[UI_WINDOW].bg_color[UI_STATE_NONE]     = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_WINDOW].bg_color[UI_STATE_HOVER]    = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_WINDOW].bg_color[UI_STATE_DOWN]     = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_WINDOW].bg_color[UI_STATE_ACTIVE]   = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
     //ui_default_style[UI_WINDOW].fg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
     //ui_default_style[UI_WINDOW].fg_color[UI_STATE_HOVER]    = TA_COLOR_INVIS;
     //ui_default_style[UI_WINDOW].fg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
@@ -164,25 +152,36 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
 
     //ui_default_style[UI_PANEL].margin                     = TA_RECT(0, 0, 0, 0);
     ui_default_style[UI_PANEL].pad                          = TA_RECT(4, 4, 4, 4);
-    //ui_default_style[UI_PANEL].bg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.0f, 0.0f, 1.0f, 0.9f);
-    //ui_default_style[UI_PANEL].bg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS;
-    //ui_default_style[UI_PANEL].bg_color[UI_STATE_ACTIVE]    = TA_COLOR_INVIS;
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_NONE]      = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_DOWN]      = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_ACTIVE]    = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_HOVER]     = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_ACTIVE]    = TA_COLOR_INVIS;
 
     ui_default_style[UI_BUTTON].margin                      = TA_RECT(2, 1, 0, 1);
-    ui_default_style[UI_BUTTON].pad                         = TA_RECT(4, 4, 4, 4); //TA_RECT(4, 1, 4, 1);
-    ui_default_style[UI_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(1.0f, 1.0f, 1.0f, 0.9f);
+    ui_default_style[UI_BUTTON].pad                         = TA_RECT(4, 1, 4, 1);
+    ui_default_style[UI_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(1.0f, 0.0f, 1.0f, 0.9f);
     ui_default_style[UI_BUTTON].bg_color[UI_STATE_HOVER]    = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
-    ui_default_style[UI_BUTTON].bg_color[UI_STATE_DOWN]     = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
+    ui_default_style[UI_BUTTON].bg_color[UI_STATE_DOWN]     = TA_RGBA(0.5f, 0.5f, 0.0f, 0.9f);
     ui_default_style[UI_BUTTON].bg_color[UI_STATE_ACTIVE]   = TA_RGBA(0.0f, 1.0f, 1.0f, 0.9f);
     //ui_default_style[UI_BUTTON].fg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
     //ui_default_style[UI_BUTTON].fg_color[UI_STATE_HOVER]    = TA_COLOR_INVIS;
     //ui_default_style[UI_BUTTON].fg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
     //ui_default_style[UI_BUTTON].fg_color[UI_STATE_ACTIVE]   = TA_COLOR_INVIS;
+
+    ui_default_style[UI_TOGGLE_BUTTON].margin                      = TA_RECT(2, 1, 0, 1);
+    ui_default_style[UI_TOGGLE_BUTTON].pad                         = TA_RECT(4, 1, 4, 1);
+    ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(1.0f, 0.0f, 1.0f, 0.9f);
+    ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_HOVER]    = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
+    ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_DOWN]     = TA_RGBA(0.5f, 0.5f, 0.0f, 0.9f);
+    ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_ACTIVE]   = TA_RGBA(0.0f, 1.0f, 1.0f, 0.9f);
+    //ui_default_style[UI_TOGGLE_BUTTON].fg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
+    //ui_default_style[UI_TOGGLE_BUTTON].fg_color[UI_STATE_HOVER]    = TA_COLOR_INVIS;
+    //ui_default_style[UI_TOGGLE_BUTTON].fg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
+    //ui_default_style[UI_TOGGLE_BUTTON].fg_color[UI_STATE_ACTIVE]   = TA_COLOR_INVIS;
 
     //ui_default_style[UI_IMAGE].margin                      = TA_RECT(0, 0, 0, 0);
     //ui_default_style[UI_IMAGE].pad                         = TA_RECT(0, 0, 0, 0);
@@ -195,12 +194,14 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
     //ui_default_style[UI_IMAGE].fg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
     //ui_default_style[UI_IMAGE].fg_color[UI_STATE_ACTIVE]   = TA_COLOR_INVIS;
 
+    // dark blue color: TA_RGBA(0.2f, 0.2f, 0.4f, 0.9f)
+
     ui_default_style[UI_LABEL].margin                       = TA_RECT(2, 1, 0, 1);
     ui_default_style[UI_LABEL].pad                          = TA_RECT(4, 1, 4, 1);
-    ui_default_style[UI_LABEL].bg_color[UI_STATE_NONE]      = TA_RGBA(0.2f, 0.2f, 0.4f, 0.9f);
-    ui_default_style[UI_LABEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.2f, 0.2f, 0.4f, 0.9f);
-    ui_default_style[UI_LABEL].bg_color[UI_STATE_DOWN]      = TA_RGBA(0.2f, 0.2f, 0.4f, 0.9f);
-    ui_default_style[UI_LABEL].bg_color[UI_STATE_ACTIVE]    = TA_RGBA(0.2f, 0.2f, 0.4f, 0.9f);
+    ui_default_style[UI_LABEL].bg_color[UI_STATE_NONE]      = TA_COLOR_BLUE5;
+    ui_default_style[UI_LABEL].bg_color[UI_STATE_HOVER]     = TA_COLOR_BLUE5;
+    ui_default_style[UI_LABEL].bg_color[UI_STATE_DOWN]      = TA_COLOR_BLUE5;
+    ui_default_style[UI_LABEL].bg_color[UI_STATE_ACTIVE]    = TA_COLOR_BLUE5;
     //ui_default_style[UI_LABEL].fg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
     //ui_default_style[UI_LABEL].fg_color[UI_STATE_HOVER]     = TA_COLOR_INVIS;
     //ui_default_style[UI_LABEL].fg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS;
@@ -208,10 +209,11 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
 
     ui_default_style[UI_TEXTBOX].margin                     = TA_RECT(2, 1, 0, 1);
     ui_default_style[UI_TEXTBOX].pad                        = TA_RECT(4, 1, 4, 1);
-    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE]    = TA_RGBA(1.0f, 1.0f, 1.0f, 0.9f);
-    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_HOVER]   = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
-    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_DOWN]    = TA_RGBA(1.0f, 0.0f, 1.0f, 0.9f);
-    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_ACTIVE]  = TA_RGBA(0.0f, 1.0f, 1.0f, 0.9f);
+    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE]    = TA_COLOR_BLUE2;
+    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_HOVER]   = TA_COLOR_ORANGE;
+    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_DOWN]    = TA_COLOR_ORANGE;
+    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_ACTIVE]  = TA_COLOR_BLUE3;
+
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_NONE]    = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_HOVER]   = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
@@ -363,6 +365,15 @@ static void ui_frame_begin(ui_frame_type type, const char *name, void *data,
         ? next_frame_style.pad
         : ui_default_style[type].pad;
 
+    for (ui_state_type state = 0; state < UI_STATE_COUNT; state++) {
+        frame->bg_color[state] = next_frame_dirty.bg_color[state]
+            ? next_frame_style.bg_color[state]
+            : ui_default_style[type].bg_color[state];
+        frame->fg_color[state] = next_frame_dirty.fg_color[state]
+            ? next_frame_style.fg_color[state]
+            : ui_default_style[type].fg_color[state];
+    }
+
     frame->container_idx = ui_container(frame->index);
     ui_frame *container = &ui_frames[frame->container_idx];
 
@@ -454,17 +465,17 @@ static ui_frame *ui_frame_end(ui_frame_type type)
     }
 
     // Updated frame states
-    ui_state_type state = UI_STATE_NONE;
+    frame->state_type = UI_STATE_NONE;
     frame->state.hover = false;
     frame->state.down = false;
     frame->state.pressed = false;
     frame->state.released = false;
     if (rect_contains_mouse(frame->rect))
     {
-        state = UI_STATE_HOVER;
+        frame->state_type = UI_STATE_HOVER;
         frame->state.hover = true;
         if (ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
-            state = UI_STATE_DOWN;
+            frame->state_type = UI_STATE_DOWN;
             frame->state.down = true;
             frame->state.pressed = ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT);
         } else {
@@ -472,14 +483,6 @@ static ui_frame *ui_frame_end(ui_frame_type type)
         }
     }
     last_frame_state = &frame->state;
-
-    // Update style based on state
-    frame->bg_color = next_frame_dirty.bg_color[state]
-        ? next_frame_style.bg_color[state]
-        : ui_default_style[type].bg_color[state];
-    frame->fg_color = next_frame_dirty.fg_color[state]
-        ? next_frame_style.fg_color[state]
-        : ui_default_style[type].fg_color[state];
 
 #if UI_DEBUG_RANDOM_COLORS
     frame->bg_color = ui_random_color(frame->index, state);
@@ -491,23 +494,19 @@ static ui_frame *ui_frame_end(ui_frame_type type)
 // TODO: Replace these with ta_ui_push_style that persists until pop
 void ta_ui_next_margin(int left, int top, int right, int bottom)
 {
-#if UI_DEBUG_MARGIN
     next_frame_style.margin.x = left;
     next_frame_style.margin.y = top;
     next_frame_style.margin.w = right;
     next_frame_style.margin.h = bottom;
     next_frame_dirty.margin = true;
-#endif
 }
 void ta_ui_next_pad(int left, int top, int right, int bottom)
 {
-#if UI_DEBUG_PAD
     next_frame_style.pad.x = left;
     next_frame_style.pad.y = top;
     next_frame_style.pad.w = right;
     next_frame_style.pad.h = bottom;
     next_frame_dirty.pad = true;
-#endif
 }
 void ta_ui_next_offset(int x, int y)
 {
@@ -649,28 +648,36 @@ bool ta_ui_button_end()
     ui_frame *frame = ui_frame_end(UI_BUTTON);
     return frame->state.pressed;
 }
-bool ta_ui_button(const char *name)
+bool ta_ui_button(const char *name, const char *text, u32 text_len)
 {
-    ui_frame_begin(UI_BUTTON, name, 0, false);
+    ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_button_begin(name, TA_UI_AUTOSIZE);
+    ta_ui_next_margin(0, 0, 0, 0);
+    ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 0);
+    ta_ui_label(0, text, text_len);
     return ta_ui_button_end();
 }
-void ta_ui_button_toggle_begin(const char *name, u32 flags)
+void ta_ui_toggle_button_begin(const char *name, u32 flags)
 {
-    ui_frame_begin(UI_BUTTON, name, 0, flags | TA_UI_CONTAINER);
+    ui_frame_begin(UI_TOGGLE_BUTTON, name, 0, flags | TA_UI_CONTAINER);
 }
-bool ta_ui_button_toggle_end(bool *checked)
+bool ta_ui_toggle_button_end(bool *checked)
 {
-    ui_frame *frame = ui_frame_end(UI_BUTTON);
+    DLB_ASSERT(checked);
+    ui_frame *frame = ui_frame_end(UI_TOGGLE_BUTTON);
     if (frame->state.pressed) {
         *checked = !*checked;
-        frame->state.checked = *checked;
     }
-    return *checked;
+    frame->state.active = *checked;
+    if (*checked) {
+        frame->state_type = UI_STATE_ACTIVE;
+    }
+    return frame->state.pressed;
 }
-bool ta_ui_button_toggle(const char *name, bool *checked)
+bool ta_ui_toggle_button(const char *name, bool *checked)
 {
-    ui_frame_begin(UI_BUTTON, name, 0, false);
-    return ta_ui_button_toggle_end(checked);
+    ui_frame_begin(UI_TOGGLE_BUTTON, name, 0, false);
+    return ta_ui_toggle_button_end(checked);
 }
 bool ta_ui_image(const char *name, ta_texture *texture, int face)
 {
@@ -690,7 +697,8 @@ bool ta_ui_image(const char *name, ta_texture *texture, int face)
     frame->texture_face = face;
     return frame->state.pressed;
 }
-bool ta_ui_label(const char *name, const char *text, u32 text_len)
+//bool ta_ui_label(const char *name, const char *text, u32 text_len)
+void ta_ui_label(const char *name, const char *text, u32 text_len)
 {
     DLB_ASSERT(text);
     DLB_ASSERT(text_len);
@@ -706,7 +714,7 @@ bool ta_ui_label(const char *name, const char *text, u32 text_len)
     ui_frame_begin(UI_LABEL, name, 0, false);
     ui_frame *frame = ui_frame_end(UI_LABEL);
     frame->text_rects = text_rects;
-    return frame->state.pressed;
+    //return frame->state.pressed;
 }
 
 static bool textbox_repeat_valid(double *last_time, bool *repeating,
@@ -850,6 +858,9 @@ static void textbox_unfocus(ta_ui_textbox_state *textbox)
     }
     textbox->focus_changed = textbox->focused;
     textbox->focused = false;  // User clicked elsewhere
+    textbox->cursor = 0;
+    textbox->selection_start = 0;
+    textbox->selection_len = 0;
 }
 static void textbox_command_submit(ta_ui_textbox_state *textbox)
 {
@@ -857,7 +868,7 @@ static void textbox_command_submit(ta_ui_textbox_state *textbox)
     textbox->cancel = false;
     // TODO: Unfocus and free on client's request, after they've been able to
     // use the buffer contents for whatever they need.
-    //textbox_unfocus(textbox);
+    textbox_unfocus(textbox);
 }
 static void textbox_command_cancel(ta_ui_textbox_state *textbox)
 {
@@ -945,7 +956,9 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
                 commands[cmd](textbox);
             }
         }
+        frame->state_type = UI_STATE_ACTIVE;
     }
+    frame->state.active = textbox->focused;
 
     // Focus/unfocus textbox
     if (frame->state.down) {
@@ -1005,7 +1018,7 @@ bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
     // TODO: dlb_vec_insert_at
     u32 len = dlb_vec_len(textbox->buffer);
     dlb_vec_reserve(textbox->buffer, len + 1);
-    dlb_memcpy(
+    dlb_memmove(
         textbox->buffer + textbox->cursor + 1,
         textbox->buffer + textbox->cursor,
         len - textbox->cursor
@@ -1038,32 +1051,6 @@ void ta_ui_vec3(ta_vec3 *vec)
     static ta_ui_textbox_state entry_z = { 0 };
     ta_ui_textbox(0, z_str, z_len, &entry_z, 0);
 }
-void ta_ui_tooltip(const char *text, u32 text_len)
-{
-    ta_rect_uv *text_rects = 0;
-    ta_rectf text_rect = ta_font_push_text(&text_rects, ui_font, text, text_len,
-        true, 0, 0, 0);
-
-    float offset_x = MOUSE_X + 10.0f;
-    float offset_y = MOUSE_Y + 20.0f;
-
-    ta_rect_uv tooltip_bg = { 0 };
-    tooltip_bg.rect.x = offset_x - 4.0f;
-    tooltip_bg.rect.y = offset_y;
-    tooltip_bg.rect.w = text_rect.w + 4.0f;
-    tooltip_bg.rect.h = text_rect.h;
-    ta_primitive_push_rect_uv(&tooltip_bg_queue, tooltip_bg, TA_COLOR_GRAY3A,
-        UI_LAYER_TIP_BG, true, false);
-
-    dlb_vec_each(ta_rect_uv *, rect, text_rects) {
-        ta_rect_uv offset_rect = *rect;
-        offset_rect.rect.x += offset_x;
-        offset_rect.rect.y += offset_y;
-        ta_primitive_push_rect_uv(&tooltip_fg_queue, offset_rect, TA_COLOR_WHITE,
-            UI_LAYER_TIP, true, false);
-    }
-    dlb_vec_zero(text_rects);
-}
 void ta_ui_tooltip_begin(const char *name)
 {
     UNUSED(name);
@@ -1075,6 +1062,32 @@ void ta_ui_tooltip_end(const char *name)
     UNUSED(name);
     // TODO: Make this a container
     DLB_ASSERT(0);
+}
+void ta_ui_tooltip(const char *text, u32 text_len)
+{
+    ta_rect_uv *text_rects = 0;
+    ta_rectf text_rect = ta_font_push_text(&text_rects, ui_font, text, text_len,
+        true, 0, 0, 0);
+
+    float offset_x = MOUSE_X + 10.0f;
+    float offset_y = MOUSE_Y + 20.0f;
+
+    ta_rect_uv tooltip_bg = { 0 };
+    tooltip_bg.rect.x = offset_x - 4.0f;
+    tooltip_bg.rect.y = offset_y - 2.0f;
+    tooltip_bg.rect.w = text_rect.w + 8.0f;
+    tooltip_bg.rect.h = text_rect.h + 3.0f;
+    ta_primitive_push_rect_uv(&tooltip_bg_queue, tooltip_bg, TA_COLOR_GRAY3A,
+        UI_LAYER_TIP_BG, true, false);
+
+    dlb_vec_each(ta_rect_uv *, rect, text_rects) {
+        ta_rect_uv offset_rect = *rect;
+        offset_rect.rect.x += offset_x;
+        offset_rect.rect.y += offset_y;
+        ta_primitive_push_rect_uv(&tooltip_fg_queue, offset_rect, TA_COLOR_WHITE,
+            UI_LAYER_TIP, true, false);
+    }
+    dlb_vec_zero(text_rects);
 }
 #if 0
 // TODO: This doesn't make any sense.. where does text come from and why are the
@@ -1094,29 +1107,32 @@ void ta_ui_statusbar()
 
 static void ui_render_window(ui_frame *frame)
 {
-    // Render window background
+    // Window background
     ta_rect bg_rect = frame->rect;
     bg_rect.w = frame->rect.w;
-    ta_primitive_push_rect(bg_rect, frame->bg_color, UI_LAYER_EDIT_WINDOW_BG);
+    ta_primitive_push_rect(bg_rect, frame->bg_color[frame->state_type],
+        UI_LAYER_EDIT_WINDOW_BG);
     ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 }
 static void ui_render_panel(ui_frame *frame)
 {
-    ta_primitive_push_rect(frame->rect, frame->bg_color, UI_LAYER_EDIT_1_BG);
+    // Panel background
+    ta_primitive_push_rect(frame->rect, frame->bg_color[frame->state_type],
+        UI_LAYER_EDIT_1_BG);
     ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 }
 static void ui_render_button(ui_frame *frame)
 {
-    ta_primitive_push_rect(frame->rect, frame->bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_push_rect(frame->rect, frame->bg_color[frame->state_type],
+        UI_LAYER_EDIT_1_BG);
     ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 }
-static void ui_render_button_toggle(ui_frame *frame)
+static void ui_render_toggle_button(ui_frame *frame)
 {
-    ta_rgba bg_color = frame->bg_color;
-    if (frame->state.checked) {
-        bg_color = ui_default_style[frame->type].bg_color[UI_STATE_ACTIVE];
+    ta_rgba bg_color = frame->bg_color[frame->state_type];
+    if (frame->state.active) {
+        DLB_ASSERT(1);
     }
-
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 }
@@ -1157,10 +1173,11 @@ static void ui_render_text(float x, float y, ta_rect_uv *text_rects)
 static void ui_render_label(ui_frame *frame)
 {
     // Render background
-    if (frame->bg_color.a == 0.0f) {
-        frame->bg_color.a = TA_EPSILON;
+    if (frame->bg_color[frame->state_type].a == 0.0f) {
+        frame->bg_color[frame->state_type].a = TA_EPSILON;
     }
-    ta_primitive_push_rect(frame->rect, frame->bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_push_rect(frame->rect, frame->bg_color[frame->state_type],
+        UI_LAYER_EDIT_1_BG);
     ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 
     // Render text
@@ -1171,7 +1188,9 @@ static void ui_render_label(ui_frame *frame)
 static void ui_render_textbox(ui_frame *frame)
 {
     // Render background
-    ta_rgba bg_color = frame->data.textbox->focused ? TA_COLOR_BLUE3 : TA_COLOR_BLUE2;
+    ta_rgba bg_color = frame->data.textbox->focused
+        ? frame->bg_color[UI_STATE_ACTIVE]
+        : frame->bg_color[frame->state_type];
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 
@@ -1193,6 +1212,8 @@ static void ui_render_textbox(ui_frame *frame)
 }
 static void ui_render_scrollbars(ui_frame *frame)
 {
+    static bool dragging_v = false;
+
     DLB_ASSERT(frame);
 
     ta_ui_scroll_state *scroll = ui_scroll_state(frame);
@@ -1229,18 +1250,22 @@ static void ui_render_scrollbars(ui_frame *frame)
         scroll_v_widget.y = frame->rect.y + scroll_v;
         scroll_v_widget.h = widget_h;
 
+        bool widget_hover = rect_contains_mouse(scroll_v_widget);
+        bool down = ta_key_down(SDL_SCANCODE_MOUSE_LEFT);
+        ta_rgba widget_color = (ta_rgba){ 0.6f, 0.0f, 0.0f, 1.0f };
+        if (widget_hover && !dragging_v) {
+            widget_color = (ta_rgba){ 0.8f, 0.0f, 0.0f, 1.0f };
+        }
+
         ta_primitive_push_rect(scroll_v_rect, TA_COLOR_BLUE, UI_LAYER_EDIT_1);
-        ta_primitive_push_rect(scroll_v_widget,
-            (ta_rgba){ 0.6f, 0.0f, 0.0f, 1.0f }, UI_LAYER_EDIT_1);
+        ta_primitive_push_rect(scroll_v_widget, widget_color, UI_LAYER_EDIT_1);
         ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 
         // Update scroll state for next frame
         if (!ta_mouse_captured()) {
-            static bool dragging_v = false;
             int delta_y = 0;
 
-            if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT) &&
-                rect_contains_mouse(scroll_v_widget))
+            if (widget_hover && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT))
             {
                 // Mouse drag
                 //scrollbar_y_frame_idx = frame->index;
@@ -1302,13 +1327,14 @@ static void ta_ui_render_statusbar()
 void ta_ui_render()
 {
     static void (*ui_renderers[])(ui_frame *frame) = {
-        [UI_ROOT]    = 0,
-        [UI_WINDOW]  = ui_render_window,
-        [UI_PANEL]   = ui_render_panel,
-        [UI_BUTTON]  = ui_render_button,
-        [UI_IMAGE]   = ui_render_image,
-        [UI_LABEL]   = ui_render_label,
-        [UI_TEXTBOX] = ui_render_textbox,
+        [UI_ROOT]           = 0,
+        [UI_WINDOW]         = ui_render_window,
+        [UI_PANEL]          = ui_render_panel,
+        [UI_BUTTON]         = ui_render_button,
+        [UI_TOGGLE_BUTTON]  = ui_render_toggle_button,
+        [UI_IMAGE]          = ui_render_image,
+        [UI_LABEL]          = ui_render_label,
+        [UI_TEXTBOX]        = ui_render_textbox,
     };
 
     // TODO: Shouldn't have to do this.. not sure where it's being bound

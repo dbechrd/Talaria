@@ -22,6 +22,7 @@ typedef enum ui_frame_type {
     UI_WINDOW,
     UI_PANEL,
     UI_BUTTON,
+    UI_TOGGLE_BUTTON,
     UI_IMAGE,
     UI_LABEL,
     UI_TEXTBOX,
@@ -34,9 +35,7 @@ typedef struct ta_ui_state {
     bool down;
     bool pressed;
     bool released;
-
-    // these require persistent state
-    bool checked;   // toggle button
+    bool active;
 } ta_ui_state;
 
 typedef struct ta_ui_scroll_state {
@@ -107,18 +106,19 @@ void ta_ui_panel_begin(const char *name, ta_ui_panel_state *panel, u32 flags);
 void ta_ui_panel_end();
 void ta_ui_button_begin(const char *name, u32 flags);
 bool ta_ui_button_end();
-bool ta_ui_button(const char *name);
-void ta_ui_button_toggle_begin(const char *name, u32 flags);
-bool ta_ui_button_toggle_end(bool *checked);
-bool ta_ui_button_toggle(const char *name, bool *checked);
+bool ta_ui_button(const char *name, const char *text, u32 text_len);
+void ta_ui_toggle_button_begin(const char *name, u32 flags);
+bool ta_ui_toggle_button_end(bool *checked);
+bool ta_ui_toggle_button(const char *name, bool *checked);
 bool ta_ui_image(const char *name, struct ta_texture *texture, int face);
-bool ta_ui_label(const char *name, const char *text, u32 text_len);
+//bool ta_ui_label(const char *name, const char *text, u32 text_len);
+void ta_ui_label(const char *name, const char *text, u32 text_len);
 bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ta_ui_textbox_state *textbox, u32 flags);
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c);
-void ta_ui_tooltip(const char *text, u32 text_len);
 void ta_ui_tooltip_begin(const char *name);
 void ta_ui_tooltip_end(const char *name);
+void ta_ui_tooltip(const char *text, u32 text_len);
 //void ta_ui_statusbar();
 
 void ta_ui_render();
