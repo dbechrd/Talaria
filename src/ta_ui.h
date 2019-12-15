@@ -29,13 +29,19 @@ typedef enum ui_frame_type {
     UI_COUNT
 } ui_frame_type;
 
+typedef enum ui_cursor_type {
+    UI_CURSOR_ARROW,
+    UI_CURSOR_SIZEWE,
+    UI_CURSOR_IBEAM,
+    UI_CURSOR_COUNT
+} ui_cursor_type;
+
 // TODO: Make this a flags enum
 typedef struct ta_ui_state {
     bool hover;
     bool down;
     bool pressed;
     bool released;
-    bool active;
 } ta_ui_state;
 
 typedef struct ta_ui_scroll_state {
@@ -68,9 +74,9 @@ typedef struct ta_ui_textbox_state {
     u32 selection_start;
     u32 selection_len;
     //bool multiline;
-    bool clicked;
+    bool mouse_down;
     bool double_clicked;
-    ta_vec2i clicked_coords;
+    ta_vec2i mouse_coords;
     double last_clicked_ms;
     bool focus_changed;  // HACK: Don't render cursor first frame, wrong index
     bool focused;   // has focus
@@ -79,6 +85,14 @@ typedef struct ta_ui_textbox_state {
     ta_ui_scroll_state scroll;
 } ta_ui_textbox_state;
 
+typedef struct ta_ui_textbox_vec3_state {
+    ta_ui_textbox_state textbox_states[3];
+} ta_ui_textbox_vec3_state;
+
+typedef struct ta_ui_textbox_vec4_state {
+    ta_ui_textbox_state textbox_states[4];
+} ta_ui_textbox_vec4_state;
+
 // container flags
 #define TA_UI_AUTOSIZE_W      0x00000001  // auto-grow container to fit contents
 #define TA_UI_AUTOSIZE_H      0x00000002  // auto-grow container to fit contents
@@ -86,6 +100,7 @@ typedef struct ta_ui_textbox_state {
 
 void ta_ui_init(struct ta_font *font, ta_ui_textbox_state **active_textbox);
 void ta_ui_set_font(struct ta_font *font);
+void ta_ui_set_cursor(ui_cursor_type cursor_type);
 
 void ta_ui_next_margin(int left, int top, int right, int bottom);
 void ta_ui_next_pad(int left, int top, int right, int bottom);
@@ -114,6 +129,10 @@ bool ta_ui_image(const char *name, struct ta_texture *texture, int face);
 void ta_ui_label(const char *name, const char *text, u32 text_len);
 bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ta_ui_textbox_state *textbox, u32 flags);
+bool ta_ui_textbox_float(const char *name, float *value,
+    ta_ui_textbox_state *textbox, u32 flags);
+void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state);
+void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state);
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c);
 void ta_ui_textbox_submit(ta_ui_textbox_state *textbox);
 void ta_ui_textbox_clear(ta_ui_textbox_state *textbox);

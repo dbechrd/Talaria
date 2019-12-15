@@ -15,7 +15,6 @@ typedef enum ta_schema_field_type {
     TYP_VEC2,
     TYP_VEC3,
     TYP_VEC4,
-    TYP_QUAT,
     TYP_MAT3,
     TYP_MAT4,
     TYP_TRANSFORM,

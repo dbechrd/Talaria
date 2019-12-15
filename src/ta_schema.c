@@ -242,13 +242,6 @@ void ta_schema_register()
     TYPE_FIELD(ta_vec4, w, ATOM_FLOAT);
     TYPE_END(ta_vec4);
 
-    TYPE_START(ta_quat, TYP_QUAT, 0, 0);
-    TYPE_FIELD(ta_quat, x, ATOM_FLOAT);
-    TYPE_FIELD(ta_quat, y, ATOM_FLOAT);
-    TYPE_FIELD(ta_quat, z, ATOM_FLOAT);
-    TYPE_FIELD(ta_quat, w, ATOM_FLOAT);
-    TYPE_END(ta_quat);
-
     TYPE_START(ta_mat3, TYP_MAT3, 0, 0);
     TYPE_UNION_TYPE(ta_mat3, data, ATOM_ENUM, 0);
     TYPE_UNION_ARRAY(ta_mat3, arr, ATOM_FLOAT, 9, data, 0);
@@ -261,7 +254,7 @@ void ta_schema_register()
 
     TYPE_START(ta_transform, TYP_TRANSFORM, 0, 0);
     TYPE_FIELD(ta_transform, position,    TYP_VEC3);
-    TYPE_FIELD(ta_transform, orientation, TYP_QUAT);
+    TYPE_FIELD(ta_transform, orientation, TYP_VEC4);
     TYPE_END(ta_transform);
 
     TYPE_START(ta_rgb, TYP_RGB, 0, 0);
@@ -509,7 +502,7 @@ void ta_schema_register()
     TYPE_FIELD(ta_rigid_body, entity_name, ATOM_STRING);
     TYPE_FIELD(ta_rigid_body, collider,    TYP_COLLIDER);
     TYPE_FIELD(ta_rigid_body, position,    TYP_VEC3);
-    TYPE_FIELD(ta_rigid_body, orientation, TYP_QUAT);
+    TYPE_FIELD(ta_rigid_body, orientation, TYP_VEC4);
     TYPE_FIELD(ta_rigid_body, mass,        ATOM_FLOAT);
     TYPE_FIELD(ta_rigid_body, trigger,     ATOM_BOOL);
     TYPE_END(ta_rigid_body);

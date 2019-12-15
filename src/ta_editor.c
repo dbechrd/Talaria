@@ -37,9 +37,6 @@ typedef enum editor_command {
 } editor_command;
 
 typedef struct ta_editor {
-    SDL_Cursor *cursor_normal;
-    SDL_Cursor *cursor_lr_arrow;  // left/right arrow "<->" cursor
-    SDL_Cursor *cursor_ibeam;     // text edit ibeam "I" cursor
     const char *status_msg;
     const char *selected_entity;
     ta_ui_textbox_state *active_textbox;
@@ -48,6 +45,7 @@ typedef struct ta_editor {
     ta_scene scene;
 } ta_editor;
 
+#if 0
 typedef struct drag_float_state {
     float *value;       // pointer to float being dragged
     bool changed;       // true if float has been dragged at all
@@ -56,15 +54,11 @@ typedef struct drag_float_state {
     float cam_position_target_vel;  // original position_target_vel
 } drag_float_state;
 static drag_float_state drag_float;
-
+#endif
 static ta_editor editor;
 
 void ta_editor_init()
 {
-    editor.cursor_normal = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-    editor.cursor_lr_arrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
-    editor.cursor_ibeam = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
-
     ta_font *font = ta_game_by_name(RES_FONT, tg_font);
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing UI styles\n");
     ta_ui_init(font, &editor.active_textbox);
@@ -104,7 +98,7 @@ const char *ta_editor_selected_entity()
 #endif
     return editor.selected_entity;
 }
-
+#if 0
 static void drag_float_begin(float *f)
 {
     drag_float.value = f;
@@ -163,6 +157,7 @@ static void drag_float_end()
         ta_mouse_drag_end();
     }
 }
+#endif
 static void ui_node_panel()
 {
     //ta_ui_next_margin(2, 2, 0, 0);
@@ -242,14 +237,13 @@ static void ui_node_panel()
     }
 #endif
 
-    //ta_ui_spacer(0, 2);
-    ta_ui_row_begin();
-    ta_ui_next_size(label_width, 0);
-
     ta_position *position = ta_game_component_try(RES_COMP_POSITION, entity_name);
     ta_rigid_body *rigid_body = ta_game_component_try(RES_COMP_RIGID_BODY, entity_name);
     ta_light *light = ta_game_component_try(RES_COMP_LIGHT, entity_name);
+
     ta_vec3 *pos_values = 0;
+    ta_ui_row_begin();
+    ta_ui_next_size(label_width, 0);
     if (rigid_body) {
         ta_ui_label(0, CSTR("Rigid Body Position:"));
         pos_values = &rigid_body->position;
@@ -261,97 +255,26 @@ static void ui_node_panel()
         pos_values = &light->position;
     }
     if (pos_values) {
-        // TODO: Refactor this into ta_ui_vec3
-        char x_str[16] = { 0 };
-        int x_len = snprintf(CSTR(x_str), "%3.4f", pos_values->x);
-        ta_ui_label(0, CSTR("x:"));
-        static ta_ui_textbox_state entry_x = { 0 };
-        if (ta_ui_textbox(0, x_str, x_len, &entry_x, 0)) {
-            pos_values->x = parse_float(entry_x.buffer);
-            ta_ui_textbox_clear(&entry_x);
-        } else if (ta_ui_last_frame_state().active) {
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.8f, 0.0f, 1.0f);
-            if (ta_ui_button(0, CSTR("Save"))) {
-                ta_ui_textbox_submit(&entry_x);
-            }
-        } else if (ta_ui_last_frame_state().hover) {
-            SDL_SetCursor(editor.cursor_lr_arrow);
-        }
-
-        char y_str[16] = { 0 };
-        int y_len = snprintf(CSTR(y_str), "%3.4f", pos_values->y);
-        ta_ui_label(0, CSTR("y:"));
-        static ta_ui_textbox_state entry_y = { 0 };
-        ta_ui_textbox(0, y_str, y_len, &entry_y, 0);
-
-        char z_str[16] = { 0 };
-        int z_len = snprintf(CSTR(z_str), "%3.4f", pos_values->z);
-        ta_ui_label(0, CSTR("z:"));
-        static ta_ui_textbox_state entry_z = { 0 };
-        ta_ui_textbox(0, z_str, z_len, &entry_z, 0);
-
-#if 0
-
-        //char pos_buf[32] = { 0 };
-        //int len = snprintf(pos_buf, sizeof(pos_buf), "%3.4f", pos_values[i]);
-        //DLB_ASSERT(len < sizeof(pos_buf));
-        if (entry) {
-            //ta_ui_next_pad(4, 1, 4, 1);
-
-            if (ta_text_entry_valid(entry)) {
-                ta_buffer text2 = ta_text_entry_text(entry);
-                pos_values[i] = parse_float(text2);
-            }
-            // ta_ui_next_margin(4, 0, 0, 0);
-            //ta_ui_next_pad(4, 1, 4, 1);
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.8f, 0.0f, 1.0f);
-            if (ta_ui_label(0, CSTR("Save"))) {
-                ta_text_entry_submit(entry);
-            }
-            if (ta_text_entry_submitted(entry)) {
-                ta_text_entry_unfocus(entry);
-                ta_text_entry_free(&entry);
-            } else if (ta_text_entry_canceled(entry)) {
-                ta_text_entry_free(&entry);
-            }
-        } else {
-            //ta_ui_next_pad(4, 1, 4, 1);
-            if (ta_ui_label(0, text, text_len)) {
-                drag_float_begin(&pos_values[i]);
-            } else if (drag_float.value == &pos_values[i] &&
-                ta_key_released(SDL_SCANCODE_MOUSE_LEFT))
-            {
-                if (!drag_float.changed) {
-                    DLB_ASSERT(!entry);
-                    ta_text_entry_init(entry);
-                    ta_text_entry_set_text(entry, text, text_len);
-                    ta_text_entry_focus(entry);
-                }
-                drag_float_end();
-            }
-        }
-#endif
-
-
-
+        static ta_ui_textbox_vec3_state pos_editors = { 0 };
+        ta_ui_textbox_vec3(pos_values, &pos_editors);
     }
 
-    drag_float_update(0.01f);
-
-    if (position) {
-        //ta_ui_spacer(0, 2);
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
+    ta_vec4 *orient_values = 0;
+    ta_ui_row_begin();
+    ta_ui_next_size(label_width, 0);
+    if (rigid_body) {
+        ta_ui_label(0, CSTR("Rigid Body Orientation:"));
+        orient_values = &rigid_body->orientation;
+    } else if (position) {
         ta_ui_label(0, CSTR("Orientation:"));
-        char orient_buf[64] = { 0 };
-        int len = snprintf(orient_buf, sizeof(orient_buf),
-            "x: %3.4f, y: %3.4f, z: %3.4f, w: %3.4f",
-            position->transform.orientation.x,
-            position->transform.orientation.y,
-            position->transform.orientation.z,
-            position->transform.orientation.w);
-        DLB_ASSERT(len < sizeof(orient_buf));
-        ta_ui_label(0, orient_buf, len);
+        orient_values = &position->transform.orientation;
+    }
+    if (orient_values) {
+        static ta_ui_textbox_vec4_state orient_editors = { 0 };
+        // TODO: Can't hand edit quaternions.. they need to be normalized and
+        // the components need to be in the range [0.0, 1.0]. Let's create a
+        // ta_ui_label_vec4, then figure out how to edit rotations (Euler XYZ).
+        ta_ui_textbox_vec4(orient_values, &orient_editors);
     }
 
     if (light) {
@@ -847,10 +770,13 @@ static void ui_editor_sidebar()
 }
 void ta_editor_draw(float alpha)
 {
-    SDL_SetCursor(editor.cursor_normal);
+    if (editor.active_textbox) {
+        ta_ui_set_cursor(UI_CURSOR_IBEAM);
+    } else {
+        ta_ui_set_cursor(UI_CURSOR_ARROW);
+    }
 
-    // TODO: Render as yellow wireframe
-    // Stencil selected entity
+    // Render selected entity as yellow wireframes
     const char *selected_entity = ta_editor_selected_entity();
     if (selected_entity) {
         ta_camera *camera = ta_game_camera();
@@ -924,10 +850,6 @@ void ta_editor_draw(float alpha)
 
     glClear(GL_DEPTH_BUFFER_BIT);
     ta_ui_render();
-
-    if (editor.active_textbox) {
-        SDL_SetCursor(editor.cursor_ibeam);
-    }
 }
 
 void editor_command_close()

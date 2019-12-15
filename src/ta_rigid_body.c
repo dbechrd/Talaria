@@ -168,7 +168,7 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     //body.m_angularVelocity +=  body.m_globalInverseInertiaTensor * (body.m_torqueAccumulator * dt);
     float dtheta_mag = vec3_len(body->ang_velocity);
     if (dtheta_mag > DTHETA_EPSILON) {
-        ta_quat delta_orient = quat_from_axis_angle(
+        ta_vec4 delta_orient = quat_from_axis_angle(
             vec3_normalize(body->ang_velocity),
             vec3_len(body->ang_velocity) //* dt  // TODO: angular dt??
         );

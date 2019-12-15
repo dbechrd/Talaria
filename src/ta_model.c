@@ -33,7 +33,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
         model->entity_name);
 
     ta_vec3 lerp_pos;
-    ta_quat lerp_orient;
+    ta_vec4 lerp_orient;
 
     if (body) {
         lerp_pos = vec3_lerp(position->transform.position, body->position,
@@ -89,7 +89,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
     ta_rigid_body *body = ta_game_component_try(RES_COMP_RIGID_BODY, model->entity_name);
 
     ta_vec3 lerp_pos;
-    ta_quat lerp_orient;
+    ta_vec4 lerp_orient;
     if (body) {
         lerp_pos = vec3_lerp(position->transform.position, body->position,
             alpha);
@@ -174,7 +174,7 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
     ta_rigid_body *body = ta_game_component_try(RES_COMP_RIGID_BODY, model->entity_name);
 
     ta_vec3 lerp_pos;
-    ta_quat lerp_orient;
+    ta_vec4 lerp_orient;
     if (body) {
         lerp_pos = vec3_lerp(position->transform.position, body->position,
             alpha);

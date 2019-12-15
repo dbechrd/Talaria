@@ -177,7 +177,7 @@ static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
 
 ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
     u32 text_len, bool screen, u32 *cursor_idx, ta_vec2 *cursor_offset,
-    const ta_vec2i *clicked_coords)
+    const ta_vec2i *mouse_coords)
 {
     DLB_ASSERT(rects);
     if (text_len) {
@@ -199,7 +199,7 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
     // Loop until i == text_len or, if text_len is 0, we hit a nil character
     u32 i = 0;
     for (; ((text_len) ? i < text_len : text[i]); i++) {
-        if (!cursor_set && !clicked_coords && cursor_idx && *cursor_idx == i) {
+        if (!cursor_set && !mouse_coords && cursor_idx && *cursor_idx == i) {
             cursor = position;
             cursor_set = true;
         }
@@ -225,18 +225,18 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
                 rect_uv->uv1.v = v;
             }
 
-            if (!cursor_set && clicked_coords && screen) {
+            if (!cursor_set && mouse_coords && screen) {
                 float x_advance = baked_pos.x - position.x;
                 float y_top = position.y - font->ascent;
 
                 // Check if user clicked on this character
-                if (clicked_coords->x >= position.x &&
-                    clicked_coords->x <= position.x + x_advance &&
-                    clicked_coords->y >= y_top &&
-                    clicked_coords->y <= y_top + font->line_height)
+                if (mouse_coords->x >= position.x &&
+                    mouse_coords->x <= position.x + x_advance &&
+                    mouse_coords->y >= y_top &&
+                    mouse_coords->y <= y_top + font->line_height)
                 {
                     // If click on left half of char rect, use previous position
-                    if (clicked_coords->x < position.x + x_advance/2) {
+                    if (mouse_coords->x < position.x + x_advance/2) {
                         cursor = position;
                         if (cursor_idx) {
                             *cursor_idx = i;

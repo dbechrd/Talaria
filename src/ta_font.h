@@ -37,6 +37,6 @@ void ta_font_delete(ta_font *font);
 void ta_font_free(ta_font *font);
 ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
     u32 text_len, bool screen, u32 *cursor_idx, ta_vec2 *cursor_offset,
-    const ta_vec2i *clicked_coords);
+    const ta_vec2i *mouse_coords);
 void ta_font_render(struct ta_vert_quad *queue, ta_font *font, float x, float y,
     float z, bool clear_queues, bool reset_uniforms);

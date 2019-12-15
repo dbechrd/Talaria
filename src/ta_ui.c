@@ -13,10 +13,12 @@
 #include "ta_keybind.h"
 #include "ta_schema.h"
 #include "ta_timer.h"
+#include "ta_parse.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_murmur3.h"
 #include "misc/gl3w.h"
 #include "SDL/SDL_keyboard.h"
+#include "SDL/SDL_mouse.h"
 
 #define UI_DEBUG_PANEL          0
 #define UI_DEBUG_NO_TEXTURES    0
@@ -114,6 +116,11 @@ typedef enum ui_textbox_command {
 // Internal state
 static ta_font *ui_font;
 static ta_ui_textbox_state **ui_active_textbox;
+static SDL_Cursor *ui_cursor_arrow;    // normal mouse pointer
+static SDL_Cursor *ui_cursor_size_we;  // left/right arrow "<->" cursor
+static SDL_Cursor *ui_cursor_ibeam;     // text edit ibeam "I" cursor
+static SDL_Cursor *ui_active_cursor;    // current cursor being used
+static bool ui_active_cursor_changed;   // (SetCursor is *expensive*)
 
 static ui_style ui_default_style[UI_COUNT] = { 0 };
 static ta_vec2i next_frame_pos_relative;
@@ -136,6 +143,9 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
 
     ui_font = font;
     ui_active_textbox = active_textbox;
+    ui_cursor_arrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    ui_cursor_size_we = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
+    ui_cursor_ibeam = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
 
     // Reserve element zero for UI_ROOT
     dlb_vec_alloc(ui_frames);
@@ -213,8 +223,7 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
     ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE]    = TA_COLOR_BLUE2;
     ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_HOVER]   = TA_COLOR_ORANGE;
     ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_DOWN]    = TA_COLOR_ORANGE;
-    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_ACTIVE]  = TA_COLOR_BLUE3;
-
+    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_ACTIVE]  = TA_RGBA(0.0f, 0.5f, 0.45f, 0.9f);
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_NONE]    = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_HOVER]   = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
@@ -239,7 +248,31 @@ void ta_ui_set_font(ta_font *font)
     DLB_ASSERT(font);
     ui_font = font;
 }
-
+void ui_set_cursor(SDL_Cursor *cursor)
+{
+    if (ui_active_cursor == cursor) return;
+    ui_active_cursor = cursor;
+    ui_active_cursor_changed = true;
+}
+void ta_ui_set_cursor(ui_cursor_type cursor_type)
+{
+    SDL_Cursor *cursor = ui_cursor_arrow;
+    switch (cursor_type) {
+        case UI_CURSOR_ARROW: {
+            cursor = ui_cursor_arrow;
+            break;
+        } case UI_CURSOR_SIZEWE: {
+            cursor = ui_cursor_size_we;
+            break;
+        } case UI_CURSOR_IBEAM: {
+            cursor = ui_cursor_ibeam;
+            break;
+        } default: {
+            DLB_ASSERT(!"Need to handle this cursor type");
+        }
+    };
+    ui_set_cursor(cursor);
+}
 #if 1
 static ta_rgba ui_random_color(u32 frame_idx, ui_state_type state)
 {
@@ -492,6 +525,16 @@ static ui_frame *ui_frame_end(ui_frame_type type)
 
     return frame;
 }
+static ta_rect ui_frame_client_area(ui_frame *frame)
+{
+    DLB_ASSERT(frame);
+    ta_rect client_area = { 0 };
+    client_area.x = frame->rect.x + frame->pad.x;
+    client_area.y = frame->rect.y + frame->pad.y;
+    client_area.w = frame->rect.w - frame->pad.x - frame->pad.w;
+    client_area.h = frame->rect.h - frame->pad.y - frame->pad.h;
+    return client_area;
+}
 
 // TODO: Replace these with ta_ui_push_style that persists until pop
 void ta_ui_next_margin(int left, int top, int right, int bottom)
@@ -670,7 +713,6 @@ bool ta_ui_toggle_button_end(bool *checked)
     if (frame->state.pressed) {
         *checked = !*checked;
     }
-    frame->state.active = *checked;
     if (*checked) {
         frame->state_type = UI_STATE_ACTIVE;
     }
@@ -878,6 +920,23 @@ static void textbox_command_cancel(ta_ui_textbox_state *textbox)
     textbox_unfocus(textbox);
 }
 
+ta_textbox_filter *ta_textbox_filter_default = &textbox_filter_default;
+static void (*textbox_commands[TEXTBOX_COMMAND_COUNT])(ta_ui_textbox_state *textbox) = {
+    [TEXTBOX_COMMAND_CURSOR_RIGHT] = textbox_command_cursor_right,
+    [TEXTBOX_COMMAND_CURSOR_LEFT]  = textbox_command_cursor_left,
+    [TEXTBOX_COMMAND_CURSOR_DOWN]  = textbox_command_cursor_down,
+    [TEXTBOX_COMMAND_CURSOR_UP]    = textbox_command_cursor_up,
+    [TEXTBOX_COMMAND_CURSOR_BOL]   = textbox_command_cursor_bol,
+    [TEXTBOX_COMMAND_CURSOR_EOL]   = textbox_command_cursor_eol,
+    [TEXTBOX_COMMAND_CURSOR_BOF]   = textbox_command_cursor_bof,
+    [TEXTBOX_COMMAND_CURSOR_EOF]   = textbox_command_cursor_eof,
+    [TEXTBOX_COMMAND_DELETE]       = textbox_command_delete,
+    [TEXTBOX_COMMAND_BACKSPACE]    = textbox_command_backspace,
+    [TEXTBOX_COMMAND_SUBMIT1]      = textbox_command_submit,
+    [TEXTBOX_COMMAND_SUBMIT2]      = textbox_command_submit,
+    [TEXTBOX_COMMAND_CANCEL]       = textbox_command_cancel,
+};
+
 // TODO: Run filter on input string.. maybe?
 static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text, u32 text_len)
 {
@@ -901,26 +960,35 @@ static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text, u32
     //textbox->selection_len = text_len;
 }
 
-ta_textbox_filter *ta_textbox_filter_default = &textbox_filter_default;
+static void textbox_mouse_down(ui_frame *frame)
+{
+    DLB_ASSERT(frame->data.textbox);
+
+    ta_rect client_area = ui_frame_client_area(frame);
+    int mouse_x = ta_mouse_x() - client_area.x;
+    int mouse_y = ta_mouse_y() - client_area.y;
+    if (mouse_x >= 0 && mouse_x <= client_area.w &&
+        mouse_y >= 0 && mouse_y <= client_area.h)
+    {
+        frame->data.textbox->mouse_coords.x = mouse_x;
+        frame->data.textbox->mouse_coords.y = mouse_y;
+        frame->data.textbox->mouse_down = true;
+
+        if (frame->state.pressed) {
+            double now_ms = ta_timer_elapsed_ms();
+            double delta_ms = now_ms - frame->data.textbox->last_clicked_ms;
+            if (delta_ms < double_click_interval_ms) {
+                // TODO: Select current word
+                frame->data.textbox->double_clicked = true;
+            }
+            frame->data.textbox->last_clicked_ms = now_ms;
+        }
+    }
+}
+
 bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ta_ui_textbox_state *textbox, u32 flags)
 {
-    static void (*commands[TEXTBOX_COMMAND_COUNT])(ta_ui_textbox_state *textbox) = {
-        [TEXTBOX_COMMAND_CURSOR_RIGHT] = textbox_command_cursor_right,
-        [TEXTBOX_COMMAND_CURSOR_LEFT]  = textbox_command_cursor_left,
-        [TEXTBOX_COMMAND_CURSOR_DOWN]  = textbox_command_cursor_down,
-        [TEXTBOX_COMMAND_CURSOR_UP]    = textbox_command_cursor_up,
-        [TEXTBOX_COMMAND_CURSOR_BOL]   = textbox_command_cursor_bol,
-        [TEXTBOX_COMMAND_CURSOR_EOL]   = textbox_command_cursor_eol,
-        [TEXTBOX_COMMAND_CURSOR_BOF]   = textbox_command_cursor_bof,
-        [TEXTBOX_COMMAND_CURSOR_EOF]   = textbox_command_cursor_eof,
-        [TEXTBOX_COMMAND_DELETE]       = textbox_command_delete,
-        [TEXTBOX_COMMAND_BACKSPACE]    = textbox_command_backspace,
-        [TEXTBOX_COMMAND_SUBMIT1]      = textbox_command_submit,
-        [TEXTBOX_COMMAND_SUBMIT2]      = textbox_command_submit,
-        [TEXTBOX_COMMAND_CANCEL]       = textbox_command_cancel,
-    };
-
     DLB_ASSERT(text);
     DLB_ASSERT(text_len);
     DLB_ASSERT(textbox);
@@ -930,16 +998,16 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ta_rectf text_rect = { 0 };
 
     if (textbox->buffer) {
-        ta_vec2i *clicked_coords = 0;
-        if (textbox->clicked) {
-            clicked_coords = &textbox->clicked_coords;
-            textbox->clicked = false;
+        ta_vec2i *mouse_coords = 0;
+        if (textbox->mouse_down) {
+            mouse_coords = &textbox->mouse_coords;
+            textbox->mouse_down = false;
         }
 
         // If still editing, render buffer
         u32 buffer_len = dlb_vec_len(textbox->buffer);
         text_rect = ta_font_push_text(&text_rects, ui_font, textbox->buffer,
-            buffer_len, true, &textbox->cursor, &cursor, clicked_coords);
+            buffer_len, true, &textbox->cursor, &cursor, mouse_coords);
     } else {
         // If not editing (or just canceled), render text
         text_rect = ta_font_push_text(&text_rects, ui_font, text, text_len,
@@ -958,55 +1026,191 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
         for (ui_textbox_command cmd = 0; cmd < TEXTBOX_COMMAND_COUNT; ++cmd) {
             ta_keybind_update(&textbox_keybinds[cmd]);
             if (ta_keybind_triggered(&textbox_keybinds[cmd])) {
-                commands[cmd](textbox);
+                textbox_commands[cmd](textbox);
             }
         }
         frame->state_type = UI_STATE_ACTIVE;
+        textbox->focus_changed = false;
     }
 
-    // Focus/unfocus textbox
-    if (frame->state.down) {
+    if (frame->state.pressed) {
         if (!textbox->buffer) {
             textbox_set_text(textbox, text, text_len);
         }
         textbox_focus(textbox);
-
-        // TODO: Refactor into ui_frame_client_area(ui_frame *frame)
-        ta_rect client_area = { 0 };
-        client_area.x = frame->rect.x + frame->pad.x;
-        client_area.y = frame->rect.y + frame->pad.y;
-        client_area.w = frame->rect.w - frame->pad.x - frame->pad.w;
-        client_area.h = frame->rect.h - frame->pad.y - frame->pad.h;
-
-        int clicked_x = ta_mouse_x() - client_area.x;
-        int clicked_y = ta_mouse_y() - client_area.y;
-        if (clicked_x >= 0 && clicked_x <= client_area.w &&
-            clicked_y >= 0 && clicked_y <= client_area.h)
-        {
-            textbox->clicked_coords.x = clicked_x;
-            textbox->clicked_coords.y = clicked_y;
-            textbox->clicked = true;
-
-            if (frame->state.pressed) {
-                double now_ms = ta_timer_elapsed_ms();
-                double delta_ms = now_ms - textbox->last_clicked_ms;
-                if (delta_ms < double_click_interval_ms) {
-                    // TODO: Select current word
-                    textbox->double_clicked = true;
-                }
-                textbox->last_clicked_ms = now_ms;
-            }
-        }
-    } else if (textbox->buffer && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
-        textbox_command_submit(textbox);
-    } else if (textbox->buffer && ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
-        textbox_command_cancel(textbox);
     }
 
-    frame->state.active = textbox->buffer != 0;
+    if (textbox->buffer) {
+        if (frame->state.down) {
+            textbox_mouse_down(frame);
+        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
+            textbox_command_submit(textbox);
+        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
+            textbox_command_cancel(textbox);
+        }
+    }
+
     frame->text_rects = text_rects;
     frame->cursor = cursor;
     return frame->data.textbox->submit;
+}
+
+typedef struct drag_float_state {
+    float *value;  // pointer to float being dragged
+    bool changed;  // true if float has been dragged at all
+} drag_float_state;
+static drag_float_state drag_float;
+
+static void drag_float_begin(float *f)
+{
+    drag_float.value = f;
+    drag_float.changed = false;
+    ta_mouse_drag_begin();
+}
+static void drag_float_update(float delta)
+{
+    if (!drag_float.value) return;
+
+    int mouse_dx = ta_mouse_dx();
+    if (mouse_dx) {
+        *drag_float.value += mouse_dx * delta;
+        drag_float.changed = true;
+    }
+}
+static bool drag_float_end()
+{
+    DLB_ASSERT(drag_float.value);
+    bool changed = drag_float.changed;
+    drag_float.value = 0;
+    drag_float.changed = false;
+    ta_mouse_drag_end();
+    return changed;
+}
+
+bool ta_ui_textbox_float(const char *name, float *value,
+    ta_ui_textbox_state *textbox, u32 flags)
+{
+    DLB_ASSERT(value);
+    DLB_ASSERT(textbox);
+
+    ta_rect_uv *text_rects = 0;
+    ta_vec2 cursor = { 0 };
+    ta_rectf text_rect = { 0 };
+
+    if (textbox->buffer) {
+        ta_vec2i *mouse_coords = 0;
+        if (textbox->mouse_down) {
+            mouse_coords = &textbox->mouse_coords;
+            textbox->mouse_down = false;
+        }
+
+        // If still editing, render buffer
+        u32 buffer_len = dlb_vec_len(textbox->buffer);
+        text_rect = ta_font_push_text(&text_rects, ui_font, textbox->buffer,
+            buffer_len, true, &textbox->cursor, &cursor, mouse_coords);
+    } else {
+        // If not editing (or just canceled), render text
+        char text[16] = { 0 };
+        int text_len = snprintf(CSTR(text), "%3.4f", *value);
+        DLB_ASSERT(text_len < sizeof(text));
+        text_rect = ta_font_push_text(&text_rects, ui_font, text, text_len,
+            true, 0, 0, 0);
+    }
+
+    // Auto-expand frame based on contents
+    ta_ui_next_size(MAX(next_frame_size.w, (int)text_rect.w),
+        MAX(next_frame_size.h, (int)text_rect.h));
+
+    ui_frame_begin(UI_TEXTBOX, name, textbox, flags);
+    ui_frame *frame = ui_frame_end(UI_TEXTBOX);
+
+    if (textbox->focused) {
+        // Textbox is active, handle hotkeys
+        for (ui_textbox_command cmd = 0; cmd < TEXTBOX_COMMAND_COUNT; ++cmd) {
+            ta_keybind_update(&textbox_keybinds[cmd]);
+            if (ta_keybind_triggered(&textbox_keybinds[cmd])) {
+                textbox_commands[cmd](textbox);
+            }
+        }
+        frame->state_type = UI_STATE_ACTIVE;
+        textbox->focus_changed = false;
+    }
+
+    if (textbox->buffer) {
+        // Do edit mode things
+        if (frame->state.down) {
+            if (frame->state.pressed) {
+                textbox_focus(textbox);
+            }
+            textbox_mouse_down(frame);
+        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
+            textbox_command_submit(textbox);
+        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
+            textbox_command_cancel(textbox);
+        }
+    } else {
+        // Do drag float things
+        if (frame->state.pressed) {
+            drag_float_begin(value);
+        } else if (drag_float.value == value) {
+            drag_float_update(0.01f);
+            if (ta_key_released(SDL_SCANCODE_MOUSE_LEFT)) {
+                // If drag ended and value didn't change, start edit mode
+                if (drag_float_end()) {
+                    frame->data.textbox->submit = true;
+                } else {
+                    char text[16] = { 0 };
+                    int text_len = snprintf(CSTR(text), "%3.4f", *value);
+                    DLB_ASSERT(text_len < sizeof(text));
+                    textbox_set_text(textbox, text, text_len);
+                    textbox_focus(textbox);
+                    textbox_mouse_down(frame);
+                }
+            } else {
+                frame->state_type = UI_STATE_ACTIVE;
+            }
+        }
+    }
+
+    frame->text_rects = text_rects;
+    frame->cursor = cursor;
+    return frame->data.textbox->submit;
+}
+void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state)
+{
+    DLB_ASSERT(vec);
+    DLB_ASSERT(vec_state);
+
+    const char *labels[3] = { "x:", "y:", "z:" };
+    float *components = (float *)vec;
+    for (int i = 0; i < 3; ++i) {
+        ta_ui_label(0, CSTR(labels[i]));
+        ta_ui_textbox_state *state = &vec_state->textbox_states[i];
+        if (ta_ui_textbox_float(0, &components[i], state, 0)) {
+            components[i] = parse_float(state->buffer);
+            ta_ui_textbox_clear(state);
+        } else if (ta_ui_last_frame_state().hover && !state->focused) {
+            ui_set_cursor(ui_cursor_size_we);
+        }
+    }
+}
+void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state)
+{
+    DLB_ASSERT(vec);
+    DLB_ASSERT(vec_state);
+
+    const char *labels[4] = { "x:", "y:", "z:", "w:" };
+    float *components = (float *)vec;
+    for (int i = 0; i < 4; ++i) {
+        ta_ui_label(0, CSTR(labels[i]));
+        ta_ui_textbox_state *state = &vec_state->textbox_states[i];
+        if (ta_ui_textbox_float(0, &components[i], state, 0)) {
+            components[i] = parse_float(state->buffer);
+            ta_ui_textbox_clear(state);
+        } else if (ta_ui_last_frame_state().hover && !state->focused) {
+            ui_set_cursor(ui_cursor_size_we);
+        }
+    }
 }
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
 {
@@ -1047,29 +1251,6 @@ void ta_ui_textbox_clear(ta_ui_textbox_state *textbox)
 {
     DLB_ASSERT(textbox);
     textbox_command_cancel(textbox);
-}
-void ta_ui_vec3(ta_vec3 *vec)
-{
-    char x_str[16] = { 0 };
-    int x_len = snprintf(x_str, sizeof(x_str), "%3.4f", vec->x);
-    DLB_ASSERT(x_len < sizeof(x_str));
-    ta_ui_label(0, CSTR("x:"));
-    static ta_ui_textbox_state entry_x = { 0 };
-    ta_ui_textbox(0, x_str, x_len, &entry_x, 0);
-
-    char y_str[16] = { 0 };
-    int y_len = snprintf(y_str, sizeof(y_str), "%3.4f", vec->y);
-    DLB_ASSERT(y_len < sizeof(y_str));
-    ta_ui_label(0, CSTR("y:"));
-    static ta_ui_textbox_state entry_y = { 0 };
-    ta_ui_textbox(0, y_str, y_len, &entry_y, 0);
-
-    char z_str[16] = { 0 };
-    int z_len = snprintf(z_str, sizeof(z_str), "%3.4f", vec->z);
-    DLB_ASSERT(z_len < sizeof(z_str));
-    ta_ui_label(0, CSTR("z:"));
-    static ta_ui_textbox_state entry_z = { 0 };
-    ta_ui_textbox(0, z_str, z_len, &entry_z, 0);
 }
 void ta_ui_tooltip_begin(const char *name)
 {
@@ -1150,9 +1331,6 @@ static void ui_render_button(ui_frame *frame)
 static void ui_render_toggle_button(ui_frame *frame)
 {
     ta_rgba bg_color = frame->bg_color[frame->state_type];
-    if (frame->state.active) {
-        DLB_ASSERT(1);
-    }
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 }
@@ -1208,9 +1386,7 @@ static void ui_render_label(ui_frame *frame)
 static void ui_render_textbox(ui_frame *frame)
 {
     // Render background
-    ta_rgba bg_color = frame->data.textbox->focused
-        ? frame->bg_color[UI_STATE_ACTIVE]
-        : frame->bg_color[frame->state_type];
+    ta_rgba bg_color = frame->bg_color[frame->state_type];
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 
@@ -1404,4 +1580,9 @@ void ta_ui_render()
     last_frame_state = 0;
     dlb_vec_zero(ui_frames);
     dlb_vec_alloc(ui_frames);  // reserve UI_ROOT
+
+    if (ui_active_cursor_changed) {
+        SDL_SetCursor(ui_active_cursor);
+        ui_active_cursor_changed = false;
+    }
 }

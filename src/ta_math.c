@@ -26,7 +26,7 @@ const ta_vec3 VEC3_MIN = { FLT_MIN, FLT_MIN, FLT_MIN };
 const ta_vec3 VEC3_MAX = { FLT_MAX, FLT_MAX, FLT_MAX };
 const ta_vec3 VEC3_EPSILON = { TA_EPSILON, TA_EPSILON, TA_EPSILON };
 
-const ta_quat QUAT_IDENT = { 0.0f, 0.0f, 0.0f, 1.0f };
+const ta_vec4 QUAT_IDENT = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 const ta_mat3 MAT3_IDENT = {
     1.0f, 0.0f, 0.0f,
@@ -275,7 +275,7 @@ ta_vec3 vec3_lerp(ta_vec3 a, ta_vec3 b, float w)
     result.z = a.z + w * (b.z - a.z);
     return result;
 }
-ta_vec3 vec3_rotate_quat(ta_vec3 v, ta_quat q)
+ta_vec3 vec3_rotate_quat(ta_vec3 v, ta_vec4 q)
 {
     // http://physicsforgames.blogspot.com/2010/03/quaternion-tricks.html
     float x1 = q.y*v.z - q.z*v.y;
@@ -316,19 +316,19 @@ int vec4_equal(ta_vec4 a, ta_vec4 b)
            fabs(a.w - b.w) < TA_EPSILON;
 }
 
-void quat_print(FILE *file, ta_quat q)
+void quat_print(FILE *file, ta_vec4 q)
 {
     fprintf(file, "q: %f %f %f %f\n", q.x, q.y, q.z, q.w);
 }
-int quat_zero(ta_quat v)
+int quat_zero(ta_vec4 v)
 {
     return v.x == 0.0f && v.y == 0.0f && v.z == 0.0f && v.w == 0.0f;
 }
-int quat_ident(ta_quat q)
+int quat_ident(ta_vec4 q)
 {
     return q.x == 0.0f && q.y == 0.0f && q.z == 0.0f && q.w == 1.0f;
 }
-int quat_equal(ta_quat a, ta_quat b)
+int quat_equal(ta_vec4 a, ta_vec4 b)
 {
     return
         fabs(a.x - b.x) < TA_EPSILON &&
@@ -336,11 +336,11 @@ int quat_equal(ta_quat a, ta_quat b)
         fabs(a.z - b.z) < TA_EPSILON &&
         fabs(a.w - b.w) < TA_EPSILON;
 }
-ta_quat quat_from_axis_angle(ta_vec3 axis, float deg)
+ta_vec4 quat_from_axis_angle(ta_vec3 axis, float deg)
 {
     DLB_ASSERT(vec3_equal(axis, vec3_normalize(axis)));
 
-    ta_quat result;
+    ta_vec4 result;
     float s = sinf(DEG_TO_RADF(deg) / 2.0f);
     result.w = cosf(DEG_TO_RADF(deg) / 2.0f);
     result.x = axis.x * s;
@@ -349,13 +349,13 @@ ta_quat quat_from_axis_angle(ta_vec3 axis, float deg)
     quat_normalize(result);
     return result;
 }
-ta_quat quat_from_vec_vec(ta_vec3 from, ta_vec3 to)
+ta_vec4 quat_from_vec_vec(ta_vec3 from, ta_vec3 to)
 {
     // http://physicsforgames.blogspot.com/2010/03/quaternion-tricks.html
     ta_vec3 h = vec3_add(from, to);
     h = vec3_normalize(h);
 
-    ta_quat result;
+    ta_vec4 result;
     result.w = vec3_dot(from, h);
     result.x = from.y*h.z - from.z*h.y;
     result.y = from.z*h.x - from.x*h.z;
@@ -363,15 +363,15 @@ ta_quat quat_from_vec_vec(ta_vec3 from, ta_vec3 to)
     result = quat_normalize(result);
     return result;
 }
-float quat_norm_sq(ta_quat q)
+float quat_norm_sq(ta_vec4 q)
 {
     return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
 }
-float quat_norm(ta_quat q)
+float quat_norm(ta_vec4 q)
 {
     return sqrtf(quat_norm_sq(q));
 }
-ta_quat quat_normalize(ta_quat q)
+ta_vec4 quat_normalize(ta_vec4 q)
 {
     float norm = quat_norm(q);
 
@@ -379,7 +379,7 @@ ta_quat quat_normalize(ta_quat q)
     if (norm == 1.0f)
         return q;
 
-    ta_quat result = { 0 };
+    ta_vec4 result = { 0 };
     if (norm > TA_EPSILON) {
         float inv_norm = 1.0f / norm;
         result.x = q.x * inv_norm;
@@ -393,18 +393,18 @@ ta_quat quat_normalize(ta_quat q)
 
     return result;
 }
-ta_quat quat_conjugate(ta_quat q)
+ta_vec4 quat_conjugate(ta_vec4 q)
 {
-    ta_quat result;
+    ta_vec4 result;
     result.x = -q.x;
     result.y = -q.y;
     result.z = -q.z;
     result.w = q.w;
     return result;
 }
-ta_quat quat_inverse(ta_quat q)
+ta_vec4 quat_inverse(ta_vec4 q)
 {
-    ta_quat result = quat_conjugate(q);
+    ta_vec4 result = quat_conjugate(q);
     float norm_sq = quat_norm_sq(result);
 
     // Inverse == conjugate for normalized ("unit-norm") quaternions
@@ -419,29 +419,29 @@ ta_quat quat_inverse(ta_quat q)
     result.z *= inv_norm_sq;
     return result;
 }
-ta_quat quat_mul(ta_quat a, ta_quat b)
+ta_vec4 quat_mul(ta_vec4 a, ta_vec4 b)
 {
-    ta_quat result;
+    ta_vec4 result;
     result.w = a.w*b.w - a.x*b.x - a.y*b.y - a.z*b.z;
     result.x = a.w*b.x + a.x*b.w + a.y*b.z - a.z*b.y;
     result.y = a.w*b.y - a.x*b.z + a.y*b.w + a.z*b.x;
     result.z = a.w*b.z + a.x*b.y - a.y*b.x + a.z*b.w;
     return result;
 }
-float quat_dot(ta_quat a, ta_quat b)
+float quat_dot(ta_vec4 a, ta_vec4 b)
 {
     return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 }
-static ta_quat quat_negate(ta_quat q)
+static ta_vec4 quat_negate(ta_vec4 q)
 {
-    ta_quat result;
+    ta_vec4 result;
     result.x = -q.x;
     result.y = -q.y;
     result.z = -q.z;
     result.w = -q.w;
     return result;
 }
-ta_quat quat_nlerp(ta_quat a, ta_quat b, float w)
+ta_vec4 quat_nlerp(ta_vec4 a, ta_vec4 b, float w)
 {
     float dot = quat_dot(a, b);
     float inv_w = 1.0f - w;
@@ -450,7 +450,7 @@ ta_quat quat_nlerp(ta_quat a, ta_quat b, float w)
         b = quat_negate(b);
     }
 
-    ta_quat result;
+    ta_vec4 result;
     result.w = inv_w*a.w + w*b.w;
     result.x = inv_w*a.x + w*b.x;
     result.y = inv_w*a.y + w*b.y;
@@ -458,7 +458,7 @@ ta_quat quat_nlerp(ta_quat a, ta_quat b, float w)
     result = quat_normalize(result);
     return result;
 }
-ta_quat quat_slerp(ta_quat a, ta_quat b, float w)
+ta_vec4 quat_slerp(ta_vec4 a, ta_vec4 b, float w)
 {
     // http://number-none.com/product/Understanding%20Slerp,%20Then%20Not%20Using%20It/
     DLB_ASSERT(!"Not yet implemented");
@@ -550,7 +550,7 @@ ta_mat3 mat3_rotate_z(float deg)
     );
     return result;
 }
-ta_mat3 mat3_rotate_quat(ta_quat q)
+ta_mat3 mat3_rotate_quat(ta_vec4 q)
 {
     DLB_ASSERT(quat_equal(q, quat_normalize(q)));
 
@@ -809,7 +809,7 @@ ta_mat4 mat4_rotate_z(float deg)
     );
     return result;
 }
-ta_mat4 mat4_rotate_quat(ta_quat q)
+ta_mat4 mat4_rotate_quat(ta_vec4 q)
 {
     DLB_ASSERT(quat_equal(q, quat_normalize(q)));
 
@@ -1185,7 +1185,7 @@ ta_rgb hsl_to_rbg(ta_hsl hsl)
 
 void ta_math_test()
 {
-    ta_quat q = { 1.0f, 2.0f, 3.0f, 1.0f };
+    ta_vec4 q = { 1.0f, 2.0f, 3.0f, 1.0f };
     q = quat_normalize(q);
     ta_mat4 result = mat4_rotate_quat(q);
     DLB_ASSERT(result.data.f[0][0] - -0.733333f < TA_EPSILON);

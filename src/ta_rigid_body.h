@@ -43,13 +43,13 @@ typedef struct ta_rigid_body {
     //ta_mat3 tensor;
     ta_mat3 inv_tensor_global;
     ta_mat3 inv_tensor_local;
-    ta_quat tensor_orientation;
+    ta_vec4 tensor_orientation;
 
     ta_vec3 centroid_global;
     ta_vec3 centroid_local;
 
     ta_vec3 position;
-    ta_quat orientation;
+    ta_vec4 orientation;
 
     ta_vec3 velocity;
     ta_vec3 ang_velocity;
