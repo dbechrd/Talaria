@@ -844,29 +844,22 @@ void ta_editor_draw(float alpha)
         ta_camera *camera = ta_game_camera();
         ta_model *model = ta_game_component_try(RES_COMP_MODEL, selected_entity);
         if (model) {
-            glEnable(GL_STENCIL_TEST);
-            glStencilFunc(GL_ALWAYS, 1, 0xFF);
-            glStencilMask(0xFF);
-            // Stencil the outline and any occluded fragments
-            glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-            // Stencil just the outline
-            //glStencilOp(GL_REPLACE, GL_REPLACE, GL_REPLACE);
-            glDepthMask(GL_FALSE);
-            glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-            ta_model_render(model, camera, alpha);
-            glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-            glDepthMask(GL_TRUE);
-
             glClear(GL_DEPTH_BUFFER_BIT);
 
-            // Outline selected node
-            glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-            glStencilMask(0x00);
+            GLint polygon_mode = 0;
+            glGetIntegerv(GL_POLYGON_MODE, &polygon_mode);
+            if (polygon_mode != GL_LINE) {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            }
+
             ta_shader *shader = ta_scene_find_by_name(&editor.scene, RES_SHADER,
                 editor.shader_editor_select);
-            ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&TA_COLOR_YELLOW);
-            ta_model_render_shader(model, camera, shader, alpha, 1.1f);
-            glDisable(GL_STENCIL_TEST);
+            ta_rgba wire_color = TA_COLOR_YELLOW;
+            ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
+            ta_model_render_shader(model, camera, shader, alpha, 1.0f);
+            if (polygon_mode != GL_LINE) {
+                glPolygonMode(GL_FRONT_AND_BACK, polygon_mode);
+            }
         }
     }
 
