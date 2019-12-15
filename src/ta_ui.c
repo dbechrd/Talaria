@@ -105,7 +105,8 @@ typedef enum ui_textbox_command {
     TEXTBOX_COMMAND_CURSOR_EOF,
     TEXTBOX_COMMAND_DELETE,
     TEXTBOX_COMMAND_BACKSPACE,
-    TEXTBOX_COMMAND_SUBMIT,
+    TEXTBOX_COMMAND_SUBMIT1,
+    TEXTBOX_COMMAND_SUBMIT2,
     TEXTBOX_COMMAND_CANCEL,
     TEXTBOX_COMMAND_COUNT
 } ui_textbox_command;
@@ -229,7 +230,8 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
     ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOF],   TA_KEYBIND_PRESS,   SDL_SCANCODE_LSHIFT, SDL_SCANCODE_END);
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_DELETE],       TA_KEYBIND_HOLD,    SDL_SCANCODE_DELETE);
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_BACKSPACE],    TA_KEYBIND_HOLD,    SDL_SCANCODE_BACKSPACE);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT],       TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],     TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],     TA_KEYBIND_PRESS,   SDL_SCANCODE_KP_ENTER);
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL],       TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
 }
 void ta_ui_set_font(ta_font *font)
@@ -865,7 +867,6 @@ static void textbox_unfocus(ta_ui_textbox_state *textbox)
 static void textbox_command_submit(ta_ui_textbox_state *textbox)
 {
     textbox->submit = true;
-    textbox->cancel = false;
     // TODO: Unfocus and free on client's request, after they've been able to
     // use the buffer contents for whatever they need.
     textbox_unfocus(textbox);
@@ -873,7 +874,6 @@ static void textbox_command_submit(ta_ui_textbox_state *textbox)
 static void textbox_command_cancel(ta_ui_textbox_state *textbox)
 {
     textbox->submit = false;
-    textbox->cancel = true;
     dlb_vec_free(textbox->buffer);
     textbox_unfocus(textbox);
 }
@@ -887,9 +887,13 @@ static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text, u32
     if (textbox->buffer) {
         dlb_vec_zero(textbox->buffer);
     }
-    dlb_vec_reserve(textbox->buffer, text_len);
+    dlb_vec_reserve(textbox->buffer, text_len + 1);  // reserve 1 extra for nil
     dlb_memcpy(textbox->buffer, text, text_len);
-    dlb_vec_hdr(textbox->buffer)->len = text_len;
+    dlb_vec_hdr(textbox->buffer)->len = text_len + 1;
+
+    // Ensure buffer is nil-terminated
+    u32 new_len = dlb_vec_len(textbox->buffer);
+    DLB_ASSERT(textbox->buffer[new_len] == '\0');
 
     // TODO: Set cursor (and selection?) based on where user clicked
     //textbox->cursor = text_len;
@@ -902,18 +906,19 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ta_ui_textbox_state *textbox, u32 flags)
 {
     static void (*commands[TEXTBOX_COMMAND_COUNT])(ta_ui_textbox_state *textbox) = {
-        [TEXTBOX_COMMAND_CURSOR_RIGHT]  = textbox_command_cursor_right,
-        [TEXTBOX_COMMAND_CURSOR_LEFT]   = textbox_command_cursor_left,
-        [TEXTBOX_COMMAND_CURSOR_DOWN]   = textbox_command_cursor_down,
-        [TEXTBOX_COMMAND_CURSOR_UP]     = textbox_command_cursor_up,
-        [TEXTBOX_COMMAND_CURSOR_BOL]    = textbox_command_cursor_bol,
-        [TEXTBOX_COMMAND_CURSOR_EOL]    = textbox_command_cursor_eol,
-        [TEXTBOX_COMMAND_CURSOR_BOF]    = textbox_command_cursor_bof,
-        [TEXTBOX_COMMAND_CURSOR_EOF]    = textbox_command_cursor_eof,
-        [TEXTBOX_COMMAND_DELETE]        = textbox_command_delete,
-        [TEXTBOX_COMMAND_BACKSPACE]     = textbox_command_backspace,
-        [TEXTBOX_COMMAND_SUBMIT]        = textbox_command_submit,
-        [TEXTBOX_COMMAND_CANCEL]        = textbox_command_cancel,
+        [TEXTBOX_COMMAND_CURSOR_RIGHT] = textbox_command_cursor_right,
+        [TEXTBOX_COMMAND_CURSOR_LEFT]  = textbox_command_cursor_left,
+        [TEXTBOX_COMMAND_CURSOR_DOWN]  = textbox_command_cursor_down,
+        [TEXTBOX_COMMAND_CURSOR_UP]    = textbox_command_cursor_up,
+        [TEXTBOX_COMMAND_CURSOR_BOL]   = textbox_command_cursor_bol,
+        [TEXTBOX_COMMAND_CURSOR_EOL]   = textbox_command_cursor_eol,
+        [TEXTBOX_COMMAND_CURSOR_BOF]   = textbox_command_cursor_bof,
+        [TEXTBOX_COMMAND_CURSOR_EOF]   = textbox_command_cursor_eof,
+        [TEXTBOX_COMMAND_DELETE]       = textbox_command_delete,
+        [TEXTBOX_COMMAND_BACKSPACE]    = textbox_command_backspace,
+        [TEXTBOX_COMMAND_SUBMIT1]      = textbox_command_submit,
+        [TEXTBOX_COMMAND_SUBMIT2]      = textbox_command_submit,
+        [TEXTBOX_COMMAND_CANCEL]       = textbox_command_cancel,
     };
 
     DLB_ASSERT(text);
@@ -958,7 +963,6 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
         }
         frame->state_type = UI_STATE_ACTIVE;
     }
-    frame->state.active = textbox->focused;
 
     // Focus/unfocus textbox
     if (frame->state.down) {
@@ -993,12 +997,13 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
                 textbox->last_clicked_ms = now_ms;
             }
         }
-    } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT) ||
-               ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT))
-    {
-        textbox_unfocus(textbox);
+    } else if (textbox->buffer && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
+        textbox_command_submit(textbox);
+    } else if (textbox->buffer && ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
+        textbox_command_cancel(textbox);
     }
 
+    frame->state.active = textbox->buffer != 0;
     frame->text_rects = text_rects;
     frame->cursor = cursor;
     return frame->data.textbox->submit;
@@ -1017,7 +1022,7 @@ bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
 
     // TODO: dlb_vec_insert_at
     u32 len = dlb_vec_len(textbox->buffer);
-    dlb_vec_reserve(textbox->buffer, len + 1);
+    dlb_vec_reserve(textbox->buffer, len + 2);  // reserve 1 extra for nil
     dlb_memmove(
         textbox->buffer + textbox->cursor + 1,
         textbox->buffer + textbox->cursor,
@@ -1026,7 +1031,22 @@ bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
     textbox->buffer[textbox->cursor] = c;
     dlb_vec_hdr(textbox->buffer)->len++;
     textbox->cursor++;
+
+    // Ensure buffer is nil-terminated
+    u32 new_len = dlb_vec_len(textbox->buffer);
+    DLB_ASSERT(textbox->buffer[new_len] == '\0');
+
     return true;
+}
+void ta_ui_textbox_submit(ta_ui_textbox_state *textbox)
+{
+    DLB_ASSERT(textbox);
+    textbox_command_submit(textbox);
+}
+void ta_ui_textbox_clear(ta_ui_textbox_state *textbox)
+{
+    DLB_ASSERT(textbox);
+    textbox_command_cancel(textbox);
 }
 void ta_ui_vec3(ta_vec3 *vec)
 {

@@ -75,7 +75,6 @@ typedef struct ta_ui_textbox_state {
     bool focus_changed;  // HACK: Don't render cursor first frame, wrong index
     bool focused;   // has focus
     bool submit;    // user requested save
-    bool cancel;    // user requested discard
     ta_textbox_filter *filter;
     ta_ui_scroll_state scroll;
 } ta_ui_textbox_state;
@@ -116,6 +115,8 @@ void ta_ui_label(const char *name, const char *text, u32 text_len);
 bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ta_ui_textbox_state *textbox, u32 flags);
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c);
+void ta_ui_textbox_submit(ta_ui_textbox_state *textbox);
+void ta_ui_textbox_clear(ta_ui_textbox_state *textbox);
 void ta_ui_tooltip_begin(const char *name);
 void ta_ui_tooltip_end(const char *name);
 void ta_ui_tooltip(const char *text, u32 text_len);

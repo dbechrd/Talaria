@@ -4,6 +4,7 @@
 
 unsigned int parse_uint(char *buf)
 {
+    DLB_ASSERT(buf);
     unsigned long value = strtoul(buf, 0, 10);
     return (unsigned int)value;
 }
@@ -17,6 +18,7 @@ int parse_int_binary(char *buf)
 
 int parse_int(char *buf)
 {
+    DLB_ASSERT(buf && buf[0]);
     long value;
     if (buf[0] == '0' && buf[1] == 'b') {
         value = parse_int_binary(buf);
@@ -28,6 +30,7 @@ int parse_int(char *buf)
 
 float parse_float_hex(char *buf)
 {
+    DLB_ASSERT(buf);
     float value;
     unsigned long l = strtoul(buf, 0, 16);
     value = *(float *)&l;
@@ -36,6 +39,7 @@ float parse_float_hex(char *buf)
 
 float parse_float(char *buf)
 {
+    DLB_ASSERT(buf && buf[0]);
     float value;
     if (buf[0] == '0' && buf[1] == 'x') {
         value = parse_float_hex(buf);

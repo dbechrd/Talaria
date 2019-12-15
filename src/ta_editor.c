@@ -21,11 +21,13 @@
 #include "ta_position.h"
 #include "ta_entity.h"
 #include "ta_model.h"
-#include "SDL/SDL_keycode.h"
 #include "dlb/dlb_vector.h"
+#include "SDL/SDL_keycode.h"
+#include "SDL/SDL.h"
 
 typedef enum editor_command {
-    EDITOR_COMMAND_CLOSE,
+    EDITOR_COMMAND_CLOSE1,
+    EDITOR_COMMAND_CLOSE2,
     EDITOR_COMMAND_SELECT,
     EDITOR_COMMAND_SIM_PAUSE_RESUME,
     EDITOR_COMMAND_SIM_NEXT,
@@ -35,6 +37,9 @@ typedef enum editor_command {
 } editor_command;
 
 typedef struct ta_editor {
+    SDL_Cursor *cursor_normal;
+    SDL_Cursor *cursor_lr_arrow;  // left/right arrow "<->" cursor
+    SDL_Cursor *cursor_ibeam;     // text edit ibeam "I" cursor
     const char *status_msg;
     const char *selected_entity;
     ta_ui_textbox_state *active_textbox;
@@ -56,6 +61,10 @@ static ta_editor editor;
 
 void ta_editor_init()
 {
+    editor.cursor_normal = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    editor.cursor_lr_arrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
+    editor.cursor_ibeam = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+
     ta_font *font = ta_game_by_name(RES_FONT, tg_font);
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing UI styles\n");
     ta_ui_init(font, &editor.active_textbox);
@@ -71,8 +80,8 @@ void ta_editor_init()
 
     // TODO: How to handle mapping multiple keybinds to the same event type? We
     // may be able to just handle escape key as special case?
-    //ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE           ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE           ], TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE1          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE2          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SELECT          ], TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_PAUSE_RESUME], TA_KEYBIND_PRESS,   SDL_SCANCODE_F5);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT        ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F6);
@@ -257,18 +266,16 @@ static void ui_node_panel()
         int x_len = snprintf(CSTR(x_str), "%3.4f", pos_values->x);
         ta_ui_label(0, CSTR("x:"));
         static ta_ui_textbox_state entry_x = { 0 };
-        ta_ui_textbox(0, x_str, x_len, &entry_x, 0);
-        if (!entry_x.submit && entry_x.buffer) {
+        if (ta_ui_textbox(0, x_str, x_len, &entry_x, 0)) {
+            pos_values->x = parse_float(entry_x.buffer);
+            ta_ui_textbox_clear(&entry_x);
+        } else if (ta_ui_last_frame_state().active) {
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.8f, 0.0f, 1.0f);
             if (ta_ui_button(0, CSTR("Save"))) {
-                entry_x.submit = true;
+                ta_ui_textbox_submit(&entry_x);
             }
-        }
-        if (entry_x.submit) {
-            DLB_ASSERT(entry_x.buffer);
-            pos_values->x = parse_float(entry_x.buffer);
-            dlb_vec_free(entry_x.buffer);
-            entry_x.submit = false;
+        } else if (ta_ui_last_frame_state().hover) {
+            SDL_SetCursor(editor.cursor_lr_arrow);
         }
 
         char y_str[16] = { 0 };
@@ -802,8 +809,11 @@ static void ui_editor_sidebar()
         //ta_ui_next_margin(0, 0, 0, 2);
         bool active = (i == category_selected);
         ta_ui_toggle_button(category_names[i], &active);
-        if (active) {
+        if (active && category_selected != i) {
             category_selected = i;
+            if (editor.active_textbox) {
+                ta_ui_textbox_clear(editor.active_textbox);
+            }
         }
         if (ta_ui_last_frame_state().hover) {
             ta_ui_tooltip(SYM(category_names[i]));
@@ -837,6 +847,8 @@ static void ui_editor_sidebar()
 }
 void ta_editor_draw(float alpha)
 {
+    SDL_SetCursor(editor.cursor_normal);
+
     // TODO: Render as yellow wireframe
     // Stencil selected entity
     const char *selected_entity = ta_editor_selected_entity();
@@ -912,10 +924,19 @@ void ta_editor_draw(float alpha)
 
     glClear(GL_DEPTH_BUFFER_BIT);
     ta_ui_render();
+
+    if (editor.active_textbox) {
+        SDL_SetCursor(editor.cursor_ibeam);
+    }
 }
 
 void editor_command_close()
 {
+    // NOTE: This can't happen at the moment because textbox cancel and editor
+    // close are both bound to Escape. Just to be safe.
+    if (editor.active_textbox) {
+        ta_ui_textbox_clear(editor.active_textbox);
+    }
     ta_game_state_set(ta_game_state_prev());
 }
 void editor_command_select()
@@ -1008,7 +1029,8 @@ void ta_editor_hotkeys()
         return;
 
     static void (*commands[EDITOR_COMMAND_COUNT])() = {
-        [EDITOR_COMMAND_CLOSE]            = editor_command_close,
+        [EDITOR_COMMAND_CLOSE1]           = editor_command_close,
+        [EDITOR_COMMAND_CLOSE2]           = editor_command_close,
         [EDITOR_COMMAND_SELECT]           = editor_command_select,
         [EDITOR_COMMAND_SIM_PAUSE_RESUME] = editor_command_sim_pause_resume,
         [EDITOR_COMMAND_SIM_NEXT]         = editor_command_sim_next,

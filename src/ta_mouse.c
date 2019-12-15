@@ -34,23 +34,20 @@ void ta_mouse_init()
 void ta_mouse_capture_set(bool capture)
 {
     if (mouse.dragging) return;
+    if (mouse.captured == capture) return;
 
-#if 0
-    mouse.captured = capture;
-    SDL_SetRelativeMouseMode(mouse.captured);
-#else
-    mouse.captured = capture;
-    if (mouse.captured) {
+    if (capture) {
+        SDL_SetRelativeMouseMode(true);
+        mouse.captured = true;
         mouse.capture_x = mouse.x;
         mouse.capture_y = mouse.y;
-        SDL_SetRelativeMouseMode(true);
     } else {
-        SDL_SetRelativeMouseMode(mouse.captured);
+        SDL_SetRelativeMouseMode(false);
         ta_mouse_move(mouse.capture_x, mouse.capture_y);
+        mouse.captured = false;
         mouse.capture_x = 0;
         mouse.capture_y = 0;
     }
-#endif
 }
 
 void ta_mouse_capture_toggle()
