@@ -184,7 +184,7 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
     //ui_default_style[UI_BUTTON].fg_color[UI_STATE_ACTIVE]   = TA_COLOR_INVIS;
 
     ui_default_style[UI_TOGGLE_BUTTON].margin                      = TA_RECT(2, 1, 0, 1);
-    ui_default_style[UI_TOGGLE_BUTTON].pad                         = TA_RECT(4, 1, 4, 1);
+    ui_default_style[UI_TOGGLE_BUTTON].pad                         = TA_RECT(2, 2, 2, 2);
     ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(1.0f, 0.0f, 1.0f, 0.9f);
     ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_HOVER]    = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
     ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_DOWN]     = TA_RGBA(0.5f, 0.5f, 0.0f, 0.9f);
@@ -948,7 +948,7 @@ static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text, u32
     }
     dlb_vec_reserve(textbox->buffer, text_len + 1);  // reserve 1 extra for nil
     dlb_memcpy(textbox->buffer, text, text_len);
-    dlb_vec_hdr(textbox->buffer)->len = text_len + 1;
+    dlb_vec_hdr(textbox->buffer)->len = text_len;
 
     // Ensure buffer is nil-terminated
     u32 new_len = dlb_vec_len(textbox->buffer);

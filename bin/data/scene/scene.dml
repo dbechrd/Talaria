@@ -130,9 +130,9 @@ ta_light:
   entity_name: "point_room2"
   cast_shadows: true
   position:
-    x: 0x4118A612 (9.540545)
+    x: 0x414E1932 (12.881151)
     y: 0x3FAE1479 (1.360000)
-    z: 0x414D8291 (12.844377)
+    z: 0x4117DA76 (9.490835)
   type: 2  # TA_LIGHT_POINT
   point:
     intensity: 0x3F800000 (1.000000)
@@ -189,18 +189,14 @@ ta_light:
 ta_model:
   name: "chamber_0001"
   entity_name: "chamber_0001"
-  mesh_groups: [
-    "chamber_0001",
-  ]
+  mesh_groups: ["chamber_0001", ]
   material: "metal_plate_019"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "wakeup"
   entity_name: "wakeup"
-  mesh_groups: [
-    "wakeup",
-  ]
+  mesh_groups: ["wakeup", ]
   material: "cobble"
   invisible: true
   cast_shadows: true
@@ -208,63 +204,49 @@ ta_model:
 ta_model:
   name: "button_0001"
   entity_name: "button_0001"
-  mesh_groups: [
-    "button",
-  ]
+  mesh_groups: ["button", ]
   material: "test"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "player_one"
   entity_name: "player_one"
-  mesh_groups: [
-    "prim_cube",
-  ]
+  mesh_groups: ["prim_cube", ]
   material: "cobble"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "sphere1"
   entity_name: "sphere1"
-  mesh_groups: [
-    "prim_sphere",
-  ]
+  mesh_groups: ["prim_sphere", ]
   material: "test"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "sphere2"
   entity_name: "sphere2"
-  mesh_groups: [
-    "prim_sphere",
-  ]
+  mesh_groups: ["prim_sphere", ]
   material: "red"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "shadow_test_1"
   entity_name: "shadow_test_1"
-  mesh_groups: [
-    "letter_r",
-  ]
+  mesh_groups: ["letter_r", ]
   material: "test"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0001"
   entity_name: "column_0001"
-  mesh_groups: [
-    "column_0001",
-  ]
+  mesh_groups: ["column_0001", ]
   material: "terrazzo"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "star_0001"
   entity_name: "star_0001"
-  mesh_groups: [
-    "star_0001",
-  ]
+  mesh_groups: ["star_0001", ]
   material: "star_0001"
   cast_shadows: true
   receive_shadows: true
@@ -275,9 +257,7 @@ ta_player:
   name: "player_one"
   entity_name: "player_one"
   e_gun: "gun"
-  e_guns: [
-    "gun",
-  ]
+  e_guns: ["gun", ]
 #-------------------------------------------------------------------------------
 # TYP_POSITION
 #-------------------------------------------------------------------------------
@@ -316,10 +296,10 @@ ta_position:
       y: 0xC1000000 (-8.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EE4F92E (0.447214)
+      x: 0x3EE4F930 (0.447214)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F64F92E (0.894427)
+      w: 0x3F64F930 (0.894427)
 ta_position:
   name: "player_one"
   entity_name: "player_one"
@@ -329,10 +309,10 @@ ta_position:
       y: 0xC0E000D2 (-7.000100)
       z: 0x3F66200D (0.898927)
     orientation:
-      x: 0xBF5E1DE1 (-0.867643)
-      y: 0x3E9E7459 (0.309481)
-      z: 0x3EB26B93 (0.348477)
-      w: 0xBE314DB3 (-0.173148)
+      x: 0xBF5E1DDF (-0.867643)
+      y: 0x3E9E7458 (0.309481)
+      z: 0x3EB26B92 (0.348477)
+      w: 0xBE314DB2 (-0.173148)
 ta_position:
   name: "sphere1"
   entity_name: "sphere1"
@@ -440,10 +420,10 @@ ta_rigid_body:
     y: 0xC1000000 (-8.000000)
     z: 0x00000000 (0.000000)
   orientation:
-    x: 0x3EE4F92E (0.447214)
+    x: 0x3EE4F930 (0.447214)
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
-    w: 0x3F64F92E (0.894427)
+    w: 0x3F64F930 (0.894427)
   mass: 0x3F800000 (1.000000)
   trigger: true
 ta_rigid_body:
@@ -462,10 +442,10 @@ ta_rigid_body:
     y: 0xC0E000D2 (-7.000100)
     z: 0x3F66200D (0.898927)
   orientation:
-    x: 0xBF5E1DE1 (-0.867643)
-    y: 0x3E9E7459 (0.309481)
-    z: 0x3EB26B93 (0.348477)
-    w: 0xBE314DB3 (-0.173148)
+    x: 0xBF5E1DDF (-0.867643)
+    y: 0x3E9E7458 (0.309481)
+    z: 0x3EB26B92 (0.348477)
+    w: 0xBE314DB2 (-0.173148)
   mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "sphere1"
@@ -587,8 +567,16 @@ ta_audio_buffer:
 #-------------------------------------------------------------------------------
 # TYP_FONT
 #-------------------------------------------------------------------------------
-ta_font: { name: "ubuntumono", path: "data/font/UbuntuMono-Regular.ttf", pixel_height: 18.0, shader: "text" }
-ta_font: { name: "lexenddeca", path: "data/font/LexendDeca-Regular.ttf", pixel_height: 18.0, shader: "text" }
+ta_font:
+  name: "ubuntumono"
+  path: "data/font/UbuntuMono-Regular.ttf"
+  pixel_height: 0x41900000 (18.000000)
+  shader: "text"
+ta_font:
+  name: "lexenddeca"
+  path: "data/font/LexendDeca-Regular.ttf"
+  pixel_height: 0x41900000 (18.000000)
+  shader: "text"
 #-------------------------------------------------------------------------------
 # TYP_MATERIAL
 #-------------------------------------------------------------------------------
@@ -1235,28 +1223,14 @@ ta_shader:
 #-------------------------------------------------------------------------------
 ta_texture:
   name: "missing_albedo"
-  pixels: [
-    {
-      r: 255,
-      g: 0,
-      b: 255,
-      a: 255,
-    },
-  ]
+  pixels: [255, 0, 255, 255, ]
   width: 1
   height: 1
   channels: 4
   repeat: true
 ta_texture:
   name: "missing_height"
-  pixels: [
-    {
-      r: 0,
-      g: 0,
-      b: 0,
-      a: 0,
-    },
-  ]
+  pixels: [0, ]
   width: 1
   height: 1
   channels: 1
@@ -1264,14 +1238,7 @@ ta_texture:
   repeat: true
 ta_texture:
   name: "missing_metallic"
-  pixels: [
-    {
-      r: 0,
-      g: 0,
-      b: 0,
-      a: 0,
-    },
-  ]
+  pixels: [0, ]
   width: 1
   height: 1
   channels: 1
@@ -1279,14 +1246,7 @@ ta_texture:
   repeat: true
 ta_texture:
   name: "missing_normal"
-  pixels: [
-    {
-      r: 127,
-      g: 127,
-      b: 255,
-      a: 0,
-    },
-  ]
+  pixels: [127, 127, 255, ]
   width: 1
   height: 1
   channels: 3
@@ -1294,14 +1254,7 @@ ta_texture:
   repeat: true
 ta_texture:
   name: "missing_occlusion"
-  pixels: [
-    {
-      r: 255,
-      g: 0,
-      b: 0,
-      a: 0,
-    },
-  ]
+  pixels: [255, ]
   width: 1
   height: 1
   channels: 1
@@ -1309,14 +1262,7 @@ ta_texture:
   repeat: true
 ta_texture:
   name: "missing_roughness"
-  pixels: [
-    {
-      r: 127,
-      g: 0,
-      b: 0,
-      a: 0,
-    },
-  ]
+  pixels: [127, ]
   width: 1
   height: 1
   channels: 1
@@ -1324,14 +1270,7 @@ ta_texture:
   repeat: true
 ta_texture:
   name: "red_albedo"
-  pixels: [
-    {
-      r: 255,
-      g: 0,
-      b: 0,
-      a: 255,
-    },
-  ]
+  pixels: [255, 0, 0, 255, ]
   width: 1
   height: 1
   channels: 4

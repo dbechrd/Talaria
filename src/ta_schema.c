@@ -401,7 +401,8 @@ void ta_schema_register()
     TYPE_START(ta_texture, TYP_TEXTURE, ta_texture_init, ta_texture_free);
     TYPE_FIELD(ta_texture, name,     ATOM_STRING);
     TYPE_FIELD(ta_texture, path,     ATOM_STRING);
-    TYPE_VECTOR(ta_texture, pixels,  TYP_RGBA_U8);
+    //TYPE_VECTOR(ta_texture, pixels,  TYP_RGBA_U8);
+    TYPE_VECTOR(ta_texture, pixels,  ATOM_UINT8);
     TYPE_FIELD(ta_texture, width,    ATOM_INT);
     TYPE_FIELD(ta_texture, height,   ATOM_INT);
     TYPE_FIELD(ta_texture, channels, ATOM_INT);
@@ -657,21 +658,24 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
 
             if (arr_len) {
                 indent(f, level + 1);
-                fprintf(f, "%s: [\n", field->name);
                 u8 *arr_end = arr + (arr_len * field->size);
-                for (u8 *p = arr; p != arr_end; p += field->size) {
-                    indent(f, level + 2);
-                    if (field->type < TYP_COUNT) {
+                fprintf(f, "%s: [", field->name);
+                if (field->type < TYP_COUNT) {
+                    fprintf(f, "\n");
+                    for (u8 *p = arr; p != arr_end; p += field->size) {
+                        indent(f, level + 2);
                         fprintf(f, "{\n");
                         ta_schema_print(f, field->type, p, level + 2, in_array + 1);
                         indent(f, level + 2);
-                        fprintf(f, "}");
-                    } else {
-                        schema_atom_print(f, field, p);
+                        fprintf(f, "},\n");
                     }
-                    fprintf(f, ",\n");
+                    indent(f, level + 1);
+                } else {
+                    for (u8 *p = arr; p != arr_end; p += field->size) {
+                        schema_atom_print(f, field, p);
+                        fprintf(f, ", ");
+                    }
                 }
-                indent(f, level + 1);
                 fprintf(f, "]\n");
             } else {
                 // Don't print empty arrays?
@@ -706,5 +710,158 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
                 }
             }
         }
+    }
+}
+static void schema_atom_print_json(FILE *f, ta_schema_field *field, void *ptr)
+{
+    switch (field->type) {
+        case ATOM_BOOL: {
+            bool *val = ptr;
+            fprintf(f, "%s", *val ? "true" : "false");
+            break;
+        } case ATOM_UINT8: {
+            u8 *val = ptr;
+            fprintf(f, "%u", *val);
+            break;
+        } case ATOM_INT: {
+            int *val = ptr;
+            fprintf(f, "%d", *val);
+            break;
+        } case ATOM_UINT: {
+            u32 *val = ptr;
+            fprintf(f, "%u", *val);
+            break;
+        } case ATOM_FLOAT: {
+            float *val = ptr;
+            fprintf(f, "\"0x%08X (%f)\"", *(u32 *)val, *val);
+            break;
+        } case ATOM_STRING: {
+            const char **val = ptr;
+            //fprintf(f, "\"%s\"  # %08X\n", IFNULL(*val, ""), (u32)*val);
+            fprintf(f, "\"%s\"", IFNULL(*val, ""));
+            break;
+        } case ATOM_ENUM: {
+            int *val = ptr;
+            fprintf(f, "%d", *val);
+            break;
+        } default: {
+            PANIC("Unexpected field type, don't know how to print");
+        }
+    }
+}
+void ta_schema_print_json(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
+    int in_array)
+{
+    static int last_char_comma = false;
+    static fpos_t last_char_comma_pos;
+
+    ta_schema *schema = &tg_schemas[type];
+
+    // NOTE: Defaults to a value unlikely to be used in any legitimate enum to
+    //       detect errors more easily.
+    int union_type = -9001;
+
+    u32 field_count = dlb_vec_len(schema->fields);
+    for (u32 field_idx = 0; field_idx < field_count; ++field_idx) {
+        ta_schema_field *field = &schema->fields[field_idx];
+        if (field->is_alias) {
+            continue;
+        }
+        if (field->in_union && field->union_type != union_type) {
+            continue;
+        }
+
+        u8 *field_ptr = ptr + field->offset;
+
+        if (field->array_len) {
+            u8 *arr = field_ptr;
+            u32 arr_len = field->array_len;
+            if (arr_len) {
+                if (arr_len == 1) {
+                    arr = *(void **)field_ptr;
+                    arr_len = dlb_vec_len(arr);
+                }
+            }
+
+            // Don't print empty arrays
+            if (!arr_len) {
+                //indent(f, level + 1);
+                //fprintf(f, "\"%s\": []", field->name);
+                continue;
+            }
+
+            indent(f, level + 1);
+            fprintf(f, "\"%s\": [", field->name);
+            for (u32 arr_idx = 0; arr_idx < arr_len; ++arr_idx) {
+                if (field->type < TYP_COUNT) {
+                    fprintf(f, "\n");
+                    indent(f, level + 2);
+                    fprintf(f, "{\n");
+                    ta_schema_print_json(f, field->type, arr, level + 2, in_array + 1);
+                    if (last_char_comma) {
+                        DLB_ASSERT(!fsetpos(f, &last_char_comma_pos));
+                        fprintf(f, "\n");
+                    }
+                    indent(f, level + 2);
+                    fprintf(f, "}");
+                } else {
+                    schema_atom_print_json(f, field, arr);
+                }
+                if (arr_len && arr_idx < arr_len - 1) {
+                    DLB_ASSERT(!fgetpos(f, &last_char_comma_pos));
+                    fprintf(f, ",");
+                    if (field->type > TYP_COUNT) {
+                        fprintf(f, " ");
+                    }
+                    last_char_comma = true;
+                } else {
+                    last_char_comma = false;
+                }
+                if (field->type < TYP_COUNT) {
+                    fprintf(f, "\n");
+                }
+                arr += field->size;
+            }
+            if (field->type < TYP_COUNT) {
+                indent(f, level + 1);
+            }
+            DLB_ASSERT(!last_char_comma);
+            fprintf(f, "]");
+        } else {
+            if (field->type < TYP_COUNT) {
+                indent(f, level + 1);
+                fprintf(f, "\"%s\": {\n", field->name);
+                ta_schema_print_json(f, field->type, field_ptr, level + 1, 0);
+                if (last_char_comma) {
+                    DLB_ASSERT(!fsetpos(f, &last_char_comma_pos));
+                    fprintf(f, "\n");
+                }
+                indent(f, level + 1);
+                fprintf(f, "}");
+            } else {
+                if (field->is_union_type) {
+                    union_type = *(int *)field_ptr;
+                }
+                if (level || in_array || schema_atom_present(field, field_ptr)) {
+                    indent(f, level + 1);
+                    fprintf(f, "\"%s\": ", field->name);
+                    schema_atom_print_json(f, field, field_ptr);
+                    //if (field->type == ATOM_ENUM && field->enum_converter) {
+                    //    int enum_type = *(int *)(ptr + field->offset);
+                    //    const char *enum_str = field->enum_converter(enum_type);
+                    //    fprintf(f, "  // %s", enum_str);
+                    //}
+                }
+            }
+        }
+
+        if (field_count && field_idx < field_count - 1) {
+            DLB_ASSERT(!fgetpos(f, &last_char_comma_pos));
+            fprintf(f, ",");
+            last_char_comma = true;
+        } else {
+            last_char_comma = false;
+        }
+        fprintf(f, "\n");
     }
 }

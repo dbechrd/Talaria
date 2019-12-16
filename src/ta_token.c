@@ -126,7 +126,7 @@ static token *token_read(ta_file *f, token **tokens)
                 buf[len++] = ta_file_char(f);
                 next = ta_file_peek(f);
                 if (next == 'x') {
-                    tok->type = TOKEN_FLOAT;
+                    tok->type = TOKEN_INT;
                     buf[len++] = ta_file_char(f);
                     next = ta_file_read(f, buf + len, 8, C_NUMBER_HEX, 0, &read);
                     len += read;
@@ -549,48 +549,61 @@ void tokens_parse(ta_scene *scene, token *tokens)
                 *fp = tok->value.as_bool;
                 break;
             } case TOKEN_INT: {
-                if (expect_array_start || (stack[sp].type != ATOM_UINT8 &&
+                if (expect_array_start || (
+                    stack[sp].type != ATOM_UINT8 &&
                     stack[sp].type != ATOM_INT &&
                     stack[sp].type != ATOM_UINT &&
-                    stack[sp].type != ATOM_ENUM))
+                    stack[sp].type != ATOM_ENUM &&
+                    stack[sp].type != ATOM_FLOAT))
                 {
                     BAD_TOKEN();
                 }
 
-#if 0
-                // TODO: Need to cast *fp to u8 for this to work?
-                //if (stack[sp].type == ATOM_UINT8) {
-                //    DLB_ASSERT(1);
-                //}
-
-                switch (stack[sp].type) {
-                    case ATOM_UINT8: {
+                if (stack[sp].type == ATOM_UINT8) {
+                    DLB_ASSERT(tok->value.as_int <= UINT8_MAX);
+                    if (stack[sp].array_len) {
+                        // NOTE: Fixed-sized atomic arrays not supported
+                        DLB_ASSERT(stack[sp].array_len == 1);
+                        DLB_ASSERT(stack[sp].ptr);
+                        u8 **arr = stack[sp].ptr;
+                        dlb_vec_push(*arr, (u8)tok->value.as_int);
+                    } else {
                         u8 *fp = stack[sp].ptr;
-                        *fp = tok->value.as_int;
-                        break;
-                    } case ATOM_INT: case ATOM_UINT: case ATOM_FLOAT:
-                    case ATOM_ENUM:
-                    {
-                        int *fp = stack[sp].ptr;
-                        *fp = tok->value.as_int;
-                        break;
+                        *fp = (u8)tok->value.as_int;
                     }
-                }
-#else
-                int *fp = stack[sp].ptr;
-                *fp = tok->value.as_int;
-#endif
-                if (stack[sp].is_union_type) {
-                    stack[sp-1].is_union = true;
-                    stack[sp-1].union_type = *fp;
+                } else {
+                    if (stack[sp].array_len) {
+                        // NOTE: Fixed-sized atomic arrays not supported
+                        DLB_ASSERT(stack[sp].array_len == 1);
+                        DLB_ASSERT(stack[sp].ptr);
+                        u32 **arr = stack[sp].ptr;
+                        dlb_vec_push(*arr, tok->value.as_int);
+                    } else {
+                        u32 *fp = stack[sp].ptr;
+                        *fp = tok->value.as_int;
+                    }
+
+                    if (stack[sp].is_union_type) {
+                        stack[sp-1].is_union = true;
+                        stack[sp-1].union_type = *(u32 *)stack[sp].ptr;
+                    }
                 }
                 break;
             } case TOKEN_FLOAT: {
                 if (expect_array_start || stack[sp].type != ATOM_FLOAT) {
                     BAD_TOKEN();
                 }
-                float *fp = stack[sp].ptr;
-                *fp = tok->value.as_float;
+
+                if (stack[sp].array_len) {
+                    // NOTE: Fixed-sized atomic arrays not supported
+                    DLB_ASSERT(stack[sp].array_len == 1);
+                    DLB_ASSERT(stack[sp].ptr);
+                    float **arr = stack[sp].ptr;
+                    dlb_vec_push(*arr, tok->value.as_float);
+                } else {
+                    float *fp = stack[sp].ptr;
+                    *fp = tok->value.as_float;
+                }
                 break;
             } case TOKEN_STRING: {
                 if (expect_array_start || stack[sp].type != ATOM_STRING) {
@@ -630,8 +643,12 @@ void tokens_parse(ta_scene *scene, token *tokens)
                 if (stack[sp].type < TYP_COUNT) {
                     sp++;
                 } else {
-                    // NOTE: Only string vectors are supported for now
-                    if (stack[sp].type != ATOM_STRING) {
+                    if (stack[sp].type != ATOM_STRING &&
+                        stack[sp].type != ATOM_FLOAT &&
+                        stack[sp].type != ATOM_UINT8 &&
+                        stack[sp].type != ATOM_INT &&
+                        stack[sp].type != ATOM_UINT)
+                    {
                         BAD_TOKEN();
                     }
                 }

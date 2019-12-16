@@ -140,3 +140,5 @@ ta_schema *ta_schema_find_by_name(const char *name, int len);
 ta_schema_field *ta_schema_field_find(ta_schema_field_type type, const char *name);
 void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
     int in_array);
+void ta_schema_print_json(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
+    int in_array);

@@ -150,6 +150,24 @@ static void event_sdl_poll()
                 event.data.mouse_scroll.y = sdl_event.wheel.y;
                 event.data.mouse_scroll.flipped = (u8)sdl_event.wheel.direction;
                 break;
+            } case SDL_DROPBEGIN: {
+                printf("dropbegin] file: %s\n", sdl_event.drop.file);
+                handled = false;
+                break;
+            } case SDL_DROPFILE: {
+                // TODO: Something useful with dropped files (maybe check mouse
+                // position to see where it was dropped?)
+                printf("dropfile] file: %s\n", sdl_event.drop.file);
+                handled = false;
+                break;
+            } case SDL_DROPTEXT: {
+                printf("droptext] file: %s\n", sdl_event.drop.file);
+                handled = false;
+                break;
+            } case SDL_DROPCOMPLETE: {
+                printf("dropcomplete] file: %s\n", sdl_event.drop.file);
+                handled = false;
+                break;
             } default: {
                 handled = false;
             }

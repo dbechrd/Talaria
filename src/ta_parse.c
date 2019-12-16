@@ -9,6 +9,13 @@ unsigned int parse_uint(char *buf)
     return (unsigned int)value;
 }
 
+int parse_int_hex(char *buf)
+{
+    DLB_ASSERT(buf);
+    int value = (int)strtoul(buf, 0, 16);
+    return value;
+}
+
 int parse_int_binary(char *buf)
 {
     UNUSED(buf);
@@ -19,21 +26,14 @@ int parse_int_binary(char *buf)
 int parse_int(char *buf)
 {
     DLB_ASSERT(buf && buf[0]);
-    long value;
-    if (buf[0] == '0' && buf[1] == 'b') {
+    int value;
+    if (buf[0] == '0' && buf[1] == 'x') {
+        value = (int)parse_int_hex(buf);
+    } else if (buf[0] == '0' && buf[1] == 'b') {
         value = parse_int_binary(buf);
     } else {
-        value = strtol(buf, 0, 10);
+        value = (int)strtol(buf, 0, 10);
     }
-    return (int)value;
-}
-
-float parse_float_hex(char *buf)
-{
-    DLB_ASSERT(buf);
-    float value;
-    unsigned long l = strtoul(buf, 0, 16);
-    value = *(float *)&l;
     return value;
 }
 
@@ -42,7 +42,8 @@ float parse_float(char *buf)
     DLB_ASSERT(buf && buf[0]);
     float value;
     if (buf[0] == '0' && buf[1] == 'x') {
-        value = parse_float_hex(buf);
+        int as_int = parse_int_hex(buf);;
+        value = *(float *)&as_int;
     } else {
         value = strtof(buf, 0);
     }

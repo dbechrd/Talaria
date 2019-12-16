@@ -499,11 +499,11 @@ static void ui_textbox_panel()
     ta_ui_next_size(300, 0);
     //ta_ui_next_margin(4, 0, 0, 2);
     static ta_ui_textbox_state textbox = { 0 };
-    ta_ui_textbox(0, CSTR("The quick brown fox jumps over the lazy dog. 1234567890 |||"), &textbox, 0);
-    if (textbox.focused) {
-        editor.active_textbox = &textbox;
-    } else if (editor.active_textbox == &textbox) {
-        editor.active_textbox = 0;
+    static char buf[1024] = "The quick brown fox jumps over the lazy dog. 1234567890 |||";
+    if (ta_ui_textbox(0, CSTR(buf), &textbox, 0)) {
+        u32 text_len = dlb_vec_len(textbox.buffer);
+        dlb_memcpy(buf, textbox.buffer, MAX(sizeof(buf) - 1, text_len));
+        ta_ui_textbox_clear(&textbox);
     }
     ta_ui_row_end();
 
@@ -793,6 +793,7 @@ void ta_editor_draw(float alpha)
             ta_shader *shader = ta_scene_find_by_name(&editor.scene, RES_SHADER,
                 editor.shader_editor_select);
             ta_rgba wire_color = TA_COLOR_YELLOW;
+            wire_color.a = 0.4f;
             ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
             ta_model_render_shader(model, camera, shader, alpha, 1.0f);
             if (polygon_mode != GL_LINE) {

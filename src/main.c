@@ -32,6 +32,7 @@
 #include "ta_model.h"
 #include "ta_entity.h"
 #include "ta_player.h"
+#include "ta_json.h"
 #include "ta_gltf.h"
 
 #include "dlb/dlb_types.h"
@@ -118,6 +119,7 @@ int main(int argc, char *argv[])
         SRC_EVENT | SRC_SYSTEM);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
+    ta_json_test();
     ta_gltf_test();
 
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");

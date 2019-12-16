@@ -1,0 +1,1815 @@
+{
+  "ta_audio_source": [
+    {
+      "name": "background_music",
+      "entity_name": "background_music",
+      "audio_buffer": "mus_cello",
+      "pitch": "0x3F800000 (1.000000)",
+      "gain": "0x41200000 (10.000000)",
+      "loop": false
+    },
+    {
+      "name": "button_0001",
+      "entity_name": "button_0001",
+      "audio_buffer": "",
+      "pitch": "0x3F800000 (1.000000)",
+      "gain": "0x3F800000 (1.000000)",
+      "loop": false
+    },
+    {
+      "name": "gun",
+      "entity_name": "gun",
+      "audio_buffer": "",
+      "pitch": "0x3F800000 (1.000000)",
+      "gain": "0x3F800000 (1.000000)",
+      "loop": false
+    },
+    {
+      "name": "player_one",
+      "entity_name": "player_one",
+      "audio_buffer": "",
+      "pitch": "0x3F800000 (1.000000)",
+      "gain": "0x3F800000 (1.000000)",
+      "loop": false
+    }
+  ],
+  "ta_e_button": [
+    {
+      "name": "button_0001",
+      "entity_name": "button_0001",
+      "sfx_activated": "sfx_button_activated",
+      "sfx_active": "",
+      "sfx_deactivated": "sfx_button_deactivated"
+    }
+  ],
+  "ta_camera": [
+    {
+      "name": "freecam",
+      "entity_name": "freecam",
+      "position": {
+        "x": "0x40F72D42 (7.724275)",
+        "y": "0xBF62AF76 (-0.885490)",
+        "z": "0x412E7FD8 (10.906212)"
+      },
+      "position_smooth": "0x3DCCCCCD (0.100000)",
+      "position_target_vel": "0x3E99999A (0.300000)",
+      "yaw": "0x42F1CDC4 (120.901886)",
+      "yaw_smooth": "0x3F333333 (0.700000)",
+      "pitch": "0xC1319CE2 (-11.100801)",
+      "pitch_smooth": "0x3F333333 (0.700000)",
+      "pitch_min": "0xC2B40000 (-90.000000)",
+      "pitch_max": "0x42B40000 (90.000000)",
+      "fov": "0x42960000 (75.000000)",
+      "znear": "0x3DCCCCCD (0.100000)",
+      "focal_point": {
+        "x": "0x00000000 (0.000000)",
+        "y": "0x00000000 (0.000000)",
+        "z": "0x00000000 (0.000000)"
+      },
+      "up": {
+        "x": "0xBDCA81D9 (-0.098880)",
+        "y": "0x3F7B35D2 (0.981290)",
+        "z": "0xBE292B78 (-0.165205)"
+      },
+      "ortho": false
+    },
+    {
+      "name": "player_one",
+      "entity_name": "player_one",
+      "position": {
+        "x": "0xBFFEF076 (-1.991713)",
+        "y": "0xC0A000C8 (-5.000095)",
+        "z": "0x3F662016 (0.898927)"
+      },
+      "position_smooth": "0x3D4CCCCD (0.050000)",
+      "position_target_vel": "0x3E4CCCCD (0.200000)",
+      "yaw": "0x41519E69 (13.101174)",
+      "yaw_smooth": "0x3F333333 (0.700000)",
+      "pitch": "0xC1299849 (-10.599679)",
+      "pitch_smooth": "0x3F333333 (0.700000)",
+      "pitch_min": "0xC2960000 (-75.000000)",
+      "pitch_max": "0x42960000 (75.000000)",
+      "fov": "0x42820000 (65.000000)",
+      "znear": "0x3DCCCCCD (0.100000)",
+      "focal_point": {
+        "x": "0x00000000 (0.000000)",
+        "y": "0x00000000 (0.000000)",
+        "z": "0x00000000 (0.000000)"
+      },
+      "up": {
+        "x": "0x3E377531 (0.179158)",
+        "y": "0x3F7BA1B9 (0.982936)",
+        "z": "0xBD2AC8A2 (-0.041695)"
+      },
+      "ortho": false
+    }
+  ],
+  "ta_gun": [
+    {
+      "name": "gun",
+      "entity_name": "gun",
+      "carrying_ammo": 20,
+      "carrying_ammo_max": 20,
+      "loaded_ammo": 8,
+      "loaded_ammo_max": 8,
+      "sfx_bang": "sfx_gunshot",
+      "sfx_reload": "sfx_cock",
+      "sfx_empty": "sfx_oh_no"
+    }
+  ],
+  "ta_light": [
+    {
+      "name": "sun",
+      "entity_name": "sun",
+      "disabled": true,
+      "cast_shadows": true,
+      "position": {
+        "x": "0x00000000 (0.000000)",
+        "y": "0x40A00000 (5.000000)",
+        "z": "0x00000000 (0.000000)"
+      },
+      "type": 1,
+      "directional": {
+        "intensity": "0x3F800000 (1.000000)",
+        "color": {
+          "r": "0x3F800000 (1.000000)",
+          "g": "0x3F800000 (1.000000)",
+          "b": "0x3F800000 (1.000000)"
+        },
+        "direction": {
+          "x": "0xBF3504F4 (-0.707107)",
+          "y": "0xBF3504F4 (-0.707107)",
+          "z": "0x00000000 (0.000000)"
+        }
+      },
+      "shadowmap": {
+        "resolution": 1024,
+        "znear": "0x3DCCCCCD (0.100000)",
+        "zfar": "0x42480000 (50.000000)"
+      }
+    },
+    {
+      "name": "point_room2",
+      "entity_name": "point_room2",
+      "disabled": false,
+      "cast_shadows": true,
+      "position": {
+        "x": "0x414E1932 (12.881151)",
+        "y": "0x3FAE1479 (1.360000)",
+        "z": "0x4117DA76 (9.490835)"
+      },
+      "type": 2,
+      "point": {
+        "intensity": "0x3F800000 (1.000000)",
+        "color": {
+          "r": "0x3F800000 (1.000000)",
+          "g": "0x3F800000 (1.000000)",
+          "b": "0x3F800000 (1.000000)"
+        }
+      },
+      "shadowmap": {
+        "resolution": 1024,
+        "znear": "0x3DCCCCCD (0.100000)",
+        "zfar": "0x42C80000 (100.000000)"
+      }
+    },
+    {
+      "name": "point_room3",
+      "entity_name": "point_room3",
+      "disabled": false,
+      "cast_shadows": true,
+      "position": {
+        "x": "0x40EFAE43 (7.490022)",
+        "y": "0x40251EB0 (2.579998)",
+        "z": "0xC24E1477 (-51.519985)"
+      },
+      "type": 2,
+      "point": {
+        "intensity": "0x3F800000 (1.000000)",
+        "color": {
+          "r": "0x3F800000 (1.000000)",
+          "g": "0x3DCCCCCD (0.100000)",
+          "b": "0x3F800000 (1.000000)"
+        }
+      },
+      "shadowmap": {
+        "resolution": 1024,
+        "znear": "0x3DCCCCCD (0.100000)",
+        "zfar": "0x42C80000 (100.000000)"
+      }
+    },
+    {
+      "name": "point_attic",
+      "entity_name": "point_attic",
+      "disabled": true,
+      "cast_shadows": true,
+      "position": {
+        "x": "0x40400000 (3.000000)",
+        "y": "0x41400000 (12.000000)",
+        "z": "0x40400000 (3.000000)"
+      },
+      "type": 2,
+      "point": {
+        "intensity": "0x3F800000 (1.000000)",
+        "color": {
+          "r": "0x3F800000 (1.000000)",
+          "g": "0x3F800000 (1.000000)",
+          "b": "0x3ECCCCCD (0.400000)"
+        }
+      },
+      "shadowmap": {
+        "resolution": 1024,
+        "znear": "0x3DCCCCCD (0.100000)",
+        "zfar": "0x42C80000 (100.000000)"
+      }
+    }
+  ],
+  "ta_model": [
+    {
+      "name": "chamber_0001",
+      "entity_name": "chamber_0001",
+      "mesh_groups": ["chamber_0001"],
+      "material": "metal_plate_019",
+      "invisible": false,
+      "cast_shadows": true,
+      "receive_shadows": true
+    },
+    {
+      "name": "wakeup",
+      "entity_name": "wakeup",
+      "mesh_groups": ["wakeup"],
+      "material": "cobble",
+      "invisible": true,
+      "cast_shadows": true,
+      "receive_shadows": true
+    },
+    {
+      "name": "button_0001",
+      "entity_name": "button_0001",
+      "mesh_groups": ["button"],
+      "material": "test",
+      "invisible": false,
+      "cast_shadows": true,
+      "receive_shadows": true
+    },
+    {
+      "name": "player_one",
+      "entity_name": "player_one",
+      "mesh_groups": ["prim_cube"],
+      "material": "cobble",
+      "invisible": false,
+      "cast_shadows": true,
+      "receive_shadows": true
+    },
+    {
+      "name": "sphere1",
+      "entity_name": "sphere1",
+      "mesh_groups": ["prim_sphere"],
+      "material": "test",
+      "invisible": false,
+      "cast_shadows": true,
+      "receive_shadows": true
+    },
+    {
+      "name": "sphere2",
+      "entity_name": "sphere2",
+      "mesh_groups": ["prim_sphere"],
+      "material": "red",
+      "invisible": false,
+      "cast_shadows": true,
+      "receive_shadows": true
+    },
+    {
+      "name": "shadow_test_1",
+      "entity_name": "shadow_test_1",
+      "mesh_groups": ["letter_r"],
+      "material": "test",
+      "invisible": false,
+      "cast_shadows": true,
+      "receive_shadows": true
+    },
+    {
+      "name": "column_0001",
+      "entity_name": "column_0001",
+      "mesh_groups": ["column_0001"],
+      "material": "terrazzo",
+      "invisible": false,
+      "cast_shadows": true,
+      "receive_shadows": true
+    },
+    {
+      "name": "star_0001",
+      "entity_name": "star_0001",
+      "mesh_groups": ["star_0001"],
+      "material": "star_0001",
+      "invisible": false,
+      "cast_shadows": true,
+      "receive_shadows": true
+    }
+  ],
+  "ta_player": [
+    {
+      "name": "player_one",
+      "entity_name": "player_one",
+      "e_gun": "gun",
+      "e_guns": ["gun"]
+    }
+  ],
+  "ta_position": [
+    {
+      "name": "chamber_0001",
+      "entity_name": "chamber_0001",
+      "transform": {
+        "position": {
+          "x": "0x00000000 (0.000000)",
+          "y": "0xC1000000 (-8.000000)",
+          "z": "0x3F800000 (1.000000)"
+        },
+        "orientation": {
+          "x": "0x00000000 (0.000000)",
+          "y": "0x00000000 (0.000000)",
+          "z": "0x00000000 (0.000000)",
+          "w": "0x3F800000 (1.000000)"
+        }
+      }
+    },
+    {
+      "name": "wakeup",
+      "entity_name": "wakeup",
+      "transform": {
+        "position": {
+          "x": "0x00000000 (0.000000)",
+          "y": "0x41000000 (8.000000)",
+          "z": "0x00000000 (0.000000)"
+        },
+        "orientation": {
+          "x": "0x00000000 (0.000000)",
+          "y": "0x00000000 (0.000000)",
+          "z": "0x00000000 (0.000000)",
+          "w": "0x3F800000 (1.000000)"
+        }
+      }
+    },
+    {
+      "name": "button_0001",
+      "entity_name": "button_0001",
+      "transform": {
+        "position": {
+          "x": "0x00000000 (0.000000)",
+          "y": "0xC1000000 (-8.000000)",
+          "z": "0x00000000 (0.000000)"
+        },
+        "orientation": {
+          "x": "0x3EE4F930 (0.447214)",
+          "y": "0x00000000 (0.000000)",
+          "z": "0x00000000 (0.000000)",
+          "w": "0x3F64F930 (0.894427)"
+        }
+      }
+    },
+    {
+      "name": "player_one",
+      "entity_name": "player_one",
+      "transform": {
+        "position": {
+          "x": "0xBFFEF07F (-1.991714)",
+          "y": "0xC0E000D2 (-7.000100)",
+          "z": "0x3F66200D (0.898927)"
+        },
+        "orientation": {
+          "x": "0xBF5E1DDF (-0.867643)",
+          "y": "0x3E9E7458 (0.309481)",
+          "z": "0x3EB26B92 (0.348477)",
+          "w": "0xBE314DB2 (-0.173148)"
+        }
+      }
+    },
+    {
+      "name": "sphere1",
+      "entity_name": "sphere1",
+      "transform": {
+        "position": {
+          "x": "0xC0427F48 (-3.039019)",
+          "y": "0xC0E000D2 (-7.000100)",
+          "z": "0x40B25284 (5.572573)"
+        },
+        "orientation": {
+          "x": "0x3F15D131 (0.585223)",
+          "y": "0x3AE4B27C (0.001745)",
+          "z": "0x3F155646 (0.583348)",
+          "w": "0xBF102F28 (-0.563220)"
+        }
+      }
+    },
+    {
+      "name": "sphere2",
+      "entity_name": "sphere2",
+      "transform": {
+        "position": {
+          "x": "0x408FCF3E (4.494048)",
+          "y": "0xC0E000D2 (-7.000100)",
+          "z": "0xC08EAE44 (-4.458773)"
+        },
+        "orientation": {
+          "x": "0xBDF75D6A (-0.120784)",
+          "y": "0xBF3A5C44 (-0.727970)",
+          "z": "0x3F2BA519 (0.670488)",
+          "w": "0x3D9D871C (0.076918)"
+        }
+      }
+    },
+    {
+      "name": "shadow_test_1",
+      "entity_name": "shadow_test_1",
+      "transform": {
+        "position": {
+          "x": "0x40900000 (4.500000)",
+          "y": "0xC0800000 (-4.000000)",
+          "z": "0x00000000 (0.000000)"
+        },
+        "orientation": {
+          "x": "0x00000000 (0.000000)",
+          "y": "0xBF800000 (-1.000000)",
+          "z": "0x00000000 (0.000000)",
+          "w": "0x3F800000 (1.000000)"
+        }
+      }
+    },
+    {
+      "name": "column_0001",
+      "entity_name": "column_0001",
+      "transform": {
+        "position": {
+          "x": "0xC005AAA3 (-2.088540)",
+          "y": "0xC0FEB93A (-7.960111)",
+          "z": "0xBFD42EC9 (-1.657678)"
+        },
+        "orientation": {
+          "x": "0x00000000 (0.000000)",
+          "y": "0x00000000 (0.000000)",
+          "z": "0x00000000 (0.000000)",
+          "w": "0x3F800000 (1.000000)"
+        }
+      }
+    },
+    {
+      "name": "star_0001",
+      "entity_name": "star_0001",
+      "transform": {
+        "position": {
+          "x": "0xBF3C76CA (-0.736188)",
+          "y": "0xC0F000D2 (-7.500100)",
+          "z": "0xC024AED1 (-2.573170)"
+        },
+        "orientation": {
+          "x": "0x3DC88338 (0.097907)",
+          "y": "0x3F4CA437 (0.799381)",
+          "z": "0xBECA34BC (-0.394934)",
+          "w": "0xBEE257F0 (-0.442077)"
+        }
+      }
+    }
+  ],
+  "ta_rigid_body": [
+    {
+      "name": "chamber_0001",
+      "entity_name": "chamber_0001",
+      "collider": {
+        "type": 0,
+        "plane": {
+          "center": {
+            "x": "0x00000000 (0.000000)",
+            "y": "0x00000000 (0.000000)",
+            "z": "0x00000000 (0.000000)"
+          },
+          "normal": {
+            "x": "0x00000000 (0.000000)",
+            "y": "0x3F800000 (1.000000)",
+            "z": "0x00000000 (0.000000)"
+          }
+        }
+      },
+      "position": {
+        "x": "0x00000000 (0.000000)",
+        "y": "0xC1000000 (-8.000000)",
+        "z": "0x3F800000 (1.000000)"
+      },
+      "orientation": {
+        "x": "0x00000000 (0.000000)",
+        "y": "0x00000000 (0.000000)",
+        "z": "0x00000000 (0.000000)",
+        "w": "0x3F800000 (1.000000)"
+      },
+      "mass": "0x00000000 (0.000000)",
+      "trigger": false
+    },
+    {
+      "name": "button_0001",
+      "entity_name": "button_0001",
+      "collider": {
+        "type": 1,
+        "sphere": {
+          "center": {
+            "x": "0x00000000 (0.000000)",
+            "y": "0x00000000 (0.000000)",
+            "z": "0x00000000 (0.000000)"
+          },
+          "radius": "0x3F333333 (0.700000)"
+        }
+      },
+      "position": {
+        "x": "0x00000000 (0.000000)",
+        "y": "0xC1000000 (-8.000000)",
+        "z": "0x00000000 (0.000000)"
+      },
+      "orientation": {
+        "x": "0x3EE4F92E (0.447214)",
+        "y": "0x00000000 (0.000000)",
+        "z": "0x00000000 (0.000000)",
+        "w": "0x3F64F92E (0.894427)"
+      },
+      "mass": "0x3F800000 (1.000000)",
+      "trigger": true
+    },
+    {
+      "name": "player_one",
+      "entity_name": "player_one",
+      "collider": {
+        "type": 1,
+        "sphere": {
+          "center": {
+            "x": "0x00000000 (0.000000)",
+            "y": "0x00000000 (0.000000)",
+            "z": "0x00000000 (0.000000)"
+          },
+          "radius": "0x3F800000 (1.000000)"
+        }
+      },
+      "position": {
+        "x": "0xBFFEF07F (-1.991714)",
+        "y": "0xC0E000D2 (-7.000100)",
+        "z": "0x3F66200D (0.898927)"
+      },
+      "orientation": {
+        "x": "0xBF5E1DE1 (-0.867643)",
+        "y": "0x3E9E7459 (0.309481)",
+        "z": "0x3EB26B93 (0.348477)",
+        "w": "0xBE314DB3 (-0.173148)"
+      },
+      "mass": "0x3F800000 (1.000000)",
+      "trigger": false
+    },
+    {
+      "name": "sphere1",
+      "entity_name": "sphere1",
+      "collider": {
+        "type": 1,
+        "sphere": {
+          "center": {
+            "x": "0x00000000 (0.000000)",
+            "y": "0x00000000 (0.000000)",
+            "z": "0x00000000 (0.000000)"
+          },
+          "radius": "0x3F800000 (1.000000)"
+        }
+      },
+      "position": {
+        "x": "0xC0427F48 (-3.039019)",
+        "y": "0xC0E000D2 (-7.000100)",
+        "z": "0x40B25284 (5.572573)"
+      },
+      "orientation": {
+        "x": "0x3F15D131 (0.585223)",
+        "y": "0x3AE4B27C (0.001745)",
+        "z": "0x3F155646 (0.583348)",
+        "w": "0xBF102F28 (-0.563220)"
+      },
+      "mass": "0x3F800000 (1.000000)",
+      "trigger": false
+    },
+    {
+      "name": "sphere2",
+      "entity_name": "sphere2",
+      "collider": {
+        "type": 1,
+        "sphere": {
+          "center": {
+            "x": "0x00000000 (0.000000)",
+            "y": "0x00000000 (0.000000)",
+            "z": "0x00000000 (0.000000)"
+          },
+          "radius": "0x3F800000 (1.000000)"
+        }
+      },
+      "position": {
+        "x": "0x408FCF3E (4.494048)",
+        "y": "0xC0E000D2 (-7.000100)",
+        "z": "0xC08EAE44 (-4.458773)"
+      },
+      "orientation": {
+        "x": "0xBDF75D6A (-0.120784)",
+        "y": "0xBF3A5C44 (-0.727970)",
+        "z": "0x3F2BA519 (0.670488)",
+        "w": "0x3D9D871C (0.076918)"
+      },
+      "mass": "0x3F800000 (1.000000)",
+      "trigger": false
+    },
+    {
+      "name": "column_0001",
+      "entity_name": "column_0001",
+      "collider": {
+        "type": 1,
+        "sphere": {
+          "center": {
+            "x": "0x00000000 (0.000000)",
+            "y": "0x3F800000 (1.000000)",
+            "z": "0x00000000 (0.000000)"
+          },
+          "radius": "0x3F800000 (1.000000)"
+        }
+      },
+      "position": {
+        "x": "0xC005AAA3 (-2.088540)",
+        "y": "0xC0FEB93A (-7.960111)",
+        "z": "0xBFD42EC9 (-1.657678)"
+      },
+      "orientation": {
+        "x": "0x00000000 (0.000000)",
+        "y": "0x00000000 (0.000000)",
+        "z": "0x00000000 (0.000000)",
+        "w": "0x3F800000 (1.000000)"
+      },
+      "mass": "0x461C3C00 (9999.000000)",
+      "trigger": false
+    },
+    {
+      "name": "star_0001",
+      "entity_name": "star_0001",
+      "collider": {
+        "type": 1,
+        "sphere": {
+          "center": {
+            "x": "0x00000000 (0.000000)",
+            "y": "0x00000000 (0.000000)",
+            "z": "0x00000000 (0.000000)"
+          },
+          "radius": "0x3F000000 (0.500000)"
+        }
+      },
+      "position": {
+        "x": "0xBF3C76CA (-0.736188)",
+        "y": "0xC0F000D2 (-7.500100)",
+        "z": "0xC024AED1 (-2.573170)"
+      },
+      "orientation": {
+        "x": "0x3DC88338 (0.097907)",
+        "y": "0x3F4CA437 (0.799381)",
+        "z": "0xBECA34BC (-0.394934)",
+        "w": "0xBEE257F0 (-0.442077)"
+      },
+      "mass": "0x3E4CCCCD (0.200000)",
+      "trigger": false
+    }
+  ],
+  "ta_audio_buffer": [
+    {
+      "name": "mus_wakeup",
+      "path": "data/music/wakeup.raw"
+    },
+    {
+      "name": "mus_genesis",
+      "path": "data/music/genesis.raw"
+    },
+    {
+      "name": "mus_overture",
+      "path": "data/music/william_tell_overture.raw"
+    },
+    {
+      "name": "mus_cello",
+      "path": "data/music/kevin_olusola_beatbox_cello.raw"
+    },
+    {
+      "name": "sfx_button_activated",
+      "path": "data/sfx/button_activated.raw"
+    },
+    {
+      "name": "sfx_button_deactivated",
+      "path": "data/sfx/button_deactivated.raw"
+    },
+    {
+      "name": "sfx_cock",
+      "path": "data/sfx/cock.raw"
+    },
+    {
+      "name": "sfx_gunshot",
+      "path": "data/sfx/gunshot.raw"
+    },
+    {
+      "name": "sfx_oh_no",
+      "path": "data/sfx/oh_no.raw"
+    },
+    {
+      "name": "sfx_explosion",
+      "path": "data/sfx/explosion.raw"
+    }
+  ],
+  "ta_font": [
+    {
+      "name": "ubuntumono",
+      "path": "data/font/UbuntuMono-Regular.ttf",
+      "pixel_height": "0x41900000 (18.000000)",
+      "shader": "text"
+    },
+    {
+      "name": "lexenddeca",
+      "path": "data/font/LexendDeca-Regular.ttf",
+      "pixel_height": "0x41900000 (18.000000)",
+      "shader": "text"
+    }
+  ],
+  "ta_material": [
+    {
+      "name": "red",
+      "shader": "mesh",
+      "tex_albedo": "red_albedo",
+      "tex_height": "",
+      "tex_metallic": "",
+      "tex_normal": "",
+      "tex_occlusion": "",
+      "tex_roughness": ""
+    },
+    {
+      "name": "test",
+      "shader": "mesh",
+      "tex_albedo": "test_diff",
+      "tex_height": "",
+      "tex_metallic": "test_mrao",
+      "tex_normal": "",
+      "tex_occlusion": "",
+      "tex_roughness": ""
+    },
+    {
+      "name": "cobble",
+      "shader": "mesh",
+      "tex_albedo": "cobble_albedo",
+      "tex_height": "",
+      "tex_metallic": "",
+      "tex_normal": "cobble_normal",
+      "tex_occlusion": "cobble_occlusion",
+      "tex_roughness": "cobble_roughness"
+    },
+    {
+      "name": "terrazzo",
+      "shader": "mesh",
+      "tex_albedo": "terrazzo_albedo",
+      "tex_height": "terrazzo_height",
+      "tex_metallic": "",
+      "tex_normal": "terrazzo_normal",
+      "tex_occlusion": "terrazzo_occlusion",
+      "tex_roughness": "terrazzo_roughness"
+    },
+    {
+      "name": "metal_plate_019",
+      "shader": "mesh",
+      "tex_albedo": "metal_plate_019_albedo",
+      "tex_height": "metal_plate_019_height",
+      "tex_metallic": "metal_plate_019_metallic",
+      "tex_normal": "metal_plate_019_normal",
+      "tex_occlusion": "metal_plate_019_occlusion",
+      "tex_roughness": "metal_plate_019_roughness"
+    },
+    {
+      "name": "acoustic_foam",
+      "shader": "mesh",
+      "tex_albedo": "acoustic_foam_albedo",
+      "tex_height": "acoustic_foam_height",
+      "tex_metallic": "",
+      "tex_normal": "acoustic_foam_normal",
+      "tex_occlusion": "acoustic_foam_occlusion",
+      "tex_roughness": "acoustic_foam_roughness"
+    },
+    {
+      "name": "column_0001",
+      "shader": "mesh",
+      "tex_albedo": "red_albedo",
+      "tex_height": "",
+      "tex_metallic": "",
+      "tex_normal": "",
+      "tex_occlusion": "",
+      "tex_roughness": ""
+    },
+    {
+      "name": "star_0001",
+      "shader": "mesh",
+      "tex_albedo": "star_albedo",
+      "tex_height": "",
+      "tex_metallic": "",
+      "tex_normal": "",
+      "tex_occlusion": "",
+      "tex_roughness": ""
+    }
+  ],
+  "ta_mesh_group": [
+    {
+      "name": "prim_cube",
+      "path": "data/mesh/prim_cube.obj"
+    },
+    {
+      "name": "prim_sphere",
+      "path": "data/mesh/prim_sphere.obj"
+    },
+    {
+      "name": "chamber_0001",
+      "path": "data/mesh/chamber0001.obj"
+    },
+    {
+      "name": "wakeup",
+      "path": "data/mesh/wakeup.obj"
+    },
+    {
+      "name": "button",
+      "path": "data/mesh/button.obj"
+    },
+    {
+      "name": "letter_r",
+      "path": "data/mesh/letter_r.obj"
+    },
+    {
+      "name": "column_0001",
+      "path": "data/mesh/column_0001.obj"
+    },
+    {
+      "name": "star_0001",
+      "path": "data/mesh/star.obj"
+    }
+  ],
+  "ta_shader": [
+    {
+      "name": "lines",
+      "path_vert": "data/shader/lines_v.glsl",
+      "path_frag": "data/shader/lines_f.glsl",
+      "attributes": [
+        {
+          "name": "attr_position",
+          "type": 5
+        },
+
+        {
+          "name": "attr_color",
+          "type": 6
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "u_proj",
+          "type": 8
+        },
+
+        {
+          "name": "u_view",
+          "type": 8
+        },
+
+        {
+          "name": "u_model",
+          "type": 8
+        }
+      ]
+    },
+    {
+      "name": "quads",
+      "path_vert": "data/shader/quads_v.glsl",
+      "path_frag": "data/shader/quads_f.glsl",
+      "attributes": [
+        {
+          "name": "attr_position",
+          "type": 5
+        },
+
+        {
+          "name": "attr_color",
+          "type": 6
+        },
+
+        {
+          "name": "attr_uv",
+          "type": 4
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "u_proj",
+          "type": 8
+        },
+
+        {
+          "name": "u_view",
+          "type": 8
+        },
+
+        {
+          "name": "u_model",
+          "type": 8
+        },
+
+        {
+          "name": "u_tex",
+          "type": 3
+        }
+      ]
+    },
+    {
+      "name": "text",
+      "path_vert": "data/shader/text_v.glsl",
+      "path_frag": "data/shader/text_f.glsl",
+      "attributes": [
+        {
+          "name": "attr_position",
+          "type": 5
+        },
+
+        {
+          "name": "attr_color",
+          "type": 6
+        },
+
+        {
+          "name": "attr_uv",
+          "type": 4
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "u_proj",
+          "type": 8
+        },
+
+        {
+          "name": "u_view",
+          "type": 8
+        },
+
+        {
+          "name": "u_model",
+          "type": 8
+        },
+
+        {
+          "name": "u_tex",
+          "type": 3
+        }
+      ]
+    },
+    {
+      "name": "cubemap",
+      "path_vert": "data/shader/cubemap_v.glsl",
+      "path_frag": "data/shader/cubemap_f.glsl",
+      "attributes": [
+        {
+          "name": "attr_position",
+          "type": 5
+        },
+
+        {
+          "name": "attr_uv",
+          "type": 4
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "u_proj",
+          "type": 8
+        },
+
+        {
+          "name": "u_view",
+          "type": 8
+        },
+
+        {
+          "name": "u_model",
+          "type": 8
+        },
+
+        {
+          "name": "u_face",
+          "type": 0
+        },
+
+        {
+          "name": "u_tex",
+          "type": 10
+        }
+      ]
+    },
+    {
+      "name": "mesh",
+      "path_vert": "data/shader/mesh_v.glsl",
+      "path_frag": "data/shader/mesh_f.glsl",
+      "attributes": [
+        {
+          "name": "attr_position",
+          "type": 5
+        },
+
+        {
+          "name": "attr_color",
+          "type": 6
+        },
+
+        {
+          "name": "attr_uv",
+          "type": 4
+        },
+
+        {
+          "name": "attr_normal",
+          "type": 5
+        },
+
+        {
+          "name": "attr_tangent",
+          "type": 5
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "u_proj",
+          "type": 8
+        },
+
+        {
+          "name": "u_view",
+          "type": 8
+        },
+
+        {
+          "name": "u_model",
+          "type": 8
+        },
+
+        {
+          "name": "u_camera_pos",
+          "type": 5
+        },
+
+        {
+          "name": "u_material",
+          "type": 9,
+          "properties": [
+            {
+              "name": "u_material.tex0",
+              "type": 3
+            },
+
+            {
+              "name": "u_material.tex1",
+              "type": 3
+            },
+
+            {
+              "name": "u_material.tex2",
+              "type": 3
+            }
+          ]
+        },
+
+        {
+          "name": "u_tex_albedo",
+          "type": 3
+        },
+
+        {
+          "name": "u_tex_height",
+          "type": 3
+        },
+
+        {
+          "name": "u_tex_metallic",
+          "type": 3
+        },
+
+        {
+          "name": "u_tex_normal",
+          "type": 3
+        },
+
+        {
+          "name": "u_tex_occlusion",
+          "type": 3
+        },
+
+        {
+          "name": "u_tex_roughness",
+          "type": 3
+        },
+
+        {
+          "name": "u_lights_count",
+          "type": 1
+        },
+
+        {
+          "name": "u_lights",
+          "type": 9,
+          "properties": [
+            {
+              "name": "u_lights[0].intensity",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[1].intensity",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[2].intensity",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[3].intensity",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[4].intensity",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[5].intensity",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[6].intensity",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[7].intensity",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[0].position",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[1].position",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[2].position",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[3].position",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[4].position",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[5].position",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[6].position",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[7].position",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[0].color",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[1].color",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[2].color",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[3].color",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[4].color",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[5].color",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[6].color",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[7].color",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[0].type",
+              "type": 0
+            },
+
+            {
+              "name": "u_lights[1].type",
+              "type": 0
+            },
+
+            {
+              "name": "u_lights[2].type",
+              "type": 0
+            },
+
+            {
+              "name": "u_lights[3].type",
+              "type": 0
+            },
+
+            {
+              "name": "u_lights[4].type",
+              "type": 0
+            },
+
+            {
+              "name": "u_lights[5].type",
+              "type": 0
+            },
+
+            {
+              "name": "u_lights[6].type",
+              "type": 0
+            },
+
+            {
+              "name": "u_lights[7].type",
+              "type": 0
+            },
+
+            {
+              "name": "u_lights[0].direction",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[1].direction",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[2].direction",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[3].direction",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[4].direction",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[5].direction",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[6].direction",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[7].direction",
+              "type": 5
+            },
+
+            {
+              "name": "u_lights[0].cast_shadows",
+              "type": 11
+            },
+
+            {
+              "name": "u_lights[1].cast_shadows",
+              "type": 11
+            },
+
+            {
+              "name": "u_lights[2].cast_shadows",
+              "type": 11
+            },
+
+            {
+              "name": "u_lights[3].cast_shadows",
+              "type": 11
+            },
+
+            {
+              "name": "u_lights[4].cast_shadows",
+              "type": 11
+            },
+
+            {
+              "name": "u_lights[5].cast_shadows",
+              "type": 11
+            },
+
+            {
+              "name": "u_lights[6].cast_shadows",
+              "type": 11
+            },
+
+            {
+              "name": "u_lights[7].cast_shadows",
+              "type": 11
+            },
+
+            {
+              "name": "u_lights[0].shadowmap2d",
+              "type": 3
+            },
+
+            {
+              "name": "u_lights[1].shadowmap2d",
+              "type": 3
+            },
+
+            {
+              "name": "u_lights[2].shadowmap2d",
+              "type": 3
+            },
+
+            {
+              "name": "u_lights[3].shadowmap2d",
+              "type": 3
+            },
+
+            {
+              "name": "u_lights[4].shadowmap2d",
+              "type": 3
+            },
+
+            {
+              "name": "u_lights[5].shadowmap2d",
+              "type": 3
+            },
+
+            {
+              "name": "u_lights[6].shadowmap2d",
+              "type": 3
+            },
+
+            {
+              "name": "u_lights[7].shadowmap2d",
+              "type": 3
+            },
+
+            {
+              "name": "u_lights[0].shadowmap3d",
+              "type": 10
+            },
+
+            {
+              "name": "u_lights[1].shadowmap3d",
+              "type": 10
+            },
+
+            {
+              "name": "u_lights[2].shadowmap3d",
+              "type": 10
+            },
+
+            {
+              "name": "u_lights[3].shadowmap3d",
+              "type": 10
+            },
+
+            {
+              "name": "u_lights[4].shadowmap3d",
+              "type": 10
+            },
+
+            {
+              "name": "u_lights[5].shadowmap3d",
+              "type": 10
+            },
+
+            {
+              "name": "u_lights[6].shadowmap3d",
+              "type": 10
+            },
+
+            {
+              "name": "u_lights[7].shadowmap3d",
+              "type": 10
+            },
+
+            {
+              "name": "u_lights[0].shadowmap_zfar",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[1].shadowmap_zfar",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[2].shadowmap_zfar",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[3].shadowmap_zfar",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[4].shadowmap_zfar",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[5].shadowmap_zfar",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[6].shadowmap_zfar",
+              "type": 2
+            },
+
+            {
+              "name": "u_lights[7].shadowmap_zfar",
+              "type": 2
+            }
+          ]
+        },
+
+        {
+          "name": "u_selected",
+          "type": 0
+        }
+      ]
+    },
+    {
+      "name": "shadow",
+      "path_vert": "data/shader/shadow_v.glsl",
+      "path_frag": "data/shader/shadow_f.glsl",
+      "attributes": [
+        {
+          "name": "attr_position",
+          "type": 5
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "u_model",
+          "type": 8
+        },
+
+        {
+          "name": "u_light_pvm",
+          "type": 8
+        },
+
+        {
+          "name": "u_light_pos",
+          "type": 5
+        },
+
+        {
+          "name": "u_light_zfar",
+          "type": 2
+        }
+      ]
+    }
+  ],
+  "ta_texture": [
+    {
+      "name": "missing_albedo",
+      "path": "",
+      "pixels": [255, 0, 255, 255],
+      "width": 1,
+      "height": 1,
+      "channels": 4,
+      "linear": false,
+      "repeat": true
+    },
+    {
+      "name": "missing_height",
+      "path": "",
+      "pixels": [0],
+      "width": 1,
+      "height": 1,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "missing_metallic",
+      "path": "",
+      "pixels": [0],
+      "width": 1,
+      "height": 1,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "missing_normal",
+      "path": "",
+      "pixels": [127, 127, 255],
+      "width": 1,
+      "height": 1,
+      "channels": 3,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "missing_occlusion",
+      "path": "",
+      "pixels": [255],
+      "width": 1,
+      "height": 1,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "missing_roughness",
+      "path": "",
+      "pixels": [127],
+      "width": 1,
+      "height": 1,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "red_albedo",
+      "path": "",
+      "pixels": [255, 0, 0, 255],
+      "width": 1,
+      "height": 1,
+      "channels": 4,
+      "linear": false,
+      "repeat": true
+    },
+    {
+      "name": "test_diff",
+      "path": "data/texture/pbr_default_0.tga",
+      "width": 32,
+      "height": 32,
+      "channels": 3,
+      "linear": false,
+      "repeat": true
+    },
+    {
+      "name": "test_mrao",
+      "path": "data/texture/pbr_default_1.tga",
+      "width": 32,
+      "height": 32,
+      "channels": 3,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "cobble_albedo",
+      "path": "data/texture/cobble_albedo.tga",
+      "width": 512,
+      "height": 512,
+      "channels": 3,
+      "linear": false,
+      "repeat": true
+    },
+    {
+      "name": "cobble_normal",
+      "path": "data/texture/cobble_normal.tga",
+      "width": 512,
+      "height": 512,
+      "channels": 3,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "cobble_occlusion",
+      "path": "data/texture/cobble_occlusion.tga",
+      "width": 512,
+      "height": 512,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "cobble_roughness",
+      "path": "data/texture/cobble_roughness.tga",
+      "width": 512,
+      "height": 512,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "audio_icon",
+      "path": "data/texture/audio_icon.tga",
+      "width": 32,
+      "height": 32,
+      "channels": 4,
+      "linear": true,
+      "repeat": false
+    },
+    {
+      "name": "terrazzo_albedo",
+      "path": "data/texture/Terrazzo_Tiles_001_albedo.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 3,
+      "linear": false,
+      "repeat": true
+    },
+    {
+      "name": "terrazzo_height",
+      "path": "data/texture/Terrazzo_Tiles_001_height.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "terrazzo_normal",
+      "path": "data/texture/Terrazzo_Tiles_001_normal.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 3,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "terrazzo_occlusion",
+      "path": "data/texture/Terrazzo_Tiles_001_occlusion.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "terrazzo_roughness",
+      "path": "data/texture/Terrazzo_Tiles_001_roughness.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "metal_plate_019_albedo",
+      "path": "data/texture/Metal_Plate_019_albedo.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 3,
+      "linear": false,
+      "repeat": true
+    },
+    {
+      "name": "metal_plate_019_height",
+      "path": "data/texture/Metal_Plate_019_height.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "metal_plate_019_metallic",
+      "path": "data/texture/Metal_Plate_019_metallic.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "metal_plate_019_normal",
+      "path": "data/texture/Metal_Plate_019_normal.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 3,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "metal_plate_019_occlusion",
+      "path": "data/texture/Metal_Plate_019_occlusion.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "metal_plate_019_roughness",
+      "path": "data/texture/Metal_Plate_019_roughness.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "acoustic_foam_albedo",
+      "path": "data/texture/Acoustic_Foam_001_albedo.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": false,
+      "repeat": true
+    },
+    {
+      "name": "acoustic_foam_height",
+      "path": "data/texture/Acoustic_Foam_001_height.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "acoustic_foam_normal",
+      "path": "data/texture/Acoustic_Foam_001_normal.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 3,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "acoustic_foam_occlusion",
+      "path": "data/texture/Acoustic_Foam_001_occlusion.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "acoustic_foam_roughness",
+      "path": "data/texture/Acoustic_Foam_001_roughness.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 1,
+      "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "star_albedo",
+      "path": "data/texture/star_albedo.tga",
+      "width": 1024,
+      "height": 1024,
+      "channels": 3,
+      "linear": false,
+      "repeat": true
+    },
+    {
+      "name": "martin_luther",
+      "path": "data/texture/martin_luther.tga",
+      "width": 512,
+      "height": 512,
+      "channels": 3,
+      "linear": false,
+      "repeat": true
+    }
+  ]
+}

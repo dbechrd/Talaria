@@ -215,7 +215,52 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
     }
     fflush(hnd);
 }
+void ta_scene_save_file_json(ta_scene *scene, const char *filename)
+{
+    // TODO: Alloc dynamic buffer to write arbitrary data to
+    //ta_buffer *buffer = ??
+    ta_file *file = ta_file_open(filename, FILE_WRITE);
+    ta_scene_print_json(scene, file->hnd);
+    ta_file_close(file);
+}
+void ta_scene_print_json(ta_scene *scene, FILE *f)
+{
+    fprintf(f, "{\n");
+    for (ta_resource_type res_type = 0; res_type < RES_COUNT; ++res_type) {
+        ta_schema_field_type schema_type = res_to_typ(res_type);
+        // NOTE: We may have mesh properties at some point, but, for now, meshes are
+        // created at run-time via mesh_groups.
+        if (res_type == RES_MESH) {
+            continue;
+        }
 
+        ta_schema *schema = &tg_schemas[schema_type];
+
+        fprintf(f, "  \"%s\": [\n", schema->name);
+
+        void *pool = scene->resource_data[res_type];
+        u32 pool_len = dlb_vec_len(pool);
+        u8 *ptr = pool;
+        for (u32 i = 0; i < pool_len; ++i) {
+            fprintf(f, "    {\n");
+            ta_schema_print_json(f, schema_type, ptr, 2, 0);
+            fprintf(f, "    }");
+            if (pool_len && i < pool_len - 1) {
+                fprintf(f, ",");
+            }
+            fprintf(f, "\n");
+            ptr += schema->size;
+        }
+
+        fprintf(f, "  ]");
+        if (RES_COUNT && res_type < RES_COUNT - 1) {
+            fprintf(f, ",");
+        }
+        fprintf(f, "\n");
+    }
+    fprintf(f, "}\n");
+    fflush(f);
+}
 void *ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name)
 {
     DLB_ASSERT(scene);

@@ -111,7 +111,8 @@ ta_json_result ta_json_parse(const u8* json_data, size_t json_len,
 
 void ta_json_test()
 {
-    ta_buffer test_json = ta_file_read_all("test.json");
+    //ta_buffer test_json = ta_file_read_all("test.json");
+    ta_buffer test_json = ta_file_read_all("data/scene/scene.json");
     DLB_ASSERT(test_json.length);
 
     jsmntok_t *tokens = 0;

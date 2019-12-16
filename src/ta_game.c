@@ -178,7 +178,8 @@ void ta_game_init()
     // Scene
     //--------------------------------------------------------------------------
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading first scene...\n");
-    ta_scene_load_file(&game.scene, "data/scene/scene1_gen.dml");
+    ta_scene_load_file(&game.scene, "data/scene/scene.dml");
+    ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
     //--------------------------------------------------------------------------
     // Simulation
@@ -944,6 +945,9 @@ void ta_game_event(ta_event *event)
                 ta_event_push(&cam_rotate_evt);
             }
             break;
+        } case GAME_EVENT_SHUTDOWN: {
+            game_command_shutdown();
+            break;
         } case GAME_EVENT_CAMERA_ROTATE: {
             ta_camera *camera = ta_game_camera();
             if (event->data.camera_rotate.delta_yaw) {
@@ -984,5 +988,5 @@ void ta_game_event(ta_event *event)
 void ta_game_save()
 {
     // TODO: Back up original save file before overwriting, handle errors
-    ta_scene_save_file(&game.scene, "data/scene/scene1_gen.dml");
+    ta_scene_save_file(&game.scene, game.scene.filename);
 }

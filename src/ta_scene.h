@@ -56,6 +56,8 @@ void ta_scene_free(ta_scene *scene);
 void ta_scene_save(struct ta_buffer *buffer);
 void ta_scene_save_file(ta_scene *scene, const char *filename);
 void ta_scene_print(ta_scene *scene, FILE *hnd);
+void ta_scene_save_file_json(ta_scene *scene, const char *filename);
+void ta_scene_print_json(ta_scene *scene, FILE *hnd);
 void *ta_scene_alloc(ta_scene *scene, enum ta_resource_type type, const char *name);
 void ta_scene_destroy(ta_scene *scene, enum ta_resource_type type, const char *name);
 void *ta_scene_find_at(ta_scene *scene, enum ta_resource_type type, u32 index);
