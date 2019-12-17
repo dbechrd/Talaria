@@ -1,26 +1,28 @@
-﻿#include "ta_editor.h"
-#include "ta_ui.h"
-#include "ta_game.h"
-#include "ta_scene.h"
-#include "ta_light.h"
-#include "ta_symbol.h"
-#include "ta_audio.h"
-#include "ta_texture.h"
-#include "ta_material.h"
-#include "ta_primitive.h"
-#include "ta_window.h"
-#include "ta_font.h"
-#include "ta_shader.h"
-#include "ta_parse.h"
-#include "ta_rigid_body.h"
-#include "ta_event.h"
-#include "ta_mouse.h"
+﻿#include "ta_audio.h"
 #include "ta_camera.h"
-#include "ta_keybind.h"
-#include "ta_log.h"
-#include "ta_position.h"
+#include "ta_editor.h"
 #include "ta_entity.h"
+#include "ta_event.h"
+#include "ta_font.h"
+#include "ta_game.h"
+#include "ta_keybind.h"
+#include "ta_light.h"
+#include "ta_log.h"
+#include "ta_material.h"
+#include "ta_mesh.h"
+#include "ta_mesh_group.h"
 #include "ta_model.h"
+#include "ta_mouse.h"
+#include "ta_parse.h"
+#include "ta_position.h"
+#include "ta_primitive.h"
+#include "ta_rigid_body.h"
+#include "ta_scene.h"
+#include "ta_shader.h"
+#include "ta_symbol.h"
+#include "ta_texture.h"
+#include "ta_ui.h"
+#include "ta_window.h"
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL_keycode.h"
 #include "SDL/SDL.h"
@@ -164,7 +166,7 @@ static void ui_node_panel()
     static ta_ui_panel_state node_panel = { 0 };
     ta_ui_panel_begin(0, &node_panel, TA_UI_AUTOSIZE);
 
-    static int label_width = 180;
+    static int label_width = 210;
     const char *entity_name = ta_editor_selected_entity();
     if (!entity_name) {
         //ta_ui_spacer(0, 2);
@@ -262,22 +264,26 @@ static void ui_node_panel()
         ta_ui_toggle_button_end(&model->invisible);
     }
 
-    ta_vec3 *pos_values = 0;
-    ta_ui_row_begin();
-    ta_ui_next_size(label_width, 0);
-    if (rigid_body) {
-        ta_ui_label(0, CSTR("Rigid Body Position:"));
-        pos_values = &rigid_body->position;
-    } else if (position) {
+    if (position) {
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
         ta_ui_label(0, CSTR("Position:"));
-        pos_values = &position->transform.position;
-    } else if (light) {
-        ta_ui_label(0, CSTR("Light Position:"));
-        pos_values = &light->position;
+        static ta_ui_textbox_vec3_state textbox = { 0 };
+        ta_ui_textbox_vec3(&position->transform.position, &textbox);
     }
-    if (pos_values) {
-        static ta_ui_textbox_vec3_state pos_editors = { 0 };
-        ta_ui_textbox_vec3(pos_values, &pos_editors);
+    if (rigid_body) {
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("Rigid Body Position:"));
+        static ta_ui_textbox_vec3_state textbox = { 0 };
+        ta_ui_textbox_vec3(&rigid_body->position, &textbox);
+    }
+    if (light) {
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("Light Position:"));
+        static ta_ui_textbox_vec3_state textbox = { 0 };
+        ta_ui_textbox_vec3(&light->position, &textbox);
     }
 
     ta_vec4 *orient_values = 0;
@@ -416,6 +422,95 @@ static void ui_audio_panel()
 
     ta_ui_panel_end();
 }
+static void ui_camera_panel()
+{
+    //ta_ui_next_margin(2, 2, 0, 0);
+    static ta_ui_panel_state camera_panel = { 0 };
+    ta_ui_panel_begin(0, &camera_panel, TA_UI_AUTOSIZE);
+    static const char *selected_camera = 0;
+    //ta_ui_row_begin();
+    dlb_vec_each(ta_camera *, camera, ta_game_resource_pool(RES_COMP_CAMERA)) {
+        ta_ui_next_size(68, 68);
+        //ta_ui_next_margin(0, 0, 2, 0);
+        ta_ui_next_pad(4, 4, 4, 4);
+        //ta_ui_next_size(material->width, material->height);
+        bool selected = camera->name == selected_camera;
+        ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
+        ta_ui_label(0, SYM(camera->name));
+        if (ta_ui_toggle_button_end(&selected)) {
+            if (selected) {
+                selected_camera = camera->name;
+            }
+        }
+        if (ta_ui_last_frame_state().hover) {
+            // TODO: useful tooltip for camera
+        }
+    }
+    ta_ui_panel_end();
+
+    static ta_ui_panel_state selected_camera_panel = { 0 };
+    ta_ui_panel_begin(0, &selected_camera_panel, TA_UI_AUTOSIZE);
+
+    if (selected_camera) {
+        ta_camera *camera = ta_game_by_name(RES_COMP_CAMERA, selected_camera);
+
+        ta_ui_row_begin();
+        static ta_ui_panel_state label_panel = { 0 };
+        ta_ui_panel_begin(0, &label_panel, TA_UI_AUTOSIZE);
+        ta_ui_label(0, CSTR("Name"));
+        ta_ui_label(0, CSTR("Entity name"));
+        ta_ui_label(0, CSTR("Position"));
+        ta_ui_label(0, CSTR("Position smooth"));
+        ta_ui_label(0, CSTR("Position target vel"));
+        ta_ui_label(0, CSTR("Yaw smooth"));
+        ta_ui_label(0, CSTR("Pitch smooth"));
+        ta_ui_label(0, CSTR("FOV"));
+        ta_ui_label(0, CSTR("Z near"));
+        ta_ui_panel_end();
+
+        static ta_ui_panel_state button_panel = { 0 };
+        ta_ui_panel_begin(0, &button_panel, TA_UI_AUTOSIZE);
+        ta_ui_label(0, SYM(camera->name));
+        ta_ui_label(0, SYM(camera->entity_name));
+        static ta_ui_textbox_vec3_state pos_textbox = { 0 };
+        ta_ui_row_begin();
+        ta_ui_textbox_vec3(&camera->position, &pos_textbox);
+        ta_ui_row_end();
+        static ta_ui_textbox_state pos_smooth_textbox = { 0 };
+        ta_ui_textbox_float(0, &camera->position_smooth, &pos_smooth_textbox, 0);
+        ta_ui_row_begin();
+        static ta_ui_textbox_state pos_target_vel_textbox = { 0 };
+        ta_ui_textbox_float(0, &camera->position_target_vel, &pos_target_vel_textbox, 0);
+        ta_ui_next_margin(8, 1, 0, 0);
+        if (ta_ui_button(0, CSTR("Slow"))) {
+            camera->position_target_vel = 0.01f;
+        }
+        ta_ui_next_margin(8, 1, 0, 0);
+        if (ta_ui_button(0, CSTR("Normal"))) {
+            camera->position_target_vel = 0.3f;
+        }
+        ta_ui_next_margin(8, 1, 0, 0);
+        if (ta_ui_button(0, CSTR("Fast"))) {
+            camera->position_target_vel = 1.0f;
+        }
+        ta_ui_row_end();
+        static ta_ui_textbox_state yaw_smooth_textbox = { 0 };
+        ta_ui_textbox_float(0, &camera->yaw_smooth, &yaw_smooth_textbox, 0);
+        static ta_ui_textbox_state pitch_smooth_textbox = { 0 };
+        ta_ui_textbox_float(0, &camera->pitch_smooth, &pitch_smooth_textbox, 0);
+        static ta_ui_textbox_state fov_textbox = { 0 };
+        ta_ui_textbox_float(0, &camera->fov, &fov_textbox, 0);
+        static ta_ui_textbox_state znear_textbox = { 0 };
+        ta_ui_textbox_float(0, &camera->znear, &znear_textbox, 0);
+        if (ta_ui_button(0, CSTR("Recalc projection matrix"))) {
+            ta_camera_recalc_projection(camera);
+        }
+
+        ta_ui_panel_end();
+    }
+
+    ta_ui_panel_end();
+}
 static void ui_material_panel()
 {
     //ta_ui_next_margin(2, 2, 0, 0);
@@ -509,6 +604,63 @@ static void ui_texture_panel()
     }
     ta_ui_panel_end();
 }
+static void ui_mesh_panel()
+{
+    //ta_ui_next_margin(2, 2, 0, 0);
+    static ta_ui_panel_state mesh_panel = { 0 };
+    ta_ui_panel_begin(0, &mesh_panel, TA_UI_AUTOSIZE);
+    ta_ui_row_begin();
+    dlb_vec_each(ta_mesh *, mesh, ta_game_resource_pool(RES_MESH)) {
+        ta_ui_next_size(68, 68);
+        //ta_ui_next_margin(0, 0, 2, 0);
+        ta_ui_next_pad(4, 4, 4, 4);
+        //ta_ui_next_size(material->width, material->height);
+        if (ta_ui_button(0, SYM(mesh->name))) {
+            // i don't why this is a button, but, whatever, man
+        }
+        if (ta_ui_last_frame_state().hover) {
+            char tex_buf[1024] = { 0 };
+            int len = snprintf(tex_buf, sizeof(tex_buf),
+                "name         : %s\n"
+                "vertex count : %u",
+                mesh->name,
+                dlb_vec_len(mesh->positions)
+            );
+            DLB_ASSERT(len < sizeof(tex_buf));
+            ta_ui_tooltip(tex_buf, len);
+        }
+    }
+    ta_ui_panel_end();
+}
+static void ui_mesh_group_panel()
+{
+    //ta_ui_next_margin(2, 2, 0, 0);
+    static ta_ui_panel_state mesh_group_panel = { 0 };
+    ta_ui_panel_begin(0, &mesh_group_panel, TA_UI_AUTOSIZE);
+    ta_ui_row_begin();
+    dlb_vec_each(ta_mesh_group *, mesh_group, ta_game_resource_pool(RES_MESH_GROUP)) {
+        ta_model *model = 0;
+        ta_ui_next_size(68, 68);
+        //ta_ui_next_margin(0, 0, 2, 0);
+        ta_ui_next_pad(4, 4, 4, 4);
+        //ta_ui_next_size(material->width, material->height);
+        if (ta_ui_button(0, SYM(mesh_group->name))) {
+            // i don't why this is a button, but, whatever, man
+        }
+        if (ta_ui_last_frame_state().hover) {
+            char tex_buf[1024] = { 0 };
+            int len = snprintf(tex_buf, sizeof(tex_buf),
+                "name : %s\n"
+                "path : %s",
+                mesh_group->name,
+                mesh_group->path
+            );
+            DLB_ASSERT(len < sizeof(tex_buf));
+            ta_ui_tooltip(tex_buf, len);
+        }
+    }
+    ta_ui_panel_end();
+}
 static void ui_textbox_panel()
 {
     //ta_ui_next_margin(2, 2, 0, 0);
@@ -520,10 +672,10 @@ static void ui_textbox_panel()
     ta_ui_next_size(300, 0);
     //ta_ui_next_margin(4, 0, 0, 2);
     static ta_ui_textbox_state textbox = { 0 };
-    static char buf[1024] = "The quick brown fox jumps over the lazy dog. 1234567890 |||";
+    static char buf[] = "The quick brown fox jumps over the lazy dog. 1234567890 |||";
     if (ta_ui_textbox(0, CSTR(buf), &textbox, 0)) {
         u32 text_len = dlb_vec_len(textbox.buffer);
-        dlb_memcpy(buf, textbox.buffer, MAX(sizeof(buf) - 1, text_len));
+        //dlb_memcpy(buf, textbox.buffer, MAX(sizeof(buf) - 1, text_len));
         ta_ui_textbox_clear(&textbox);
     }
     ta_ui_row_end();
@@ -726,19 +878,25 @@ static void ui_editor_sidebar()
     enum {
         CATEGORY_NODE,
         CATEGORY_AUDIO,
+        CATEGORY_CAMERA,
         CATEGORY_MATERIALS,
         CATEGORY_TEXTURES,
+        CATEGORY_MESHES,
+        CATEGORY_MESH_GROUPS,
         CATEGORY_TEXTBOX,
         CATEGORY_SCENE,
         CATEGORY_COUNT
     };
     const char *category_names[CATEGORY_COUNT] = { 0 };
-    category_names[CATEGORY_NODE]      = INTERN(STRING(CATEGORY_NODE));
-    category_names[CATEGORY_AUDIO]     = INTERN(STRING(CATEGORY_AUDIO));
-    category_names[CATEGORY_MATERIALS] = INTERN(STRING(CATEGORY_MATERIALS));
-    category_names[CATEGORY_TEXTURES]  = INTERN(STRING(CATEGORY_TEXTURES));
-    category_names[CATEGORY_TEXTBOX]   = INTERN(STRING(CATEGORY_TEXTBOX));
-    category_names[CATEGORY_SCENE]     = INTERN(STRING(CATEGORY_SCENE));
+    category_names[CATEGORY_NODE]        = INTERN(STRING(CATEGORY_NODE));
+    category_names[CATEGORY_AUDIO]       = INTERN(STRING(CATEGORY_AUDIO));
+    category_names[CATEGORY_CAMERA]       = INTERN(STRING(CATEGORY_CAMERA));
+    category_names[CATEGORY_MATERIALS]   = INTERN(STRING(CATEGORY_MATERIALS));
+    category_names[CATEGORY_TEXTURES]    = INTERN(STRING(CATEGORY_TEXTURES));
+    category_names[CATEGORY_MESHES]      = INTERN(STRING(CATEGORY_MESHES));
+    category_names[CATEGORY_MESH_GROUPS] = INTERN(STRING(CATEGORY_MESH_GROUPS));
+    category_names[CATEGORY_TEXTBOX]     = INTERN(STRING(CATEGORY_TEXTBOX));
+    category_names[CATEGORY_SCENE]       = INTERN(STRING(CATEGORY_SCENE));
     static int category_selected = CATEGORY_NODE;
 
     ta_ui_row_begin();
@@ -773,11 +931,20 @@ static void ui_editor_sidebar()
         } case CATEGORY_AUDIO: {
             ui_audio_panel();
             break;
+        } case CATEGORY_CAMERA: {
+            ui_camera_panel();
+            break;
         } case CATEGORY_MATERIALS: {
             ui_material_panel();
             break;
         } case CATEGORY_TEXTURES: {
             ui_texture_panel();
+            break;
+        } case CATEGORY_MESHES: {
+            ui_mesh_panel();
+            break;
+        } case CATEGORY_MESH_GROUPS: {
+            ui_mesh_group_panel();
             break;
         } case CATEGORY_TEXTBOX: {
             ui_textbox_panel();

@@ -146,12 +146,6 @@ int main(int argc, char *argv[])
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing editor...\n");
     ta_editor_init();
 
-    // TODO: Cleanup
-    ta_ui_barchart chart = ta_ui_barchart_init(10, 10, MAX(0, WINDOW_W - 20), 30);
-    UNUSED(chart);
-
-    //ta_shader_set_sampler2d(tg_shader_mesh, SYM_U_TEX0, tex_test->gl_id);
-
     ta_game_loop();
 
     ta_log_flush(&tg_debug_log);

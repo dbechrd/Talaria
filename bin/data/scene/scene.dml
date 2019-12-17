@@ -39,27 +39,27 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x41150554 (9.313801)
-    y: 0xC0695298 (-3.645666)
-    z: 0xC0E892E6 (-7.267932)
+    x: 0xC0CB905F (-6.361373)
+    y: 0xC06585EF (-3.586300)
+    z: 0x410D8DEF (8.847152)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x435151CA (209.319489)
+  yaw: 0x42917204 (72.722687)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1B4D156 (-22.602215)
+  pitch: 0xC12FFFAB (-10.999919)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
   fov: 0x42960000 (75.000000)
-  znear: 0x3DCCCCCD (0.100000)
+  znear: 0x3C23D712 (0.010000)
   focal_point:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBEAB9223 (-0.335099)
-    y: 0x3F6C5688 (0.923195)
-    z: 0x3E40B730 (0.188199)
+    x: 0x3D681E08 (0.056669)
+    y: 0x3F7B4BF0 (0.981627)
+    z: 0xBE3A9224 (-0.182198)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
@@ -130,9 +130,9 @@ ta_light:
   entity_name: "point_room2"
   cast_shadows: true
   position:
-    x: 0x412B3B14 (10.701923)
+    x: 0x413A8275 (11.656850)
     y: 0x3EC7ACEA (0.389991)
-    z: 0xC13E4E19 (-11.894067)
+    z: 0xC12F5B76 (-10.959829)
   type: 2  # TA_LIGHT_POINT
   point:
     intensity: 0x3F800000 (1.000000)
@@ -244,6 +244,20 @@ ta_model:
   cast_shadows: true
   receive_shadows: true
 ta_model:
+  name: "column_0002"
+  entity_name: "column_0002"
+  mesh_groups: ["column_0001", ]
+  material: "terrazzo"
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "column_0003"
+  entity_name: "column_0003"
+  mesh_groups: ["column_0001", ]
+  material: "terrazzo"
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
   name: "star_0001"
   entity_name: "star_0001"
   mesh_groups: ["star_0001", ]
@@ -296,10 +310,10 @@ ta_position:
       y: 0xC1000000 (-8.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EE4F92E (0.447214)
+      x: 0x3EE4F930 (0.447214)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F64F92E (0.894427)
+      w: 0x3F64F930 (0.894427)
 ta_position:
   name: "player_one"
   entity_name: "player_one"
@@ -322,16 +336,16 @@ ta_position:
       y: 0xC0E000D2 (-7.000100)
       z: 0xBF902795 (-1.126208)
     orientation:
-      x: 0xBDB00E74 (-0.085965)
-      y: 0x3CC2729F (0.023736)
-      z: 0xBF60865C (-0.877050)
-      w: 0xBEF1B059 (-0.472049)
+      x: 0xBDB00E73 (-0.085965)
+      y: 0x3CC2729D (0.023736)
+      z: 0xBF60865A (-0.877050)
+      w: 0xBEF1B057 (-0.472048)
 ta_position:
   name: "sphere2"
   entity_name: "sphere2"
   transform:
     position:
-      x: 0x409ABFA7 (4.835895)
+      x: 0x40931192 (4.595895)
       y: 0xC0E000D2 (-7.000100)
       z: 0xC107A93E (-8.478819)
     orientation:
@@ -357,9 +371,35 @@ ta_position:
   entity_name: "column_0001"
   transform:
     position:
-      x: 0xC10D41B6 (-8.828543)
-      y: 0xC0FEB93A (-7.960111)
-      z: 0xBFD42EC9 (-1.657678)
+      x: 0xC0D9BE34 (-6.804468)
+      y: 0xC1000069 (-8.000100)
+      z: 0xBFC8C520 (-1.568516)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_position:
+  name: "column_0002"
+  entity_name: "column_0002"
+  transform:
+    position:
+      x: 0xC10D930C (-8.848400)
+      y: 0xC1000069 (-8.000100)
+      z: 0xBFDE67C7 (-1.737542)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_position:
+  name: "column_0003"
+  entity_name: "column_0003"
+  transform:
+    position:
+      x: 0xC0EECED7 (-7.462749)
+      y: 0xC1000069 (-8.000100)
+      z: 0xC05D3F07 (-3.456972)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -420,10 +460,10 @@ ta_rigid_body:
     y: 0xC1000000 (-8.000000)
     z: 0x00000000 (0.000000)
   orientation:
-    x: 0x3EE4F92E (0.447214)
+    x: 0x3EE4F930 (0.447214)
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
-    w: 0x3F64F92E (0.894427)
+    w: 0x3F64F930 (0.894427)
   mass: 0x3F800000 (1.000000)
   trigger: true
 ta_rigid_body:
@@ -463,10 +503,10 @@ ta_rigid_body:
     y: 0xC0E000D2 (-7.000100)
     z: 0xBF902795 (-1.126208)
   orientation:
-    x: 0xBDB00E74 (-0.085965)
-    y: 0x3CC2729F (0.023736)
-    z: 0xBF60865C (-0.877050)
-    w: 0xBEF1B059 (-0.472049)
+    x: 0xBDB00E73 (-0.085965)
+    y: 0x3CC2729D (0.023736)
+    z: 0xBF60865A (-0.877050)
+    w: 0xBEF1B057 (-0.472048)
   mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "sphere2"
@@ -480,7 +520,7 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   position:
-    x: 0x409ABFA7 (4.835895)
+    x: 0x40931192 (4.595895)
     y: 0xC0E000D2 (-7.000100)
     z: 0xC107A93E (-8.478819)
   orientation:
@@ -501,9 +541,51 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   position:
-    x: 0xC10D41B6 (-8.828543)
-    y: 0xC0FEB93A (-7.960111)
-    z: 0xBFD42EC9 (-1.657678)
+    x: 0xC0D9BE34 (-6.804468)
+    y: 0xC1000069 (-8.000100)
+    z: 0xBFC8C520 (-1.568516)
+  orientation:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+    w: 0x3F800000 (1.000000)
+  mass: 0x461C3C00 (9999.000000)
+ta_rigid_body:
+  name: "column_0002"
+  entity_name: "column_0002"
+  collider:
+    type: 1  # TA_COLLIDER_SHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x3F800000 (1.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  position:
+    x: 0xC10D930C (-8.848400)
+    y: 0xC1000069 (-8.000100)
+    z: 0xBFDE67C7 (-1.737542)
+  orientation:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+    w: 0x3F800000 (1.000000)
+  mass: 0x461C3C00 (9999.000000)
+ta_rigid_body:
+  name: "column_0003"
+  entity_name: "column_0003"
+  collider:
+    type: 1  # TA_COLLIDER_SHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x3F800000 (1.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  position:
+    x: 0xC0EECED7 (-7.462749)
+    y: 0xC1000069 (-8.000100)
+    z: 0xC05D3F07 (-3.456972)
   orientation:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)

@@ -183,6 +183,7 @@ extern const ta_rgba TA_COLOR_BLUE2;
 extern const ta_rgba TA_COLOR_BLUE3;
 extern const ta_rgba TA_COLOR_BLUE4;
 extern const ta_rgba TA_COLOR_BLUE5;
+extern const ta_rgba TA_COLOR_BLUE5A;
 extern const ta_rgba TA_COLOR_BLUE6;
 extern const ta_rgba TA_COLOR_BLUE7;
 extern const ta_rgba TA_COLOR_BLUE8;

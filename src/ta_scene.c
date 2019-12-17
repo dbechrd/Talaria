@@ -586,7 +586,7 @@ void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
 
 #if 1
     dlb_vec_each(ta_camera *, camera, scene->resource_data[RES_COMP_CAMERA]) {
-        if (camera->entity_name != tg_e_active_camera) {
+        if (camera->name != tg_e_active_camera) {
             ta_sphere sphere = { 0 };
             sphere.center = camera->position;
             sphere.radius = 0.2f;

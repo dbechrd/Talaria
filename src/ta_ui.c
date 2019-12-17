@@ -163,10 +163,10 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
 
     //ui_default_style[UI_PANEL].margin                     = TA_RECT(0, 0, 0, 0);
     ui_default_style[UI_PANEL].pad                          = TA_RECT(4, 4, 4, 4);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_NONE]      = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_DOWN]      = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_ACTIVE]    = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_NONE]      = TA_COLOR_BLUE5; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]     = TA_COLOR_BLUE5; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_DOWN]      = TA_COLOR_BLUE5; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_ACTIVE]    = TA_COLOR_BLUE5; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_HOVER]     = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS;
@@ -209,10 +209,10 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
 
     ui_default_style[UI_LABEL].margin                       = TA_RECT(2, 1, 0, 1);
     ui_default_style[UI_LABEL].pad                          = TA_RECT(4, 1, 4, 1);
-    ui_default_style[UI_LABEL].bg_color[UI_STATE_NONE]      = TA_COLOR_BLUE5;
-    ui_default_style[UI_LABEL].bg_color[UI_STATE_HOVER]     = TA_COLOR_BLUE5;
-    ui_default_style[UI_LABEL].bg_color[UI_STATE_DOWN]      = TA_COLOR_BLUE5;
-    ui_default_style[UI_LABEL].bg_color[UI_STATE_ACTIVE]    = TA_COLOR_BLUE5;
+    ui_default_style[UI_LABEL].bg_color[UI_STATE_NONE]      = TA_COLOR_INVIS; //TA_COLOR_BLUE5;
+    ui_default_style[UI_LABEL].bg_color[UI_STATE_HOVER]     = TA_COLOR_INVIS; //TA_COLOR_BLUE5;
+    ui_default_style[UI_LABEL].bg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS; //TA_COLOR_BLUE5;
+    ui_default_style[UI_LABEL].bg_color[UI_STATE_ACTIVE]    = TA_COLOR_INVIS; //TA_COLOR_BLUE5;
     //ui_default_style[UI_LABEL].fg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
     //ui_default_style[UI_LABEL].fg_color[UI_STATE_HOVER]     = TA_COLOR_INVIS;
     //ui_default_style[UI_LABEL].fg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS;
@@ -220,7 +220,7 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
 
     ui_default_style[UI_TEXTBOX].margin                     = TA_RECT(2, 1, 0, 1);
     ui_default_style[UI_TEXTBOX].pad                        = TA_RECT(4, 1, 4, 1);
-    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE]    = TA_COLOR_BLUE2;
+    ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE]    = TA_COLOR_GRAY4;
     ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_HOVER]   = TA_COLOR_ORANGE;
     ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_DOWN]    = TA_COLOR_ORANGE;
     ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_ACTIVE]  = TA_RGBA(0.0f, 0.5f, 0.45f, 0.9f);
@@ -1170,6 +1170,13 @@ bool ta_ui_textbox_float(const char *name, float *value,
         }
     }
 
+    if (frame->data.textbox->submit) {
+        *value = parse_float(textbox->buffer);
+        ta_ui_textbox_clear(textbox);
+    } else if (ta_ui_last_frame_state().hover && !textbox->focused) {
+        ui_set_cursor(ui_cursor_size_we);
+    }
+
     frame->text_rects = text_rects;
     frame->cursor = cursor;
     return frame->data.textbox->submit;
@@ -1184,12 +1191,13 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state)
     for (int i = 0; i < 3; ++i) {
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
-        if (ta_ui_textbox_float(0, &components[i], state, 0)) {
-            components[i] = parse_float(state->buffer);
-            ta_ui_textbox_clear(state);
-        } else if (ta_ui_last_frame_state().hover && !state->focused) {
-            ui_set_cursor(ui_cursor_size_we);
-        }
+        ta_ui_textbox_float(0, &components[i], state, 0);
+        //if (ta_ui_textbox_float(0, &components[i], state, 0)) {
+        //    components[i] = parse_float(state->buffer);
+        //    ta_ui_textbox_clear(state);
+        //} else if (ta_ui_last_frame_state().hover && !state->focused) {
+        //    ui_set_cursor(ui_cursor_size_we);
+        //}
     }
 }
 void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state)
@@ -1202,12 +1210,13 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state)
     for (int i = 0; i < 4; ++i) {
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
-        if (ta_ui_textbox_float(0, &components[i], state, 0)) {
-            components[i] = parse_float(state->buffer);
-            ta_ui_textbox_clear(state);
-        } else if (ta_ui_last_frame_state().hover && !state->focused) {
-            ui_set_cursor(ui_cursor_size_we);
-        }
+        ta_ui_textbox_float(0, &components[i], state, 0);
+        //if (ta_ui_textbox_float(0, &components[i], state, 0)) {
+        //    components[i] = parse_float(state->buffer);
+        //    ta_ui_textbox_clear(state);
+        //} else if (ta_ui_last_frame_state().hover && !state->focused) {
+        //    ui_set_cursor(ui_cursor_size_we);
+        //}
     }
 }
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
@@ -1451,7 +1460,7 @@ static void ui_render_scrollbars(ui_frame *frame)
             widget_color = (ta_rgba){ 0.8f, 0.0f, 0.0f, 1.0f };
         }
 
-        ta_primitive_push_rect(scroll_v_rect, TA_COLOR_BLUE, UI_LAYER_EDIT_1);
+        ta_primitive_push_rect(scroll_v_rect, TA_COLOR_GRAY4, UI_LAYER_EDIT_1);
         ta_primitive_push_rect(scroll_v_widget, widget_color, UI_LAYER_EDIT_1);
         ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
 

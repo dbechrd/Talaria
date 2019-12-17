@@ -19,6 +19,8 @@
 #include "ta_symbol.h"
 #include "ta_timer.h"
 #include "ta_ui.h"
+#include "ta_ui_barchart.h"
+#include "ta_viewport.h"
 #include "ta_window.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
@@ -469,6 +471,10 @@ void ta_game_loop()
     minimap_camera.ortho = true;
     ta_camera_init(&minimap_camera);
 
+    // TODO: Cleanup
+    ta_ui_barchart chart = ta_ui_barchart_init(10, 10, MAX(0, WINDOW_W - 20), 30);
+    UNUSED(chart);
+
     // Eric Catto - Soft Constraints (GDC 2011)
     // Semi-implicit Euler will eventually blow up if you take big time steps. A
     // general rule is to take at least 4 time steps per period of oscillation.
@@ -626,7 +632,7 @@ void ta_game_loop()
         // Render minimap
         ta_rect map_rect = { 10, 50, 200, 200 };
         ta_viewport_bind(map_rect, TA_COLOR_GRAY7, true);
-        ta_scene_render(tg_game.scene, &minimap_camera, sim_alpha);
+        ta_scene_render(&game.scene, &minimap_camera, sim_alpha);
         ta_viewport_unbind();
         ta_primitive_render(true, true);
 
@@ -653,9 +659,8 @@ void ta_game_loop()
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-        ta_ui_barchart_draw(0, 0, &chart);
-        ta_primitive_render();
-        ta_primitive_clear();
+        ta_ui_barchart_draw(&chart, 0, 0);
+        ta_primitive_render(true, true);
     #endif
 
         //debug_nametag(active_cam);

@@ -260,6 +260,9 @@ ta_buffer ta_file_read_all(const char *filename)
     }
     rewind(fs);
 
+    // Empty file
+    DLB_ASSERT(tell > 0);
+
     // Allocate buffer
     ta_buffer buffer = ta_buffer_init(tell + 1);
 
