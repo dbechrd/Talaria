@@ -119,7 +119,7 @@ void ta_json_test()
     ta_json_parse(test_json.data, test_json.length, &tokens);
     DLB_ASSERT(tokens);
 
-    ta_json_dump(test_json.data, tokens, dlb_vec_len(tokens), 0);
+    //ta_json_dump(test_json.data, tokens, dlb_vec_len(tokens), 0);
 
     dlb_vec_free(tokens);
     ta_buffer_free(test_json);

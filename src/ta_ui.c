@@ -1156,9 +1156,7 @@ bool ta_ui_textbox_float(const char *name, float *value,
             drag_float_update(0.01f);
             if (ta_key_released(SDL_SCANCODE_MOUSE_LEFT)) {
                 // If drag ended and value didn't change, start edit mode
-                if (drag_float_end()) {
-                    frame->data.textbox->submit = true;
-                } else {
+                if (!drag_float_end()) {
                     char text[16] = { 0 };
                     int text_len = snprintf(CSTR(text), "%3.4f", *value);
                     DLB_ASSERT(text_len < sizeof(text));

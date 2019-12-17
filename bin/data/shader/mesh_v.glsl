@@ -28,8 +28,10 @@ out vs_out {
     vec3 position;
     vec4 color;
 	vec2 uv;
-	vec3 normal;
+    vec3 normal;
+    vec3 tangent;
     vec3 tbn_position;
+	vec3 tbn_normal;
     vec3 tbn_camera_pos;
     vec3 tbn_light_pos[8];
     vec3 tbn_light_dir[8];
@@ -46,6 +48,8 @@ void main()
     vertex.position = vec3(position);
 	vertex.color = attr_color;
 	vertex.uv = attr_uv;
+    vertex.normal = attr_normal;
+    vertex.tangent = attr_tangent;
 
     mat3 normal_matrix = transpose(inverse(mat3(u_model)));
     vec3 T = normalize(normal_matrix * attr_tangent);
@@ -54,7 +58,7 @@ void main()
     vec3 B = cross(N, T);
     mat3 TBN = transpose(mat3(T, B, N));
 
-    vertex.normal = TBN * normalize(vec3(u_model * vec4(attr_normal, 0.0)));
+    vertex.tbn_normal = TBN * normalize(vec3(u_model * vec4(attr_normal, 0.0)));
 
     vertex.tbn_position = TBN * vertex.position;
     vertex.tbn_camera_pos = TBN * u_camera_pos;

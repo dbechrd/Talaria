@@ -240,6 +240,27 @@ static void ui_node_panel()
     ta_position *position = ta_game_component_try(RES_COMP_POSITION, entity_name);
     ta_rigid_body *rigid_body = ta_game_component_try(RES_COMP_RIGID_BODY, entity_name);
     ta_light *light = ta_game_component_try(RES_COMP_LIGHT, entity_name);
+    ta_model *model = ta_game_component_try(RES_COMP_MODEL, entity_name);
+
+    if (model) {
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("Invisible:"));
+        ta_ui_next_pad(0, 0, 0, 0);
+        ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
+        if (model->invisible) {
+            ta_ui_next_margin(0, 0, 0, 0);
+            ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+            ta_ui_label(0, CSTR("True"));
+        } else {
+            ta_ui_next_margin(0, 0, 0, 0);
+            ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+            ta_ui_label(0, CSTR("False"));
+        }
+        ta_ui_toggle_button_end(&model->invisible);
+    }
 
     ta_vec3 *pos_values = 0;
     ta_ui_row_begin();

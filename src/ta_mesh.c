@@ -77,8 +77,8 @@ void ta_mesh_create(ta_mesh *mesh)
     }
 }
 
-// TODO: Should tangent generation also go here? Or should this be moved to
-// mesh_group loader?
+// NOTE: Leave this separate from mesh_group load because it's only useful in
+// debug mode
 void ta_mesh_init_normals(ta_mesh *mesh, float scale)
 {
     DLB_ASSERT(!mesh->vertex_normals);
@@ -90,6 +90,7 @@ void ta_mesh_init_normals(ta_mesh *mesh, float scale)
 
     u32 face_count = normal_count / 3;
     dlb_vec_reserve(mesh->face_normals, face_count);
+    dlb_vec_reserve(mesh->tangent_lines, face_count);
 
     ta_line_3d *line;
     u32 i = 0;
@@ -109,6 +110,12 @@ void ta_mesh_init_normals(ta_mesh *mesh, float scale)
         ta_vec3 face_center = vec3_scalef(vec3_add(vec3_add(v0, v1), v2), 1.0f / 3.0f);
         line->p0 = face_center;
         line->p1 = vec3_add(face_center, face_normal);
+
+        line = dlb_vec_alloc(mesh->tangent_lines);
+        ta_vec3 t0 = mesh->tangents[i * 3];
+        ta_vec3 tangent = vec3_scalef(t0, scale);
+        line->p0 = face_center;
+        line->p1 = vec3_add(face_center, tangent);
     }
     for (; i < normal_count; i++) {
         line = dlb_vec_alloc(mesh->vertex_normals);
@@ -144,14 +151,16 @@ void ta_mesh_push_normals(ta_mesh *mesh)
 {
     DLB_ASSERT(mesh->vertex_normals);
     DLB_ASSERT(mesh->face_normals);
+    DLB_ASSERT(mesh->tangent_lines);
 
-    dlb_vec_each(ta_line_3d *, line, mesh->vertex_normals) {
-        //ta_primitive_push_line_3d(&line, TA_COLOR_RED, TA_COLOR_GREEN);
-        ta_primitive_push_line_3d(*line, TA_COLOR_MAGENTA, TA_COLOR_MAGENTA);
-    }
-    dlb_vec_each(ta_line_3d *, line, mesh->face_normals) {
-        //ta_primitive_push_line_3d(&line, TA_COLOR_RED, TA_COLOR_GREEN);
-        ta_primitive_push_line_3d(*line, TA_COLOR_CYAN, TA_COLOR_CYAN);
+    //dlb_vec_each(ta_line_3d *, line, mesh->vertex_normals) {
+    //    ta_primitive_push_line_3d(*line, TA_COLOR_MAGENTA, TA_COLOR_MAGENTA);
+    //}
+    //dlb_vec_each(ta_line_3d *, line, mesh->face_normals) {
+    //    ta_primitive_push_line_3d(*line, TA_COLOR_CYAN, TA_COLOR_CYAN);
+    //}
+    dlb_vec_each(ta_line_3d *, line, mesh->tangent_lines) {
+        ta_primitive_push_line_3d(*line, TA_COLOR_RED, TA_COLOR_GREEN);
     }
 }
 

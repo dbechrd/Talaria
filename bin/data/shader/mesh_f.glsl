@@ -5,7 +5,9 @@ in vs_out {
     vec4 color;
 	vec2 uv;
 	vec3 normal;
+    vec3 tangent;
     vec3 tbn_position;
+	vec3 tbn_normal;
     vec3 tbn_camera_pos;
     vec3 tbn_light_pos[8];
     vec3 tbn_light_dir[8];
@@ -114,7 +116,7 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0);
 
 void main()
 {
-    vec2 vertex_uv = vertex.uv * 8.0;
+    vec2 vertex_uv = vertex.uv; // * 8.0;
     // TODO: Use defaults if texture not present
     // NOTE: Currently implemented in ta_model.c, maybe it should stay there?
     vec4  tex_albedo    = texture(u_tex_albedo,    vertex_uv);
@@ -240,8 +242,17 @@ void main()
     //final_color = vertex.color;
 	//final_color = mix(tex_albedo, vertex.color, vertex.color.a > 0);
 
-    // normals
+    // normal map
     //final_color = vec4((N * 0.5) + 0.5, 1.0);
+
+    // normals
+    //final_color = vec4((vertex.normal * 0.5) + 0.5, 1.0);
+
+    // TBN normals
+    //final_color = vec4((vertex.tbn_normal * 0.5) + 0.5, 1.0);
+
+    // tangents
+    //final_color = vec4(vertex.tangent * 0.5) + 0.5, 1.0);
 
     // uv coords
     //final_color = vec4(vertex_uv.x, vertex_uv.y, 0.0, 1.0);

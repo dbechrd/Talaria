@@ -155,21 +155,21 @@ void gltf_dump(cgltf_data *data)
     printf("\n");
 }
 
-static const char *ta_cgltf_error_str[] = {
-    [cgltf_result_success] = "cgltf_result_success",
-    [cgltf_result_data_too_short] = "cgltf_result_data_too_short",
-    [cgltf_result_unknown_format] = "cgltf_result_unknown_format",
-    [cgltf_result_invalid_json] = "cgltf_result_invalid_json",
-    [cgltf_result_invalid_gltf] = "cgltf_result_invalid_gltf",
-    [cgltf_result_invalid_options] = "cgltf_result_invalid_options",
-    [cgltf_result_file_not_found] = "cgltf_result_file_not_found",
-    [cgltf_result_io_error] = "cgltf_result_io_error",
-    [cgltf_result_out_of_memory] = "cgltf_result_out_of_memory",
-    [cgltf_result_legacy_gltf] = "cgltf_result_legacy_gltf",
-};
-
 cgltf_result ta_gltf_parse(const char *filename)
 {
+    static const char *ta_cgltf_error_str[] = {
+        [cgltf_result_success] = "cgltf_result_success",
+        [cgltf_result_data_too_short] = "cgltf_result_data_too_short",
+        [cgltf_result_unknown_format] = "cgltf_result_unknown_format",
+        [cgltf_result_invalid_json] = "cgltf_result_invalid_json",
+        [cgltf_result_invalid_gltf] = "cgltf_result_invalid_gltf",
+        [cgltf_result_invalid_options] = "cgltf_result_invalid_options",
+        [cgltf_result_file_not_found] = "cgltf_result_file_not_found",
+        [cgltf_result_io_error] = "cgltf_result_io_error",
+        [cgltf_result_out_of_memory] = "cgltf_result_out_of_memory",
+        [cgltf_result_legacy_gltf] = "cgltf_result_legacy_gltf",
+    };
+
     cgltf_options options = { 0 };
     cgltf_data* data = NULL;
     cgltf_result err;
@@ -206,5 +206,6 @@ void ta_gltf_test()
 {
     cgltf_result err = 0;
     //err = ta_gltf_parse("F:/Users/User/Rez/Models/bee.glb");
+    err = ta_gltf_parse("data/mesh/rock_0001.gltf");
     DLB_ASSERT(!err);
 }

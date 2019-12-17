@@ -16,7 +16,7 @@
 #define TINYOBJ_LOADER_C_IMPLEMENTATION
 #include "misc/tinyobj_loader_c.h"
 
-#define TA_MESH_NORMAL_LEN 0.5f
+#define TA_MESH_NORMAL_LEN 0.1f
 
 void ta_mesh_group_init(ta_mesh_group *group, const char *path)
 {
@@ -69,14 +69,19 @@ void ta_mesh_group_load(ta_mesh_group *group)
         mesh_max = VEC3_MIN;
         mesh_radius = 0.0f;
 
+        dlb_vec_reserve(mesh->positions, shape.length * 3);
+        dlb_vec_reserve(mesh->normals, shape.length * 3);
+        dlb_vec_reserve(mesh->uvs, shape.length * 3);
+        dlb_vec_reserve(mesh->tangents, shape.length * 3);
+
         // Each face in object
         for (size_t f_idx = 0; f_idx < shape.length; f_idx++) {
-            int face_verts = attrib.face_num_verts[shape.face_offset + f_idx];
+            const int face_verts = attrib.face_num_verts[shape.face_offset + f_idx];
             DLB_ASSERT(face_verts == 3);
-            ta_vec3 *positions[3] = { 0 };
-            ta_vec2 *uvs[3] = { 0 };
+            ta_vec3 positions[3] = { 0 };
+            ta_vec2 uvs[3] = { 0 };
 
-            for (int v_idx = 0; v_idx < face_verts; v_idx++) {
+            for (int v_idx = 0; v_idx < 3; v_idx++) {
                 tinyobj_vertex_index_t vert = attrib.faces[shape.face_offset * 3 + f_idx * 3 + v_idx];
                 ta_vec3 *position = dlb_vec_alloc(mesh->positions);
                 position->x = attrib.vertices[vert.v_idx * 3];
@@ -91,8 +96,8 @@ void ta_mesh_group_load(ta_mesh_group *group)
                 uv->y = attrib.texcoords[vert.vt_idx * 2 + 1];
                 // TODO: Handle attrib.material_ids possibly for color data?
 
-                positions[v_idx] = position;
-                uvs[v_idx] = uv;
+                positions[v_idx] = *position;
+                uvs[v_idx] = *uv;
 
                 mesh_min.x = MIN(mesh_min.x, position->x);
                 mesh_min.y = MIN(mesh_min.y, position->y);
@@ -103,10 +108,10 @@ void ta_mesh_group_load(ta_mesh_group *group)
                 mesh_radius = MAX(mesh_radius, vec3_len(*position));
             }
 
-            ta_vec3 edge1 = vec3_sub(*positions[1], *positions[0]);
-            ta_vec3 edge2 = vec3_sub(*positions[2], *positions[0]);
-            ta_vec2 delta_uv1 = vec2_sub(*uvs[1], *uvs[0]);
-            ta_vec2 delta_uv2 = vec2_sub(*uvs[2], *uvs[0]);
+            ta_vec3 edge1 = vec3_sub(positions[1], positions[0]);
+            ta_vec3 edge2 = vec3_sub(positions[2], positions[0]);
+            ta_vec2 delta_uv1 = vec2_sub(uvs[1], uvs[0]);
+            ta_vec2 delta_uv2 = vec2_sub(uvs[2], uvs[0]);
 
             ta_vec3 tangent = { 0 };
             float f = 1.0f / (delta_uv1.x * delta_uv2.y - delta_uv2.x * delta_uv1.y);

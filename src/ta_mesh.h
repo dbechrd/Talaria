@@ -24,6 +24,7 @@ typedef struct ta_mesh {
     ta_vec3 *tangents;
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;
+    ta_line_3d *tangent_lines;
     ta_aabb aabb;
 
     GLuint vao;
