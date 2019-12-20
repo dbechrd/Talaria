@@ -13,7 +13,7 @@ typedef struct ta_camera {
     ta_vec3 position;           // where the camera is
     float position_smooth;      // how fast to blend to target [0, 1]
     float position_target_vel;  // how fast to move the target
-    ta_transform target_xform;  // where the camera wants to be
+    ta_xform target_xform;  // where the camera wants to be
     float follow_distance;      // how far to track target
     float yaw;
     float yaw_smooth;

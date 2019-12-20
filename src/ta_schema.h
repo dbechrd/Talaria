@@ -17,7 +17,7 @@ typedef enum ta_schema_field_type {
     TYP_VEC4,
     TYP_MAT3,
     TYP_MAT4,
-    TYP_TRANSFORM,
+    TYP_XFORM,
     TYP_RGB,
     TYP_RGBA,
     TYP_RGBA_U8,
@@ -42,7 +42,7 @@ typedef enum ta_schema_field_type {
     TYP_LIGHT,
     TYP_MODEL,
     TYP_PLAYER,
-    TYP_POSITION,
+    TYP_TRANSFORM,
     TYP_RIGID_BODY,
 
     // Resource types
@@ -75,7 +75,7 @@ typedef enum ta_resource_type {
     RES_COMP_LIGHT,
     RES_COMP_MODEL,
     RES_COMP_PLAYER,
-    RES_COMP_POSITION,
+    RES_COMP_TRANSFORM,
     RES_COMP_RIGID_BODY,
     RES_COMP_COUNT,
     // Resource types

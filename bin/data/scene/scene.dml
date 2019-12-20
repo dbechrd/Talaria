@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0xC0CB905F (-6.361373)
-    y: 0xC06585EF (-3.586300)
-    z: 0x410D8DEF (8.847152)
+    x: 0x4125A5FE (10.353025)
+    y: 0xC021248A (-2.517855)
+    z: 0x40265AA0 (2.599281)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x42917204 (72.722687)
+  yaw: 0x42DDD83E (110.922348)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC12FFFAB (-10.999919)
+  pitch: 0xBFBFFBDF (-1.499874)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,9 +57,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0x3D681E08 (0.056669)
-    y: 0x3F7B4BF0 (0.981627)
-    z: 0xBE3A9224 (-0.182198)
+    x: 0xBC19246D (-0.009347)
+    y: 0x3F7FE98A (0.999657)
+    z: 0xBCC8491B (-0.024449)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
@@ -106,10 +106,6 @@ ta_light:
   entity_name: "sun"
   disabled: true
   cast_shadows: true
-  position:
-    x: 0x00000000 (0.000000)
-    y: 0x40A00000 (5.000000)
-    z: 0x00000000 (0.000000)
   type: 1  # TA_LIGHT_DIRECTIONAL
   directional:
     intensity: 0x3F800000 (1.000000)
@@ -117,10 +113,6 @@ ta_light:
       r: 0x3F800000 (1.000000)
       g: 0x3F800000 (1.000000)
       b: 0x3F800000 (1.000000)
-    direction:
-      x: 0xBF3504F4 (-0.707107)
-      y: 0xBF3504F4 (-0.707107)
-      z: 0x00000000 (0.000000)
   shadowmap:
     resolution: 1024
     znear: 0x3DCCCCCD (0.100000)
@@ -129,10 +121,6 @@ ta_light:
   name: "point_room2"
   entity_name: "point_room2"
   cast_shadows: true
-  position:
-    x: 0x413A8275 (11.656850)
-    y: 0x3EC7ACEA (0.389991)
-    z: 0xC12F5B76 (-10.959829)
   type: 2  # TA_LIGHT_POINT
   point:
     intensity: 0x3F800000 (1.000000)
@@ -148,10 +136,6 @@ ta_light:
   name: "point_room3"
   entity_name: "point_room3"
   cast_shadows: true
-  position:
-    x: 0x40EFAE43 (7.490022)
-    y: 0x40251EB0 (2.579998)
-    z: 0xC24E1477 (-51.519985)
   type: 2  # TA_LIGHT_POINT
   point:
     intensity: 0x3F800000 (1.000000)
@@ -168,10 +152,6 @@ ta_light:
   entity_name: "point_attic"
   disabled: true
   cast_shadows: true
-  position:
-    x: 0x40400000 (3.000000)
-    y: 0x41400000 (12.000000)
-    z: 0x40400000 (3.000000)
   type: 2  # TA_LIGHT_POINT
   point:
     intensity: 0x3F800000 (1.000000)
@@ -273,12 +253,64 @@ ta_player:
   e_gun: "gun"
   e_guns: ["gun", ]
 #-------------------------------------------------------------------------------
-# TYP_POSITION
+# TYP_TRANSFORM
 #-------------------------------------------------------------------------------
-ta_position:
+ta_transform:
+  name: "sun"
+  entity_name: "sun"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x40A00000 (5.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0xBEC3EF04 (-0.382683)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F6C8362 (0.923880)
+ta_transform:
+  name: "point_room2"
+  entity_name: "point_room2"
+  xform:
+    position:
+      x: 0x413A8275 (11.656850)
+      y: 0x3EC7ACEA (0.389991)
+      z: 0xC12F5B76 (-10.959829)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "point_room3"
+  entity_name: "point_room3"
+  xform:
+    position:
+      x: 0x40EFAE43 (7.490022)
+      y: 0x40251EB0 (2.579998)
+      z: 0xC24E1477 (-51.519985)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "point_attic"
+  entity_name: "point_attic"
+  xform:
+    position:
+      x: 0x40400000 (3.000000)
+      y: 0x41400000 (12.000000)
+      z: 0x40400000 (3.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
   name: "chamber_0001"
   entity_name: "chamber_0001"
-  transform:
+  xform:
     position:
       x: 0x00000000 (0.000000)
       y: 0xC1000000 (-8.000000)
@@ -288,10 +320,10 @@ ta_position:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-ta_position:
+ta_transform:
   name: "wakeup"
   entity_name: "wakeup"
-  transform:
+  xform:
     position:
       x: 0x00000000 (0.000000)
       y: 0x41000000 (8.000000)
@@ -301,23 +333,23 @@ ta_position:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-ta_position:
+ta_transform:
   name: "button_0001"
   entity_name: "button_0001"
-  transform:
+  xform:
     position:
       x: 0x00000000 (0.000000)
       y: 0xC1000000 (-8.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EE4F930 (0.447214)
+      x: 0x3EE4F92E (0.447214)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F64F930 (0.894427)
-ta_position:
+      w: 0x3F64F92E (0.894427)
+ta_transform:
   name: "player_one"
   entity_name: "player_one"
-  transform:
+  xform:
     position:
       x: 0x406AC7DD (3.668449)
       y: 0xC0E000D2 (-7.000100)
@@ -327,23 +359,23 @@ ta_position:
       y: 0x3DB965E4 (0.090526)
       z: 0x3F20EB6B (0.628592)
       w: 0xBF31EED7 (-0.695051)
-ta_position:
+ta_transform:
   name: "sphere1"
   entity_name: "sphere1"
-  transform:
+  xform:
     position:
       x: 0x40A9FF4A (5.312413)
       y: 0xC0E000D2 (-7.000100)
       z: 0xBF902795 (-1.126208)
     orientation:
-      x: 0xBDB00E73 (-0.085965)
-      y: 0x3CC2729D (0.023736)
-      z: 0xBF60865A (-0.877050)
-      w: 0xBEF1B057 (-0.472048)
-ta_position:
+      x: 0xBDB00E74 (-0.085965)
+      y: 0x3CC2729F (0.023736)
+      z: 0xBF60865C (-0.877050)
+      w: 0xBEF1B059 (-0.472049)
+ta_transform:
   name: "sphere2"
   entity_name: "sphere2"
-  transform:
+  xform:
     position:
       x: 0x40931192 (4.595895)
       y: 0xC0E000D2 (-7.000100)
@@ -353,23 +385,23 @@ ta_position:
       y: 0xBEC4CCA1 (-0.384374)
       z: 0x3F3BE18E (0.733910)
       w: 0x3F008517 (0.502031)
-ta_position:
+ta_transform:
   name: "shadow_test_1"
   entity_name: "shadow_test_1"
-  transform:
+  xform:
     position:
       x: 0x40900000 (4.500000)
       y: 0xC0800000 (-4.000000)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
-      y: 0xBF800000 (-1.000000)
+      y: 0xBF3504F3 (-0.707107)
       z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
-ta_position:
+      w: 0x3F3504F3 (0.707107)
+ta_transform:
   name: "column_0001"
   entity_name: "column_0001"
-  transform:
+  xform:
     position:
       x: 0xC0D9BE34 (-6.804468)
       y: 0xC1000069 (-8.000100)
@@ -379,10 +411,10 @@ ta_position:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-ta_position:
+ta_transform:
   name: "column_0002"
   entity_name: "column_0002"
-  transform:
+  xform:
     position:
       x: 0xC10D930C (-8.848400)
       y: 0xC1000069 (-8.000100)
@@ -392,10 +424,10 @@ ta_position:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-ta_position:
+ta_transform:
   name: "column_0003"
   entity_name: "column_0003"
-  transform:
+  xform:
     position:
       x: 0xC0EECED7 (-7.462749)
       y: 0xC1000069 (-8.000100)
@@ -405,10 +437,10 @@ ta_position:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-ta_position:
+ta_transform:
   name: "star_0001"
   entity_name: "star_0001"
-  transform:
+  xform:
     position:
       x: 0xC0F18863 (-7.547899)
       y: 0xC0F000D2 (-7.500100)
@@ -435,15 +467,6 @@ ta_rigid_body:
         x: 0x00000000 (0.000000)
         y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
-  position:
-    x: 0x00000000 (0.000000)
-    y: 0xC1000000 (-8.000000)
-    z: 0x3F800000 (1.000000)
-  orientation:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-    w: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "button_0001"
   entity_name: "button_0001"
@@ -455,15 +478,6 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F333333 (0.700000)
-  position:
-    x: 0x00000000 (0.000000)
-    y: 0xC1000000 (-8.000000)
-    z: 0x00000000 (0.000000)
-  orientation:
-    x: 0x3EE4F930 (0.447214)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-    w: 0x3F64F930 (0.894427)
   mass: 0x3F800000 (1.000000)
   trigger: true
 ta_rigid_body:
@@ -477,15 +491,6 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  position:
-    x: 0x406AC7DD (3.668449)
-    y: 0xC0E000D2 (-7.000100)
-    z: 0xC0A1A28A (-5.051091)
-  orientation:
-    x: 0x3EAC8DAE (0.337018)
-    y: 0x3DB965E4 (0.090526)
-    z: 0x3F20EB6B (0.628592)
-    w: 0xBF31EED7 (-0.695051)
   mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "sphere1"
@@ -498,15 +503,6 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  position:
-    x: 0x40A9FF4A (5.312413)
-    y: 0xC0E000D2 (-7.000100)
-    z: 0xBF902795 (-1.126208)
-  orientation:
-    x: 0xBDB00E73 (-0.085965)
-    y: 0x3CC2729D (0.023736)
-    z: 0xBF60865A (-0.877050)
-    w: 0xBEF1B057 (-0.472048)
   mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "sphere2"
@@ -519,15 +515,6 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  position:
-    x: 0x40931192 (4.595895)
-    y: 0xC0E000D2 (-7.000100)
-    z: 0xC107A93E (-8.478819)
-  orientation:
-    x: 0xBE7E2528 (-0.248189)
-    y: 0xBEC4CCA1 (-0.384374)
-    z: 0x3F3BE18E (0.733910)
-    w: 0x3F008517 (0.502031)
   mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "column_0001"
@@ -540,15 +527,6 @@ ta_rigid_body:
         y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  position:
-    x: 0xC0D9BE34 (-6.804468)
-    y: 0xC1000069 (-8.000100)
-    z: 0xBFC8C520 (-1.568516)
-  orientation:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-    w: 0x3F800000 (1.000000)
   mass: 0x461C3C00 (9999.000000)
 ta_rigid_body:
   name: "column_0002"
@@ -561,15 +539,6 @@ ta_rigid_body:
         y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  position:
-    x: 0xC10D930C (-8.848400)
-    y: 0xC1000069 (-8.000100)
-    z: 0xBFDE67C7 (-1.737542)
-  orientation:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-    w: 0x3F800000 (1.000000)
   mass: 0x461C3C00 (9999.000000)
 ta_rigid_body:
   name: "column_0003"
@@ -582,15 +551,6 @@ ta_rigid_body:
         y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  position:
-    x: 0xC0EECED7 (-7.462749)
-    y: 0xC1000069 (-8.000100)
-    z: 0xC05D3F07 (-3.456972)
-  orientation:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-    w: 0x3F800000 (1.000000)
   mass: 0x461C3C00 (9999.000000)
 ta_rigid_body:
   name: "star_0001"
@@ -603,15 +563,6 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F000000 (0.500000)
-  position:
-    x: 0xC0F18863 (-7.547899)
-    y: 0xC0F000D2 (-7.500100)
-    z: 0xC0EB784C (-7.358435)
-  orientation:
-    x: 0xBED068F2 (-0.407051)
-    y: 0x3BD094A1 (0.006365)
-    z: 0xBF657F29 (-0.896472)
-    w: 0x3E332680 (0.174952)
   mass: 0x3E4CCCCD (0.200000)
 #-------------------------------------------------------------------------------
 # TYP_AUDIO_BUFFER

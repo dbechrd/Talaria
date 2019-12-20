@@ -28,7 +28,7 @@
 #include "ta_primitive.h"
 #include "ta_editor.h"
 #include "ta_rigid_body.h"
-#include "ta_position.h"
+#include "ta_transform.h"
 #include "ta_model.h"
 #include "ta_entity.h"
 #include "ta_player.h"
@@ -163,9 +163,10 @@ static void debug_nametag(ta_camera *camera)
     ta_rectf tag_rect = ta_font_push_text(&tag_rects, font,
         CSTR("Player 1\nis da best"), true, 0, 0, 0);
 
-    ta_position *player_pos = ta_game_component(RES_COMP_POSITION, tg_e_player_one);
+    ta_transform *player_transform =
+        ta_game_component(RES_COMP_TRANSFORM, tg_e_player_one);
 
-    ta_vec3 tag_pos = vec3_add(player_pos->transform.position,
+    ta_vec3 tag_pos = vec3_add(player_transform->xform.position,
         (ta_vec3){ 0.0f, 1.2f, 0.0f });
     ta_vec3 tag_to_cam = vec3_sub(camera->position, tag_pos);
     tag_to_cam.z *= -1.0f;

@@ -56,11 +56,11 @@ typedef struct ta_mat4 {
     } data;
 } ta_mat4;
 
-typedef struct ta_transform {
+typedef struct ta_xform {
     ta_vec3 position;
     ta_vec4 orientation;
     //ta_vec3 scale;
-} ta_transform;
+} ta_xform;
 
 typedef struct ta_hsl {
     float h;

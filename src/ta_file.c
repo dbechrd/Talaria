@@ -242,12 +242,14 @@ int ta_file_allow_char(ta_file *f, const char *chars, int times) {
 
 ta_buffer ta_file_read_all(const char *filename)
 {
+    ta_buffer buffer = { 0 };
+
     // Open file
     FILE *fs = fopen(filename, "rb");
     if (!fs) {
         ta_log_write(&tg_debug_log, SRC_FILE, "Unable to open %s for reading\n",
             filename);
-        DLB_ASSERT(!"ta_file_read_all: failed to open file");
+        return buffer;
     }
 
     // Calculate length
@@ -264,7 +266,8 @@ ta_buffer ta_file_read_all(const char *filename)
     DLB_ASSERT(tell > 0);
 
     // Allocate buffer
-    ta_buffer buffer = ta_buffer_init(tell + 1);
+    ta_buffer_init(&buffer, tell + 1);
+    DLB_ASSERT(buffer.data);
 
     // Read into buffer, null-terminate
     fread(buffer.data, 1, tell, fs);

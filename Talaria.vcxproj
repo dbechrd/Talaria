@@ -177,7 +177,7 @@
     <ClCompile Include="src\ta_json.c" />
     <ClCompile Include="src\ta_key.c" />
     <ClCompile Include="src\ta_light.c" />
-    <ClCompile Include="src\ta_position.c" />
+    <ClCompile Include="src\ta_transform.c" />
     <ClCompile Include="src\ta_rigid_body.c" />
     <ClCompile Include="src\ta_model.c" />
     <ClCompile Include="src\ta_material.c" />
@@ -222,7 +222,7 @@
     <ClInclude Include="src\ta_light.h" />
     <ClInclude Include="src\ta_model.h" />
     <ClInclude Include="src\ta_player.h" />
-    <ClInclude Include="src\ta_position.h" />
+    <ClInclude Include="src\ta_transform.h" />
     <ClInclude Include="src\ta_rigid_body.h" />
     <ClInclude Include="src\ta_material.h" />
     <ClInclude Include="src\ta_mesh_group.h" />

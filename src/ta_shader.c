@@ -1,9 +1,9 @@
-#include "ta_shader.h"
-#include "ta_log.h"
-#include "ta_file.h"
-#include "ta_symbol.h"
-#include "ta_light.h"
 #include "ta_buffer.h"
+#include "ta_file.h"
+#include "ta_light.h"
+#include "ta_log.h"
+#include "ta_shader.h"
+#include "ta_symbol.h"
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
@@ -45,7 +45,8 @@ static void show_info_log(GLuint shader)
 
     GLint length = 0;
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-    ta_buffer buf = ta_buffer_init(length);
+    ta_buffer buf = { 0 };
+    ta_buffer_init(&buf, length);
     glGetShaderInfoLog(shader, buf.length, NULL, (GLchar *)buf.data);
     ta_log_write(&tg_debug_log, SRC_SHADER,
         "\n---[OpenGL Info Log]------------------------------------------------------------\n"
@@ -419,7 +420,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
 
     u_intensity->value.glfloat        = light->data.common.intensity;
     u_color->value.rgb                = light->data.common.color;
-    u_position->value.vec3            = light->position;
+    u_position->value.vec3            = ta_light_position(light);
     u_type->value.glint               = light->type;
     u_direction->value.vec3           = VEC3_ZERO;
     u_cast_shadows->value.glbool      = (GLboolean)light->cast_shadows;
@@ -431,7 +432,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
         case TA_LIGHT_AMBIENT:
             break;
         case TA_LIGHT_DIRECTIONAL:
-            u_direction->value.vec3 = light->data.directional.direction;
+            u_direction->value.vec3 = ta_light_direction(light);
             u_shadowmap2d->value.sampler2d = light->shadowmap.texture.gl_id;
             break;
         case TA_LIGHT_POINT:
@@ -439,7 +440,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
             u_shadowmap_zfar->value.glfloat = light->shadowmap.zfar;
             break;
         case TA_LIGHT_SPOT:
-            u_direction->value.vec3 = light->data.directional.direction;
+            u_direction->value.vec3 = ta_light_direction(light);
             u_shadowmap2d->value.sampler2d = light->shadowmap.texture.gl_id;
             DLB_ASSERT(!"Don't handle spot lights yet");
             break;

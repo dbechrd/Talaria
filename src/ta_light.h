@@ -23,7 +23,6 @@ typedef struct ta_light_ambient {
 typedef struct ta_light_directional {
     float intensity;
     ta_rgb color;
-    ta_vec3 direction;
 } ta_light_directional;
 
 typedef struct ta_light_point {
@@ -34,7 +33,6 @@ typedef struct ta_light_point {
 typedef struct ta_light_spot {
     float intensity;
     ta_rgb color;
-    ta_vec3 direction;
     float theta_cone;
     float theta_falloff;
 } ta_light_spot;
@@ -53,7 +51,6 @@ typedef struct ta_light {
     u32 index;
     const char *name;
     const char *entity_name;
-    ta_vec3 position;  // TODO: COMP_POSITION? Different from light position?
     bool disabled;
     bool cast_shadows;
     ta_light_shadowmap shadowmap;
@@ -72,6 +69,8 @@ typedef struct ta_light {
 
 const char *ta_light_type_str(int type);
 void ta_light_init(ta_light *light);
+ta_vec3 ta_light_position(ta_light *light);
+ta_vec3 ta_light_direction(ta_light *light);
 void ta_light_shadowpass_render(ta_light *light, struct ta_shader *shader,
     float alpha, struct ta_model *models);
 void ta_light_render_shadowmap_debug(ta_light *light, int x, int y);

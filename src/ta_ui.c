@@ -115,7 +115,8 @@ typedef enum ui_textbox_command {
 
 // Internal state
 static ta_font *ui_font;
-static ta_ui_textbox_state **ui_active_textbox;
+static ta_ui_textbox_state **ui_textbox_editing;
+static ta_ui_textbox_state **ui_textbox_dragging;
 static SDL_Cursor *ui_cursor_arrow;    // normal mouse pointer
 static SDL_Cursor *ui_cursor_size_we;  // left/right arrow "<->" cursor
 static SDL_Cursor *ui_cursor_ibeam;     // text edit ibeam "I" cursor
@@ -136,13 +137,16 @@ static void ui_row_end(ui_frame *container);
 
 // active_textbox is an external pointer that the ui code will keep updated
 // for you automatically when focus changes.
-void ta_ui_init(ta_font *font, ta_ui_textbox_state **active_textbox)
+void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
+    ta_ui_textbox_state **textbox_dragging)
 {
     DLB_ASSERT(font);
-    DLB_ASSERT(active_textbox);
+    DLB_ASSERT(textbox_editing);
+    DLB_ASSERT(textbox_dragging);
 
     ui_font = font;
-    ui_active_textbox = active_textbox;
+    ui_textbox_editing = textbox_editing;
+    ui_textbox_dragging = textbox_dragging;
     ui_cursor_arrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     ui_cursor_size_we = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     ui_cursor_ibeam = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
@@ -891,14 +895,14 @@ static void textbox_command_backspace(ta_ui_textbox_state *textbox)
 }
 static void textbox_focus(ta_ui_textbox_state *textbox)
 {
-    *ui_active_textbox = textbox;
+    *ui_textbox_editing = textbox;
     textbox->focus_changed = !textbox->focused;
     textbox->focused = true;
 }
 static void textbox_unfocus(ta_ui_textbox_state *textbox)
 {
-    if (*ui_active_textbox == textbox) {
-        *ui_active_textbox = 0;
+    if (*ui_textbox_editing == textbox) {
+        *ui_textbox_editing = 0;
     }
     textbox->focus_changed = textbox->focused;
     textbox->focused = false;  // User clicked elsewhere
@@ -1056,15 +1060,18 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
 }
 
 typedef struct drag_float_state {
-    float *value;  // pointer to float being dragged
-    bool changed;  // true if float has been dragged at all
+    float *value;     // pointer to float being dragged
+    float value_orig; // value when drag started (for cancel)
+    bool changed;     // true if float has been dragged at all
 } drag_float_state;
 static drag_float_state drag_float;
 
-static void drag_float_begin(float *f)
+static void drag_float_begin(ta_ui_textbox_state *textbox, float *f)
 {
     drag_float.value = f;
+    drag_float.value_orig = *f;
     drag_float.changed = false;
+    *ui_textbox_dragging = textbox;
     ta_mouse_drag_begin();
 }
 static void drag_float_update(float delta)
@@ -1083,8 +1090,15 @@ static bool drag_float_end()
     bool changed = drag_float.changed;
     drag_float.value = 0;
     drag_float.changed = false;
+    *ui_textbox_dragging = 0;
     ta_mouse_drag_end();
     return changed;
+}
+static void drag_float_cancel()
+{
+    DLB_ASSERT(drag_float.value);
+    *drag_float.value = drag_float.value_orig;
+    drag_float_end();
 }
 
 bool ta_ui_textbox_float(const char *name, float *value,
@@ -1151,7 +1165,7 @@ bool ta_ui_textbox_float(const char *name, float *value,
     } else {
         // Do drag float things
         if (frame->state.pressed) {
-            drag_float_begin(value);
+            drag_float_begin(textbox, value);
         } else if (drag_float.value == value) {
             drag_float_update(0.01f);
             if (ta_key_released(SDL_SCANCODE_MOUSE_LEFT)) {
@@ -1164,8 +1178,18 @@ bool ta_ui_textbox_float(const char *name, float *value,
                     textbox_focus(textbox);
                     textbox_mouse_down(frame);
                 }
+            // TODO: I want right-click to cancel drag, but it's also bound to
+            // rotate camera right now and cancel drag works but it rotates the
+            // camera a huge amount which is annoying and gross.
+            //} else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
+            //    drag_float_cancel();
             } else {
-                frame->state_type = UI_STATE_ACTIVE;
+                ta_keybind_update(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL]);
+                if (ta_keybind_triggered(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL])) {
+                    drag_float_cancel();
+                } else {
+                    frame->state_type = UI_STATE_ACTIVE;
+                }
             }
         }
     }
@@ -1192,12 +1216,6 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state)
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(0, &components[i], state, 0);
-        //if (ta_ui_textbox_float(0, &components[i], state, 0)) {
-        //    components[i] = parse_float(state->buffer);
-        //    ta_ui_textbox_clear(state);
-        //} else if (ta_ui_last_frame_state().hover && !state->focused) {
-        //    ui_set_cursor(ui_cursor_size_we);
-        //}
     }
 }
 void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state)
@@ -1211,12 +1229,6 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state)
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(0, &components[i], state, 0);
-        //if (ta_ui_textbox_float(0, &components[i], state, 0)) {
-        //    components[i] = parse_float(state->buffer);
-        //    ta_ui_textbox_clear(state);
-        //} else if (ta_ui_last_frame_state().hover && !state->focused) {
-        //    ui_set_cursor(ui_cursor_size_we);
-        //}
     }
 }
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)

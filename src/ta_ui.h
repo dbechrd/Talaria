@@ -98,7 +98,8 @@ typedef struct ta_ui_textbox_vec4_state {
 #define TA_UI_AUTOSIZE_H      0x00000002  // auto-grow container to fit contents
 #define TA_UI_AUTOSIZE        (TA_UI_AUTOSIZE_W | TA_UI_AUTOSIZE_H)
 
-void ta_ui_init(struct ta_font *font, ta_ui_textbox_state **active_textbox);
+void ta_ui_init(struct ta_font *font, ta_ui_textbox_state **textbox_editing,
+    ta_ui_textbox_state **textbox_dragging);
 void ta_ui_set_font(struct ta_font *font);
 void ta_ui_set_cursor(ui_cursor_type cursor_type);
 

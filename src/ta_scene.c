@@ -13,7 +13,7 @@
 #include "ta_mesh_group.h"
 #include "ta_model.h"
 #include "ta_parse.h"
-#include "ta_position.h"
+#include "ta_transform.h"
 #include "ta_primitive.h"
 #include "ta_rigid_body.h"
 #include "ta_scene.h"
@@ -483,29 +483,22 @@ void ta_scene_update(ta_scene *scene, float dt)
         ta_rigid_body_update(body, dt);
     }
 
-    // Collision broad phase
+    // Broad phase
     ta_rigid_body_pair *pairs = collision_broadphase(scene, dt);
     if (pairs) {
-        // Collision narrow phase
+        // Narrow phase
         ta_manifold *manifolds = detect_collisions(pairs, dt);
         dlb_vec_each(ta_manifold *, manifold, manifolds) {
-            // Collision resolution
+            // Resolution
             ta_rigid_body_resolve_collision(manifold);
-            ta_rigid_body_positional_correction(manifold);
         }
         dlb_vec_zero(manifolds);
         dlb_vec_zero(pairs);
     }
 
-    // Update positions
-    dlb_vec_each(ta_position *, position, scene->resource_data[RES_COMP_POSITION]) {
-        position->transform_prev = position->transform;
-    }
-    dlb_vec_each(ta_rigid_body *, body, scene->resource_data[RES_COMP_RIGID_BODY]) {
-        ta_position *position = ta_scene_component(scene, RES_COMP_POSITION,
-            body->entity_name);
-        position->transform.position = body->position;
-        position->transform.orientation = body->orientation;
+    // Update previous xform (for interpolation, dunno if I even need this..)
+    dlb_vec_each(ta_transform *, transform, scene->resource_data[RES_COMP_TRANSFORM]) {
+        transform->xform_prev = transform->xform;
     }
 
     // Update buttons
@@ -538,7 +531,9 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
         // TODO: Disable shadows per light (pass cast_shadows as light uniform)
         //if (!light->cast_shadows) continue;
 
-        ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &light->position);
+        ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM,
+            light->entity_name);
+        ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &transform->xform.position);
         ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->shadowmap.zfar);
         ta_light_shadowpass_render(light, shader, alpha,
             scene->resource_data[RES_COMP_MODEL]);
@@ -595,8 +590,10 @@ void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
         }
     }
     dlb_vec_each(ta_light *, light, scene->resource_data[RES_COMP_LIGHT]) {
+        ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM,
+            light->entity_name);
         ta_sphere light_pos = { 0 };
-        light_pos.center = light->position;
+        light_pos.center = transform->xform.position;
         light_pos.radius = 0.2f;
         ta_rgba color = { 0 };
         if (light->disabled) {

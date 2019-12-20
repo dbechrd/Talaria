@@ -18,6 +18,7 @@
 #include "ta_shader.h"
 #include "ta_symbol.h"
 #include "ta_timer.h"
+#include "ta_transform.h"
 #include "ta_ui.h"
 #include "ta_ui_barchart.h"
 #include "ta_viewport.h"
@@ -523,19 +524,20 @@ void ta_game_loop()
         ta_log_write(&tg_debug_log, SRC_GAME, " Finding components...\n");
         ta_camera *active_camera = ta_game_camera();
         ta_camera *player_cam = 0;
-        ta_rigid_body *player_body = 0;
+        ta_transform *player_transform = 0;
 
         if (ms_frame_accum >= ms_sim_dt) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Finding sim components...\n");
             player_cam = ta_game_component(RES_COMP_CAMERA, tg_e_player_one);
-            player_body = ta_game_component(RES_COMP_RIGID_BODY, tg_e_player_one);
+            player_transform = ta_game_component(RES_COMP_TRANSFORM, tg_e_player_one);
         }
 
         while (ms_frame_accum >= ms_sim_dt) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Sim step...\n");
             // Target player camera
             ta_camera_set_target_pos_absolute(player_cam,
-                vec3_add(player_body->position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
+                vec3_add(player_transform->xform.position,
+                (ta_vec3) { 0.0f, 2.0f, 0.0f }));
 
             // Target minimap camera
             ta_vec3 minimap_camera_target_pos = active_camera->position;
@@ -553,41 +555,25 @@ void ta_game_loop()
                 if (game.simulate > 0) {
                     game.simulate--;
                 }
-    #if 0
-                ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
-                tg_game.sun->data.sun.direction =
-                    mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
-    #endif
 
-    #if 1
-                // HACK: Make point light rotate in a circle
-                static float light_deg = 0.0f;
-                light_deg += 0.005f;
-                if (light_deg >= 360.0f) light_deg = 0.0f;
+                //ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
+                //tg_game.sun->data.sun.direction =
+                //    mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
 
-                ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
-                lights[1].position.x = cosf(light_deg) * 16.0f;
-                lights[1].position.z = sinf(light_deg) * 16.0f;
+                //// HACK: Make point light rotate in a circle
+                //static float light_deg = 0.0f;
+                //light_deg += 0.005f;
+                //if (light_deg >= 360.0f) light_deg = 0.0f;
+
+                //ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+                //lights[1].position.x = cosf(light_deg) * 16.0f;
+                //lights[1].position.z = sinf(light_deg) * 16.0f;
 
                 ta_audio_source *bg_source = ta_game_component_try(
                     RES_COMP_AUDIO_SOURCE, tg_e_background_music);
                 alSourcei(bg_source->al_source_id, AL_SOURCE_RELATIVE, AL_FALSE);
-    #if 1
-                alSourcefv(bg_source->al_source_id, AL_POSITION, (float *)&lights[1].position);
-    #else
                 alSourcefv(bg_source->al_source_id, AL_POSITION, (float *)&VEC3_ZERO);
-    #endif
                 alSourcefv(bg_source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
-
-    #else
-                // HACK: Make point light follow player camera
-                lights[1]->position = tg_game.camera_player->position;
-                // HACK: Make point light follow camera
-                lights[1]->position = vec3_add(
-                    tg_game.camera_freecam->position,
-                    tg_game.camera_freecam->front
-                );
-    #endif
 
                 // Update scene
                 ta_scene_update(&game.scene, (float)sim_dt);

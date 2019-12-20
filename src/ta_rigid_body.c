@@ -1,6 +1,9 @@
 #include "ta_rigid_body.h"
 #include "ta_log.h"
 #include "ta_primitive.h"
+#include "ta_transform.h"
+#include "ta_game.h"
+#include "ta_schema.h"
 #include "dlb/dlb_vector.h"
 #include <math.h>
 
@@ -36,10 +39,10 @@ const char *ta_collider_type_str(int type)
     }
 }
 
-static void update_collider_center(ta_rigid_body *body)
+static void update_collider_center(ta_rigid_body *body, ta_transform *transform)
 {
     // TODO: For each collider in body->colliders
-    body->collider.center_world = vec3_add(body->position, body->collider.data.center);
+    body->collider.center_world = vec3_add(transform->xform.position, body->collider.data.center);
     body->centroid_local = body->collider.data.center;
     body->centroid_global = body->collider.center_world;
 #if 0
@@ -59,11 +62,6 @@ static void update_collider_center(ta_rigid_body *body)
 
 void ta_rigid_body_init(ta_rigid_body *body)
 {
-    if (quat_zero(body->orientation)) {
-        body->orientation = QUAT_IDENT;
-    } else {
-        body->orientation = quat_normalize(body->orientation);
-    }
     switch (body->collider.type) {
         case TA_COLLIDER_PLANE: {
             body->collider.data.plane.normal = vec3_normalize(body->collider.data.plane.normal);
@@ -101,7 +99,10 @@ void ta_rigid_body_init(ta_rigid_body *body)
         body->collider.data.plane.normal =
             vec3_normalize(body->collider.data.plane.normal);
     }
-    update_collider_center(body);
+    // TOOD: Is this necessary? I don't want to enforce transform -> rigid_body
+    // component init order if I don't need to.
+    //ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM, body->entity_name);
+    //update_collider_center(body, transform);
     if (body->mass != 0.0f) {
         body->inv_mass = 1.0f / body->mass;
     }
@@ -164,6 +165,8 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
 
     bool dirty = false;
 
+    ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM, body->entity_name);
+
     // TODO: Calculate this based on torque_accum and dt
     //body.m_angularVelocity +=  body.m_globalInverseInertiaTensor * (body.m_torqueAccumulator * dt);
     float dtheta_mag = vec3_len(body->ang_velocity);
@@ -172,21 +175,21 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
             vec3_normalize(body->ang_velocity),
             vec3_len(body->ang_velocity) //* dt  // TODO: angular dt??
         );
-        body->orientation = quat_normalize(quat_mul(delta_orient,
-            body->orientation));
+        transform->xform.orientation = quat_normalize(quat_mul(delta_orient,
+            transform->xform.orientation));
         dirty = true;
     }
 
     // Update global tensor when orientation changes
-    if (!quat_equal(body->tensor_orientation, body->orientation)) {
+    if (!quat_equal(body->tensor_orientation, transform->xform.orientation)) {
         // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf p. D14
         // I_global = R * I_body * R^T
-        ta_mat3 rot = mat3_rotate_quat(body->orientation);
+        ta_mat3 rot = mat3_rotate_quat(transform->xform.orientation);
         ta_mat3 rot_t = mat3_transpose(&rot);
         ta_mat3 inv_t_global = mat3_mul(&body->inv_tensor_local, &rot_t);
         inv_t_global = mat3_mul(&rot, &inv_t_global);
         body->inv_tensor_global = inv_t_global;
-        body->tensor_orientation = body->orientation;
+        body->tensor_orientation = transform->xform.orientation;
     }
 
     ta_vec3 gravity = { 0.0f, GRAVITY, 0.0f };
@@ -197,10 +200,10 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     ta_vec3 dv = vec3_scalef(body->velocity, dt);
     float dv_mag = vec3_len(dv);
     if (dv_mag > DV_EPSILON) {
-        body->position = vec3_add(body->position, dv);
+        transform->xform.position = vec3_add(transform->xform.position, dv);
         dirty = true;
     }
-    update_collider_center(body);
+    update_collider_center(body, transform);
 
 #if 1
     // TODO: Implement drag in a way that doesn't vary with different timesteps
@@ -311,7 +314,7 @@ static bool intersector_plane_v_sphere(const ta_collider *a,
     return collided;
 }
 
-bool ta_rigid_body_intersect(const ta_rigid_body *a, const ta_rigid_body *b,
+bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
     ta_manifold *manifold)
 {
     DLB_ASSERT(a);
@@ -333,8 +336,10 @@ bool ta_rigid_body_intersect(const ta_rigid_body *a, const ta_rigid_body *b,
     }
 
     if (collided && manifold) {
-        manifold->a = (void *)a;
-        manifold->b = (void *)b;
+        manifold->a = a;
+        manifold->b = b;
+        manifold->atrans = ta_game_component(RES_COMP_TRANSFORM, a->entity_name);
+        manifold->btrans = ta_game_component(RES_COMP_TRANSFORM, b->entity_name);
         manifold->e = MAX(a->e, b->e);
         manifold->sf = sqrtf(a->ks * a->ks + b->ks * b->ks);
         manifold->df = sqrtf(a->kd * a->kd + b->kd * b->kd);
@@ -344,8 +349,12 @@ bool ta_rigid_body_intersect(const ta_rigid_body *a, const ta_rigid_body *b,
 
 void ta_rigid_body_resolve_collision(ta_manifold *manifold)
 {
+    DLB_ASSERT(manifold->a != manifold->b);
+
     ta_rigid_body *a = manifold->a;
     ta_rigid_body *b = manifold->b;
+    ta_transform *atrans = manifold->atrans;
+    ta_transform *btrans = manifold->btrans;
 
     // Trigger colliders don't need any resolution
     if (a->trigger || b->trigger) {
@@ -364,8 +373,8 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
 
     for (u32 i = 0; i < manifold->contact_count; i++) {
         // Radii
-        ta_vec3 ra = vec3_sub(manifold->contacts[i], a->position);
-        ta_vec3 rb = vec3_sub(manifold->contacts[i], b->position);
+        ta_vec3 ra = vec3_sub(manifold->contacts[i], atrans->xform.position);
+        ta_vec3 rb = vec3_sub(manifold->contacts[i], btrans->xform.position);
 
         // Relative velocity
         //ta_vec3 rv = vec3_sub(b->velocity, a->velocity);
@@ -424,14 +433,14 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
 
         if (a->collider.type != TA_COLLIDER_PLANE) {
             ta_line_3d debug_a_contact_world;
-            debug_a_contact_world.p0 = a->position;
+            debug_a_contact_world.p0 = atrans->xform.position;
             debug_a_contact_world.p1 = manifold->contacts[i];
             ta_primitive_push_line_3d(debug_a_contact_world, TA_COLOR_WHITE,
                 TA_COLOR_RED);
         }
         if (b->collider.type != TA_COLLIDER_PLANE) {
             ta_line_3d debug_b_contact_world;
-            debug_b_contact_world.p0 = b->position;
+            debug_b_contact_world.p0 = btrans->xform.position;
             debug_b_contact_world.p1 = manifold->contacts[i];
             ta_primitive_push_line_3d(debug_b_contact_world, TA_COLOR_WHITE,
                 TA_COLOR_RED);
@@ -483,17 +492,6 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
             ta_rigid_body_apply_impulse(b, friction_impulse, rb);
         }
     }
-}
-
-void ta_rigid_body_positional_correction(ta_manifold *manifold)
-{
-    ta_rigid_body *a = manifold->a;
-    ta_rigid_body *b = manifold->b;
-
-    // Trigger colliders don't need any resolution
-    if (a->trigger || b->trigger) {
-        return;
-    }
 
     // Positional correction
     const float slop = TA_EPSILON;
@@ -501,6 +499,8 @@ void ta_rigid_body_positional_correction(ta_manifold *manifold)
     float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) *
         percent;
     ta_vec3 correction = vec3_scalef(manifold->normal, c);
-    a->position = vec3_sub(a->position, vec3_scalef(correction, a->inv_mass));
-    b->position = vec3_add(b->position, vec3_scalef(correction, b->inv_mass));
+    atrans->xform.position =
+        vec3_sub(atrans->xform.position, vec3_scalef(correction, a->inv_mass));
+    btrans->xform.position =
+        vec3_add(btrans->xform.position, vec3_scalef(correction, b->inv_mass));
 }

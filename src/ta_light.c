@@ -1,11 +1,13 @@
+#include "ta_entity.h"
+#include "ta_game.h"
 #include "ta_light.h"
-#include "ta_window.h"
-#include "ta_symbol.h"
+#include "ta_model.h"
 #include "ta_primitive.h"
 #include "ta_shader.h"
-#include "ta_entity.h"
-#include "ta_model.h"
+#include "ta_symbol.h"
 #include "ta_texture.h"
+#include "ta_transform.h"
+#include "ta_window.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_index.h"
 #include "misc/gl3w.h"
@@ -52,8 +54,6 @@ void ta_light_init(ta_light *light)
             DLB_ASSERT(!light->cast_shadows);
             break;
         } case TA_LIGHT_DIRECTIONAL: {
-            light->data.directional.direction =
-                vec3_normalize(light->data.directional.direction);
             light->shadowmap.projection = mat4_ortho(
                 -10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 50.0f);
             shadowmap_directional_create(light);
@@ -65,8 +65,6 @@ void ta_light_init(ta_light *light)
             shadowmap_point_create(light);
             break;
         } case TA_LIGHT_SPOT: {
-            light->data.directional.direction =
-                vec3_normalize(light->data.directional.direction);
             light->shadowmap.projection = mat4_perspective(
                 45.0f, 1.0f, light->shadowmap.znear, light->shadowmap.zfar
             );
@@ -149,6 +147,21 @@ static void shadowmap_point_create(ta_light *light)
     glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
+ta_vec3 ta_light_position(ta_light *light)
+{
+    ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM, light->entity_name);
+    return transform->xform.position;
+}
+
+ta_vec3 ta_light_direction(ta_light *light)
+{
+    ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM, light->entity_name);
+
+    // Lights with identity orientation point directly down
+    ta_vec3 direction = vec3_rotate_quat(VEC3_NY, transform->xform.orientation);
+    return direction;
+}
+
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#spot-lights
 // Use texture2Dproj to account for perspective-divide
 
@@ -164,7 +177,7 @@ static void shadowpass_render_directional(ta_light *light, ta_shader *shader,
     glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
     glViewport(0, 0, light->shadowmap.resolution, light->shadowmap.resolution);
 
-    ta_vec3 inv_dir = vec3_neg(light->data.directional.direction);
+    ta_vec3 inv_dir = vec3_neg(ta_light_direction(light));
     ta_mat4 view = mat4_lookat(inv_dir, VEC3_ZERO, VEC3_Y);
     ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view);
     dlb_vec_each(ta_model *, model, models) {
@@ -183,16 +196,18 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
 
     // https://gamedev.stackexchange.com/questions/19461/opengl-glsl-render-to-cube-map
 
+    ta_vec3 position = ta_light_position(light);
+
     // TODO: Cache lookat matrices in dlb_vec, store light_pos as lookat_pos and
     //       update if light_pos != lookat_pos (i.e. position has changed)
     // PERF: Cache may be slower than just recalculating every frame.. profile!
     ta_mat4 view[6];
-    view[0] = mat4_lookat(light->position, vec3_add(light->position, VEC3_X),  VEC3_NY);
-    view[1] = mat4_lookat(light->position, vec3_add(light->position, VEC3_NX), VEC3_NY);
-    view[2] = mat4_lookat(light->position, vec3_add(light->position, VEC3_Y),  VEC3_Z);
-    view[3] = mat4_lookat(light->position, vec3_add(light->position, VEC3_NY), VEC3_NZ);
-    view[4] = mat4_lookat(light->position, vec3_add(light->position, VEC3_Z),  VEC3_NY);
-    view[5] = mat4_lookat(light->position, vec3_add(light->position, VEC3_NZ), VEC3_NY);
+    view[0] = mat4_lookat(position, vec3_add(position, VEC3_X),  VEC3_NY);
+    view[1] = mat4_lookat(position, vec3_add(position, VEC3_NX), VEC3_NY);
+    view[2] = mat4_lookat(position, vec3_add(position, VEC3_Y),  VEC3_Z);
+    view[3] = mat4_lookat(position, vec3_add(position, VEC3_NY), VEC3_NZ);
+    view[4] = mat4_lookat(position, vec3_add(position, VEC3_Z),  VEC3_NY);
+    view[5] = mat4_lookat(position, vec3_add(position, VEC3_NZ), VEC3_NY);
 
     //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, light->shadowmap.texture, 0);
 

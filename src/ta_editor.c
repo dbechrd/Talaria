@@ -14,7 +14,7 @@
 #include "ta_model.h"
 #include "ta_mouse.h"
 #include "ta_parse.h"
-#include "ta_position.h"
+#include "ta_transform.h"
 #include "ta_primitive.h"
 #include "ta_rigid_body.h"
 #include "ta_scene.h"
@@ -41,7 +41,8 @@ typedef enum editor_command {
 typedef struct ta_editor {
     const char *status_msg;
     const char *selected_entity;
-    ta_ui_textbox_state *active_textbox;
+    ta_ui_textbox_state *textbox_editing;
+    ta_ui_textbox_state *textbox_dragging;
     ta_keybind keybinds[EDITOR_COMMAND_COUNT];
     const char *shader_editor_select;
     ta_scene scene;
@@ -63,7 +64,7 @@ void ta_editor_init()
 {
     ta_font *font = ta_game_by_name(RES_FONT, tg_font);
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing UI styles\n");
-    ta_ui_init(font, &editor.active_textbox);
+    ta_ui_init(font, &editor.textbox_editing, &editor.textbox_dragging);
 
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Loading editor scene\n");
     ta_scene_load_file(&editor.scene, "data/scene/editor.dml");
@@ -105,16 +106,16 @@ static void drag_float_begin(float *f)
 {
     drag_float.value = f;
     drag_float.changed = false;
-    ta_position *position = ta_game_component_try(RES_COMP_POSITION,
+    ta_transform *transform = ta_game_component_try(RES_COMP_TRANSFORM,
         editor.selected_entity);
-    if (position) {
+    if (transform) {
         ta_camera *active_cam = ta_game_camera();
         drag_float.cam_position_smooth = active_cam->position_smooth;
         drag_float.cam_position_target_vel = active_cam->position_target_vel;
         active_cam->position_smooth = 0.9f;
         active_cam->position_target_vel = 0.9f;
         drag_float.cam_offset = vec3_sub(active_cam->position,
-            position->transform.position);
+            transform->xform.position);
     } else {
         drag_float.cam_offset = VEC3_ZERO;
     }
@@ -130,11 +131,11 @@ static void drag_float_update(float delta)
         *drag_float.value += mouse_dx * delta * acc;
         drag_float.changed = true;
 
-        ta_position *position = ta_game_component_try(RES_COMP_POSITION,
+        ta_transform *transform = ta_game_component_try(RES_COMP_TRANSFORM,
             editor.selected_entity);
-        if (position) {
+        if (transform) {
             ta_camera *active_cam = ta_game_camera();
-            ta_vec3 cam_pos = vec3_add(position->transform.position,
+            ta_vec3 cam_pos = vec3_add(transform->xform.position,
                 drag_float.cam_offset);
 #if 1
             ta_camera_set_target_pos_absolute(active_cam, cam_pos);
@@ -239,7 +240,7 @@ static void ui_node_panel()
     }
 #endif
 
-    ta_position *position = ta_game_component_try(RES_COMP_POSITION, entity_name);
+    ta_transform *transform = ta_game_component_try(RES_COMP_TRANSFORM, entity_name);
     ta_rigid_body *rigid_body = ta_game_component_try(RES_COMP_RIGID_BODY, entity_name);
     ta_light *light = ta_game_component_try(RES_COMP_LIGHT, entity_name);
     ta_model *model = ta_game_component_try(RES_COMP_MODEL, entity_name);
@@ -264,37 +265,27 @@ static void ui_node_panel()
         ta_ui_toggle_button_end(&model->invisible);
     }
 
-    if (position) {
+    if (transform) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Position:"));
+        ta_ui_label(0, CSTR("Transform:"));
         static ta_ui_textbox_vec3_state textbox = { 0 };
-        ta_ui_textbox_vec3(&position->transform.position, &textbox);
+        ta_ui_textbox_vec3(&transform->xform.position, &textbox);
     }
     if (rigid_body) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Rigid Body Position:"));
-        static ta_ui_textbox_vec3_state textbox = { 0 };
-        ta_ui_textbox_vec3(&rigid_body->position, &textbox);
-    }
-    if (light) {
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Light Position:"));
-        static ta_ui_textbox_vec3_state textbox = { 0 };
-        ta_ui_textbox_vec3(&light->position, &textbox);
+        ta_ui_label(0, CSTR("Rigid Body Mass:"));
+        static ta_ui_textbox_state textbox = { 0 };
+        ta_ui_textbox_float(0, &rigid_body->mass, &textbox, 0);
     }
 
     ta_vec4 *orient_values = 0;
     ta_ui_row_begin();
     ta_ui_next_size(label_width, 0);
-    if (rigid_body) {
-        ta_ui_label(0, CSTR("Rigid Body Orientation:"));
-        orient_values = &rigid_body->orientation;
-    } else if (position) {
+    if (transform) {
         ta_ui_label(0, CSTR("Orientation:"));
-        orient_values = &position->transform.orientation;
+        orient_values = &transform->xform.orientation;
     }
     if (orient_values) {
         static ta_ui_textbox_vec4_state orient_editors = { 0 };
@@ -505,7 +496,6 @@ static void ui_camera_panel()
         if (ta_ui_button(0, CSTR("Recalc projection matrix"))) {
             ta_camera_recalc_projection(camera);
         }
-
         ta_ui_panel_end();
     }
 
@@ -913,8 +903,8 @@ static void ui_editor_sidebar()
         ta_ui_toggle_button(category_names[i], &active);
         if (active && category_selected != i) {
             category_selected = i;
-            if (editor.active_textbox) {
-                ta_ui_textbox_clear(editor.active_textbox);
+            if (editor.textbox_editing) {
+                ta_ui_textbox_clear(editor.textbox_editing);
             }
         }
         if (ta_ui_last_frame_state().hover) {
@@ -958,7 +948,7 @@ static void ui_editor_sidebar()
 }
 void ta_editor_draw(float alpha)
 {
-    if (editor.active_textbox) {
+    if (editor.textbox_editing) {
         ta_ui_set_cursor(UI_CURSOR_IBEAM);
     } else {
         ta_ui_set_cursor(UI_CURSOR_ARROW);
@@ -1045,8 +1035,8 @@ void editor_command_close()
 {
     // NOTE: This can't happen at the moment because textbox cancel and editor
     // close are both bound to Escape. Just to be safe.
-    if (editor.active_textbox) {
-        ta_ui_textbox_clear(editor.active_textbox);
+    if (editor.textbox_editing) {
+        ta_ui_textbox_clear(editor.textbox_editing);
     }
     ta_game_state_set(ta_game_state_prev());
 }
@@ -1083,8 +1073,10 @@ void editor_command_select()
 
     ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
     dlb_vec_each(ta_light *, light, lights) {
+        ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM,
+            light->entity_name);
         ta_sphere sphere = { 0 };
-        sphere.center = light->position;
+        sphere.center = transform->xform.position;
         sphere.radius = 0.2f;
         float t;
         if (ta_intersect_ray_sphere(ray, sphere, &t)) {
@@ -1136,7 +1128,7 @@ void editor_command_sim_while_held()
 void ta_editor_hotkeys()
 {
     // Don't trigger any hotkeys while a textbox is focused
-    if (editor.active_textbox)
+    if (editor.textbox_editing || editor.textbox_dragging)
         return;
 
     static void (*commands[EDITOR_COMMAND_COUNT])() = {
@@ -1166,7 +1158,7 @@ static bool ta_editor_textbox_event(ta_event *event)
 
     switch (event->type) {
         case INPUT_EVENT_TEXT_INPUT: {
-            ta_ui_textbox_insert(editor.active_textbox, event->data.text_input.chr);
+            ta_ui_textbox_insert(editor.textbox_editing, event->data.text_input.chr);
             handled = true;
             break;
         } case INPUT_EVENT_KEY_PRESS: {
@@ -1190,7 +1182,7 @@ static bool ta_editor_textbox_event(ta_event *event)
 
 void ta_editor_event(ta_event *event)
 {
-    if (editor.active_textbox) {
+    if (editor.textbox_editing) {
         event->handled = ta_editor_textbox_event(event);
     }
 }

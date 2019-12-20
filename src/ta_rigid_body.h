@@ -48,8 +48,9 @@ typedef struct ta_rigid_body {
     ta_vec3 centroid_global;
     ta_vec3 centroid_local;
 
-    ta_vec3 position;
-    ta_vec4 orientation;
+    // TODO: Relative offset (position/orientation) from transform component
+    // for asymmetric collider types.
+    //ta_xform offset;
 
     ta_vec3 velocity;
     ta_vec3 ang_velocity;
@@ -86,6 +87,8 @@ typedef struct ta_rigid_body_pair {
 typedef struct ta_manifold {
     ta_rigid_body *a;
     ta_rigid_body *b;
+    struct ta_transform *atrans;
+    struct ta_transform *btrans;
     ta_vec3 normal;
     float depth;
     ta_vec3 contacts[1];  // world position
@@ -106,7 +109,6 @@ bool ta_sphere_v_sphere(const ta_sphere *a, const ta_sphere *b,
     ta_manifold *manifold);
 bool ta_plane_v_sphere(const ta_plane *plane, const ta_sphere *sphere,
     ta_manifold *manifold);
-bool ta_rigid_body_intersect(const ta_rigid_body *a, const ta_rigid_body *b,
+bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
     ta_manifold *manifold);
 void ta_rigid_body_resolve_collision(ta_manifold *manifold);
-void ta_rigid_body_positional_correction(ta_manifold *manifold);

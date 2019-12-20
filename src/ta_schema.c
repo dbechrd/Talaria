@@ -14,7 +14,7 @@
 #include "ta_mesh_group.h"
 #include "ta_font.h"
 #include "ta_model.h"
-#include "ta_position.h"
+#include "ta_transform.h"
 #include "ta_entity.h"
 #include "ta_player.h"
 #include "ta_log.h"
@@ -35,7 +35,7 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
         case TYP_VEC4:              return "TYP_VEC4";
         case TYP_MAT3:              return "TYP_MAT3";
         case TYP_MAT4:              return "TYP_MAT4";
-        case TYP_TRANSFORM:         return "TYP_TRANSFORM";
+        case TYP_XFORM:             return "TYP_XFORM";
         case TYP_RGB:               return "TYP_RGB";
         case TYP_RGBA:              return "TYP_RGBA";
         case TYP_RGBA_U8:           return "TYP_RGBA_U8";
@@ -60,7 +60,7 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
         case TYP_LIGHT:             return "TYP_LIGHT";
         case TYP_MODEL:             return "TYP_MODEL";
         case TYP_PLAYER:            return "TYP_PLAYER";
-        case TYP_POSITION:          return "TYP_POSITION";
+        case TYP_TRANSFORM:         return "TYP_TRANSFORM";
         case TYP_RIGID_BODY:        return "TYP_RIGID_BODY";
 
         // Resource types
@@ -99,7 +99,7 @@ ta_schema_field_type res_to_typ(ta_resource_type type)
         case RES_COMP_LIGHT       : schema_type = TYP_LIGHT        ; break;
         case RES_COMP_MODEL       : schema_type = TYP_MODEL        ; break;
         case RES_COMP_PLAYER      : schema_type = TYP_PLAYER       ; break;
-        case RES_COMP_POSITION    : schema_type = TYP_POSITION     ; break;
+        case RES_COMP_TRANSFORM   : schema_type = TYP_TRANSFORM     ; break;
         case RES_COMP_RIGID_BODY  : schema_type = TYP_RIGID_BODY   ; break;
         // Resource types
         case RES_AUDIO_BUFFER     : schema_type = TYP_AUDIO_BUFFER ; break;
@@ -126,7 +126,7 @@ ta_resource_type typ_to_res(ta_schema_field_type type)
         case TYP_LIGHT        : res_type = RES_COMP_LIGHT       ; break;
         case TYP_MODEL        : res_type = RES_COMP_MODEL       ; break;
         case TYP_PLAYER       : res_type = RES_COMP_PLAYER      ; break;
-        case TYP_POSITION     : res_type = RES_COMP_POSITION    ; break;
+        case TYP_TRANSFORM    : res_type = RES_COMP_TRANSFORM    ; break;
         case TYP_RIGID_BODY   : res_type = RES_COMP_RIGID_BODY  ; break;
         // Resource types
         case TYP_AUDIO_BUFFER : res_type = RES_AUDIO_BUFFER     ; break;
@@ -252,10 +252,10 @@ void ta_schema_register()
     TYPE_UNION_ARRAY(ta_mat4, arr, ATOM_FLOAT, 16, data, 0);
     TYPE_END(ta_mat4);
 
-    TYPE_START(ta_transform, TYP_TRANSFORM, 0, 0);
-    TYPE_FIELD(ta_transform, position,    TYP_VEC3);
-    TYPE_FIELD(ta_transform, orientation, TYP_VEC4);
-    TYPE_END(ta_transform);
+    TYPE_START(ta_xform, TYP_XFORM, 0, 0);
+    TYPE_FIELD(ta_xform, position,    TYP_VEC3);
+    TYPE_FIELD(ta_xform, orientation, TYP_VEC4);
+    TYPE_END(ta_xform);
 
     TYPE_START(ta_rgb, TYP_RGB, 0, 0);
     TYPE_FIELD(ta_rgb, r, ATOM_FLOAT);
@@ -285,7 +285,6 @@ void ta_schema_register()
     TYPE_START(ta_light_directional, TYP_LIGHT_DIRECTIONAL, 0, 0);
     TYPE_FIELD(ta_light_directional, intensity, ATOM_FLOAT);
     TYPE_FIELD(ta_light_directional, color,     TYP_RGB);
-    TYPE_FIELD(ta_light_directional, direction, TYP_VEC3);
     TYPE_END(ta_light_directional);
 
     TYPE_START(ta_light_point, TYP_LIGHT_POINT, 0, 0);
@@ -296,7 +295,6 @@ void ta_schema_register()
     TYPE_START(ta_light_spot, TYP_LIGHT_SPOT, 0, 0);
     TYPE_FIELD(ta_light_spot, intensity,     ATOM_FLOAT);
     TYPE_FIELD(ta_light_spot, color,         TYP_RGB);
-    TYPE_FIELD(ta_light_spot, direction,     TYP_VEC3);
     TYPE_FIELD(ta_light_spot, theta_cone,    ATOM_FLOAT);
     TYPE_FIELD(ta_light_spot, theta_falloff, ATOM_FLOAT);
     TYPE_END(ta_light_spot);
@@ -466,7 +464,6 @@ void ta_schema_register()
     TYPE_FIELD(ta_light, entity_name,  ATOM_STRING);
     TYPE_FIELD(ta_light, disabled,     ATOM_BOOL);
     TYPE_FIELD(ta_light, cast_shadows, ATOM_BOOL);
-    TYPE_FIELD(ta_light, position,     TYP_VEC3);
     TYPE_UNION_TYPE(ta_light,  type,        ATOM_ENUM,             ta_light_type_str);
     TYPE_UNION_FIELD(ta_light, ambient,     TYP_LIGHT_AMBIENT,     data, TA_LIGHT_AMBIENT);
     TYPE_UNION_FIELD(ta_light, directional, TYP_LIGHT_DIRECTIONAL, data, TA_LIGHT_DIRECTIONAL);
@@ -492,18 +489,16 @@ void ta_schema_register()
     TYPE_VECTOR(ta_player, e_guns,     ATOM_STRING);
     TYPE_END(ta_player);
 
-    TYPE_START(ta_position, TYP_POSITION, ta_position_init, 0);
-    TYPE_FIELD(ta_position, name,        ATOM_STRING);
-    TYPE_FIELD(ta_position, entity_name, ATOM_STRING);
-    TYPE_FIELD(ta_position, transform,   TYP_TRANSFORM);
-    TYPE_END(ta_position);
+    TYPE_START(ta_transform, TYP_TRANSFORM, ta_transform_init, 0);
+    TYPE_FIELD(ta_transform, name,        ATOM_STRING);
+    TYPE_FIELD(ta_transform, entity_name, ATOM_STRING);
+    TYPE_FIELD(ta_transform, xform,       TYP_XFORM);
+    TYPE_END(ta_transform);
 
     TYPE_START(ta_rigid_body, TYP_RIGID_BODY, ta_rigid_body_init, 0);
     TYPE_FIELD(ta_rigid_body, name,        ATOM_STRING);
     TYPE_FIELD(ta_rigid_body, entity_name, ATOM_STRING);
     TYPE_FIELD(ta_rigid_body, collider,    TYP_COLLIDER);
-    TYPE_FIELD(ta_rigid_body, position,    TYP_VEC3);
-    TYPE_FIELD(ta_rigid_body, orientation, TYP_VEC4);
     TYPE_FIELD(ta_rigid_body, mass,        ATOM_FLOAT);
     TYPE_FIELD(ta_rigid_body, trigger,     ATOM_BOOL);
     TYPE_END(ta_rigid_body);
