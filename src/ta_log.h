@@ -3,27 +3,6 @@
 
 typedef struct _iobuf FILE;
 
-typedef struct ta_log {
-    const char *filename;
-    FILE *stream;
-    bool flush;
-    bool echo;
-    u32 src_include;         // 1 = log this source
-    u32 src_exclude;         // 1 = exclude this source (overrides include)
-    u32 level_filter;
-    double last_write_ms;
-} ta_log;
-
-// TODO: Actually use this
-typedef enum ta_log_level {
-    LEVEL_NONE  = 0x00000000,
-    LEVEL_DEBUG = 0x00000001,
-    LEVEL_INFO  = 0x00000002,
-    LEVEL_WARN  = 0x00000004,
-    LEVEL_ERROR = 0x00000008,
-    LEVEL_FATAL = 0x00000010,
-} ta_log_level;
-
 typedef enum ta_log_source {
     SRC_NONE       = 0x00000000,
     SRC_ASSERT     = 0x00000001,
@@ -70,6 +49,27 @@ typedef enum ta_log_source {
             | SRC_WINDOW
 } ta_log_source;
 
+// TODO: Actually use this
+typedef enum ta_log_level {
+    LEVEL_NONE  = 0x00000000,
+    LEVEL_DEBUG = 0x00000001,
+    LEVEL_INFO  = 0x00000002,
+    LEVEL_WARN  = 0x00000004,
+    LEVEL_ERROR = 0x00000008,
+    LEVEL_FATAL = 0x00000010,
+} ta_log_level;
+
+typedef struct ta_log {
+    const char *filename;
+    FILE *stream;
+    bool flush;
+    bool echo;
+    u32 src_include;    // bitmap, 1 = log this source
+    u32 src_exclude;    // bitmap, 1 = exclude this source (overrides include)
+    u32 level_filter;
+    struct SDL_mutex *mutex;
+} ta_log;
+
 extern ta_log tg_debug_log;
 
 const char *ta_log_source_str(ta_log_source src);
@@ -79,5 +79,5 @@ void ta_log_init_file(ta_log *log, const char *filename, bool flush, bool echo,
     u32 src_include, u32 src_exclude);
 void ta_log_flush(ta_log *log);
 void ta_log_write(ta_log *log, u32 src, const char *fmt, ...);
-void ta_log_append(ta_log *log, const char* fmt, ...);
+//void ta_log_append(ta_log *log, const char* fmt, ...);
 //void ta_log_free(ta_log *log);

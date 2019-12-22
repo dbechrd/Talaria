@@ -7,7 +7,54 @@
 #include <stdio.h>
 #include <time.h>
 
+// Note: Don't use DLB_ASSERT in this file because the assert handler writes
+// to the log (will cause infinite recursion).
+#undef DLB_ASSERT
+
+// NOTE: I don't expect lock/unlock to ever error, but if it's a real thing that
+// happens I'll refactor this to handle it better.
+#define TA_LOCK(mutex) assert(!SDL_LockMutex(mutex));
+#define TA_UNLOCK(mutex) assert(!SDL_UnlockMutex(mutex));
+#define MAX_THREADS 8
+
 ta_log tg_debug_log;
+
+static struct {
+    SDL_threadID thread_id;
+    double last_write_ms;
+} thread_times[MAX_THREADS];
+
+static void thread_set_last_write(SDL_threadID thread_id, double time_ms)
+{
+    assert(thread_id);
+
+    for (int i = 0; i < MAX_THREADS; ++i) {
+        if (thread_times[i].thread_id == thread_id) {
+            // Update time
+            thread_times[i].last_write_ms = time_ms;
+            return;
+        } else if (!thread_times[i].thread_id) {
+            // Add new thread to list
+            thread_times[i].thread_id = thread_id;
+            thread_times[i].last_write_ms = time_ms;
+            return;
+        }
+    }
+
+    assert(!"Thread table is full. Do clean-up or increase MAX_THREADS");
+}
+
+static double thread_get_last_write(SDL_threadID thread_id)
+{
+    assert(thread_id);
+    double time_ms = 0;
+    for (int i = 0; i < MAX_THREADS; ++i) {
+        if (thread_times[i].thread_id == thread_id) {
+            time_ms = thread_times[i].last_write_ms;
+        }
+    }
+    return time_ms;
+}
 
 const char *ta_log_source_str(ta_log_source src) {
     switch(src) {
@@ -31,7 +78,7 @@ const char *ta_log_source_str(ta_log_source src) {
         case SRC_TEXTURE:    return "TEXTURE";
         case SRC_WINDOW:     return "WINDOW";
         default:
-            DLB_ASSERT(!"<UNKNOWN_SRC_TYPE>");
+            assert(!"<UNKNOWN_SRC_TYPE>");
             return 0;
     }
 }
@@ -39,17 +86,21 @@ const char *ta_log_source_str(ta_log_source src) {
 void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
     u32 src_include, u32 src_exclude)
 {
-    DLB_ASSERT(log);
-    DLB_ASSERT(stream);
+    assert(log);
+    assert(stream);
     log->stream = stream;
     log->flush = flush;
     log->echo = echo;
     log->src_include = src_include;
     log->src_exclude = src_exclude;
-    log->last_write_ms = ta_timer_elapsed_ms();
+    log->mutex = SDL_CreateMutex();
+    assert(log->mutex);
+
+    TA_LOCK(log->mutex);
     fprintf(log->stream,
         "[     Timestamp     ][Thread][  Elapsed  ][  Delta   ][ Source  ][       Message       ]\n"
         "--------------------------------------------------------------------------------\n");
+    TA_UNLOCK(log->mutex);
 }
 
 void ta_log_init_file(ta_log *log, const char *filename, bool flush, bool echo,
@@ -77,14 +128,14 @@ static void ta_log_timestamp(char *buf, int len)
 
 static void ta_log_write_timestamp(ta_log *log, u32 src)
 {
-    char timestamp[] = "1970-01-01 00:00:00";
-    ta_log_timestamp(timestamp, sizeof(timestamp));
+    char timestamp[32] = "1970-01-01 00:00:00";
+    ta_log_timestamp(CSTR(timestamp));
     double elapsed_sec = ta_timer_elapsed_sec();
     double elapsed_ms = ta_timer_elapsed_ms();
-    double ms_since_last_write = elapsed_ms - log->last_write_ms;
-    log->last_write_ms = elapsed_ms;
 
     SDL_threadID thread_id = SDL_ThreadID();
+    double ms_since_last_write = elapsed_ms - thread_get_last_write(thread_id);
+    thread_set_last_write(thread_id, elapsed_ms);
 
     fprintf(log->stream, "[%s][%6u][%10.3fs][%7.3fms][ %10s] ", timestamp,
         thread_id, elapsed_sec, ms_since_last_write, ta_log_source_str(src));
@@ -94,6 +145,9 @@ static void ta_log_write_timestamp(ta_log *log, u32 src)
     }
 }
 
+#if 0
+// Not a good idea when multi-threaded logging is enabled, would need to buffer
+// the whole line before sending it.
 void ta_log_append(ta_log *log, const char* fmt, ...)
 {
     va_list args;
@@ -107,10 +161,12 @@ void ta_log_append(ta_log *log, const char* fmt, ...)
         ta_log_flush(log);
     }
 }
+#endif
 
 void ta_log_write(ta_log *log, u32 src, const char *fmt, ...)
 {
     if (log->src_include & src && !(log->src_exclude & src)) {
+        TA_LOCK(log->mutex);
         ta_log_write_timestamp(log, src);
         va_list args;
         va_start(args, fmt);
@@ -122,6 +178,7 @@ void ta_log_write(ta_log *log, u32 src, const char *fmt, ...)
         if (log->flush) {
             ta_log_flush(log);
         }
+        TA_UNLOCK(log->mutex);
     }
 }
 
@@ -129,5 +186,8 @@ void ta_log_free(ta_log *log)
 {
     if (log->filename) {
         fclose(log->stream);
+    }
+    if (log->mutex) {
+        SDL_DestroyMutex(log->mutex);
     }
 }

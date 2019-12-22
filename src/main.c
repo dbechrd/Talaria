@@ -124,13 +124,13 @@ int main(int argc, char *argv[])
 
     ta_timer_init();
     ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_ALL,
-        SRC_EVENT | SRC_SYSTEM);
+        SRC_EVENT | SRC_GAME);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
     // TODO: Make delta_time specific to thread ids (hash table)
     SDL_Thread *thread = SDL_CreateThread(thread_test, "thread_test", 0);
-    SDL_WaitThread(thread, 0);
-    //SDL_DetachThread(thread);
+    //SDL_WaitThread(thread, 0);
+    SDL_DetachThread(thread);
 
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
     debug_tests();
