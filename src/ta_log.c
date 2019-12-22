@@ -2,6 +2,7 @@
 #include "ta_timer.h"
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL_Timer.h"
+#include "SDL/SDL_Thread.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <time.h>
@@ -47,7 +48,7 @@ void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
     log->src_exclude = src_exclude;
     log->last_write_ms = ta_timer_elapsed_ms();
     fprintf(log->stream,
-        "[     Timestamp     ][  Elapsed  ][  Delta   ][ Source  ][       Message       ]\n"
+        "[     Timestamp     ][Thread][  Elapsed  ][  Delta   ][ Source  ][       Message       ]\n"
         "--------------------------------------------------------------------------------\n");
 }
 
@@ -83,11 +84,13 @@ static void ta_log_write_timestamp(ta_log *log, u32 src)
     double ms_since_last_write = elapsed_ms - log->last_write_ms;
     log->last_write_ms = elapsed_ms;
 
-    fprintf(log->stream, "[%s][%10.3fs][%7.3fms][ %10s] ", timestamp, elapsed_sec,
-        ms_since_last_write, ta_log_source_str(src));
+    SDL_threadID thread_id = SDL_ThreadID();
+
+    fprintf(log->stream, "[%s][%6u][%10.3fs][%7.3fms][ %10s] ", timestamp,
+        thread_id, elapsed_sec, ms_since_last_write, ta_log_source_str(src));
     if (log->echo) {
-        fprintf(stdout, "[%s][%10.3fs][%9.3fms][ %10s] ", timestamp, elapsed_sec,
-            ms_since_last_write, ta_log_source_str(src));
+        fprintf(stdout, "[%s][%6u][%10.3fs][%9.3fms][ %10s] ", timestamp,
+            thread_id, elapsed_sec, ms_since_last_write, ta_log_source_str(src));
     }
 }
 

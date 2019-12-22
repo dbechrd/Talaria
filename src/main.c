@@ -105,6 +105,14 @@ void ndc_tests() {
 
 static void debug_nametag();
 
+int thread_test(void *data)
+{
+    UNUSED(data);
+    ta_json_test();
+    ta_gltf_test();
+    return 0;
+}
+
 // NOTE: Only works in Subsystem:Console mode?
 //#undef main
 
@@ -119,8 +127,10 @@ int main(int argc, char *argv[])
         SRC_EVENT | SRC_SYSTEM);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
-    ta_json_test();
-    ta_gltf_test();
+    // TODO: Make delta_time specific to thread ids (hash table)
+    SDL_Thread *thread = SDL_CreateThread(thread_test, "thread_test", 0);
+    SDL_WaitThread(thread, 0);
+    //SDL_DetachThread(thread);
 
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
     debug_tests();

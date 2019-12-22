@@ -75,8 +75,6 @@ void ta_editor_init()
     // TODO: Read keybinds from file
     //dlb_vec_reserve(tg_keybinds, 16);
 
-    // TODO: How to handle mapping multiple keybinds to the same event type? We
-    // may be able to just handle escape key as special case?
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE1          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE2          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SELECT          ], TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
@@ -101,71 +99,22 @@ const char *ta_editor_selected_entity()
 #endif
     return editor.selected_entity;
 }
-#if 0
-static void drag_float_begin(float *f)
-{
-    drag_float.value = f;
-    drag_float.changed = false;
-    ta_transform *transform = ta_game_component_try(RES_COMP_TRANSFORM,
-        editor.selected_entity);
-    if (transform) {
-        ta_camera *active_cam = ta_game_camera();
-        drag_float.cam_position_smooth = active_cam->position_smooth;
-        drag_float.cam_position_target_vel = active_cam->position_target_vel;
-        active_cam->position_smooth = 0.9f;
-        active_cam->position_target_vel = 0.9f;
-        drag_float.cam_offset = vec3_sub(active_cam->position,
-            transform->xform.position);
-    } else {
-        drag_float.cam_offset = VEC3_ZERO;
-    }
-    ta_mouse_drag_begin();
-}
-static void drag_float_update(float delta)
-{
-    if (!drag_float.value) return;
 
-    int mouse_dx = ta_mouse_dx();
-    if (mouse_dx) {
-        float acc = 1.0f + ((int)vec3_len(drag_float.cam_offset) / 10);
-        *drag_float.value += mouse_dx * delta * acc;
-        drag_float.changed = true;
-
-        ta_transform *transform = ta_game_component_try(RES_COMP_TRANSFORM,
-            editor.selected_entity);
-        if (transform) {
-            ta_camera *active_cam = ta_game_camera();
-            ta_vec3 cam_pos = vec3_add(transform->xform.position,
-                drag_float.cam_offset);
-#if 1
-            ta_camera_set_target_pos_absolute(active_cam, cam_pos);
-#else
-            ta_camera_set_position(active_cam, cam_pos.x, cam_pos.y, cam_pos.z);
-#endif
-        }
-    }
-}
-static void drag_float_end()
-{
-    if (drag_float.value) {
-        drag_float.value = 0;
-        drag_float.changed = false;
-        drag_float.cam_offset = VEC3_ZERO;
-        if (drag_float.cam_position_smooth) {
-            ta_camera *active_cam = ta_game_camera();
-            active_cam->position_smooth = drag_float.cam_position_smooth;
-            active_cam->position_target_vel = drag_float.cam_position_target_vel;
-        }
-        drag_float.cam_position_smooth = 0.0f;
-        ta_mouse_drag_end();
-    }
-}
-#endif
 static void ui_node_panel()
 {
     //ta_ui_next_margin(2, 2, 0, 0);
     static ta_ui_panel_state node_panel = { 0 };
     ta_ui_panel_begin(0, &node_panel, TA_UI_AUTOSIZE);
+
+    ta_ui_row_begin();
+    ta_ui_next_margin(0, 0, 0, 20);
+    ta_ui_next_size(300, 17);
+    static ta_ui_textbox_state uid_search = { 0 };
+    if (ta_ui_textbox(0, 0, 0, &uid_search, 0)) {
+        // TODO: Search
+    }
+    ta_ui_next_margin(4, 0, 0, 0);
+    ta_ui_button(0, CSTR("Search"));
 
     static int label_width = 210;
     const char *entity_name = ta_editor_selected_entity();
@@ -183,9 +132,8 @@ static void ui_node_panel()
     ta_ui_row_begin();
     ta_ui_next_size(label_width, 0);
     ta_ui_label(0, CSTR("Name:"));
-#if 1
     ta_ui_label(0, SYM(entity_name));
-#else
+#if 0
     static ta_text_entry *uid_editor = 0;
     if (uid_editor) {
         ta_ui_next_size(100, 0);
@@ -248,21 +196,39 @@ static void ui_node_panel()
     if (model) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Invisible:"));
+        ta_ui_label(0, CSTR("Visible:"));
         ta_ui_next_pad(0, 0, 0, 0);
         ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
-        if (model->invisible) {
-            ta_ui_next_margin(0, 0, 0, 0);
-            ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-            ta_ui_label(0, CSTR("True"));
-        } else {
+        if (!model->invisible) {
             ta_ui_next_margin(0, 0, 0, 0);
             ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+            ta_ui_label(0, CSTR("True"));
+        } else {
+            ta_ui_next_margin(0, 0, 0, 0);
+            ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
             ta_ui_label(0, CSTR("False"));
         }
         ta_ui_toggle_button_end(&model->invisible);
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("Cast shadows:"));
+        ta_ui_next_pad(0, 0, 0, 0);
+        ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
+        if (model->cast_shadows) {
+            ta_ui_next_margin(0, 0, 0, 0);
+            ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+            ta_ui_label(0, CSTR("True"));
+        } else {
+            ta_ui_next_margin(0, 0, 0, 0);
+            ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+            ta_ui_label(0, CSTR("False"));
+        }
+        ta_ui_toggle_button_end(&model->cast_shadows);
     }
 
     if (transform) {
@@ -666,7 +632,6 @@ static void ui_textbox_panel()
     if (ta_ui_textbox(0, CSTR(buf), &textbox, 0)) {
         u32 text_len = dlb_vec_len(textbox.buffer);
         //dlb_memcpy(buf, textbox.buffer, MAX(sizeof(buf) - 1, text_len));
-        ta_ui_textbox_clear(&textbox);
     }
     ta_ui_row_end();
 

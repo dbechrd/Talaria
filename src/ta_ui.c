@@ -944,9 +944,6 @@ static void (*textbox_commands[TEXTBOX_COMMAND_COUNT])(ta_ui_textbox_state *text
 // TODO: Run filter on input string.. maybe?
 static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text, u32 text_len)
 {
-    DLB_ASSERT(text);
-    DLB_ASSERT(text_len);
-
     if (textbox->buffer) {
         dlb_vec_zero(textbox->buffer);
     }
@@ -993,9 +990,13 @@ static void textbox_mouse_down(ui_frame *frame)
 bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ta_ui_textbox_state *textbox, u32 flags)
 {
-    DLB_ASSERT(text);
-    DLB_ASSERT(text_len);
+    //DLB_ASSERT(text);
+    //DLB_ASSERT(text_len);
     DLB_ASSERT(textbox);
+
+    if (textbox->submit) {
+        ta_ui_textbox_clear(textbox);
+    }
 
     ta_rect_uv *text_rects = 0;
     ta_vec2 cursor = { 0 };
@@ -1012,7 +1013,7 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
         u32 buffer_len = dlb_vec_len(textbox->buffer);
         text_rect = ta_font_push_text(&text_rects, ui_font, textbox->buffer,
             buffer_len, true, &textbox->cursor, &cursor, mouse_coords);
-    } else {
+    } else if (text) {
         // If not editing (or just canceled), render text
         text_rect = ta_font_push_text(&text_rects, ui_font, text, text_len,
             true, 0, 0, 0);
