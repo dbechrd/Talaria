@@ -4,7 +4,7 @@
 struct ta_event;
 
 void ta_editor_init();
-void ta_editor_select_node(const char *entity_name);
+void ta_editor_select_entity(const char *entity_name);
 const char *ta_editor_selected_entity();
 void ta_editor_draw(float alpha);
 void ta_editor_hotkeys();

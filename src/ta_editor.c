@@ -83,7 +83,7 @@ void ta_editor_init()
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT_10     ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F7);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_WHILE_HELD  ], TA_KEYBIND_HOLD,    SDL_SCANCODE_F8);
 }
-void ta_editor_select_node(const char *entity_name)
+void ta_editor_select_entity(const char *entity_name)
 {
     editor.selected_entity = entity_name;
 }
@@ -107,15 +107,37 @@ static void ui_node_panel()
     ta_ui_panel_begin(0, &node_panel, TA_UI_AUTOSIZE);
 
     ta_ui_row_begin();
-    ta_ui_next_margin(0, 0, 0, 20);
     ta_ui_next_size(300, 17);
-    static ta_ui_textbox_state uid_search = { 0 };
-    if (ta_ui_textbox(0, 0, 0, &uid_search, 0)) {
-        // TODO: Search
-    }
-    ta_ui_next_margin(4, 0, 0, 0);
-    ta_ui_button(0, CSTR("Search"));
+    static ta_ui_textbox_state search_box = { 0 };
+    if (ta_ui_textbox(0, 0, 0, &search_box, 0)) {
 
+    }
+    ta_ui_next_margin(4, 1, 0, 0);
+    if (ta_ui_button(0, CSTR("Clear"))) {
+        ta_ui_textbox_clear(&search_box);
+    }
+
+    // TODO: Accelerate search (e.g. trie) if it gets slow
+    u32 query_len = dlb_vec_len(search_box.buffer);
+    if (query_len) {
+        static const char **search_results = 0;
+        dlb_vec_clear(search_results);
+        ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
+        dlb_vec_each(ta_transform *, transform, transforms) {
+            //if (!strncmp(transform->entity_name, search_box.buffer, query_len)) {
+            if (strstr(transform->entity_name, search_box.buffer)) {
+                dlb_vec_push(search_results, transform->entity_name);
+            }
+        }
+        dlb_vec_each(const char **, result, search_results) {
+            ta_ui_row_begin();
+            if (ta_ui_button(0, SYM(*result))) {
+                ta_editor_select_entity(*result);
+            }
+        }
+    }
+
+    ta_ui_spacer(0, 20);
     static int label_width = 210;
     const char *entity_name = ta_editor_selected_entity();
     if (!entity_name) {
@@ -189,9 +211,26 @@ static void ui_node_panel()
 #endif
 
     ta_transform *transform = ta_game_component_try(RES_COMP_TRANSFORM, entity_name);
+    ta_model *model = ta_game_component_try(RES_COMP_MODEL, entity_name);
     ta_rigid_body *rigid_body = ta_game_component_try(RES_COMP_RIGID_BODY, entity_name);
     ta_light *light = ta_game_component_try(RES_COMP_LIGHT, entity_name);
-    ta_model *model = ta_game_component_try(RES_COMP_MODEL, entity_name);
+
+    if (transform) {
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("Transform:"));
+        static ta_ui_textbox_vec3_state textbox = { 0 };
+        ta_ui_textbox_vec3(&transform->xform.position, &textbox);
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("Orientation:"));
+        static ta_ui_textbox_vec4_state orient_editors = { 0 };
+        // TODO: Can't hand edit quaternions.. they need to be normalized and
+        // the components need to be in the range [0.0, 1.0]. Let's create a
+        // ta_ui_label_vec4, then figure out how to edit rotations (Euler XYZ).
+        ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors);
+    }
 
     if (model) {
         ta_ui_row_begin();
@@ -231,34 +270,12 @@ static void ui_node_panel()
         ta_ui_toggle_button_end(&model->cast_shadows);
     }
 
-    if (transform) {
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Transform:"));
-        static ta_ui_textbox_vec3_state textbox = { 0 };
-        ta_ui_textbox_vec3(&transform->xform.position, &textbox);
-    }
     if (rigid_body) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, CSTR("Rigid Body Mass:"));
         static ta_ui_textbox_state textbox = { 0 };
         ta_ui_textbox_float(0, &rigid_body->mass, &textbox, 0);
-    }
-
-    ta_vec4 *orient_values = 0;
-    ta_ui_row_begin();
-    ta_ui_next_size(label_width, 0);
-    if (transform) {
-        ta_ui_label(0, CSTR("Orientation:"));
-        orient_values = &transform->xform.orientation;
-    }
-    if (orient_values) {
-        static ta_ui_textbox_vec4_state orient_editors = { 0 };
-        // TODO: Can't hand edit quaternions.. they need to be normalized and
-        // the components need to be in the range [0.0, 1.0]. Let's create a
-        // ta_ui_label_vec4, then figure out how to edit rotations (Euler XYZ).
-        ta_ui_textbox_vec4(orient_values, &orient_editors);
     }
 
     if (light) {
@@ -632,6 +649,7 @@ static void ui_textbox_panel()
     if (ta_ui_textbox(0, CSTR(buf), &textbox, 0)) {
         u32 text_len = dlb_vec_len(textbox.buffer);
         //dlb_memcpy(buf, textbox.buffer, MAX(sizeof(buf) - 1, text_len));
+        ta_ui_textbox_clear(&textbox);
     }
     ta_ui_row_end();
 
@@ -1061,7 +1079,7 @@ void editor_command_select()
     }
 
     if (closest_entity) {
-        ta_editor_select_node(closest_entity);
+        ta_editor_select_entity(closest_entity);
     }
 }
 void editor_command_sim_pause_resume()

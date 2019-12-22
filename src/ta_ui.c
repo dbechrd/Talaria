@@ -994,10 +994,6 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     //DLB_ASSERT(text_len);
     DLB_ASSERT(textbox);
 
-    if (textbox->submit) {
-        ta_ui_textbox_clear(textbox);
-    }
-
     ta_rect_uv *text_rects = 0;
     ta_vec2 cursor = { 0 };
     ta_rectf text_rect = { 0 };
@@ -1050,8 +1046,9 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
             textbox_mouse_down(frame);
         } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
             textbox_command_submit(textbox);
-        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
-            textbox_command_cancel(textbox);
+        // TODO(cleanup): I don't like this.. maybe just always use escape.
+        //} else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
+        //    textbox_command_cancel(textbox);
         }
     }
 
@@ -1107,6 +1104,10 @@ bool ta_ui_textbox_float(const char *name, float *value,
 {
     DLB_ASSERT(value);
     DLB_ASSERT(textbox);
+
+    if (textbox->submit) {
+        ta_ui_textbox_clear(textbox);
+    }
 
     ta_rect_uv *text_rects = 0;
     ta_vec2 cursor = { 0 };
