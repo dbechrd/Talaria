@@ -80,9 +80,6 @@
     <ClCompile Include="src\ta_scene.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ta_mesh_group.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ta_material.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -197,9 +194,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_scene.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ta_mesh_group.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_material.h">

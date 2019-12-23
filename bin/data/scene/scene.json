@@ -203,7 +203,7 @@
     {
       "name": "chamber_0001",
       "entity_name": "chamber_0001",
-      "mesh_groups": ["chamber_0001"],
+      "meshes": ["chamber_0001"],
       "material": "metal_plate_019",
       "invisible": false,
       "cast_shadows": true,
@@ -212,7 +212,7 @@
     {
       "name": "wakeup",
       "entity_name": "wakeup",
-      "mesh_groups": ["wakeup"],
+      "meshes": ["wakeup"],
       "material": "cobble",
       "invisible": true,
       "cast_shadows": true,
@@ -221,7 +221,7 @@
     {
       "name": "button_0001",
       "entity_name": "button_0001",
-      "mesh_groups": ["button"],
+      "meshes": ["button"],
       "material": "test",
       "invisible": false,
       "cast_shadows": true,
@@ -230,7 +230,7 @@
     {
       "name": "player_one",
       "entity_name": "player_one",
-      "mesh_groups": ["prim_cube"],
+      "meshes": ["prim_cube"],
       "material": "cobble",
       "invisible": false,
       "cast_shadows": true,
@@ -239,7 +239,7 @@
     {
       "name": "sphere1",
       "entity_name": "sphere1",
-      "mesh_groups": ["prim_sphere"],
+      "meshes": ["prim_sphere"],
       "material": "metal_plate_019",
       "invisible": false,
       "cast_shadows": true,
@@ -248,7 +248,7 @@
     {
       "name": "sphere2",
       "entity_name": "sphere2",
-      "mesh_groups": ["prim_sphere"],
+      "meshes": ["prim_sphere"],
       "material": "red",
       "invisible": false,
       "cast_shadows": true,
@@ -257,7 +257,7 @@
     {
       "name": "shadow_test_1",
       "entity_name": "shadow_test_1",
-      "mesh_groups": ["letter_r"],
+      "meshes": ["letter_r"],
       "material": "test",
       "invisible": false,
       "cast_shadows": true,
@@ -266,7 +266,7 @@
     {
       "name": "column_0001",
       "entity_name": "column_0001",
-      "mesh_groups": ["column_0001"],
+      "meshes": ["column_0001"],
       "material": "terrazzo",
       "invisible": false,
       "cast_shadows": true,
@@ -275,7 +275,7 @@
     {
       "name": "column_0002",
       "entity_name": "column_0002",
-      "mesh_groups": ["column_0001"],
+      "meshes": ["column_0001"],
       "material": "terrazzo",
       "invisible": false,
       "cast_shadows": true,
@@ -284,7 +284,7 @@
     {
       "name": "column_0003",
       "entity_name": "column_0003",
-      "mesh_groups": ["column_0001"],
+      "meshes": ["column_0001"],
       "material": "terrazzo",
       "invisible": false,
       "cast_shadows": true,
@@ -293,7 +293,7 @@
     {
       "name": "star_0001",
       "entity_name": "star_0001",
-      "mesh_groups": ["star_0001"],
+      "meshes": ["star_0001"],
       "material": "star_0001",
       "invisible": false,
       "cast_shadows": true,
@@ -585,7 +585,8 @@
         }
       },
       "mass": "0x00000000 (0.000000)",
-      "trigger": false
+      "trigger": false,
+      "no_gravity": false
     },
     {
       "name": "button_0001",
@@ -602,7 +603,8 @@
         }
       },
       "mass": "0x3F800000 (1.000000)",
-      "trigger": true
+      "trigger": true,
+      "no_gravity": false
     },
     {
       "name": "player_one",
@@ -619,7 +621,8 @@
         }
       },
       "mass": "0x3F800000 (1.000000)",
-      "trigger": false
+      "trigger": false,
+      "no_gravity": false
     },
     {
       "name": "sphere1",
@@ -636,7 +639,8 @@
         }
       },
       "mass": "0x3F800000 (1.000000)",
-      "trigger": false
+      "trigger": false,
+      "no_gravity": false
     },
     {
       "name": "sphere2",
@@ -653,7 +657,8 @@
         }
       },
       "mass": "0x3F800000 (1.000000)",
-      "trigger": false
+      "trigger": false,
+      "no_gravity": false
     },
     {
       "name": "column_0001",
@@ -670,7 +675,8 @@
         }
       },
       "mass": "0x461C3C00 (9999.000000)",
-      "trigger": false
+      "trigger": false,
+      "no_gravity": false
     },
     {
       "name": "column_0002",
@@ -687,7 +693,8 @@
         }
       },
       "mass": "0x461C3C00 (9999.000000)",
-      "trigger": false
+      "trigger": false,
+      "no_gravity": false
     },
     {
       "name": "column_0003",
@@ -704,7 +711,8 @@
         }
       },
       "mass": "0x461C3C00 (9999.000000)",
-      "trigger": false
+      "trigger": false,
+      "no_gravity": false
     },
     {
       "name": "star_0001",
@@ -721,7 +729,8 @@
         }
       },
       "mass": "0x3E4CCCCD (0.200000)",
-      "trigger": false
+      "trigger": false,
+      "no_gravity": false
     }
   ],
   "ta_audio_buffer": [
@@ -860,40 +869,6 @@
       "tex_normal": "",
       "tex_occlusion": "",
       "tex_roughness": ""
-    }
-  ],
-  "ta_mesh_group": [
-    {
-      "name": "prim_cube",
-      "path": "data/mesh/prim_cube.obj"
-    },
-    {
-      "name": "prim_sphere",
-      "path": "data/mesh/prim_sphere.obj"
-    },
-    {
-      "name": "chamber_0001",
-      "path": "data/mesh/chamber0001.obj"
-    },
-    {
-      "name": "wakeup",
-      "path": "data/mesh/wakeup.obj"
-    },
-    {
-      "name": "button",
-      "path": "data/mesh/button.obj"
-    },
-    {
-      "name": "letter_r",
-      "path": "data/mesh/letter_r.obj"
-    },
-    {
-      "name": "column_0001",
-      "path": "data/mesh/column_0001.obj"
-    },
-    {
-      "name": "star_0001",
-      "path": "data/mesh/star.obj"
     }
   ],
   "ta_shader": [

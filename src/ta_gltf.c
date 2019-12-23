@@ -238,8 +238,11 @@ void ta_gltf_load(ta_gltf *gltf)
         ta_mesh *mesh = ta_game_alloc(RES_MESH, name, strlen(name));
         cgltf_attribute *pos = &gltf_mesh->primitives->attributes[0];
         DLB_ASSERT(pos->type == cgltf_attribute_type_position);
-        mesh->positions = (ta_vec3 *)pos->data->buffer_view->buffer->data;
-        mesh->positions_count = pos->data->count;
+        DLB_ASSERT(pos->data->type == cgltf_type_vec3);
+        dlb_vec_reserve(mesh->positions, pos->data->count);
+        dlb_memcpy(mesh->positions, pos->data->buffer_view->buffer->data,
+            sizeof(*mesh->positions) * pos->data->count);
+        dlb_vec_hdr(mesh->positions)->len = pos->data->count;
         ta_mesh_create(mesh);
     }
 }

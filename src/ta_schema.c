@@ -11,7 +11,6 @@
 #include "ta_rigid_body.h"
 #include "ta_light.h"
 #include "ta_material.h"
-#include "ta_mesh_group.h"
 #include "ta_font.h"
 #include "ta_model.h"
 #include "ta_transform.h"
@@ -67,7 +66,6 @@ const char *ta_schema_field_type_str(ta_schema_field_type type) {
         case TYP_AUDIO_BUFFER:      return "TYP_AUDIO_BUFFER";
         case TYP_FONT:              return "TYP_FONT";
         case TYP_MATERIAL:          return "TYP_MATERIAL";
-        case TYP_MESH_GROUP:        return "TYP_MESH_GROUP";
         case TYP_MESH:              return "TYP_MESH";
         case TYP_SHADER:            return "TYP_SHADER";
         case TYP_TEXTURE:           return "TYP_TEXTURE";
@@ -105,7 +103,6 @@ ta_schema_field_type res_to_typ(ta_resource_type type)
         case RES_AUDIO_BUFFER     : schema_type = TYP_AUDIO_BUFFER ; break;
         case RES_FONT             : schema_type = TYP_FONT         ; break;
         case RES_MATERIAL         : schema_type = TYP_MATERIAL     ; break;
-        case RES_MESH_GROUP       : schema_type = TYP_MESH_GROUP   ; break;
         case RES_MESH             : schema_type = TYP_MESH         ; break;
         case RES_SHADER           : schema_type = TYP_SHADER       ; break;
         case RES_TEXTURE          : schema_type = TYP_TEXTURE      ; break;
@@ -132,7 +129,6 @@ ta_resource_type typ_to_res(ta_schema_field_type type)
         case TYP_AUDIO_BUFFER : res_type = RES_AUDIO_BUFFER     ; break;
         case TYP_FONT         : res_type = RES_FONT             ; break;
         case TYP_MATERIAL     : res_type = RES_MATERIAL         ; break;
-        case TYP_MESH_GROUP   : res_type = RES_MESH_GROUP       ; break;
         case TYP_MESH         : res_type = RES_MESH             ; break;
         case TYP_SHADER       : res_type = RES_SHADER           ; break;
         case TYP_TEXTURE      : res_type = RES_TEXTURE          ; break;
@@ -379,13 +375,9 @@ void ta_schema_register()
     TYPE_FIELD(ta_material, tex_roughness, ATOM_STRING);
     TYPE_END(ta_material);
 
-    TYPE_START(ta_mesh_group, TYP_MESH_GROUP, ta_mesh_group_load, ta_mesh_group_free);
-    TYPE_FIELD(ta_mesh_group, name, ATOM_STRING);
-    TYPE_FIELD(ta_mesh_group, path, ATOM_STRING);
-    TYPE_END(ta_mesh_group);
-
-    TYPE_START(ta_mesh, TYP_MESH, 0, ta_mesh_free);
-    //TYPE_FIELD(ta_mesh, id, ATOM_UINT);
+    TYPE_START(ta_mesh, TYP_MESH, ta_mesh_init, ta_mesh_free);
+    TYPE_FIELD(ta_mesh, name, ATOM_STRING);
+    TYPE_FIELD(ta_mesh, path, ATOM_STRING);
     TYPE_END(ta_mesh);
 
     TYPE_START(ta_shader, TYP_SHADER, ta_shader_load, 0);
@@ -475,7 +467,7 @@ void ta_schema_register()
     TYPE_START(ta_model, TYP_MODEL, 0, 0);
     TYPE_FIELD(ta_model, name,            ATOM_STRING);
     TYPE_FIELD(ta_model, entity_name,     ATOM_STRING);
-    TYPE_VECTOR(ta_model, mesh_groups,    ATOM_STRING);
+    TYPE_VECTOR(ta_model, meshes,         ATOM_STRING);
     TYPE_FIELD(ta_model, material,        ATOM_STRING);
     TYPE_FIELD(ta_model, invisible,       ATOM_BOOL);
     TYPE_FIELD(ta_model, cast_shadows,    ATOM_BOOL);
@@ -501,6 +493,7 @@ void ta_schema_register()
     TYPE_FIELD(ta_rigid_body, collider,    TYP_COLLIDER);
     TYPE_FIELD(ta_rigid_body, mass,        ATOM_FLOAT);
     TYPE_FIELD(ta_rigid_body, trigger,     ATOM_BOOL);
+    TYPE_FIELD(ta_rigid_body, no_gravity,  ATOM_BOOL);
     TYPE_END(ta_rigid_body);
 }
 

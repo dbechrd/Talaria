@@ -10,7 +10,6 @@
 #include "ta_log.h"
 #include "ta_material.h"
 #include "ta_mesh.h"
-#include "ta_mesh_group.h"
 #include "ta_model.h"
 #include "ta_mouse.h"
 #include "ta_parse.h"
@@ -138,7 +137,7 @@ static void ui_node_panel()
     }
 
     ta_ui_spacer(0, 20);
-    static int label_width = 210;
+    static int label_width = 250;
     const char *entity_name = ta_editor_selected_entity();
     if (!entity_name) {
         //ta_ui_spacer(0, 2);
@@ -218,24 +217,38 @@ static void ui_node_panel()
     if (transform) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Transform:"));
+        ta_ui_label(0, CSTR("[transform] Position:"));
         static ta_ui_textbox_vec3_state textbox = { 0 };
-        ta_ui_textbox_vec3(&transform->xform.position, &textbox);
+        ta_ui_textbox_vec3(&transform->xform.position, &textbox, false);
+
+        ta_ui_next_margin(6, 1, 0, 1);
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Reset"))) {
+            transform->xform.position = VEC3_ZERO;
+        }
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Orientation:"));
+        ta_ui_label(0, CSTR("[transform] Orientation:"));
         static ta_ui_textbox_vec4_state orient_editors = { 0 };
         // TODO: Can't hand edit quaternions.. they need to be normalized and
         // the components need to be in the range [0.0, 1.0]. Let's create a
         // ta_ui_label_vec4, then figure out how to edit rotations (Euler XYZ).
-        ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors);
+        ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors, true);
+
+        ta_ui_next_margin(6, 1, 0, 1);
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Reset"))) {
+            transform->xform.orientation = QUAT_IDENT;
+        }
     }
 
     if (model) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Visible:"));
+        ta_ui_label(0, CSTR("[model] Visible:"));
         ta_ui_next_pad(0, 0, 0, 0);
         ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
         if (!model->invisible) {
@@ -253,10 +266,45 @@ static void ui_node_panel()
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Cast shadows:"));
+        ta_ui_label(0, CSTR("[model] Cast shadows:"));
+
+        if (!model->invisible) {
+            ta_ui_next_pad(0, 0, 0, 0);
+            ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
+            if (model->cast_shadows) {
+                ta_ui_next_margin(0, 0, 0, 0);
+                ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+                ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+                ta_ui_label(0, CSTR("True"));
+            } else {
+                ta_ui_next_margin(0, 0, 0, 0);
+                ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+                ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+                ta_ui_label(0, CSTR("False"));
+            }
+            ta_ui_toggle_button_end(&model->cast_shadows);
+        } else {
+            ta_ui_label(0, CSTR("n/a"));
+            ta_ui_label(0, CSTR("[?]"));
+            if (ta_ui_last_frame_state().hover) {
+                ta_ui_tooltip(CSTR("Model must be visible to cast shadows"));
+            }
+        }
+    }
+
+    if (rigid_body) {
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("[rigid_body] Mass:"));
+        static ta_ui_textbox_state textbox = { 0 };
+        ta_ui_textbox_float(0, &rigid_body->mass, &textbox, 0);
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("[rigid_body] Apply gravity:"));
         ta_ui_next_pad(0, 0, 0, 0);
         ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
-        if (model->cast_shadows) {
+        if (!rigid_body->no_gravity) {
             ta_ui_next_margin(0, 0, 0, 0);
             ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
@@ -267,21 +315,13 @@ static void ui_node_panel()
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
             ta_ui_label(0, CSTR("False"));
         }
-        ta_ui_toggle_button_end(&model->cast_shadows);
-    }
-
-    if (rigid_body) {
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Rigid Body Mass:"));
-        static ta_ui_textbox_state textbox = { 0 };
-        ta_ui_textbox_float(0, &rigid_body->mass, &textbox, 0);
+        ta_ui_toggle_button_end(&rigid_body->no_gravity);
     }
 
     if (light) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Enabled:"));
+        ta_ui_label(0, CSTR("[light] Enabled:"));
         if (light->disabled) {
             if (ta_ui_button(0, CSTR("False"))) light->disabled = false;
         } else {
@@ -290,7 +330,7 @@ static void ui_node_panel()
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("Shadow Map:"));
+        ta_ui_label(0, CSTR("[light] Shadow Map:"));
         static bool show_shadow_map = true;
         if (show_shadow_map) {
             if (ta_ui_button(0, CSTR("Hide"))) show_shadow_map = false;
@@ -448,7 +488,7 @@ static void ui_camera_panel()
         ta_ui_label(0, SYM(camera->entity_name));
         static ta_ui_textbox_vec3_state pos_textbox = { 0 };
         ta_ui_row_begin();
-        ta_ui_textbox_vec3(&camera->position, &pos_textbox);
+        ta_ui_textbox_vec3(&camera->position, &pos_textbox, false);
         ta_ui_row_end();
         static ta_ui_textbox_state pos_smooth_textbox = { 0 };
         ta_ui_textbox_float(0, &camera->position_smooth, &pos_smooth_textbox, 0);
@@ -593,11 +633,10 @@ static void ui_mesh_panel()
             if (entity_name) {
                 ta_model *model = ta_game_component_try(RES_COMP_MODEL,
                     entity_name);
-                //if (model && model->mesh_groups) {
-                //    ta_material *material = ta_game_by_sym(RES_MATERIAL,
-                //        model->material);
-                //    material->tex_albedo = texture->name;
-                //}
+                if (model) {
+                    dlb_vec_clear(model->meshes);
+                    dlb_vec_push(model->meshes, mesh->name);
+                }
             }
         }
         if (ta_ui_last_frame_state().hover) {
@@ -606,36 +645,7 @@ static void ui_mesh_panel()
                 "name         : %s\n"
                 "vertex count : %u",
                 mesh->name,
-                mesh->positions_count
-            );
-            DLB_ASSERT(len < sizeof(tex_buf));
-            ta_ui_tooltip(tex_buf, len);
-        }
-    }
-    ta_ui_panel_end();
-}
-static void ui_mesh_group_panel()
-{
-    //ta_ui_next_margin(2, 2, 0, 0);
-    static ta_ui_panel_state mesh_group_panel = { 0 };
-    ta_ui_panel_begin(0, &mesh_group_panel, TA_UI_AUTOSIZE);
-    ta_ui_row_begin();
-    dlb_vec_each(ta_mesh_group *, mesh_group, ta_game_resource_pool(RES_MESH_GROUP)) {
-        ta_model *model = 0;
-        ta_ui_next_size(68, 68);
-        //ta_ui_next_margin(0, 0, 2, 0);
-        ta_ui_next_pad(4, 4, 4, 4);
-        //ta_ui_next_size(material->width, material->height);
-        if (ta_ui_button(0, SYM(mesh_group->name))) {
-            // i don't why this is a button, but, whatever, man
-        }
-        if (ta_ui_last_frame_state().hover) {
-            char tex_buf[1024] = { 0 };
-            int len = snprintf(tex_buf, sizeof(tex_buf),
-                "name : %s\n"
-                "path : %s",
-                mesh_group->name,
-                mesh_group->path
+                dlb_vec_len(mesh->positions)
             );
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
@@ -864,7 +874,6 @@ static void ui_editor_sidebar()
         CATEGORY_MATERIALS,
         CATEGORY_TEXTURES,
         CATEGORY_MESHES,
-        CATEGORY_MESH_GROUPS,
         CATEGORY_TEXTBOX,
         CATEGORY_SCENE,
         CATEGORY_COUNT
@@ -876,7 +885,6 @@ static void ui_editor_sidebar()
     category_names[CATEGORY_MATERIALS]   = INTERN(STRING(CATEGORY_MATERIALS));
     category_names[CATEGORY_TEXTURES]    = INTERN(STRING(CATEGORY_TEXTURES));
     category_names[CATEGORY_MESHES]      = INTERN(STRING(CATEGORY_MESHES));
-    category_names[CATEGORY_MESH_GROUPS] = INTERN(STRING(CATEGORY_MESH_GROUPS));
     category_names[CATEGORY_TEXTBOX]     = INTERN(STRING(CATEGORY_TEXTBOX));
     category_names[CATEGORY_SCENE]       = INTERN(STRING(CATEGORY_SCENE));
     static int category_selected = CATEGORY_NODE;
@@ -924,9 +932,6 @@ static void ui_editor_sidebar()
             break;
         } case CATEGORY_MESHES: {
             ui_mesh_panel();
-            break;
-        } case CATEGORY_MESH_GROUPS: {
-            ui_mesh_group_panel();
             break;
         } case CATEGORY_TEXTBOX: {
             ui_textbox_panel();

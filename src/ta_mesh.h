@@ -16,27 +16,23 @@ enum {
 typedef struct ta_mesh {
     u32 index;
     const char *name;
+    const char *path;
     GLuint *indexes;
-    u32 indexes_count;
     ta_vec3 *positions;
-    u32 positions_count;
     ta_vec2 *uvs;
-    u32 uvs_count;
     ta_rgba *colors;
-    u32 colors_count;
     ta_vec3 *normals;
-    u32 normals_count;
     ta_vec3 *tangents;
-    u32 tangents_count;
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;
     ta_line_3d *tangent_lines;
     ta_aabb aabb;
-
     GLuint vao;
     GLuint buffers[TA_MESH_BUFFER_COUNT];
 } ta_mesh;
 
+void ta_mesh_init(ta_mesh *mesh);
+void ta_mesh_load_file(ta_mesh *mesh, const char *filename);
 void ta_mesh_create(ta_mesh *mesh);
 void ta_mesh_init_normals(ta_mesh *mesh, float scale);
 void ta_mesh_push_normals(ta_mesh *mesh);

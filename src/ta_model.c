@@ -7,7 +7,7 @@
 #include "ta_schema.h"
 #include "ta_symbol.h"
 #include "ta_camera.h"
-#include "ta_mesh_group.h"
+#include "ta_mesh.h"
 #include "ta_material.h"
 #include "ta_texture.h"
 #include "ta_light.h"
@@ -25,7 +25,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
     if (model->invisible || !model->cast_shadows) {
         return;
     }
-    DLB_ASSERT(dlb_vec_len(model->mesh_groups));
+    DLB_ASSERT(dlb_vec_len(model->meshes));
 
     ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM,
         model->entity_name);
@@ -49,10 +49,9 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
     ta_mat4 light_pvm = mat4_mul(light_pv, &transform->model);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
     ta_shader_bind(shader);
-    dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-        ta_mesh_group *mesh_group = ta_game_by_sym(RES_MESH_GROUP,
-            *mesh_group_name);
-        ta_mesh_group_render(mesh_group);
+    dlb_vec_each(const char **, mesh_name, model->meshes) {
+        ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+        ta_mesh_render(mesh);
     }
     ta_shader_unbind();
 }
@@ -71,7 +70,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
     {
         return;
     }
-    DLB_ASSERT(dlb_vec_len(model->mesh_groups));
+    DLB_ASSERT(dlb_vec_len(model->meshes));
 
     ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM, model->entity_name);
 
@@ -118,9 +117,9 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         ta_shader_set_sampler2d(shader, SYM_U_TEX_OCCLUSION, texture_occlusion->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ROUGHNESS, texture_roughness->gl_id);
         ta_shader_bind(shader);
-        dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-            ta_mesh_group *mesh_group = ta_game_by_sym(RES_MESH_GROUP, *mesh_group_name);
-            ta_mesh_group_render(mesh_group);
+        dlb_vec_each(const char **, mesh_name, model->meshes) {
+            ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+            ta_mesh_render(mesh);
         }
         ta_shader_unbind();
     }
@@ -128,9 +127,9 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
     if (camera->debug_normals || camera->debug_bounding_boxes) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
         if (camera->debug_normals) {
-            dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-                ta_mesh_group *mesh_group = ta_game_by_sym(RES_MESH_GROUP, *mesh_group_name);
-                ta_mesh_group_push_normals(mesh_group);
+            dlb_vec_each(const char **, mesh_name, model->meshes) {
+                ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+                ta_mesh_push_normals(mesh);
             }
         }
         if (camera->debug_bounding_boxes) {
@@ -169,9 +168,9 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
     ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
     ta_shader_bind(shader);
-    dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-        ta_mesh_group *mesh_group = ta_game_by_sym(RES_MESH_GROUP, *mesh_group_name);
-        ta_mesh_group_render(mesh_group);
+    dlb_vec_each(const char **, mesh_name, model->meshes) {
+        ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+        ta_mesh_render(mesh);
     }
     ta_shader_unbind();
 }

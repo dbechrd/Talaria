@@ -132,8 +132,10 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ta_ui_textbox_state *textbox, u32 flags);
 bool ta_ui_textbox_float(const char *name, float *value,
     ta_ui_textbox_state *textbox, u32 flags);
-void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state);
-void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state);
+void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
+    bool normalize);
+void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
+    bool normalize);
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c);
 void ta_ui_textbox_submit(ta_ui_textbox_state *textbox);
 void ta_ui_textbox_clear(ta_ui_textbox_state *textbox);

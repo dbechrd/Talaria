@@ -1207,7 +1207,8 @@ bool ta_ui_textbox_float(const char *name, float *value,
     frame->cursor = cursor;
     return frame->data.textbox->submit;
 }
-void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state)
+void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
+    bool normalize)
 {
     DLB_ASSERT(vec);
     DLB_ASSERT(vec_state);
@@ -1219,8 +1220,12 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state)
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(0, &components[i], state, 0);
     }
+    if (normalize) {
+        *vec = vec3_normalize(*vec);
+    }
 }
-void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state)
+void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
+    bool normalize)
 {
     DLB_ASSERT(vec);
     DLB_ASSERT(vec_state);
@@ -1230,7 +1235,12 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state)
     for (int i = 0; i < 4; ++i) {
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
-        ta_ui_textbox_float(0, &components[i], state, 0);
+        if (ta_ui_textbox_float(0, &components[i], state, 0)) {
+
+        }
+    }
+    if (normalize) {
+        *vec = quat_normalize(*vec);
     }
 }
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)

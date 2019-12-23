@@ -10,7 +10,6 @@
 #include "ta_light.h"
 #include "ta_log.h"
 #include "ta_material.h"
-#include "ta_mesh_group.h"
 #include "ta_model.h"
 #include "ta_parse.h"
 #include "ta_transform.h"
@@ -195,16 +194,6 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
         fprintf(hnd, "# %s\n", ta_schema_field_type_str(schema_type));
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
-
-        if (res_type == RES_MESH) {
-            fprintf(hnd,
-                "#\n"
-                "# NOTE: We may have mesh properties at some point, but, for now, meshes are\n"
-                "# created at run-time via mesh_groups.\n"
-                "#\n"
-            );
-            continue;
-        }
 
         u32 size = tg_schemas[schema_type].size;
         void *pool = scene->resource_data[res_type];

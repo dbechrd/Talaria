@@ -169,14 +169,14 @@ ta_light:
 ta_model:
   name: "chamber_0001"
   entity_name: "chamber_0001"
-  mesh_groups: ["chamber_0001", ]
+  meshes: ["chamber_0001", ]
   material: "metal_plate_019"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "wakeup"
   entity_name: "wakeup"
-  mesh_groups: ["wakeup", ]
+  meshes: ["wakeup", ]
   material: "cobble"
   invisible: true
   cast_shadows: true
@@ -184,63 +184,63 @@ ta_model:
 ta_model:
   name: "button_0001"
   entity_name: "button_0001"
-  mesh_groups: ["button", ]
+  meshes: ["button", ]
   material: "test"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "player_one"
   entity_name: "player_one"
-  mesh_groups: ["prim_cube", ]
+  meshes: ["prim_cube", ]
   material: "cobble"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "sphere1"
   entity_name: "sphere1"
-  mesh_groups: ["prim_sphere", ]
+  meshes: ["prim_sphere", ]
   material: "metal_plate_019"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "sphere2"
   entity_name: "sphere2"
-  mesh_groups: ["prim_sphere", ]
+  meshes: ["prim_sphere", ]
   material: "red"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "shadow_test_1"
   entity_name: "shadow_test_1"
-  mesh_groups: ["letter_r", ]
+  meshes: ["letter_r", ]
   material: "test"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0001"
   entity_name: "column_0001"
-  mesh_groups: ["column_0001", ]
+  meshes: ["column_0001", ]
   material: "terrazzo"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0002"
   entity_name: "column_0002"
-  mesh_groups: ["column_0001", ]
+  meshes: ["column_0001", ]
   material: "terrazzo"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0003"
   entity_name: "column_0003"
-  mesh_groups: ["column_0001", ]
+  meshes: ["column_0001", ]
   material: "terrazzo"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "star_0001"
   entity_name: "star_0001"
-  mesh_groups: ["star_0001", ]
+  meshes: ["star_0001", ]
   material: "star_0001"
   cast_shadows: true
   receive_shadows: true
@@ -662,39 +662,32 @@ ta_material:
   shader: "mesh"
   tex_albedo: "star_albedo"
 #-------------------------------------------------------------------------------
-# TYP_MESH_GROUP
-#-------------------------------------------------------------------------------
-ta_mesh_group:
-  name: "prim_cube"
-  path: "data/mesh/prim_cube.obj"
-ta_mesh_group:
-  name: "prim_sphere"
-  path: "data/mesh/prim_sphere.obj"
-ta_mesh_group:
-  name: "chamber_0001"
-  path: "data/mesh/chamber0001.obj"
-ta_mesh_group:
-  name: "wakeup"
-  path: "data/mesh/wakeup.obj"
-ta_mesh_group:
-  name: "button"
-  path: "data/mesh/button.obj"
-ta_mesh_group:
-  name: "letter_r"
-  path: "data/mesh/letter_r.obj"
-ta_mesh_group:
-  name: "column_0001"
-  path: "data/mesh/column_0001.obj"
-ta_mesh_group:
-  name: "star_0001"
-  path: "data/mesh/star.obj"
-#-------------------------------------------------------------------------------
 # TYP_MESH
 #-------------------------------------------------------------------------------
-#
-# NOTE: We may have mesh properties at some point, but, for now, meshes are
-# created at run-time via mesh_groups.
-#
+ta_mesh:
+  name: "prim_cube"
+  path: "data/mesh/prim_cube.obj"
+ta_mesh:
+  name: "prim_sphere"
+  path: "data/mesh/prim_sphere.obj"
+ta_mesh:
+  name: "chamber_0001"
+  path: "data/mesh/chamber0001.obj"
+ta_mesh:
+  name: "wakeup"
+  path: "data/mesh/wakeup.obj"
+ta_mesh:
+  name: "button"
+  path: "data/mesh/button.obj"
+ta_mesh:
+  name: "letter_r"
+  path: "data/mesh/letter_r.obj"
+ta_mesh:
+  name: "column_0001"
+  path: "data/mesh/column_0001.obj"
+ta_mesh:
+  name: "star_0001"
+  path: "data/mesh/star.obj"
 #-------------------------------------------------------------------------------
 # TYP_SHADER
 #-------------------------------------------------------------------------------
