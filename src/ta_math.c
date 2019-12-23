@@ -1205,6 +1205,6 @@ void ta_math_test()
     DLB_ASSERT(result.data.f[3][1] < TA_EPSILON);
     DLB_ASSERT(result.data.f[3][2] < TA_EPSILON);
     DLB_ASSERT(result.data.f[3][3] - 1.0f < TA_EPSILON);
-    quat_print(stdout, q);
-    mat4_print(stdout, &result);
+    //quat_print(stdout, q);
+    //mat4_print(stdout, &result);
 }

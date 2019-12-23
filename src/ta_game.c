@@ -7,6 +7,7 @@
 #include "ta_event.h"
 #include "ta_font.h"
 #include "ta_game.h"
+#include "ta_gltf.h"
 #include "ta_keybind.h"
 #include "ta_light.h"
 #include "ta_log.h"
@@ -184,6 +185,8 @@ void ta_game_init()
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
     ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
+    ta_game_load_gltf();
+
     //--------------------------------------------------------------------------
     // Simulation
     //--------------------------------------------------------------------------
@@ -234,10 +237,10 @@ void ta_game_init()
     // Shaders
     //--------------------------------------------------------------------------
     // TODO: Move these to shaders.dml, they're not scene-specific
-    tg_shader_lines   = ta_game_by_name(RES_SHADER, INTERN("lines"));
-    tg_shader_quads   = ta_game_by_name(RES_SHADER, INTERN("quads"));
-    tg_shader_cubemap = ta_game_by_name(RES_SHADER, INTERN("cubemap"));
-    tg_shader_shadow  = ta_game_by_name(RES_SHADER, INTERN("shadow"));
+    tg_shader_lines   = ta_game_by_sym(RES_SHADER, INTERN("lines"));
+    tg_shader_quads   = ta_game_by_sym(RES_SHADER, INTERN("quads"));
+    tg_shader_cubemap = ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
+    tg_shader_shadow  = ta_game_by_sym(RES_SHADER, INTERN("shadow"));
     DLB_ASSERT(tg_shader_lines);
     DLB_ASSERT(tg_shader_quads);
     DLB_ASSERT(tg_shader_cubemap);
@@ -287,28 +290,40 @@ void ta_game_state_set(ta_game_state state)
         }
     }
 }
-void *ta_game_alloc(enum ta_resource_type type, const char *name)
+void *ta_game_alloc(enum ta_resource_type type, const char *name, u32 name_len)
 {
-    return ta_scene_alloc(&game.scene, type, name);
+    return ta_scene_alloc(&game.scene, type, name, name_len);
 }
-void ta_game_destroy(enum ta_resource_type type, const char *name)
+void ta_game_destroy(enum ta_resource_type type, const char *name, u32 name_len)
 {
-    ta_scene_destroy(&game.scene, type, name);
+    ta_scene_destroy(&game.scene, type, name, name_len);
 }
 // If not found, ASSERT
-void *ta_game_by_name(ta_resource_type type, const char *name)
+void *ta_game_by_name(ta_resource_type type, const char *name, u32 name_len)
 {
-    return ta_scene_find_by_name(&game.scene, type, name);
+    return ta_scene_find_by_name(&game.scene, type, name, name_len);
 }
 // If not found, returns NULL
-void *ta_game_by_name_try(ta_resource_type type, const char *name)
+void *ta_game_by_name_try(ta_resource_type type, const char *name, u32 name_len)
 {
-    return ta_scene_find_by_name_try(&game.scene, type, name);
+    return ta_scene_find_by_name_try(&game.scene, type, name, name_len);
 }
 // If not found, returns the first resource of the given type
-void *ta_game_by_name_or_default(ta_resource_type type, const char *name)
+void *ta_game_by_name_or_default(ta_resource_type type, const char *name, u32 name_len)
 {
-    return ta_scene_find_by_name_or_default(&game.scene, type, name);
+    return ta_scene_find_by_name_or_default(&game.scene, type, name, name_len);
+}
+void *ta_game_by_sym(enum ta_resource_type type, const char *sym)
+{
+    return ta_game_by_name(type, SYM(sym));
+}
+void *ta_game_by_sym_try(enum ta_resource_type type, const char *sym)
+{
+    return ta_game_by_name_try(type, SYM(sym));
+}
+void *ta_game_by_sym_or_default(enum ta_resource_type type, const char *sym)
+{
+    return ta_game_by_name_or_default(type, SYM(sym));
 }
 void *ta_game_component(ta_resource_type type, const char *entity)
 {
@@ -321,6 +336,18 @@ void *ta_game_component_try(ta_resource_type type, const char *entity)
 void *ta_game_resource_pool(ta_resource_type type)
 {
     return game.scene.resource_data[type];
+}
+void ta_game_load_gltf()
+{
+    ta_gltf rock_gltf = { 0 };
+    //err = ta_gltf_parse(data, "F:/Users/User/Rez/Models/bee.glb");
+    int err = ta_gltf_parse_file(&rock_gltf, "data/mesh/rock_0001.gltf");
+    if (err) {
+        ta_log_write(&tg_debug_log, SRC_SYSTEM, "Failed to load gltf model\n");
+        DLB_ASSERT(0);
+    }
+    ta_gltf_load(&rock_gltf);
+    ta_gltf_free(&rock_gltf);
 }
 ta_camera *ta_game_camera()
 {
@@ -409,7 +436,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     DLB_ASSERT(len < sizeof(frame_info));
 
     static ta_rect_uv *frame_time_rects = 0;
-    ta_font *font = ta_game_by_name(RES_FONT, tg_font);
+    ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
     ta_font_push_text(&frame_time_rects, font, CSTR(frame_info), true, 0, 0, 0);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
         ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
@@ -417,7 +444,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     }
     dlb_vec_zero(frame_time_rects);
 
-    ta_shader *font_shader = ta_game_by_name(RES_SHADER, font->shader);
+    ta_shader *font_shader = ta_game_by_sym(RES_SHADER, font->shader);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
@@ -436,10 +463,10 @@ static void game_draw_hud()
         ta_ui_next_size(20, 20);
         ta_ui_next_pad(2, 2, 2, 2);
         if (i < gun->carrying_ammo) {
-            ta_texture *tex = ta_game_by_name(RES_TEXTURE, tg_tex_orange);
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
             ta_ui_image(0, tex, 0);
         } else {
-            ta_texture *tex = ta_game_by_name(RES_TEXTURE, tg_tex_red);
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_red);
             ta_ui_image(0, tex, 0);
         }
     }
@@ -449,10 +476,10 @@ static void game_draw_hud()
         ta_ui_next_size(20, 20);
         ta_ui_next_pad(2, 2, 2, 2);
         if (i < gun->loaded_ammo) {
-            ta_texture *tex = ta_game_by_name(RES_TEXTURE, tg_tex_orange);
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
             ta_ui_image(0, tex, 0);
         } else {
-            ta_texture *tex = ta_game_by_name(RES_TEXTURE, tg_tex_red);
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_red);
             ta_ui_image(0, tex, 0);
         }
     }

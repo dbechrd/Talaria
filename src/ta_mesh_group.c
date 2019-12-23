@@ -63,7 +63,7 @@ void ta_mesh_group_load(ta_mesh_group *group)
         u32 name_len = (u32)strlen(shapes[shape_idx].name);
         const char *name = ta_symbol_intern(shapes[shape_idx].name, name_len);
         dlb_vec_push(group->meshes, name);
-        ta_mesh *mesh = ta_game_alloc(RES_MESH, name);
+        ta_mesh *mesh = ta_game_alloc(RES_MESH, name, name_len);
 
         mesh_min = VEC3_MAX;
         mesh_max = VEC3_MIN;
@@ -124,6 +124,13 @@ void ta_mesh_group_load(ta_mesh_group *group)
             dlb_vec_push(mesh->tangents, tangent);
         }
 
+        mesh->indexes_count = dlb_vec_len(mesh->indexes);
+        mesh->positions_count = dlb_vec_len(mesh->positions);
+        mesh->uvs_count = dlb_vec_len(mesh->uvs);
+        mesh->colors_count = dlb_vec_len(mesh->colors);
+        mesh->normals_count = dlb_vec_len(mesh->normals);
+        mesh->tangents_count = dlb_vec_len(mesh->tangents);
+
         ta_mesh_create(mesh);
 
         mesh->aabb.extents = vec3_scalef(vec3_sub(mesh_max, mesh_min), 0.5f);
@@ -165,21 +172,21 @@ void ta_mesh_group_load(ta_mesh_group *group)
 void ta_mesh_group_push_normals(ta_mesh_group *group)
 {
     dlb_vec_each(const char **, name, group->meshes) {
-        ta_mesh *mesh = ta_game_by_name(RES_MESH, *name);
+        ta_mesh *mesh = ta_game_by_sym(RES_MESH, *name);
         ta_mesh_push_normals(mesh);
     }
 }
 void ta_mesh_group_render(ta_mesh_group *group)
 {
     dlb_vec_each(const char **, name, group->meshes) {
-        ta_mesh *mesh = ta_game_by_name(RES_MESH, *name);
+        ta_mesh *mesh = ta_game_by_sym(RES_MESH, *name);
         ta_mesh_render(mesh);
     }
 }
 void ta_mesh_group_free(ta_mesh_group *group)
 {
     dlb_vec_each(const char **, name, group->meshes) {
-        ta_game_destroy(RES_MESH, *name);
+        ta_game_destroy(RES_MESH, SYM(*name));
     }
     dlb_vec_free(group->meshes);
 }

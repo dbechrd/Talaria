@@ -1,7 +1,11 @@
 #include "ta_gltf.h"
 #include "ta_buffer.h"
+#include "ta_game.h"
 #include "ta_json.h"
 #include "ta_log.h"
+#include "ta_mesh.h"
+#include "ta_schema.h"
+#include "ta_symbol.h"
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_vector.h"
 #include "misc/jsmn.h"
@@ -9,7 +13,7 @@
 #include "misc/cgltf.h"
 #include <stdio.h>
 
-#define gltf_each(t, i, s) for (t (i) = (s), *(e) = (s + s##_count); (i) != (e); (i)++)
+#define gltf_each(t, i, s) for (t (i) = (s), *(i##e) = (s + s##_count); (i) != (i##e); (i)++)
 
 void gltf_dump(cgltf_data *data)
 {
@@ -56,6 +60,12 @@ void gltf_dump(cgltf_data *data)
     if (data->animations_count) {
         gltf_each(cgltf_animation *, animation, data->animations) {
             printf("  name: %s\n", animation->name);
+            gltf_each(cgltf_animation_channel *, channel, animation->channels) {
+                printf("    sampler\n");
+                printf("      interpolation: %d\n", channel->sampler->interpolation);
+                printf("    target node: %s\n", channel->target_node->name);
+                printf("    target path: %d\n", channel->target_path);
+            }
         }
     }
     printf("buffer_views: %zu\n", data->buffer_views_count);
@@ -80,6 +90,9 @@ void gltf_dump(cgltf_data *data)
     if (data->images_count) {
         gltf_each(cgltf_image *, image, data->images) {
             printf("  name: %s\n", image->name);
+            printf("  mime_type: %s\n", image->mime_type);
+            printf("  uri: %s\n", image->uri);
+            printf("  buffer_view type: %d\n", image->buffer_view->type);
         }
     }
     printf("lights: %zu\n", data->lights_count);
@@ -88,10 +101,19 @@ void gltf_dump(cgltf_data *data)
             printf("  name: %s\n", light->name);
         }
     }
+    printf("materials: %zu\n", data->materials_count);
+    if (data->materials_count) {
+        gltf_each(cgltf_material *, material, data->materials) {
+            printf("  name: %s\n", material->name);
+        }
+    }
     printf("meshes: %zu\n", data->meshes_count);
     if (data->meshes_count) {
         gltf_each(cgltf_mesh *, mesh, data->meshes) {
             printf("  name: %s\n", mesh->name);
+            printf("  primitives count: %d\n", mesh->primitives_count);
+            printf("  target names count: %d\n", mesh->target_names_count);
+            printf("  weights count: %d\n", mesh->weights_count);
             if (mesh->extras.start_offset) {
                 u8 *extras = (u8 *)data->json + mesh->extras.start_offset;
                 size_t extras_len = mesh->extras.end_offset - mesh->extras.start_offset;
@@ -112,16 +134,25 @@ void gltf_dump(cgltf_data *data)
             }
         }
     }
-    printf("materials: %zu\n", data->materials_count);
-    if (data->materials_count) {
-        gltf_each(cgltf_material *, material, data->materials) {
-            printf("  name: %s\n", material->name);
-        }
-    }
     printf("nodes: %zu\n", data->nodes_count);
     if (data->nodes_count) {
         gltf_each(cgltf_node *, node, data->nodes) {
             printf("  name: %s\n", node->name);
+            if (node->camera) {
+                printf("    camera: %s\n", node->camera->name);
+            }
+            if (node->light) {
+                printf("    light: %s\n", node->light->name);
+            }
+            if (node->mesh) {
+                printf("    mesh: %s\n", node->mesh->name);
+            }
+            if (node->skin) {
+                printf("    skin: %s\n", node->skin->name);
+            }
+            if (node->children_count) {
+                printf("    children count: %d\n", node->children_count);
+            }
         }
     }
     printf("samplers: %zu\n", data->samplers_count);
@@ -155,7 +186,7 @@ void gltf_dump(cgltf_data *data)
     printf("\n");
 }
 
-cgltf_result ta_gltf_parse(const char *filename)
+cgltf_result ta_gltf_parse_file(ta_gltf *gltf, const char *filename)
 {
     static const char *ta_cgltf_error_str[] = {
         [cgltf_result_success] = "cgltf_result_success",
@@ -171,41 +202,49 @@ cgltf_result ta_gltf_parse(const char *filename)
     };
 
     cgltf_options options = { 0 };
-    cgltf_data* data = NULL;
     cgltf_result err;
 
     ta_log_write(&tg_debug_log, SRC_GLTF, "parsing %s\n", filename);
-    err = cgltf_parse_file(&options, filename, &data);
+    err = cgltf_parse_file(&options, filename, &gltf->data);
     if (err) {
         printf("cgltf_parse_file error: %s", ta_cgltf_error_str[err]);
         return err;
     }
 
     ta_log_write(&tg_debug_log, SRC_GLTF, "loading buffers\n");
-    err = cgltf_load_buffers(&options, data, filename);
+    err = cgltf_load_buffers(&options, gltf->data, filename);
     if (err) {
         printf("cgltf_load_buffers error: %s", ta_cgltf_error_str[err]);
         return err;
     }
 
     ta_log_write(&tg_debug_log, SRC_GLTF, "validating\n");
-    err = cgltf_validate(data);
+    err = cgltf_validate(gltf->data);
     if (err) {
         printf("cgltf_validate error: %s", ta_cgltf_error_str[err]);
         return err;
     }
 
     ta_log_write(&tg_debug_log, SRC_GLTF, "successfully loaded %s\n", filename);
-    gltf_dump(data);
+    gltf_dump(gltf->data);
 
-    cgltf_free(data);
     return err;
 }
 
-void ta_gltf_test()
+void ta_gltf_load(ta_gltf *gltf)
 {
-    cgltf_result err = 0;
-    //err = ta_gltf_parse("F:/Users/User/Rez/Models/bee.glb");
-    err = ta_gltf_parse("data/mesh/rock_0001.gltf");
-    DLB_ASSERT(!err);
+    gltf_each(cgltf_mesh *, gltf_mesh, gltf->data->meshes) {
+        const char *name = gltf_mesh->name;
+        ta_mesh *mesh = ta_game_alloc(RES_MESH, name, strlen(name));
+        cgltf_attribute *pos = &gltf_mesh->primitives->attributes[0];
+        DLB_ASSERT(pos->type == cgltf_attribute_type_position);
+        mesh->positions = (ta_vec3 *)pos->data->buffer_view->buffer->data;
+        mesh->positions_count = pos->data->count;
+        ta_mesh_create(mesh);
+    }
+}
+
+void ta_gltf_free(ta_gltf *gltf)
+{
+    cgltf_free(gltf->data);
 }

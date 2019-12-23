@@ -62,7 +62,7 @@ static ta_editor editor;
 
 void ta_editor_init()
 {
-    ta_font *font = ta_game_by_name(RES_FONT, tg_font);
+    ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing UI styles\n");
     ta_ui_init(font, &editor.textbox_editing, &editor.textbox_dragging);
 
@@ -91,7 +91,7 @@ const char *ta_editor_selected_entity()
 {
 #if 0
     // Clear selection if entity has been deleted
-    if (!ta_game_by_name_try(tg_game.scene, RES_ENTITY,
+    if (!ta_game_by_sym_try(tg_game.scene, RES_ENTITY,
         editor.selected_entity_name))
     {
         editor.selected_entity_name = 0;
@@ -371,7 +371,7 @@ static void ui_audio_panel()
         //ta_ui_next_size(36, 36);
         //ta_ui_next_margin(0, 0, 2, 0);
         ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
-        ta_ui_image(0, ta_game_by_name(RES_TEXTURE, tg_tex_audio_icon), 0);
+        ta_ui_image(0, ta_game_by_sym(RES_TEXTURE, tg_tex_audio_icon), 0);
         if (ta_ui_toggle_button_end(&active)) {
             audio_request_name = audio_buffer->name;
         }
@@ -426,7 +426,7 @@ static void ui_camera_panel()
     ta_ui_panel_begin(0, &selected_camera_panel, TA_UI_AUTOSIZE);
 
     if (selected_camera) {
-        ta_camera *camera = ta_game_by_name(RES_COMP_CAMERA, selected_camera);
+        ta_camera *camera = ta_game_by_sym(RES_COMP_CAMERA, selected_camera);
 
         ta_ui_row_begin();
         static ta_ui_panel_state label_panel = { 0 };
@@ -555,7 +555,7 @@ static void ui_texture_panel()
                 ta_model *model = ta_game_component_try(RES_COMP_MODEL,
                     entity_name);
                 if (model && model->material) {
-                    ta_material *material = ta_game_by_name(RES_MATERIAL,
+                    ta_material *material = ta_game_by_sym(RES_MATERIAL,
                         model->material);
                     material->tex_albedo = texture->name;
                 }
@@ -589,7 +589,16 @@ static void ui_mesh_panel()
         ta_ui_next_pad(4, 4, 4, 4);
         //ta_ui_next_size(material->width, material->height);
         if (ta_ui_button(0, SYM(mesh->name))) {
-            // i don't why this is a button, but, whatever, man
+            const char *entity_name = ta_editor_selected_entity();
+            if (entity_name) {
+                ta_model *model = ta_game_component_try(RES_COMP_MODEL,
+                    entity_name);
+                //if (model && model->mesh_groups) {
+                //    ta_material *material = ta_game_by_sym(RES_MATERIAL,
+                //        model->material);
+                //    material->tex_albedo = texture->name;
+                //}
+            }
         }
         if (ta_ui_last_frame_state().hover) {
             char tex_buf[1024] = { 0 };
@@ -597,7 +606,7 @@ static void ui_mesh_panel()
                 "name         : %s\n"
                 "vertex count : %u",
                 mesh->name,
-                dlb_vec_len(mesh->positions)
+                mesh->positions_count
             );
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
@@ -952,7 +961,7 @@ void ta_editor_draw(float alpha)
             }
 
             ta_shader *shader = ta_scene_find_by_name(&editor.scene, RES_SHADER,
-                editor.shader_editor_select);
+                SYM(editor.shader_editor_select));
             ta_rgba wire_color = TA_COLOR_YELLOW;
             wire_color.a = 0.4f;
             ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);

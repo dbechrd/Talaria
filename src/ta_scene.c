@@ -261,21 +261,23 @@ void ta_scene_print_json(ta_scene *scene, FILE *f)
     fprintf(f, "}\n");
     fflush(f);
 }
-void *ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name)
+void *ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name,
+    u32 name_len)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(type < RES_COUNT);
     DLB_ASSERT(name);
+    DLB_ASSERT(name_len);
 
     ta_schema_field_type schema_type = res_to_typ(type);
     u32 size = tg_schemas[schema_type].size;
 
     ta_resource *res = dlb_vec_alloc_size(scene->resource_data[type], size);
     res->index = dlb_vec_len(scene->resource_data[type]) - 1;
-    res->name = name;
+    res->name = ta_symbol_intern(name, name_len);
 
     dlb_index *store = &scene->index_by_name[type];
-    u32 hash = dlb_murmur3(SYM(name));
+    u32 hash = dlb_murmur3(SYM(res->name));
     dlb_index_insert(store, hash, res->index);
 
     if (tg_schemas[schema_type].init) {
@@ -284,7 +286,7 @@ void *ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name)
 
     return res;
 }
-void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name)
+void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name, u32 name_len)
 {
     DLB_ASSERT(scene);
     // TODO: if type is a component type, find and update parent entity:
@@ -303,7 +305,7 @@ void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name)
 
     // Remove name from index
     dlb_index *store = &scene->index_by_name[type];
-    u32 hash = dlb_murmur3(SYM(name));
+    u32 hash = dlb_murmur3(name, name_len);
     // TODO: Find index
     DLB_ASSERT(0);
     u32 index = 0000000;
@@ -326,7 +328,7 @@ void *ta_scene_find_at(ta_scene *scene, ta_resource_type type, u32 index)
 }
 // If not found, returns NULL
 void *ta_scene_find_by_name_try(ta_scene *scene, ta_resource_type type,
-    const char *name)
+    const char *name, u32 name_len)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(name);
@@ -334,7 +336,7 @@ void *ta_scene_find_by_name_try(ta_scene *scene, ta_resource_type type,
     ta_schema_field_type schema_type = res_to_typ(type);
     u32 size = tg_schemas[schema_type].size;
 
-    u32 hash = dlb_murmur3(SYM(name));
+    u32 hash = dlb_murmur3(name, name_len);
     dlb_index *store = &scene->index_by_name[type];
     for (u32 i = dlb_index_first(store, hash); i != DLB_INDEX_EMPTY; i = dlb_index_next(store, i)) {
         ta_resource *res = dlb_vec_index_size(scene->resource_data[type], i, size);
@@ -347,20 +349,20 @@ void *ta_scene_find_by_name_try(ta_scene *scene, ta_resource_type type,
 }
 // If not found, ASSERT
 void *ta_scene_find_by_name(ta_scene *scene, ta_resource_type type,
-    const char *name)
+    const char *name, u32 name_len)
 {
-    void *resource = ta_scene_find_by_name_try(scene, type, name);
+    void *resource = ta_scene_find_by_name_try(scene, type, name, name_len);
     DLB_ASSERT(resource);
     return resource;
 }
 // If not found, returns the first resource of the given type
 void *ta_scene_find_by_name_or_default(ta_scene *scene, ta_resource_type type,
-    const char *name)
+    const char *name, u32 name_len)
 {
     ta_schema_field_type schema_type = res_to_typ(type);
     u32 size = tg_schemas[schema_type].size;
 
-    void *resource = ta_scene_find_by_name_try(scene, type, name);
+    void *resource = ta_scene_find_by_name_try(scene, type, name, name_len);
     if (!resource) {
         resource = dlb_vec_index_size(scene->resource_data[type], 0, size);
     }
@@ -377,7 +379,7 @@ void *ta_scene_component_add(ta_scene *scene, ta_resource_type type,
     DLB_ASSERT(!component);
 
     // TODO: Build better component name (or guarantee name == entity_name)
-    component = ta_scene_alloc(scene, type, entity);
+    component = ta_scene_alloc(scene, type, SYM(entity));
     DLB_ASSERT(component);
     component->entity_name = entity;
     return component;
@@ -389,7 +391,7 @@ void *ta_scene_component_try(ta_scene *scene, ta_resource_type type,
     DLB_ASSERT(entity);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
-    void *component = ta_scene_find_by_name_try(scene, type, entity);
+    void *component = ta_scene_find_by_name_try(scene, type, SYM(entity));
     return component;
 }
 void *ta_scene_component(ta_scene *scene, ta_resource_type type,

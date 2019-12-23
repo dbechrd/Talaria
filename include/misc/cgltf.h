@@ -2740,7 +2740,6 @@ static int cgltf_parse_json_sampler(cgltf_options* options, jsmntok_t const* tok
 	return i;
 }
 
-
 static int cgltf_parse_json_texture(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, cgltf_texture* out_texture)
 {
 	CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_OBJECT);

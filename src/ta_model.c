@@ -50,7 +50,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
     ta_shader_bind(shader);
     dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-        ta_mesh_group *mesh_group = ta_game_by_name(RES_MESH_GROUP,
+        ta_mesh_group *mesh_group = ta_game_by_sym(RES_MESH_GROUP,
             *mesh_group_name);
         ta_mesh_group_render(mesh_group);
     }
@@ -88,14 +88,14 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
     transform->model = mat4_mul(&trans, &transform->model);
 
     if (!camera->debug_no_mesh) {
-        ta_material *material = ta_game_by_name(RES_MATERIAL, model->material);
-        ta_shader *shader = ta_game_by_name(RES_SHADER, material->shader);
-        ta_texture *texture_albedo    = ta_game_by_name(RES_TEXTURE, material->tex_albedo    ? material->tex_albedo    : SYM_MISSING_ALBEDO);
-        ta_texture *texture_height    = ta_game_by_name(RES_TEXTURE, material->tex_height    ? material->tex_height    : SYM_MISSING_HEIGHT);
-        ta_texture *texture_metallic  = ta_game_by_name(RES_TEXTURE, material->tex_metallic  ? material->tex_metallic  : SYM_MISSING_METALLIC);
-        ta_texture *texture_normal    = ta_game_by_name(RES_TEXTURE, material->tex_normal    ? material->tex_normal    : SYM_MISSING_NORMAL);
-        ta_texture *texture_occlusion = ta_game_by_name(RES_TEXTURE, material->tex_occlusion ? material->tex_occlusion : SYM_MISSING_OCCLUSION);
-        ta_texture *texture_roughness = ta_game_by_name(RES_TEXTURE, material->tex_roughness ? material->tex_roughness : SYM_MISSING_ROUGHNESS);
+        ta_material *material = ta_game_by_sym(RES_MATERIAL, model->material);
+        ta_shader *shader = ta_game_by_sym(RES_SHADER, material->shader);
+        ta_texture *texture_albedo    = ta_game_by_sym(RES_TEXTURE, material->tex_albedo    ? material->tex_albedo    : SYM_MISSING_ALBEDO);
+        ta_texture *texture_height    = ta_game_by_sym(RES_TEXTURE, material->tex_height    ? material->tex_height    : SYM_MISSING_HEIGHT);
+        ta_texture *texture_metallic  = ta_game_by_sym(RES_TEXTURE, material->tex_metallic  ? material->tex_metallic  : SYM_MISSING_METALLIC);
+        ta_texture *texture_normal    = ta_game_by_sym(RES_TEXTURE, material->tex_normal    ? material->tex_normal    : SYM_MISSING_NORMAL);
+        ta_texture *texture_occlusion = ta_game_by_sym(RES_TEXTURE, material->tex_occlusion ? material->tex_occlusion : SYM_MISSING_OCCLUSION);
+        ta_texture *texture_roughness = ta_game_by_sym(RES_TEXTURE, material->tex_roughness ? material->tex_roughness : SYM_MISSING_ROUGHNESS);
 
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
@@ -119,7 +119,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ROUGHNESS, texture_roughness->gl_id);
         ta_shader_bind(shader);
         dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-            ta_mesh_group *mesh_group = ta_game_by_name(RES_MESH_GROUP, *mesh_group_name);
+            ta_mesh_group *mesh_group = ta_game_by_sym(RES_MESH_GROUP, *mesh_group_name);
             ta_mesh_group_render(mesh_group);
         }
         ta_shader_unbind();
@@ -129,7 +129,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
         if (camera->debug_normals) {
             dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-                ta_mesh_group *mesh_group = ta_game_by_name(RES_MESH_GROUP, *mesh_group_name);
+                ta_mesh_group *mesh_group = ta_game_by_sym(RES_MESH_GROUP, *mesh_group_name);
                 ta_mesh_group_push_normals(mesh_group);
             }
         }
@@ -170,7 +170,7 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
     ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
     ta_shader_bind(shader);
     dlb_vec_each(const char **, mesh_group_name, model->mesh_groups) {
-        ta_mesh_group *mesh_group = ta_game_by_name(RES_MESH_GROUP, *mesh_group_name);
+        ta_mesh_group *mesh_group = ta_game_by_sym(RES_MESH_GROUP, *mesh_group_name);
         ta_mesh_group_render(mesh_group);
     }
     ta_shader_unbind();

@@ -148,7 +148,7 @@ void ta_font_free(ta_font *font)
 ta_shader *ta_font_shader(ta_font *font)
 {
     // TODO: Fonts probably don't belong in the game scene..
-    ta_shader *shader = ta_game_by_name(RES_SHADER, font->shader);
+    ta_shader *shader = ta_game_by_sym(RES_SHADER, font->shader);
     return shader;
 }
 

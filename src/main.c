@@ -108,8 +108,7 @@ static void debug_nametag();
 int thread_test(void *data)
 {
     UNUSED(data);
-    ta_json_test();
-    ta_gltf_test();
+    //ta_json_test();
     return 0;
 }
 
@@ -128,9 +127,9 @@ int main(int argc, char *argv[])
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
     // TODO: Make delta_time specific to thread ids (hash table)
-    SDL_Thread *thread = SDL_CreateThread(thread_test, "thread_test", 0);
+    SDL_Thread *thread_gltf = SDL_CreateThread(thread_test, "thread_test", 0);
     //SDL_WaitThread(thread, 0);
-    SDL_DetachThread(thread);
+    SDL_DetachThread(thread_gltf);
 
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
     debug_tests();
@@ -168,7 +167,7 @@ int main(int argc, char *argv[])
 
 static void debug_nametag(ta_camera *camera)
 {
-    ta_font *font = ta_game_by_name(RES_FONT, tg_font);
+    ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
     static ta_rect_uv *tag_rects = 0;
     ta_rectf tag_rect = ta_font_push_text(&tag_rects, font,
         CSTR("Player 1\nis da best"), true, 0, 0, 0);
@@ -206,7 +205,7 @@ static void debug_nametag(ta_camera *camera)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform_bg);
-    ta_texture *tex_orange = ta_game_by_name(RES_TEXTURE, tg_tex_orange);
+    ta_texture *tex_orange = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex_orange->gl_id);
     ta_rect_uv tag_background = { 0 };
     tag_background.rect.x -= NDC_W(5.0f);
@@ -218,7 +217,7 @@ static void debug_nametag(ta_camera *camera)
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
     // Name tag text
-    ta_shader *font_shader = ta_game_by_name(RES_SHADER, font->shader);
+    ta_shader *font_shader = ta_game_by_sym(RES_SHADER, font->shader);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform_fg);
