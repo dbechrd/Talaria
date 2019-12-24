@@ -194,7 +194,8 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
 
     if (!body->no_gravity) {
         ta_vec3 gravity = { 0.0f, GRAVITY, 0.0f };
-        ta_rigid_body_apply_force(body, gravity);
+        ta_vec3 gravity_force = vec3_scalef(gravity, body->mass);
+        ta_rigid_body_apply_force(body, gravity_force);
     }
 
     ta_vec3 acc = vec3_scalef(vec3_scalef(body->force_accum, dt), body->inv_mass);

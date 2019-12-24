@@ -1105,6 +1105,11 @@ bool ta_ui_textbox_float(const char *name, float *value,
     DLB_ASSERT(value);
     DLB_ASSERT(textbox);
 
+    if (!next_frame_dirty.size) {
+        // TODO: Add UI_TEXT_ALIGN_RIGHT flag to make this useful
+        ta_ui_next_size(80, 0);
+    }
+
     if (textbox->submit) {
         ta_ui_textbox_clear(textbox);
     }
@@ -1127,7 +1132,7 @@ bool ta_ui_textbox_float(const char *name, float *value,
     } else {
         // If not editing (or just canceled), render text
         char text[16] = { 0 };
-        int text_len = snprintf(CSTR(text), "%3.4f", *value);
+        int text_len = snprintf(CSTR(text), "%.3f", *value);
         DLB_ASSERT(text_len < sizeof(text));
         text_rect = ta_font_push_text(&text_rects, ui_font, text, text_len,
             true, 0, 0, 0);
@@ -1174,7 +1179,7 @@ bool ta_ui_textbox_float(const char *name, float *value,
                 // If drag ended and value didn't change, start edit mode
                 if (!drag_float_end()) {
                     char text[16] = { 0 };
-                    int text_len = snprintf(CSTR(text), "%3.4f", *value);
+                    int text_len = snprintf(CSTR(text), "%.3f", *value);
                     DLB_ASSERT(text_len < sizeof(text));
                     textbox_set_text(textbox, text, text_len);
                     textbox_focus(textbox);
@@ -1216,6 +1221,7 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
     const char *labels[3] = { "x:", "y:", "z:" };
     float *components = (float *)vec;
     for (int i = 0; i < 3; ++i) {
+        ta_ui_row_begin();
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(0, &components[i], state, 0);
@@ -1233,6 +1239,7 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
     const char *labels[4] = { "x:", "y:", "z:", "w:" };
     float *components = (float *)vec;
     for (int i = 0; i < 4; ++i) {
+        ta_ui_row_begin();
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         if (ta_ui_textbox_float(0, &components[i], state, 0)) {

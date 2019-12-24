@@ -20,6 +20,7 @@
 #include "ta_shader.h"
 #include "ta_symbol.h"
 #include "ta_texture.h"
+#include "ta_timer.h"
 #include "ta_ui.h"
 #include "ta_window.h"
 #include "dlb/dlb_vector.h"
@@ -106,7 +107,7 @@ static void ui_node_panel()
     ta_ui_panel_begin(0, &node_panel, TA_UI_AUTOSIZE);
 
     ta_ui_row_begin();
-    ta_ui_next_size(300, 17);
+    ta_ui_next_size(200, 17);
     static ta_ui_textbox_state search_box = { 0 };
     if (ta_ui_textbox(0, 0, 0, &search_box, 0)) {
 
@@ -137,7 +138,8 @@ static void ui_node_panel()
     }
 
     ta_ui_spacer(0, 20);
-    static int label_width = 250;
+    const int header_width = 200;
+    const int label_width = 130;
     const char *entity_name = ta_editor_selected_entity();
     if (!entity_name) {
         //ta_ui_spacer(0, 2);
@@ -151,7 +153,6 @@ static void ui_node_panel()
 
     //ta_ui_spacer(0, 2);
     ta_ui_row_begin();
-    ta_ui_next_size(label_width, 0);
     ta_ui_label(0, CSTR("Name:"));
     ta_ui_label(0, SYM(entity_name));
 #if 0
@@ -216,10 +217,13 @@ static void ui_node_panel()
 
     if (transform) {
         ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("[transform] Position:"));
-        static ta_ui_textbox_vec3_state textbox = { 0 };
-        ta_ui_textbox_vec3(&transform->xform.position, &textbox, false);
+        ta_ui_next_margin(2, 12, 0, 1);
+        ta_ui_next_size(header_width, 0);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
+        ta_ui_label(0, CSTR("Transform"));
+
+        ta_ui_row_begin();
+        ta_ui_label(0, CSTR("position:"));
 
         ta_ui_next_margin(6, 1, 0, 1);
         ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
@@ -229,13 +233,11 @@ static void ui_node_panel()
         }
 
         ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("[transform] Orientation:"));
-        static ta_ui_textbox_vec4_state orient_editors = { 0 };
-        // TODO: Can't hand edit quaternions.. they need to be normalized and
-        // the components need to be in the range [0.0, 1.0]. Let's create a
-        // ta_ui_label_vec4, then figure out how to edit rotations (Euler XYZ).
-        ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors, true);
+        static ta_ui_textbox_vec3_state textbox = { 0 };
+        ta_ui_textbox_vec3(&transform->xform.position, &textbox, false);
+
+        ta_ui_row_begin();
+        ta_ui_label(0, CSTR("orientation:"));
 
         ta_ui_next_margin(6, 1, 0, 1);
         ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
@@ -243,12 +245,25 @@ static void ui_node_panel()
         if (ta_ui_button(0, CSTR("Reset"))) {
             transform->xform.orientation = QUAT_IDENT;
         }
+
+        ta_ui_row_begin();
+        // TODO: Can't hand edit quaternions.. they need to be normalized and
+        // the components need to be in the range [0.0, 1.0]. Let's create a
+        // ta_ui_label_vec4, then figure out how to edit rotations (Euler XYZ).
+        static ta_ui_textbox_vec4_state orient_editors = { 0 };
+        ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors, true);
     }
 
     if (model) {
         ta_ui_row_begin();
+        ta_ui_next_margin(2, 12, 0, 1);
+        ta_ui_next_size(header_width, 0);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
+        ta_ui_label(0, CSTR("Model"));
+
+        ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("[model] Visible:"));
+        ta_ui_label(0, CSTR("visible:"));
         ta_ui_next_pad(0, 0, 0, 0);
         ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
         if (!model->invisible) {
@@ -266,8 +281,7 @@ static void ui_node_panel()
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("[model] Cast shadows:"));
-
+        ta_ui_label(0, CSTR("cast shadows:"));
         if (!model->invisible) {
             ta_ui_next_pad(0, 0, 0, 0);
             ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
@@ -294,14 +308,20 @@ static void ui_node_panel()
 
     if (rigid_body) {
         ta_ui_row_begin();
+        ta_ui_next_margin(2, 12, 0, 1);
+        ta_ui_next_size(header_width, 0);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
+        ta_ui_label(0, CSTR("Rigid Body"));
+
+        ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("[rigid_body] Mass:"));
+        ta_ui_label(0, CSTR("mass:"));
         static ta_ui_textbox_state textbox = { 0 };
         ta_ui_textbox_float(0, &rigid_body->mass, &textbox, 0);
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("[rigid_body] Apply gravity:"));
+        ta_ui_label(0, CSTR("apply gravity:"));
         ta_ui_next_pad(0, 0, 0, 0);
         ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
         if (!rigid_body->no_gravity) {
@@ -320,8 +340,14 @@ static void ui_node_panel()
 
     if (light) {
         ta_ui_row_begin();
+        ta_ui_next_margin(2, 12, 0, 1);
+        ta_ui_next_size(header_width, 0);
+        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
+        ta_ui_label(0, CSTR("Light"));
+
+        ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("[light] Enabled:"));
+        ta_ui_label(0, CSTR("enabled:"));
         if (light->disabled) {
             if (ta_ui_button(0, CSTR("False"))) light->disabled = false;
         } else {
@@ -330,7 +356,7 @@ static void ui_node_panel()
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("[light] Shadow Map:"));
+        ta_ui_label(0, CSTR("shadow map:"));
         static bool show_shadow_map = true;
         if (show_shadow_map) {
             if (ta_ui_button(0, CSTR("Hide"))) show_shadow_map = false;
@@ -1007,7 +1033,9 @@ void ta_editor_draw(float alpha)
             ta_shader *shader = ta_scene_find_by_name(&editor.scene, RES_SHADER,
                 SYM(editor.shader_editor_select));
             ta_rgba wire_color = TA_COLOR_YELLOW;
-            wire_color.a = 0.4f;
+            double seconds = ta_timer_elapsed_sec();
+            double sine = sin(seconds * 4.0) * 0.5 + 0.5;
+            wire_color.a = (float)(0.25 * (sine * sine) + 0.02);
             ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
             ta_model_render_shader(model, camera, shader, alpha, 1.0f);
             if (polygon_mode != GL_LINE) {

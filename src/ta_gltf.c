@@ -235,9 +235,9 @@ void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, int type)
 {
     cgltf_type acc_type = accessor->type;
     cgltf_size acc_count = accessor->count;
-    cgltf_size data_offset = accessor->buffer_view->offset;
     cgltf_size data_size = accessor->buffer_view->size;
-    char *data = accessor->buffer_view->buffer->data;
+    void *data = (char *)accessor->buffer_view->buffer->data +
+        accessor->buffer_view->offset;
     DLB_ASSERT(accessor->buffer_view->stride == 0);
 
     switch (type) {
@@ -246,49 +246,54 @@ void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, int type)
             DLB_ASSERT(data_size == sizeof(*mesh->positions) * acc_count);
             dlb_vec_reserve(mesh->positions, acc_count);
             dlb_vec_hdr(mesh->positions)->len = acc_count;
-            dlb_memcpy(mesh->positions, data + data_offset, data_size);
+            dlb_memcpy(mesh->positions, data, data_size);
             break;
         } case cgltf_attribute_type_normal: {
             DLB_ASSERT(acc_type == cgltf_type_vec3);
             DLB_ASSERT(data_size == sizeof(*mesh->normals) * acc_count);
             dlb_vec_reserve(mesh->normals, acc_count);
             dlb_vec_hdr(mesh->normals)->len = acc_count;
-            dlb_memcpy(mesh->normals, data + data_offset, data_size);
+            dlb_memcpy(mesh->normals, data, data_size);
             break;
         } case cgltf_attribute_type_tangent: {
-            DLB_ASSERT(acc_type == cgltf_type_vec3);
-            DLB_ASSERT(data_size == sizeof(*mesh->tangents) * acc_count);
+            DLB_ASSERT(acc_type == cgltf_type_vec4);
+            //DLB_ASSERT(data_size == sizeof(*mesh->tangents) * acc_count);
             dlb_vec_reserve(mesh->tangents, acc_count);
             dlb_vec_hdr(mesh->tangents)->len = acc_count;
-            dlb_memcpy(mesh->tangents, data + data_offset, data_size);
+            float *comp = data;
+            for (cgltf_size i = 0; i < accessor->count; ++i) {
+                mesh->tangents[i].x = comp[i*4];
+                mesh->tangents[i].y = comp[i*4+1];
+                mesh->tangents[i].z = comp[i*4+2];
+            }
             break;
         } case cgltf_attribute_type_texcoord: {
             DLB_ASSERT(acc_type == cgltf_type_vec2);
             DLB_ASSERT(data_size == sizeof(*mesh->uvs) * acc_count);
             dlb_vec_reserve(mesh->uvs, acc_count);
             dlb_vec_hdr(mesh->uvs)->len = acc_count;
-            dlb_memcpy(mesh->uvs, data + data_offset, data_size);
+            dlb_memcpy(mesh->uvs, data, data_size);
             break;
         } case cgltf_attribute_type_color: {
             DLB_ASSERT(acc_type == cgltf_type_vec4);
             DLB_ASSERT(data_size == sizeof(*mesh->colors) * acc_count);
             dlb_vec_reserve(mesh->colors, acc_count);
             dlb_vec_hdr(mesh->colors)->len = acc_count;
-            dlb_memcpy(mesh->colors, data + data_offset, data_size);
+            dlb_memcpy(mesh->colors, data, data_size);
             break;
         } case cgltf_attribute_type_joints: {
             DLB_ASSERT(acc_type == cgltf_type_vec4);
             //DLB_ASSERT(data_size == sizeof(*mesh->joints) * data_count);
             //dlb_vec_reserve(mesh->joints, data_count);
             //dlb_vec_hdr(mesh->joints)->len = data_count;
-            //dlb_memcpy(mesh->joints, data + data_offset, data_size);
+            //dlb_memcpy(mesh->joints, data, data_size);
             break;
         } case cgltf_attribute_type_weights: {
             DLB_ASSERT(acc_type == cgltf_type_vec4);
             //DLB_ASSERT(data_size == sizeof(*mesh->weights) * data_count);
             //dlb_vec_reserve(mesh->weights, data_count);
             //dlb_vec_hdr(mesh->weights)->len = data_count;
-            //dlb_memcpy(mesh->weights, data + data_offset, data_size);
+            //dlb_memcpy(mesh->weights, data, data_size);
             break;
         } default: {
             break;
@@ -354,6 +359,7 @@ void ta_gltf_load(ta_gltf *gltf)
         }
 
         ta_mesh_create(mesh);
+        ta_mesh_init_normals(mesh, 0.1f);
     }
 }
 
