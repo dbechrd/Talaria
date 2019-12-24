@@ -480,6 +480,7 @@ static void ui_camera_panel()
         ta_ui_label(0, CSTR("Pitch smooth"));
         ta_ui_label(0, CSTR("FOV"));
         ta_ui_label(0, CSTR("Z near"));
+        ta_ui_label(0, CSTR("Debug channel"));
         ta_ui_panel_end();
 
         static ta_ui_panel_state button_panel = { 0 };
@@ -515,10 +516,41 @@ static void ui_camera_panel()
         static ta_ui_textbox_state fov_textbox = { 0 };
         ta_ui_textbox_float(0, &camera->fov, &fov_textbox, 0);
         static ta_ui_textbox_state znear_textbox = { 0 };
+        ta_ui_row_begin();
         ta_ui_textbox_float(0, &camera->znear, &znear_textbox, 0);
+        ta_ui_next_margin(8, 1, 0, 0);
         if (ta_ui_button(0, CSTR("Recalc projection matrix"))) {
             ta_camera_recalc_projection(camera);
         }
+
+        ta_ui_row_begin();
+        static struct {
+            const char *text;
+            u32 len;
+        } dbg_modes[] = {
+            [DBG_NONE]           = CSTR("NONE"),
+            [DBG_VTX_COLOR]      = CSTR("VTX_COLOR"),
+            [DBG_VTX_UV]         = CSTR("VTX_UV"),
+            [DBG_VTX_NORMAL]     = CSTR("VTX_NORMAL"),
+            [DBG_VTX_TANGENT]    = CSTR("VTX_TANGENT"),
+            [DBG_VTX_TBN_NORMAL] = CSTR("VTX_TBN_NORMAL"),
+            [DBG_NORMAL_MAP]     = CSTR("NORMAL_MAP"),
+            [DBG_MTL_ALBEDO]     = CSTR("MTL_ALBEDO"),
+            [DBG_MTL_METALLIC]   = CSTR("MTL_METALLIC"),
+            [DBG_MTL_ROUGHNESS]  = CSTR("MTL_ROUGHNESS"),
+            [DBG_MTL_OCCLUSION]  = CSTR("MTL_OCCLUSION"),
+        };
+
+        for (int mode = 0; mode < ARRAY_COUNT(dbg_modes); ++mode) {
+            ta_ui_row_begin();
+            ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
+            ta_ui_label(0, dbg_modes[mode].text, dbg_modes[mode].len);
+            bool checked = mode == camera->debug_channel;
+            if (ta_ui_toggle_button_end(&checked)) {
+                camera->debug_channel = mode;
+            }
+        }
+        ta_ui_row_end();
         ta_ui_panel_end();
     }
 

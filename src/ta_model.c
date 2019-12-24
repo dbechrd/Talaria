@@ -116,6 +116,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         ta_shader_set_sampler2d(shader, SYM_U_TEX_NORMAL,    texture_normal->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_OCCLUSION, texture_occlusion->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ROUGHNESS, texture_roughness->gl_id);
+        ta_shader_set_int(shader, SYM_U_DEBUG_CHANNEL, camera->debug_channel);
         ta_shader_bind(shader);
         dlb_vec_each(const char **, mesh_name, model->meshes) {
             ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);

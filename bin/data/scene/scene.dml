@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x4125A5FE (10.353025)
-    y: 0xC021248A (-2.517855)
-    z: 0x40265AA0 (2.599281)
+    x: 0x412B885C (10.720791)
+    y: 0xC03427FA (-2.814940)
+    z: 0x40AA4CBF (5.321868)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x42DDD83E (110.922348)
+  yaw: 0x430BB8FE (139.722626)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xBFBFFBDF (-1.499874)
+  pitch: 0xC14665E4 (-12.399876)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,9 +57,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBC19246D (-0.009347)
-    y: 0x3F7FE98A (0.999657)
-    z: 0xBCC8491B (-0.024449)
+    x: 0xBE27C1C4 (-0.163825)
+    y: 0x3F7A073B (0.976673)
+    z: 0xBE0E277E (-0.138823)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
@@ -198,7 +198,7 @@ ta_model:
 ta_model:
   name: "sphere1"
   entity_name: "sphere1"
-  meshes: ["prim_sphere", ]
+  meshes: ["rock_mesh", ]
   material: "metal_plate_019"
   cast_shadows: true
   receive_shadows: true
@@ -338,14 +338,14 @@ ta_transform:
   entity_name: "button_0001"
   xform:
     position:
-      x: 0x00000000 (0.000000)
+      x: 0x408147B0 (4.040001)
       y: 0xC1000000 (-8.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EE4F92E (0.447214)
+      x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F64F92E (0.894427)
+      w: 0x3F800000 (1.000000)
 ta_transform:
   name: "player_one"
   entity_name: "player_one"
@@ -364,14 +364,14 @@ ta_transform:
   entity_name: "sphere1"
   xform:
     position:
-      x: 0x40A9FF4A (5.312413)
+      x: 0x00000000 (0.000000)
       y: 0xC0E000D2 (-7.000100)
-      z: 0xBF902795 (-1.126208)
+      z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBDB00E74 (-0.085965)
-      y: 0x3CC2729F (0.023736)
-      z: 0xBF60865C (-0.877050)
-      w: 0xBEF1B059 (-0.472049)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
 ta_transform:
   name: "sphere2"
   entity_name: "sphere2"
@@ -395,9 +395,9 @@ ta_transform:
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
-      y: 0xBF3504F3 (-0.707107)
+      y: 0xBF3504F4 (-0.707107)
       z: 0x00000000 (0.000000)
-      w: 0x3F3504F3 (0.707107)
+      w: 0x3F3504F4 (0.707107)
 ta_transform:
   name: "column_0001"
   entity_name: "column_0001"
@@ -688,6 +688,8 @@ ta_mesh:
 ta_mesh:
   name: "star_0001"
   path: "data/mesh/star.obj"
+ta_mesh:
+  name: "rock_mesh"
 #-------------------------------------------------------------------------------
 # TYP_SHADER
 #-------------------------------------------------------------------------------
@@ -1214,6 +1216,10 @@ ta_shader:
       name: "u_selected",
       type: 0,  # TA_GLSL_INT
     },
+    {
+      name: "u_debug_channel",
+      type: 0,  # TA_GLSL_INT
+    }
   ]
 ta_shader:
   name: "shadow"

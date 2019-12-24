@@ -110,6 +110,18 @@ uniform vec3 u_camera_pos;
 // TODO: Use this to color selected object differently
 uniform bool u_selected;
 
+#define DBG_VTX_COLOR       1
+#define DBG_VTX_UV          2
+#define DBG_VTX_NORMAL      3
+#define DBG_VTX_TANGENT     4
+#define DBG_VTX_TBN_NORMAL  5
+#define DBG_NORMAL_MAP      6
+#define DBG_MTL_ALBEDO      7
+#define DBG_MTL_METALLIC    8
+#define DBG_MTL_ROUGHNESS   9
+#define DBG_MTL_OCCLUSION   10
+uniform int u_debug_channel;
+
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 FresnelSchlick(float cosTheta, vec3 F0);
@@ -235,40 +247,60 @@ void main()
 
     final_color = vec4(color, mtl_opacity);
 
-    //final_color = vec4(vec3(1.0 - shadows[0]), 1.0);
-    //final_color = vec4(vec3(1.0 - shadows[1]), 1.0);
+    //-------------------------------------------------------------------
+    // debug channels
+    //-------------------------------------------------------------------
 
-    // vertex colors
-    //final_color = vertex.color;
-	//final_color = mix(tex_albedo, vertex.color, vertex.color.a > 0);
+    // vertex properties
+    vec4 dbg_vtx_color = vertex.color;
+    vec4 dbg_vtx_uv = vec4(vertex_uv.x, vertex_uv.y, 0.0, 1.0);
+    vec4 dbg_vtx_normal = vec4((vertex.normal * 0.5) + 0.5, 1.0);
+    vec4 dbg_vtx_tangent = vec4((vertex.tangent * 0.5) + 0.5, 1.0);
+    vec4 dbg_vtx_tbn_normal = vec4((vertex.tbn_normal * 0.5) + 0.5, 1.0);
+    vec4 dbg_normal_map = vec4((N * 0.5) + 0.5, 1.0);
 
-    // normal map
-    //final_color = vec4((N * 0.5) + 0.5, 1.0);
+    // material properties
+    vec4 dbg_mtl_albedo = vec4(mtl_albedo, 1.0);
+    vec4 dbg_mtl_metallic = vec4(vec3(mtl_metallic), 1.0);
+    vec4 dbg_mtl_roughness = vec4(vec3(mtl_roughness), 1.0);
+    vec4 dbg_mtl_occlusion = vec4(vec3(mtl_occlusion), 1.0);
 
-    // normals
-    //final_color = vec4((vertex.normal * 0.5) + 0.5, 1.0);
+     // lighting
+    //vec4 dbg_shadow0 = vec4(vec3(1.0 - shadows[0]), 1.0);
+    //vec4 dbg_shadow1 = vec4(vec3(1.0 - shadows[1]), 1.0);
 
-    // TBN normals
-    //final_color = vec4((vertex.tbn_normal * 0.5) + 0.5, 1.0);
-
-    // tangents
-    //final_color = vec4(vertex.tangent * 0.5) + 0.5, 1.0);
-
-    // uv coords
-    //final_color = vec4(vertex_uv.x, vertex_uv.y, 0.0, 1.0);
-
-    // albedo
-    //final_color = vec4(mtl_albedo, 1.0);
-    //final_color = vec4(pow(mtl_albedo, vec3(1.0 / 2.2)), tex_albedo.a);
-
-    // metallic
-    //final_color = vec4(vec3(mtl_metallic), 1.0);
-
-    // roughness
-    //final_color = vec4(vec3(mtl_roughness), 1.0);
-
-    // ambient occlusion
-    //final_color = vec4(vec3(mtl_occlusion), 1.0);
+    switch (u_debug_channel) {
+        case DBG_VTX_COLOR:
+            final_color = dbg_vtx_color;
+            break;
+        case DBG_VTX_UV:
+            final_color = dbg_vtx_uv;
+            break;
+        case DBG_VTX_NORMAL:
+            final_color = dbg_vtx_normal;
+            break;
+        case DBG_VTX_TANGENT:
+            final_color = dbg_vtx_tangent;
+            break;
+        case DBG_VTX_TBN_NORMAL:
+            final_color = dbg_vtx_tbn_normal;
+            break;
+        case DBG_NORMAL_MAP:
+            final_color = dbg_normal_map;
+            break;
+        case DBG_MTL_ALBEDO:
+            final_color = dbg_mtl_albedo;
+            break;
+        case DBG_MTL_METALLIC:
+            final_color = dbg_mtl_metallic;
+            break;
+        case DBG_MTL_ROUGHNESS:
+            final_color = dbg_mtl_roughness;
+            break;
+        case DBG_MTL_OCCLUSION:
+            final_color = dbg_mtl_occlusion;
+            break;
+    };
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

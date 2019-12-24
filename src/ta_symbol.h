@@ -83,6 +83,7 @@ extern const char *SYM_U_LIGHTS_CAST_SHADOWS[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP2D[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP3D[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP_ZFAR[8];
+extern const char *SYM_U_DEBUG_CHANNEL;
 
 // Constants
 extern const char *SYM_ENTITY_PLAYER_ONE;

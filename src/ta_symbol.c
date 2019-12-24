@@ -60,6 +60,7 @@ const char *SYM_U_LIGHTS_CAST_SHADOWS[8];
 const char *SYM_U_LIGHTS_SHADOWMAP2D[8];
 const char *SYM_U_LIGHTS_SHADOWMAP3D[8];
 const char *SYM_U_LIGHTS_SHADOWMAP_ZFAR[8];
+const char *SYM_U_DEBUG_CHANNEL;
 
 // Constants
 const char *SYM_ENTITY_PLAYER_ONE;
@@ -192,6 +193,7 @@ void ta_symbol_init() {
     SYM_U_LIGHTS_SHADOWMAP_ZFAR[5]  = INTERN("u_lights[5].shadowmap_zfar");
     SYM_U_LIGHTS_SHADOWMAP_ZFAR[6]  = INTERN("u_lights[6].shadowmap_zfar");
     SYM_U_LIGHTS_SHADOWMAP_ZFAR[7]  = INTERN("u_lights[7].shadowmap_zfar");
+    SYM_U_DEBUG_CHANNEL             = INTERN("u_debug_channel");
 
     SYM_ENTITY_PLAYER_ONE       = INTERN("player_one");
     SYM_ENTITY_FREECAM          = INTERN("freecam");

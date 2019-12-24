@@ -5,6 +5,20 @@
 
 struct ta_event;
 
+typedef enum ta_shader_debug_channel {
+    DBG_NONE            = 0,
+    DBG_VTX_COLOR       = 1,
+    DBG_VTX_UV          = 2,
+    DBG_VTX_NORMAL      = 3,
+    DBG_VTX_TANGENT     = 4,
+    DBG_VTX_TBN_NORMAL  = 5,
+    DBG_NORMAL_MAP      = 6,
+    DBG_MTL_ALBEDO      = 7,
+    DBG_MTL_METALLIC    = 8,
+    DBG_MTL_ROUGHNESS   = 9,
+    DBG_MTL_OCCLUSION   = 10,
+} ta_shader_debug_channel;
+
 typedef struct ta_camera {
     u32 index;
     const char *name;
@@ -38,6 +52,7 @@ typedef struct ta_camera {
     bool debug_normals;
     bool debug_bounding_boxes;
     bool debug_no_mesh;
+    ta_shader_debug_channel debug_channel;
 } ta_camera;
 
 void ta_camera_init(ta_camera *camera);
