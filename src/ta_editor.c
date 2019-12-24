@@ -528,29 +528,36 @@ static void ui_camera_panel()
             const char *text;
             u32 len;
         } dbg_modes[] = {
-            [DBG_NONE]           = CSTR("NONE"),
-            [DBG_VTX_COLOR]      = CSTR("VTX_COLOR"),
-            [DBG_VTX_UV]         = CSTR("VTX_UV"),
-            [DBG_VTX_NORMAL]     = CSTR("VTX_NORMAL"),
-            [DBG_VTX_TANGENT]    = CSTR("VTX_TANGENT"),
-            [DBG_VTX_TBN_NORMAL] = CSTR("VTX_TBN_NORMAL"),
-            [DBG_NORMAL_MAP]     = CSTR("NORMAL_MAP"),
-            [DBG_MTL_ALBEDO]     = CSTR("MTL_ALBEDO"),
-            [DBG_MTL_METALLIC]   = CSTR("MTL_METALLIC"),
-            [DBG_MTL_ROUGHNESS]  = CSTR("MTL_ROUGHNESS"),
-            [DBG_MTL_OCCLUSION]  = CSTR("MTL_OCCLUSION"),
+            [DBG_NONE]           = CSTR("None"),
+            [DBG_VTX_COLOR]      = CSTR("Vertex color"),
+            [DBG_VTX_UV]         = CSTR("UV"),
+            [DBG_VTX_NORMAL]     = CSTR("Normal"),
+            [DBG_VTX_TANGENT]    = CSTR("Tangent"),
+            [DBG_VTX_TBN_NORMAL] = CSTR("TBN normal"),
+            [DBG_NORMAL_MAP]     = CSTR("Normal map"),
+            [DBG_MTL_ALBEDO]     = CSTR("Albedo"),
+            [DBG_MTL_METALLIC]   = CSTR("Metallic"),
+            [DBG_MTL_ROUGHNESS]  = CSTR("Roughness"),
+            [DBG_MTL_OCCLUSION]  = CSTR("Occlusion"),
         };
 
         for (int mode = 0; mode < ARRAY_COUNT(dbg_modes); ++mode) {
-            ta_ui_row_begin();
-            ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
+            if (mode % 2 == 1) ta_ui_row_begin();
+            if (mode == 0) {
+                ta_ui_next_size(246, 0);
+            } else {
+                ta_ui_next_size(120, 0);
+            }
+            ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE_H);
             ta_ui_label(0, dbg_modes[mode].text, dbg_modes[mode].len);
             bool checked = mode == camera->debug_channel;
             if (ta_ui_toggle_button_end(&checked)) {
                 camera->debug_channel = mode;
             }
+            if (mode == 0) {
+                ta_ui_row_begin();
+            }
         }
-        ta_ui_row_end();
         ta_ui_panel_end();
     }
 
