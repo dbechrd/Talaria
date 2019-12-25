@@ -14,10 +14,9 @@ typedef struct ta_collider {
     ta_collider_type type;
     float mass;
     ta_mat3 tensor;
-    ta_vec3 center_world;  // TODO: Update this whenever rigid body moves
     union {
+        ta_vec3 center;    // Offset relative to parent rigid body
         // NOTE: Must all start with ta_vec3 center
-        ta_vec3 center;
         ta_sphere sphere;
         ta_aabb aabb;
         ta_obb obb;
@@ -26,3 +25,4 @@ typedef struct ta_collider {
 } ta_collider;
 
 bool ta_intersect_ray_sphere(ta_ray ray, ta_sphere sphere, float *t);
+void ta_collider_render(ta_collider *collider);

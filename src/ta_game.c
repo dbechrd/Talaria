@@ -68,7 +68,7 @@ typedef enum game_command {
     GAME_COMMAND_DEBUG_MOUSE_LOCK_TOGGLE,
     GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME,
     GAME_COMMAND_DEBUG_TOGGLE_NORMALS,
-    GAME_COMMAND_DEBUG_TOGGLE_BBOX,
+    GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS,
     GAME_COMMAND_DEBUG_TOGGLE_MESH,
 
     GAME_COMMAND_COUNT
@@ -126,7 +126,7 @@ void ta_game_init()
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_SHOOT],            TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_MOUSE_LOCK_TOGGLE], TA_KEYBIND_PRESS,   SDL_SCANCODE_M);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME],  TA_KEYBIND_PRESS,   SDL_SCANCODE_2);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_BBOX],       TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS],       TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_MESH],       TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
 
@@ -150,7 +150,7 @@ void ta_game_init()
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_MOUSE_UNLOCK],      TA_KEYBIND_RELEASE, SDL_SCANCODE_MOUSE_RIGHT);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_MOUSE_LOCK_TOGGLE], TA_KEYBIND_PRESS,   SDL_SCANCODE_M);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME],  TA_KEYBIND_PRESS,   SDL_SCANCODE_2);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_BBOX],       TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS],       TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_MESH],       TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
 
@@ -174,7 +174,7 @@ void ta_game_init()
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_MOUSE_UNLOCK],      TA_KEYBIND_RELEASE, SDL_SCANCODE_MOUSE_RIGHT);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_MOUSE_LOCK_TOGGLE], TA_KEYBIND_PRESS,   SDL_SCANCODE_M);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME],  TA_KEYBIND_PRESS,   SDL_SCANCODE_2);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_BBOX],       TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS],       TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_MESH],       TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
 
@@ -894,10 +894,10 @@ void game_command_debug_toggle_normals()
     ta_camera *camera = ta_game_camera();
     camera->debug_normals = !camera->debug_normals;
 }
-void game_command_debug_toggle_bbox()
+void game_command_debug_toggle_colliders()
 {
     ta_camera *camera = ta_game_camera();
-    camera->debug_bounding_boxes = !camera->debug_bounding_boxes;
+    camera->debug_colliders = !camera->debug_colliders;
 }
 void game_command_debug_toggle_mesh()
 {
@@ -929,7 +929,7 @@ void ta_game_hotkeys()
         [GAME_COMMAND_DEBUG_MOUSE_LOCK_TOGGLE] = game_command_debug_mouse_lock_toggle,
         [GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME]  = game_command_debug_toggle_wireframe,
         [GAME_COMMAND_DEBUG_TOGGLE_NORMALS]    = game_command_debug_toggle_normals,
-        [GAME_COMMAND_DEBUG_TOGGLE_BBOX]       = game_command_debug_toggle_bbox,
+        [GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS]  = game_command_debug_toggle_colliders,
         [GAME_COMMAND_DEBUG_TOGGLE_MESH]       = game_command_debug_toggle_mesh,
     };
 

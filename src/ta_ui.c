@@ -178,7 +178,7 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
 
     ui_default_style[UI_BUTTON].margin                      = TA_RECT(2, 1, 0, 1);
     ui_default_style[UI_BUTTON].pad                         = TA_RECT(4, 1, 4, 1);
-    ui_default_style[UI_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(1.0f, 0.0f, 1.0f, 0.9f);
+    ui_default_style[UI_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(0.2f, 0.6f, 1.0f, 0.9f);
     ui_default_style[UI_BUTTON].bg_color[UI_STATE_HOVER]    = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
     ui_default_style[UI_BUTTON].bg_color[UI_STATE_DOWN]     = TA_RGBA(0.5f, 0.5f, 0.0f, 0.9f);
     ui_default_style[UI_BUTTON].bg_color[UI_STATE_ACTIVE]   = TA_RGBA(0.0f, 1.0f, 1.0f, 0.9f);
@@ -189,10 +189,10 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
 
     ui_default_style[UI_TOGGLE_BUTTON].margin                      = TA_RECT(2, 1, 0, 1);
     ui_default_style[UI_TOGGLE_BUTTON].pad                         = TA_RECT(2, 2, 2, 2);
-    ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(1.0f, 0.0f, 1.0f, 0.9f);
+    ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(0.4f, 0.2f, 1.0f, 0.9f);
     ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_HOVER]    = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
     ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_DOWN]     = TA_RGBA(0.5f, 0.5f, 0.0f, 0.9f);
-    ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_ACTIVE]   = TA_RGBA(0.0f, 1.0f, 1.0f, 0.9f);
+    ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_ACTIVE]   = TA_RGBA(0.8f, 0.5f, 1.0f, 0.9f);
     //ui_default_style[UI_TOGGLE_BUTTON].fg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
     //ui_default_style[UI_TOGGLE_BUTTON].fg_color[UI_STATE_HOVER]    = TA_COLOR_INVIS;
     //ui_default_style[UI_TOGGLE_BUTTON].fg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
@@ -243,8 +243,8 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
     ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOF],   TA_KEYBIND_PRESS,   SDL_SCANCODE_LSHIFT, SDL_SCANCODE_END);
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_DELETE],       TA_KEYBIND_HOLD,    SDL_SCANCODE_DELETE);
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_BACKSPACE],    TA_KEYBIND_HOLD,    SDL_SCANCODE_BACKSPACE);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],     TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],     TA_KEYBIND_PRESS,   SDL_SCANCODE_KP_ENTER);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_PRESS,   SDL_SCANCODE_KP_ENTER);
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL],       TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
 }
 void ta_ui_set_font(ta_font *font)
@@ -1046,9 +1046,12 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
             textbox_mouse_down(frame);
         } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
             textbox_command_submit(textbox);
-        // TODO(cleanup): I don't like this.. maybe just always use escape.
-        //} else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
-        //    textbox_command_cancel(textbox);
+        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
+            // TODO(cleanup): Right click usually means cancel, but in the case
+            // of search box I want to right click to rotate camera without
+            // losing my search results, sooo...
+            textbox_command_submit(textbox);
+            //textbox_command_cancel(textbox);
         }
     }
 
@@ -1213,42 +1216,74 @@ bool ta_ui_textbox_float(const char *name, float *value,
     return frame->data.textbox->submit;
 }
 void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
-    bool normalize)
+    bool normalize, bool multiple_rows, bool reset_button)
 {
     DLB_ASSERT(vec);
     DLB_ASSERT(vec_state);
+
+    ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_panel_begin(0, &vec_state->panel_state, TA_UI_AUTOSIZE);
 
     const char *labels[3] = { "x:", "y:", "z:" };
     float *components = (float *)vec;
     for (int i = 0; i < 3; ++i) {
-        ta_ui_row_begin();
+        if (multiple_rows) {
+            ta_ui_row_begin();
+        }
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(0, &components[i], state, 0);
+
+        if (i == 0 && reset_button) {
+            ta_ui_next_margin(6, 1, 0, 1);
+            ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+            if (ta_ui_button(0, CSTR("Reset"))) {
+                *vec = VEC3_ZERO;
+            }
+        }
     }
     if (normalize) {
         *vec = vec3_normalize(*vec);
     }
+
+
+
+    ta_ui_panel_end();
 }
 void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
-    bool normalize)
+    bool normalize, bool multiple_rows, bool reset_button)
 {
     DLB_ASSERT(vec);
     DLB_ASSERT(vec_state);
 
+    ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_panel_begin(0, &vec_state->panel_state, TA_UI_AUTOSIZE);
+
     const char *labels[4] = { "x:", "y:", "z:", "w:" };
     float *components = (float *)vec;
     for (int i = 0; i < 4; ++i) {
-        ta_ui_row_begin();
+        if (multiple_rows) {
+            ta_ui_row_begin();
+        }
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
-        if (ta_ui_textbox_float(0, &components[i], state, 0)) {
+        ta_ui_textbox_float(0, &components[i], state, 0);
 
+        if (i == 0 && reset_button) {
+            ta_ui_next_margin(6, 1, 0, 1);
+            ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+            if (ta_ui_button(0, CSTR("Reset"))) {
+                *vec = QUAT_IDENT;
+            }
         }
     }
     if (normalize) {
         *vec = quat_normalize(*vec);
     }
+
+    ta_ui_panel_end();
 }
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
 {

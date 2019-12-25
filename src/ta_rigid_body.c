@@ -15,17 +15,6 @@
 #define DV_EPSILON 0.001f     // minimum velocity required to affect position
 #define DTHETA_EPSILON 0.08f  // minimum magnitude required to affect orientation
 
-typedef bool (intersector)(const ta_collider *a, const ta_collider *b,
-    ta_manifold *manifold);
-
-static intersector intersector_sphere_v_sphere;
-static intersector intersector_plane_v_sphere;
-
-static intersector *intersectors[TA_COLLIDER_COUNT][TA_COLLIDER_COUNT] = {
-    [TA_COLLIDER_SPHERE][TA_COLLIDER_SPHERE] = intersector_sphere_v_sphere,
-    [TA_COLLIDER_PLANE][TA_COLLIDER_SPHERE] = intersector_plane_v_sphere,
-};
-
 const char *ta_collider_type_str(int type)
 {
     switch(type) {
@@ -37,27 +26,6 @@ const char *ta_collider_type_str(int type)
             DLB_ASSERT(!"<UNKNOWN_TA_COLLIDER_TYPE>");
             return 0;
     }
-}
-
-static void update_collider_center(ta_rigid_body *body, ta_transform *transform)
-{
-    // TODO: For each collider in body->colliders
-    body->collider.center_world = vec3_add(transform->xform.position, body->collider.data.center);
-    body->centroid_local = body->collider.data.center;
-    body->centroid_global = body->collider.center_world;
-#if 0
-    switch (body->collider.type) {
-        case TA_COLLIDER_PLANE: {
-            break;
-        } case TA_COLLIDER_SPHERE: {
-            break;
-        } case TA_COLLIDER_AABB: {
-            break;
-        } case TA_COLLIDER_OBB: {
-            break;
-        }
-    }
-#endif
 }
 
 void ta_rigid_body_init(ta_rigid_body *body)
@@ -99,21 +67,17 @@ void ta_rigid_body_init(ta_rigid_body *body)
         body->collider.data.plane.normal =
             vec3_normalize(body->collider.data.plane.normal);
     }
-    // TOOD: Is this necessary? I don't want to enforce transform -> rigid_body
-    // component init order if I don't need to.
-    //ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM, body->entity_name);
-    //update_collider_center(body, transform);
     if (body->mass != 0.0f) {
         body->inv_mass = 1.0f / body->mass;
     }
     if (!body->e) {
-        body->e = 0.5f;
+        body->e = 0.2f;
     }
     if (!body->ks) {
         body->ks = 0.20f;
     }
     if (!body->kd) {
-        body->kd = 0.15f;
+        body->kd = 0.10f;
     }
     if (body->collider.type == TA_COLLIDER_SPHERE) {
         // Sphere moment of inertia: 2/5 MR^2
@@ -206,7 +170,9 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
         transform->xform.position = vec3_add(transform->xform.position, dv);
         dirty = true;
     }
-    update_collider_center(body, transform);
+
+    body->centroid_local = body->collider.data.center;
+    body->centroid_global = vec3_add(transform->xform.position, body->collider.data.center);
 
 #if 1
     // TODO: Implement drag in a way that doesn't vary with different timesteps
@@ -291,29 +257,29 @@ bool ta_plane_v_sphere(const ta_plane *plane, const ta_sphere *sphere,
     return true;
 }
 
-static bool intersector_sphere_v_sphere(const ta_collider *a,
-    const ta_collider *b, ta_manifold *manifold)
+static bool intersector_sphere_v_sphere(const ta_rigid_body *a,
+    const ta_rigid_body *b, ta_manifold *manifold)
 {
     ta_sphere sphere_a;
-    sphere_a.center = a->center_world;
-    sphere_a.radius = a->data.sphere.radius;
+    sphere_a.center = vec3_add(a->centroid_global, a->collider.data.center);
+    sphere_a.radius = a->collider.data.sphere.radius;
     ta_sphere sphere_b;
-    sphere_b.center = b->center_world;
-    sphere_b.radius = b->data.sphere.radius;
+    sphere_b.center = vec3_add(b->centroid_global, b->collider.data.center);
+    sphere_b.radius = b->collider.data.sphere.radius;
     bool collided = ta_sphere_v_sphere(&sphere_a, &sphere_b, manifold);
     return collided;
 }
 
-static bool intersector_plane_v_sphere(const ta_collider *a,
-    const ta_collider *b, ta_manifold *manifold)
+static bool intersector_plane_v_sphere(const ta_rigid_body *a,
+    const ta_rigid_body *b, ta_manifold *manifold)
 {
-    ta_plane plane;
-    plane.center = a->center_world;
-    plane.normal = a->data.plane.normal;
-    ta_sphere sphere;
-    sphere.center = b->center_world;
-    sphere.radius = b->data.sphere.radius;
-    bool collided = ta_plane_v_sphere(&plane, &sphere, manifold);
+    ta_plane plane_a;
+    plane_a.center = vec3_add(a->centroid_global, a->collider.data.center);
+    plane_a.normal = a->collider.data.plane.normal;
+    ta_sphere sphere_b;
+    sphere_b.center = vec3_add(b->centroid_global, b->collider.data.center);
+    sphere_b.radius = b->collider.data.sphere.radius;
+    bool collided = ta_plane_v_sphere(&plane_a, &sphere_b, manifold);
     return collided;
 }
 
@@ -322,6 +288,14 @@ bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
 {
     DLB_ASSERT(a);
     DLB_ASSERT(b);
+
+    typedef bool (intersector)(const ta_rigid_body *a, const ta_rigid_body *b,
+        ta_manifold *manifold);
+
+    static intersector *intersectors[TA_COLLIDER_COUNT][TA_COLLIDER_COUNT] = {
+        [TA_COLLIDER_SPHERE][TA_COLLIDER_SPHERE] = intersector_sphere_v_sphere,
+        [TA_COLLIDER_PLANE][TA_COLLIDER_SPHERE] = intersector_plane_v_sphere,
+    };
 
     bool collided = false;
 
@@ -332,7 +306,7 @@ bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
         : intersectors[b_type][a_type];
 
     if (intersect) {
-        collided = (*intersect)(&a->collider, &b->collider, manifold);
+        collided = (*intersect)(a, b, manifold);
     } else {
         // TODO: Log this. For now, just return false.
         //ta_log_write(&tg_debug_log, "[Rigid Body] Unhandled collision pair.\n");

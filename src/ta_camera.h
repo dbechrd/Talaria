@@ -50,7 +50,7 @@ typedef struct ta_camera {
     bool dirty;
     bool debug_wireframe;
     bool debug_normals;
-    bool debug_bounding_boxes;
+    bool debug_colliders;
     bool debug_no_mesh;
     ta_shader_debug_channel debug_channel;
 } ta_camera;

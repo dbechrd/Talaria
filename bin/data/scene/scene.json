@@ -47,15 +47,15 @@
       "name": "freecam",
       "entity_name": "freecam",
       "position": {
-        "x": "0x412B885C (10.720791)",
-        "y": "0xC03427FA (-2.814940)",
-        "z": "0x40AA4CBF (5.321868)"
+        "x": "0x41458ECC (12.347363)",
+        "y": "0xC0326926 (-2.787668)",
+        "z": "0x40C915B6 (6.283900)"
       },
       "position_smooth": "0x3DCCCCCD (0.100000)",
       "position_target_vel": "0x3E99999A (0.300000)",
-      "yaw": "0x430BB8FE (139.722626)",
+      "yaw": "0x430CB933 (140.723434)",
       "yaw_smooth": "0x3F333333 (0.700000)",
-      "pitch": "0xC14665E4 (-12.399876)",
+      "pitch": "0xC1859986 (-16.699963)",
       "pitch_smooth": "0x3F333333 (0.700000)",
       "pitch_min": "0xC2B40000 (-90.000000)",
       "pitch_max": "0x42B40000 (90.000000)",
@@ -67,9 +67,9 @@
         "z": "0x00000000 (0.000000)"
       },
       "up": {
-        "x": "0xBE27C1C4 (-0.163825)",
-        "y": "0x3F7A073B (0.976673)",
-        "z": "0xBE0E277E (-0.138823)"
+        "x": "0xBE63C8A5 (-0.222445)",
+        "y": "0x3F7533DE (0.957823)",
+        "z": "0xBE3A4887 (-0.181917)"
       },
       "ortho": false
     },
@@ -77,9 +77,9 @@
       "name": "player_one",
       "entity_name": "player_one",
       "position": {
-        "x": "0x406AC7E6 (3.668451)",
-        "y": "0xC0A000C9 (-5.000096)",
-        "z": "0xC0A1A294 (-5.051096)"
+        "x": "0x402F83B4 (2.742414)",
+        "y": "0xC0A000C8 (-5.000095)",
+        "z": "0xC07D5458 (-3.958273)"
       },
       "position_smooth": "0x3D4CCCCD (0.050000)",
       "position_target_vel": "0x3E4CCCCD (0.200000)",
@@ -230,8 +230,8 @@
     {
       "name": "player_one",
       "entity_name": "player_one",
-      "meshes": ["prim_cube"],
-      "material": "cobble",
+      "meshes": ["prim_sphere"],
+      "material": "metal_plate_019",
       "invisible": false,
       "cast_shadows": true,
       "receive_shadows": true
@@ -433,15 +433,15 @@
       "entity_name": "player_one",
       "xform": {
         "position": {
-          "x": "0x406AC7DD (3.668449)",
+          "x": "0x402F83AB (2.742411)",
           "y": "0xC0E000D2 (-7.000100)",
-          "z": "0xC0A1A28A (-5.051091)"
+          "z": "0xC07D544F (-3.958271)"
         },
         "orientation": {
-          "x": "0x3EAC8DAE (0.337018)",
-          "y": "0x3DB965E4 (0.090526)",
-          "z": "0x3F20EB6B (0.628592)",
-          "w": "0xBF31EED7 (-0.695051)"
+          "x": "0x3D1CF1C8 (0.038317)",
+          "y": "0xBD1362EF (-0.035983)",
+          "z": "0x3EC8E196 (0.392346)",
+          "w": "0xBF6B16AB (-0.918315)"
         }
       }
     },

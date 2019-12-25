@@ -66,7 +66,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
     }
     // If debug flags set such that there's nothing to render
     if (camera->debug_no_mesh && !camera->debug_normals &&
-        !camera->debug_bounding_boxes)
+        !camera->debug_colliders)
     {
         return;
     }
@@ -125,7 +125,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         ta_shader_unbind();
     }
 
-    if (camera->debug_normals || camera->debug_bounding_boxes) {
+    if (camera->debug_normals || camera->debug_colliders) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
         if (camera->debug_normals) {
             dlb_vec_each(const char **, mesh_name, model->meshes) {
@@ -133,10 +133,10 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
                 ta_mesh_push_normals(mesh);
             }
         }
-        if (camera->debug_bounding_boxes) {
+        if (camera->debug_colliders) {
             ta_rigid_body *body = ta_game_component_try(RES_COMP_RIGID_BODY, model->entity_name);
             if (body) {
-                ta_primitive_push_aabb(body->aabb, TA_COLOR_RED);
+                ta_collider_render(&body->collider);
             }
         }
     }
