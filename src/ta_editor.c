@@ -100,6 +100,96 @@ const char *ta_editor_selected_entity()
     return editor.selected_entity;
 }
 
+static void ui_scene_panel()
+{
+    static ta_ui_panel_state scene_panel = { 0 };
+    ta_ui_panel_begin(0, &scene_panel, TA_UI_AUTOSIZE);
+
+    ta_ui_row_begin();
+    static ta_ui_panel_state label_panel = { 0 };
+    ta_ui_panel_begin(0, &label_panel, TA_UI_AUTOSIZE);
+    ta_ui_label(0, CSTR("Scene"));
+    ta_ui_label(0, CSTR("Simulation"));
+    ta_ui_label(0, CSTR("V-Sync"));
+    ta_ui_label(0, CSTR("Audio"));
+    ta_ui_label(0, CSTR("Volume"));
+    ta_ui_panel_end();
+
+    static ta_ui_panel_state button_panel = { 0 };
+    ta_ui_panel_begin(0, &button_panel, TA_UI_AUTOSIZE);
+    ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+    ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+    if (ta_ui_button(0, CSTR("Save"))) {
+        ta_game_save();
+    }
+
+    ta_ui_row_begin();
+    if (ta_game_sim_running()) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Running"))) {
+            ta_game_sim_pause();
+        }
+    } else {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Paused"))) {
+            ta_game_sim_resume();
+        }
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.4f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Next (1)"))) {
+            ta_game_sim_step_n_frames(1);
+        }
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.4f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Next (10)"))) {
+            ta_game_sim_step_n_frames(10);
+        }
+    }
+
+    ta_ui_row_begin();
+    if (ta_window_vsync(tg_window)) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("On"))) {
+            ta_window_set_vsync(tg_window, false);
+        }
+    } else {
+
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Off"))) {
+            ta_window_set_vsync(tg_window, true);
+        }
+    }
+
+    ta_ui_row_begin();
+    if (tg_audio.muted) {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Unmute"))) {
+            ta_audio_listener_unmute(&tg_audio);
+        }
+    } else {
+        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Mute"))) {
+            ta_audio_listener_mute(&tg_audio);
+        }
+    }
+
+    ta_ui_row_begin();
+    // TODO: Make this a drag float
+    char tex_buf[16] = { 0 };
+    int len = snprintf(tex_buf, sizeof(tex_buf), "%.2f",
+        ta_audio_listener_get_volume(&tg_audio));
+    DLB_ASSERT(len < sizeof(tex_buf));
+    ta_ui_label(0, tex_buf, len);
+    ta_ui_panel_end();
+
+    ta_ui_panel_end();
+}
 static void ui_node_panel()
 {
     //ta_ui_next_margin(2, 2, 0, 0);
@@ -250,6 +340,18 @@ static void ui_node_panel()
         ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
         ta_ui_label(0, CSTR("Model"));
 
+        // TODO: List all the meshes
+        DLB_ASSERT(dlb_vec_len(model->meshes) > 0);
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("meshes[0]:"));
+        ta_ui_label(0, SYM(model->meshes[0]));
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("material:"));
+        ta_ui_label(0, SYM(model->material));
+
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, CSTR("visible:"));
@@ -311,6 +413,12 @@ static void ui_node_panel()
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("density:"));
+        static ta_ui_textbox_state density_editor = { 0 };
+        ta_ui_textbox_float(0, &rigid_body->density, &density_editor, 0);
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
         ta_ui_label(0, CSTR("apply gravity:"));
         ta_ui_next_pad(0, 0, 0, 0);
         ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
@@ -334,6 +442,7 @@ static void ui_node_panel()
         ta_ui_label(0, CSTR("Collider"));
 
         ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
         ta_ui_label(0, CSTR("type:"));
         const char *collider_type = ta_collider_type_str(rigid_body->collider.type);
         ta_ui_label(0, collider_type, strlen(collider_type));
@@ -602,17 +711,17 @@ static void ui_camera_panel()
             const char *text;
             u32 len;
         } dbg_modes[] = {
-            [DBG_NONE]           = CSTR("None"),
-            [DBG_VTX_COLOR]      = CSTR("Vertex color"),
-            [DBG_VTX_UV]         = CSTR("UV"),
-            [DBG_VTX_NORMAL]     = CSTR("Normal"),
-            [DBG_VTX_TANGENT]    = CSTR("Tangent"),
-            [DBG_VTX_TBN_NORMAL] = CSTR("TBN normal"),
-            [DBG_NORMAL_MAP]     = CSTR("Normal map"),
-            [DBG_MTL_ALBEDO]     = CSTR("Albedo"),
-            [DBG_MTL_METALLIC]   = CSTR("Metallic"),
-            [DBG_MTL_ROUGHNESS]  = CSTR("Roughness"),
-            [DBG_MTL_OCCLUSION]  = CSTR("Occlusion"),
+            [DBG_NONE]           = { CSTR("None") },
+            [DBG_VTX_COLOR]      = { CSTR("Vertex color") },
+            [DBG_VTX_UV]         = { CSTR("UV") },
+            [DBG_VTX_NORMAL]     = { CSTR("Normal") },
+            [DBG_VTX_TANGENT]    = { CSTR("Tangent") },
+            [DBG_VTX_TBN_NORMAL] = { CSTR("TBN normal") },
+            [DBG_NORMAL_MAP]     = { CSTR("Normal map") },
+            [DBG_MTL_ALBEDO]     = { CSTR("Albedo") },
+            [DBG_MTL_METALLIC]   = { CSTR("Metallic") },
+            [DBG_MTL_ROUGHNESS]  = { CSTR("Roughness") },
+            [DBG_MTL_OCCLUSION]  = { CSTR("Occlusion") },
         };
 
         for (int mode = 0; mode < ARRAY_COUNT(dbg_modes); ++mode) {
@@ -643,10 +752,10 @@ static void ui_material_panel()
     //ta_ui_next_margin(2, 2, 0, 0);
     static ta_ui_panel_state material_panel = { 0 };
     ta_ui_panel_begin(0, &material_panel, TA_UI_AUTOSIZE);
-    ta_ui_row_begin();
     dlb_vec_each(ta_material *, material, ta_game_resource_pool(RES_MATERIAL)) {
-        ta_ui_next_size(68, 68);
-        //ta_ui_next_margin(0, 0, 2, 0);
+        ta_ui_row_begin();
+        ta_ui_next_size(200, 0);
+        ta_ui_next_margin(0, 2, 0, 0);
         ta_ui_next_pad(4, 4, 4, 4);
         //ta_ui_next_size(material->width, material->height);
         if (ta_ui_button(0, SYM(material->name))) {
@@ -678,6 +787,42 @@ static void ui_material_panel()
                 material->tex_normal,
                 material->tex_occlusion,
                 material->tex_roughness
+            );
+            DLB_ASSERT(len < sizeof(tex_buf));
+            ta_ui_tooltip(tex_buf, len);
+        }
+    }
+    ta_ui_panel_end();
+}
+static void ui_mesh_panel()
+{
+    //ta_ui_next_margin(2, 2, 0, 0);
+    static ta_ui_panel_state mesh_panel = { 0 };
+    ta_ui_panel_begin(0, &mesh_panel, TA_UI_AUTOSIZE);
+    dlb_vec_each(ta_mesh *, mesh, ta_game_resource_pool(RES_MESH)) {
+        ta_ui_row_begin();
+        ta_ui_next_size(200, 0);
+        ta_ui_next_margin(0, 2, 0, 0);
+        ta_ui_next_pad(4, 4, 4, 4);
+        //ta_ui_next_size(material->width, material->height);
+        if (ta_ui_button(0, SYM(mesh->name))) {
+            const char *entity_name = ta_editor_selected_entity();
+            if (entity_name) {
+                ta_model *model = ta_game_component_try(RES_COMP_MODEL,
+                    entity_name);
+                if (model) {
+                    dlb_vec_clear(model->meshes);
+                    dlb_vec_push(model->meshes, mesh->name);
+                }
+            }
+        }
+        if (ta_ui_last_frame_state().hover) {
+            char tex_buf[1024] = { 0 };
+            int len = snprintf(tex_buf, sizeof(tex_buf),
+                "name         : %s\n"
+                "vertex count : %u",
+                mesh->name,
+                dlb_vec_len(mesh->positions)
             );
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
@@ -731,42 +876,6 @@ static void ui_texture_panel()
     }
     ta_ui_panel_end();
 }
-static void ui_mesh_panel()
-{
-    //ta_ui_next_margin(2, 2, 0, 0);
-    static ta_ui_panel_state mesh_panel = { 0 };
-    ta_ui_panel_begin(0, &mesh_panel, TA_UI_AUTOSIZE);
-    ta_ui_row_begin();
-    dlb_vec_each(ta_mesh *, mesh, ta_game_resource_pool(RES_MESH)) {
-        ta_ui_next_size(68, 68);
-        //ta_ui_next_margin(0, 0, 2, 0);
-        ta_ui_next_pad(4, 4, 4, 4);
-        //ta_ui_next_size(material->width, material->height);
-        if (ta_ui_button(0, SYM(mesh->name))) {
-            const char *entity_name = ta_editor_selected_entity();
-            if (entity_name) {
-                ta_model *model = ta_game_component_try(RES_COMP_MODEL,
-                    entity_name);
-                if (model) {
-                    dlb_vec_clear(model->meshes);
-                    dlb_vec_push(model->meshes, mesh->name);
-                }
-            }
-        }
-        if (ta_ui_last_frame_state().hover) {
-            char tex_buf[1024] = { 0 };
-            int len = snprintf(tex_buf, sizeof(tex_buf),
-                "name         : %s\n"
-                "vertex count : %u",
-                mesh->name,
-                dlb_vec_len(mesh->positions)
-            );
-            DLB_ASSERT(len < sizeof(tex_buf));
-            ta_ui_tooltip(tex_buf, len);
-        }
-    }
-    ta_ui_panel_end();
-}
 static void ui_textbox_panel()
 {
     //ta_ui_next_margin(2, 2, 0, 0);
@@ -796,212 +905,23 @@ static void ui_textbox_panel()
 
     ta_ui_panel_end();
 }
-static void ui_scene_panel()
-{
-    static ta_ui_panel_state scene_panel = { 0 };
-    ta_ui_panel_begin(0, &scene_panel, TA_UI_AUTOSIZE);
-
-#if 1
-    ta_ui_row_begin();
-
-    static ta_ui_panel_state label_panel = { 0 };
-    ta_ui_panel_begin(0, &label_panel, TA_UI_AUTOSIZE);
-    ta_ui_label(0, CSTR("Scene"));
-    ta_ui_label(0, CSTR("Simulation"));
-    ta_ui_label(0, CSTR("V-Sync"));
-    ta_ui_label(0, CSTR("Audio"));
-    ta_ui_label(0, CSTR("Volume"));
-    ta_ui_panel_end();
-
-    static ta_ui_panel_state button_panel = { 0 };
-    ta_ui_panel_begin(0, &button_panel, TA_UI_AUTOSIZE);
-
-    ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-    ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-    if (ta_ui_button(0, CSTR("Save"))) {
-        ta_game_save();
-    }
-
-    ta_ui_row_begin();
-    if (ta_game_sim_running()) {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-        if (ta_ui_button(0, CSTR("Running"))) {
-            ta_game_sim_pause();
-        }
-    } else {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-        if (ta_ui_button(0, CSTR("Paused"))) {
-            ta_game_sim_resume();
-        }
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.4f, 0.0f, 0.9f);
-        if (ta_ui_button(0, CSTR("Next (1)"))) {
-            ta_game_sim_step_n_frames(1);
-        }
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.4f, 0.0f, 0.9f);
-        if (ta_ui_button(0, CSTR("Next (10)"))) {
-            ta_game_sim_step_n_frames(10);
-        }
-    }
-
-    ta_ui_row_begin();
-    if (ta_window_vsync(tg_window)) {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-        if (ta_ui_button(0, CSTR("On"))) {
-            ta_window_set_vsync(tg_window, false);
-        }
-    } else {
-
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-        if (ta_ui_button(0, CSTR("Off"))) {
-            ta_window_set_vsync(tg_window, true);
-        }
-    }
-
-    ta_ui_row_begin();
-    if (tg_audio.muted) {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-        if (ta_ui_button(0, CSTR("Unmute"))) {
-            ta_audio_listener_unmute(&tg_audio);
-        }
-    } else {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-        if (ta_ui_button(0, CSTR("Mute"))) {
-            ta_audio_listener_mute(&tg_audio);
-        }
-    }
-
-    ta_ui_row_begin();
-    // TODO: Make this a drag float
-    char tex_buf[16] = { 0 };
-    int len = snprintf(tex_buf, sizeof(tex_buf), "%.2f",
-        ta_audio_listener_get_volume(&tg_audio));
-    DLB_ASSERT(len < sizeof(tex_buf));
-    ta_ui_label(0, tex_buf, len);
-
-    ta_ui_panel_end();
-#else
-    int col1_w = 90;
-    int col2_w = 70;
-
-    ta_ui_row_begin();
-    ta_ui_next_size(col1_w, 17);
-    ta_ui_label(0, CSTR("     Scene"));
-    ta_ui_next_size(col2_w, 17);
-    ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-    ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-    if (ta_ui_label(0, CSTR("Save"))) {
-        ta_game_save();
-    }
-
-    ta_ui_row_begin();
-    ta_ui_next_size(col1_w, 17);
-    ta_ui_label(0, CSTR("Simulation"));
-    ta_ui_next_size(col2_w, 17);
-    if (ta_game_sim_running()) {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-        if (ta_ui_label(0, CSTR("Running"))) {
-            ta_game_sim_pause();
-        }
-    } else {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-        if (ta_ui_label(0, CSTR("Paused"))) {
-            ta_game_sim_resume();
-        }
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.4f, 0.0f, 0.9f);
-        if (ta_ui_label(0, CSTR("Next (1)"))) {
-            ta_game_sim_step_n_frames(1);
-        }
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.4f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.4f, 0.0f, 0.9f);
-        if (ta_ui_label(0, CSTR("Next (10)"))) {
-            ta_game_sim_step_n_frames(10);
-        }
-    }
-
-    ta_ui_row_begin();
-    ta_ui_next_size(col1_w, 17);
-    ta_ui_label(0, CSTR("    V-Sync"));
-    ta_ui_next_size(col2_w, 17);
-    if (ta_window_vsync(tg_window)) {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-        if (ta_ui_label(0, CSTR("On"))) {
-            ta_window_set_vsync(tg_window, false);
-        }
-    } else {
-
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-        if (ta_ui_label(0, CSTR("Off"))) {
-            ta_window_set_vsync(tg_window, true);
-        }
-    }
-
-    ta_ui_row_begin();
-    ta_ui_next_size(col1_w, 17);
-    ta_ui_label(0, CSTR("     Audio"));
-    ta_ui_next_size(col2_w, 17);
-    if (tg_audio.muted) {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-        if (ta_ui_label(0, CSTR("Unmute"))) {
-            ta_audio_listener_unmute(&tg_audio);
-        }
-    } else {
-        ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-        if (ta_ui_label(0, CSTR("Mute"))) {
-            ta_audio_listener_mute(&tg_audio);
-        }
-    }
-
-    char tex_buf[16] = { 0 };
-    int len = snprintf(tex_buf, sizeof(tex_buf), "%.2f",
-        ta_audio_listener_get_volume(&tg_audio));
-    DLB_ASSERT(len < sizeof(tex_buf));
-
-    ta_ui_row_begin();
-    ta_ui_label(0, CSTR("    Volume"));
-    // TODO: Make this a drag float
-    ta_ui_label(0, tex_buf, len);
-#endif
-
-    ta_ui_panel_end();
-}
 static void ui_editor_sidebar()
 {
-    enum {
-        CATEGORY_NODE,
-        CATEGORY_AUDIO,
-        CATEGORY_CAMERA,
-        CATEGORY_MATERIALS,
-        CATEGORY_TEXTURES,
-        CATEGORY_MESHES,
-        CATEGORY_TEXTBOX,
-        CATEGORY_SCENE,
-        CATEGORY_COUNT
+    static struct {
+        const char *name;
+        u32 len;
+        void (*panel_method)();
+    } categories[] = {
+        { CSTR("Scene"),     ui_scene_panel },
+        { CSTR("Node"),      ui_node_panel },
+        { CSTR("Audio"),     ui_audio_panel },
+        { CSTR("Cameras"),   ui_camera_panel },
+        { CSTR("Materials"), ui_material_panel },
+        { CSTR("Meshes"),    ui_mesh_panel },
+        { CSTR("Textures"),  ui_texture_panel },
+        { CSTR("Textbox"),   ui_textbox_panel },
     };
-    const char *category_names[CATEGORY_COUNT] = { 0 };
-    category_names[CATEGORY_NODE]        = INTERN(STRING(CATEGORY_NODE));
-    category_names[CATEGORY_AUDIO]       = INTERN(STRING(CATEGORY_AUDIO));
-    category_names[CATEGORY_CAMERA]       = INTERN(STRING(CATEGORY_CAMERA));
-    category_names[CATEGORY_MATERIALS]   = INTERN(STRING(CATEGORY_MATERIALS));
-    category_names[CATEGORY_TEXTURES]    = INTERN(STRING(CATEGORY_TEXTURES));
-    category_names[CATEGORY_MESHES]      = INTERN(STRING(CATEGORY_MESHES));
-    category_names[CATEGORY_TEXTBOX]     = INTERN(STRING(CATEGORY_TEXTBOX));
-    category_names[CATEGORY_SCENE]       = INTERN(STRING(CATEGORY_SCENE));
-    static int category_selected = CATEGORY_NODE;
+    static int category_selected = 1;
 
     ta_ui_row_begin();
 
@@ -1009,53 +929,24 @@ static void ui_editor_sidebar()
     //ta_ui_next_pad(2, 2, 2, 2);
     static ta_ui_panel_state category_panel = { 0 };
     ta_ui_panel_begin(INTERN("editor_sidebar"), &category_panel, TA_UI_AUTOSIZE);
-    for (int i = 0; i < CATEGORY_COUNT; i++) {
+    for (int i = 0; i < ARRAY_COUNT(categories); i++) {
         ta_ui_row_begin();
-        ta_ui_next_size(50, 50);
+        ta_ui_next_size(100, 0);
         //ta_ui_next_margin(0, 0, 0, 2);
         bool active = (i == category_selected);
-        ta_ui_toggle_button(category_names[i], &active);
+        ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
+        ta_ui_label(0, categories[i].name, categories[i].len);
+        ta_ui_toggle_button_end(&active);
         if (active && category_selected != i) {
             category_selected = i;
             if (editor.textbox_editing) {
                 ta_ui_textbox_clear(editor.textbox_editing);
             }
         }
-        if (ta_ui_last_frame_state().hover) {
-            ta_ui_tooltip(SYM(category_names[i]));
-
-        }
     }
     ta_ui_panel_end();
 
-    switch (category_selected) {
-        case CATEGORY_NODE: {
-            ui_node_panel();
-            break;
-        } case CATEGORY_AUDIO: {
-            ui_audio_panel();
-            break;
-        } case CATEGORY_CAMERA: {
-            ui_camera_panel();
-            break;
-        } case CATEGORY_MATERIALS: {
-            ui_material_panel();
-            break;
-        } case CATEGORY_TEXTURES: {
-            ui_texture_panel();
-            break;
-        } case CATEGORY_MESHES: {
-            ui_mesh_panel();
-            break;
-        } case CATEGORY_TEXTBOX: {
-            ui_textbox_panel();
-            break;
-        } case CATEGORY_SCENE: {
-            ui_scene_panel();
-        } default: {
-            break;
-        }
-    }
+    categories[category_selected].panel_method();
 }
 void ta_editor_draw(float alpha)
 {

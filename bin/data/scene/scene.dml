@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x41458ECC (12.347363)
-    y: 0xC0326926 (-2.787668)
-    z: 0x40C915B6 (6.283900)
+    x: 0x4114AC4C (9.292065)
+    y: 0xC08F3A86 (-4.475894)
+    z: 0x4016A6F2 (2.353940)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x430CB933 (140.723434)
+  yaw: 0x4314B885 (148.720779)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1859986 (-16.699963)
+  pitch: 0xC0C32F33 (-6.099512)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,9 +57,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBE63C8A5 (-0.222445)
-    y: 0x3F7533DE (0.957823)
-    z: 0xBE3A4887 (-0.181917)
+    x: 0xBDB9FB24 (-0.090811)
+    y: 0x3F7E8CFC (0.994339)
+    z: 0xBD61F8C1 (-0.055169)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
@@ -366,7 +366,7 @@ ta_transform:
     position:
       x: 0x00000000 (0.000000)
       y: 0xC0E000D2 (-7.000100)
-      z: 0x00000000 (0.000000)
+      z: 0xC187AE19 (-16.960009)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -404,7 +404,7 @@ ta_transform:
   xform:
     position:
       x: 0xC0D9BE34 (-6.804468)
-      y: 0xC1000069 (-8.000100)
+      y: 0xC1100069 (-9.000100)
       z: 0xBFC8C520 (-1.568516)
     orientation:
       x: 0x00000000 (0.000000)
@@ -417,7 +417,7 @@ ta_transform:
   xform:
     position:
       x: 0xC10D930C (-8.848400)
-      y: 0xC1000069 (-8.000100)
+      y: 0xC1100069 (-9.000100)
       z: 0xBFDE67C7 (-1.737542)
     orientation:
       x: 0x00000000 (0.000000)
@@ -430,7 +430,7 @@ ta_transform:
   xform:
     position:
       x: 0xC0EECED7 (-7.462749)
-      y: 0xC1000069 (-8.000100)
+      y: 0xC1100069 (-9.000100)
       z: 0xC05D3F07 (-3.456972)
     orientation:
       x: 0x00000000 (0.000000)
@@ -524,7 +524,7 @@ ta_rigid_body:
     sphere:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x3F800000 (0.000000)
+        y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   mass: 0x461C3C00 (9999.000000)
@@ -536,7 +536,7 @@ ta_rigid_body:
     sphere:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x3F800000 (0.000000)
+        y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   mass: 0x461C3C00 (9999.000000)
@@ -548,7 +548,7 @@ ta_rigid_body:
     sphere:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x3F800000 (0.000000)
+        y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   mass: 0x461C3C00 (9999.000000)
@@ -688,6 +688,8 @@ ta_mesh:
 ta_mesh:
   name: "star_0001"
   path: "data/mesh/star.obj"
+ta_mesh:
+  name: "rock_mesh"
 ta_mesh:
   name: "rock_mesh"
 ta_mesh:
