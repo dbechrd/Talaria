@@ -46,11 +46,15 @@ void e_button_update(ta_e_button *button)
         tg_e_player_one);
 
     button->state_prev = button->state;
+#if 0
     if (ta_rigid_body_intersect(player_body, button_body, 0)) {
         button->state = TA_BUTTON_ACTIVE;
     } else {
         button->state = TA_BUTTON_INACTIVE;
     }
+#else
+    button->state = TA_BUTTON_INACTIVE;
+#endif
 
     if (button_activated(button)) {
         ta_event event = { 0 };

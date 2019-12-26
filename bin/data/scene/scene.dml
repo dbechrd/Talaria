@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x4114AC4C (9.292065)
-    y: 0xC08F3A86 (-4.475894)
-    z: 0x4016A6F2 (2.353940)
+    x: 0x3F97C1F7 (1.185607)
+    y: 0xC07DBC02 (-3.964600)
+    z: 0x411C6BF0 (9.776352)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x4314B885 (148.720779)
+  yaw: 0x42D50E7F (106.528313)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC0C32F33 (-6.099512)
+  pitch: 0xC1419BF2 (-12.100573)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,17 +57,17 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBDB9FB24 (-0.090811)
-    y: 0x3F7E8CFC (0.994339)
-    z: 0xBD61F8C1 (-0.055169)
+    x: 0xBD7445ED (-0.059637)
+    y: 0x3F7A4FDF (0.977781)
+    z: 0xBE4DCA21 (-0.200966)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
   position:
-    x: 0x402F83B4 (2.742414)
-    y: 0xC0A000C8 (-5.000095)
-    z: 0xC07D5458 (-3.958273)
-  position_smooth: 0x3D4CCCCD (0.050000)
+    x: 0xC132B07C (-11.168087)
+    y: 0xC0A000D2 (-5.000100)
+    z: 0x401BE7FE (2.436035)
+  position_smooth: 0x3F000000 (0.500000)
   position_target_vel: 0x3E4CCCCD (0.200000)
   yaw: 0x439E59AF (316.700653)
   yaw_smooth: 0x3F333333 (0.700000)
@@ -170,7 +170,7 @@ ta_model:
   name: "chamber_0001"
   entity_name: "chamber_0001"
   meshes: ["chamber_0001", ]
-  material: "metal_plate_019"
+  material: "terrazzo"
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -220,21 +220,21 @@ ta_model:
   name: "column_0001"
   entity_name: "column_0001"
   meshes: ["column_0001", ]
-  material: "terrazzo"
+  material: "test"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0002"
   entity_name: "column_0002"
   meshes: ["column_0001", ]
-  material: "terrazzo"
+  material: "test"
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0003"
   entity_name: "column_0003"
   meshes: ["column_0001", ]
-  material: "terrazzo"
+  material: "test"
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -338,8 +338,8 @@ ta_transform:
   entity_name: "button_0001"
   xform:
     position:
-      x: 0x408147B0 (4.040001)
-      y: 0xC1000000 (-8.000000)
+      x: 0x40D28F66 (6.580005)
+      y: 0xC0FFFFEE (-7.999991)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -351,14 +351,14 @@ ta_transform:
   entity_name: "player_one"
   xform:
     position:
-      x: 0x402F83AB (2.742411)
+      x: 0xC132B07C (-11.168087)
       y: 0xC0E000D2 (-7.000100)
-      z: 0xC07D544F (-3.958271)
+      z: 0x401BE7FF (2.436035)
     orientation:
-      x: 0x3D1CF1C8 (0.038317)
-      y: 0xBD1362EF (-0.035983)
-      z: 0x3EC8E196 (0.392346)
-      w: 0xBF6B16AB (-0.918315)
+      x: 0xBDFF49ED (-0.124653)
+      y: 0x3B9342D8 (0.004494)
+      z: 0x3F479FFE (0.779785)
+      w: 0x3F1D0E0C (0.613496)
 ta_transform:
   name: "sphere1"
   entity_name: "sphere1"
@@ -403,9 +403,9 @@ ta_transform:
   entity_name: "column_0001"
   xform:
     position:
-      x: 0xC0D9BE34 (-6.804468)
-      y: 0xC1100069 (-9.000100)
-      z: 0xBFC8C520 (-1.568516)
+      x: 0xC0BEC11F (-5.961074)
+      y: 0xC1000069 (-8.000100)
+      z: 0xBFAC3BC6 (-1.345574)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -416,35 +416,35 @@ ta_transform:
   entity_name: "column_0002"
   xform:
     position:
-      x: 0xC10D930C (-8.848400)
-      y: 0xC1100069 (-9.000100)
-      z: 0xBFDE67C7 (-1.737542)
+      x: 0xC10E8E27 (-8.909705)
+      y: 0xC0FFFFBE (-7.999969)
+      z: 0xBFD5157B (-1.664718)
     orientation:
-      x: 0x00000000 (0.000000)
-      y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
+      x: 0x3979749C (0.000238)
+      y: 0xB4010E4C (-0.000000)
+      z: 0x3C04D2E1 (0.008107)
+      w: 0x3F7FFDD8 (0.999967)
 ta_transform:
   name: "column_0003"
   entity_name: "column_0003"
   xform:
     position:
-      x: 0xC0EECED7 (-7.462749)
-      y: 0xC1100069 (-9.000100)
-      z: 0xC05D3F07 (-3.456972)
+      x: 0xC10358F7 (-8.209220)
+      y: 0xC1000058 (-8.000084)
+      z: 0xC0773246 (-3.862443)
     orientation:
-      x: 0x00000000 (0.000000)
-      y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
+      x: 0xBB132B54 (-0.002246)
+      y: 0xB5A2BDD6 (-0.000001)
+      z: 0xBAD96FBC (-0.001659)
+      w: 0x3F7FFFC0 (0.999996)
 ta_transform:
   name: "star_0001"
   entity_name: "star_0001"
   xform:
     position:
-      x: 0xC0F18863 (-7.547899)
+      x: 0xC0FB49F4 (-7.852777)
       y: 0xC0F000D2 (-7.500100)
-      z: 0xC0EB784C (-7.358435)
+      z: 0xC0ED528F (-7.416328)
     orientation:
       x: 0xBED068F2 (-0.407051)
       y: 0x3BD094A1 (0.006365)
@@ -475,11 +475,12 @@ ta_rigid_body:
     sphere:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x00000000 (0.000000)
+        y: 0x3F199998 (0.600000)
         z: 0x00000000 (0.000000)
       radius: 0x3F333333 (0.700000)
   mass: 0x3F800000 (1.000000)
   trigger: true
+  no_gravity: true
 ta_rigid_body:
   name: "player_one"
   entity_name: "player_one"
@@ -527,7 +528,7 @@ ta_rigid_body:
         y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  mass: 0x461C3C00 (9999.000000)
+  mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "column_0002"
   entity_name: "column_0002"
@@ -539,7 +540,7 @@ ta_rigid_body:
         y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  mass: 0x461C3C00 (9999.000000)
+  mass: 0x447A0000 (1000.000000)
 ta_rigid_body:
   name: "column_0003"
   entity_name: "column_0003"
@@ -551,7 +552,7 @@ ta_rigid_body:
         y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  mass: 0x461C3C00 (9999.000000)
+  mass: 0x447A0000 (1000.000000)
 ta_rigid_body:
   name: "star_0001"
   entity_name: "star_0001"
@@ -688,6 +689,28 @@ ta_mesh:
 ta_mesh:
   name: "star_0001"
   path: "data/mesh/star.obj"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
 ta_mesh:
   name: "rock_mesh"
 ta_mesh:

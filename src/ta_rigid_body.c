@@ -74,9 +74,11 @@ void ta_rigid_body_init(ta_rigid_body *body)
         body->e = 0.2f;
     }
     if (!body->ks) {
-        body->ks = 0.20f;
+        //body->ks = 0.20f;
+        body->ks = 0.60f;
     }
     if (!body->kd) {
+        //body->kd = 0.10f;
         body->kd = 0.10f;
     }
     if (body->collider.type == TA_COLLIDER_SPHERE) {
@@ -122,13 +124,6 @@ void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 c
 
 void ta_rigid_body_update(ta_rigid_body *body, float dt)
 {
-    // Triggers don't need to update their position
-    if (body->trigger) {
-        return;
-    }
-
-    bool dirty = false;
-
     ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM, body->entity_name);
 
     // TODO: Calculate this based on torque_accum and dt
@@ -141,7 +136,6 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
         );
         transform->xform.orientation = quat_normalize(quat_mul(delta_orient,
             transform->xform.orientation));
-        dirty = true;
     }
 
     // Update global tensor when orientation changes
@@ -158,32 +152,38 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
 
     if (!body->no_gravity) {
         ta_vec3 gravity = { 0.0f, GRAVITY, 0.0f };
-        ta_vec3 gravity_force = vec3_scalef(gravity, body->mass);
-        ta_rigid_body_apply_force(body, gravity_force);
+        ta_rigid_body_apply_force(body, gravity);
     }
 
+    // a = Fdt / m
     ta_vec3 acc = vec3_scalef(vec3_scalef(body->force_accum, dt), body->inv_mass);
     body->velocity = vec3_add(body->velocity, acc);
     ta_vec3 dv = vec3_scalef(body->velocity, dt);
     float dv_mag = vec3_len(dv);
     if (dv_mag > DV_EPSILON) {
         transform->xform.position = vec3_add(transform->xform.position, dv);
-        dirty = true;
     }
 
     body->centroid_local = body->collider.data.center;
-    body->centroid_global = vec3_add(transform->xform.position, body->collider.data.center);
+    body->centroid_global = vec3_rotate_quat(body->centroid_local, transform->xform.orientation);
+    body->centroid_global = vec3_add(body->centroid_global, transform->xform.position);
+
+    // TODO: Recalculate AABBs for an
+    body->aabb = ta_collider_world_aabb(&body->collider, &transform->xform);
 
 #if 1
     // TODO: Implement drag in a way that doesn't vary with different timesteps
     //       The "compound interest" problem.
-    body->velocity = vec3_scalef(body->velocity, 0.99f);
-    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.99f);
+    body->velocity = vec3_scalef(body->velocity, 0.97f);
+    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.97f);
 #endif
 
     // Reset accumulators
     body->force_accum = VEC3_ZERO;
     body->torque_accum = VEC3_ZERO;
+
+    body->dbg_broadphase = false;
+    body->dbg_narrowphase = false;
 }
 
 bool ta_aabb_v_aabb(const ta_aabb *a, const ta_aabb *b, ta_manifold *manifold)
@@ -261,10 +261,10 @@ static bool intersector_sphere_v_sphere(const ta_rigid_body *a,
     const ta_rigid_body *b, ta_manifold *manifold)
 {
     ta_sphere sphere_a;
-    sphere_a.center = vec3_add(a->centroid_global, a->collider.data.center);
+    sphere_a.center = a->centroid_global;
     sphere_a.radius = a->collider.data.sphere.radius;
     ta_sphere sphere_b;
-    sphere_b.center = vec3_add(b->centroid_global, b->collider.data.center);
+    sphere_b.center = b->centroid_global;
     sphere_b.radius = b->collider.data.sphere.radius;
     bool collided = ta_sphere_v_sphere(&sphere_a, &sphere_b, manifold);
     return collided;
@@ -274,10 +274,10 @@ static bool intersector_plane_v_sphere(const ta_rigid_body *a,
     const ta_rigid_body *b, ta_manifold *manifold)
 {
     ta_plane plane_a;
-    plane_a.center = vec3_add(a->centroid_global, a->collider.data.center);
+    plane_a.center = a->centroid_global;
     plane_a.normal = a->collider.data.plane.normal;
     ta_sphere sphere_b;
-    sphere_b.center = vec3_add(b->centroid_global, b->collider.data.center);
+    sphere_b.center = b->centroid_global;
     sphere_b.radius = b->collider.data.sphere.radius;
     bool collided = ta_plane_v_sphere(&plane_a, &sphere_b, manifold);
     return collided;
@@ -286,9 +286,6 @@ static bool intersector_plane_v_sphere(const ta_rigid_body *a,
 bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
     ta_manifold *manifold)
 {
-    DLB_ASSERT(a);
-    DLB_ASSERT(b);
-
     typedef bool (intersector)(const ta_rigid_body *a, const ta_rigid_body *b,
         ta_manifold *manifold);
 
@@ -297,30 +294,55 @@ bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
         [TA_COLLIDER_PLANE][TA_COLLIDER_SPHERE] = intersector_plane_v_sphere,
     };
 
+    DLB_ASSERT(a);
+    DLB_ASSERT(b);
+
+    if (a->trigger || b->trigger) {
+        return false;
+    }
+
     bool collided = false;
+
+    // TODO(cleanup): If this gets called at all, these two bodies are
+    // broadphase intersecting.
+    // HACK: Don't set broadphase true for when colliding with floor.. stupid.
+    bool floor_collision = a->collider.type == TA_COLLIDER_PLANE ||
+                           b->collider.type == TA_COLLIDER_PLANE;
+    if (!floor_collision)
+    {
+        a->dbg_broadphase = true;
+        b->dbg_broadphase = true;
+    }
 
     ta_collider_type a_type = a->collider.type;
     ta_collider_type b_type = b->collider.type;
-    intersector *intersect = a_type <= b_type
+    intersector *intersect_method = a_type <= b_type
         ? intersectors[a_type][b_type]
         : intersectors[b_type][a_type];
 
-    if (intersect) {
-        collided = (*intersect)(a, b, manifold);
+    if (intersect_method) {
+        collided = (*intersect_method)(a, b, manifold);
     } else {
         // TODO: Log this. For now, just return false.
         //ta_log_write(&tg_debug_log, "[Rigid Body] Unhandled collision pair.\n");
     }
 
-    if (collided && manifold) {
-        manifold->a = a;
-        manifold->b = b;
-        manifold->atrans = ta_game_component(RES_COMP_TRANSFORM, a->entity_name);
-        manifold->btrans = ta_game_component(RES_COMP_TRANSFORM, b->entity_name);
-        manifold->e = MAX(a->e, b->e);
-        manifold->sf = sqrtf(a->ks * a->ks + b->ks * b->ks);
-        manifold->df = sqrtf(a->kd * a->kd + b->kd * b->kd);
+    if (collided) {
+        if (manifold) {
+            manifold->a = a;
+            manifold->b = b;
+            manifold->atrans = ta_game_component(RES_COMP_TRANSFORM, a->entity_name);
+            manifold->btrans = ta_game_component(RES_COMP_TRANSFORM, b->entity_name);
+            manifold->e = MAX(a->e, b->e);
+            manifold->sf = sqrtf(a->ks * a->ks + b->ks * b->ks);
+            manifold->df = sqrtf(a->kd * a->kd + b->kd * b->kd);
+        }
+        if (!floor_collision) {
+            a->dbg_narrowphase = true;
+            b->dbg_narrowphase = true;
+        }
     }
+
     return collided;
 }
 
@@ -350,8 +372,8 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
 
     for (u32 i = 0; i < manifold->contact_count; i++) {
         // Radii
-        ta_vec3 ra = vec3_sub(manifold->contacts[i], atrans->xform.position);
-        ta_vec3 rb = vec3_sub(manifold->contacts[i], btrans->xform.position);
+        ta_vec3 ra = vec3_sub(manifold->contacts[i], a->centroid_global); // atrans->xform.position);
+        ta_vec3 rb = vec3_sub(manifold->contacts[i], b->centroid_global); // btrans->xform.position);
 
         // Relative velocity
         //ta_vec3 rv = vec3_sub(b->velocity, a->velocity);
@@ -361,9 +383,8 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
 
         // Relative velocity along normal
         float v_normal = vec3_dot(rv, manifold->normal);
-
-        // If bodies moving apart, let it happen
-        if (v_normal >= 0.0f) {
+        if (v_normal > TA_EPSILON) {
+            // If bodies moving apart, let it happen
             return;
         }
 
@@ -386,6 +407,11 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
             vec3_cross(rb, manifold->normal)), rb);
         float impulse_ang = vec3_dot(vec3_add(impulse_ang_a, impulse_ang_b),
             manifold->normal);
+
+        // TODO: Impulse angle is always zero.. what's the point?
+        if (impulse_ang != 0.0f) {
+            DLB_ASSERT(1);
+        }
 
         float j_denom = a->inv_mass + b->inv_mass + impulse_ang;
 
@@ -410,14 +436,14 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
 
         if (a->collider.type != TA_COLLIDER_PLANE) {
             ta_line_3d debug_a_contact_world;
-            debug_a_contact_world.p0 = atrans->xform.position;
+            debug_a_contact_world.p0 = a->centroid_global; // atrans->xform.position;
             debug_a_contact_world.p1 = manifold->contacts[i];
             ta_primitive_push_line_3d(debug_a_contact_world, TA_COLOR_WHITE,
                 TA_COLOR_RED);
         }
         if (b->collider.type != TA_COLLIDER_PLANE) {
             ta_line_3d debug_b_contact_world;
-            debug_b_contact_world.p0 = btrans->xform.position;
+            debug_b_contact_world.p0 = b->centroid_global; // btrans->xform.position;
             debug_b_contact_world.p1 = manifold->contacts[i];
             ta_primitive_push_line_3d(debug_b_contact_world, TA_COLOR_WHITE,
                 TA_COLOR_RED);
@@ -464,6 +490,17 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
                 friction_impulse = vec3_scalef(t, -j * manifold->df);
             }
 
+            ta_line_3d friction_a_impulse;
+            friction_a_impulse.p0 = contact_world;
+            friction_a_impulse.p1 = vec3_add(contact_world, vec3_neg(friction_impulse));
+            ta_primitive_push_line_3d(friction_a_impulse, TA_COLOR_WHITE, TA_COLOR_ORANGE);
+            ta_line_3d friction_b_impulse;
+            friction_b_impulse.p0 = contact_world;
+            friction_b_impulse.p1 = vec3_add(contact_world, friction_impulse);
+            ta_primitive_push_line_3d(friction_b_impulse, TA_COLOR_WHITE, TA_COLOR_ORANGE);
+
+            // TODO: THIS DOESN'T WORK AT ALL!!!!! (Turn off drag and check, it
+            // just makes jitter city and doesn't actually slow down objects.
             // Apply friction impulses
             ta_rigid_body_apply_impulse(a, vec3_neg(friction_impulse), ra);
             ta_rigid_body_apply_impulse(b, friction_impulse, rb);
@@ -476,8 +513,15 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
     float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) *
         percent;
     ta_vec3 correction = vec3_scalef(manifold->normal, c);
+
     atrans->xform.position =
         vec3_sub(atrans->xform.position, vec3_scalef(correction, a->inv_mass));
     btrans->xform.position =
         vec3_add(btrans->xform.position, vec3_scalef(correction, b->inv_mass));
+
+    //a->centroid_global = vec3_rotate_quat(a->centroid_local, atrans->xform.orientation);
+    //a->centroid_global = vec3_add(a->centroid_global, atrans->xform.position);
+    //
+    //b->centroid_global = vec3_rotate_quat(b->centroid_local, btrans->xform.orientation);
+    //b->centroid_global = vec3_add(b->centroid_global, btrans->xform.position);
 }

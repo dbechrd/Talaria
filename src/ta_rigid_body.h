@@ -7,8 +7,8 @@
 // http://allenchou.net/2013/12/game-physics-introduction/
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
 typedef struct ta_rigid_body {
-    u32 index;
-    const char *name;
+    u32 index;         // TODO: Comment what this is for
+    const char *name;  // TODO: Comment what this is for
     const char *entity_name;
     ta_aabb aabb;
     ta_collider collider;
@@ -78,6 +78,10 @@ typedef struct ta_rigid_body {
     bool no_gravity;  // If true, gravity will not affect this body
     //float gravity_scale;   // Is this useful?
     //u32 collision_groups;  // Bit flags; "layers"
+
+    // TODO(cleanup): Random debug shit
+    bool dbg_broadphase;
+    bool dbg_narrowphase;
 } ta_rigid_body;
 
 typedef struct ta_rigid_body_pair {

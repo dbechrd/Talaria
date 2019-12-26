@@ -438,6 +438,17 @@ static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
             if (a->entity_name == b->entity_name) {
                 continue;
             }
+#if 1
+            // TODO: Get rid of infinite plane colliders
+            // Skip AABB broadphase for planes, makes no sense
+            if (a->collider.type == TA_COLLIDER_PLANE ||
+                b->collider.type == TA_COLLIDER_PLANE)
+            {
+                ta_rigid_body_pair *pair = dlb_vec_alloc(pairs);
+                pair->a = a;
+                pair->b = b;
+            }
+#endif
             if (ta_aabb_v_aabb(&a->aabb, &b->aabb, 0))
             {
                 ta_rigid_body_pair *pair = dlb_vec_alloc(pairs);
@@ -561,6 +572,9 @@ void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
     ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &render_camera->look_at);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &render_camera->projection);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &render_camera->look_at);
+
+    // Dump any prims from the collision pass
+    ta_primitive_render(true, false);
 
     // TODO: Group by shader / material to minimize redundant uniform calls
     dlb_vec_each(ta_model *, model, scene->resource_data[RES_COMP_MODEL]) {

@@ -229,7 +229,7 @@ static void ui_node_panel()
     }
 
     const int header_width = 300;
-    const int label_width = 130;
+    const int label_width = 150;
     const char *entity_name = ta_editor_selected_entity();
     if (!entity_name) {
         //ta_ui_spacer(0, 2);
@@ -417,6 +417,29 @@ static void ui_node_panel()
         static ta_ui_textbox_state density_editor = { 0 };
         ta_ui_textbox_float(0, &rigid_body->density, &density_editor, 0);
 
+        char text[64] = { 0 };
+        int text_len = 0;
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("velocity:"));
+        text_len = snprintf(CSTR(text), "%9.6f, %9.6f, %9.6f",
+            rigid_body->velocity.x,
+            rigid_body->velocity.y,
+            rigid_body->velocity.z);
+        DLB_ASSERT(text_len < sizeof(text));
+        ta_ui_label(0, CSTR(text));
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("ang. velocity:"));
+        text_len = snprintf(CSTR(text), "%9.6f, %9.6f, %9.6f",
+            rigid_body->ang_velocity.x,
+            rigid_body->ang_velocity.y,
+            rigid_body->ang_velocity.z);
+        DLB_ASSERT(text_len < sizeof(text));
+        ta_ui_label(0, CSTR(text));
+
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, CSTR("apply gravity:"));
@@ -434,6 +457,28 @@ static void ui_node_panel()
             ta_ui_label(0, CSTR("False"));
         }
         ta_ui_toggle_button_end(&rigid_body->no_gravity);
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("dbg_broadphase:"));
+        rigid_body->dbg_broadphase ? ta_ui_label(0, SYM(SYM_TRUE)) : ta_ui_label(0, SYM(SYM_FALSE));
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("dbg_narrowphase:"));
+        rigid_body->dbg_narrowphase ? ta_ui_label(0, SYM(SYM_TRUE)) : ta_ui_label(0, SYM(SYM_FALSE));
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("centroid_local:"));
+        static ta_ui_textbox_vec3_state centroid_local_editor = { 0 };
+        ta_ui_textbox_vec3(&rigid_body->centroid_local, &centroid_local_editor, false, false, false);
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("centroid_global:"));
+        static ta_ui_textbox_vec3_state centroid_global_editor = { 0 };
+        ta_ui_textbox_vec3(&rigid_body->centroid_global, &centroid_global_editor, false, false, false);
 
         ta_ui_row_begin();
         ta_ui_next_margin(2, 12, 0, 4);
@@ -1062,8 +1107,9 @@ void editor_command_select()
             continue;
         }
 
-        ta_sphere sphere = body->collider.data.sphere;
-        sphere.center = vec3_add(sphere.center, body->centroid_global);
+        ta_sphere sphere = { 0 };
+        sphere.center = body->centroid_global;
+        sphere.radius = body->collider.data.sphere.radius;
         float t;
         if (ta_intersect_ray_sphere(ray, sphere, &t)) {
             if (t >= 0.0f && t < t_min) {

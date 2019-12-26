@@ -25,4 +25,5 @@ typedef struct ta_collider {
 } ta_collider;
 
 bool ta_intersect_ray_sphere(ta_ray ray, ta_sphere sphere, float *t);
-void ta_collider_render(ta_collider *collider);
+ta_aabb ta_collider_world_aabb(ta_collider *collider, ta_xform *xform);
+void ta_collider_render(ta_collider *collider, ta_rgba color);

@@ -44,6 +44,7 @@ const ta_mat4 MAT4_IDENT = {
 const ta_rgba TA_COLOR_INVIS       = { 0.0f, 0.0f, 0.0f, 0.0f };
 const ta_rgba TA_COLOR_BLACK       = { 0.0f, 0.0f, 0.0f, 1.0f };
 const ta_rgba TA_COLOR_RED         = { 1.0f, 0.1f, 0.1f, 1.0f };
+const ta_rgba TA_COLOR_DARK_RED    = { 0.5f, 0.0f, 0.0f, 1.0f };
 const ta_rgba TA_COLOR_GREEN       = { 0.1f, 1.0f, 0.1f, 1.0f };
 const ta_rgba TA_COLOR_BLUE        = { 0.1f, 0.1f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_BLUE1       = { 0.0f, 0.0f, 0.1f, 1.0f };

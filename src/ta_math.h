@@ -176,6 +176,7 @@ extern const ta_mat4 MAT4_IDENT;
 extern const ta_rgba TA_COLOR_INVIS;
 extern const ta_rgba TA_COLOR_BLACK;
 extern const ta_rgba TA_COLOR_RED;
+extern const ta_rgba TA_COLOR_DARK_RED;
 extern const ta_rgba TA_COLOR_GREEN;
 extern const ta_rgba TA_COLOR_BLUE;
 extern const ta_rgba TA_COLOR_BLUE1;

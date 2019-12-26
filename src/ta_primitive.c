@@ -183,6 +183,9 @@ void ta_primitive_push_rect_uv(ta_vert_quad **queue, ta_rect_uv rect_uv,
             y1 -= 1.0f;
         }
     } else {
+        // TODO(cleanup): This code path never seems to be called?
+        DLB_ASSERT(0);
+
         x0 = rect_uv.rect.x;
         x1 = rect_uv.rect.x + rect_uv.rect.w;
         y0 = rect_uv.rect.y;

@@ -127,21 +127,44 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
 
     if (camera->debug_normals || camera->debug_colliders) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->model);
+
         if (camera->debug_normals) {
             dlb_vec_each(const char **, mesh_name, model->meshes) {
                 ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
                 ta_mesh_push_normals(mesh);
+                ta_primitive_render(true, false);
             }
         }
         if (camera->debug_colliders) {
             ta_rigid_body *body = ta_game_component_try(RES_COMP_RIGID_BODY, model->entity_name);
             if (body) {
-                ta_collider_render(&body->collider);
+                // Model space
+                ta_sphere centroid_local = { 0 };
+                centroid_local.center = body->centroid_local;
+                centroid_local.radius = 0.05f;
+                ta_primitive_push_sphere(centroid_local, TA_COLOR_MAGENTA);
+
+                ta_rgba narrowphase_color = body->dbg_narrowphase ? TA_COLOR_MAGENTA : TA_COLOR_GRAY4;
+                ta_collider_render(&body->collider, narrowphase_color);
+
+                ta_primitive_render(true, false);
+
+                // World space
+                ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+
+                ta_sphere centroid_global = { 0 };
+                centroid_global.center = body->centroid_global;
+                centroid_global.radius = 0.1f;
+                ta_primitive_push_sphere(centroid_global, TA_COLOR_CYAN);
+
+                ta_rgba broadphase_color = body->dbg_broadphase ? TA_COLOR_RED : TA_COLOR_GRAY4;
+                ta_primitive_push_aabb(body->aabb, broadphase_color);
+
+                ta_primitive_render(true, false);
             }
         }
     }
-
-    ta_primitive_render(true, false);
 }
 
 void ta_model_render_shader(ta_model *model, ta_camera *camera,

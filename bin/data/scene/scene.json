@@ -47,15 +47,15 @@
       "name": "freecam",
       "entity_name": "freecam",
       "position": {
-        "x": "0x4114AC4C (9.292065)",
-        "y": "0xC08F3A86 (-4.475894)",
-        "z": "0x4016A6F2 (2.353940)"
+        "x": "0x3FB738BC (1.431419)",
+        "y": "0xC08C8FE6 (-4.392566)",
+        "z": "0x41344A10 (11.268082)"
       },
       "position_smooth": "0x3DCCCCCD (0.100000)",
       "position_target_vel": "0x3E99999A (0.300000)",
-      "yaw": "0x4314B885 (148.720779)",
+      "yaw": "0x42DFA817 (111.828300)",
       "yaw_smooth": "0x3F333333 (0.700000)",
-      "pitch": "0xC0C32F33 (-6.099512)",
+      "pitch": "0xC1566868 (-13.400490)",
       "pitch_smooth": "0x3F333333 (0.700000)",
       "pitch_min": "0xC2B40000 (-90.000000)",
       "pitch_max": "0x42B40000 (90.000000)",
@@ -67,9 +67,9 @@
         "z": "0x00000000 (0.000000)"
       },
       "up": {
-        "x": "0xBDB9FB24 (-0.090811)",
-        "y": "0x3F7E8CFC (0.994339)",
-        "z": "0xBD61F8C1 (-0.055169)"
+        "x": "0xBDB07B84 (-0.086173)",
+        "y": "0x3F7907B6 (0.972774)",
+        "z": "0xBE5C4D9D (-0.215140)"
       },
       "ortho": false
     },
@@ -77,11 +77,11 @@
       "name": "player_one",
       "entity_name": "player_one",
       "position": {
-        "x": "0x402F83B4 (2.742414)",
-        "y": "0xC0A000C8 (-5.000095)",
-        "z": "0xC07D5458 (-3.958273)"
+        "x": "0xC132B07C (-11.168087)",
+        "y": "0xC0A000D2 (-5.000100)",
+        "z": "0x401BE7FE (2.436035)"
       },
-      "position_smooth": "0x3D4CCCCD (0.050000)",
+      "position_smooth": "0x3F000000 (0.500000)",
       "position_target_vel": "0x3E4CCCCD (0.200000)",
       "yaw": "0x439E59AF (316.700653)",
       "yaw_smooth": "0x3F333333 (0.700000)",
@@ -267,7 +267,7 @@
       "name": "column_0001",
       "entity_name": "column_0001",
       "meshes": ["column_0001"],
-      "material": "terrazzo",
+      "material": "test",
       "invisible": false,
       "cast_shadows": true,
       "receive_shadows": true
@@ -276,7 +276,7 @@
       "name": "column_0002",
       "entity_name": "column_0002",
       "meshes": ["column_0001"],
-      "material": "terrazzo",
+      "material": "test",
       "invisible": false,
       "cast_shadows": true,
       "receive_shadows": true
@@ -285,7 +285,7 @@
       "name": "column_0003",
       "entity_name": "column_0003",
       "meshes": ["column_0001"],
-      "material": "terrazzo",
+      "material": "test",
       "invisible": false,
       "cast_shadows": true,
       "receive_shadows": true
@@ -416,8 +416,8 @@
       "entity_name": "button_0001",
       "xform": {
         "position": {
-          "x": "0x408147B0 (4.040001)",
-          "y": "0xC1000000 (-8.000000)",
+          "x": "0x40D28F66 (6.580005)",
+          "y": "0xC0FFFFEE (-7.999991)",
           "z": "0x00000000 (0.000000)"
         },
         "orientation": {
@@ -433,15 +433,15 @@
       "entity_name": "player_one",
       "xform": {
         "position": {
-          "x": "0x402F83AB (2.742411)",
+          "x": "0xC132B07C (-11.168087)",
           "y": "0xC0E000D2 (-7.000100)",
-          "z": "0xC07D544F (-3.958271)"
+          "z": "0x401BE7FF (2.436035)"
         },
         "orientation": {
-          "x": "0x3D1CF1C8 (0.038317)",
-          "y": "0xBD1362EF (-0.035983)",
-          "z": "0x3EC8E196 (0.392346)",
-          "w": "0xBF6B16AB (-0.918315)"
+          "x": "0xBDFF49ED (-0.124653)",
+          "y": "0x3B9342D8 (0.004494)",
+          "z": "0x3F479FFE (0.779785)",
+          "w": "0x3F1D0E0C (0.613496)"
         }
       }
     },
@@ -501,9 +501,9 @@
       "entity_name": "column_0001",
       "xform": {
         "position": {
-          "x": "0xC0D9BE34 (-6.804468)",
-          "y": "0xC1100069 (-9.000100)",
-          "z": "0xBFC8C520 (-1.568516)"
+          "x": "0xC0BEC11F (-5.961074)",
+          "y": "0xC1000069 (-8.000100)",
+          "z": "0xBFAC3BC6 (-1.345574)"
         },
         "orientation": {
           "x": "0x00000000 (0.000000)",
@@ -518,15 +518,15 @@
       "entity_name": "column_0002",
       "xform": {
         "position": {
-          "x": "0xC10D930C (-8.848400)",
-          "y": "0xC1100069 (-9.000100)",
-          "z": "0xBFDE67C7 (-1.737542)"
+          "x": "0xC10E8E27 (-8.909705)",
+          "y": "0xC0FFFFBE (-7.999969)",
+          "z": "0xBFD5157B (-1.664718)"
         },
         "orientation": {
-          "x": "0x00000000 (0.000000)",
-          "y": "0x00000000 (0.000000)",
-          "z": "0x00000000 (0.000000)",
-          "w": "0x3F800000 (1.000000)"
+          "x": "0x3979749C (0.000238)",
+          "y": "0xB4010E4C (-0.000000)",
+          "z": "0x3C04D2E1 (0.008107)",
+          "w": "0x3F7FFDD8 (0.999967)"
         }
       }
     },
@@ -535,15 +535,15 @@
       "entity_name": "column_0003",
       "xform": {
         "position": {
-          "x": "0xC0EECED7 (-7.462749)",
-          "y": "0xC1100069 (-9.000100)",
-          "z": "0xC05D3F07 (-3.456972)"
+          "x": "0xC10358F7 (-8.209220)",
+          "y": "0xC1000058 (-8.000084)",
+          "z": "0xC0773246 (-3.862443)"
         },
         "orientation": {
-          "x": "0x00000000 (0.000000)",
-          "y": "0x00000000 (0.000000)",
-          "z": "0x00000000 (0.000000)",
-          "w": "0x3F800000 (1.000000)"
+          "x": "0xBB132B54 (-0.002246)",
+          "y": "0xB5A2BDD6 (-0.000001)",
+          "z": "0xBAD96FBC (-0.001659)",
+          "w": "0x3F7FFFC0 (0.999996)"
         }
       }
     },
@@ -552,9 +552,9 @@
       "entity_name": "star_0001",
       "xform": {
         "position": {
-          "x": "0xC0F18863 (-7.547899)",
+          "x": "0xC0FB49F4 (-7.852777)",
           "y": "0xC0F000D2 (-7.500100)",
-          "z": "0xC0EB784C (-7.358435)"
+          "z": "0xC0ED528F (-7.416328)"
         },
         "orientation": {
           "x": "0xBED068F2 (-0.407051)",
@@ -596,7 +596,7 @@
         "sphere": {
           "center": {
             "x": "0x00000000 (0.000000)",
-            "y": "0x00000000 (0.000000)",
+            "y": "0x3F199998 (0.600000)",
             "z": "0x00000000 (0.000000)"
           },
           "radius": "0x3F333333 (0.700000)"
@@ -604,7 +604,7 @@
       },
       "mass": "0x3F800000 (1.000000)",
       "trigger": true,
-      "no_gravity": false
+      "no_gravity": true
     },
     {
       "name": "player_one",
@@ -674,7 +674,7 @@
           "radius": "0x3F800000 (1.000000)"
         }
       },
-      "mass": "0x461C3C00 (9999.000000)",
+      "mass": "0x3F800000 (1.000000)",
       "trigger": false,
       "no_gravity": false
     },
@@ -692,7 +692,7 @@
           "radius": "0x3F800000 (1.000000)"
         }
       },
-      "mass": "0x461C3C00 (9999.000000)",
+      "mass": "0x447A0000 (1000.000000)",
       "trigger": false,
       "no_gravity": false
     },
@@ -710,7 +710,7 @@
           "radius": "0x3F800000 (1.000000)"
         }
       },
-      "mass": "0x461C3C00 (9999.000000)",
+      "mass": "0x447A0000 (1000.000000)",
       "trigger": false,
       "no_gravity": false
     },
