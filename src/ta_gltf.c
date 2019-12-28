@@ -12,6 +12,7 @@
 #define CGLTF_IMPLEMENTATION
 #include "misc/cgltf.h"
 #include <stdio.h>
+#include <math.h>
 
 #define gltf_each(t, i, s) for (t (i) = (s), *(i##e) = (s + s##_count); (i) != (i##e); (i)++)
 

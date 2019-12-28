@@ -145,7 +145,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
                 centroid_local.radius = 0.05f;
                 ta_primitive_push_sphere(centroid_local, TA_COLOR_MAGENTA);
 
-                ta_rgba narrowphase_color = body->dbg_narrowphase ? TA_COLOR_MAGENTA : TA_COLOR_GRAY4;
+                ta_rgba narrowphase_color = body->dbg_narrowphase ? TA_COLOR_MAGENTA : TA_COLOR_ORANGE;
                 ta_collider_render(&body->collider, narrowphase_color);
 
                 ta_primitive_render(true, false);

@@ -487,6 +487,11 @@ static ui_frame *ui_frame_end(ui_frame_type type)
         if (frame->content_size.w > frame->rect.w) {
             frame->rect.h += SCROLL_WIDGET_THICKNESS;
         }
+
+        if (frame->type == UI_WINDOW) {
+            frame->rect.w = MIN(frame->rect.w, WINDOW_W - frame->rect.x);
+            frame->rect.h = MIN(frame->rect.h, WINDOW_H - frame->rect.y);
+        }
     }
 
     // NOTE: Setting offset manually is like position: relative. May want to

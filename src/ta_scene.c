@@ -466,8 +466,8 @@ static ta_manifold *detect_collisions(ta_rigid_body_pair *pairs, double dt)
 
     static ta_manifold *manifolds = 0;
 
-    ta_manifold manifold;
     dlb_vec_each(ta_rigid_body_pair *, pair, pairs) {
+        ta_manifold manifold = { 0 };
         if (ta_rigid_body_intersect(pair->a, pair->b, &manifold)) {
             ta_manifold *m = dlb_vec_alloc(manifolds);
             *m = manifold;

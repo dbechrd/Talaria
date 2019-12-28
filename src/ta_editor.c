@@ -410,6 +410,7 @@ static void ui_node_panel()
         ta_ui_label(0, CSTR("mass:"));
         static ta_ui_textbox_state mass_editor = { 0 };
         ta_ui_textbox_float(0, &rigid_body->mass, &mass_editor, 0);
+        rigid_body->mass = MAX(0.0f, rigid_body->mass);
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
@@ -429,6 +430,14 @@ static void ui_node_panel()
             rigid_body->velocity.z);
         DLB_ASSERT(text_len < sizeof(text));
         ta_ui_label(0, CSTR(text));
+        ta_ui_next_margin(6, 1, 0, 1);
+        ta_rgba velc = TA_COLOR_DARK_RED;
+        ta_ui_next_bg_color(UI_STATE_NONE, velc.r, velc.g, velc.b, velc.a);
+        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.8f, 0.0f, 0.0f, 0.9f);
+        if (ta_ui_button(0, CSTR("Reset"))) {
+            rigid_body->velocity = VEC3_ZERO;
+            rigid_body->ang_velocity = VEC3_ZERO;
+        }
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
@@ -460,23 +469,35 @@ static void ui_node_panel()
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("dbg_broadphase:"));
+        ta_ui_label(0, CSTR("broadphase collide:"));
         rigid_body->dbg_broadphase ? ta_ui_label(0, SYM(SYM_TRUE)) : ta_ui_label(0, SYM(SYM_FALSE));
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("dbg_narrowphase:"));
+        ta_ui_label(0, CSTR("broad aabb center:"));
+        static ta_ui_textbox_vec3_state broad_center_editor = { 0 };
+        ta_ui_textbox_vec3(&rigid_body->aabb.center, &broad_center_editor, false, true, true);
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("broad aabb extents:"));
+        static ta_ui_textbox_vec3_state broad_extents_editor = { 0 };
+        ta_ui_textbox_vec3(&rigid_body->aabb.extents, &broad_extents_editor, false, true, false);
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(0, CSTR("narrowphase collide:"));
         rigid_body->dbg_narrowphase ? ta_ui_label(0, SYM(SYM_TRUE)) : ta_ui_label(0, SYM(SYM_FALSE));
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("centroid_local:"));
+        ta_ui_label(0, CSTR("centroid local:"));
         static ta_ui_textbox_vec3_state centroid_local_editor = { 0 };
         ta_ui_textbox_vec3(&rigid_body->centroid_local, &centroid_local_editor, false, false, false);
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("centroid_global:"));
+        ta_ui_label(0, CSTR("centroid global:"));
         static ta_ui_textbox_vec3_state centroid_global_editor = { 0 };
         ta_ui_textbox_vec3(&rigid_body->centroid_global, &centroid_global_editor, false, false, false);
 
@@ -503,7 +524,7 @@ static void ui_node_panel()
                 ta_ui_row_begin();
                 ta_ui_label(0, CSTR("normal:"));
                 static ta_ui_textbox_vec3_state normal_editor = { 0 };
-                ta_ui_textbox_vec3(&rigid_body->collider.data.plane.normal, &normal_editor, false, true, false);
+                ta_ui_textbox_vec3(&rigid_body->collider.data.plane.normal, &normal_editor, true, true, false);
                 break;
             } case TA_COLLIDER_SPHERE: {
                 ta_ui_row_begin();
@@ -512,28 +533,15 @@ static void ui_node_panel()
                 static ta_ui_textbox_state radius_editor = { 0 };
                 ta_ui_textbox_float(0, &rigid_body->collider.data.sphere.radius, &radius_editor, 0);
                 break;
-            } case TA_COLLIDER_AABB: {
-                ta_ui_row_begin();
-                ta_ui_label(0, CSTR("extents:"));
-                static ta_ui_textbox_vec3_state extents_editor = { 0 };
-                ta_ui_textbox_vec3(&rigid_body->collider.data.aabb.extents, &extents_editor, false, true, false);
-                break;
             } case TA_COLLIDER_OBB: {
                 ta_ui_row_begin();
                 ta_ui_label(0, CSTR("extents:"));
                 static ta_ui_textbox_vec3_state extents_editor = { 0 };
                 ta_ui_textbox_vec3(&rigid_body->collider.data.obb.extents, &extents_editor, false, true, false);
-
                 ta_ui_row_begin();
-                ta_ui_label(0, CSTR("axes:"));
-                ta_ui_row_begin();
-                static ta_ui_textbox_vec3_state axes_editors[3] = { 0 };
-                ta_ui_label(0, CSTR("axes[0]:"));
-                ta_ui_textbox_vec3(&rigid_body->collider.data.obb.axes[0], &axes_editors[0], false, true, false);
-                ta_ui_label(0, CSTR("axes[1]:"));
-                ta_ui_textbox_vec3(&rigid_body->collider.data.obb.axes[1], &axes_editors[1], false, true, false);
-                ta_ui_label(0, CSTR("axes[2]:"));
-                ta_ui_textbox_vec3(&rigid_body->collider.data.obb.axes[2], &axes_editors[2], false, true, false);
+                ta_ui_label(0, CSTR("orientation:"));
+                static ta_ui_textbox_vec4_state orientation_editor = { 0 };
+                ta_ui_textbox_vec4(&rigid_body->collider.data.obb.orientation, &orientation_editor, true, true, true);
                 break;
             } default: {
                 break;
@@ -1019,6 +1027,9 @@ void ta_editor_draw(float alpha)
             double seconds = ta_timer_elapsed_sec();
             double sine = sin(seconds * 4.0) * 0.5 + 0.5;
             wire_color.a = (float)(0.25 * (sine * sine) + 0.02);
+            if (camera->debug_no_mesh) {
+                wire_color.a = 0.05f;
+            }
             ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
             ta_model_render_shader(model, camera, shader, alpha, 1.0f);
         }
@@ -1102,14 +1113,23 @@ void editor_command_select()
 
     ta_rigid_body *bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
     dlb_vec_each(ta_rigid_body *, body, bodies) {
-        // TODO: Handle types other than spheres
-        if (body->collider.type != TA_COLLIDER_SPHERE) {
-            continue;
+        ta_sphere sphere = { 0 };
+        switch (body->collider.type) {
+            case TA_COLLIDER_SPHERE: {
+                sphere.center = body->centroid_global;
+                sphere.radius = body->collider.data.sphere.radius;
+                break;
+            } case TA_COLLIDER_OBB: {
+                // TODO: Ray vs. OBB for more accurate picking
+                sphere.center = body->centroid_global;
+                sphere.radius = vec3_len(body->collider.data.obb.extents);
+                break;
+            } default: {
+                // Ignore unsupported colliders when picking
+                continue;
+            }
         }
 
-        ta_sphere sphere = { 0 };
-        sphere.center = body->centroid_global;
-        sphere.radius = body->collider.data.sphere.radius;
         float t;
         if (ta_intersect_ray_sphere(ray, sphere, &t)) {
             if (t >= 0.0f && t < t_min) {

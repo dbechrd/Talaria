@@ -1,0 +1,45 @@
+struct ta_transform {
+    ta_vec3 position;
+    ta_quat orientation;
+    ta_vec3 scale;
+};
+
+// Note(perf): Could be combined via bitmask into a single 32-bit integer
+struct ta_handle {
+    size_t index;
+    size_t generation;
+};
+
+# contiguous list of active transform components
+vector<ta_tranform> transforms;
+
+# ordered list of entities that have transforms
+# O(log n) binary search to find out if entity has transform
+vector<ta_handle> entity_transforms;
+
+# hash map of entites that have transforms
+# O(1) lookup of entity by uid
+# wastes some space
+unordered_map<u32 uid, ta_handle> entity_transforms;
+
+# sparse set of entites that have transforms
+# O(1) lookup of entity by uid
+# wastes a lot of space
+ta_handle entity_transforms[MAX_ENTITY_UID];
+
+# entity id recycling via implicit list
+# not sure why need to leave version in place.. just check if uid.index == entities[uid].index
+
+
+# Jon Game Editor Stuff
+Can render all static things to a static shadow map, then only render dynamic things to another shadow map to optimize for draw calls
+
+send all point lights to GPU (e.g. Ignacio array 127 lights), then send indices of lights (e.g. 4 indices) affecting current entity being drawn
+
+
+# http://bitsquid.blogspot.com/2015/06/allocation-adventures-1-datacomponent.html
+(Note: we won't actually hash the string "stats.health" directly, because that could lead to problems if some of our keys contained a "." character. Instead we hash each sub key separately and then hash them all together.)
+
+These "holes" will cause fragmentation of the buffer and eventually make it run out of space. If this was a general purpose memory allocator that would be a serious issue that we would have to be seriously worried about.
+
+But in our case it doesn't really matter. The number of items is small and we control the pointers to them, so we can easily move them around and defragment the buffer when necessary. But in fact, we don't even have to do that. If we get fragmentation we will eventually run out of space. This will reallocate the buffer which will also defragment it. This is enough for our purposes.

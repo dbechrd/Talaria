@@ -459,22 +459,28 @@ void ta_primitive_push_rgb_sphere(ta_sphere sphere)
 
 void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
 {
+#if 1
+    ta_obb obb = { 0 };
+    obb.center = aabb.center;
+    obb.extents = aabb.extents;
+    obb.orientation = QUAT_IDENT;
+    ta_primitive_push_obb(obb, color);
+#else
     ta_line_3d line = { 0 };
-
-    ta_vec3 min = vec3_sub(aabb.center, aabb.extents);
+    ta_vec3 pmin = vec3_sub(aabb.center, aabb.extents);
     ta_vec3 size = vec3_scalef(aabb.extents, 2.0f);
 
     ta_vec3 p0, p1, p2, p3, p4, p5, p6, p7;
 
 #define VEC3(vec, a, b, c) vec.x = a; vec.y = b; vec.z = c;
-    VEC3(p0, min.x         , min.y         , min.z         );
-    VEC3(p1, min.x         , min.y         , min.z + size.z);
-    VEC3(p2, min.x         , min.y + size.y, min.z         );
-    VEC3(p3, min.x         , min.y + size.y, min.z + size.z);
-    VEC3(p4, min.x + size.x, min.y         , min.z         );
-    VEC3(p5, min.x + size.x, min.y         , min.z + size.z);
-    VEC3(p6, min.x + size.x, min.y + size.y, min.z         );
-    VEC3(p7, min.x + size.x, min.y + size.y, min.z + size.z);
+    VEC3(p0, pmin.x         , pmin.y         , pmin.z         );
+    VEC3(p1, pmin.x         , pmin.y         , pmin.z + size.z);
+    VEC3(p2, pmin.x         , pmin.y + size.y, pmin.z         );
+    VEC3(p3, pmin.x         , pmin.y + size.y, pmin.z + size.z);
+    VEC3(p4, pmin.x + size.x, pmin.y         , pmin.z         );
+    VEC3(p5, pmin.x + size.x, pmin.y         , pmin.z + size.z);
+    VEC3(p6, pmin.x + size.x, pmin.y + size.y, pmin.z         );
+    VEC3(p7, pmin.x + size.x, pmin.y + size.y, pmin.z + size.z);
 #undef VEC3
 
 #define PUSH_LINE(a, b) line.p0 = a; line.p1 = b; \
@@ -492,6 +498,70 @@ void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
     PUSH_LINE(p5, p7);
     PUSH_LINE(p6, p7);
 #undef PUSH_LINE
+#endif
+}
+
+void ta_primitive_push_obb(ta_obb obb, ta_rgba color)
+{
+    ta_vec3 p[8] = { 0 };
+    p[0].x = -obb.extents.x;
+    p[0].y = -obb.extents.y;
+    p[0].z = -obb.extents.z;
+    p[1].x = -obb.extents.x;
+    p[1].y = -obb.extents.y;
+    p[1].z = +obb.extents.z;
+    p[2].x = -obb.extents.x;
+    p[2].y = +obb.extents.y;
+    p[2].z = -obb.extents.z;
+    p[3].x = -obb.extents.x;
+    p[3].y = +obb.extents.y;
+    p[3].z = +obb.extents.z;
+    p[4].x = +obb.extents.x;
+    p[4].y = -obb.extents.y;
+    p[4].z = -obb.extents.z;
+    p[5].x = +obb.extents.x;
+    p[5].y = -obb.extents.y;
+    p[5].z = +obb.extents.z;
+    p[6].x = +obb.extents.x;
+    p[6].y = +obb.extents.y;
+    p[6].z = -obb.extents.z;
+    p[7].x = +obb.extents.x;
+    p[7].y = +obb.extents.y;
+    p[7].z = +obb.extents.z;
+
+    for (int i = 0; i < 8; ++i) {
+        p[i] = vec3_rotate_quat(p[i], obb.orientation);
+        p[i] = vec3_add(p[i], obb.center);
+    }
+
+    ta_line_3d line = { 0 };
+#define PUSH_LINE(a, b) line.p0 = a; line.p1 = b; \
+                        ta_primitive_push_line_3d(line, color, color)
+    PUSH_LINE(p[0], p[1]);
+    PUSH_LINE(p[0], p[2]);
+    PUSH_LINE(p[0], p[4]);
+    PUSH_LINE(p[1], p[3]);
+    PUSH_LINE(p[1], p[5]);
+    PUSH_LINE(p[2], p[3]);
+    PUSH_LINE(p[2], p[6]);
+    PUSH_LINE(p[3], p[7]);
+    PUSH_LINE(p[4], p[5]);
+    PUSH_LINE(p[4], p[6]);
+    PUSH_LINE(p[5], p[7]);
+    PUSH_LINE(p[6], p[7]);
+#undef PUSH_LINE
+
+#if 0
+    ta_vec3 p[8] = { 0 };
+    p[0] = vec3_sub(vec3_sub(vec3_sub(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
+    p[1] = vec3_sub(vec3_sub(vec3_add(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
+    p[2] = vec3_sub(vec3_add(vec3_sub(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
+    p[3] = vec3_sub(vec3_add(vec3_add(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
+    p[4] = vec3_add(vec3_sub(vec3_sub(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
+    p[5] = vec3_add(vec3_sub(vec3_add(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
+    p[6] = vec3_add(vec3_add(vec3_sub(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
+    p[7] = vec3_add(vec3_add(vec3_add(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
+#endif
 }
 
 void ta_primitive_render_lines(ta_shader *shader, bool clear_queues,

@@ -33,6 +33,11 @@ const ta_mat3 MAT3_IDENT = {
     0.0f, 1.0f, 0.0f,
     0.0f, 0.0f, 1.0f,
 };
+const ta_mat3 MAT3_ZERO = {
+    0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f,
+    0.0f, 0.0f, 0.0f,
+};
 
 const ta_mat4 MAT4_IDENT = {
     1.0f, 0.0f, 0.0f, 0.0f,

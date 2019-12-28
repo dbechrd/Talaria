@@ -96,7 +96,7 @@ typedef struct ta_manifold {
     struct ta_transform *btrans;
     ta_vec3 normal;
     float depth;
-    ta_vec3 contacts[1];  // world position
+    ta_vec3 contacts[8];  // world position
     u32 contact_count;
     float e;   // Mixed restitution
     float df;  // Mixed dynamic friction

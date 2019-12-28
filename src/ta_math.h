@@ -134,7 +134,7 @@ typedef struct ta_aabb {
 typedef struct ta_obb {
     ta_vec3 center;
     ta_vec3 extents;
-    ta_vec3 axes[3];
+    ta_vec4 orientation;
 } ta_obb;
 
 typedef struct ta_plane {
@@ -171,6 +171,7 @@ extern const ta_vec3 VEC3_EPSILON;
 
 extern const ta_vec4 QUAT_IDENT;
 extern const ta_mat3 MAT3_IDENT;
+extern const ta_mat3 MAT3_ZERO;
 extern const ta_mat4 MAT4_IDENT;
 
 extern const ta_rgba TA_COLOR_INVIS;

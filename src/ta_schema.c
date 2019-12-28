@@ -336,16 +336,15 @@ void ta_schema_register()
     TYPE_END(ta_aabb);
 
     TYPE_START(ta_obb, TYP_OBB, 0, 0);
-    TYPE_FIELD(ta_obb, center,  TYP_VEC3);
-    TYPE_FIELD(ta_obb, extents, TYP_VEC3);
-    TYPE_ARRAY(ta_obb, axes,    TYP_VEC3, 3);
+    TYPE_FIELD(ta_obb, center,      TYP_VEC3);
+    TYPE_FIELD(ta_obb, extents,     TYP_VEC3);
+    TYPE_FIELD(ta_obb, orientation, TYP_VEC4);
     TYPE_END(ta_obb);
 
     TYPE_START(ta_collider, TYP_COLLIDER, 0, 0);
     TYPE_UNION_TYPE(ta_collider,  type,   ATOM_ENUM,  ta_collider_type_str);
     TYPE_UNION_FIELD(ta_collider, plane,  TYP_PLANE,  data, TA_COLLIDER_PLANE);
     TYPE_UNION_FIELD(ta_collider, sphere, TYP_SPHERE, data, TA_COLLIDER_SPHERE);
-    TYPE_UNION_FIELD(ta_collider, aabb,   TYP_AABB,   data, TA_COLLIDER_AABB);
     TYPE_UNION_FIELD(ta_collider, obb,    TYP_OBB,    data, TA_COLLIDER_OBB);
     TYPE_END(ta_collider);
 
