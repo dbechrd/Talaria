@@ -492,7 +492,7 @@ void ta_scene_update(ta_scene *scene, float dt)
         ta_manifold *manifolds = detect_collisions(pairs, dt);
         dlb_vec_each(ta_manifold *, manifold, manifolds) {
             // Resolution
-            ta_rigid_body_resolve_collision(manifold);
+            ta_rigid_body_resolve_collision(manifold, dt);
         }
         dlb_vec_zero(manifolds);
         dlb_vec_zero(pairs);

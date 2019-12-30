@@ -52,6 +52,9 @@ typedef struct ta_rigid_body {
     // for asymmetric collider types.
     //ta_xform offset;
 
+    ta_vec3 acceleration;      // Don't ever change this directly, use force/impulse
+    //ta_vec3 ang_acceleration;  // Dunno if we need this
+
     ta_vec3 velocity;
     ta_vec3 ang_velocity;
 
@@ -92,13 +95,11 @@ typedef struct ta_rigid_body_pair {
 typedef struct ta_manifold {
     ta_rigid_body *a;
     ta_rigid_body *b;
-    struct ta_transform *atrans;
-    struct ta_transform *btrans;
-    ta_vec3 normal;
-    float depth;
+    ta_vec3 normal;       // normal from a to b
+    float depth;          // distance along normal
     ta_vec3 contacts[8];  // world position
     u32 contact_count;
-    float e;   // Mixed restitution
+    float e;   // Mixed restitution (0.0 = inelastic, 1.0 = perfectly elastic)
     float df;  // Mixed dynamic friction
     float sf;  // Mixed static friction
 } ta_manifold;
@@ -116,4 +117,4 @@ bool ta_plane_v_sphere(const ta_plane *plane, const ta_sphere *sphere,
     ta_manifold *manifold);
 bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
     ta_manifold *manifold);
-void ta_rigid_body_resolve_collision(ta_manifold *manifold);
+void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt);

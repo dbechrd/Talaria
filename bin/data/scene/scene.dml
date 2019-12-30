@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x410B6750 (8.712723)
-    y: 0xC08D0516 (-4.406871)
-    z: 0x40EA49EB (7.321523)
+    x: 0x40FDAF18 (7.927624)
+    y: 0xC043F1D0 (-3.061634)
+    z: 0xC088FDD2 (-4.280984)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x431AA112 (154.629181)
+  yaw: 0x43453B1D (197.230911)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC17668A0 (-15.400543)
+  pitch: 0xC183348D (-16.400660)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,16 +57,16 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBE75B61B (-0.239952)
-    y: 0x3F76CECC (0.964093)
-    z: 0xBDE909B9 (-0.113788)
+    x: 0xBE8A1385 (-0.269680)
+    y: 0x3F759565 (0.959311)
+    z: 0x3DAB4B2B (0.083639)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
   position:
-    x: 0xC132B07C (-11.168087)
+    x: 0xC047713C (-3.116286)
     y: 0xC0A000D2 (-5.000100)
-    z: 0x401BE7FE (2.436035)
+    z: 0xC097929C (-4.736647)
   position_smooth: 0x3F000000 (0.500000)
   position_target_vel: 0x3E4CCCCD (0.200000)
   yaw: 0x439E59AF (316.700653)
@@ -219,7 +219,7 @@ ta_model:
 ta_model:
   name: "column_0001"
   entity_name: "column_0001"
-  meshes: ["column_0001", ]
+  meshes: ["prim_sphere", ]
   material: "test"
   cast_shadows: true
   receive_shadows: true
@@ -351,27 +351,27 @@ ta_transform:
   entity_name: "player_one"
   xform:
     position:
-      x: 0xC132B07C (-11.168087)
+      x: 0xC047713B (-3.116286)
       y: 0xC0E000D2 (-7.000100)
-      z: 0x401BE7FF (2.436035)
+      z: 0xC097929D (-4.736647)
     orientation:
-      x: 0xBDFF49ED (-0.124653)
-      y: 0x3B9342D8 (0.004494)
-      z: 0x3F479FFE (0.779785)
-      w: 0x3F1D0E0C (0.613496)
+      x: 0x3F5878CB (0.845593)
+      y: 0xBE48C354 (-0.196058)
+      z: 0xBDFC5870 (-0.123216)
+      w: 0xBEF64460 (-0.480990)
 ta_transform:
   name: "sphere1"
   entity_name: "sphere1"
   xform:
     position:
-      x: 0x00000000 (0.000000)
-      y: 0xC0EF18C5 (-7.471774)
-      z: 0x40C75C13 (6.229990)
+      x: 0x4044DC30 (3.075939)
+      y: 0xC0E848C8 (-7.258884)
+      z: 0x405AFEEF (3.421810)
     orientation:
-      x: 0x3ABBF65E (0.001434)
-      y: 0x3B644FEC (0.003484)
-      z: 0x3A934E69 (0.001124)
-      w: 0x3F7FFF80 (0.999992)
+      x: 0xBA0469A7 (-0.000505)
+      y: 0x3E55E222 (0.208870)
+      z: 0x3C629113 (0.013829)
+      w: 0x3F7A5415 (0.977845)
 ta_transform:
   name: "sphere2"
   entity_name: "sphere2"
@@ -403,21 +403,21 @@ ta_transform:
   entity_name: "column_0001"
   xform:
     position:
-      x: 0xC0BEC11F (-5.961074)
-      y: 0xC1000069 (-8.000100)
-      z: 0xBFAC3BC6 (-1.345574)
+      x: 0xC05FA9C3 (-3.494736)
+      y: 0xC0E000D2 (-7.000100)
+      z: 0xBF5A5640 (-0.852879)
     orientation:
-      x: 0x00000000 (0.000000)
-      y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
+      x: 0x3EF4DC83 (0.478245)
+      y: 0xBE36F7F1 (-0.178680)
+      z: 0xBF071031 (-0.527591)
+      w: 0x3F2DD120 (0.678972)
 ta_transform:
   name: "column_0002"
   entity_name: "column_0002"
   xform:
     position:
       x: 0xC10E8E27 (-8.909705)
-      y: 0xC0FFFFBE (-7.999969)
+      y: 0xC0FF85AA (-7.985066)
       z: 0xBFD5157B (-1.664718)
     orientation:
       x: 0x3979749C (0.000238)
@@ -430,7 +430,7 @@ ta_transform:
   xform:
     position:
       x: 0xC10358F7 (-8.209220)
-      y: 0xC1000058 (-8.000084)
+      y: 0xC0FF869C (-7.985182)
       z: 0xC0773246 (-3.862443)
     orientation:
       x: 0xBB132B54 (-0.002246)
@@ -512,7 +512,7 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
-  mass: 0x3F800000 (1.000000)
+  mass: 0x41200000 (10.000000)
 ta_rigid_body:
   name: "sphere2"
   entity_name: "sphere2"
@@ -533,7 +533,7 @@ ta_rigid_body:
     sphere:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x3F800000 (1.000000)
+        y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   mass: 0x3F800000 (1.000000)
@@ -548,7 +548,6 @@ ta_rigid_body:
         y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  mass: 0x447A0000 (1000.000000)
 ta_rigid_body:
   name: "column_0003"
   entity_name: "column_0003"
@@ -560,7 +559,6 @@ ta_rigid_body:
         y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  mass: 0x447A0000 (1000.000000)
 ta_rigid_body:
   name: "star_0001"
   entity_name: "star_0001"
@@ -697,6 +695,12 @@ ta_mesh:
 ta_mesh:
   name: "star_0001"
   path: "data/mesh/star.obj"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
+ta_mesh:
+  name: "rock_mesh"
 ta_mesh:
   name: "rock_mesh"
 ta_mesh:

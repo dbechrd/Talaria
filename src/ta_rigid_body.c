@@ -4,6 +4,7 @@
 #include "ta_transform.h"
 #include "ta_game.h"
 #include "ta_schema.h"
+#include "ta_symbol.h"
 #include "dlb/dlb_vector.h"
 #include <math.h>
 #include <float.h>
@@ -37,13 +38,14 @@ void ta_rigid_body_init(ta_rigid_body *body)
     if (!body->e) {
         body->e = 0.5f;
     }
+    // TODO: Why is ks < kd? Am I supposed to 1.0 - kd? Hmm..
     if (!body->ks) {
         //body->ks = 0.20f;
-        body->ks = 0.60f;
+        body->ks = 0.05f;
     }
     if (!body->kd) {
         //body->kd = 0.10f;
-        body->kd = 0.10f;
+        body->kd = 0.20f;
     }
     body->inv_tensor_local = ta_collider_inv_tensor(&body->collider, body->mass);
 }
@@ -81,9 +83,8 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
 {
     ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM, body->entity_name);
 
-    if (body->mass) {
-        body->inv_mass = 1.0f / body->mass;
-    }
+    // Update inverse mass when mass changes (editor UI)
+    body->inv_mass = body->mass ? 1.0f / body->mass : 0.0f;
 
     // TODO: Calculate this based on torque_accum and dt
     //body.m_angularVelocity +=  body.m_globalInverseInertiaTensor * (body.m_torqueAccumulator * dt);
@@ -115,8 +116,9 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     }
 
     // a = Fdt / m
-    ta_vec3 acc = vec3_scalef(vec3_scalef(body->force_accum, dt), body->inv_mass);
-    body->velocity = vec3_add(body->velocity, acc);
+    body->acceleration = vec3_scalef(body->force_accum, body->inv_mass);
+    ta_vec3 da = vec3_scalef(body->acceleration, dt);
+    body->velocity = vec3_add(body->velocity, da);
     ta_vec3 dv = vec3_scalef(body->velocity, dt);
     float dv_mag = vec3_len(dv);
     if (dv_mag > DV_EPSILON) {
@@ -131,8 +133,8 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
 #if 1
     // TODO: Implement drag in a way that doesn't vary with different timesteps
     //       The "compound interest" problem.
-    body->velocity = vec3_scalef(body->velocity, 0.98f);
-    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.95f);
+    body->velocity = vec3_scalef(body->velocity, 0.99f);
+    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.99f);
 #endif
 
     // Reset accumulators
@@ -384,6 +386,7 @@ bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
     }
 
     bool collided = false;
+    bool swap_ab = (a->collider.type > b->collider.type);
 
     // TODO(cleanup): If this gets called at all, these two bodies are
     // broadphase intersecting.
@@ -396,11 +399,9 @@ bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
         b->dbg_broadphase = true;
     }
 
-    ta_collider_type a_type = a->collider.type;
-    ta_collider_type b_type = b->collider.type;
-    intersector *intersect_method = a_type <= b_type
-        ? intersectors[a_type][b_type]
-        : intersectors[b_type][a_type];
+    intersector *intersect_method = swap_ab
+        ? intersectors[b->collider.type][a->collider.type]
+        : intersectors[a->collider.type][b->collider.type];
 
     if (intersect_method) {
         collided = (*intersect_method)(a, b, manifold);
@@ -411,10 +412,20 @@ bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
 
     if (collided) {
         if (manifold) {
+#if 0
             manifold->a = a;
             manifold->b = b;
-            manifold->atrans = ta_game_component(RES_COMP_TRANSFORM, a->entity_name);
-            manifold->btrans = ta_game_component(RES_COMP_TRANSFORM, b->entity_name);
+#else
+            // TODO: Is it necessary to swap normal and bodies?
+            if (swap_ab) {
+                manifold->a = b;
+                manifold->b = a;
+                manifold->normal = vec3_neg(manifold->normal);
+            } else {
+                manifold->a = a;
+                manifold->b = b;
+            }
+#endif
             // Arithmetic mean (page 7)
             // https://graphics.stanford.edu/projects/bouncemap/assets/restitution_lowres.pdf
             manifold->e = (a->e + b->e) / 2.0f;
@@ -431,14 +442,14 @@ bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
     return collided;
 }
 
-void ta_rigid_body_resolve_collision(ta_manifold *manifold)
+void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
 {
     DLB_ASSERT(manifold->a != manifold->b);
 
     ta_rigid_body *a = manifold->a;
     ta_rigid_body *b = manifold->b;
-    ta_transform *atrans = manifold->atrans;
-    ta_transform *btrans = manifold->btrans;
+    ta_transform *atrans = ta_game_component(RES_COMP_TRANSFORM, a->entity_name);
+    ta_transform *btrans = ta_game_component(RES_COMP_TRANSFORM, b->entity_name);
 
     // Trigger colliders don't need any resolution
     if (a->trigger || b->trigger) {
@@ -457,31 +468,45 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
 
     for (u32 i = 0; i < manifold->contact_count; i++) {
         // Radii
-        ta_vec3 ra = vec3_sub(manifold->contacts[i], a->centroid_global); // atrans->xform.position);
-        ta_vec3 rb = vec3_sub(manifold->contacts[i], b->centroid_global); // btrans->xform.position);
+        ta_vec3 ra = vec3_sub(manifold->contacts[i], a->centroid_global);
+        ta_vec3 rb = vec3_sub(manifold->contacts[i], b->centroid_global);
 
         // Relative velocity
-        //ta_vec3 rv = vec3_sub(b->velocity, a->velocity);
         ta_vec3 rv_a = vec3_sub(a->velocity, vec3_cross(a->ang_velocity, ra));
         ta_vec3 rv_b = vec3_add(b->velocity, vec3_cross(b->ang_velocity, rb));
         ta_vec3 rv = vec3_sub(rv_b, rv_a);
 
-        // Relative velocity along normal
-        float rv_normal = vec3_dot(rv, manifold->normal);
-        if (rv_normal >= 0) {
+        // Separating velocity along normal
+        float v_separate = vec3_dot(rv, manifold->normal);
+        if (v_separate >= 0) {
             // If bodies moving apart, let it happen
             continue;
         }
 
-        float e = manifold->e;
+        float restitution = manifold->e;
 #if 1
         // "Box2D also uses inelastic collisions when the collision velocity is
         // small. This is done to prevent jitter." -Box2D manual
         //if (fabs(rv_normal) < 0.01f) {
-        //    e = 0.0f;
+        //    restitution = 0.0f;
         //}
 #endif
-        float j_numer = -(1.0f + e) * rv_normal;
+        float v_separate_new = -v_separate * restitution;
+
+#if 1
+        // Calculate separating velocity coming from acceleration this frame
+        ta_vec3 v_acc = vec3_sub(b->acceleration, a->acceleration);
+        float v_acc_separate = vec3_dot(v_acc, manifold->normal) * dt;
+
+        if (v_acc_separate < 0) {
+            v_separate_new += v_acc_separate * restitution;
+            v_separate_new = MAX(0, v_separate_new);
+        }
+
+        float delta_v = v_separate_new - v_separate;
+#else
+        float delta_v = v_separate_new;
+#endif
 
 #if 1
         // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-oriented-rigid-bodies--gamedev-8032
@@ -501,50 +526,53 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
         float j_denom = a->inv_mass + b->inv_mass + impulse_ang;
 
         // Calculate impulse
-        float jn = j_numer / j_denom;
-        ta_vec3 impulse = vec3_scalef(manifold->normal, jn);
+        float jn = delta_v / j_denom;
+        ta_vec3 a_resolve = vec3_scalef(manifold->normal, -jn);
+        ta_vec3 b_resolve = vec3_neg(a_resolve);
 
         // Apply separation impulses
-        ta_rigid_body_apply_impulse(a, vec3_neg(impulse), ra);
-        ta_rigid_body_apply_impulse(b, impulse, rb);
+        ta_rigid_body_apply_impulse(a, a_resolve, ra);
+        ta_rigid_body_apply_impulse(b, b_resolve, rb);
 
-#if _DEBUG && 1
-        // Render debug primitives at collision contact points
+        //-----------------------------
+        // Debug rendering
         ta_sphere dbg_contact_world;
         dbg_contact_world.center = manifold->contacts[i];
-        dbg_contact_world.radius = 0.1f;
-        ta_primitive_push_sphere(dbg_contact_world, TA_COLOR_RED);
-
+        dbg_contact_world.radius = 0.05f;
+        ta_primitive_push_sphere(dbg_contact_world, TA_COLOR_DARK_RED);
         ta_line_3d dbg_contact_normal;
-        dbg_contact_normal.p0 = manifold->contacts[i];
-        dbg_contact_normal.p1 = vec3_add(manifold->contacts[i], manifold->normal);
-        ta_primitive_push_line_3d(dbg_contact_normal, TA_COLOR_RED, TA_COLOR_RED);
+        dbg_contact_normal.p0 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, 0.05f));
+        dbg_contact_normal.p1 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, 0.95f));
+        ta_primitive_push_line_3d(dbg_contact_normal, TA_COLOR_DARK_RED, TA_COLOR_DARK_RED);
 
-        ta_vec3 a_impulse = vec3_scalef(impulse, a->inv_mass);
-        ta_line_3d dbg_impulse_a;
-        dbg_impulse_a.p0 = manifold->contacts[i];
-        dbg_impulse_a.p1 = vec3_add(manifold->contacts[i], a_impulse);
-        ta_primitive_push_line_3d(dbg_impulse_a, TA_COLOR_GREEN, TA_COLOR_GREEN);
-
-        ta_vec3 b_impulse = vec3_scalef(impulse, b->inv_mass);
-        ta_line_3d dbg_impulse_b;
-        dbg_impulse_b.p0 = manifold->contacts[i];
-        dbg_impulse_b.p1 = vec3_add(manifold->contacts[i], b_impulse);
-        ta_primitive_push_line_3d(dbg_impulse_b, TA_COLOR_BLUE, TA_COLOR_BLUE);
-#endif
+        //ta_vec3 a_impulse = vec3_scalef(impulse, a->inv_mass);
+        //ta_line_3d dbg_impulse_a;
+        //dbg_impulse_a.p0 = manifold->contacts[i];
+        //dbg_impulse_a.p1 = vec3_add(manifold->contacts[i], a_impulse);
+        //dbg_impulse_a.p0 = vec3_sub(dbg_impulse_a.p0, (ta_vec3){0.01f,0.01f,0.01f});
+        //dbg_impulse_a.p1 = vec3_sub(dbg_impulse_a.p1, (ta_vec3){0.01f,0.01f,0.01f});
+        //ta_primitive_push_line_3d(dbg_impulse_a, TA_COLOR_MAGENTA, TA_COLOR_MAGENTA);
+        //
+        //ta_vec3 b_impulse = vec3_scalef(impulse, b->inv_mass);
+        //ta_line_3d dbg_impulse_b;
+        //dbg_impulse_b.p0 = manifold->contacts[i];
+        //dbg_impulse_b.p1 = vec3_add(manifold->contacts[i], b_impulse);
+        //dbg_impulse_b.p0 = vec3_add(dbg_impulse_b.p0, (ta_vec3){0.01f,0.01f,0.01f});
+        //dbg_impulse_b.p1 = vec3_add(dbg_impulse_b.p1, (ta_vec3){0.01f,0.01f,0.01f});
+        //ta_primitive_push_line_3d(dbg_impulse_b, TA_COLOR_CYAN, TA_COLOR_CYAN);
+        //-----------------------------
 
         // Randy's Coloumb friction
         // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-friction-scene-and-jump-table--gamedev-7756
 
         // Recalculate relative velocity after impulses are applied
-        //rv = vec3_sub(b->velocity, a->velocity);
         rv_a = vec3_sub(a->velocity, vec3_cross(a->ang_velocity, ra));
         rv_b = vec3_add(b->velocity, vec3_cross(b->ang_velocity, rb));
         rv = vec3_sub(rv_b, rv_a);
-        rv_normal = vec3_dot(rv, manifold->normal);
+        v_separate = vec3_dot(rv, manifold->normal);
 
         // Tangent vector
-        ta_vec3 t = vec3_sub(rv, vec3_scalef(manifold->normal, rv_normal));
+        ta_vec3 t = vec3_sub(rv, vec3_scalef(manifold->normal, v_separate));
         if (!vec3_tiny(t)) {
             t = vec3_normalize(t);
 
@@ -554,27 +582,41 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold)
                 continue;
             }
 
-            ta_vec3 friction_impulse;
+            ta_vec3 a_friction;
             if (jt_abs < jn * manifold->sf) {
-                friction_impulse = vec3_scalef(t, jt);
+                a_friction = vec3_scalef(t, -jt);
             } else {
-                friction_impulse = vec3_scalef(t, -jn * manifold->df);
+                a_friction = vec3_scalef(t, jn * manifold->df);
             }
+            ta_vec3 b_friction = vec3_neg(a_friction);
 
-            ta_line_3d dbg_friction_a;
-            dbg_friction_a.p0 = manifold->contacts[i];
-            dbg_friction_a.p1 = vec3_add(manifold->contacts[i], vec3_neg(friction_impulse));
-            ta_primitive_push_line_3d(dbg_friction_a, TA_COLOR_WHITE, TA_COLOR_ORANGE);
-            ta_line_3d dbg_friction_b;
-            dbg_friction_b.p0 = manifold->contacts[i];
-            dbg_friction_b.p1 = vec3_add(manifold->contacts[i], friction_impulse);
-            ta_primitive_push_line_3d(dbg_friction_b, TA_COLOR_WHITE, TA_COLOR_ORANGE);
-
-            // TODO: THIS DOESN'T WORK AT ALL!!!!! (Turn off drag and check, it
-            // just makes jitter city and doesn't actually slow down objects.
             // Apply friction impulses
-            //ta_rigid_body_apply_impulse(a, vec3_neg(friction_impulse), ra);
-            //ta_rigid_body_apply_impulse(b, friction_impulse, rb);
+            ta_rigid_body_apply_impulse(a, a_friction, ra);
+            ta_rigid_body_apply_impulse(b, b_friction, rb);
+
+            //-----------------------------
+            // Debug rendering
+            if (a->inv_mass) {
+                ta_line_3d dbg_friction_a = { 0 };
+                dbg_friction_a.p0 = manifold->contacts[i];
+                dbg_friction_a.p1 = vec3_add(manifold->contacts[i], a_friction);
+                ta_primitive_push_line_3d(dbg_friction_a, TA_COLOR_RED, TA_COLOR_RED);
+                ta_sphere dbg_friction_a_cone = { 0 };
+                dbg_friction_a_cone.center = dbg_friction_a.p1;
+                dbg_friction_a_cone.radius = 0.01f;
+                ta_primitive_push_sphere(dbg_friction_a_cone, TA_COLOR_RED);
+            }
+            if (b->inv_mass) {
+                ta_line_3d dbg_friction_b = { 0 };
+                dbg_friction_b.p0 = manifold->contacts[i];
+                dbg_friction_b.p1 = vec3_add(manifold->contacts[i], b_friction);
+                ta_primitive_push_line_3d(dbg_friction_b, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                ta_sphere dbg_friction_b_cone = { 0 };
+                dbg_friction_b_cone.center = dbg_friction_b.p1;
+                dbg_friction_b_cone.radius = 0.01f;
+                ta_primitive_push_sphere(dbg_friction_b_cone, TA_COLOR_GREEN);
+            }
+            //-----------------------------
         }
     }
 

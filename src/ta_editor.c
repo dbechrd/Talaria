@@ -977,18 +977,21 @@ static void ui_editor_sidebar()
     static int category_selected = 1;
 
     ta_ui_row_begin();
-
-    //ta_ui_next_size(50, 50);
-    //ta_ui_next_pad(2, 2, 2, 2);
+    ta_ui_next_pad(4, 4, 4, 4);
     static ta_ui_panel_state category_panel = { 0 };
     ta_ui_panel_begin(INTERN("editor_sidebar"), &category_panel, TA_UI_AUTOSIZE);
     for (int i = 0; i < ARRAY_COUNT(categories); i++) {
-        ta_ui_row_begin();
+        if (i % 4 == 0) {
+            ta_ui_row_begin();
+            ta_ui_next_margin(0, 0, 0, 2);
+        } else {
+            ta_ui_next_margin(2, 0, 0, 2);
+        }
         ta_ui_next_size(100, 0);
-        //ta_ui_next_margin(0, 0, 0, 2);
-        bool active = (i == category_selected);
-        ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
+        ta_ui_next_pad(0, 0, 0, 0);
+        ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE_H);
         ta_ui_label(0, categories[i].name, categories[i].len);
+        bool active = (i == category_selected);
         ta_ui_toggle_button_end(&active);
         if (active && category_selected != i) {
             category_selected = i;
@@ -999,6 +1002,7 @@ static void ui_editor_sidebar()
     }
     ta_ui_panel_end();
 
+    ta_ui_row_begin();
     categories[category_selected].panel_method();
 }
 void ta_editor_draw(float alpha)

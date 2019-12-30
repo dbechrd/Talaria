@@ -27,7 +27,7 @@
 #define WIDGET_PAD              1
 #define SCROLL_WIDGET_THICKNESS 8
 #define SCROLL_WIDGET_H_MIN     4
-#define SCROLL_WHEEL_SPEED      10
+#define SCROLL_WHEEL_SPEED      17
 
 // internal flags
 #define TA_UI_INVISIBLE         0x20000000  // takes up space but doesn't render (display: hidden)
