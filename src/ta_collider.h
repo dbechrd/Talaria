@@ -18,12 +18,12 @@ typedef struct ta_collider {
         // NOTE: Must all start with ta_vec3 center
         ta_sphere sphere;
         ta_obb obb;
-        ta_plane plane;
+        ta_plane plane;  // This is technically a half-space, not a true plane
     } data;
 } ta_collider;
 
 void ta_collider_init(ta_collider *collider);
 ta_mat3 ta_collider_inv_tensor(ta_collider *collider, float mass);
 bool ta_intersect_ray_sphere(ta_ray ray, ta_sphere sphere, float *t);
-ta_aabb ta_collider_world_aabb(ta_collider *collider, ta_xform *xform);
+ta_aabb ta_collider_world_bounds(ta_collider *collider, ta_xform *xform);
 void ta_collider_render(ta_collider *collider, ta_rgba color);

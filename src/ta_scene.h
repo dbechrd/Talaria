@@ -38,6 +38,12 @@ typedef struct ta_scene {
     const char *name;
     void *resource_data[RES_COUNT];         // dense resource data (e.g. ta_texture *)
     dlb_index index_by_name[RES_COUNT];     // name hash -> dense index
+
+    // Internal data, need to persist between frames for when sim is paused
+    struct {
+        struct ta_manifold *manifolds;
+        struct ta_rigid_body_pair *pairs;
+    } data;
 } ta_scene;
 
 /*

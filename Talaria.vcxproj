@@ -174,6 +174,7 @@
     <ClCompile Include="src\ta_entity.c" />
     <ClCompile Include="src\ta_font.c" />
     <ClCompile Include="src\ta_gltf.c" />
+    <ClCompile Include="src\ta_intersect.c" />
     <ClCompile Include="src\ta_json.c" />
     <ClCompile Include="src\ta_key.c" />
     <ClCompile Include="src\ta_light.c" />
@@ -216,6 +217,7 @@
     <ClInclude Include="src\ta_button_state.h" />
     <ClInclude Include="src\ta_collider.h" />
     <ClInclude Include="src\ta_gltf.h" />
+    <ClInclude Include="src\ta_intersect.h" />
     <ClInclude Include="src\ta_json.h" />
     <ClInclude Include="src\ta_key.h" />
     <ClInclude Include="src\ta_light.h" />

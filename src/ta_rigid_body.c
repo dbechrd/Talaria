@@ -1,10 +1,11 @@
 #include "ta_rigid_body.h"
+#include "ta_game.h"
+#include "ta_intersect.h"
 #include "ta_log.h"
 #include "ta_primitive.h"
-#include "ta_transform.h"
-#include "ta_game.h"
 #include "ta_schema.h"
 #include "ta_symbol.h"
+#include "ta_transform.h"
 #include "dlb/dlb_vector.h"
 #include <math.h>
 #include <float.h>
@@ -128,7 +129,7 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     body->centroid_local = body->collider.data.center;
     body->centroid_global = vec3_rotate_quat(body->centroid_local, transform->xform.orientation);
     body->centroid_global = vec3_add(body->centroid_global, transform->xform.position);
-    body->aabb = ta_collider_world_aabb(&body->collider, &transform->xform);
+    body->aabb = ta_collider_world_bounds(&body->collider, &transform->xform);
 
 #if 1
     // TODO: Implement drag in a way that doesn't vary with different timesteps
@@ -145,201 +146,8 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     body->dbg_narrowphase = false;
 }
 
-bool ta_aabb_v_aabb(const ta_aabb *a, const ta_aabb *b, ta_manifold *manifold)
-{
-    // TODO: Handle generating manifolds for AABBs. For now, just allow this to
-    //       be used for broadphase collision detection.
-    DLB_ASSERT(!manifold);
-
-    bool collided = false;
-    if (a->extents.x == 0.0f || b->extents.x == 0.0f || (
-        a->center.x + a->extents.x > b->center.x - b->extents.x &&
-        a->center.y + a->extents.y > b->center.y - b->extents.y &&
-        a->center.z + a->extents.z > b->center.z - b->extents.z &&
-        b->center.x + b->extents.x > a->center.x - a->extents.x &&
-        b->center.y + b->extents.y > a->center.y - a->extents.y &&
-        b->center.z + b->extents.z > a->center.z - a->extents.z))
-    {
-        collided = true;
-    }
-    return collided;
-}
-
-bool ta_sphere_v_sphere(const ta_sphere *a, const ta_sphere *b,
-    ta_manifold *manifold)
-{
-    float r = a->radius + b->radius;
-    ta_vec3 n = vec3_sub(b->center, a->center);
-
-    float d2 = vec3_len2(n);
-    if (d2 > r * r) {
-        return false;
-    }
-
-    if (manifold) {
-        float d = sqrtf(d2);
-        if (d != 0) {
-            manifold->depth = r - d;
-            manifold->normal = vec3_scalef(n, 1.0f / d);
-        } else {
-            // Edge case: Circles at same position
-            manifold->depth = a->radius;
-            manifold->normal = VEC3_Y;
-        }
-        manifold->contact_count = 1;
-        manifold->contacts[0] = vec3_add(a->center,
-            vec3_scalef(manifold->normal, manifold->depth));
-    }
-
-    return true;
-}
-
-bool ta_plane_v_sphere(const ta_plane *plane, const ta_sphere *sphere,
-    ta_manifold *manifold)
-{
-    float r = sphere->radius;
-    ta_vec3 n = vec3_sub(sphere->center, plane->center);
-
-    float d = vec3_dot(n, plane->normal);
-    if (d > r) {
-        return false;
-    }
-
-    if (manifold) {
-        manifold->depth = r - d;
-        manifold->normal = plane->normal;
-        manifold->contact_count = 1;
-        manifold->contacts[0] = vec3_add(sphere->center,
-            vec3_scalef(manifold->normal, -d));
-    }
-
-    return true;
-}
-
-bool ta_plane_v_obb(const ta_plane *plane, const ta_obb *obb,
-    ta_manifold *manifold)
-{
-    ta_vec3 p[8] = { 0 };
-    p[0].x = -obb->extents.x;
-    p[0].y = -obb->extents.y;
-    p[0].z = -obb->extents.z;
-    p[1].x = -obb->extents.x;
-    p[1].y = -obb->extents.y;
-    p[1].z = +obb->extents.z;
-    p[2].x = -obb->extents.x;
-    p[2].y = +obb->extents.y;
-    p[2].z = -obb->extents.z;
-    p[3].x = -obb->extents.x;
-    p[3].y = +obb->extents.y;
-    p[3].z = +obb->extents.z;
-    p[4].x = +obb->extents.x;
-    p[4].y = -obb->extents.y;
-    p[4].z = -obb->extents.z;
-    p[5].x = +obb->extents.x;
-    p[5].y = -obb->extents.y;
-    p[5].z = +obb->extents.z;
-    p[6].x = +obb->extents.x;
-    p[6].y = +obb->extents.y;
-    p[6].z = -obb->extents.z;
-    p[7].x = +obb->extents.x;
-    p[7].y = +obb->extents.y;
-    p[7].z = +obb->extents.z;
-
-    for (int i = 0; i < 8; ++i) {
-        p[i] = vec3_rotate_quat(p[i], obb->orientation);
-        p[i] = vec3_add(p[i], obb->center);
-    }
-
-#if 1
-    // HACK: This doesn't work for anything with > 1kg of mass.. so it's a
-    // pretty useless hack.
-    const float resting_fudge = 0.02f;
-
-    float dists[8];
-    float d_min = FLT_MAX / 2.0f;
-    for (int i = 0; i < 8; ++i) {
-        ta_vec3 n = vec3_sub(p[i], plane->center);
-        float d = vec3_dot(n, plane->normal);
-        if (d < resting_fudge) {
-            dists[i] = d;
-            d_min = (d < d_min) ? d : d_min;
-        } else {
-            dists[i] = -FLT_MAX / 2.0f;
-        }
-    }
-
-    int contact_count = 0;
-    for (int i = 0; i < 8; ++i) {
-        if (fabs(dists[i] - d_min) <= resting_fudge) {
-            if (manifold) {
-                manifold->contacts[contact_count] =
-                    vec3_add(p[i], vec3_scalef(manifold->normal, -dists[i]));
-            }
-            contact_count++;
-        }
-    }
-    if (!contact_count) {
-        return false;
-    }
-
-    if (manifold) {
-        manifold->depth = -d_min;
-        manifold->normal = plane->normal;
-        manifold->contact_count = contact_count;
-    }
-#else
-    float dists[8] = { 0 };
-    float d_min = FLT_MAX;
-    for (int i = 0; i < 8; ++i) {
-        ta_vec3 n = vec3_sub(p[i], plane->center);
-        float d = vec3_dot(n, plane->normal);
-        if (d < 0) {
-            dists[i] = d;
-            d_min = (d < d_min) ? d : d_min;
-        }
-    }
-
-    int contact_points[8] = { 0 };
-    int contact_count = 0;
-    for (int i = 0; i < 8; ++i) {
-        if (dists[i] == d_min) {
-            contact_points[contact_count] = i;
-            contact_count++;
-        }
-    }
-    if (!contact_count) {
-        return false;
-    }
-
-    if (manifold) {
-        manifold->depth = -d_min;
-        manifold->normal = plane->normal;
-        manifold->contact_count = contact_count;
-        for (int i = 0; i < manifold->contact_count; ++i) {
-            int point_idx = contact_points[i];
-            manifold->contacts[i] = vec3_add(p[point_idx], vec3_scalef(manifold->normal, -d_min));
-        }
-    }
-#endif
-
-    return true;
-}
-
-static bool intersector_sphere_v_sphere(const ta_rigid_body *a,
-    const ta_rigid_body *b, ta_manifold *manifold)
-{
-    ta_sphere sphere_a;
-    sphere_a.center = a->centroid_global;
-    sphere_a.radius = a->collider.data.sphere.radius;
-    ta_sphere sphere_b;
-    sphere_b.center = b->centroid_global;
-    sphere_b.radius = b->collider.data.sphere.radius;
-    bool collided = ta_sphere_v_sphere(&sphere_a, &sphere_b, manifold);
-    return collided;
-}
-
-static bool intersector_plane_v_sphere(const ta_rigid_body *a,
-    const ta_rigid_body *b, ta_manifold *manifold)
+static bool intersector_plane_v_sphere(ta_manifold *manifold,
+    const ta_rigid_body *a, const ta_rigid_body *b)
 {
     ta_plane plane_a;
     plane_a.center = a->centroid_global;
@@ -347,12 +155,12 @@ static bool intersector_plane_v_sphere(const ta_rigid_body *a,
     ta_sphere sphere_b;
     sphere_b.center = b->centroid_global;
     sphere_b.radius = b->collider.data.sphere.radius;
-    bool collided = ta_plane_v_sphere(&plane_a, &sphere_b, manifold);
+    bool collided = ta_plane_v_sphere(manifold, &plane_a, &sphere_b);
     return collided;
 }
 
-static bool intersector_plane_v_obb(const ta_rigid_body *a,
-    const ta_rigid_body *b, ta_manifold *manifold)
+static bool intersector_plane_v_obb(ta_manifold *manifold,
+    const ta_rigid_body *a, const ta_rigid_body *b)
 {
     ta_transform *btrans = ta_game_component(RES_COMP_TRANSFORM, b->entity_name);
 
@@ -362,35 +170,58 @@ static bool intersector_plane_v_obb(const ta_rigid_body *a,
     ta_obb obb_b = b->collider.data.obb;
     obb_b.center = b->centroid_global;
     obb_b.orientation = quat_mul(btrans->xform.orientation, obb_b.orientation);
-    bool collided = ta_plane_v_obb(&plane_a, &obb_b, manifold);
+    bool collided = ta_plane_v_obb(manifold, &plane_a, &obb_b);
     return collided;
 }
 
-bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
-    ta_manifold *manifold)
+static bool intersector_sphere_v_sphere(ta_manifold *manifold,
+    const ta_rigid_body *a, const ta_rigid_body *b)
 {
-    typedef bool (intersector)(const ta_rigid_body *a, const ta_rigid_body *b,
-        ta_manifold *manifold);
+    ta_sphere sphere_a;
+    sphere_a.center = a->centroid_global;
+    sphere_a.radius = a->collider.data.sphere.radius;
+    ta_sphere sphere_b;
+    sphere_b.center = b->centroid_global;
+    sphere_b.radius = b->collider.data.sphere.radius;
+    bool collided = ta_sphere_v_sphere(manifold, &sphere_a, &sphere_b);
+    return collided;
+}
+
+static bool intersector_sphere_v_obb(ta_manifold *manifold,
+    const ta_rigid_body *a, const ta_rigid_body *b)
+{
+    UNUSED(manifold && a && b);
+    return false;
+}
+
+static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a,
+    const ta_rigid_body *b)
+{
+    UNUSED(manifold && a && b);
+    return false;
+}
+
+bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a,
+    ta_rigid_body *b)
+{
+    typedef bool (intersector)(ta_manifold *manifold, const ta_rigid_body *a,
+        const ta_rigid_body *b);
 
     static intersector *intersectors[TA_COLLIDER_COUNT][TA_COLLIDER_COUNT] = {
-        [TA_COLLIDER_SPHERE][TA_COLLIDER_SPHERE] = intersector_sphere_v_sphere,
         [TA_COLLIDER_PLANE][TA_COLLIDER_SPHERE] = intersector_plane_v_sphere,
         [TA_COLLIDER_PLANE][TA_COLLIDER_OBB] = intersector_plane_v_obb,
+        [TA_COLLIDER_SPHERE][TA_COLLIDER_SPHERE] = intersector_sphere_v_sphere,
+        [TA_COLLIDER_SPHERE][TA_COLLIDER_OBB] = intersector_sphere_v_obb,
+        [TA_COLLIDER_OBB][TA_COLLIDER_OBB] = intersector_obb_v_obb,
     };
 
     DLB_ASSERT(a);
     DLB_ASSERT(b);
 
-    if (a->trigger || b->trigger) {
-        return false;
-    }
-
-    bool collided = false;
-    bool swap_ab = (a->collider.type > b->collider.type);
-
     // TODO(cleanup): If this gets called at all, these two bodies are
     // broadphase intersecting.
-    // HACK: Don't set broadphase true for when colliding with floor.. stupid.
+    // HACK: Don't set debug flags true for when colliding with floor. These are
+    // used to set colors when rendering debug colliders.
     bool floor_collision = a->collider.type == TA_COLLIDER_PLANE ||
                            b->collider.type == TA_COLLIDER_PLANE;
     if (!floor_collision)
@@ -399,12 +230,24 @@ bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
         b->dbg_broadphase = true;
     }
 
+    if (a->trigger || b->trigger) {
+        return false;
+    }
+
+    bool collided = false;
+    bool swap_ab = (a->collider.type > b->collider.type);
+
+    // HACK: These asserts are just to make Visual Studio shut up. There's no
+    // code path that would allow collider type to fall outside the valid range.
+    DLB_ASSERT(a->collider.type >= 0);
+    DLB_ASSERT(b->collider.type >= 0);
+
     intersector *intersect_method = swap_ab
         ? intersectors[b->collider.type][a->collider.type]
         : intersectors[a->collider.type][b->collider.type];
 
     if (intersect_method) {
-        collided = (*intersect_method)(a, b, manifold);
+        collided = (*intersect_method)(manifold, a, b);
     } else {
         // TODO: Log this. For now, just return false.
         //ta_log_write(&tg_debug_log, "[Rigid Body] Unhandled collision pair.\n");
@@ -535,15 +378,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         ta_rigid_body_apply_impulse(b, b_resolve, rb);
 
         //-----------------------------
-        // Debug rendering
-        ta_sphere dbg_contact_world;
-        dbg_contact_world.center = manifold->contacts[i];
-        dbg_contact_world.radius = 0.05f;
-        ta_primitive_push_sphere(dbg_contact_world, TA_COLOR_DARK_RED);
-        ta_line_3d dbg_contact_normal;
-        dbg_contact_normal.p0 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, 0.05f));
-        dbg_contact_normal.p1 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, 0.95f));
-        ta_primitive_push_line_3d(dbg_contact_normal, TA_COLOR_DARK_RED, TA_COLOR_DARK_RED);
+        // Debug rendering (resolution impulse)
 
         //ta_vec3 a_impulse = vec3_scalef(impulse, a->inv_mass);
         //ta_line_3d dbg_impulse_a;
@@ -552,7 +387,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         //dbg_impulse_a.p0 = vec3_sub(dbg_impulse_a.p0, (ta_vec3){0.01f,0.01f,0.01f});
         //dbg_impulse_a.p1 = vec3_sub(dbg_impulse_a.p1, (ta_vec3){0.01f,0.01f,0.01f});
         //ta_primitive_push_line_3d(dbg_impulse_a, TA_COLOR_MAGENTA, TA_COLOR_MAGENTA);
-        //
+
         //ta_vec3 b_impulse = vec3_scalef(impulse, b->inv_mass);
         //ta_line_3d dbg_impulse_b;
         //dbg_impulse_b.p0 = manifold->contacts[i];
@@ -595,7 +430,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
             ta_rigid_body_apply_impulse(b, b_friction, rb);
 
             //-----------------------------
-            // Debug rendering
+            // Debug rendering (friction impulse)
             if (a->inv_mass) {
                 ta_line_3d dbg_friction_a = { 0 };
                 dbg_friction_a.p0 = manifold->contacts[i];
@@ -636,6 +471,6 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     a->centroid_global = vec3_add(a->centroid_global, atrans->xform.position);
     b->centroid_global = vec3_rotate_quat(b->centroid_local, btrans->xform.orientation);
     b->centroid_global = vec3_add(b->centroid_global, btrans->xform.position);
-    a->aabb = ta_collider_world_aabb(&a->collider, &atrans->xform);
-    b->aabb = ta_collider_world_aabb(&b->collider, &btrans->xform);
+    a->aabb = ta_collider_world_bounds(&a->collider, &atrans->xform);
+    b->aabb = ta_collider_world_bounds(&b->collider, &btrans->xform);
 }

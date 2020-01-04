@@ -4,6 +4,8 @@
 #include "ta_collider.h"
 #include "dlb/dlb_types.h"
 
+struct ta_manifold;
+
 // http://allenchou.net/2013/12/game-physics-introduction/
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
 typedef struct ta_rigid_body {
@@ -92,29 +94,12 @@ typedef struct ta_rigid_body_pair {
     ta_rigid_body *b;
 } ta_rigid_body_pair;
 
-typedef struct ta_manifold {
-    ta_rigid_body *a;
-    ta_rigid_body *b;
-    ta_vec3 normal;       // normal from a to b
-    float depth;          // distance along normal
-    ta_vec3 contacts[8];  // world position
-    u32 contact_count;
-    float e;   // Mixed restitution (0.0 = inelastic, 1.0 = perfectly elastic)
-    float df;  // Mixed dynamic friction
-    float sf;  // Mixed static friction
-} ta_manifold;
-
 const char *ta_collider_type_str(int type);
 void ta_rigid_body_init(ta_rigid_body *body);
 void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force);
 void ta_rigid_body_apply_force_at(ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
 void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
 void ta_rigid_body_update(ta_rigid_body *body, float dt);
-bool ta_aabb_v_aabb(const ta_aabb *a, const ta_aabb *b, ta_manifold *manifold);
-bool ta_sphere_v_sphere(const ta_sphere *a, const ta_sphere *b,
-    ta_manifold *manifold);
-bool ta_plane_v_sphere(const ta_plane *plane, const ta_sphere *sphere,
-    ta_manifold *manifold);
-bool ta_rigid_body_intersect(ta_rigid_body *a, ta_rigid_body *b,
-    ta_manifold *manifold);
-void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt);
+bool ta_rigid_body_intersect(struct ta_manifold *manifold, ta_rigid_body *a,
+    ta_rigid_body *b);
+void ta_rigid_body_resolve_collision(struct ta_manifold *manifold, float dt);

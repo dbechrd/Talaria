@@ -119,7 +119,7 @@ ta_mat3 ta_collider_inv_tensor(ta_collider *collider, float mass)
     return inv_tensor;
 }
 
-static ta_aabb plane_to_world_aabb(ta_plane *plane, ta_xform *xform)
+static ta_aabb plane_world_bounds(ta_plane *plane, ta_xform *xform)
 {
     // TODO: Calculate AABB for plane (add TA_EPSILON depth)
     // or .. infinite AABB??
@@ -130,7 +130,7 @@ static ta_aabb plane_to_world_aabb(ta_plane *plane, ta_xform *xform)
     return result;
 }
 
-static ta_aabb sphere_to_world_aabb(ta_sphere *sphere, ta_xform *xform)
+static ta_aabb sphere_world_bounds(ta_sphere *sphere, ta_xform *xform)
 {
     DLB_ASSERT(sphere->radius > TA_EPSILON);
 
@@ -143,7 +143,7 @@ static ta_aabb sphere_to_world_aabb(ta_sphere *sphere, ta_xform *xform)
     return result;
 }
 
-static ta_aabb obb_to_world_aabb(ta_obb *obb, ta_xform *xform)
+static ta_aabb obb_world_bounds(ta_obb *obb, ta_xform *xform)
 {
     DLB_ASSERT(obb->extents.x > TA_EPSILON);
     DLB_ASSERT(obb->extents.y > TA_EPSILON);
@@ -184,26 +184,26 @@ static ta_aabb obb_to_world_aabb(ta_obb *obb, ta_xform *xform)
         p[i] = vec3_rotate_quat(p[i], xform->orientation);
         //p[i] = vec3_add(p[i], obb->center);
 
-        result.extents.x = MAX(result.extents.x, fabs(p[i].x));
-        result.extents.y = MAX(result.extents.y, fabs(p[i].y));
-        result.extents.z = MAX(result.extents.z, fabs(p[i].z));
+        result.extents.x = (float)MAX(result.extents.x, fabs(p[i].x));
+        result.extents.y = (float)MAX(result.extents.y, fabs(p[i].y));
+        result.extents.z = (float)MAX(result.extents.z, fabs(p[i].z));
     }
 
     return result;
 }
 
-ta_aabb ta_collider_world_aabb(ta_collider *collider, ta_xform *xform)
+ta_aabb ta_collider_world_bounds(ta_collider *collider, ta_xform *xform)
 {
     ta_aabb result = { 0 };
     switch (collider->type) {
         case TA_COLLIDER_PLANE: {
-            result = plane_to_world_aabb(&collider->data.plane, xform);
+            result = plane_world_bounds(&collider->data.plane, xform);
             break;
         } case TA_COLLIDER_SPHERE: {
-            result = sphere_to_world_aabb(&collider->data.sphere, xform);
+            result = sphere_world_bounds(&collider->data.sphere, xform);
             break;
         } case TA_COLLIDER_OBB: {
-            result = obb_to_world_aabb(&collider->data.obb, xform);
+            result = obb_world_bounds(&collider->data.obb, xform);
             break;
         } default: {
             DLB_ASSERT(!"Don't know how to bound this collider type");

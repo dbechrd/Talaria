@@ -7,6 +7,7 @@
 #include "ta_file.h"
 #include "ta_font.h"
 #include "ta_game.h"
+#include "ta_intersect.h"
 #include "ta_light.h"
 #include "ta_log.h"
 #include "ta_material.h"
@@ -395,7 +396,8 @@ void *ta_scene_component(ta_scene *scene, ta_resource_type type,
     return component;
 }
 
-static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
+static void collision_broadphase(ta_rigid_body_pair **pairs,
+    ta_rigid_body *rigid_bodies, double dt)
 {
     // Box2D supports 16 collision categories. For each fixture you can
     // specify which category it belongs to. You also specify what other
@@ -429,52 +431,37 @@ static ta_rigid_body_pair *collision_broadphase(ta_scene *scene, double dt)
 
     UNUSED(dt);
 
-    static ta_rigid_body_pair *pairs = 0;
-
-    ta_rigid_body *rigid_bodies = scene->resource_data[RES_COMP_RIGID_BODY];
     dlb_vec_each(ta_rigid_body *, a, rigid_bodies) {
         dlb_vec_range(ta_rigid_body *, b, a + 1, dlb_vec_end(rigid_bodies)) {
             // Don't let entities collide with themselves
             if (a->entity_name == b->entity_name) {
                 continue;
             }
-#if 1
-            // TODO: Get rid of infinite plane colliders
-            // Skip AABB broadphase for planes, makes no sense
+            // HACK: Skip AABB broadphase for planes, makes no sense (always
+            //       collect them as potential pairs)
             if (a->collider.type == TA_COLLIDER_PLANE ||
-                b->collider.type == TA_COLLIDER_PLANE)
+                b->collider.type == TA_COLLIDER_PLANE ||
+                ta_aabb_v_aabb(&a->aabb, &b->aabb))
             {
-                ta_rigid_body_pair *pair = dlb_vec_alloc(pairs);
-                pair->a = a;
-                pair->b = b;
-            }
-#endif
-            if (ta_aabb_v_aabb(&a->aabb, &b->aabb, 0))
-            {
-                ta_rigid_body_pair *pair = dlb_vec_alloc(pairs);
+                ta_rigid_body_pair *pair = dlb_vec_alloc(*pairs);
                 pair->a = a;
                 pair->b = b;
             }
         }
     }
-
-    return pairs;
 }
-static ta_manifold *detect_collisions(ta_rigid_body_pair *pairs, double dt)
+static void detect_collisions(ta_manifold **manifolds, ta_rigid_body_pair *pairs,
+    double dt)
 {
     UNUSED(dt);
 
-    static ta_manifold *manifolds = 0;
-
     dlb_vec_each(ta_rigid_body_pair *, pair, pairs) {
         ta_manifold manifold = { 0 };
-        if (ta_rigid_body_intersect(pair->a, pair->b, &manifold)) {
-            ta_manifold *m = dlb_vec_alloc(manifolds);
+        if (ta_rigid_body_intersect(&manifold, pair->a, pair->b)) {
+            ta_manifold *m = dlb_vec_alloc(*manifolds);
             *m = manifold;
         }
     }
-
-    return manifolds;
 }
 void ta_scene_update(ta_scene *scene, float dt)
 {
@@ -485,17 +472,19 @@ void ta_scene_update(ta_scene *scene, float dt)
         ta_rigid_body_update(body, dt);
     }
 
+    dlb_vec_zero(scene->data.manifolds);
+    dlb_vec_zero(scene->data.pairs);
+
     // Broad phase
-    ta_rigid_body_pair *pairs = collision_broadphase(scene, dt);
-    if (pairs) {
+    ta_rigid_body *rigid_bodies = scene->resource_data[RES_COMP_RIGID_BODY];
+    collision_broadphase(&scene->data.pairs, rigid_bodies, dt);
+    if (scene->data.pairs) {
         // Narrow phase
-        ta_manifold *manifolds = detect_collisions(pairs, dt);
-        dlb_vec_each(ta_manifold *, manifold, manifolds) {
+        detect_collisions(&scene->data.manifolds, scene->data.pairs, dt);
+        dlb_vec_each(ta_manifold *, manifold, scene->data.manifolds) {
             // Resolution
             ta_rigid_body_resolve_collision(manifold, dt);
         }
-        dlb_vec_zero(manifolds);
-        dlb_vec_zero(pairs);
     }
 
     // Update previous xform (for interpolation, dunno if I even need this..)
@@ -551,6 +540,22 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
     glCullFace(GL_BACK);
     glViewport(0, 0, WINDOW_W, WINDOW_H);
 }
+static void debug_render_manifolds(ta_scene *scene)
+{
+    const float radius = 0.05f;
+    dlb_vec_each(ta_manifold *, manifold, scene->data.manifolds) {
+        for (u32 i = 0; i < manifold->contact_count; ++i) {
+            ta_sphere dbg_contact_world;
+            dbg_contact_world.center = manifold->contacts[i];
+            dbg_contact_world.radius = radius;
+            ta_primitive_push_sphere(dbg_contact_world, TA_COLOR_DARK_RED);
+            ta_line_3d dbg_contact_normal;
+            dbg_contact_normal.p0 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, radius));
+            dbg_contact_normal.p1 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, 1.0f - radius));
+            ta_primitive_push_line_3d(dbg_contact_normal, TA_COLOR_DARK_RED, TA_COLOR_DARK_RED);
+        }
+    }
+}
 void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
 {
     //glCullFace(GL_BACK);
@@ -574,6 +579,7 @@ void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &render_camera->look_at);
 
     // Dump any prims from the collision pass
+    debug_render_manifolds(scene);
     ta_primitive_render(true, false);
 
     // TODO: Group by shader / material to minimize redundant uniform calls
