@@ -631,6 +631,22 @@ void tokens_parse(ta_scene *scene, token *tokens)
                             u32 hash = dlb_murmur3(SYM(resource->name));
                             dlb_index_insert(&scene->index_by_name[res_type], hash,
                                 resource->index);
+                        } else {
+                            DLB_ASSERT(1);
+                        }
+                    } else if (stack[sp].name == SYM_ENTITY_NAME) {
+                        // NOTE: Ignore "entity_name" fields for non-resource types
+                        ta_resource_type res_type = typ_to_res(stack[sp-1].type);
+                        if (res_type < RES_COMP_COUNT) {
+                            ta_component *comp = stack[sp-1].ptr;
+                            comp->index = stack[sp-1].index;
+                            DLB_ASSERT(comp->entity_name == tok->value.string);  // TODO: Cleanup
+
+                            u32 hash = dlb_murmur3(SYM(comp->entity_name));
+                            dlb_index_insert(&scene->index_by_entity[res_type], hash,
+                                comp->index);
+                        } else {
+                            DLB_ASSERT(1);
                         }
                     }
                 }

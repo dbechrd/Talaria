@@ -296,7 +296,7 @@ static void ui_node_panel()
     }
 #endif
 
-    ta_transform *transform = ta_game_component_try(RES_COMP_TRANSFORM, entity_name);
+    ta_transform *transform = ta_game_component_try(entity_name, RES_COMP_TRANSFORM);
     if (transform) {
         ta_ui_row_begin();
         ta_ui_next_margin(2, 12, 0, 4);
@@ -332,7 +332,7 @@ static void ui_node_panel()
         ta_ui_label(0, SYM(entity_name));
     }
 
-    ta_model *model = ta_game_component_try(RES_COMP_MODEL, entity_name);
+    ta_model *model = ta_game_component_try(entity_name, RES_COMP_MODEL);
     if (model) {
         ta_ui_row_begin();
         ta_ui_next_margin(2, 12, 0, 4);
@@ -397,7 +397,7 @@ static void ui_node_panel()
         }
     }
 
-    ta_rigid_body *rigid_body = ta_game_component_try(RES_COMP_RIGID_BODY, entity_name);
+    ta_rigid_body *rigid_body = ta_game_component_try(entity_name, RES_COMP_RIGID_BODY);
     if (rigid_body) {
         ta_ui_row_begin();
         ta_ui_next_margin(2, 12, 0, 4);
@@ -549,7 +549,7 @@ static void ui_node_panel()
         }
     }
 
-    ta_light *light = ta_game_component_try(RES_COMP_LIGHT, entity_name);
+    ta_light *light = ta_game_component_try(entity_name, RES_COMP_LIGHT);
     if (light) {
         ta_ui_row_begin();
         ta_ui_next_margin(2, 12, 0, 4);
@@ -659,8 +659,8 @@ static void ui_audio_panel()
     }
 
     if (audio_request_name) {
-        ta_audio_source *bg_music_src = ta_game_component(RES_COMP_AUDIO_SOURCE,
-            tg_e_background_music);
+        ta_audio_source *bg_music_src = ta_game_component(tg_e_background_music,
+            RES_COMP_AUDIO_SOURCE);
         ta_audio_source_stop(bg_music_src);
         if (audio_request_name != audio_playing_name) {
             ta_audio_source_set_buffer(bg_music_src,
@@ -814,8 +814,7 @@ static void ui_material_panel()
         if (ta_ui_button(0, SYM(material->name))) {
             const char *entity_name = ta_editor_selected_entity();
             if (entity_name) {
-                ta_model *model = ta_game_component_try(RES_COMP_MODEL,
-                    entity_name);
+                ta_model *model = ta_game_component_try(entity_name, RES_COMP_MODEL);
                 if (model) {
                     model->material = material->name;
                 }
@@ -861,8 +860,7 @@ static void ui_mesh_panel()
         if (ta_ui_button(0, SYM(mesh->name))) {
             const char *entity_name = ta_editor_selected_entity();
             if (entity_name) {
-                ta_model *model = ta_game_component_try(RES_COMP_MODEL,
-                    entity_name);
+                ta_model *model = ta_game_component_try(entity_name, RES_COMP_MODEL);
                 if (model) {
                     dlb_vec_clear(model->meshes);
                     dlb_vec_push(model->meshes, mesh->name);
@@ -904,8 +902,7 @@ static void ui_texture_panel()
         if (ta_ui_button_end()) {
             const char *entity_name = ta_editor_selected_entity();
             if (entity_name) {
-                ta_model *model = ta_game_component_try(RES_COMP_MODEL,
-                    entity_name);
+                ta_model *model = ta_game_component_try(entity_name, RES_COMP_MODEL);
                 if (model && model->material) {
                     ta_material *material = ta_game_by_sym(RES_MATERIAL,
                         model->material);
@@ -1020,12 +1017,12 @@ void ta_editor_draw(float alpha)
     const char *selected_entity = ta_editor_selected_entity();
     if (selected_entity) {
         ta_camera *camera = ta_game_camera();
-        ta_model *model = ta_game_component_try(RES_COMP_MODEL, selected_entity);
+        ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
         if (model) {
             glClear(GL_DEPTH_BUFFER_BIT);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-            ta_shader *shader = ta_scene_find_by_name(&editor.scene, RES_SHADER,
+            ta_shader *shader = ta_scene_find(&editor.scene, RES_SHADER,
                 SYM(editor.shader_editor_select));
             ta_rgba wire_color = TA_COLOR_YELLOW;
             double seconds = ta_timer_elapsed_sec();
@@ -1145,8 +1142,8 @@ void editor_command_select()
 
     ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
     dlb_vec_each(ta_light *, light, lights) {
-        ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM,
-            light->entity_name);
+        ta_transform *transform = ta_game_component(light->entity_name,
+            RES_COMP_TRANSFORM);
         ta_sphere sphere = { 0 };
         sphere.center = transform->xform.position;
         sphere.radius = 0.2f;

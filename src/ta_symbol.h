@@ -31,6 +31,7 @@ static inline char *dlb_symbol__alloc(const char *buf, u32 len) {
 
 // Special identifiers
 extern const char *SYM_NAME;
+extern const char *SYM_ENTITY_NAME;
 
 // DML keywords
 extern const char *SYM_NULL;

@@ -173,7 +173,7 @@ static void debug_nametag(ta_camera *camera)
         CSTR("Player 1\nis da best"), true, 0, 0, 0);
 
     ta_transform *player_transform =
-        ta_game_component(RES_COMP_TRANSFORM, tg_e_player_one);
+        ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
 
     ta_vec3 tag_pos = vec3_add(player_transform->xform.position,
         (ta_vec3){ 0.0f, 1.2f, 0.0f });

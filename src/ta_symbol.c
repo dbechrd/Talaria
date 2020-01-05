@@ -8,6 +8,7 @@
 
 // Special identifiers
 const char *SYM_NAME;
+const char *SYM_ENTITY_NAME;
 
 // DML keywords
 const char *SYM_NULL;
@@ -82,10 +83,11 @@ static dlb_hash symbol_table;
 void ta_symbol_init() {
     dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 512);
 
-    SYM_NAME  = INTERN(IDENT_NAME);
-    SYM_NULL  = INTERN(KEYWORD_NULL);
-    SYM_TRUE  = INTERN(KEYWORD_TRUE);
-    SYM_FALSE = INTERN(KEYWORD_FALSE);
+    SYM_NAME         = INTERN(IDENT_NAME);
+    SYM_ENTITY_NAME  = INTERN(IDENT_ENTITY_NAME);
+    SYM_NULL         = INTERN(KEYWORD_NULL);
+    SYM_TRUE         = INTERN(KEYWORD_TRUE);
+    SYM_FALSE        = INTERN(KEYWORD_FALSE);
 
     SYM_GLINT     = INTERN("glint");
     SYM_GLUINT    = INTERN("gluint");

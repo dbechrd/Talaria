@@ -32,6 +32,7 @@
 #define C_IDENT_ID          C__DIGIT
 #define C_IDENT_ID_END      "]"
 #define IDENT_NAME          "name"
+#define IDENT_ENTITY_NAME   "entity_name"
 #define KEYWORD_NULL        "null"
 #define KEYWORD_TRUE        "true"
 #define KEYWORD_FALSE       "false"

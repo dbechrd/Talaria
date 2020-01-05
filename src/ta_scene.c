@@ -106,6 +106,7 @@ void ta_scene_init(ta_scene *scene)
     // TODO(perf): This is a lot of back-to-back allocations, can we avoid?
     for (ta_resource_type type = 0; type < RES_COUNT; type++) {
         dlb_index_init(&scene->index_by_name[type], 128, 128);
+        dlb_index_init(&scene->index_by_entity[type], 128, 128);
     }
     scene_load_placeholders(scene);
 }
@@ -317,7 +318,7 @@ void *ta_scene_find_at(ta_scene *scene, ta_resource_type type, u32 index)
     return resource;
 }
 // If not found, returns NULL
-void *ta_scene_find_by_name_try(ta_scene *scene, ta_resource_type type,
+void *ta_scene_find_try(ta_scene *scene, ta_resource_type type,
     const char *name, u32 name_len)
 {
     DLB_ASSERT(scene);
@@ -338,60 +339,79 @@ void *ta_scene_find_by_name_try(ta_scene *scene, ta_resource_type type,
     return 0;
 }
 // If not found, ASSERT
-void *ta_scene_find_by_name(ta_scene *scene, ta_resource_type type,
+void *ta_scene_find(ta_scene *scene, ta_resource_type type,
     const char *name, u32 name_len)
 {
-    void *resource = ta_scene_find_by_name_try(scene, type, name, name_len);
+    void *resource = ta_scene_find_try(scene, type, name, name_len);
     DLB_ASSERT(resource);
     return resource;
 }
 // If not found, returns the first resource of the given type
-void *ta_scene_find_by_name_or_default(ta_scene *scene, ta_resource_type type,
+void *ta_scene_find_or_default(ta_scene *scene, ta_resource_type type,
     const char *name, u32 name_len)
 {
     ta_schema_field_type schema_type = res_to_typ(type);
     u32 size = tg_schemas[schema_type].size;
 
-    void *resource = ta_scene_find_by_name_try(scene, type, name, name_len);
+    void *resource = ta_scene_find_try(scene, type, name, name_len);
     if (!resource) {
         resource = dlb_vec_index_size(scene->resource_data[type], 0, size);
     }
     return resource;
 }
-void *ta_scene_component_add(ta_scene *scene, ta_resource_type type,
-    const char *entity)
+void *ta_scene_component_add(ta_scene *scene, const char *entity,
+    ta_resource_type type, const char *name, u32 name_len)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
     // Prevent duplicates
-    ta_component *component = ta_scene_component(scene, type, entity);
+    ta_component *component = ta_scene_component(scene, entity, type);
     DLB_ASSERT(!component);
 
-    // TODO: Build better component name (or guarantee name == entity_name)
-    component = ta_scene_alloc(scene, type, SYM(entity));
+    component = ta_scene_alloc(scene, type, name, name_len);
     DLB_ASSERT(component);
     component->entity_name = entity;
+
+    dlb_index *store = &scene->index_by_entity[type];
+    u32 hash = dlb_murmur3(SYM(component->entity_name));
+    dlb_index_insert(store, hash, component->index);
+
     return component;
 }
-void *ta_scene_component_try(ta_scene *scene, ta_resource_type type,
-    const char *entity)
+void *ta_scene_component_try(ta_scene *scene, const char *entity,
+    ta_resource_type type)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(entity);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
-    void *component = ta_scene_find_by_name_try(scene, type, SYM(entity));
+    void *component = 0;
+
+    ta_schema_field_type schema_type = res_to_typ(type);
+    u32 size = tg_schemas[schema_type].size;
+
+    u32 hash = dlb_murmur3(SYM(entity));
+    dlb_index *store = &scene->index_by_entity[type];
+    for (u32 i = dlb_index_first(store, hash); i != DLB_INDEX_EMPTY; i = dlb_index_next(store, i)) {
+        ta_component *comp = dlb_vec_index_size(scene->resource_data[type], i, size);
+        if (comp->entity_name == entity) {
+            DLB_ASSERT(comp->index == i);
+            component = comp;
+            break;
+        }
+    }
+
     return component;
 }
-void *ta_scene_component(ta_scene *scene, ta_resource_type type,
-    const char *entity)
+void *ta_scene_component(ta_scene *scene, const char *entity,
+    ta_resource_type type)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(entity);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
-    void *component = ta_scene_component_try(scene, type, entity);
+    void *component = ta_scene_component_try(scene, entity, type);
     DLB_ASSERT(component);
     return component;
 }
@@ -522,8 +542,8 @@ void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
         // TODO: Disable shadows per light (pass cast_shadows as light uniform)
         //if (!light->cast_shadows) continue;
 
-        ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM,
-            light->entity_name);
+        ta_transform *transform = ta_game_component(light->entity_name,
+            RES_COMP_TRANSFORM);
         ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &transform->xform.position);
         ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->shadowmap.zfar);
         ta_light_shadowpass_render(light, shader, alpha,
@@ -602,8 +622,8 @@ void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
         }
     }
     dlb_vec_each(ta_light *, light, scene->resource_data[RES_COMP_LIGHT]) {
-        ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM,
-            light->entity_name);
+        ta_transform *transform = ta_game_component(light->entity_name,
+            RES_COMP_TRANSFORM);
         ta_sphere light_pos = { 0 };
         light_pos.center = transform->xform.position;
         light_pos.radius = 0.2f;

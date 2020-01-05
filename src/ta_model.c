@@ -27,8 +27,8 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
     }
     DLB_ASSERT(dlb_vec_len(model->meshes));
 
-    ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM,
-        model->entity_name);
+    ta_transform *transform = ta_game_component(model->entity_name,
+        RES_COMP_TRANSFORM);
 
     ta_vec3 lerp_pos = vec3_lerp(transform->xform_prev.position,
         transform->xform.position, alpha);
@@ -78,7 +78,8 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
     }
     DLB_ASSERT(dlb_vec_len(model->meshes));
 
-    ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM, model->entity_name);
+    ta_transform *transform = ta_game_component(model->entity_name,
+        RES_COMP_TRANSFORM);
 
     ta_vec3 lerp_pos = vec3_lerp(transform->xform_prev.position,
         transform->xform.position, alpha);
@@ -149,7 +150,8 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
             }
         }
         if (camera->debug_colliders) {
-            ta_rigid_body *body = ta_game_component_try(RES_COMP_RIGID_BODY, model->entity_name);
+            ta_rigid_body *body = ta_game_component_try(model->entity_name,
+                RES_COMP_RIGID_BODY);
             if (body) {
                 // Model space
                 ta_sphere centroid_local = { 0 };
@@ -191,7 +193,8 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
     DLB_ASSERT(camera);
     DLB_ASSERT(shader);
 
-    ta_transform *transform = ta_game_component(RES_COMP_TRANSFORM, model->entity_name);
+    ta_transform *transform = ta_game_component(model->entity_name,
+        RES_COMP_TRANSFORM);
 
     ta_vec3 lerp_pos = vec3_lerp(transform->xform_prev.position,
         transform->xform.position, alpha);

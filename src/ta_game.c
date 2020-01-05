@@ -11,6 +11,7 @@
 #include "ta_keybind.h"
 #include "ta_light.h"
 #include "ta_log.h"
+#include "ta_model.h"
 #include "ta_mouse.h"
 #include "ta_player.h"
 #include "ta_primitive.h"
@@ -217,8 +218,8 @@ void ta_game_init()
     tg_e_background_music = SYM_ENTITY_BACKGROUND_MUSIC;
     DLB_ASSERT(tg_e_background_music);
 
-    ta_audio_source *bg_music_src = ta_game_component(RES_COMP_AUDIO_SOURCE,
-        tg_e_background_music);
+    ta_audio_source *bg_music_src = ta_game_component(tg_e_background_music,
+        RES_COMP_AUDIO_SOURCE);
     DLB_ASSERT(bg_music_src);
 
     ta_audio_listener_set_volume(&tg_audio, 1.0f);
@@ -277,9 +278,10 @@ void ta_game_state_set(ta_game_state state)
             ta_mouse_capture_set(true);
             break;
         } case TA_GAME_STATE_FREE_CAM: {
-            ta_camera *freecam = ta_game_component(RES_COMP_CAMERA, tg_e_freecam);
+            ta_camera *freecam = ta_game_component(tg_e_freecam, RES_COMP_CAMERA);
             if (vec3_zero(freecam->position)) {
-                ta_camera *active_cam = ta_game_component(RES_COMP_CAMERA, tg_e_active_camera);
+                ta_camera *active_cam = ta_game_component(tg_e_active_camera,
+                    RES_COMP_CAMERA);
                 freecam->target_xform.position = active_cam->target_xform.position;
                 freecam->position = freecam->target_xform.position;
             }
@@ -301,17 +303,17 @@ void ta_game_destroy(enum ta_resource_type type, const char *name, u32 name_len)
 // If not found, ASSERT
 void *ta_game_by_name(ta_resource_type type, const char *name, u32 name_len)
 {
-    return ta_scene_find_by_name(&game.scene, type, name, name_len);
+    return ta_scene_find(&game.scene, type, name, name_len);
 }
 // If not found, returns NULL
 void *ta_game_by_name_try(ta_resource_type type, const char *name, u32 name_len)
 {
-    return ta_scene_find_by_name_try(&game.scene, type, name, name_len);
+    return ta_scene_find_try(&game.scene, type, name, name_len);
 }
 // If not found, returns the first resource of the given type
 void *ta_game_by_name_or_default(ta_resource_type type, const char *name, u32 name_len)
 {
-    return ta_scene_find_by_name_or_default(&game.scene, type, name, name_len);
+    return ta_scene_find_or_default(&game.scene, type, name, name_len);
 }
 void *ta_game_by_sym(enum ta_resource_type type, const char *sym)
 {
@@ -325,13 +327,18 @@ void *ta_game_by_sym_or_default(enum ta_resource_type type, const char *sym)
 {
     return ta_game_by_name_or_default(type, SYM(sym));
 }
-void *ta_game_component(ta_resource_type type, const char *entity)
+void *ta_game_component_add(const char *entity, ta_resource_type type,
+    const char *name, u32 name_len)
 {
-    return ta_scene_component(&game.scene, type, entity);
+    return ta_scene_component_add(&game.scene, entity, type, name, name_len);
 }
-void *ta_game_component_try(ta_resource_type type, const char *entity)
+void *ta_game_component(const char *entity, ta_resource_type type)
 {
-    return ta_scene_component_try(&game.scene, type, entity);
+    return ta_scene_component(&game.scene, entity, type);
+}
+void *ta_game_component_try(const char *entity, ta_resource_type type)
+{
+    return ta_scene_component_try(&game.scene, entity, type);
 }
 void *ta_game_resource_pool(ta_resource_type type)
 {
@@ -351,11 +358,11 @@ void ta_game_load_gltf()
 }
 ta_camera *ta_game_camera()
 {
-    return ta_game_component(RES_COMP_CAMERA, tg_e_active_camera);
+    return ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
 }
 ta_player *ta_game_player()
 {
-    return ta_game_component(RES_COMP_PLAYER, tg_e_player_one);
+    return ta_game_component(tg_e_player_one, RES_COMP_PLAYER);
 }
 void ta_game_sim_pause()
 {
@@ -459,7 +466,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
 static void game_draw_hud()
 {
     ta_player *player = ta_game_player();
-    ta_gun *gun = ta_game_component(RES_COMP_GUN, player->e_gun);
+    ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
 
     static ta_ui_window_state window = { 0 };
     ta_ui_window_begin(0, &window, TA_UI_AUTOSIZE);
@@ -560,8 +567,8 @@ void ta_game_loop()
 
         if (ms_frame_accum >= ms_sim_dt) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Finding sim components...\n");
-            player_cam = ta_game_component(RES_COMP_CAMERA, tg_e_player_one);
-            player_transform = ta_game_component(RES_COMP_TRANSFORM, tg_e_player_one);
+            player_cam = ta_game_component(tg_e_player_one, RES_COMP_CAMERA);
+            player_transform = ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
         }
 
         while (ms_frame_accum >= ms_sim_dt) {
@@ -602,7 +609,7 @@ void ta_game_loop()
                 //lights[1].position.z = sinf(light_deg) * 16.0f;
 
                 ta_audio_source *bg_source = ta_game_component_try(
-                    RES_COMP_AUDIO_SOURCE, tg_e_background_music);
+                    tg_e_background_music, RES_COMP_AUDIO_SOURCE);
                 alSourcei(bg_source->al_source_id, AL_SOURCE_RELATIVE, AL_FALSE);
                 alSourcefv(bg_source->al_source_id, AL_POSITION, (float *)&VEC3_ZERO);
                 alSourcefv(bg_source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
@@ -738,8 +745,8 @@ void game_command_player_move_forward()
     dir.z = camera->front.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, 0.1f);
-    ta_rigid_body *player_body = ta_game_component(RES_COMP_RIGID_BODY,
-        tg_e_player_one);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
+        RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_move_backward()
@@ -750,8 +757,8 @@ void game_command_player_move_backward()
     dir.z = -camera->front.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, 0.1f);
-    ta_rigid_body *player_body = ta_game_component(RES_COMP_RIGID_BODY,
-        tg_e_player_one);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
+        RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_move_right()
@@ -762,8 +769,8 @@ void game_command_player_move_right()
     dir.z = camera->right.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, 0.1f);
-    ta_rigid_body *player_body = ta_game_component(RES_COMP_RIGID_BODY,
-        tg_e_player_one);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
+        RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_move_left()
@@ -774,17 +781,47 @@ void game_command_player_move_left()
     dir.z = -camera->right.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, 0.1f);
-    ta_rigid_body *player_body = ta_game_component(RES_COMP_RIGID_BODY,
-        tg_e_player_one);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
+        RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_jump()
 {
     ta_vec3 dir = VEC3_Y;
     dir = vec3_scalef(dir, 5.0f);
-    ta_rigid_body *player_body = ta_game_component(RES_COMP_RIGID_BODY,
-        tg_e_player_one);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
+        RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
+}
+static void spawn_bullet(ta_vec3 position)
+{
+    static const char *bullet_names[] = {
+        "bullet_01",
+        "bullet_02",
+        "bullet_03",
+        "bullet_04",
+        "bullet_05",
+        "bullet_06",
+        "bullet_07",
+        "bullet_08",
+        "bullet_09",
+    };
+    static int next_idx = 0;
+    DLB_ASSERT(next_idx < ARRAY_COUNT(bullet_names));
+    const char *name = bullet_names[next_idx];
+    next_idx++;
+
+    ta_transform *transform = ta_game_alloc(RES_COMP_TRANSFORM, CSTR(name));
+    ta_model *model = ta_game_alloc(RES_COMP_MODEL, CSTR(name));
+    ta_rigid_body *body = ta_game_alloc(RES_COMP_RIGID_BODY, CSTR(name));
+    DLB_ASSERT(transform);
+    DLB_ASSERT(model);
+    DLB_ASSERT(body);
+
+    ta_transform_init(transform);
+    transform->xform.position = position;
+
+    //model->
 }
 void game_command_player_shoot()
 {
@@ -793,9 +830,9 @@ void game_command_player_shoot()
     static double last_empty_ms = 0;
 
     ta_player *player = ta_game_player();
-    ta_gun *gun = ta_game_component(RES_COMP_GUN, player->e_gun);
-    ta_audio_source *src_gun = ta_game_component(RES_COMP_AUDIO_SOURCE,
-        player->e_gun);
+    ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
+    ta_audio_source *src_gun = ta_game_component(player->e_gun,
+        RES_COMP_AUDIO_SOURCE);
 
     double now_ms = ta_timer_elapsed_ms();
 
@@ -816,6 +853,7 @@ void game_command_player_shoot()
             if (now_ms < last_bang_ms + after_bang_delay_ms) {
                 return;
             }
+
 
             ta_audio_source_play_name(src_gun, gun->sfx_reload);
             last_reload_ms = ta_timer_elapsed_ms();
@@ -987,7 +1025,7 @@ void ta_game_event(ta_event *event)
             // TODO: Check which button was activated:
             //event->data.button.button_name;
             ta_player *player = ta_game_player();
-            ta_gun *gun = ta_game_component(RES_COMP_GUN, player->e_gun);
+            ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
             if (gun->carrying_ammo == 0 && gun->loaded_ammo == 0) {
                 gun->carrying_ammo = gun->carrying_ammo_max;
             }

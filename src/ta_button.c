@@ -40,10 +40,10 @@ void e_button_update(ta_e_button *button)
     //       EVENT_BUTTON_DEACTIVATED
     //       EVENT_BUTTON_STATE_CHANGED
 
-    ta_rigid_body *button_body = ta_game_component(RES_COMP_RIGID_BODY,
-        button->entity_name);
-    ta_rigid_body *player_body = ta_game_component(RES_COMP_RIGID_BODY,
-        tg_e_player_one);
+    ta_rigid_body *button_body = ta_game_component(button->entity_name,
+        RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
+        RES_COMP_RIGID_BODY);
 
     button->state_prev = button->state;
 #if 0

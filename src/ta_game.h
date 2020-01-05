@@ -46,8 +46,10 @@ void *ta_game_by_name_or_default(enum ta_resource_type type, const char *name, u
 void *ta_game_by_sym(enum ta_resource_type type, const char *sym);
 void *ta_game_by_sym_try(enum ta_resource_type type, const char *sym);
 void *ta_game_by_sym_or_default(enum ta_resource_type type, const char *sym);
-void *ta_game_component(enum ta_resource_type type, const char *entity);
-void *ta_game_component_try(enum ta_resource_type type, const char *entity);
+void *ta_game_component_add(const char *entity, enum ta_resource_type type,
+    const char *name, u32 name_len);
+void *ta_game_component(const char *entity, enum ta_resource_type type);
+void *ta_game_component_try(const char *entity, enum ta_resource_type type);
 void *ta_game_resource_pool(enum ta_resource_type type);
 void ta_game_load_gltf();
 struct ta_camera *ta_game_camera();
