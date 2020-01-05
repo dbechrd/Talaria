@@ -580,6 +580,7 @@ void ta_scene_render(ta_scene *scene, ta_camera *render_camera, float alpha)
 
     // Dump any prims from the collision pass
     debug_render_manifolds(scene);
+    ta_primitive_render_lines(perma_lines_queue, tg_shader_lines, false, false);
     ta_primitive_render(true, false);
 
     // TODO: Group by shader / material to minimize redundant uniform calls

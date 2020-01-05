@@ -398,6 +398,10 @@ void ta_game_window_resize()
 static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     double ms_frame_delta, u64 sim_step)
 {
+    GLint polygon_mode = 0;
+    glGetIntegerv(GL_POLYGON_MODE, &polygon_mode);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     ta_size window_size = { 0 };
     ta_window_sdl_size(tg_window, &window_size.w, &window_size.h);
 
@@ -439,8 +443,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
     ta_font_push_text(&frame_time_rects, font, CSTR(frame_info), true, 0, 0, 0);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
-        ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
-            0, true, false);
+        ta_primitive_push_rect_uv(*rect, TA_COLOR_WHITE, 0, true, false);
     }
     dlb_vec_zero(frame_time_rects);
 
@@ -450,6 +453,8 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
     ta_font_render(quads_queue, font, SCREEN_WRAP_X(-320.0f), 0,
         UI_LAYER_HUD, true, true);
+
+    glPolygonMode(GL_FRONT_AND_BACK, polygon_mode);
 }
 static void game_draw_hud()
 {
@@ -883,6 +888,9 @@ void game_command_debug_mouse_unlock()
 void game_command_debug_mouse_lock_toggle()
 {
     ta_mouse_capture_toggle();
+
+    // HACK: Too lazy to make a proper keybind for this
+    dlb_vec_clear(perma_lines_queue);
 }
 void game_command_debug_toggle_wireframe()
 {

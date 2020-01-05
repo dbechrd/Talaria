@@ -45,12 +45,18 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
     // set a "loaded" flag for each uniform (will be 0 by default, so safer than
     // "dirty" flag), and only load when changed. I don't know how expensive
     // glUniform calls are, so this may or may not matter.
-    ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
     ta_mat4 light_pvm = mat4_mul(light_pv, &transform->model);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
-    ta_shader_bind(shader);
     dlb_vec_each(const char **, mesh_name, model->meshes) {
         ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+        if (vec3_zero(mesh->offset)) {
+            ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
+        } else {
+            ta_mat4 offset = mat4_translate(mesh->offset);
+            offset = mat4_mul(&offset, &transform->model);
+            ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
+        }
+        ta_shader_bind(shader);
         ta_mesh_render(mesh);
     }
     ta_shader_unbind();
@@ -96,9 +102,6 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         ta_texture *texture_occlusion = ta_game_by_sym(RES_TEXTURE, material->tex_occlusion ? material->tex_occlusion : SYM_MISSING_OCCLUSION);
         ta_texture *texture_roughness = ta_game_by_sym(RES_TEXTURE, material->tex_roughness ? material->tex_roughness : SYM_MISSING_ROUGHNESS);
 
-        ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
-        ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
-        ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
         ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
         u32 lights_len = dlb_vec_len(lights);
         u32 u_lights_count = 0;
@@ -117,9 +120,18 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
         ta_shader_set_sampler2d(shader, SYM_U_TEX_OCCLUSION, texture_occlusion->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ROUGHNESS, texture_roughness->gl_id);
         ta_shader_set_int(shader, SYM_U_DEBUG_CHANNEL, camera->debug_channel);
-        ta_shader_bind(shader);
+        ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
+        ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
         dlb_vec_each(const char **, mesh_name, model->meshes) {
             ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+            if (vec3_zero(mesh->offset)) {
+                ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
+            } else {
+                ta_mat4 offset = mat4_translate(mesh->offset);
+                offset = mat4_mul(&transform->model, &offset);
+                ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
+            }
+            ta_shader_bind(shader);
             ta_mesh_render(mesh);
         }
         ta_shader_unbind();
@@ -152,6 +164,11 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
 
                 // World space
                 ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+
+                ta_sphere model_origin = { 0 };
+                model_origin.center = transform->xform.position;
+                model_origin.radius = 0.04f;
+                ta_primitive_push_sphere(model_origin, TA_COLOR_PINK);
 
                 ta_sphere centroid_global = { 0 };
                 centroid_global.center = body->centroid_global;
@@ -190,10 +207,16 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
 
     ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
-    ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
-    ta_shader_bind(shader);
     dlb_vec_each(const char **, mesh_name, model->meshes) {
         ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+        if (vec3_zero(mesh->offset)) {
+            ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
+        } else {
+            ta_mat4 offset = mat4_translate(mesh->offset);
+            offset = mat4_mul(&transform->model, &offset);
+            ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
+        }
+        ta_shader_bind(shader);
         ta_mesh_render(mesh);
     }
     ta_shader_unbind();

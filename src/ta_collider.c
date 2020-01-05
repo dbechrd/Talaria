@@ -12,13 +12,26 @@ void ta_collider_init(ta_collider *collider)
             }
             break;
         } case TA_COLLIDER_SPHERE: {
-            DLB_ASSERT(collider->data.sphere.radius > TA_EPSILON);
+            if (!collider->data.sphere.radius) {
+                collider->data.sphere.radius = 1.0f;
+            } else {
+                DLB_ASSERT(collider->data.sphere.radius > TA_EPSILON);
+            }
             break;
         } case TA_COLLIDER_OBB: {
-            DLB_ASSERT(collider->data.obb.extents.x > TA_EPSILON);
-            DLB_ASSERT(collider->data.obb.extents.y > TA_EPSILON);
-            DLB_ASSERT(collider->data.obb.extents.z > TA_EPSILON);
-            collider->data.obb.orientation = quat_normalize(collider->data.obb.orientation);
+            if (vec3_zero(collider->data.obb.extents)) {
+                collider->data.obb.extents = VEC3_ONE;
+            } else {
+                DLB_ASSERT(collider->data.obb.extents.x > TA_EPSILON);
+                DLB_ASSERT(collider->data.obb.extents.y > TA_EPSILON);
+                DLB_ASSERT(collider->data.obb.extents.z > TA_EPSILON);
+            }
+            if (vec4_zero(collider->data.obb.orientation)) {
+                collider->data.obb.orientation = QUAT_IDENT;
+            } else {
+                collider->data.obb.orientation =
+                    quat_normalize(collider->data.obb.orientation);
+            }
             break;
         } default: {
             DLB_ASSERT(!"Make sure this collider doesn't need initializer");

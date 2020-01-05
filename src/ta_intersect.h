@@ -19,10 +19,16 @@ typedef struct ta_manifold {
     float sf;  // Mixed static friction
 } ta_manifold;
 
+// NOTE: All of these shapes should be in world space, manifold is currently
+// optional (if not provided, will just return true/false and not fill out
+// contact properties).
+
 bool ta_aabb_v_aabb(const struct ta_aabb *a, const struct ta_aabb *b);
-bool ta_sphere_v_sphere(struct ta_manifold *manifold, const struct ta_sphere *a,
-    const struct ta_sphere *b);
 bool ta_plane_v_sphere(struct ta_manifold *manifold, const struct ta_plane *plane,
     const struct ta_sphere *sphere);
 bool ta_plane_v_obb(struct ta_manifold *manifold, const struct ta_plane *plane,
     const struct ta_obb *obb);
+bool ta_sphere_v_sphere(struct ta_manifold *manifold, const struct ta_sphere *a,
+    const struct ta_sphere *b);
+bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere,
+    const ta_obb *obb);

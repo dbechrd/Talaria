@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x40FDAF18 (7.927624)
-    y: 0xC043F1D0 (-3.061634)
-    z: 0xC088FDD2 (-4.280984)
+    x: 0xC0BB4E45 (-5.853304)
+    y: 0xC0391504 (-2.891908)
+    z: 0x40352655 (2.830465)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x43453B1D (197.230911)
+  yaw: 0x42E6A939 (115.330513)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC183348D (-16.400660)
+  pitch: 0xC19D9BBB (-19.701040)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,16 +57,16 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBE8A1385 (-0.269680)
-    y: 0x3F759565 (0.959311)
-    z: 0x3DAB4B2B (0.083639)
+    x: 0xBE13B103 (-0.144230)
+    y: 0x3F7103D0 (0.941464)
+    z: 0xBE9C01B8 (-0.304701)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
   position:
-    x: 0xC047713C (-3.116286)
-    y: 0xC0A000D2 (-5.000100)
-    z: 0xC097929C (-4.736647)
+    x: 0xC15532C2 (-13.324892)
+    y: 0xC0208524 (-2.508126)
+    z: 0xC02AA97A (-2.666594)
   position_smooth: 0x3F000000 (0.500000)
   position_target_vel: 0x3E4CCCCD (0.200000)
   yaw: 0x439E59AF (316.700653)
@@ -199,7 +199,7 @@ ta_model:
   name: "sphere1"
   entity_name: "sphere1"
   meshes: ["rock_mesh", ]
-  material: "metal_plate_019"
+  material: "cobble"
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -219,7 +219,7 @@ ta_model:
 ta_model:
   name: "column_0001"
   entity_name: "column_0001"
-  meshes: ["prim_sphere", ]
+  meshes: ["column_0001", ]
   material: "test"
   cast_shadows: true
   receive_shadows: true
@@ -351,40 +351,40 @@ ta_transform:
   entity_name: "player_one"
   xform:
     position:
-      x: 0xC047713B (-3.116286)
-      y: 0xC0E000D2 (-7.000100)
-      z: 0xC097929D (-4.736647)
+      x: 0xC15532C2 (-13.324892)
+      y: 0xC0904292 (-4.508126)
+      z: 0xC02AA97A (-2.666594)
     orientation:
-      x: 0x3F5878CB (0.845593)
-      y: 0xBE48C354 (-0.196058)
-      z: 0xBDFC5870 (-0.123216)
-      w: 0xBEF64460 (-0.480990)
+      x: 0x3ED530A6 (0.416387)
+      y: 0x3F081EA2 (0.531717)
+      z: 0x3DE7B7AF (0.113143)
+      w: 0xBF3A904A (-0.728764)
 ta_transform:
   name: "sphere1"
   entity_name: "sphere1"
   xform:
     position:
-      x: 0x4044DC30 (3.075939)
-      y: 0xC0E848C8 (-7.258884)
-      z: 0x405AFEEF (3.421810)
+      x: 0x3D07683A (0.033058)
+      y: 0xC0EE0DF3 (-7.439203)
+      z: 0xC18BB84D (-17.464991)
     orientation:
-      x: 0xBA0469A7 (-0.000505)
-      y: 0x3E55E222 (0.208870)
-      z: 0x3C629113 (0.013829)
-      w: 0x3F7A5415 (0.977845)
+      x: 0x3A2829C8 (0.000641)
+      y: 0xBA181E3F (-0.000580)
+      z: 0x3AB1E8E3 (0.001357)
+      w: 0x3F7FFFEA (0.999999)
 ta_transform:
   name: "sphere2"
   entity_name: "sphere2"
   xform:
     position:
-      x: 0x40931192 (4.595895)
+      x: 0x40DA4412 (6.820809)
       y: 0xC0E000D2 (-7.000100)
-      z: 0xC107A93E (-8.478819)
+      z: 0xC1199A96 (-9.600241)
     orientation:
-      x: 0xBE7E2528 (-0.248189)
-      y: 0xBEC4CCA1 (-0.384374)
-      z: 0x3F3BE18E (0.733910)
-      w: 0x3F008517 (0.502031)
+      x: 0xBF6E7C45 (-0.931584)
+      y: 0xBB2B35E8 (-0.002612)
+      z: 0xBEBA1EF7 (-0.363517)
+      w: 0x37A080B8 (0.000019)
 ta_transform:
   name: "shadow_test_1"
   entity_name: "shadow_test_1"
@@ -403,53 +403,53 @@ ta_transform:
   entity_name: "column_0001"
   xform:
     position:
-      x: 0xC05FA9C3 (-3.494736)
-      y: 0xC0E000D2 (-7.000100)
-      z: 0xBF5A5640 (-0.852879)
+      x: 0xC134F153 (-11.308917)
+      y: 0xC1200069 (-10.000100)
+      z: 0x40C3AD3D (6.114897)
     orientation:
-      x: 0x3EF4DC83 (0.478245)
-      y: 0xBE36F7F1 (-0.178680)
-      z: 0xBF071031 (-0.527591)
-      w: 0x3F2DD120 (0.678972)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
 ta_transform:
   name: "column_0002"
   entity_name: "column_0002"
   xform:
     position:
-      x: 0xC10E8E27 (-8.909705)
-      y: 0xC0FF85AA (-7.985066)
-      z: 0xBFD5157B (-1.664718)
+      x: 0xC102E011 (-8.179704)
+      y: 0xC1000069 (-8.000100)
+      z: 0xBF97A4DB (-1.184718)
     orientation:
-      x: 0x3979749C (0.000238)
-      y: 0xB4010E4C (-0.000000)
-      z: 0x3C04D2E1 (0.008107)
-      w: 0x3F7FFDD8 (0.999967)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x3F1BB0BA (0.608165)
+      w: 0x3F4B3727 (0.793810)
 ta_transform:
   name: "column_0003"
   entity_name: "column_0003"
   xform:
     position:
       x: 0xC10358F7 (-8.209220)
-      y: 0xC0FF869C (-7.985182)
+      y: 0xC1000069 (-8.000100)
       z: 0xC0773246 (-3.862443)
     orientation:
-      x: 0xBB132B54 (-0.002246)
-      y: 0xB5A2BDD6 (-0.000001)
-      z: 0xBAD96FBC (-0.001659)
-      w: 0x3F7FFFC0 (0.999996)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x3F1C1985 (0.609764)
+      w: 0x3F4AE6B5 (0.792583)
 ta_transform:
   name: "star_0001"
   entity_name: "star_0001"
   xform:
     position:
-      x: 0xC0FB49F4 (-7.852777)
+      x: 0xC116969B (-9.411769)
       y: 0xC0F000D2 (-7.500100)
-      z: 0xC0ED528F (-7.416328)
+      z: 0xC0C91A72 (-6.284478)
     orientation:
-      x: 0xBED068F2 (-0.407051)
-      y: 0x3BD094A1 (0.006365)
-      z: 0xBF657F29 (-0.896472)
-      w: 0x3E332680 (0.174952)
+      x: 0xBB8002C4 (-0.003907)
+      y: 0x3E01D0F1 (0.126774)
+      z: 0xBF2456A4 (-0.641947)
+      w: 0x3F419568 (0.756186)
 #-------------------------------------------------------------------------------
 # TYP_RIGID_BODY
 #-------------------------------------------------------------------------------
@@ -471,7 +471,7 @@ ta_rigid_body:
   name: "button_0001"
   entity_name: "button_0001"
   collider:
-    type: 1  # TA_COLLIDER_SHERE
+    type: 1  # TA_COLLIDER_SPHERE
     sphere:
       center:
         x: 0x00000000 (0.000000)
@@ -485,7 +485,7 @@ ta_rigid_body:
   name: "player_one"
   entity_name: "player_one"
   collider:
-    type: 1  # TA_COLLIDER_SHERE
+    type: 1  # TA_COLLIDER_SPHERE
     sphere:
       center:
         x: 0x00000000 (0.000000)
@@ -512,12 +512,13 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
-  mass: 0x41200000 (10.000000)
+  mass: 0x3F800000 (1.000000)
+  no_gravity: true
 ta_rigid_body:
   name: "sphere2"
   entity_name: "sphere2"
   collider:
-    type: 1  # TA_COLLIDER_SHERE
+    type: 1  # TA_COLLIDER_SPHERE
     sphere:
       center:
         x: 0x00000000 (0.000000)
@@ -529,11 +530,11 @@ ta_rigid_body:
   name: "column_0001"
   entity_name: "column_0001"
   collider:
-    type: 1  # TA_COLLIDER_SHERE
+    type: 1  # TA_COLLIDER_SPHERE
     sphere:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x00000000 (0.000000)
+        y: 0x40400000 (3.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   mass: 0x3F800000 (1.000000)
@@ -541,29 +542,45 @@ ta_rigid_body:
   name: "column_0002"
   entity_name: "column_0002"
   collider:
-    type: 1  # TA_COLLIDER_SHERE
-    sphere:
+    type: 2  # TA_COLLIDER_OBB
+    obb:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x3F800000 (1.000000)
+        y: 0x404CCCC7 (3.199999)
         z: 0x00000000 (0.000000)
-      radius: 0x3F800000 (1.000000)
+      extents:
+        x: 0x3F800000 (1.000000)
+        y: 0x404CCCC5 (3.199998)
+        z: 0x3F800000 (1.000000)
+      orientation:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+        w: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "column_0003"
   entity_name: "column_0003"
   collider:
-    type: 1  # TA_COLLIDER_SHERE
-    sphere:
+    type: 2  # TA_COLLIDER_OBB
+    obb:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x3F800000 (1.000000)
+        y: 0x404CCCCD (3.200000)
         z: 0x00000000 (0.000000)
-      radius: 0x3F800000 (1.000000)
+      extents:
+        x: 0x3F800000 (1.000000)
+        y: 0x404CCCCD (3.200000)
+        z: 0x3F800000 (1.000000)
+      orientation:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+        w: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "star_0001"
   entity_name: "star_0001"
   collider:
-    type: 1  # TA_COLLIDER_SHERE
+    type: 1  # TA_COLLIDER_SPHERE
     sphere:
       center:
         x: 0x00000000 (0.000000)
@@ -674,41 +691,173 @@ ta_material:
 ta_mesh:
   name: "prim_cube"
   path: "data/mesh/prim_cube.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "prim_sphere"
   path: "data/mesh/prim_sphere.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "chamber_0001"
   path: "data/mesh/chamber0001.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "wakeup"
   path: "data/mesh/wakeup.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "button"
   path: "data/mesh/button.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "letter_r"
   path: "data/mesh/letter_r.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "column_0001"
   path: "data/mesh/column_0001.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "star_0001"
   path: "data/mesh/star.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
 #-------------------------------------------------------------------------------
 # TYP_SHADER
 #-------------------------------------------------------------------------------

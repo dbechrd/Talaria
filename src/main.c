@@ -211,8 +211,8 @@ static void debug_nametag(ta_camera *camera)
     tag_background.rect.x -= NDC_W(5.0f);
     tag_background.rect.w = NDC_W(tag_rect.w) + NDC_W(10.0f);
     tag_background.rect.h = NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
-    ta_primitive_push_rect_uv(&quads_queue, tag_background, TA_COLOR_GRAY3A,
-        UI_LAYER_HUD_BG, false, false);
+    ta_primitive_push_rect_uv(tag_background, TA_COLOR_GRAY3A, UI_LAYER_HUD_BG,
+        false, false);
     ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
@@ -226,8 +226,8 @@ static void debug_nametag(ta_camera *camera)
     //       make font_render's xform arguments stack with current value
     //       of SYM_U_MODEL.
     dlb_vec_each(ta_rect_uv *, rect, tag_rects) {
-        ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE,
-            UI_LAYER_HUD, true, true);
+        ta_primitive_push_rect_uv(*rect, TA_COLOR_WHITE, UI_LAYER_HUD, true,
+            true);
     }
     dlb_vec_zero(tag_rects);
     ta_font_render(quads_queue, font, 0, 0, 0, true, true);

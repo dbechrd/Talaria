@@ -375,8 +375,9 @@ void ta_schema_register()
     TYPE_END(ta_material);
 
     TYPE_START(ta_mesh, TYP_MESH, ta_mesh_init, ta_mesh_free);
-    TYPE_FIELD(ta_mesh, name, ATOM_STRING);
-    TYPE_FIELD(ta_mesh, path, ATOM_STRING);
+    TYPE_FIELD(ta_mesh, name,   ATOM_STRING);
+    TYPE_FIELD(ta_mesh, path,   ATOM_STRING);
+    TYPE_FIELD(ta_mesh, offset, TYP_VEC3);
     TYPE_END(ta_mesh);
 
     TYPE_START(ta_shader, TYP_SHADER, ta_shader_load, 0);

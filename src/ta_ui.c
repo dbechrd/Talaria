@@ -1356,15 +1356,15 @@ void ta_ui_tooltip(const char *text, u32 text_len)
     tooltip_bg.rect.y = offset_y - 2.0f;
     tooltip_bg.rect.w = text_rect.w + 8.0f;
     tooltip_bg.rect.h = text_rect.h + 3.0f;
-    ta_primitive_push_rect_uv(&tooltip_bg_queue, tooltip_bg, TA_COLOR_GRAY3A,
+    ta_primitive_push_rect_uv_q(&tooltip_bg_queue, tooltip_bg, TA_COLOR_GRAY3A,
         UI_LAYER_TIP_BG, true, false);
 
     dlb_vec_each(ta_rect_uv *, rect, text_rects) {
         ta_rect_uv offset_rect = *rect;
         offset_rect.rect.x += offset_x;
         offset_rect.rect.y += offset_y;
-        ta_primitive_push_rect_uv(&tooltip_fg_queue, offset_rect, TA_COLOR_WHITE,
-            UI_LAYER_TIP, true, false);
+        ta_primitive_push_rect_uv_q(&tooltip_fg_queue, offset_rect,
+            TA_COLOR_WHITE, UI_LAYER_TIP, true, false);
     }
     dlb_vec_zero(text_rects);
 }
@@ -1439,7 +1439,7 @@ static void ui_render_text(float x, float y, ta_rect_uv *text_rects)
 {
     if (dlb_vec_len(text_rects)) {
         dlb_vec_each(ta_rect_uv *, rect, text_rects) {
-            ta_primitive_push_rect_uv(&quads_queue, *rect, TA_COLOR_WHITE, 0,
+            ta_primitive_push_rect_uv_q(&quads_queue, *rect, TA_COLOR_WHITE, 0,
                 true, false);
         }
 

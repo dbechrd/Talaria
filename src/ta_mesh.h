@@ -17,6 +17,7 @@ typedef struct ta_mesh {
     u32 index;
     const char *name;
     const char *path;
+    ta_vec3 offset;
     GLuint *indexes;
     ta_vec3 *positions;
     ta_vec2 *uvs;
