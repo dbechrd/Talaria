@@ -54,8 +54,11 @@ void ta_light_init(ta_light *light)
             DLB_ASSERT(!light->cast_shadows);
             break;
         } case TA_LIGHT_DIRECTIONAL: {
+            const float ortho = 50.0f;
             light->shadowmap.projection = mat4_ortho(
-                -10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 50.0f);
+                -ortho, ortho, -ortho, ortho,
+                light->shadowmap.znear, light->shadowmap.zfar
+            );
             shadowmap_directional_create(light);
             break;
         } case TA_LIGHT_POINT: {
@@ -79,25 +82,36 @@ static void shadowmap_directional_create(ta_light *light)
 {
     light->shadowmap.texture.width = light->shadowmap.resolution;
     light->shadowmap.texture.height = light->shadowmap.resolution;
-    light->shadowmap.texture.cubemap = true;
+    light->shadowmap.texture.cubemap = false;
 
     glGenTextures(1, &light->shadowmap.texture.gl_id);
     glBindTexture(GL_TEXTURE_2D, light->shadowmap.texture.gl_id);
+
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[4] = { 0 };
+    //float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
     // TODO: Should internalformat be GL_DEPTH_COMPONENT16 instead?
     glTexImage2D(
         GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, light->shadowmap.resolution,
         light->shadowmap.resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0
     );
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glGenFramebuffers(1, &light->shadowmap.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
         light->shadowmap.texture.gl_id, 0);
     glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -152,51 +166,73 @@ ta_vec3 ta_light_position(ta_light *light)
     ta_transform *transform = ta_game_component(light->entity_name, RES_COMP_TRANSFORM);
     return transform->xform.position;
 }
-
 ta_vec3 ta_light_direction(ta_light *light)
 {
     ta_transform *transform = ta_game_component(light->entity_name, RES_COMP_TRANSFORM);
 
-    // Lights with identity orientation point directly down
+    // Lights with identity orientation don't cast shadows; give them a nudge
+    if (quat_equal(transform->xform.orientation, QUAT_IDENT)) {
+        transform->xform.orientation.x += TA_EPSILON;
+        transform->xform.orientation = quat_normalize(transform->xform.orientation);
+    }
+    // Default light direction is directly down
     ta_vec3 direction = vec3_rotate_quat(VEC3_NY, transform->xform.orientation);
+    direction = vec3_normalize(direction);
     return direction;
+}
+ta_mat4 ta_light_pv(ta_light *light)
+{
+    ta_vec3 inv_dir = vec3_neg(ta_light_direction(light));
+    ta_mat4 view = mat4_lookat(inv_dir, VEC3_ZERO, VEC3_Y);
+    ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view);
+    return light_pv;
 }
 
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#spot-lights
 // Use texture2Dproj to account for perspective-divide
-
-static void shadowpass_render_directional(ta_light *light, ta_shader *shader,
-    float alpha, ta_model *models)
+static void shadowpass_render_directional(ta_light *light, float alpha,
+    ta_model *models)
 {
     DLB_ASSERT(light->shadowmap.framebuffer);
+
+    ta_shader *shader = ta_game_by_sym(RES_SHADER, light->shadowmap.shader);
+    ta_shader_bind(shader);
 
     // TODO: Draw into shadowmap from ortho big enough to cover camera
     // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#rendering-the-shadow-map
     // https://www.khronos.org/opengl/wiki/GLAPI/glBindFragDataLocation
 
-    glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
     glViewport(0, 0, light->shadowmap.resolution, light->shadowmap.resolution);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light->shadowmap.framebuffer);
 
-    ta_vec3 inv_dir = vec3_neg(ta_light_direction(light));
-    ta_mat4 view = mat4_lookat(inv_dir, VEC3_ZERO, VEC3_Y);
-    ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view);
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
+    }
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+
+    ta_mat4 light_pv = ta_light_pv(light);
     dlb_vec_each(ta_model *, model, models) {
         ta_model_shadow_pass(model, shader, &light_pv, alpha);
     }
+
+    ta_shader_unbind(shader);
 }
 
-static void shadowpass_render_point(ta_light *light, ta_shader *shader,
-    float alpha, ta_model *models)
+// Draw into shadowmap from light perspective
+// http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#rendering-the-shadow-map
+// https://www.khronos.org/opengl/wiki/GLAPI/glBindFragDataLocation
+// https://gamedev.stackexchange.com/questions/19461/opengl-glsl-render-to-cube-map
+static void shadowpass_render_point(ta_light *light, float alpha,
+    ta_model *models)
 {
     DLB_ASSERT(light->shadowmap.framebuffer);
 
-    // TODO: Draw into shadowmap from light perspective
-    // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#rendering-the-shadow-map
-    // https://www.khronos.org/opengl/wiki/GLAPI/glBindFragDataLocation
-
-    // https://gamedev.stackexchange.com/questions/19461/opengl-glsl-render-to-cube-map
-
     ta_vec3 position = ta_light_position(light);
+    ta_shader *shader = ta_game_by_sym(RES_SHADER, light->shadowmap.shader);
+    ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &position);
+    ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->shadowmap.zfar);
 
     // TODO: Cache lookat matrices in dlb_vec, store light_pos as lookat_pos and
     //       update if light_pos != lookat_pos (i.e. position has changed)
@@ -208,11 +244,6 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
     view[3] = mat4_lookat(position, vec3_add(position, VEC3_NY), VEC3_NZ);
     view[4] = mat4_lookat(position, vec3_add(position, VEC3_Z),  VEC3_NY);
     view[5] = mat4_lookat(position, vec3_add(position, VEC3_NZ), VEC3_NY);
-
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, light->shadowmap.texture, 0);
-
-    //GLenum draw_buffers[] = { GL_DEPTH_ATTACHMENT };
-    //glDrawBuffers(1, draw_buffers);
 
     glViewport(0, 0, light->shadowmap.resolution, light->shadowmap.resolution);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light->shadowmap.framebuffer);
@@ -230,34 +261,51 @@ static void shadowpass_render_point(ta_light *light, ta_shader *shader,
         glClear(GL_DEPTH_BUFFER_BIT);
 
         ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view[face]);
-
         dlb_vec_each(ta_model *, model, models) {
             ta_model_shadow_pass(model, shader, &light_pv, alpha);
         }
     }
+
+    ta_shader_unbind(shader);
 }
 
-typedef void (* shadowpass_render)(ta_light *light, ta_shader *shader,
-    float alpha, ta_model *models);
-
-static shadowpass_render shadowpass_renderers[TA_LIGHT_COUNT] = {
-    [TA_LIGHT_DIRECTIONAL] = shadowpass_render_directional,
-    [TA_LIGHT_POINT]       = shadowpass_render_point,
-};
-
-void ta_light_shadowpass_render(ta_light *light, ta_shader *shader,
-    float alpha, ta_model *models)
+void ta_light_shadowpass_render(ta_light *light, float alpha, ta_model *models)
 {
-    if (!light->cast_shadows) return;
+    typedef void (* shadowpass_render)(ta_light *light, float alpha,
+        ta_model *models);
+
+    static shadowpass_render shadowpass_renderers[TA_LIGHT_COUNT] = {
+        [TA_LIGHT_DIRECTIONAL] = shadowpass_render_directional,
+        [TA_LIGHT_POINT]       = shadowpass_render_point,
+    };
+
+    DLB_ASSERT(!light->disabled);
+    DLB_ASSERT(light->cast_shadows);
 
     if (shadowpass_renderers[light->type]) {
-        shadowpass_renderers[light->type](light, shader, alpha, models);
+        shadowpass_renderers[light->type](light, alpha, models);
     } else {
         DLB_ASSERT(!"No shadowpass renderer for this light type");
     }
 }
 
-void ta_light_render_shadowmap_debug(ta_light *light, int x, int y)
+void render_shadowmap_debug_directional(ta_light *light, int x, int y)
+{
+    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX,
+        light->shadowmap.texture.gl_id);
+
+    s32 resolution = light->shadowmap.resolution / 10;
+    ta_rect rect = { 0 };
+    rect.x = x;
+    rect.y = y;
+    rect.w = resolution;
+    rect.h = resolution;
+    ta_primitive_push_rect(rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+    ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
+
+    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+}
+void render_shadowmap_debug_point(ta_light *light, int x, int y)
 {
     ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX,
         light->shadowmap.texture.gl_id);
@@ -292,6 +340,19 @@ void ta_light_render_shadowmap_debug(ta_light *light, int x, int y)
     }
 
     ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
+}
+void ta_light_render_shadowmap_debug(ta_light *light, int x, int y)
+{
+    typedef void (* shadowmap_render)(ta_light *light, int x, int y);
+
+    static shadowmap_render shadowmap_renderers[TA_LIGHT_COUNT] = {
+        [TA_LIGHT_DIRECTIONAL] = render_shadowmap_debug_directional,
+        [TA_LIGHT_POINT]       = render_shadowmap_debug_point,
+    };
+
+    if (shadowmap_renderers[light->type]) {
+        shadowmap_renderers[light->type](light, x, y);
+    }
 }
 
 #if 0

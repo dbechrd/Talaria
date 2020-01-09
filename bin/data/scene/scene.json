@@ -47,19 +47,19 @@
       "name": "freecam",
       "entity_name": "freecam",
       "position": {
-        "x": "0xC0BB4E45 (-5.853304)",
-        "y": "0xC0391504 (-2.891908)",
-        "z": "0x40352655 (2.830465)"
+        "x": "0x406EFBB4 (3.734113)",
+        "y": "0x4123689A (10.213037)",
+        "z": "0xC08CA1AC (-4.394735)"
       },
       "position_smooth": "0x3DCCCCCD (0.100000)",
       "position_target_vel": "0x3E99999A (0.300000)",
-      "yaw": "0x42E6A939 (115.330513)",
+      "yaw": "0x4266860F (57.630917)",
       "yaw_smooth": "0x3F333333 (0.700000)",
-      "pitch": "0xC19D9BBB (-19.701040)",
+      "pitch": "0xC16E69FD (-14.900876)",
       "pitch_smooth": "0x3F333333 (0.700000)",
       "pitch_min": "0xC2B40000 (-90.000000)",
       "pitch_max": "0x42B40000 (90.000000)",
-      "fov": "0x42960000 (75.000000)",
+      "fov": "0x42B40000 (90.000000)",
       "znear": "0x3C23D712 (0.010000)",
       "focal_point": {
         "x": "0x00000000 (0.000000)",
@@ -67,9 +67,9 @@
         "z": "0x00000000 (0.000000)"
       },
       "up": {
-        "x": "0xBE13B103 (-0.144230)",
-        "y": "0x3F7103D0 (0.941464)",
-        "z": "0xBE9C01B8 (-0.304701)"
+        "x": "0x3E0CF935 (0.137669)",
+        "y": "0x3F77642C (0.966372)",
+        "z": "0xBE5E6761 (-0.217191)"
       },
       "ortho": false
     },
@@ -77,9 +77,9 @@
       "name": "player_one",
       "entity_name": "player_one",
       "position": {
-        "x": "0xC15532C2 (-13.324892)",
-        "y": "0xC0208524 (-2.508126)",
-        "z": "0xC02AA97A (-2.666594)"
+        "x": "0x4167C19E (14.484770)",
+        "y": "0x403FFE5C (2.999900)",
+        "z": "0xC19E8600 (-19.815430)"
       },
       "position_smooth": "0x3F000000 (0.500000)",
       "position_target_vel": "0x3E4CCCCD (0.200000)",
@@ -121,7 +121,7 @@
     {
       "name": "sun",
       "entity_name": "sun",
-      "disabled": true,
+      "disabled": false,
       "cast_shadows": true,
       "type": 1,
       "directional": {
@@ -133,15 +133,16 @@
         }
       },
       "shadowmap": {
-        "resolution": 1024,
-        "znear": "0x3DCCCCCD (0.100000)",
-        "zfar": "0x42480000 (50.000000)"
+        "shader": "shadow_dir",
+        "resolution": 4096,
+        "znear": "0xC2200000 (-40.000000)",
+        "zfar": "0x42200000 (40.000000)"
       }
     },
     {
       "name": "point_room2",
       "entity_name": "point_room2",
-      "disabled": false,
+      "disabled": true,
       "cast_shadows": true,
       "type": 2,
       "point": {
@@ -153,6 +154,7 @@
         }
       },
       "shadowmap": {
+        "shader": "shadow_point",
         "resolution": 1024,
         "znear": "0x3DCCCCCD (0.100000)",
         "zfar": "0x42C80000 (100.000000)"
@@ -165,14 +167,15 @@
       "cast_shadows": true,
       "type": 2,
       "point": {
-        "intensity": "0x3F800000 (1.000000)",
+        "intensity": "0x3E99999A (0.300000)",
         "color": {
           "r": "0x3F800000 (1.000000)",
-          "g": "0x3DCCCCCD (0.100000)",
-          "b": "0x3F800000 (1.000000)"
+          "g": "0x3E4CCCCD (0.200000)",
+          "b": "0x00000000 (0.000000)"
         }
       },
       "shadowmap": {
+        "shader": "shadow_point",
         "resolution": 1024,
         "znear": "0x3DCCCCCD (0.100000)",
         "zfar": "0x42C80000 (100.000000)"
@@ -193,6 +196,7 @@
         }
       },
       "shadowmap": {
+        "shader": "shadow_point",
         "resolution": 1024,
         "znear": "0x3DCCCCCD (0.100000)",
         "zfar": "0x42C80000 (100.000000)"
@@ -204,7 +208,7 @@
       "name": "chamber_0001",
       "entity_name": "chamber_0001",
       "meshes": ["chamber_0001"],
-      "material": "terrazzo",
+      "material": "test",
       "invisible": false,
       "cast_shadows": true,
       "receive_shadows": true
@@ -315,14 +319,14 @@
       "xform": {
         "position": {
           "x": "0x00000000 (0.000000)",
-          "y": "0x40A00000 (5.000000)",
+          "y": "0x40E61484 (7.190004)",
           "z": "0x00000000 (0.000000)"
         },
         "orientation": {
-          "x": "0xBEC3EF04 (-0.382683)",
-          "y": "0x00000000 (0.000000)",
-          "z": "0x00000000 (0.000000)",
-          "w": "0x3F6C8362 (0.923880)"
+          "x": "0xBE7E427D (-0.248301)",
+          "y": "0x3F713FC1 (0.942379)",
+          "z": "0xBE659666 (-0.224207)",
+          "w": "0x34D245B7 (0.000000)"
         }
       }
     },
@@ -331,9 +335,9 @@
       "entity_name": "point_room2",
       "xform": {
         "position": {
-          "x": "0x413A8275 (11.656850)",
-          "y": "0x3EC7ACEA (0.389991)",
-          "z": "0xC12F5B76 (-10.959829)"
+          "x": "0xC11D0213 (-9.813006)",
+          "y": "0x423C7ABF (47.119869)",
+          "z": "0xC202E11C (-32.719833)"
         },
         "orientation": {
           "x": "0x00000000 (0.000000)",
@@ -348,9 +352,9 @@
       "entity_name": "point_room3",
       "xform": {
         "position": {
-          "x": "0x40EFAE43 (7.490022)",
-          "y": "0x40251EB0 (2.579998)",
-          "z": "0xC24E1477 (-51.519985)"
+          "x": "0x412147AF (10.080001)",
+          "y": "0x40028F8B (2.040011)",
+          "z": "0xC18F709A (-17.929981)"
         },
         "orientation": {
           "x": "0x00000000 (0.000000)",
@@ -365,9 +369,9 @@
       "entity_name": "point_attic",
       "xform": {
         "position": {
-          "x": "0x40400000 (3.000000)",
-          "y": "0x41400000 (12.000000)",
-          "z": "0x40400000 (3.000000)"
+          "x": "0x4114CCCF (9.300002)",
+          "y": "0x410A8F58 (8.659996)",
+          "z": "0xC1A27AE0 (-20.309998)"
         },
         "orientation": {
           "x": "0x00000000 (0.000000)",
@@ -383,8 +387,8 @@
       "xform": {
         "position": {
           "x": "0x00000000 (0.000000)",
-          "y": "0xC1000000 (-8.000000)",
-          "z": "0x3F800000 (1.000000)"
+          "y": "0x00000000 (0.000000)",
+          "z": "0x00000000 (0.000000)"
         },
         "orientation": {
           "x": "0x00000000 (0.000000)",
@@ -433,15 +437,15 @@
       "entity_name": "player_one",
       "xform": {
         "position": {
-          "x": "0xC15532C2 (-13.324892)",
-          "y": "0xC0904292 (-4.508126)",
-          "z": "0xC02AA97A (-2.666594)"
+          "x": "0x4167C19E (14.484770)",
+          "y": "0x3F7FF972 (0.999900)",
+          "z": "0xC19E85FF (-19.815428)"
         },
         "orientation": {
-          "x": "0x3ED530A6 (0.416387)",
-          "y": "0x3F081EA2 (0.531717)",
-          "z": "0x3DE7B7AF (0.113143)",
-          "w": "0xBF3A904A (-0.728764)"
+          "x": "0x3ED93C78 (0.424289)",
+          "y": "0xBE3ADB01 (-0.182476)",
+          "z": "0xBE08D314 (-0.133618)",
+          "w": "0xBF6077CE (-0.876828)"
         }
       }
     },
@@ -450,15 +454,15 @@
       "entity_name": "sphere1",
       "xform": {
         "position": {
-          "x": "0x3D07683A (0.033058)",
-          "y": "0xC0EE0DF3 (-7.439203)",
-          "z": "0xC18BB84D (-17.464991)"
+          "x": "0xC08F5EA0 (-4.480301)",
+          "y": "0x409C1D0A (4.878545)",
+          "z": "0xC16B3088 (-14.699348)"
         },
         "orientation": {
-          "x": "0x3A2829C9 (0.000641)",
-          "y": "0xBA181E40 (-0.000580)",
-          "z": "0x3AB1E8E4 (0.001357)",
-          "w": "0x3F7FFFEC (0.999999)"
+          "x": "0x3F064C19 (0.524599)",
+          "y": "0x3EB9784C (0.362246)",
+          "z": "0xBEE5C7AA (-0.448789)",
+          "w": "0x3F20508A (0.626229)"
         }
       }
     },
@@ -467,15 +471,15 @@
       "entity_name": "sphere2",
       "xform": {
         "position": {
-          "x": "0x40DA4412 (6.820809)",
-          "y": "0xC0E000D2 (-7.000100)",
-          "z": "0xC1199A96 (-9.600241)"
+          "x": "0x4106EC69 (8.432717)",
+          "y": "0x3F7FF972 (0.999900)",
+          "z": "0xC198DB1E (-19.106991)"
         },
         "orientation": {
-          "x": "0xBF6E7C45 (-0.931584)",
-          "y": "0xBB2B35E8 (-0.002612)",
-          "z": "0xBEBA1EF7 (-0.363517)",
-          "w": "0x37A080B8 (0.000019)"
+          "x": "0xBF671EDC (-0.902815)",
+          "y": "0x3DE4AB10 (0.111654)",
+          "z": "0xBEB6F350 (-0.357325)",
+          "w": "0x3E58AFAF (0.211608)"
         }
       }
     },
@@ -502,7 +506,7 @@
       "xform": {
         "position": {
           "x": "0xC134F153 (-11.308917)",
-          "y": "0xC1200069 (-10.000100)",
+          "y": "0xC00001A3 (-2.000100)",
           "z": "0x40C3AD3D (6.114897)"
         },
         "orientation": {
@@ -552,15 +556,15 @@
       "entity_name": "star_0001",
       "xform": {
         "position": {
-          "x": "0xC116969B (-9.411769)",
-          "y": "0xC0F000D2 (-7.500100)",
-          "z": "0xC0C91A72 (-6.284478)"
+          "x": "0x40928201 (4.578370)",
+          "y": "0x3EFFF2E5 (0.499900)",
+          "z": "0x408A2F34 (4.318262)"
         },
         "orientation": {
-          "x": "0xBB8002C4 (-0.003907)",
-          "y": "0x3E01D0F1 (0.126774)",
-          "z": "0xBF2456A4 (-0.641947)",
-          "w": "0x3F419568 (0.756186)"
+          "x": "0x3E5E47CD (0.217071)",
+          "y": "0xBEC27AC5 (-0.379843)",
+          "z": "0xBF098212 (-0.537141)",
+          "w": "0x3F389E49 (0.721165)"
         }
       }
     }
@@ -833,7 +837,7 @@
     {
       "name": "test",
       "shader": "mesh",
-      "tex_albedo": "sphere_albedo",
+      "tex_albedo": "white_albedo",
       "tex_height": "",
       "tex_metallic": "",
       "tex_normal": "",
@@ -1164,7 +1168,7 @@
 
         {
           "name": "u_lights_count",
-          "type": 1
+          "type": 0
         },
 
         {
@@ -1452,6 +1456,46 @@
             },
 
             {
+              "name": "u_lights[0].light_pv",
+              "type": 8
+            },
+
+            {
+              "name": "u_lights[1].light_pv",
+              "type": 8
+            },
+
+            {
+              "name": "u_lights[2].light_pv",
+              "type": 8
+            },
+
+            {
+              "name": "u_lights[3].light_pv",
+              "type": 8
+            },
+
+            {
+              "name": "u_lights[4].light_pv",
+              "type": 8
+            },
+
+            {
+              "name": "u_lights[5].light_pv",
+              "type": 8
+            },
+
+            {
+              "name": "u_lights[6].light_pv",
+              "type": 8
+            },
+
+            {
+              "name": "u_lights[7].light_pv",
+              "type": 8
+            },
+
+            {
               "name": "u_lights[0].shadowmap3d",
               "type": 10
             },
@@ -1545,9 +1589,31 @@
       ]
     },
     {
-      "name": "shadow",
-      "path_vert": "data/shader/shadow_v.glsl",
-      "path_frag": "data/shader/shadow_f.glsl",
+      "name": "shadow_dir",
+      "path_vert": "data/shader/shadow_dir_v.glsl",
+      "path_frag": "data/shader/shadow_dir_f.glsl",
+      "attributes": [
+        {
+          "name": "attr_position",
+          "type": 5
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "u_model",
+          "type": 8
+        },
+
+        {
+          "name": "u_light_pvm",
+          "type": 8
+        }
+      ]
+    },
+    {
+      "name": "shadow_point",
+      "path_vert": "data/shader/shadow_point_v.glsl",
+      "path_frag": "data/shader/shadow_point_f.glsl",
       "attributes": [
         {
           "name": "attr_position",
@@ -1636,6 +1702,16 @@
       "height": 1,
       "channels": 1,
       "linear": true,
+      "repeat": true
+    },
+    {
+      "name": "white_albedo",
+      "path": "",
+      "pixels": [255, 255, 255, 255],
+      "width": 1,
+      "height": 1,
+      "channels": 4,
+      "linear": false,
       "repeat": true
     },
     {

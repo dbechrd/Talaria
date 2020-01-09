@@ -1238,7 +1238,8 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(0, &components[i], state, 0);
 
-        if (i == 0 && reset_button) {
+        if ((reset_button && multiple_rows && i == 0) ||
+            (reset_button && !multiple_rows && i == 2)) {
             ta_ui_next_margin(6, 1, 0, 1);
             ta_rgba c = TA_COLOR_DARK_RED;
             ta_ui_next_bg_color(UI_STATE_NONE, c.r, c.g, c.b, c.a);

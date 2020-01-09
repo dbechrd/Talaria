@@ -38,13 +38,14 @@ typedef struct ta_light_spot {
 } ta_light_spot;
 
 typedef struct ta_light_shadowmap {
-    GLuint framebuffer;
-    ta_texture texture;
-    //u32 depthbuffer;
+    const char *shader;
     GLsizei resolution;
     float znear;
     float zfar;
+
     ta_mat4 projection;
+    GLuint framebuffer;
+    ta_texture texture;
 } ta_light_shadowmap;
 
 typedef struct ta_light {
@@ -71,6 +72,6 @@ const char *ta_light_type_str(int type);
 void ta_light_init(ta_light *light);
 ta_vec3 ta_light_position(ta_light *light);
 ta_vec3 ta_light_direction(ta_light *light);
-void ta_light_shadowpass_render(ta_light *light, struct ta_shader *shader,
-    float alpha, struct ta_model *models);
+ta_mat4 ta_light_pv(ta_light *light);
+void ta_light_shadowpass_render(ta_light *light, float alpha, struct ta_model *models);
 void ta_light_render_shadowmap_debug(ta_light *light, int x, int y);

@@ -732,7 +732,7 @@ ta_mat4 mat4_init(
 int mat4_equal(const ta_mat4 *a, const ta_mat4 *b)
 {
     for (int i = 0; i < 16; ++i) {
-        if (a->data.arr[i] != b->data.arr[i]) {
+        if (fabs(a->data.arr[i] - b->data.arr[i]) > TA_EPSILON) {
             return 0;
         }
     }
@@ -1089,21 +1089,18 @@ ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float znear)
     result.data.f[3][2] = -1.0f;
     return result;
 }
-ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
+ta_mat4 mat4_ortho(float left, float right, float top, float bottom,
     float znear, float zfar)
 {
-    float lr = 1.0f / (left - right);
-    float bt = 1.0f / (bottom - top);
-    float nf = 1.0f / (znear - zfar);
-    ta_mat4 result = { 0 };
-    result.data.f[0][0] = -2.0f * lr;
-    result.data.f[1][1] = -2.0f * bt;
-    result.data.f[2][2] = 2.0f * nf;
-    result.data.f[3][0] = (left + right) * lr;
-    result.data.f[3][1] = (top + bottom) * bt;
-    result.data.f[3][2] = (zfar + znear) * nf;
-    result.data.f[3][3] = 1.0f;
-    return result;
+    ta_mat4 mat = { 0 };
+    mat.data.f[0][0] = 2.0f / (right - left);
+    mat.data.f[1][1] = 2.0f / (top - bottom);
+    mat.data.f[2][2] = -2.0f / (zfar - znear);
+    mat.data.f[0][3] = -(right + left) / (right - left);
+    mat.data.f[1][3] = -(top + bottom) / (top - bottom);
+    mat.data.f[2][3] = -(zfar + znear) / (zfar - znear);
+    mat.data.f[3][3] = 1.0f;
+    return mat;
 }
 
 ta_mat4 mat4_lookat_fru(ta_vec3 position, ta_vec3 front, ta_vec3 right,
@@ -1141,7 +1138,6 @@ ta_mat4 mat4_lookat_fru(ta_vec3 position, ta_vec3 front, ta_vec3 right,
     ta_mat4 look_at = mat4_mul(&transform, &translate);
     return look_at;
 }
-
 ta_mat4 mat4_lookat(ta_vec3 position, ta_vec3 target, ta_vec3 world_up)
 {
     ta_vec3 front = vec3_normalize(vec3_sub(target, position));
@@ -1153,6 +1149,28 @@ ta_mat4 mat4_lookat(ta_vec3 position, ta_vec3 target, ta_vec3 world_up)
 }
 
 #if 0
+// Another (probably slower) way to calculate lookat matrix
+ta_mat4 ric_mat4_lookat(ta_vec3 pos, ta_vec3 view, ta_vec3 up)
+{
+    ta_vec3 z = pos;
+    z = vec3_sub(z, view);
+    z = vec3_normalize(z);
+
+    ta_vec3 x = vec3_cross(up, z);
+    x = vec3_normalize(x);
+
+    ta_vec3 y = vec3_cross(z, x);
+    y = vec3_normalize(y);
+
+    ta_mat4 look = mat4_init(
+        x.x,  x.y,  x.z, -vec3_dot(x, pos),
+        y.x,  y.y,  y.z, -vec3_dot(y, pos),
+        z.x,  z.y,  z.z, -vec3_dot(z, pos),
+        0.0f, 0.0f, 0.0f, 1.0f
+    );
+    return look;
+}
+
 float hue_to_rgb(float p, float q, float t) {
     if (t < 0.0f) t += 1.0f;
     if (t > 1.0f) t -= 1.0f;

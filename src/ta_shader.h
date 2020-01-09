@@ -70,7 +70,6 @@ typedef struct ta_shader {
 extern ta_shader *tg_shader_lines;
 extern ta_shader *tg_shader_quads;
 extern ta_shader *tg_shader_cubemap;
-extern ta_shader *tg_shader_shadow;
 
 struct ta_light;
 

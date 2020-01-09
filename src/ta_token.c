@@ -635,7 +635,7 @@ void tokens_parse(ta_scene *scene, token *tokens)
                             DLB_ASSERT(1);
                         }
                     } else if (stack[sp].name == SYM_ENTITY_NAME) {
-                        // NOTE: Ignore "entity_name" fields for non-resource types
+                        // NOTE: Ignore "entity_name" fields for non-component types
                         ta_resource_type res_type = typ_to_res(stack[sp-1].type);
                         if (res_type < RES_COMP_COUNT) {
                             ta_component *comp = stack[sp-1].ptr;

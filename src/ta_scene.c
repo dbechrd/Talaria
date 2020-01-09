@@ -478,8 +478,7 @@ static void detect_collisions(ta_manifold **manifolds, ta_rigid_body_pair *pairs
     dlb_vec_each(ta_rigid_body_pair *, pair, pairs) {
         ta_manifold manifold = { 0 };
         if (ta_rigid_body_intersect(&manifold, pair->a, pair->b)) {
-            ta_manifold *m = dlb_vec_alloc(*manifolds);
-            *m = manifold;
+            dlb_vec_push(*manifolds, manifold);
         }
     }
 }
@@ -523,38 +522,21 @@ void ta_scene_update(ta_scene *scene, float dt)
     }
 #endif
 }
-void ta_scene_shadow_pass(ta_scene *scene, ta_shader *shader, float alpha)
+void ta_scene_shadow_pass(ta_scene *scene, float alpha)
 {
     // TODO: Try VSM, then CSM.
     // NOTE: If we switch to back face culling it will prevent light leaks, but
     // cause a lot more jitter on the lit side. :(
     glCullFace(GL_FRONT);
     //glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-    ta_shader_bind(shader);
     dlb_vec_each(ta_light *, light, scene->resource_data[RES_COMP_LIGHT]) {
         if (light->disabled) continue;
-        if (light->type != TA_LIGHT_POINT) {
-            // TODO: Handle shadows for other light types
-            continue;
-        }
-        // TODO: Disable shadows per light (pass cast_shadows as light uniform)
-        //if (!light->cast_shadows) continue;
+        if (!light->cast_shadows) continue;
 
-        ta_transform *transform = ta_game_component(light->entity_name,
-            RES_COMP_TRANSFORM);
-        ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &transform->xform.position);
-        ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->shadowmap.zfar);
-        ta_light_shadowpass_render(light, shader, alpha,
+        ta_light_shadowpass_render(light, alpha,
             scene->resource_data[RES_COMP_MODEL]);
-
-        // TODO: Make button a component that an entity can have (*button_uid)
-        //       instead of having it contain entity. It probably needs to have
-        //       (*entity_uid) pointer as well in order to find the rigid body?
-        //       Alternatively, it can have an explicit rigid body of its own
-        //       which defaults to entity->rigid_body on initialization.
-        //ta_light_shadowpass_render(light, shader, alpha, scene->pools[TYP_BUTTON]);
     }
     ta_shader_unbind();
     glCullFace(GL_BACK);

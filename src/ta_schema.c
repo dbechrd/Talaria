@@ -296,6 +296,7 @@ void ta_schema_register()
     TYPE_END(ta_light_spot);
 
     TYPE_START(ta_light_shadowmap, TYP_LIGHT_SHADOWMAP, 0, 0);
+    TYPE_FIELD(ta_light_shadowmap, shader,     ATOM_STRING);
     TYPE_FIELD(ta_light_shadowmap, resolution, ATOM_INT);
     TYPE_FIELD(ta_light_shadowmap, znear,      ATOM_FLOAT);
     TYPE_FIELD(ta_light_shadowmap, zfar,       ATOM_FLOAT);

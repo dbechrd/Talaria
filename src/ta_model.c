@@ -40,11 +40,6 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
     ta_mat4 orient = mat4_rotate_quat(lerp_orient);
     transform->model = mat4_mul(&trans, &orient);
 
-    // TODO: Allow updating model uniform without having to rebind everything
-    // We can probably bind in the set functions instead of prerender, or can
-    // set a "loaded" flag for each uniform (will be 0 by default, so safer than
-    // "dirty" flag), and only load when changed. I don't know how expensive
-    // glUniform calls are, so this may or may not matter.
     ta_mat4 light_pvm = mat4_mul(light_pv, &transform->model);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
     dlb_vec_each(const char **, mesh_name, model->meshes) {
@@ -59,7 +54,6 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
         ta_shader_bind(shader);
         ta_mesh_render(mesh);
     }
-    ta_shader_unbind();
 }
 
 void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
@@ -112,7 +106,7 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
                 u_lights_count++;
             }
         }
-        ta_shader_set_uint(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
+        ta_shader_set_int(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO,    texture_albedo->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_HEIGHT,    texture_height->gl_id);

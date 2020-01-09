@@ -241,11 +241,9 @@ void ta_game_init()
     tg_shader_lines   = ta_game_by_sym(RES_SHADER, INTERN("lines"));
     tg_shader_quads   = ta_game_by_sym(RES_SHADER, INTERN("quads"));
     tg_shader_cubemap = ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
-    tg_shader_shadow  = ta_game_by_sym(RES_SHADER, INTERN("shadow"));
     DLB_ASSERT(tg_shader_lines);
     DLB_ASSERT(tg_shader_quads);
     DLB_ASSERT(tg_shader_cubemap);
-    DLB_ASSERT(tg_shader_shadow);
 
 #if _DEBUG
     ta_game_state_set(TA_GAME_STATE_FREE_CAM);
@@ -636,7 +634,7 @@ void ta_game_loop()
 
         // Draw models
         ta_log_write(&tg_debug_log, SRC_GAME, " Shadow pass...\n");
-        ta_scene_shadow_pass(&game.scene, tg_shader_shadow, sim_alpha);
+        ta_scene_shadow_pass(&game.scene, sim_alpha);
         ta_log_write(&tg_debug_log, SRC_GAME, " Render pass...\n");
         ta_scene_render(&game.scene, active_camera, sim_alpha);
 
@@ -808,18 +806,19 @@ static void spawn_bullet(ta_vec3 position)
     };
     static int next_idx = 0;
     DLB_ASSERT(next_idx < ARRAY_COUNT(bullet_names));
-    const char *name = bullet_names[next_idx];
+    const char *name = ta_symbol_intern(bullet_names[next_idx], strlen(bullet_names[next_idx]));
     next_idx++;
 
-    ta_transform *transform = ta_game_alloc(RES_COMP_TRANSFORM, CSTR(name));
-    ta_model *model = ta_game_alloc(RES_COMP_MODEL, CSTR(name));
-    ta_rigid_body *body = ta_game_alloc(RES_COMP_RIGID_BODY, CSTR(name));
-    DLB_ASSERT(transform);
-    DLB_ASSERT(model);
-    DLB_ASSERT(body);
+    UNUSED(position);
+    //ta_transform *transform = ta_game_entity_add(name, position);
+    //ta_model *model = ta_game_component_add(name, RES_COMP_MODEL, CSTR("who cares"));
+    //ta_rigid_body *body = ta_game_component_add(name, RES_COMP_RIGID_BODY, CSTR("who cares"));
+    //DLB_ASSERT(transform);
+    //DLB_ASSERT(model);
+    //DLB_ASSERT(body);
 
-    ta_transform_init(transform);
-    transform->xform.position = position;
+    //ta_transform_init(transform);
+    //transform->xform.position = position;
 
     //model->
 }

@@ -61,5 +61,5 @@ void *ta_scene_component_try(ta_scene *scene, const char *entity, enum ta_resour
 void *ta_scene_component(ta_scene *scene, const char *entity, enum ta_resource_type type);
 
 void ta_scene_update(ta_scene *scene, float dt);
-void ta_scene_shadow_pass(ta_scene *scene, struct ta_shader *shader, float alpha);
+void ta_scene_shadow_pass(ta_scene *scene, float alpha);
 void ta_scene_render(ta_scene *scene, struct ta_camera *render_camera, float alpha);

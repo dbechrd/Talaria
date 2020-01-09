@@ -11,6 +11,7 @@ in vs_out {
     vec3 tbn_camera_pos;
     vec3 tbn_light_pos[8];
     vec3 tbn_light_dir[8];
+    vec4 light_pvm[8];
 } vertex;
 
 out vec4 final_color;
@@ -98,11 +99,12 @@ struct Light {
     // Directional / Spot
     vec3 direction;
     sampler2D shadowmap2d;
+    mat4 light_pv;
     // Point
     samplerCube shadowmap3d;
     float shadowmap_zfar;
 };
-uniform uint u_lights_count;
+uniform int u_lights_count;
 uniform Light[8] u_lights;
 
 uniform vec3 u_camera_pos;
@@ -148,9 +150,12 @@ void main()
     F0 = mix(F0, mtl_albedo, mtl_metallic);
 
     float shadows[8];
+    float shadow_map_depths[8];
+    float shadow_dists[8];
+    vec3 debug;
 
     vec3 L0 = vec3(0.0);
-    for (uint i = 0U; i < u_lights_count; ++i) {
+    for (int i = 0; i < u_lights_count; ++i) {
         vec3 fragToLight;
         float shadow_map_depth = 0.0;
         float shadow_bias = 0.0;
@@ -162,14 +167,24 @@ void main()
             case LIGHT_DIRECTIONAL: {
                 fragToLight = -u_lights[i].direction;
 
-                //vec3 projCoords = vertex.light_space.xyz / vertex.light_space.w;
-                //projCoords = projCoords * 0.5 + 0.5;
-                //shadow_map_depth = texture(shadow_textures[TEXTURE_IDX],
-                //                           projCoords.st).r;
-                //shadow_bias = 0.0001;
-
-                //dist = projCoords.z;
+                vec3 projCoords = vertex.light_pvm[i].xyz / vertex.light_pvm[i].w;
+                projCoords = projCoords * 0.5 + 0.5;
+                debug = projCoords;
+                dist = projCoords.z;
                 attenuation = u_lights[i].intensity;
+
+                if (u_lights[i].cast_shadows) {
+                    shadow_map_depth = texture(u_lights[i].shadowmap2d, projCoords.st).r;
+                    // TODO: Better bias based on direction of light? This code
+                    // doesn't work, but tried to write it based on:
+                    // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
+                    //shadow_bias = max(0.05 * (1.0 - dot(N, u_lights[i].direction)), 0.001);
+                    shadow_bias = 0.00001;
+		            shadow = step(shadow_map_depth, dist - shadow_bias);
+                    if (projCoords.z > 1.0) {
+                        shadow = 0.0;
+                    }
+                }
 
                 fragToLight = -vertex.tbn_light_dir[i];
                 break;
@@ -186,7 +201,6 @@ void main()
 
 #if 1
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
-                    shadows[i] = shadow;
 #else
                     // Soft shadows
                     // TODO: Clean this crap up via:
@@ -213,6 +227,9 @@ void main()
                 break;
             }
         }
+        shadows[i] = shadow;
+        shadow_map_depths[i] = shadow_map_depth;
+        shadow_dists[i] = dist;
         //shadow = 0.0;
 
         vec3 radiance = u_lights[i].color * attenuation;
@@ -268,6 +285,11 @@ void main()
      // lighting
     //vec4 dbg_shadow0 = vec4(vec3(1.0 - shadows[0]), 1.0);
     //vec4 dbg_shadow1 = vec4(vec3(1.0 - shadows[1]), 1.0);
+    //int light_idx = 0;
+    //final_color = vec4(vec3(1.0 - shadows[light_idx]), 1.0);
+    //final_color = vec4(vec3(1.0 - (shadow_map_depths[light_idx] / 30.0f)), 1.0);
+    //final_color = vec4(vec3(1.0 - shadow_dists[light_idx] / 40.0f), 1.0);
+    //final_color = vec4(vertex.tbn_light_dir[light_idx], 1.0);
 
     switch (u_debug_channel) {
         case DBG_VTX_COLOR:

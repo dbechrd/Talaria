@@ -582,35 +582,41 @@ static void ui_node_panel()
             static ta_ui_panel_state shadowmap_panel = { 0 };
             ta_ui_panel_begin(0, &shadowmap_panel, TA_UI_AUTOSIZE);
 
-            // Render cubemap with the following layout:
-            //       ┌────┐                 ┌────┐
-            //       | +Y |                 |  2 |
-            //  ┌────┼────┼────┬────┐  ┌────┼────┼────┬────┐
-            //  | -X | -Z | +X | +Z |  |  1 |  5 |  0 |  4 |
-            //  └────┼────┼────┴────┘  └────┼────┼────┴────┘
-            //       | -Y |                 |  3 |
-            //       └────┘                 └────┘
             s32 resolution = light->shadowmap.resolution / 10;
+            if (light->type == TA_LIGHT_DIRECTIONAL) {
+                ta_ui_next_margin(0, 0, 0, 0);
+                ta_ui_next_size(resolution, resolution);
+                ta_ui_next_pad(0, 0, 0, 0);
+                ta_ui_image(0, &light->shadowmap.texture, 0);
+            } else if (light->type == TA_LIGHT_POINT) {
+                // Render cubemap with the following layout:
+                //       ┌────┐                 ┌────┐
+                //       | +Y |                 |  2 |
+                //  ┌────┼────┼────┬────┐  ┌────┼────┼────┬────┐
+                //  | -X | -Z | +X | +Z |  |  1 |  5 |  0 |  4 |
+                //  └────┼────┼────┴────┘  └────┼────┼────┴────┘
+                //       | -Y |                 |  3 |
+                //       └────┘                 └────┘
+                #define face_image(face) \
+                    ta_ui_next_margin(0, 0, 0, 0); \
+                    ta_ui_next_size(resolution, resolution); \
+                    ta_ui_next_pad(0, 0, 0, 0); \
+                    ta_ui_image(0, &light->shadowmap.texture, face);
 
-            #define face_image(face) \
-                ta_ui_next_size(resolution, resolution); \
-                ta_ui_next_margin(0, 0, 0, 0); \
-                ta_ui_next_pad(0, 0, 0, 0); \
-                ta_ui_image(0, &light->shadowmap.texture, face);
+                ta_ui_row_begin();
+                ta_ui_spacer(resolution, 0);
+                face_image(2);
+                ta_ui_row_begin();
+                face_image(1);
+                face_image(5);
+                face_image(0);
+                face_image(4);
+                ta_ui_row_begin();
+                ta_ui_spacer(resolution, 0);
+                face_image(3);
 
-            ta_ui_row_begin();
-            ta_ui_spacer(resolution, 0);
-            face_image(2);
-            ta_ui_row_begin();
-            face_image(1);
-            face_image(5);
-            face_image(0);
-            face_image(4);
-            ta_ui_row_begin();
-            ta_ui_spacer(resolution, 0);
-            face_image(3);
-
-            #undef face_image
+                #undef face_image
+            }
 
             ta_ui_panel_end();
         }
@@ -709,6 +715,7 @@ static void ui_camera_panel()
         ta_ui_panel_begin(0, &label_panel, TA_UI_AUTOSIZE);
         ta_ui_label(0, CSTR("Name"));
         ta_ui_label(0, CSTR("Entity name"));
+        ta_ui_label(0, CSTR("Target position"));
         ta_ui_label(0, CSTR("Position"));
         ta_ui_label(0, CSTR("Position smooth"));
         ta_ui_label(0, CSTR("Position target vel"));
@@ -723,9 +730,12 @@ static void ui_camera_panel()
         ta_ui_panel_begin(0, &button_panel, TA_UI_AUTOSIZE);
         ta_ui_label(0, SYM(camera->name));
         ta_ui_label(0, SYM(camera->entity_name));
+        static ta_ui_textbox_vec3_state tpos_textbox = { 0 };
+        ta_ui_row_begin();
+        ta_ui_textbox_vec3(&camera->target_xform.position, &tpos_textbox, false, false, true);
         static ta_ui_textbox_vec3_state pos_textbox = { 0 };
         ta_ui_row_begin();
-        ta_ui_textbox_vec3(&camera->position, &pos_textbox, false, false, true);
+        ta_ui_textbox_vec3(&camera->position, &pos_textbox, false, false, false);
         ta_ui_row_end();
         static ta_ui_textbox_state pos_smooth_textbox = { 0 };
         ta_ui_textbox_float(0, &camera->position_smooth, &pos_smooth_textbox, 0);

@@ -82,6 +82,7 @@ extern const char *SYM_U_LIGHTS_TYPE[8];
 extern const char *SYM_U_LIGHTS_DIRECTION[8];
 extern const char *SYM_U_LIGHTS_CAST_SHADOWS[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP2D[8];
+extern const char *SYM_U_LIGHTS_LIGHT_PV[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP3D[8];
 extern const char *SYM_U_LIGHTS_SHADOWMAP_ZFAR[8];
 extern const char *SYM_U_DEBUG_CHANNEL;
