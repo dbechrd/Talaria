@@ -12,3 +12,4 @@ typedef struct ta_transform {
 } ta_transform;
 
 void ta_transform_init(ta_transform *transform);
+void ta_transform_update(ta_transform *transform, float alpha);

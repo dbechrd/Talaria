@@ -73,5 +73,5 @@ void ta_light_init(ta_light *light);
 ta_vec3 ta_light_position(ta_light *light);
 ta_vec3 ta_light_direction(ta_light *light);
 ta_mat4 ta_light_pv(ta_light *light);
-void ta_light_shadowpass_render(ta_light *light, float alpha, struct ta_model *models);
+void ta_light_shadowpass_render(ta_light *light, struct ta_model *models);
 void ta_light_render_shadowmap_debug(ta_light *light, int x, int y);

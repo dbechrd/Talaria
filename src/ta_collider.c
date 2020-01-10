@@ -158,9 +158,9 @@ static ta_aabb sphere_world_bounds(ta_sphere *sphere, ta_xform *xform)
 
 static ta_aabb obb_world_bounds(ta_obb *obb, ta_xform *xform)
 {
-    DLB_ASSERT(obb->extents.x > TA_EPSILON);
-    DLB_ASSERT(obb->extents.y > TA_EPSILON);
-    DLB_ASSERT(obb->extents.z > TA_EPSILON);
+    obb->extents.x = MAX(obb->extents.x, TA_EPSILON);
+    obb->extents.y = MAX(obb->extents.y, TA_EPSILON);
+    obb->extents.z = MAX(obb->extents.z, TA_EPSILON);
 
     ta_aabb result = { 0 };
     result.center = vec3_rotate_quat(obb->center, xform->orientation);

@@ -271,17 +271,9 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a,
     DLB_ASSERT(a);
     DLB_ASSERT(b);
 
-    // TODO(cleanup): If this gets called at all, these two bodies are
-    // broadphase intersecting.
-    // HACK: Don't set debug flags true for when colliding with floor. These are
-    // used to set colors when rendering debug colliders.
-    bool floor_collision = a->collider.type == TA_COLLIDER_PLANE ||
-                           b->collider.type == TA_COLLIDER_PLANE;
-    if (!floor_collision)
-    {
-        a->dbg_broadphase = true;
-        b->dbg_broadphase = true;
-    }
+    // If this gets called at all, these two bodies are broadphase intersecting.
+    a->dbg_broadphase = true;
+    b->dbg_broadphase = true;
 
     if (a->trigger || b->trigger) {
         return false;
@@ -323,10 +315,10 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a,
             manifold->sf = (a->ks + b->ks) / 2.0f; // sqrtf(a->ks * a->ks + b->ks * b->ks);
             manifold->df = (a->kd + b->kd) / 2.0f; // sqrtf(a->kd * a->kd + b->kd * b->kd);
         }
-        if (!floor_collision) {
-            a->dbg_narrowphase = true;
-            b->dbg_narrowphase = true;
-        }
+
+        // Set some handy flags for debug rendering
+        a->dbg_narrowphase = true;
+        b->dbg_narrowphase = true;
     }
 
     return collided;

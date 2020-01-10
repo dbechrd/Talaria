@@ -190,8 +190,7 @@ ta_mat4 ta_light_pv(ta_light *light)
 
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#spot-lights
 // Use texture2Dproj to account for perspective-divide
-static void shadowpass_render_directional(ta_light *light, float alpha,
-    ta_model *models)
+static void shadowpass_render_directional(ta_light *light, ta_model *models)
 {
     DLB_ASSERT(light->shadowmap.framebuffer);
 
@@ -214,7 +213,7 @@ static void shadowpass_render_directional(ta_light *light, float alpha,
 
     ta_mat4 light_pv = ta_light_pv(light);
     dlb_vec_each(ta_model *, model, models) {
-        ta_model_shadow_pass(model, shader, &light_pv, alpha);
+        ta_model_shadow_pass(model, shader, &light_pv);
     }
 
     ta_shader_unbind(shader);
@@ -224,8 +223,7 @@ static void shadowpass_render_directional(ta_light *light, float alpha,
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#rendering-the-shadow-map
 // https://www.khronos.org/opengl/wiki/GLAPI/glBindFragDataLocation
 // https://gamedev.stackexchange.com/questions/19461/opengl-glsl-render-to-cube-map
-static void shadowpass_render_point(ta_light *light, float alpha,
-    ta_model *models)
+static void shadowpass_render_point(ta_light *light, ta_model *models)
 {
     DLB_ASSERT(light->shadowmap.framebuffer);
 
@@ -262,28 +260,28 @@ static void shadowpass_render_point(ta_light *light, float alpha,
 
         ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view[face]);
         dlb_vec_each(ta_model *, model, models) {
-            ta_model_shadow_pass(model, shader, &light_pv, alpha);
+            ta_model_shadow_pass(model, shader, &light_pv);
         }
     }
 
     ta_shader_unbind(shader);
 }
 
-void ta_light_shadowpass_render(ta_light *light, float alpha, ta_model *models)
+void ta_light_shadowpass_render(ta_light *light, ta_model *models)
 {
-    typedef void (* shadowpass_render)(ta_light *light, float alpha,
-        ta_model *models);
+    if (light->disabled && !light->cast_shadows) {
+        return;
+    }
+
+    typedef void (* shadowpass_render)(ta_light *light, ta_model *models);
 
     static shadowpass_render shadowpass_renderers[TA_LIGHT_COUNT] = {
         [TA_LIGHT_DIRECTIONAL] = shadowpass_render_directional,
         [TA_LIGHT_POINT]       = shadowpass_render_point,
     };
 
-    DLB_ASSERT(!light->disabled);
-    DLB_ASSERT(light->cast_shadows);
-
     if (shadowpass_renderers[light->type]) {
-        shadowpass_renderers[light->type](light, alpha, models);
+        shadowpass_renderers[light->type](light, models);
     } else {
         DLB_ASSERT(!"No shadowpass renderer for this light type");
     }

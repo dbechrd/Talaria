@@ -4,6 +4,7 @@
 #include "ta_scene.h"
 #include "ta_buffer.h"
 #include "ta_game.h"
+#include "ta_math.h"
 #include "dlb/dlb_memory.h"
 #include "AL/al.h"
 #include "AL/alc.h"
@@ -206,15 +207,16 @@ void ta_audio_source_init(ta_audio_source *source)
     alSourcef(source->al_source_id, AL_PITCH, source->pitch);
     alSourcef(source->al_source_id, AL_GAIN, source->gain);
 
-    // TODO: Attach rico_audio to objects which auto-update this stuff
+    // TODO: Add "bool relative" to audio_source and update this based on
+    // transform component's current position each frame when relative = true
 #if 0
     vec3 src_pos = VEC3(0.0f, 1.5f, 0.0f);
     alSourcefv(source->al_source_id, AL_POSITION, (float *)&src_pos);
     alSourcefv(source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
 #else
-    alSourcei(source->al_source_id, AL_SOURCE_RELATIVE, AL_TRUE);
-    //alSourcefv(source->al_source_id, AL_POSITION, (float *)&VEC3_ZERO);
-    //alSourcefv(source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
+    alSourcei(source->al_source_id, AL_SOURCE_RELATIVE, AL_FALSE);
+    alSourcefv(source->al_source_id, AL_POSITION, (float *)&VEC3_ZERO);
+    alSourcefv(source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
 #endif
 
     if (source->audio_buffer) {

@@ -129,7 +129,7 @@ static ta_vec3 camera_fps_target(ta_camera *camera)
     return result;
 }
 
-void ta_camera_update(ta_camera *camera, double dt)
+void ta_camera_update(ta_camera *camera, float dt)
 {
     UNUSED(dt);
 

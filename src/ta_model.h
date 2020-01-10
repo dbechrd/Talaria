@@ -20,10 +20,8 @@ typedef struct ta_model {
 struct ta_camera;
 struct ta_shader;
 
-// TODO: Move all this to ta_entity.h or get rid of it entirely (via "systems")
-void ta_model_shadow_pass(struct ta_model *model, struct ta_shader *shader,
-    ta_mat4 *light_pv, float alpha);
-void ta_model_render(struct ta_model *model, struct ta_camera *camera,
-    float alpha);
-void ta_model_render_shader(struct ta_model *model, struct ta_camera *camera,
-    struct ta_shader *shader, float alpha, float scale);
+void ta_model_shadow_pass(ta_model *model, struct ta_shader *shader,
+    ta_mat4 *light_pv);
+void ta_model_render(ta_model *model, struct ta_camera *camera);
+void ta_model_render_shader(ta_model *model, struct ta_camera *camera,
+    struct ta_shader *shader);

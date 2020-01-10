@@ -8,6 +8,7 @@
 #include "ta_font.h"
 #include "ta_game.h"
 #include "ta_gltf.h"
+#include "ta_intersect.h"
 #include "ta_keybind.h"
 #include "ta_light.h"
 #include "ta_log.h"
@@ -68,9 +69,10 @@ typedef enum game_command {
     GAME_COMMAND_DEBUG_MOUSE_UNLOCK,
     GAME_COMMAND_DEBUG_MOUSE_LOCK_TOGGLE,
     GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME,
-    GAME_COMMAND_DEBUG_TOGGLE_NORMALS,
-    GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS,
     GAME_COMMAND_DEBUG_TOGGLE_MESH,
+    GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS,
+    GAME_COMMAND_DEBUG_TOGGLE_NAMETAGS,
+    GAME_COMMAND_DEBUG_TOGGLE_NORMALS,
 
     GAME_COMMAND_COUNT
 } game_command;
@@ -84,6 +86,13 @@ typedef struct ta_game {
     u64 sim_step;
     ta_keybind keybinds[TA_GAME_STATE_COUNT][GAME_COMMAND_COUNT];
     ta_scene scene;
+
+    // TODO: Move this to DML?
+    ta_camera minimap_camera;
+
+    // Temp data, need to persist between frames for when sim is paused
+    ta_manifold *manifolds;
+    ta_rigid_body_pair *pairs;
 } ta_game;
 
 static ta_game game;
@@ -129,7 +138,8 @@ void ta_game_init()
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME],  TA_KEYBIND_PRESS,   SDL_SCANCODE_1);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_MESH],       TA_KEYBIND_PRESS,   SDL_SCANCODE_2);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS],  TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_NAMETAGS],   TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
 
     //--------------------------------------------------------------------------
     // FREE_CAM
@@ -153,7 +163,8 @@ void ta_game_init()
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME],  TA_KEYBIND_PRESS,   SDL_SCANCODE_1);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_MESH],       TA_KEYBIND_PRESS,   SDL_SCANCODE_2);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS],  TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_NAMETAGS],   TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
 
     //--------------------------------------------------------------------------
     // EDITOR
@@ -177,7 +188,8 @@ void ta_game_init()
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME],  TA_KEYBIND_PRESS,   SDL_SCANCODE_1);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_MESH],       TA_KEYBIND_PRESS,   SDL_SCANCODE_2);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS],  TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_NAMETAGS],   TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_EDITOR][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
 
     //--------------------------------------------------------------------------
     // Scene
@@ -198,18 +210,19 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // Player
     //--------------------------------------------------------------------------
-    // HACK: Find first entity with a player component, assume it's the player
     tg_e_player_one = SYM_ENTITY_PLAYER_ONE;
     DLB_ASSERT(tg_e_player_one);
 
     //--------------------------------------------------------------------------
     // Cameras
     //--------------------------------------------------------------------------
-    // TODO: idk how best to find static resources other than by name. Maybe
-    // have a lookup table in the scene file whose only purpose is to populate
-    // the scene with ids of static objects (root node, free cam, player, etc.)?
     tg_e_freecam = SYM_ENTITY_FREECAM;
     DLB_ASSERT(tg_e_freecam);
+
+    game.minimap_camera.fov = 90.0f;
+    game.minimap_camera.up = VEC3_NZ;
+    game.minimap_camera.ortho = true;
+    ta_camera_init(&game.minimap_camera);
 
     //--------------------------------------------------------------------------
     // Audio
@@ -496,18 +509,288 @@ static void game_draw_hud()
     ta_ui_window_end();
     ta_ui_render();
 }
+static void collision_broadphase(ta_rigid_body_pair **pairs,
+    ta_rigid_body *rigid_bodies, double dt)
+{
+    // Box2D supports 16 collision categories. For each fixture you can
+    // specify which category it belongs to. You also specify what other
+    // categories this fixture can collide with.
+    //
+    //   if ((categoryA & maskB) != 0 && (categoryB & maskA) != 0)
+    //
+    // Collision groups let you specify an integral group index. You can
+    // have all fixtures with the same group index always collide
+    // (positive index) or never collide (negative index). Group indices
+    // are usually used for things that are somehow related, like the
+    // parts of a bicycle.
+    //
+    // Collisions between fixtures of different group indices are
+    // filtered according the category and mask bits. In other words,
+    // group filtering has higher precedence than category filtering.
+    //
+    // - A fixture on a static body can only collide with a dynamic
+    //   body.
+    // - A fixture on a kinematic body can only collide with a dynamic
+    //   body.
+    // - Fixtures on the same body never collide with each other.
+    // - You can optionally enable/disable collision between fixtures on
+    //   bodies connected by a joint.
+    //
+    // Sensor: Fixture which only detects collision, no response. a.ka. trigger
+    // -----------------------------------------------------------------
+    // Depth-first traversal of AABB tree to find islands. Put islands
+    // to sleep when all objects in island are resting. Wake up when
+    // anything interacts or applies a force to any body in the island.
+
+    UNUSED(dt);
+
+    dlb_vec_each(ta_rigid_body *, a, rigid_bodies) {
+        dlb_vec_range(ta_rigid_body *, b, a + 1, dlb_vec_end(rigid_bodies)) {
+            // Don't let entities collide with themselves
+            if (a->entity_name == b->entity_name) {
+                continue;
+            }
+            // HACK: Skip AABB broadphase for planes, makes no sense (always
+            //       collect them as potential pairs)
+            if (a->collider.type == TA_COLLIDER_PLANE ||
+                b->collider.type == TA_COLLIDER_PLANE ||
+                ta_aabb_v_aabb(&a->aabb, &b->aabb))
+            {
+                ta_rigid_body_pair *pair = dlb_vec_alloc(*pairs);
+                pair->a = a;
+                pair->b = b;
+            }
+        }
+    }
+}
+static void collision_narrowphase(ta_manifold **manifolds,
+    ta_rigid_body_pair *pairs, double dt)
+{
+    UNUSED(dt);
+
+    dlb_vec_each(ta_rigid_body_pair *, pair, pairs) {
+        ta_manifold manifold = { 0 };
+        if (ta_rigid_body_intersect(&manifold, pair->a, pair->b)) {
+            dlb_vec_push(*manifolds, manifold);
+        }
+    }
+}
+static void game_simulate(ta_camera *active_camera, float dt)
+{
+    ta_log_write(&tg_debug_log, SRC_GAME, " Sim step...\n");
+
+    ta_transform *player_transform = ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
+    ta_camera *player_cam = ta_game_component(tg_e_player_one, RES_COMP_CAMERA);
+
+    // Target player camera
+    ta_camera_set_target_pos_absolute(player_cam,
+        vec3_add(player_transform->xform.position,
+        (ta_vec3) { 0.0f, 2.0f, 0.0f }));
+
+    // Target minimap camera
+    ta_vec3 minimap_target_pos = active_camera->position;
+    minimap_target_pos.y += 50.0f;
+    game.minimap_camera.focal_point = active_camera->position;
+    ta_camera_set_target_pos_absolute(&game.minimap_camera, minimap_target_pos);
+
+    if (game.simulate) {
+        if (game.simulate > 0) {
+            game.simulate--;
+        }
+
+        ta_rigid_body *rigid_bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
+
+        // Simulate rigid bodies
+        dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
+            ta_rigid_body_update(body, dt);
+        }
+
+        dlb_vec_zero(game.manifolds);
+        dlb_vec_zero(game.pairs);
+
+        // Broad phase
+        collision_broadphase(&game.pairs, rigid_bodies, dt);
+        if (game.pairs) {
+            // Narrow phase
+            collision_narrowphase(&game.manifolds, game.pairs, dt);
+            dlb_vec_each(ta_manifold *, manifold, game.manifolds) {
+                // Resolution
+                ta_rigid_body_resolve_collision(manifold, dt);
+            }
+        }
+
+        game.sim_step++;
+    }
+
+    // Update cameras
+    dlb_vec_each(ta_camera *, cam, ta_game_resource_pool(RES_COMP_CAMERA)) {
+        ta_camera_update(cam, dt);
+    }
+
+    // TODO: dlb_vec_each(ta_audio_listener_update)
+    ta_vec3 fwd_up[2];
+    fwd_up[0] = active_camera->front;
+    fwd_up[1] = active_camera->up;
+    alListenerfv(AL_ORIENTATION, (float *)fwd_up);
+    alListenerfv(AL_POSITION, (float *)&active_camera->position);
+    //alListenerfv(AL_VELOCITY, (float *)&tg_game.camera->velocity);
+
+    // TODO: dlb_vec_each(ta_audio_source_update)
+
+    //ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
+    //tg_game.sun->data.sun.direction =
+    //    mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
+
+    //// HACK: Make point light rotate in a circle
+    //static float light_deg = 0.0f;
+    //light_deg += 0.005f;
+    //if (light_deg >= 360.0f) light_deg = 0.0f;
+
+    //ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+    //lights[1].position.x = cosf(light_deg) * 16.0f;
+    //lights[1].position.z = sinf(light_deg) * 16.0f;
+
+    // Update buttons
+    dlb_vec_each(ta_e_button *, button, ta_game_resource_pool(RES_COMP_BUTTON)) {
+        e_button_update(button);
+    }
+}
+static void game_render_manifolds_debug()
+{
+    const float radius = 0.05f;
+    dlb_vec_each(ta_manifold *, manifold, game.manifolds) {
+        for (u32 i = 0; i < manifold->contact_count; ++i) {
+            ta_sphere dbg_contact_world;
+            dbg_contact_world.center = manifold->contacts[i];
+            dbg_contact_world.radius = radius;
+            ta_primitive_push_sphere(dbg_contact_world, TA_COLOR_DARK_RED);
+            ta_line_3d dbg_contact_normal;
+            dbg_contact_normal.p0 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, radius));
+            dbg_contact_normal.p1 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, 1.0f - radius));
+            ta_primitive_push_line_3d(dbg_contact_normal, TA_COLOR_DARK_RED, TA_COLOR_DARK_RED);
+        }
+    }
+}
+static void game_render_colliders_debug(ta_camera *camera)
+{
+    ta_rigid_body *rigid_bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
+    dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
+
+        ta_transform *transform = ta_game_component_try(body->entity_name,
+            RES_COMP_TRANSFORM);
+
+        if (transform) {
+            ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
+            ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->model);
+
+            // Local space
+            ta_sphere centroid_local = { 0 };
+            centroid_local.center = body->centroid_local;
+            centroid_local.radius = 0.05f;
+            ta_primitive_push_sphere(centroid_local, TA_COLOR_MAGENTA);
+
+            ta_rgba narrowphase_color = body->dbg_narrowphase ? TA_COLOR_MAGENTA : TA_COLOR_ORANGE;
+            ta_collider_render(&body->collider, narrowphase_color);
+
+            ta_primitive_render(true, false);
+
+            // World space
+            ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+            ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+
+            ta_sphere local_origin = { 0 };
+            local_origin.center = transform->xform.position;
+            local_origin.radius = 0.04f;
+            ta_primitive_push_sphere(local_origin, TA_COLOR_PINK);
+
+            ta_sphere centroid_global = { 0 };
+            centroid_global.center = body->centroid_global;
+            centroid_global.radius = 0.1f;
+            ta_primitive_push_sphere(centroid_global, TA_COLOR_CYAN);
+
+            ta_rgba broadphase_color = body->dbg_broadphase ? TA_COLOR_RED : TA_COLOR_GRAY4;
+            ta_primitive_push_aabb(body->aabb, broadphase_color);
+
+            ta_primitive_render(true, false);
+        } else {
+            DLB_ASSERT(transform && "Not valid to have a rigid_body without a transform");
+        }
+    }
+}
+static void game_render_nametags_debug(ta_camera *camera)
+{
+    ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
+    static ta_rect_uv *tag_rects = 0;
+
+    ta_mat4 projection = camera->projection;
+    //ta_mat4 projection = mat4_ortho(-10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 20.0f);
+
+    ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
+    dlb_vec_each(ta_transform *, transform, transforms) {
+        ta_rectf tag_rect = ta_font_push_text(&tag_rects, font,
+            SYM(transform->name), true, 0, 0, 0);
+
+        ta_vec3 tag_pos = transform->xform.position;
+        ta_vec3 tag_to_cam = vec3_sub(camera->position, tag_pos);
+        tag_to_cam.z *= -1.0f;
+        tag_to_cam.y *= 0.0f;
+        float tag_scalef = MAX(vec3_len(tag_to_cam), 4.0f);
+
+        ta_vec3 tag_offset = tag_offset = vec3_scalef(camera->right,
+            NDC_W(tag_rect.w) / 2.0f * tag_scalef);
+        ta_vec3 tag_pos_off = vec3_sub(tag_pos, tag_offset);
+
+        ta_mat4 tag_rot = mat4_lookat(VEC3_ZERO, tag_to_cam, VEC3_Y);
+
+        ta_mat4 tag_trans_bg = mat4_translate(tag_pos_off);
+        ta_mat4 tag_xform_bg = mat4_scalef(tag_scalef);
+        tag_xform_bg = mat4_mul(&tag_rot, &tag_xform_bg);
+        tag_xform_bg = mat4_mul(&tag_trans_bg, &tag_xform_bg);
+
+        ta_vec3 tag_pos_off_fg = tag_pos_off;
+        tag_pos_off_fg.y += NDC_H(tag_rect.h) * tag_scalef;
+        ta_mat4 tag_trans_fg = mat4_translate(tag_pos_off_fg);
+        ta_mat4 tag_xform_fg = mat4_scalef(tag_scalef);
+        tag_xform_fg = mat4_mul(&tag_rot, &tag_xform_fg);
+        tag_xform_fg = mat4_mul(&tag_trans_fg, &tag_xform_fg);
+
+        // Name tag background
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &projection);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform_bg);
+        ta_texture *tex_orange = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
+        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex_orange->gl_id);
+        ta_rect_uv tag_background = { 0 };
+        tag_background.rect.x -= NDC_W(5.0f);
+        tag_background.rect.w = NDC_W(tag_rect.w) + NDC_W(10.0f);
+        tag_background.rect.h = NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
+        ta_primitive_push_rect_uv(tag_background, TA_COLOR_DARK_RED, UI_LAYER_HUD_BG,
+            false, false);
+        ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
+        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+
+        // Name tag text
+        ta_shader *font_shader = ta_game_by_sym(RES_SHADER, font->shader);
+        ta_shader_set_mat4(font_shader, SYM_U_PROJ, &projection);
+        ta_shader_set_mat4(font_shader, SYM_U_VIEW, &camera->look_at);
+        ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform_fg);
+
+        // TODO: Move UI_LAYER_HUD out of push_rect_uv into tag_xform, or
+        //       make font_render's xform arguments stack with current value
+        //       of SYM_U_MODEL.
+        dlb_vec_each(ta_rect_uv *, rect, tag_rects) {
+            ta_primitive_push_rect_uv(*rect, TA_COLOR_WHITE, UI_LAYER_HUD, true,
+                true);
+        }
+        dlb_vec_zero(tag_rects);
+        ta_font_render(quads_queue, font, 0, 0, 0, true, true);
+    }
+}
 void ta_game_loop()
 {
     ////////////////////////////////////////////////////////////////////////////
     // Main loop
     ////////////////////////////////////////////////////////////////////////////
-
-    // TODO: Move this to DML (e.g. editor.dml)
-    ta_camera minimap_camera = { 0 };
-    minimap_camera.fov = 90.0f;
-    minimap_camera.up = VEC3_NZ;
-    minimap_camera.ortho = true;
-    ta_camera_init(&minimap_camera);
 
     // TODO: Cleanup
     ta_ui_barchart chart = ta_ui_barchart_init(10, 10, MAX(0, WINDOW_W - 20), 30);
@@ -521,10 +804,10 @@ void ta_game_loop()
     //
     // Randy Gaul
     // https://gamedevelopment.tutsplus.com/series/how-to-create-a-custom-physics-engine--gamedev-12715
-    const double ms_sim_dt = 20;             // fixed dt milliseconds
-    const double sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
-    const double sim_max_steps = 0;          // max simulation steps per frame
-    double ms_sim_t = 0;                     // current simulation time
+    const float ms_sim_dt = 20;             // fixed dt milliseconds
+    const float sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
+    const int sim_max_steps = 0;            // max simulation steps per frame
+    double ms_sim_t = 0;                    // current simulation time
     double ms_frame_accum = 0;
 
     double ms_frame_prev = 0;   // Last frame started
@@ -537,13 +820,24 @@ void ta_game_loop()
         ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
 
-        // Engine events
+        ta_camera *active_camera = ta_game_camera();
+        ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
+        ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+        ta_model *models = ta_game_resource_pool(RES_COMP_MODEL);
+        ta_camera *cameras = ta_game_resource_pool(RES_COMP_CAMERA);
+
+        //----------------------------------------------------------------------
+        // Handle events
+        //----------------------------------------------------------------------
         ta_log_write(&tg_debug_log, SRC_GAME, " Handling events...\n");
         ta_event_events();
 
+        //----------------------------------------------------------------------
+        // Simulation
+        //----------------------------------------------------------------------
         ta_log_write(&tg_debug_log, SRC_GAME, " Accumulating...\n");
         if (sim_max_steps == 0) {
-            // TODO: This *requires* vsync to work correctly!
+            // TODO: This is a bad idea if vsync != 60hz
             // If sim_max_steps == 0, assume we want lockstep physics
             ms_frame_accum = ms_sim_dt;
         } else {
@@ -558,101 +852,167 @@ void ta_game_loop()
             }
         }
 
-        ta_log_write(&tg_debug_log, SRC_GAME, " Finding components...\n");
-        ta_camera *active_camera = ta_game_camera();
-        ta_camera *player_cam = 0;
-        ta_transform *player_transform = 0;
-
         if (ms_frame_accum >= ms_sim_dt) {
-            ta_log_write(&tg_debug_log, SRC_GAME, " Finding sim components...\n");
-            player_cam = ta_game_component(tg_e_player_one, RES_COMP_CAMERA);
-            player_transform = ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
+            while (ms_frame_accum >= ms_sim_dt) {
+                game_simulate(active_camera, (float)sim_dt);
+                ms_sim_t += ms_sim_dt;
+                ms_frame_accum -= ms_sim_dt;
+            }
         }
 
-        while (ms_frame_accum >= ms_sim_dt) {
-            ta_log_write(&tg_debug_log, SRC_GAME, " Sim step...\n");
-            // Target player camera
-            ta_camera_set_target_pos_absolute(player_cam,
-                vec3_add(player_transform->xform.position,
-                (ta_vec3) { 0.0f, 2.0f, 0.0f }));
-
-            // Target minimap camera
-            ta_vec3 minimap_camera_target_pos = active_camera->position;
-            minimap_camera_target_pos.y += 50.0f;
-            minimap_camera.focal_point = active_camera->position;
-            ta_camera_set_target_pos_absolute(&minimap_camera,
-                minimap_camera_target_pos);
-
-            // Update cameras
-            dlb_vec_each(ta_camera *, cam, ta_game_resource_pool(RES_COMP_CAMERA)) {
-                ta_camera_update(cam, sim_dt);
-            }
-
-            if (game.simulate) {
-                if (game.simulate > 0) {
-                    game.simulate--;
-                }
-
-                //ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
-                //tg_game.sun->data.sun.direction =
-                //    mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
-
-                //// HACK: Make point light rotate in a circle
-                //static float light_deg = 0.0f;
-                //light_deg += 0.005f;
-                //if (light_deg >= 360.0f) light_deg = 0.0f;
-
-                //ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
-                //lights[1].position.x = cosf(light_deg) * 16.0f;
-                //lights[1].position.z = sinf(light_deg) * 16.0f;
-
-                ta_audio_source *bg_source = ta_game_component_try(
-                    tg_e_background_music, RES_COMP_AUDIO_SOURCE);
-                alSourcei(bg_source->al_source_id, AL_SOURCE_RELATIVE, AL_FALSE);
-                alSourcefv(bg_source->al_source_id, AL_POSITION, (float *)&VEC3_ZERO);
-                alSourcefv(bg_source->al_source_id, AL_VELOCITY, (float *)&VEC3_ZERO);
-
-                // Update scene
-                ta_scene_update(&game.scene, (float)sim_dt);
-                game.sim_step++;
-            }
-
-            // TODO: Put this somewhere intelligent
-            // Update audio listener position
-            ta_vec3 fwd_up[2];
-            fwd_up[0] = active_camera->front;
-            fwd_up[1] = active_camera->up;
-            alListenerfv(AL_ORIENTATION, (float *)fwd_up);
-            alListenerfv(AL_POSITION, (float *)&active_camera->position);
-            //alListenerfv(AL_VELOCITY, (float *)&tg_game.camera->velocity);
-
-            ms_sim_t += ms_sim_dt;
-            ms_frame_accum -= ms_sim_dt;
-        }
-
+        //----------------------------------------------------------------------
+        // Post-simulation updates (e.g. recalculate cached transform matrices)
+        //----------------------------------------------------------------------
         float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
 
-        // Draw models
-        ta_log_write(&tg_debug_log, SRC_GAME, " Shadow pass...\n");
-        ta_scene_shadow_pass(&game.scene, sim_alpha);
-        ta_log_write(&tg_debug_log, SRC_GAME, " Render pass...\n");
-        ta_scene_render(&game.scene, active_camera, sim_alpha);
+        // Update transforms (model matrix and lerp)
+        dlb_vec_each(ta_transform *, transform, transforms) {
+            ta_transform_update(transform, sim_alpha);
+        }
 
+        //----------------------------------------------------------------------
+        // Shadow pass
+        //----------------------------------------------------------------------
+        ta_log_write(&tg_debug_log, SRC_GAME, " Shadow pass...\n");
+
+        // TODO: Try VSM, then CSM.
+        // NOTE: If we switch to back face culling it will prevent light leaks, but
+        // cause a lot more jitter on the lit side. :(
+        glCullFace(GL_FRONT);
+        //glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
+        //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+        dlb_vec_each(ta_light *, light, lights) {
+            ta_light_shadowpass_render(light, models);
+        }
+        ta_shader_unbind();
+        glCullFace(GL_BACK);
+        glViewport(0, 0, WINDOW_W, WINDOW_H);
+
+        //----------------------------------------------------------------------
+        // Render pass
+        //----------------------------------------------------------------------
+        ta_log_write(&tg_debug_log, SRC_GAME, " Render pass...\n");
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glStencilMask(0xFF);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glStencilMask(0x00);
+
+        // TODO: This is going to make a zillion extranous calls, need to track
+        // current polygon mode globally
+        GLenum camera_poly_mode = active_camera->debug_wireframe ? GL_LINE : GL_FILL;
+        glPolygonMode(GL_FRONT_AND_BACK, camera_poly_mode);
+
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &active_camera->projection);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &active_camera->look_at);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &active_camera->projection);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &active_camera->look_at);
+
+        // Dump any prims from the collision pass
+        game_render_manifolds_debug();
+        ta_primitive_render_lines(perma_lines_queue, tg_shader_lines, false, false);
+        ta_primitive_render(true, false);
+
+        // TODO: Group by shader / material to minimize redundant uniform calls
+        // Render models
+        dlb_vec_each(ta_model *, model, models) {
+            ta_model_render(model, active_camera);
+        }
+
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+
+#if 1
+        // Debug render cameras as RGB spheres
+        dlb_vec_each(ta_camera *, camera, cameras) {
+            if (camera->name != tg_e_active_camera) {
+                ta_sphere sphere = { 0 };
+                sphere.center = camera->position;
+                sphere.radius = 0.2f;
+                ta_primitive_push_rgb_sphere(sphere);
+                //ta_primitive_push_sphere(sphere, TA_COLOR_GREEN);
+            }
+        }
+        // Debug render light as spheres of the light's color
+        dlb_vec_each(ta_light *, light, lights) {
+            ta_transform *transform = ta_game_component(light->entity_name,
+                RES_COMP_TRANSFORM);
+            ta_sphere light_pos = { 0 };
+            light_pos.center = transform->xform.position;
+            light_pos.radius = 0.2f;
+            ta_rgba color = { 0 };
+            if (light->disabled) {
+                color.r = 0.5f;
+                color.g = 0.5f;
+                color.b = 0.5f;
+            } else {
+                color.r = light->data.common.color.r;
+                color.g = light->data.common.color.g;
+                color.b = light->data.common.color.b;
+            }
+            ta_primitive_push_sphere(light_pos, color);
+
+            //ta_sphere light_aoe = { 0 };
+            //light_aoe.center = light->position;
+            //light_aoe.radius = light->shadowmap.zfar;
+            //ta_primitive_push_rgb_sphere(light_aoe);
+        }
+#endif
+
+        if (active_camera->debug_colliders) {
+            ta_log_write(&tg_debug_log, SRC_GAME, " Debug colliders pass...\n");
+            game_render_colliders_debug(active_camera);
+        }
+        glClear(GL_DEPTH_BUFFER_BIT);
+        if (active_camera->debug_nametags) {
+            ta_log_write(&tg_debug_log, SRC_GAME, " Debug nametags pass...\n");
+
+            GLint polygon_mode = 0;
+            glGetIntegerv(GL_POLYGON_MODE, &polygon_mode);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            game_render_nametags_debug(active_camera);
+            glPolygonMode(GL_FRONT_AND_BACK, polygon_mode);
+        }
+
+        // Dump any prims from render pass
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+        ta_primitive_render(true, false);
+
+        //----------------------------------------------------------------------
         // World axes
+        //----------------------------------------------------------------------
         ta_primitive_push_axes(1.0f);
         ta_primitive_render(true, true);
 
-        if (game.state == TA_GAME_STATE_EDITOR) {
-            ta_log_write(&tg_debug_log, SRC_GAME, " Editor pass...\n");
-            ta_editor_draw(sim_alpha);
-        }
-
-        // Cursor
+        //----------------------------------------------------------------------
+        // Crosshair
+        //----------------------------------------------------------------------
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_primitive_push_crosshair(10, 2);
+        ta_primitive_render(true, true);
 
-    #if 0
-        // Render minimap
+        //----------------------------------------------------------------------
+        // Game HUD
+        //----------------------------------------------------------------------
+        // TODO: Make HUD drawing suck less.. way too many draw calls
+        //       Use texture atlas; batch everything into one draw call; stop
+        //       using stupid RGB placeholders.
+        ta_log_write(&tg_debug_log, SRC_GAME, " HUD pass...\n");
+        //ta_game_hud_draw(&tg_game);
+
+        // TODO: Add "show_fps" flag and bind to key; off by default in release
+        ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
+        game.frame_num++;
+        ta_log_write(&tg_debug_log, SRC_GAME, " FPS pass...\n");
+        game_draw_frame_info(game.frame_num, ms_frame_time, ms_frame_delta,
+            game.sim_step);
+
+#if 0
+        //----------------------------------------------------------------------
+        // Minimap
+        //----------------------------------------------------------------------
         ta_rect map_rect = { 10, 50, 200, 200 };
         ta_viewport_bind(map_rect, TA_COLOR_GRAY7, true);
         ta_scene_render(&game.scene, &minimap_camera, sim_alpha);
@@ -668,42 +1028,37 @@ void ta_game_loop()
         dot_rect.h = dot_radius * 2;
         ta_primitive_push_rect(dot_rect, TA_COLOR_RED, UI_LAYER_HUD);
         ta_primitive_render(true, true);
-    #endif
+#endif
 
-    #if 0
-        // TODO: Mesh selector, highlight and rotate mesh while mouse hover
-        //ta_mat4 model = mat4_rotate_y(model_deg);
-        //model_deg += 1.0f;
-        //if (model_deg >= 360.0f) {
-        //    model_deg = 0.0f;
-        //}
-
+#if 0
+        // TODO(cleanup): This could be useful to visualize FPS, but it's pretty
+        // useless in its current state.
+        //----------------------------------------------------------------------
         // Barchart
+        //----------------------------------------------------------------------
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_ui_barchart_draw(&chart, 0, 0);
         ta_primitive_render(true, true);
-    #endif
+#endif
 
-        //debug_nametag(active_cam);
-        // TODO: Make HUD drawing suck less.. way too many draw calls
-        //       Use texture atlas, batch everything into one draw call. Import
-        //       textures from Rico; stop using stupid RGB placeholders
-        ta_log_write(&tg_debug_log, SRC_GAME, " HUD pass...\n");
-        //ta_game_hud_draw(&tg_game);
-
-        ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
-        game.frame_num++;
-        ta_log_write(&tg_debug_log, SRC_GAME, " FPS pass...\n");
-        game_draw_frame_info(game.frame_num, ms_frame_time, ms_frame_delta,
-            game.sim_step);
+        //----------------------------------------------------------------------
+        // Editor UI
+        //----------------------------------------------------------------------
+        if (game.state == TA_GAME_STATE_EDITOR) {
+            ta_log_write(&tg_debug_log, SRC_GAME, " Editor UI pass...\n");
+            ta_editor_draw(sim_alpha);
+        }
 
         // NOTE: This confirms rendering is being deferred until swap buffers,
         // but it's much slower (~5ms), so don't actually use it.
         //ta_log_write(&tg_debug_log, SRC_GAME, " glFinish...\n");
         //glFinish();
 
+        //----------------------------------------------------------------------
+        // BOOM! It's swap time, baby! Show the player all of our hard work.
+        //----------------------------------------------------------------------
         ta_log_write(&tg_debug_log, SRC_GAME, " Swap...\n");
         ta_window_swap(tg_window);
 
@@ -711,10 +1066,11 @@ void ta_game_loop()
             "Frame %llu displayed. time: %5.3f delta: %5.3f\n",
             game.frame_num, ms_frame_time, ms_frame_delta);
 
+        // Sob profusely when frame time goes over 16ms
         if (ms_frame_time > 16) {
-            // TODO: Debug more long frames (turn on SRC_GAME logging)
             ta_log_write(&tg_debug_log, SRC_GAME, "!!!!!!!! LONG_FRAME !!!!!!!!\n");
             ta_log_flush(&tg_debug_log);
+            // TODO: Debug more long frames (turn on SRC_GAME logging)
             //__debugbreak();
         }
     }
@@ -934,20 +1290,25 @@ void game_command_debug_toggle_wireframe()
     ta_camera *camera = ta_game_camera();
     camera->debug_wireframe = !camera->debug_wireframe;
 }
-void game_command_debug_toggle_normals()
+void game_command_debug_toggle_mesh()
 {
     ta_camera *camera = ta_game_camera();
-    camera->debug_normals = !camera->debug_normals;
+    camera->debug_no_mesh = !camera->debug_no_mesh;
 }
 void game_command_debug_toggle_colliders()
 {
     ta_camera *camera = ta_game_camera();
     camera->debug_colliders = !camera->debug_colliders;
 }
-void game_command_debug_toggle_mesh()
+void game_command_debug_toggle_nametags()
 {
     ta_camera *camera = ta_game_camera();
-    camera->debug_no_mesh = !camera->debug_no_mesh;
+    camera->debug_nametags = !camera->debug_nametags;
+}
+void game_command_debug_toggle_normals()
+{
+    ta_camera *camera = ta_game_camera();
+    camera->debug_normals = !camera->debug_normals;
 }
 
 void ta_game_hotkeys()
@@ -973,9 +1334,10 @@ void ta_game_hotkeys()
         [GAME_COMMAND_DEBUG_MOUSE_UNLOCK]      = game_command_debug_mouse_unlock,
         [GAME_COMMAND_DEBUG_MOUSE_LOCK_TOGGLE] = game_command_debug_mouse_lock_toggle,
         [GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME]  = game_command_debug_toggle_wireframe,
-        [GAME_COMMAND_DEBUG_TOGGLE_NORMALS]    = game_command_debug_toggle_normals,
-        [GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS]  = game_command_debug_toggle_colliders,
         [GAME_COMMAND_DEBUG_TOGGLE_MESH]       = game_command_debug_toggle_mesh,
+        [GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS]  = game_command_debug_toggle_colliders,
+        [GAME_COMMAND_DEBUG_TOGGLE_NAMETAGS]   = game_command_debug_toggle_nametags,
+        [GAME_COMMAND_DEBUG_TOGGLE_NORMALS]    = game_command_debug_toggle_normals,
     };
 
     for (game_command cmd = 0; cmd < GAME_COMMAND_COUNT; ++cmd) {

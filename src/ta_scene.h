@@ -20,12 +20,6 @@ typedef struct ta_scene {
     void *resource_data[RES_COUNT];        // dense resource data (e.g. ta_texture *)
     dlb_index index_by_name[RES_COUNT];    // name hash -> dense index
     dlb_index index_by_entity[RES_COUNT];  // entity hash -> dense index
-
-    // Internal data, need to persist between frames for when sim is paused
-    struct {
-        struct ta_manifold *manifolds;
-        struct ta_rigid_body_pair *pairs;
-    } data;
 } ta_scene;
 
 /*
@@ -59,7 +53,3 @@ void *ta_scene_find_or_default(ta_scene *scene, enum ta_resource_type type, cons
 void *ta_scene_component_add(ta_scene *scene, const char *entity, enum ta_resource_type type, const char *name, u32 name_len);
 void *ta_scene_component_try(ta_scene *scene, const char *entity, enum ta_resource_type type);
 void *ta_scene_component(ta_scene *scene, const char *entity, enum ta_resource_type type);
-
-void ta_scene_update(ta_scene *scene, float dt);
-void ta_scene_shadow_pass(ta_scene *scene, float alpha);
-void ta_scene_render(ta_scene *scene, struct ta_camera *render_camera, float alpha);

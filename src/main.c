@@ -103,8 +103,6 @@ void ndc_tests() {
 // Random thoughts
 // https://en.wikipedia.org/wiki/Accumulator_(energy)
 
-static void debug_nametag();
-
 int thread_test(void *data)
 {
     UNUSED(data);
@@ -123,7 +121,7 @@ int main(int argc, char *argv[])
 
     ta_timer_init();
     ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_ALL,
-        SRC_EVENT | SRC_GAME);
+        SRC_EVENT | SRC_GAME | SRC_EDITOR);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
     // TODO: Make delta_time specific to thread ids (hash table)
@@ -163,72 +161,4 @@ int main(int argc, char *argv[])
     ta_window_free(tg_window);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Goodbye.\n\n");
     return 0;
-}
-
-static void debug_nametag(ta_camera *camera)
-{
-    ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
-    static ta_rect_uv *tag_rects = 0;
-    ta_rectf tag_rect = ta_font_push_text(&tag_rects, font,
-        CSTR("Player 1\nis da best"), true, 0, 0, 0);
-
-    ta_transform *player_transform =
-        ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
-
-    ta_vec3 tag_pos = vec3_add(player_transform->xform.position,
-        (ta_vec3){ 0.0f, 1.2f, 0.0f });
-    ta_vec3 tag_to_cam = vec3_sub(camera->position, tag_pos);
-    tag_to_cam.z *= -1.0f;
-    tag_to_cam.y *= 0.0f;
-    float tag_scalef = MAX(vec3_len(tag_to_cam), 4.0f);
-
-    ta_vec3 tag_offset = tag_offset = vec3_scalef(camera->right,
-        NDC_W(tag_rect.w) / 2.0f * tag_scalef);
-    ta_vec3 tag_pos_off = vec3_sub(tag_pos, tag_offset);
-
-    ta_mat4 tag_rot = mat4_lookat(VEC3_ZERO, tag_to_cam, VEC3_Y);
-
-    ta_mat4 tag_trans_bg = mat4_translate(tag_pos_off);
-    ta_mat4 tag_xform_bg = mat4_scalef(tag_scalef);
-    tag_xform_bg = mat4_mul(&tag_rot, &tag_xform_bg);
-    tag_xform_bg = mat4_mul(&tag_trans_bg, &tag_xform_bg);
-
-    ta_vec3 tag_pos_off_fg = tag_pos_off;
-    tag_pos_off_fg.y += NDC_H(tag_rect.h) * tag_scalef;
-    ta_mat4 tag_trans_fg = mat4_translate(tag_pos_off_fg);
-    ta_mat4 tag_xform_fg = mat4_scalef(tag_scalef);
-    //tag_xform_fg = mat4_mul(&tag_xform_fg, &tag_rot_trans);
-    tag_xform_fg = mat4_mul(&tag_rot, &tag_xform_fg);
-    tag_xform_fg = mat4_mul(&tag_trans_fg, &tag_xform_fg);
-
-    // Name tag background
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform_bg);
-    ta_texture *tex_orange = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
-    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex_orange->gl_id);
-    ta_rect_uv tag_background = { 0 };
-    tag_background.rect.x -= NDC_W(5.0f);
-    tag_background.rect.w = NDC_W(tag_rect.w) + NDC_W(10.0f);
-    tag_background.rect.h = NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
-    ta_primitive_push_rect_uv(tag_background, TA_COLOR_GRAY3A, UI_LAYER_HUD_BG,
-        false, false);
-    ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
-    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
-
-    // Name tag text
-    ta_shader *font_shader = ta_game_by_sym(RES_SHADER, font->shader);
-    ta_shader_set_mat4(font_shader, SYM_U_PROJ, &camera->projection);
-    ta_shader_set_mat4(font_shader, SYM_U_VIEW, &camera->look_at);
-    ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform_fg);
-
-    // TODO: Move UI_LAYER_HUD out of push_rect_uv into tag_xform, or
-    //       make font_render's xform arguments stack with current value
-    //       of SYM_U_MODEL.
-    dlb_vec_each(ta_rect_uv *, rect, tag_rects) {
-        ta_primitive_push_rect_uv(*rect, TA_COLOR_WHITE, UI_LAYER_HUD, true,
-            true);
-    }
-    dlb_vec_zero(tag_rects);
-    ta_font_render(quads_queue, font, 0, 0, 0, true, true);
 }

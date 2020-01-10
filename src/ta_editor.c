@@ -877,6 +877,7 @@ static void ui_mesh_panel()
                 }
             }
         }
+        // TODO: Preview mesh in carousel while mouse hover
         if (ta_ui_last_frame_state().hover) {
             char tex_buf[1024] = { 0 };
             int len = snprintf(tex_buf, sizeof(tex_buf),
@@ -1012,7 +1013,7 @@ static void ui_editor_sidebar()
     ta_ui_row_begin();
     categories[category_selected].panel_method();
 }
-void ta_editor_draw(float alpha)
+void ta_editor_draw()
 {
     GLint polygon_mode = 0;
     glGetIntegerv(GL_POLYGON_MODE, &polygon_mode);
@@ -1042,10 +1043,12 @@ void ta_editor_draw(float alpha)
                 wire_color.a = 0.05f;
             }
             ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
-            ta_model_render_shader(model, camera, shader, alpha, 1.0f);
+            ta_model_render_shader(model, camera, shader);
         }
     }
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI layout begin\n");
 
     ta_ui_spacer(0, 50);
     //ta_ui_next_size(400, 400);
@@ -1093,9 +1096,13 @@ void ta_editor_draw(float alpha)
 #endif
 
     ta_ui_window_end();
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI layout end\n");
 
     glClear(GL_DEPTH_BUFFER_BIT);
+
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render begin\n");
     ta_ui_render();
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render end\n");
 
     glPolygonMode(GL_FRONT_AND_BACK, polygon_mode);
 }

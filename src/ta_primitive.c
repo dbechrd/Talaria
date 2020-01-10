@@ -238,9 +238,7 @@ void ta_primitive_push_rect_uv_q(ta_vert_quad **queue, ta_rect_uv rect_uv,
             y1 -= 1.0f;
         }
     } else {
-        // TODO(cleanup): This code path never seems to be called?
-        DLB_ASSERT(0);
-
+        // NOTE: This is only used for nametags atm.
         x0 = rect_uv.rect.x;
         x1 = rect_uv.rect.x + rect_uv.rect.w;
         y0 = rect_uv.rect.y;
@@ -339,7 +337,6 @@ void ta_primitive_push_crosshair(s32 length, s32 thickness)
 
     ta_primitive_push_rect(x, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
     ta_primitive_push_rect(y, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
-    ta_primitive_render(true, true);
 }
 
 void ta_primitive_push_axes(float scale)

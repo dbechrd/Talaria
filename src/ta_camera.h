@@ -51,6 +51,7 @@ typedef struct ta_camera {
     bool debug_wireframe;
     bool debug_normals;
     bool debug_colliders;
+    bool debug_nametags;
     bool debug_no_mesh;
     ta_shader_debug_channel debug_channel;
 } ta_camera;
@@ -65,4 +66,4 @@ void ta_camera_yaw(ta_camera *camera, float delta);
 void ta_camera_pitch(ta_camera *camera, float delta);
 void ta_camera_move(ta_camera *camera, ta_vec3 v);
 void ta_camera_recalc_projection(ta_camera *camera);
-void ta_camera_update(ta_camera *camera, double dt);
+void ta_camera_update(ta_camera *camera, float dt);

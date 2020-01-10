@@ -15,8 +15,7 @@
 #include "ta_editor.h"
 #include "dlb/dlb_vector.h"
 
-void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
-    float alpha)
+void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
 {
     DLB_ASSERT(model);
     DLB_ASSERT(shader);
@@ -29,16 +28,6 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
 
     ta_transform *transform = ta_game_component(model->entity_name,
         RES_COMP_TRANSFORM);
-
-    ta_vec3 lerp_pos = vec3_lerp(transform->xform_prev.position,
-        transform->xform.position, alpha);
-    ta_vec4 lerp_orient = quat_nlerp(transform->xform_prev.orientation,
-        transform->xform.orientation, alpha);
-
-    // TODO: Multiply position by parent via mat4_mul(parent, transform)
-    ta_mat4 trans = mat4_translate(lerp_pos);
-    ta_mat4 orient = mat4_rotate_quat(lerp_orient);
-    transform->model = mat4_mul(&trans, &orient);
 
     ta_mat4 light_pvm = mat4_mul(light_pv, &transform->model);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
@@ -56,7 +45,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv,
     }
 }
 
-void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
+void ta_model_render(ta_model *model, ta_camera *camera)
 {
     DLB_ASSERT(model);
     DLB_ASSERT(camera);
@@ -74,18 +63,6 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
 
     ta_transform *transform = ta_game_component(model->entity_name,
         RES_COMP_TRANSFORM);
-
-    ta_vec3 lerp_pos = vec3_lerp(transform->xform_prev.position,
-        transform->xform.position, alpha);
-    ta_vec4 lerp_orient = quat_nlerp(transform->xform_prev.orientation,
-        transform->xform.orientation, alpha);
-
-    // TODO: Multiply position by parent via mat4_mul(parent, transform)
-    ta_mat4 trans = mat4_translate(lerp_pos);
-    ta_mat4 rot = mat4_rotate_quat(lerp_orient);
-    ta_mat4 scal = MAT4_IDENT;
-    transform->model = mat4_mul(&rot, &scal);
-    transform->model = mat4_mul(&trans, &transform->model);
 
     if (!camera->debug_no_mesh) {
         ta_material *material = ta_game_by_sym(RES_MATERIAL, model->material);
@@ -143,45 +120,11 @@ void ta_model_render(ta_model *model, ta_camera *camera, float alpha)
                 ta_primitive_render(true, false);
             }
         }
-        if (camera->debug_colliders) {
-            ta_rigid_body *body = ta_game_component_try(model->entity_name,
-                RES_COMP_RIGID_BODY);
-            if (body) {
-                // Model space
-                ta_sphere centroid_local = { 0 };
-                centroid_local.center = body->centroid_local;
-                centroid_local.radius = 0.05f;
-                ta_primitive_push_sphere(centroid_local, TA_COLOR_MAGENTA);
-
-                ta_rgba narrowphase_color = body->dbg_narrowphase ? TA_COLOR_MAGENTA : TA_COLOR_ORANGE;
-                ta_collider_render(&body->collider, narrowphase_color);
-
-                ta_primitive_render(true, false);
-
-                // World space
-                ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-
-                ta_sphere model_origin = { 0 };
-                model_origin.center = transform->xform.position;
-                model_origin.radius = 0.04f;
-                ta_primitive_push_sphere(model_origin, TA_COLOR_PINK);
-
-                ta_sphere centroid_global = { 0 };
-                centroid_global.center = body->centroid_global;
-                centroid_global.radius = 0.1f;
-                ta_primitive_push_sphere(centroid_global, TA_COLOR_CYAN);
-
-                ta_rgba broadphase_color = body->dbg_broadphase ? TA_COLOR_RED : TA_COLOR_GRAY4;
-                ta_primitive_push_aabb(body->aabb, broadphase_color);
-
-                ta_primitive_render(true, false);
-            }
-        }
     }
 }
 
 void ta_model_render_shader(ta_model *model, ta_camera *camera,
-    ta_shader *shader, float alpha, float scale)
+    ta_shader *shader)
 {
     DLB_ASSERT(model);
     DLB_ASSERT(camera);
@@ -189,18 +132,6 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
 
     ta_transform *transform = ta_game_component(model->entity_name,
         RES_COMP_TRANSFORM);
-
-    ta_vec3 lerp_pos = vec3_lerp(transform->xform_prev.position,
-        transform->xform.position, alpha);
-    ta_vec4 lerp_orient = quat_nlerp(transform->xform_prev.orientation,
-        transform->xform.orientation, alpha);
-
-    // TODO: Multiply position by parent via mat4_mul(parent, transform)
-    ta_mat4 trans = mat4_translate(lerp_pos);
-    ta_mat4 rot = mat4_rotate_quat(lerp_orient);
-    ta_mat4 scal = mat4_scalef(scale);
-    transform->model = mat4_mul(&rot, &scal);
-    transform->model = mat4_mul(&trans, &transform->model);
 
     ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
