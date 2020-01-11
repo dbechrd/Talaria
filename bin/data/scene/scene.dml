@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x3FC8B218 (1.567935)
-    y: 0x41153866 (9.326269)
-    z: 0xBFE67E90 (-1.800737)
+    x: 0x3FAB0560 (1.336102)
+    y: 0x4138C3EC (11.547832)
+    z: 0xC09B4DE2 (-4.853257)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x4263B994 (56.931229)
+  yaw: 0x42328C4D (44.637012)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC19000DC (-18.000420)
+  pitch: 0xC1E001A0 (-28.000793)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,16 +57,16 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0x3E2CAA0E (0.168617)
-    y: 0x3F73784C (0.951054)
-    z: 0xBE849757 (-0.258967)
+    x: 0x3EAB0B72 (0.334072)
+    y: 0x3F62086D (0.882941)
+    z: 0xBEA8E41C (-0.329865)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
   position:
-    x: 0x414A91D6 (12.660604)
+    x: 0x414A91DC (12.660610)
     y: 0x40DFFF2E (6.999900)
-    z: 0xC0A628D2 (-5.192483)
+    z: 0xC0A62A6C (-5.192678)
   position_smooth: 0x3F000000 (0.500000)
   position_target_vel: 0x3E4CCCCD (0.200000)
   yaw: 0x42FE34EC (127.103363)
@@ -407,20 +407,20 @@ ta_transform:
   xform:
     position:
       x: 0x409E27E0 (4.942368)
-      y: 0x40BBBCAD (5.866782)
-      z: 0xC233D3AF (-44.956722)
+      y: 0x40B0F507 (5.529911)
+      z: 0xC21AD3AC (-38.706711)
     orientation:
-      x: 0x3ED8149D (0.422032)
-      y: 0xBF3C837D (-0.736381)
-      z: 0x3D236362 (0.039890)
-      w: 0x3F06FCD1 (0.527295)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
 ta_transform:
   name: "sphere2"
   entity_name: "sphere2"
   xform:
     position:
       x: 0x40EFC1AA (7.492391)
-      y: 0x3F802F48 (1.001443)
+      y: 0x3F801C52 (1.000864)
       z: 0xC177BE94 (-15.484028)
     orientation:
       x: 0xBB219908 (-0.002466)
@@ -464,8 +464,8 @@ ta_transform:
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
-      z: 0x3F1BB0BA (0.608165)
-      w: 0x3F4B3727 (0.793810)
+      z: 0x3F1BB0BB (0.608165)
+      w: 0x3F4B3729 (0.793810)
 ta_transform:
   name: "column_0003"
   entity_name: "column_0003"
@@ -486,12 +486,12 @@ ta_transform:
     position:
       x: 0x40928201 (4.578370)
       y: 0x3EFFF2E5 (0.499900)
-      z: 0x408A2F34 (4.318262)
+      z: 0x40968FEB (4.705068)
     orientation:
-      x: 0x3E5E47CD (0.217071)
-      y: 0xBEC27AC5 (-0.379843)
-      z: 0xBF098212 (-0.537141)
-      w: 0x3F389E49 (0.721165)
+      x: 0x3E9202C9 (0.285177)
+      y: 0xBEA73B2D (-0.326623)
+      z: 0xBF123176 (-0.571067)
+      w: 0x3F32719D (0.697046)
 #-------------------------------------------------------------------------------
 # TYP_RIGID_BODY
 #-------------------------------------------------------------------------------
@@ -842,6 +842,36 @@ ta_mesh:
 ta_mesh:
   name: "star_0001"
   path: "data/mesh/star.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
   offset:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)

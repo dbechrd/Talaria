@@ -1,5 +1,6 @@
 #include "ta_intersect.h"
 #include "ta_collider.h"
+#include "ta_primitive.h"
 #include <float.h>
 #include <math.h>
 
@@ -57,22 +58,74 @@ bool ta_ray_v_plane(const ta_ray *ray, const ta_plane *plane, float *t_intersect
     return true;
 }
 
-bool ta_ray_v_obb(const ta_ray *ray, const ta_obb *obb)
+bool ta_ray_v_obb(const ta_ray *ray, const ta_obb *obb, float *t_intersect)
 {
-    UNUSED(ray);
+    // Ray in obb local space
+    ta_vec4 orient_inv = quat_inverse(obb->orientation);
+    ta_ray ray_local = { 0 };
+    ray_local.origin = vec3_rotate_quat(vec3_sub(ray->origin, obb->center), orient_inv);
+    ray_local.direction = vec3_rotate_quat(ray->direction, orient_inv);
 
+    // Calculate plane for each face of OBB
     ta_plane planes[6] = { 0 };
+    planes[0].center.x += obb->extents.x;
+    planes[1].center.y += obb->extents.y;
+    planes[2].center.z += obb->extents.z;
+    planes[3].center.x -= obb->extents.x;
+    planes[4].center.y -= obb->extents.y;
+    planes[5].center.z -= obb->extents.z;
     planes[0].normal.x = obb->extents.x;
     planes[1].normal.y = obb->extents.y;
     planes[2].normal.z = obb->extents.z;
     planes[3].normal.x = -obb->extents.x;
     planes[4].normal.y = -obb->extents.y;
     planes[5].normal.z = -obb->extents.z;
+
+    float t_min = FLT_MAX;
+    float t = 0.0f;
+    ta_vec3 intersect;
+
     for (int i = 0; i < 6; ++i) {
-        planes[i].center = obb->center;
-        planes[i].normal = vec3_rotate_quat(planes[i].normal, obb->orientation);
+        planes[i].normal = vec3_normalize(planes[i].normal);
+
+        if (ta_ray_v_plane(&ray_local, &planes[i], &t)) {
+            intersect = vec3_add(ray_local.origin, vec3_scalef(ray_local.direction, t));
+            if (fabs(intersect.x) <= obb->extents.x + TA_EPSILON &&
+                fabs(intersect.y) <= obb->extents.y + TA_EPSILON &&
+                fabs(intersect.z) <= obb->extents.z + TA_EPSILON)
+            {
+                t_min = MIN(t_min, t);
+            }
+        }
     }
 
+#if 0
+    ta_line_3d ray_line = { 0 };
+    ray_line.p0 = ray->origin;
+    ray_line.p1 = vec3_add(ray->origin, ray->direction);
+    ta_primitive_push_line_3d(ray_line, TA_COLOR_WHITE, TA_COLOR_RED);
+    ta_primitive_push_obb(*obb, TA_COLOR_RED);
+
+    ta_line_3d ray_local_line = { 0 };
+    ray_local_line.p0 = ray_local.origin;
+    ray_local_line.p1 = vec3_add(ray_local.origin, ray_local.direction);
+    ta_primitive_push_line_3d(ray_local_line, TA_COLOR_WHITE, TA_COLOR_GREEN);
+
+    float radius = 0.2f;
+    ta_primitive_push_plane(planes[0], radius, TA_COLOR_RED);
+    ta_primitive_push_plane(planes[1], radius, TA_COLOR_GREEN);
+    ta_primitive_push_plane(planes[2], radius, TA_COLOR_BLUE);
+    ta_primitive_push_plane(planes[3], radius, TA_COLOR_CYAN);
+    ta_primitive_push_plane(planes[4], radius, TA_COLOR_MAGENTA);
+    ta_primitive_push_plane(planes[5], radius, TA_COLOR_YELLOW);
+#endif
+
+    if (t_min < FLT_MAX) {
+        if (t_intersect) {
+            *t_intersect = t_min;
+        }
+        return true;
+    }
     return false;
 }
 

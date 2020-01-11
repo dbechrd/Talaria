@@ -5,6 +5,7 @@
 #include "ta_event.h"
 #include "ta_font.h"
 #include "ta_game.h"
+#include "ta_intersect.h"
 #include "ta_keybind.h"
 #include "ta_light.h"
 #include "ta_log.h"
@@ -26,6 +27,7 @@
 #include "dlb/dlb_vector.h"
 #include "SDL/SDL_keycode.h"
 #include "SDL/SDL.h"
+#include <float.h>
 
 typedef enum editor_command {
     EDITOR_COMMAND_CLOSE1,
@@ -77,7 +79,8 @@ void ta_editor_init()
 
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE1          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE2          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SELECT          ], TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
+    //ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SELECT          ], TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SELECT          ], TA_KEYBIND_HOLD,    SDL_SCANCODE_MOUSE_LEFT);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_PAUSE_RESUME], TA_KEYBIND_PRESS,   SDL_SCANCODE_F5);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT        ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F6);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT_10     ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F7);
@@ -1126,33 +1129,43 @@ void editor_command_select()
     ray.origin = camera->position;
     ray.direction = camera->front;
 
-    float t_min = 9999.0f;
+    float t = 0.0f;
+    float t_min = FLT_MAX;
     const char *closest_entity = 0;
 
     ta_rigid_body *bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
     dlb_vec_each(ta_rigid_body *, body, bodies) {
-        ta_sphere sphere = { 0 };
         switch (body->collider.type) {
             case TA_COLLIDER_SPHERE: {
-                sphere.center = body->centroid_global;
-                sphere.radius = body->collider.data.sphere.radius;
+                ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+                ta_sphere sphere = body->collider.data.sphere;
+                sphere.center = vec3_add(sphere.center, transform->xform.position);
+                if (ta_intersect_ray_sphere(ray, sphere, &t)) {
+                    DLB_ASSERT(t >= 0.0f);
+                    //if (t >= 0.0f && t < t_min) {
+                    if (t < t_min) {
+                        t_min = t;
+                        closest_entity = body->entity_name;
+                    }
+                }
                 break;
             } case TA_COLLIDER_OBB: {
-                // TODO: Ray vs. OBB for more accurate picking
-                sphere.center = body->centroid_global;
-                sphere.radius = vec3_len(body->collider.data.obb.extents);
+                ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+                ta_obb obb = body->collider.data.obb;
+                obb.center = vec3_rotate_quat(obb.center, transform->xform.orientation);
+                obb.center = vec3_add(obb.center, transform->xform.position);
+                obb.orientation = quat_mul(transform->xform.orientation, obb.orientation);
+                if (ta_ray_v_obb(&ray, &obb, &t)) {
+                    DLB_ASSERT(t >= 0.0f);
+                    if (t < t_min) {
+                        t_min = t;
+                        closest_entity = body->entity_name;
+                    }
+                }
                 break;
             } default: {
                 // Ignore unsupported colliders when picking
                 continue;
-            }
-        }
-
-        float t;
-        if (ta_intersect_ray_sphere(ray, sphere, &t)) {
-            if (t >= 0.0f && t < t_min) {
-                t_min = t;
-                closest_entity = body->entity_name;
             }
         }
     }
@@ -1164,21 +1177,29 @@ void editor_command_select()
         ta_sphere sphere = { 0 };
         sphere.center = transform->xform.position;
         sphere.radius = 0.2f;
-        float t;
         if (ta_intersect_ray_sphere(ray, sphere, &t)) {
-            if (t >= 0.0f && t < t_min) {
+            DLB_ASSERT(t >= 0.0f);
+            //if (t >= 0.0f && t < t_min) {
+            if (t < t_min) {
                 t_min = t;
                 closest_entity = light->entity_name;
             }
         }
     }
 
-    if (!closest_entity) {
-        static const char *chamber_0001 = 0;
-        if (!chamber_0001) {
-            chamber_0001 = INTERN("chamber_0001");
-        }
-        closest_entity = chamber_0001;
+    if (closest_entity) {
+        ta_vec3 t_pos = vec3_add(ray.origin, vec3_scalef(ray.direction, t_min));
+        ta_sphere t_sphere = { 0 };
+        t_sphere.center = t_pos;
+        t_sphere.radius = 0.1f;
+        ta_primitive_push_sphere(t_sphere, TA_COLOR_PINK);
+    } else {
+        //static const char *chamber_0001 = 0;
+        //if (!chamber_0001) {
+        //    chamber_0001 = INTERN("chamber_0001");
+        //}
+        //closest_entity = chamber_0001;
+        ta_editor_select_entity(0);
     }
 
     if (closest_entity) {

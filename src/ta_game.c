@@ -109,8 +109,28 @@ const char *game_state_str(ta_game_state state)
     }
 };
 
+/* JSMN_PARENT_LINKS is necessary to make parsing large structures linear in input size */
+#define JSMN_PARENT_LINKS
+/* JSMN_STRICT is necessary to reject invalid JSON documents */
+#define JSMN_STRICT
+#include "ta_json.h"
+
+static int thread_test(void *data)
+{
+    UNUSED(data);
+    ta_json_test();
+    return 0;
+}
+
 void ta_game_init()
 {
+    DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
+
+    // TODO: Make delta_time specific to thread ids (hash table)
+    SDL_Thread *thread_gltf = SDL_CreateThread(thread_test, "thread_test", 0);
+    //SDL_WaitThread(thread, 0);
+    SDL_DetachThread(thread_gltf);
+
     ta_log_write(&tg_debug_log, SRC_GAME, "Setting state to startup...\n");
     // TODO: What other startup states would be useful (e.g. LOADING_MESHES)?
     //       Could use this for a progress bar during load and better logging.
@@ -671,14 +691,12 @@ static void game_render_manifolds_debug()
         }
     }
 }
-static void game_render_colliders_debug(ta_camera *camera)
+static void game_render_colliders_debug()
 {
     ta_rigid_body *rigid_bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
-
         ta_transform *transform = ta_game_component_try(body->entity_name,
             RES_COMP_TRANSFORM);
-
         if (transform) {
             ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
             ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->model);
@@ -938,6 +956,7 @@ void ta_game_loop()
         dlb_vec_each(ta_light *, light, lights) {
             ta_transform *transform = ta_game_component(light->entity_name,
                 RES_COMP_TRANSFORM);
+
             ta_sphere light_pos = { 0 };
             light_pos.center = transform->xform.position;
             light_pos.radius = 0.2f;
@@ -953,17 +972,48 @@ void ta_game_loop()
             }
             ta_primitive_push_sphere(light_pos, color);
 
-            //ta_sphere light_aoe = { 0 };
-            //light_aoe.center = light->position;
-            //light_aoe.radius = light->shadowmap.zfar;
-            //ta_primitive_push_rgb_sphere(light_aoe);
+            if (active_camera->debug_colliders) {
+                ta_sphere light_aoe = { 0 };
+                light_aoe.center = transform->xform.position;
+                light_aoe.radius = light->shadowmap.zfar;
+                ta_primitive_push_sphere(light_aoe, color);
+            }
         }
+        ta_primitive_render(true, false);
 #endif
-
         if (active_camera->debug_colliders) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug colliders pass...\n");
-            game_render_colliders_debug(active_camera);
+            game_render_colliders_debug();
         }
+
+        //--------------------------------------------
+#if 0
+        static ta_ray ray = { 0 };
+        static ta_obb obb = { 0 };
+        if (vec4_zero(obb.orientation)) {
+            ray.origin.x = 4.0f;
+            ray.origin.y = -2.0f;
+            ray.direction.y = 5.0f;
+            obb.center.x = 3.0f;
+            obb.extents = VEC3_ONE;
+            obb.orientation.z = 0.130526f;
+            obb.orientation.w = 0.991445f;
+            obb.orientation = quat_normalize(obb.orientation);
+        }
+        ray.origin = active_camera->position;
+        ray.direction = active_camera->front;
+        float t = 0;
+        if (ta_ray_v_obb(&ray, &obb, &t)) {
+            ta_vec3 t_pos = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+            ta_sphere t_sphere = { 0 };
+            t_sphere.center = t_pos;
+            t_sphere.radius = 0.1f;
+            ta_primitive_push_sphere(t_sphere, TA_COLOR_PINK);
+        }
+        ta_primitive_render(true, false);
+#endif
+        //--------------------------------------------
+
         glClear(GL_DEPTH_BUFFER_BIT);
         if (active_camera->debug_nametags) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug nametags pass...\n");
@@ -1037,7 +1087,7 @@ void ta_game_loop()
         // Barchart
         //----------------------------------------------------------------------
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);d
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_ui_barchart_draw(&chart, 0, 0);
         ta_primitive_render(true, true);
@@ -1050,6 +1100,33 @@ void ta_game_loop()
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor UI pass...\n");
             ta_editor_draw(sim_alpha);
         }
+
+        //--------------------------------------------
+#if 0
+        static ta_ui_window_state window = { 0 };
+        ta_ui_window_begin(INTERN("test_window"), &window, TA_UI_AUTOSIZE);
+        ta_ui_textbox_vec3_state tb3[4] = { 0 };
+        ta_ui_textbox_vec4_state tb4 = { 0 };
+        ta_ui_row_begin();
+        ta_ui_label(0, CSTR("ray.origin     "));
+        ta_ui_textbox_vec3(&ray.origin, &tb3[0], 0, 0, 0);
+        ta_ui_row_begin();
+        ta_ui_label(0, CSTR("ray.direction  "));
+        ta_ui_textbox_vec3(&ray.direction, &tb3[1], 0, 0, 0);
+        ta_ui_row_begin();
+        ta_ui_label(0, CSTR("obb.center     "));
+        ta_ui_textbox_vec3(&obb.center, &tb3[2], 0, 0, 0);
+        ta_ui_row_begin();
+        ta_ui_label(0, CSTR("obb.extents    "));
+        ta_ui_textbox_vec3(&obb.extents, &tb3[3], 0, 0, 0);
+        ta_ui_row_begin();
+        ta_ui_label(0, CSTR("obb.orientation"));
+        ta_ui_textbox_vec4(&obb.orientation, &tb4, 1, 0, 0);
+        ta_ui_window_end();
+        glClear(GL_DEPTH_BUFFER_BIT);
+        ta_ui_render();
+#endif
+        //--------------------------------------------
 
         // NOTE: This confirms rendering is being deferred until swap buffers,
         // but it's much slower (~5ms), so don't actually use it.

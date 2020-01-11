@@ -1234,6 +1234,7 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
     float *components = (float *)vec;
     for (int i = 0; i < 3; ++i) {
         if (multiple_rows) ta_ui_row_begin();
+
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(0, &components[i], state, 0);
@@ -1253,8 +1254,6 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
         *vec = vec3_normalize(*vec);
     }
 
-
-
     ta_ui_panel_end();
 }
 void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
@@ -1265,13 +1264,13 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
 
     ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_panel_begin(0, &vec_state->panel_state, TA_UI_AUTOSIZE);
+    if (!multiple_rows) ta_ui_row_begin();
 
     const char *labels[4] = { "x:", "y:", "z:", "w:" };
     float *components = (float *)vec;
     for (int i = 0; i < 4; ++i) {
-        if (multiple_rows) {
-            ta_ui_row_begin();
-        }
+        if (multiple_rows) ta_ui_row_begin();
+
         ta_ui_label(0, CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(0, &components[i], state, 0);

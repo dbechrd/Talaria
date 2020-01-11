@@ -54,9 +54,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         return;
     }
     // If debug flags set such that there's nothing to render
-    if (camera->debug_no_mesh && !camera->debug_normals &&
-        !camera->debug_colliders)
-    {
+    if (camera->debug_no_mesh && !camera->debug_normals) {
         return;
     }
     DLB_ASSERT(dlb_vec_len(model->meshes));
@@ -109,16 +107,13 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_shader_unbind();
     }
 
-    if (camera->debug_normals || camera->debug_colliders) {
+    if (camera->debug_normals) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->model);
-
-        if (camera->debug_normals) {
-            dlb_vec_each(const char **, mesh_name, model->meshes) {
-                ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
-                ta_mesh_push_normals(mesh);
-                ta_primitive_render(true, false);
-            }
+        dlb_vec_each(const char **, mesh_name, model->meshes) {
+            ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+            ta_mesh_push_normals(mesh);
+            ta_primitive_render(true, false);
         }
     }
 }

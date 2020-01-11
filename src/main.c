@@ -1,41 +1,16 @@
-/* JSMN_PARENT_LINKS is necessary to make parsing large structures linear in input size */
-#define JSMN_PARENT_LINKS
-/* JSMN_STRICT is necessary to reject invalid JSON documents */
-#define JSMN_STRICT
-
 #include "ta_audio.h"
-#include "ta_camera.h"
 #include "ta_editor.h"
-#include "ta_entity.h"
-#include "ta_event.h"
-#include "ta_file.h"
-#include "ta_font.h"
 #include "ta_game.h"
-#include "ta_gltf.h"
-#include "ta_intersect.h"
-#include "ta_json.h"
-#include "ta_keybind.h"
-#include "ta_light.h"
 #include "ta_log.h"
-#include "ta_mesh.h"
-#include "ta_model.h"
 #include "ta_mouse.h"
-#include "ta_parse.h"
-#include "ta_player.h"
 #include "ta_primitive.h"
 #include "ta_render.h"
-#include "ta_rigid_body.h"
-#include "ta_scene.h"
 #include "ta_schema.h"
-#include "ta_shader.h"
 #include "ta_symbol.h"
-#include "ta_texture.h"
 #include "ta_timer.h"
-#include "ta_transform.h"
-#include "ta_ui_barchart.h"
-#include "ta_viewport.h"
 #include "ta_window.h"
 
+// Single-header implementations
 #include "dlb/dlb_types.h"
 #define DLB_MURMUR3_IMPLEMENTATION
 #include "dlb/dlb_murmur3.h"
@@ -79,6 +54,10 @@ DLB_ASSERT_HANDLER(handle_assert)
 }
 dlb_assert_handler_def *dlb_assert_handler = handle_assert;
 
+// NOTE: These are just included for tests
+#include "ta_math.h"
+#include "ta_parse.h"
+
 void debug_tests() {
 #if _DEBUG
     parse_tests();
@@ -104,31 +83,17 @@ void ndc_tests() {
 // Random thoughts
 // https://en.wikipedia.org/wiki/Accumulator_(energy)
 
-int thread_test(void *data)
-{
-    UNUSED(data);
-    //ta_json_test();
-    return 0;
-}
-
 // NOTE: Only works in Subsystem:Console mode?
 //#undef main
-
 int main(int argc, char *argv[])
 {
     UNUSED(argc);
     UNUSED(argv);
-    DLB_ASSERT(SDL_NUM_SCANCODES == TA_SDL_NUM_SCANCODES);
 
     ta_timer_init();
     ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_ALL,
         SRC_EVENT | SRC_GAME | SRC_EDITOR);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
-
-    // TODO: Make delta_time specific to thread ids (hash table)
-    SDL_Thread *thread_gltf = SDL_CreateThread(thread_test, "thread_test", 0);
-    //SDL_WaitThread(thread, 0);
-    SDL_DetachThread(thread_gltf);
 
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
     debug_tests();
