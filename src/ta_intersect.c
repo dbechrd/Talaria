@@ -3,7 +3,80 @@
 #include <float.h>
 #include <math.h>
 
-// TODO: Handle generating manifolds for AABBs. For now, just allow this ti be
+bool ta_ray_v_plane(const ta_ray *ray, const ta_plane *plane, float *t_intersect)
+{
+    //--------------------------------------------------------------------------
+    //| Random notes:
+    //|
+    //| float a = plane->normal.x;
+    //| float b = plane->normal.y;
+    //| float c = plane->normal.z;
+    //| float d = vec3_dot(plane->normal, plane->center);
+    //| ta_vec3 ro = ray->origin;
+    //| ta_vec3 rd = ray->direction;
+    //|
+    //| Component-wise derivation before I realized these were just dot products
+    //|
+    //| Ax + By + Cz = D
+    //| A(ro.x + t*rd.x) + B(ro.y + "t"rd.y) + C(ro.z + t*rd.z) = D
+    //| A*ro.x + A*t*rd.x + B*ro.y + B*t*rd.y + C*ro.z + C*t*rd.z = D
+    //| A*t*rd.x + B*t*rd.y + C*t*rd.z = D - A*ro.x - B*ro.y - C*ro.z
+    //| t * (A*rd.x + B*rd.y + C*rd.z) = D - A*ro.x - B*ro.y - C*ro.z
+    //| t = (D - A*ro.x - B*ro.y - C*ro.z) / (A*rd.x + B*rd.y + C*rd.z)
+    //|
+    //| Observation: dot(n, a) - dot(n, b) == dot(n, a-b)
+    //|
+    //| float a = vec3_dot(plane->normal, plane->center);
+    //| float b = vec3_dot(plane->normal, ray->origin);
+    //| float c = vec3_dot(plane->normal, vec3_sub(plane->center, ray->origin));
+    //| DLB_ASSERT(a - b == c);
+    //--------------------------------------------------------------------------
+
+    // NOTE: t is the interval of the ray-to-plane intersection as a percentage
+    // of the ray's direction vector
+    ta_vec3 r = vec3_sub(plane->center, ray->origin);
+    ta_vec3 d = ray->direction;
+
+    float nr = vec3_dot(plane->normal, r);
+    float nd = vec3_dot(plane->normal, d);
+    if (nd == 0.0f) {
+        return false;  // ray parallel to plane
+    }
+    float t = nr / nd;
+    if (t < 0.0f) {
+        return false;  // ray pointing away from plane
+    }
+
+    // If caller cares about intersection time, populate it
+    if (t_intersect) {
+        *t_intersect = t;
+    }
+
+    // ray intersects plane at:
+    // vec3_add(ray->origin, vec3_scalef(ray->direction, t));
+    return true;
+}
+
+bool ta_ray_v_obb(const ta_ray *ray, const ta_obb *obb)
+{
+    UNUSED(ray);
+
+    ta_plane planes[6] = { 0 };
+    planes[0].normal.x = obb->extents.x;
+    planes[1].normal.y = obb->extents.y;
+    planes[2].normal.z = obb->extents.z;
+    planes[3].normal.x = -obb->extents.x;
+    planes[4].normal.y = -obb->extents.y;
+    planes[5].normal.z = -obb->extents.z;
+    for (int i = 0; i < 6; ++i) {
+        planes[i].center = obb->center;
+        planes[i].normal = vec3_rotate_quat(planes[i].normal, obb->orientation);
+    }
+
+    return false;
+}
+
+// TODO: Handle generating manifolds for AABBs. For now, just allow this to be
 //       used for broadphase collision detection.
 bool ta_aabb_v_aabb(const ta_aabb *a, const ta_aabb *b)
 {
