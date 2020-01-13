@@ -9,7 +9,6 @@ extern const char *tg_font;
 extern const char *tg_tex_orange;
 extern const char *tg_tex_red;
 extern const char *tg_tex_audio_icon;
-
 extern const char *tg_e_background_music;
 extern const char *tg_e_freecam;
 extern const char *tg_e_player_one;

@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0x3FAB0560 (1.336102)
-    y: 0x4138C3EC (11.547832)
-    z: 0xC09B4DE2 (-4.853257)
+    x: 0x3F8D3250 (1.103098)
+    y: 0x40F94760 (7.789963)
+    z: 0xC071DBFC (-3.779052)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E99999A (0.300000)
-  yaw: 0x42328C4D (44.637012)
+  yaw: 0x426BBE7F (58.936031)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1E001A0 (-28.000793)
+  pitch: 0xBFD9B42B (-1.700811)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,9 +57,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0x3EAB0B72 (0.334072)
-    y: 0x3F62086D (0.882941)
-    z: 0xBEA8E41C (-0.329865)
+    x: 0x3C7AEB74 (0.015315)
+    y: 0x3F7FE322 (0.999560)
+    z: 0xBCD045F5 (-0.025424)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
@@ -406,9 +406,9 @@ ta_transform:
   entity_name: "rock_0001"
   xform:
     position:
-      x: 0x409E27E0 (4.942368)
-      y: 0x40B0F507 (5.529911)
-      z: 0xC21AD3AC (-38.706711)
+      x: 0x40AC286F (5.379936)
+      y: 0x4094BAE4 (4.647814)
+      z: 0xC210A972 (-36.165474)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -464,8 +464,8 @@ ta_transform:
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
-      z: 0x3F1BB0BB (0.608165)
-      w: 0x3F4B3729 (0.793810)
+      z: 0x3F1BB0BA (0.608165)
+      w: 0x3F4B3727 (0.793810)
 ta_transform:
   name: "column_0003"
   entity_name: "column_0003"
@@ -729,7 +729,7 @@ ta_audio_buffer:
 ta_font:
   name: "ubuntumono"
   path: "data/font/UbuntuMono-Regular.ttf"
-  pixel_height: 0x41900000 (18.000000)
+  pixel_height: 16.0
   shader: "text"
 ta_font:
   name: "lexenddeca"
@@ -842,6 +842,12 @@ ta_mesh:
 ta_mesh:
   name: "star_0001"
   path: "data/mesh/star.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
   offset:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)

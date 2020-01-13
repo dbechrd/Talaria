@@ -3,7 +3,6 @@
 #include "ta_camera.h"
 #include "ta_collider.h"
 #include "ta_editor.h"
-#include "ta_entity.h"
 #include "ta_event.h"
 #include "ta_font.h"
 #include "ta_game.h"

@@ -184,6 +184,7 @@ void ta_log_write(ta_log *log, u32 src, const char *fmt, ...)
 
 void ta_log_free(ta_log *log)
 {
+    ta_log_flush(&tg_debug_log);
     if (log->filename) {
         fclose(log->stream);
     }

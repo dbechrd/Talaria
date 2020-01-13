@@ -14,7 +14,6 @@
 #include "ta_font.h"
 #include "ta_model.h"
 #include "ta_transform.h"
-#include "ta_entity.h"
 #include "ta_player.h"
 #include "ta_log.h"
 #include "dlb/dlb_types.h"
@@ -97,7 +96,7 @@ ta_schema_field_type res_to_typ(ta_resource_type type)
         case RES_COMP_LIGHT       : schema_type = TYP_LIGHT        ; break;
         case RES_COMP_MODEL       : schema_type = TYP_MODEL        ; break;
         case RES_COMP_PLAYER      : schema_type = TYP_PLAYER       ; break;
-        case RES_COMP_TRANSFORM   : schema_type = TYP_TRANSFORM     ; break;
+        case RES_COMP_TRANSFORM   : schema_type = TYP_TRANSFORM    ; break;
         case RES_COMP_RIGID_BODY  : schema_type = TYP_RIGID_BODY   ; break;
         // Resource types
         case RES_AUDIO_BUFFER     : schema_type = TYP_AUDIO_BUFFER ; break;

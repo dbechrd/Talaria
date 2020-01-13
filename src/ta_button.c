@@ -3,7 +3,6 @@
 #include "ta_event.h"
 #include "ta_rigid_body.h"
 #include "ta_scene.h"
-#include "ta_entity.h"
 #include "ta_audio.h"
 
 void e_button_init(ta_e_button *button)

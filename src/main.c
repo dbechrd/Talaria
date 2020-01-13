@@ -1,3 +1,44 @@
+// Include all other .c files (i.e. "unity build"). Compilation go vroom, vroom!
+#include "ta_audio.c"
+#include "ta_buffer.c"
+#include "ta_button.c"
+#include "ta_camera.c"
+#include "ta_collider.c"
+#include "ta_editor.c"
+#include "ta_event.c"
+#include "ta_file.c"
+#include "ta_font.c"
+#include "ta_game.c"
+#include "ta_gltf.c"
+#include "ta_intersect.c"
+#include "ta_json.c"
+#include "ta_key.c"
+#include "ta_keybind.c"
+#include "ta_light.c"
+#include "ta_log.c"
+#include "ta_material.c"
+#include "ta_math.c"
+#include "ta_mesh.c"
+#include "ta_model.c"
+#include "ta_mouse.c"
+#include "ta_parse.c"
+#include "ta_primitive.c"
+#include "ta_render.c"
+#include "ta_rigid_body.c"
+#include "ta_scene.c"
+#include "ta_schema.c"
+#include "ta_shader.c"
+#include "ta_symbol.c"
+#include "ta_texture.c"
+#include "ta_timer.c"
+#include "ta_token.c"
+#include "ta_transform.c"
+#include "ta_ui.c"
+#include "ta_ui_barchart.c"
+#include "ta_viewport.c"
+#include "ta_window.c"
+#include "gl3w.c"
+
 #include "ta_audio.h"
 #include "ta_editor.h"
 #include "ta_game.h"
@@ -9,23 +50,34 @@
 #include "ta_symbol.h"
 #include "ta_timer.h"
 #include "ta_window.h"
+#include "dlb/dlb_types.h"
+#include "misc/gl3w.h"
+#include "SDL/SDL.h"
 
 // Single-header implementations
-#include "dlb/dlb_types.h"
 #define DLB_MURMUR3_IMPLEMENTATION
 #include "dlb/dlb_murmur3.h"
+#undef DLB_MURMUR3_IMPLEMENTATION
+
 #define DLB_VECTOR_IMPLEMENTATION
 #include "dlb/dlb_vector.h"
+#undef DLB_VECTOR_IMPLEMENTATION
+
 #define DLB_HASH_IMPLEMENTATION
 #define DLB_HASH_TEST
 #include "dlb/dlb_hash.h"
+#undef DLB_HASH_TEST
+#undef DLB_HASH_IMPLEMENTATION
+
 #define DLB_BITSET_TEST
 #include "dlb/dlb_bitset.h"
+#undef DLB_BITSET_TEST
+
 #define DLB_INDEX_IMPLEMENTATION
 #define DLB_INDEX_TEST
 #include "dlb/dlb_index.h"
-#include "misc/gl3w.h"
-#include "SDL/SDL.h"
+#undef DLB_INDEX_TEST
+#undef DLB_INDEX_IMPLEMENTATION
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
@@ -101,7 +153,6 @@ int main(int argc, char *argv[])
     ta_symbol_init();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Registering schema...\n");
     ta_schema_register();
-    // TODO: Save size/position to a config file
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing window...\n");
     ta_window_init(tg_window, 1600, 900, false);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running ndc_tests...\n");
@@ -118,13 +169,14 @@ int main(int argc, char *argv[])
     ta_game_init();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing editor...\n");
     ta_editor_init();
-
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Starting game loop...\n");
     ta_game_loop();
 
-    ta_log_flush(&tg_debug_log);
 
     // TODO: Free *EVERYTHING* (at least in debug mode.. to check memory leaks)
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Cleaning up...\n");
     ta_window_free(tg_window);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Goodbye.\n\n");
+    ta_log_free(&tg_debug_log);
     return 0;
 }

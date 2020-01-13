@@ -1,4 +1,3 @@
-#include "ta_entity.h"
 #include "ta_game.h"
 #include "ta_light.h"
 #include "ta_model.h"

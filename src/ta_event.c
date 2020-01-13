@@ -16,40 +16,40 @@ typedef struct ta_event_queue {
     ta_event *buffer;
 } ta_event_queue;
 
-static ta_event_queue queue;
+static ta_event_queue event_queue;
 
 void ta_event_push(ta_event *event)
 {
-    u32 cap = dlb_vec_cap(queue.buffer);
-    if (queue.count == cap) {
+    u32 cap = dlb_vec_cap(event_queue.buffer);
+    if (event_queue.count == cap) {
         bool has_items = cap > 0;
         cap = MAX(16, cap * 2);
-        dlb_vec_reserve(queue.buffer, cap);
+        dlb_vec_reserve(event_queue.buffer, cap);
         if (has_items) {
             // Before resize: [D, A, B, C]
             // After resize : [-, A, B, C, D, -, -, -]
-            if (queue.head > 0) {
-                int bytes = queue.head * sizeof(queue.buffer[0]);
-                dlb_memcpy(&queue.buffer[queue.count],
-                    queue.buffer, bytes);
+            if (event_queue.head > 0) {
+                int bytes = event_queue.head * sizeof(event_queue.buffer[0]);
+                dlb_memcpy(&event_queue.buffer[event_queue.count],
+                    event_queue.buffer, bytes);
 #if _DEBUG
-                dlb_memset(queue.buffer, 0, bytes);
+                dlb_memset(event_queue.buffer, 0, bytes);
 #endif
             }
         }
     }
-    int next = (queue.head + queue.count) % cap;
+    int next = (event_queue.head + event_queue.count) % cap;
     // TODO(perf): This copy could be avoided by allocating events from a pool
     // and passing the index to this method.
-    queue.buffer[next] = *event;
-    queue.count++;
+    event_queue.buffer[next] = *event;
+    event_queue.count++;
 }
 bool ta_event_pop(ta_event *event)
 {
-    if (queue.count) {
-        *event = queue.buffer[queue.head];
-        queue.head = (queue.head + 1) % dlb_vec_cap(queue.buffer);
-        queue.count--;
+    if (event_queue.count) {
+        *event = event_queue.buffer[event_queue.head];
+        event_queue.head = (event_queue.head + 1) % dlb_vec_cap(event_queue.buffer);
+        event_queue.count--;
         return true;
     } else {
         return false;
@@ -57,8 +57,8 @@ bool ta_event_pop(ta_event *event)
 }
 bool ta_event_peek(ta_event *event)
 {
-    if (queue.count) {
-        *event = queue.buffer[queue.head];
+    if (event_queue.count) {
+        *event = event_queue.buffer[event_queue.head];
         return true;
     } else {
         return false;

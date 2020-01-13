@@ -113,9 +113,6 @@
     <ClCompile Include="src\ta_key.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\ta_entity.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ta_model.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -239,9 +236,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_model.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\ta_entity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_player.h">
