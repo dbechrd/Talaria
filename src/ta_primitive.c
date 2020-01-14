@@ -341,19 +341,11 @@ void ta_primitive_push_crosshair(s32 length, s32 thickness)
 
 void ta_primitive_push_axes(float scale)
 {
-    ta_line_3d X_AXIS = { 0 };
-    ta_line_3d Y_AXIS = { 0 };
-    ta_line_3d Z_AXIS = { 0 };
-    X_AXIS.p1 = vec3_scalef(VEC3_X, scale);
-    Y_AXIS.p1 = vec3_scalef(VEC3_Y, scale);
-    Z_AXIS.p1 = vec3_scalef(VEC3_Z, scale);
-
-    ta_primitive_push_line_3d(X_AXIS, TA_COLOR_RED,   TA_COLOR_RED);
-    ta_primitive_push_line_3d(Y_AXIS, TA_COLOR_GREEN, TA_COLOR_GREEN);
-    ta_primitive_push_line_3d(Z_AXIS, TA_COLOR_BLUE,  TA_COLOR_BLUE);
+    ta_primitive_push_arrow(VEC3_ZERO, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
+    ta_primitive_push_arrow(VEC3_ZERO, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
+    ta_primitive_push_arrow(VEC3_ZERO, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
 }
 
-// TODO: Make this a setting somewhere?
 #define SPHERE_SEGMENTS 32
 #define SPHERE_SEG_RAD (DEG_TO_RADF(360.f / SPHERE_SEGMENTS))
 void ta_primitive_push_sphere(ta_sphere sphere, ta_rgba color)
@@ -461,7 +453,65 @@ void ta_primitive_push_rgb_sphere(ta_sphere sphere)
     ta_primitive_push_line_3d(line_xz, TA_COLOR_WHITE, TA_COLOR_GREEN);
     ta_primitive_push_line_3d(line_xy, TA_COLOR_WHITE, TA_COLOR_BLUE);
 }
+#undef SPHERE_SEG_RAD
 #undef SPHERE_SEGMENTS
+
+#define CONE_SEGMENTS 32
+#define CONE_SEG_RAD (DEG_TO_RADF(360.f / CONE_SEGMENTS))
+void ta_primitive_push_cone(ta_cone cone, ta_rgba color)
+{
+    // u,v are +x,+y in circle space
+    ta_vec3 u = vec3_perp(cone.apex);
+    u = vec3_normalize(u);
+    ta_vec3 v = vec3_cross(vec3_normalize(cone.apex), u);
+    v = vec3_normalize(v);
+
+    // Start at (1, 0) on the circle (simplified because cos(0) is 1.0, i.e.
+    // just the radius, and sin(0) is 0, so v does not contribute).
+    ta_line_3d directrix = { 0 };
+    directrix.p0 = vec3_add(cone.center, vec3_scalef(u, cone.radius));
+
+    ta_line_3d generatrix = { 0 };
+    generatrix.p1 = vec3_add(cone.center, cone.apex);
+
+    // Calculate directrix segments counter-clockwise, and a generatrix from the
+    // base to the apex for each one.
+    for (int i = 1; i <= CONE_SEGMENTS; i++) {
+        float rcos = cone.radius * cosf(CONE_SEG_RAD * i);
+        float rsin = cone.radius * sinf(CONE_SEG_RAD * i);
+
+        generatrix.p0 = directrix.p0;
+        ta_primitive_push_line_3d(generatrix, color, color);
+
+        directrix.p1 = vec3_scalef(u, rcos);
+        directrix.p1 = vec3_add(directrix.p1, vec3_scalef(v, rsin));
+        directrix.p1 = vec3_add(directrix.p1, cone.center);
+        ta_primitive_push_line_3d(directrix, color, color);
+
+        directrix.p0 = directrix.p1;
+    }
+}
+#undef CONE_SEG_RAD
+#undef CONE_SEGMENTS
+
+void ta_primitive_push_arrow(ta_vec3 origin, ta_vec3 direction, ta_rgba color)
+{
+    ta_line_3d line;
+    line.p0 = origin;
+    line.p1 = vec3_add(origin, direction);
+    ta_primitive_push_line_3d(line, color, color);
+
+    ta_vec3 normal = vec3_normalize(direction);
+
+    float len = vec3_len(direction);
+    float apex = 0.1f;
+    float radius = len * apex / 3.0f;
+    ta_cone cone = { 0 };
+    cone.center = vec3_add(origin, vec3_scalef(normal, len - apex));
+    cone.apex = vec3_scalef(direction, apex);
+    cone.radius = radius;
+    ta_primitive_push_cone(cone, color);
+}
 
 void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
 {
@@ -472,7 +522,7 @@ void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
     obb.orientation = QUAT_IDENT;
     ta_primitive_push_obb(obb, color);
 #else
-    ta_line_3d line = { 0 };
+    ta_line_3d directrix = { 0 };
     ta_vec3 pmin = vec3_sub(aabb.center, aabb.extents);
     ta_vec3 size = vec3_scalef(aabb.extents, 2.0f);
 
@@ -489,8 +539,8 @@ void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
     VEC3(p7, pmin.x + size.x, pmin.y + size.y, pmin.z + size.z);
 #undef VEC3
 
-#define PUSH_LINE(a, b) line.p0 = a; line.p1 = b; \
-                        ta_primitive_push_line_3d(line, color, color)
+#define PUSH_LINE(a, b) directrix.p0 = a; directrix.p1 = b; \
+                        ta_primitive_push_line_3d(directrix, color, color)
     PUSH_LINE(p0, p1);
     PUSH_LINE(p0, p2);
     PUSH_LINE(p0, p4);

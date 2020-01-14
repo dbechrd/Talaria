@@ -132,7 +132,7 @@ static void ta_render_init_gl()
     }
 #endif
 
-    glClearColor(0.7f, 0.9f, 1.0f, 1.0f);
+    //glClearColor(0.7f, 0.9f, 1.0f, 1.0f);
 
     // Stencil buffer
     //glStencilMask(0x00);

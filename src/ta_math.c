@@ -300,6 +300,20 @@ ta_vec3 vec3_rotate_quat(ta_vec3 v, ta_vec4 q)
     result.z = v.z + 2.0f*z2;
     return result;
 }
+ta_vec3 vec3_perp(ta_vec3 v)
+{
+    // Finds an abitrary, reasonable perpendicular vector to v, if possible
+    ta_vec3 result = { 0 };
+    if (fabs(v.x) >= TA_EPSILON) {
+        result.x = v.y;
+        result.y = -v.x;
+    } else {
+        DLB_ASSERT(fabs(v.y) >= TA_EPSILON || fabs(v.z) >= TA_EPSILON);
+        result.y = -v.z;
+        result.z = v.y;
+    }
+    return result;
+}
 
 void vec4_print(FILE *file, ta_vec4 v)
 {

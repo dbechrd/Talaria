@@ -23,6 +23,7 @@ typedef struct ta_manifold {
 // optional (if not provided, will just return true/false and not fill out
 // contact properties).
 
+bool ta_ray_v_sphere(const ta_ray *ray, const ta_sphere *sphere, float *t_intersect);
 bool ta_ray_v_plane(const ta_ray *ray, const ta_plane *plane, float *t_intersect);
 bool ta_ray_v_obb(const ta_ray *ray, const ta_obb *obb, float *t_intersect);
 bool ta_aabb_v_aabb(const struct ta_aabb *a, const struct ta_aabb *b);

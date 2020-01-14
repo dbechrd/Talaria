@@ -24,6 +24,5 @@ typedef struct ta_collider {
 
 void ta_collider_init(ta_collider *collider);
 ta_mat3 ta_collider_inv_tensor(ta_collider *collider, float mass);
-bool ta_intersect_ray_sphere(ta_ray ray, ta_sphere sphere, float *t);
 ta_aabb ta_collider_world_bounds(ta_collider *collider, ta_xform *xform);
 void ta_collider_render(ta_collider *collider, ta_rgba color);

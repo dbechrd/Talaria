@@ -1010,6 +1010,16 @@ void ta_game_loop()
             ta_primitive_push_sphere(t_sphere, TA_COLOR_PINK);
         }
         ta_primitive_render(true, false);
+
+        ta_cone cone = { 0 };
+        cone.center = VEC3_ONE;
+        cone.apex = vec3_scalef(VEC3_ONE, 0.3f);
+        cone.radius = 0.3f;
+        ta_primitive_push_cone(cone, TA_COLOR_BLUE);
+
+        ta_primitive_push_arrow(VEC3_ONE, vec3_scalef(VEC3_ONE, 10.0f), TA_COLOR_MAGENTA);
+
+        ta_primitive_render(true, false);
 #endif
         //--------------------------------------------
 

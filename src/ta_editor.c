@@ -1135,11 +1135,24 @@ void editor_command_select()
     ta_rigid_body *bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
     dlb_vec_each(ta_rigid_body *, body, bodies) {
         switch (body->collider.type) {
-            case TA_COLLIDER_SPHERE: {
+            case TA_COLLIDER_PLANE: {
+                ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+                ta_plane plane = body->collider.data.plane;
+                plane.center = vec3_add(plane.center, transform->xform.position);
+                if (ta_ray_v_plane(&ray, &plane, &t)) {
+                    DLB_ASSERT(t >= 0.0f);
+                    //if (t >= 0.0f && t < t_min) {
+                    if (t < t_min) {
+                        t_min = t;
+                        closest_entity = body->entity_name;
+                    }
+                }
+                break;
+            } case TA_COLLIDER_SPHERE: {
                 ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
                 ta_sphere sphere = body->collider.data.sphere;
                 sphere.center = vec3_add(sphere.center, transform->xform.position);
-                if (ta_intersect_ray_sphere(ray, sphere, &t)) {
+                if (ta_ray_v_sphere(&ray, &sphere, &t)) {
                     DLB_ASSERT(t >= 0.0f);
                     //if (t >= 0.0f && t < t_min) {
                     if (t < t_min) {
@@ -1176,7 +1189,7 @@ void editor_command_select()
         ta_sphere sphere = { 0 };
         sphere.center = transform->xform.position;
         sphere.radius = 0.2f;
-        if (ta_intersect_ray_sphere(ray, sphere, &t)) {
+        if (ta_ray_v_sphere(&ray, &sphere, &t)) {
             DLB_ASSERT(t >= 0.0f);
             //if (t >= 0.0f && t < t_min) {
             if (t < t_min) {

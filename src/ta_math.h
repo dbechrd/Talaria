@@ -126,6 +126,12 @@ typedef struct ta_sphere {
     float radius;
 } ta_sphere;
 
+typedef struct ta_cone {
+    ta_vec3 center;  // center of base circle
+    float radius;    // radius of base circle
+    ta_vec3 apex;    // vector from center to apex
+} ta_cone;
+
 typedef struct ta_aabb {
     ta_vec3 center;
     ta_vec3 extents;
@@ -242,6 +248,7 @@ float vec3_dot(ta_vec3 a, ta_vec3 b);
 ta_vec3 vec3_cross(ta_vec3 a, ta_vec3 b);
 ta_vec3 vec3_lerp(ta_vec3 a, ta_vec3 b, float w);
 ta_vec3 vec3_rotate_quat(ta_vec3 v, ta_vec4 q);
+ta_vec3 vec3_perp(ta_vec3 v);
 
 void vec4_print(FILE *file, ta_vec4 v);
 int vec4_zero(ta_vec4 v);
