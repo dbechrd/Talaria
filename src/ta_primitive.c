@@ -118,27 +118,27 @@ void ta_primitive_line3d_to_quad(ta_vert_quad *quad, ta_line_3d line3d,
 
     quad->verts[0].position = v0;
     quad->verts[0].color = color0;
-    quad->verts[0].uv.x = 0.0f;
+    quad->verts[0].uv.line = 0.0f;
     quad->verts[0].uv.y = 0.0f;
     quad->verts[1].position = v1;
     quad->verts[1].color = color0;
-    quad->verts[1].uv.x = 1.0f;
+    quad->verts[1].uv.line = 1.0f;
     quad->verts[1].uv.y = 0.0f;
     quad->verts[2].position = v2;
     quad->verts[2].color = color1;
-    quad->verts[2].uv.x = 1.0f;
+    quad->verts[2].uv.line = 1.0f;
     quad->verts[2].uv.y = 1.0f;
     quad->verts[3].position = v0;
     quad->verts[3].color = color0;
-    quad->verts[3].uv.x = 0.0f;
+    quad->verts[3].uv.line = 0.0f;
     quad->verts[3].uv.y = 0.0f;
     quad->verts[4].position = v2;
     quad->verts[4].color = color1;
-    quad->verts[4].uv.x = 1.0f;
+    quad->verts[4].uv.line = 1.0f;
     quad->verts[4].uv.y = 1.0f;
     quad->verts[5].position = v3;
     quad->verts[5].color = color1;
-    quad->verts[5].uv.x = 0.0f;
+    quad->verts[5].uv.line = 0.0f;
     quad->verts[5].uv.y = 1.0f;
 }
 #endif
@@ -339,13 +339,6 @@ void ta_primitive_push_crosshair(s32 length, s32 thickness)
     ta_primitive_push_rect(y, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
 }
 
-void ta_primitive_push_axes(float scale)
-{
-    ta_primitive_push_arrow(VEC3_ZERO, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
-    ta_primitive_push_arrow(VEC3_ZERO, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
-    ta_primitive_push_arrow(VEC3_ZERO, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
-}
-
 #define SPHERE_SEGMENTS 32
 #define SPHERE_SEG_RAD (DEG_TO_RADF(360.f / SPHERE_SEGMENTS))
 void ta_primitive_push_sphere(ta_sphere sphere, ta_rgba color)
@@ -496,20 +489,17 @@ void ta_primitive_push_cone(ta_cone cone, ta_rgba color)
 
 void ta_primitive_push_arrow(ta_vec3 origin, ta_vec3 direction, ta_rgba color)
 {
+    ta_vec3 tip = vec3_add(origin, direction);
+
     ta_line_3d line;
     line.p0 = origin;
-    line.p1 = vec3_add(origin, direction);
+    line.p1 = tip;
     ta_primitive_push_line_3d(line, color, color);
 
-    ta_vec3 normal = vec3_normalize(direction);
-
-    float len = vec3_len(direction);
-    float apex = 0.1f;
-    float radius = len * apex / 3.0f;
     ta_cone cone = { 0 };
-    cone.center = vec3_add(origin, vec3_scalef(normal, len - apex));
-    cone.apex = vec3_scalef(direction, apex);
-    cone.radius = radius;
+    cone.apex = vec3_scalef(direction, 0.1f);
+    cone.center = vec3_sub(tip, cone.apex);
+    cone.radius = vec3_len(direction) / 30.0f;
     ta_primitive_push_cone(cone, color);
 }
 
@@ -522,25 +512,25 @@ void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color)
     obb.orientation = QUAT_IDENT;
     ta_primitive_push_obb(obb, color);
 #else
-    ta_line_3d directrix = { 0 };
+    ta_line_3d edge = { 0 };
     ta_vec3 pmin = vec3_sub(aabb.center, aabb.extents);
     ta_vec3 size = vec3_scalef(aabb.extents, 2.0f);
 
     ta_vec3 p0, p1, p2, p3, p4, p5, p6, p7;
 
-#define VEC3(vec, a, b, c) vec.x = a; vec.y = b; vec.z = c;
-    VEC3(p0, pmin.x         , pmin.y         , pmin.z         );
-    VEC3(p1, pmin.x         , pmin.y         , pmin.z + size.z);
-    VEC3(p2, pmin.x         , pmin.y + size.y, pmin.z         );
-    VEC3(p3, pmin.x         , pmin.y + size.y, pmin.z + size.z);
-    VEC3(p4, pmin.x + size.x, pmin.y         , pmin.z         );
-    VEC3(p5, pmin.x + size.x, pmin.y         , pmin.z + size.z);
-    VEC3(p6, pmin.x + size.x, pmin.y + size.y, pmin.z         );
-    VEC3(p7, pmin.x + size.x, pmin.y + size.y, pmin.z + size.z);
+#define VEC3(vec, a, b, c) vec.line = a; vec.y = b; vec.z = c;
+    VEC3(p0, pmin.line         , pmin.y         , pmin.z         );
+    VEC3(p1, pmin.line         , pmin.y         , pmin.z + size.z);
+    VEC3(p2, pmin.line         , pmin.y + size.y, pmin.z         );
+    VEC3(p3, pmin.line         , pmin.y + size.y, pmin.z + size.z);
+    VEC3(p4, pmin.line + size.line, pmin.y         , pmin.z         );
+    VEC3(p5, pmin.line + size.line, pmin.y         , pmin.z + size.z);
+    VEC3(p6, pmin.line + size.line, pmin.y + size.y, pmin.z         );
+    VEC3(p7, pmin.line + size.line, pmin.y + size.y, pmin.z + size.z);
 #undef VEC3
 
-#define PUSH_LINE(a, b) directrix.p0 = a; directrix.p1 = b; \
-                        ta_primitive_push_line_3d(directrix, color, color)
+#define PUSH_LINE(a, b) edge.p0 = a; edge.p1 = b; \
+                        ta_primitive_push_line_3d(edge, color, color)
     PUSH_LINE(p0, p1);
     PUSH_LINE(p0, p2);
     PUSH_LINE(p0, p4);
@@ -618,6 +608,74 @@ void ta_primitive_push_obb(ta_obb obb, ta_rgba color)
     p[6] = vec3_add(vec3_add(vec3_sub(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
     p[7] = vec3_add(vec3_add(vec3_add(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
 #endif
+}
+
+void ta_primitive_push_cube(ta_vec3 center, float radius, ta_rgba color)
+{
+    ta_vec3 pmin = center;
+    pmin.x -= radius;
+    pmin.y -= radius;
+    pmin.z -= radius;
+
+    float size = radius * 2.0f;
+
+    ta_vec3 p0, p1, p2, p3, p4, p5, p6, p7;
+
+#define VEC3(vec, a, b, c) vec.x = a; vec.y = b; vec.z = c;
+    VEC3(p0, pmin.x       , pmin.y       , pmin.z       );
+    VEC3(p1, pmin.x       , pmin.y       , pmin.z + size);
+    VEC3(p2, pmin.x       , pmin.y + size, pmin.z       );
+    VEC3(p3, pmin.x       , pmin.y + size, pmin.z + size);
+    VEC3(p4, pmin.x + size, pmin.y       , pmin.z       );
+    VEC3(p5, pmin.x + size, pmin.y       , pmin.z + size);
+    VEC3(p6, pmin.x + size, pmin.y + size, pmin.z       );
+    VEC3(p7, pmin.x + size, pmin.y + size, pmin.z + size);
+#undef VEC3
+
+    ta_line_3d edge = { 0 };
+#define PUSH_LINE(a, b) edge.p0 = a; edge.p1 = b; \
+                        ta_primitive_push_line_3d(edge, color, color)
+    PUSH_LINE(p0, p1);
+    PUSH_LINE(p0, p2);
+    PUSH_LINE(p0, p4);
+    PUSH_LINE(p1, p3);
+    PUSH_LINE(p1, p5);
+    PUSH_LINE(p2, p3);
+    PUSH_LINE(p2, p6);
+    PUSH_LINE(p3, p7);
+    PUSH_LINE(p4, p5);
+    PUSH_LINE(p4, p6);
+    PUSH_LINE(p5, p7);
+    PUSH_LINE(p6, p7);
+#undef PUSH_LINE
+}
+
+void ta_primitive_push_axes_arrow(ta_vec3 position, float scale)
+{
+    ta_primitive_push_arrow(position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
+    ta_primitive_push_arrow(position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
+    ta_primitive_push_arrow(position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
+}
+
+void ta_primitive_push_axes_cube(ta_vec3 position, float scale)
+{
+    // Render lines
+    ta_line_3d line;
+    line.p0 = position;
+
+    float cube_radius = scale / 30.0f;
+
+    line.p1 = vec3_add(position, vec3_scalef(VEC3_X, scale));
+    ta_primitive_push_line_3d(line, TA_COLOR_RED, TA_COLOR_RED);
+    ta_primitive_push_cube(line.p1, cube_radius, TA_COLOR_RED);
+
+    line.p1 = vec3_add(position, vec3_scalef(VEC3_Y, scale));
+    ta_primitive_push_line_3d(line, TA_COLOR_GREEN, TA_COLOR_GREEN);
+    ta_primitive_push_cube(line.p1, cube_radius, TA_COLOR_GREEN);
+
+    line.p1 = vec3_add(position, vec3_scalef(VEC3_Z, scale));
+    ta_primitive_push_line_3d(line, TA_COLOR_BLUE, TA_COLOR_BLUE);
+    ta_primitive_push_cube(line.p1, cube_radius, TA_COLOR_BLUE);
 }
 
 void ta_primitive_render_lines(ta_vert_line *queue, struct ta_shader *shader,

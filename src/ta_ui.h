@@ -126,7 +126,8 @@ bool ta_ui_button_end();
 bool ta_ui_button(const char *name, const char *text, u32 text_len);
 void ta_ui_toggle_button_begin(const char *name, u32 flags);
 bool ta_ui_toggle_button_end(bool *checked);
-bool ta_ui_toggle_button(const char *name, bool *checked);
+bool ta_ui_toggle_button(const char *name, const char *text, u32 text_len,
+    bool *checked);
 bool ta_ui_image(const char *name, struct ta_texture *texture, int face);
 //bool ta_ui_label(const char *name, const char *text, u32 text_len);
 void ta_ui_label(const char *name, const char *text, u32 text_len);

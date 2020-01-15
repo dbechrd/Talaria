@@ -298,19 +298,19 @@ static void ui_node_panel()
     }
 #endif
 
-    ta_transform *transform = ta_game_component_try(entity_name, RES_COMP_TRANSFORM);
-    if (transform) {
-        ta_ui_row_begin();
-        ta_ui_next_margin(2, 12, 0, 4);
-        ta_ui_next_size(header_width, 0);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
-        ta_ui_label(0, CSTR("Transform"));
+    ta_transform *transform = ta_game_component(entity_name, RES_COMP_TRANSFORM);
+    ta_ui_row_begin();
+    ta_ui_next_size(label_width, 0);
+    ta_ui_label(0, CSTR("Entity:"));
+    ta_ui_label(0, SYM(transform->entity_name));
 
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("name:"));
-        ta_ui_label(0, SYM(transform->entity_name));
+    ta_ui_row_end();
+    ta_ui_next_size(header_width, 0);
+    ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
+    static bool transform_expanded = false;
+    ta_ui_toggle_button(0, CSTR("Transform"), &transform_expanded);
 
+    if (transform_expanded) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(0, CSTR("position:"));
@@ -327,58 +327,35 @@ static void ui_node_panel()
         static ta_ui_textbox_vec4_state orient_editors = { 0 };
         ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors, true,
             true, true);
-    } else {
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("name:"));
-        ta_ui_label(0, SYM(entity_name));
     }
 
-    ta_model *model = ta_game_component_try(entity_name, RES_COMP_MODEL);
-    if (model) {
-        ta_ui_row_begin();
-        ta_ui_next_margin(2, 12, 0, 4);
-        ta_ui_next_size(header_width, 0);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
-        ta_ui_label(0, CSTR("Model"));
+    ta_ui_row_end();
+    ta_ui_next_size(header_width, 0);
+    ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
+    static bool model_expanded = false;
+    ta_ui_toggle_button(0, CSTR("Model"), &model_expanded);
 
-        // TODO: List all the meshes
-        DLB_ASSERT(dlb_vec_len(model->meshes) > 0);
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("meshes[0]:"));
-        ta_ui_label(0, SYM(model->meshes[0]));
+    if (model_expanded) {
+        ta_model *model = ta_game_component_try(entity_name, RES_COMP_MODEL);
+        if (model) {
+            // TODO: List all the meshes
+            DLB_ASSERT(dlb_vec_len(model->meshes) > 0);
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("meshes[0]:"));
+            ta_ui_label(0, SYM(model->meshes[0]));
 
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("material:"));
-        ta_ui_label(0, SYM(model->material));
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("material:"));
+            ta_ui_label(0, SYM(model->material));
 
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("visible:"));
-        ta_ui_next_pad(0, 0, 0, 0);
-        ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
-        if (!model->invisible) {
-            ta_ui_next_margin(0, 0, 0, 0);
-            ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-            ta_ui_label(0, CSTR("True"));
-        } else {
-            ta_ui_next_margin(0, 0, 0, 0);
-            ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-            ta_ui_label(0, CSTR("False"));
-        }
-        ta_ui_toggle_button_end(&model->invisible);
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("cast shadows:"));
-        if (!model->invisible) {
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("visible:"));
             ta_ui_next_pad(0, 0, 0, 0);
             ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
-            if (model->cast_shadows) {
+            if (!model->invisible) {
                 ta_ui_next_margin(0, 0, 0, 0);
                 ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
@@ -389,238 +366,274 @@ static void ui_node_panel()
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
                 ta_ui_label(0, CSTR("False"));
             }
-            ta_ui_toggle_button_end(&model->cast_shadows);
-        } else {
-            ta_ui_label(0, CSTR("n/a"));
-            ta_ui_label(0, CSTR("[?]"));
-            if (ta_ui_last_frame_state().hover) {
-                ta_ui_tooltip(CSTR("Model must be visible to cast shadows"));
-            }
-        }
-    }
+            ta_ui_toggle_button_end(&model->invisible);
 
-    ta_rigid_body *rigid_body = ta_game_component_try(entity_name, RES_COMP_RIGID_BODY);
-    if (rigid_body) {
-        ta_ui_row_begin();
-        ta_ui_next_margin(2, 12, 0, 4);
-        ta_ui_next_size(header_width, 0);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
-        ta_ui_label(0, CSTR("Rigid Body"));
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("mass:"));
-        static ta_ui_textbox_state mass_editor = { 0 };
-        ta_ui_textbox_float(0, &rigid_body->mass, &mass_editor, 0);
-        rigid_body->mass = MAX(0.0f, rigid_body->mass);
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("density:"));
-        static ta_ui_textbox_state density_editor = { 0 };
-        ta_ui_textbox_float(0, &rigid_body->density, &density_editor, 0);
-
-        char text[64] = { 0 };
-        int text_len = 0;
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("velocity:"));
-        text_len = snprintf(CSTR(text), "%9.6f, %9.6f, %9.6f",
-            rigid_body->velocity.x,
-            rigid_body->velocity.y,
-            rigid_body->velocity.z);
-        DLB_ASSERT(text_len < sizeof(text));
-        ta_ui_label(0, CSTR(text));
-        ta_ui_next_margin(6, 1, 0, 1);
-        ta_rgba velc = TA_COLOR_DARK_RED;
-        ta_ui_next_bg_color(UI_STATE_NONE, velc.r, velc.g, velc.b, velc.a);
-        ta_ui_next_bg_color(UI_STATE_INTERACT, 0.8f, 0.0f, 0.0f, 0.9f);
-        if (ta_ui_button(0, CSTR("Reset"))) {
-            rigid_body->velocity = VEC3_ZERO;
-            rigid_body->ang_velocity = VEC3_ZERO;
-        }
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("ang. velocity:"));
-        text_len = snprintf(CSTR(text), "%9.6f, %9.6f, %9.6f",
-            rigid_body->ang_velocity.x,
-            rigid_body->ang_velocity.y,
-            rigid_body->ang_velocity.z);
-        DLB_ASSERT(text_len < sizeof(text));
-        ta_ui_label(0, CSTR(text));
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("apply gravity:"));
-        ta_ui_next_pad(0, 0, 0, 0);
-        ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
-        if (!rigid_body->no_gravity) {
-            ta_ui_next_margin(0, 0, 0, 0);
-            ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-            ta_ui_label(0, CSTR("True"));
-        } else {
-            ta_ui_next_margin(0, 0, 0, 0);
-            ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-            ta_ui_label(0, CSTR("False"));
-        }
-        ta_ui_toggle_button_end(&rigid_body->no_gravity);
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("broadphase collide:"));
-        rigid_body->dbg_broadphase ? ta_ui_label(0, SYM(SYM_TRUE)) : ta_ui_label(0, SYM(SYM_FALSE));
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("broad aabb center:"));
-        static ta_ui_textbox_vec3_state broad_center_editor = { 0 };
-        ta_ui_textbox_vec3(&rigid_body->aabb.center, &broad_center_editor, false, true, true);
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("broad aabb extents:"));
-        static ta_ui_textbox_vec3_state broad_extents_editor = { 0 };
-        ta_ui_textbox_vec3(&rigid_body->aabb.extents, &broad_extents_editor, false, true, false);
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("narrowphase collide:"));
-        rigid_body->dbg_narrowphase ? ta_ui_label(0, SYM(SYM_TRUE)) : ta_ui_label(0, SYM(SYM_FALSE));
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("centroid local:"));
-        static ta_ui_textbox_vec3_state centroid_local_editor = { 0 };
-        ta_ui_textbox_vec3(&rigid_body->centroid_local, &centroid_local_editor, false, false, false);
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("centroid global:"));
-        static ta_ui_textbox_vec3_state centroid_global_editor = { 0 };
-        ta_ui_textbox_vec3(&rigid_body->centroid_global, &centroid_global_editor, false, false, false);
-
-        ta_ui_row_begin();
-        ta_ui_next_margin(2, 12, 0, 4);
-        ta_ui_next_size(header_width, 0);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
-        ta_ui_label(0, CSTR("Collider"));
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("type:"));
-        const char *collider_type = ta_collider_type_str(rigid_body->collider.type);
-        ta_ui_label(0, collider_type, strlen(collider_type));
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("center:"));
-        static ta_ui_textbox_vec3_state center_editor = { 0 };
-        ta_ui_textbox_vec3(&rigid_body->collider.data.center, &center_editor, false, true, true);
-
-        switch (rigid_body->collider.type) {
-            case TA_COLLIDER_PLANE: {
-                ta_ui_row_begin();
-                ta_ui_label(0, CSTR("normal:"));
-                static ta_ui_textbox_vec3_state normal_editor = { 0 };
-                ta_ui_textbox_vec3(&rigid_body->collider.data.plane.normal, &normal_editor, true, true, false);
-                break;
-            } case TA_COLLIDER_SPHERE: {
-                ta_ui_row_begin();
-                ta_ui_next_size(label_width, 0);
-                ta_ui_label(0, CSTR("radius:"));
-                static ta_ui_textbox_state radius_editor = { 0 };
-                ta_ui_textbox_float(0, &rigid_body->collider.data.sphere.radius, &radius_editor, 0);
-                break;
-            } case TA_COLLIDER_OBB: {
-                ta_ui_row_begin();
-                ta_ui_label(0, CSTR("extents:"));
-                static ta_ui_textbox_vec3_state extents_editor = { 0 };
-                ta_ui_textbox_vec3(&rigid_body->collider.data.obb.extents, &extents_editor, false, true, false);
-                ta_ui_row_begin();
-                ta_ui_label(0, CSTR("orientation:"));
-                static ta_ui_textbox_vec4_state orientation_editor = { 0 };
-                ta_ui_textbox_vec4(&rigid_body->collider.data.obb.orientation, &orientation_editor, true, true, true);
-                break;
-            } default: {
-                break;
-            }
-        }
-    }
-
-    ta_light *light = ta_game_component_try(entity_name, RES_COMP_LIGHT);
-    if (light) {
-        ta_ui_row_begin();
-        ta_ui_next_margin(2, 12, 0, 4);
-        ta_ui_next_size(header_width, 0);
-        ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
-        ta_ui_label(0, CSTR("Light"));
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("enabled:"));
-        if (light->disabled) {
-            if (ta_ui_button(0, CSTR("False"))) light->disabled = false;
-        } else {
-            if (ta_ui_button(0, CSTR("True"))) light->disabled = true;
-        }
-
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(0, CSTR("shadow map:"));
-        static bool show_shadow_map = true;
-        if (show_shadow_map) {
-            if (ta_ui_button(0, CSTR("Hide"))) show_shadow_map = false;
-        } else {
-            if (ta_ui_button(0, CSTR("Show"))) show_shadow_map = true;
-        }
-
-        if (show_shadow_map) {
             ta_ui_row_begin();
-            ta_ui_next_pad(1, 1, 1, 1);
-            static ta_ui_panel_state shadowmap_panel = { 0 };
-            ta_ui_panel_begin(0, &shadowmap_panel, TA_UI_AUTOSIZE);
-
-            s32 resolution = light->shadowmap.resolution / 10;
-            if (light->type == TA_LIGHT_DIRECTIONAL) {
-                ta_ui_next_margin(0, 0, 0, 0);
-                ta_ui_next_size(resolution, resolution);
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("cast shadows:"));
+            if (!model->invisible) {
                 ta_ui_next_pad(0, 0, 0, 0);
-                ta_ui_image(0, &light->shadowmap.texture, 0);
-            } else if (light->type == TA_LIGHT_POINT) {
-                // Render cubemap with the following layout:
-                //       ┌────┐                 ┌────┐
-                //       | +Y |                 |  2 |
-                //  ┌────┼────┼────┬────┐  ┌────┼────┼────┬────┐
-                //  | -X | -Z | +X | +Z |  |  1 |  5 |  0 |  4 |
-                //  └────┼────┼────┴────┘  └────┼────┼────┴────┘
-                //       | -Y |                 |  3 |
-                //       └────┘                 └────┘
-                #define face_image(face) \
-                    ta_ui_next_margin(0, 0, 0, 0); \
-                    ta_ui_next_size(resolution, resolution); \
-                    ta_ui_next_pad(0, 0, 0, 0); \
-                    ta_ui_image(0, &light->shadowmap.texture, face);
+                ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
+                if (model->cast_shadows) {
+                    ta_ui_next_margin(0, 0, 0, 0);
+                    ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+                    ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+                    ta_ui_label(0, CSTR("True"));
+                } else {
+                    ta_ui_next_margin(0, 0, 0, 0);
+                    ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+                    ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+                    ta_ui_label(0, CSTR("False"));
+                }
+                ta_ui_toggle_button_end(&model->cast_shadows);
+            } else {
+                ta_ui_label(0, CSTR("n/a"));
+                ta_ui_label(0, CSTR("[?]"));
+                if (ta_ui_last_frame_state().hover) {
+                    ta_ui_tooltip(CSTR("Model must be visible to cast shadows"));
+                }
+            }
+        } else {
+            if (ta_ui_button(0, CSTR("Add model"))) {
+                // TODO: add model
+            }
+        }
+    }
 
-                ta_ui_row_begin();
-                ta_ui_spacer(resolution, 0);
-                face_image(2);
-                ta_ui_row_begin();
-                face_image(1);
-                face_image(5);
-                face_image(0);
-                face_image(4);
-                ta_ui_row_begin();
-                ta_ui_spacer(resolution, 0);
-                face_image(3);
+    ta_ui_row_end();
+    ta_ui_next_size(header_width, 0);
+    ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
+    static bool rigid_body_expanded = false;
+    ta_ui_toggle_button(0, CSTR("Rigid Body"), &rigid_body_expanded);
 
-                #undef face_image
+    if (rigid_body_expanded) {
+        ta_rigid_body *rigid_body = ta_game_component_try(entity_name, RES_COMP_RIGID_BODY);
+        if (rigid_body) {
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("mass:"));
+            static ta_ui_textbox_state mass_editor = { 0 };
+            ta_ui_textbox_float(0, &rigid_body->mass, &mass_editor, 0);
+            rigid_body->mass = MAX(0.0f, rigid_body->mass);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("density:"));
+            static ta_ui_textbox_state density_editor = { 0 };
+            ta_ui_textbox_float(0, &rigid_body->density, &density_editor, 0);
+
+            char text[64] = { 0 };
+            int text_len = 0;
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("velocity:"));
+            text_len = snprintf(CSTR(text), "%9.6f, %9.6f, %9.6f",
+                rigid_body->velocity.x,
+                rigid_body->velocity.y,
+                rigid_body->velocity.z);
+            DLB_ASSERT(text_len < sizeof(text));
+            ta_ui_label(0, CSTR(text));
+            ta_ui_next_margin(6, 1, 0, 1);
+            ta_rgba velc = TA_COLOR_DARK_RED;
+            ta_ui_next_bg_color(UI_STATE_NONE, velc.r, velc.g, velc.b, velc.a);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.8f, 0.0f, 0.0f, 0.9f);
+            if (ta_ui_button(0, CSTR("Reset"))) {
+                rigid_body->velocity = VEC3_ZERO;
+                rigid_body->ang_velocity = VEC3_ZERO;
             }
 
-            ta_ui_panel_end();
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("ang. velocity:"));
+            text_len = snprintf(CSTR(text), "%9.6f, %9.6f, %9.6f",
+                rigid_body->ang_velocity.x,
+                rigid_body->ang_velocity.y,
+                rigid_body->ang_velocity.z);
+            DLB_ASSERT(text_len < sizeof(text));
+            ta_ui_label(0, CSTR(text));
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("apply gravity:"));
+            ta_ui_next_pad(0, 0, 0, 0);
+            ta_ui_toggle_button_begin(0, TA_UI_AUTOSIZE);
+            if (!rigid_body->no_gravity) {
+                ta_ui_next_margin(0, 0, 0, 0);
+                ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+                ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+                ta_ui_label(0, CSTR("True"));
+            } else {
+                ta_ui_next_margin(0, 0, 0, 0);
+                ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+                ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+                ta_ui_label(0, CSTR("False"));
+            }
+            ta_ui_toggle_button_end(&rigid_body->no_gravity);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("broadphase collide:"));
+            rigid_body->dbg_broadphase ? ta_ui_label(0, SYM(SYM_TRUE)) : ta_ui_label(0, SYM(SYM_FALSE));
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("broad aabb center:"));
+            static ta_ui_textbox_vec3_state broad_center_editor = { 0 };
+            ta_ui_textbox_vec3(&rigid_body->aabb.center, &broad_center_editor, false, true, true);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("broad aabb extents:"));
+            static ta_ui_textbox_vec3_state broad_extents_editor = { 0 };
+            ta_ui_textbox_vec3(&rigid_body->aabb.extents, &broad_extents_editor, false, true, false);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("narrowphase collide:"));
+            rigid_body->dbg_narrowphase ? ta_ui_label(0, SYM(SYM_TRUE)) : ta_ui_label(0, SYM(SYM_FALSE));
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("centroid local:"));
+            static ta_ui_textbox_vec3_state centroid_local_editor = { 0 };
+            ta_ui_textbox_vec3(&rigid_body->centroid_local, &centroid_local_editor, false, false, false);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("centroid global:"));
+            static ta_ui_textbox_vec3_state centroid_global_editor = { 0 };
+            ta_ui_textbox_vec3(&rigid_body->centroid_global, &centroid_global_editor, false, false, false);
+
+            ta_ui_row_begin();
+            ta_ui_next_margin(2, 12, 0, 4);
+            ta_ui_next_size(header_width, 0);
+            ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
+            ta_ui_label(0, CSTR("Collider"));
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("type:"));
+            const char *collider_type = ta_collider_type_str(rigid_body->collider.type);
+            ta_ui_label(0, collider_type, strlen(collider_type));
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("center:"));
+            static ta_ui_textbox_vec3_state center_editor = { 0 };
+            ta_ui_textbox_vec3(&rigid_body->collider.data.center, &center_editor, false, true, true);
+
+            switch (rigid_body->collider.type) {
+                case TA_COLLIDER_PLANE: {
+                    ta_ui_row_begin();
+                    ta_ui_label(0, CSTR("normal:"));
+                    static ta_ui_textbox_vec3_state normal_editor = { 0 };
+                    ta_ui_textbox_vec3(&rigid_body->collider.data.plane.normal, &normal_editor, true, true, false);
+                    break;
+                } case TA_COLLIDER_SPHERE: {
+                    ta_ui_row_begin();
+                    ta_ui_next_size(label_width, 0);
+                    ta_ui_label(0, CSTR("radius:"));
+                    static ta_ui_textbox_state radius_editor = { 0 };
+                    ta_ui_textbox_float(0, &rigid_body->collider.data.sphere.radius, &radius_editor, 0);
+                    break;
+                } case TA_COLLIDER_OBB: {
+                    ta_ui_row_begin();
+                    ta_ui_label(0, CSTR("extents:"));
+                    static ta_ui_textbox_vec3_state extents_editor = { 0 };
+                    ta_ui_textbox_vec3(&rigid_body->collider.data.obb.extents, &extents_editor, false, true, false);
+                    ta_ui_row_begin();
+                    ta_ui_label(0, CSTR("orientation:"));
+                    static ta_ui_textbox_vec4_state orientation_editor = { 0 };
+                    ta_ui_textbox_vec4(&rigid_body->collider.data.obb.orientation, &orientation_editor, true, true, true);
+                    break;
+                } default: {
+                    break;
+                }
+            }
+        } else {
+            if (ta_ui_button(0, CSTR("Add rigid body"))) {
+                // TODO: add rigidy body
+            }
+        }
+    }
+
+    ta_ui_row_end();
+    ta_ui_next_size(header_width, 0);
+    ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
+    static bool light_expanded = false;
+    ta_ui_toggle_button(0, CSTR("Light"), &light_expanded);
+
+    if (light_expanded) {
+        ta_light *light = ta_game_component_try(entity_name, RES_COMP_LIGHT);
+        if (light) {
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("enabled:"));
+            if (light->disabled) {
+                if (ta_ui_button(0, CSTR("False"))) light->disabled = false;
+            } else {
+                if (ta_ui_button(0, CSTR("True"))) light->disabled = true;
+            }
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(0, CSTR("shadow map:"));
+            static bool show_shadow_map = true;
+            if (show_shadow_map) {
+                if (ta_ui_button(0, CSTR("Hide"))) show_shadow_map = false;
+            } else {
+                if (ta_ui_button(0, CSTR("Show"))) show_shadow_map = true;
+            }
+
+            if (show_shadow_map) {
+                ta_ui_row_begin();
+                ta_ui_next_pad(1, 1, 1, 1);
+                static ta_ui_panel_state shadowmap_panel = { 0 };
+                ta_ui_panel_begin(0, &shadowmap_panel, TA_UI_AUTOSIZE);
+
+                s32 resolution = light->shadowmap.resolution / 10;
+                if (light->type == TA_LIGHT_DIRECTIONAL) {
+                    ta_ui_next_margin(0, 0, 0, 0);
+                    ta_ui_next_size(resolution, resolution);
+                    ta_ui_next_pad(0, 0, 0, 0);
+                    ta_ui_image(0, &light->shadowmap.texture, 0);
+                } else if (light->type == TA_LIGHT_POINT) {
+                    // Render cubemap with the following layout:
+                    //       ┌────┐                 ┌────┐
+                    //       | +Y |                 |  2 |
+                    //  ┌────┼────┼────┬────┐  ┌────┼────┼────┬────┐
+                    //  | -X | -Z | +X | +Z |  |  1 |  5 |  0 |  4 |
+                    //  └────┼────┼────┴────┘  └────┼────┼────┴────┘
+                    //       | -Y |                 |  3 |
+                    //       └────┘                 └────┘
+                    #define face_image(face) \
+                        ta_ui_next_margin(0, 0, 0, 0); \
+                        ta_ui_next_size(resolution, resolution); \
+                        ta_ui_next_pad(0, 0, 0, 0); \
+                        ta_ui_image(0, &light->shadowmap.texture, face);
+
+                    ta_ui_row_begin();
+                    ta_ui_spacer(resolution, 0);
+                    face_image(2);
+                    ta_ui_row_begin();
+                    face_image(1);
+                    face_image(5);
+                    face_image(0);
+                    face_image(4);
+                    ta_ui_row_begin();
+                    ta_ui_spacer(resolution, 0);
+                    face_image(3);
+
+                    #undef face_image
+                }
+
+                ta_ui_panel_end();
+            }
+        } else {
+            if (ta_ui_button(0, CSTR("Add light"))) {
+                // TODO: add light
+            }
         }
     }
 
@@ -1015,23 +1028,16 @@ static void ui_editor_sidebar()
     ta_ui_row_begin();
     categories[category_selected].panel_method();
 }
-void ta_editor_draw()
+void ta_editor_draw_world()
 {
-    GLint polygon_mode = 0;
-    glGetIntegerv(GL_POLYGON_MODE, &polygon_mode);
-
-    if (editor.textbox_editing) {
-        ta_ui_set_cursor(UI_CURSOR_IBEAM);
-    } else {
-        ta_ui_set_cursor(UI_CURSOR_ARROW);
-    }
-
-    // Render selected entity as yellow wireframes
     const char *selected_entity = ta_editor_selected_entity();
     if (selected_entity) {
         ta_camera *camera = ta_game_camera();
-        ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
-        if (model) {
+
+        // Render selected entity as yellow wireframes
+        ta_model *e_model = ta_game_component_try(selected_entity,
+            RES_COMP_MODEL);
+        if (e_model) {
             glClear(GL_DEPTH_BUFFER_BIT);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -1045,10 +1051,38 @@ void ta_editor_draw()
                 wire_color.a = 0.05f;
             }
             ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
-            ta_model_render_shader(model, camera, shader);
+            ta_model_render_shader(e_model, camera, shader);
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
+
+        glClear(GL_DEPTH_BUFFER_BIT);
+        ta_transform *e_transform = ta_game_component(selected_entity,
+            RES_COMP_TRANSFORM);
+        float dist = vec3_len(vec3_sub(camera->position,
+            e_transform->xform.position));
+        float scale = MAX(1.0f, dist * 0.1f);
+
+        // Transform widget
+        {
+            ta_primitive_push_axes_arrow(e_transform->xform.position, scale);
+        }
+
+        // Scale widget
+        {
+            //ta_primitive_push_axes_cube(e_transform->xform.position, scale);
+        }
+
+        ta_primitive_render(true, false);
     }
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+}
+void ta_editor_draw_screen()
+{
+    if (editor.textbox_editing) {
+        ta_ui_set_cursor(UI_CURSOR_IBEAM);
+    } else {
+        ta_ui_set_cursor(UI_CURSOR_ARROW);
+    }
 
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI layout begin\n");
 
@@ -1100,13 +1134,10 @@ void ta_editor_draw()
     ta_ui_window_end();
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI layout end\n");
 
-    glClear(GL_DEPTH_BUFFER_BIT);
-
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render begin\n");
+    glClear(GL_DEPTH_BUFFER_BIT);
     ta_ui_render();
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render end\n");
-
-    glPolygonMode(GL_FRONT_AND_BACK, polygon_mode);
 }
 
 void editor_command_close()

@@ -435,10 +435,6 @@ void ta_game_window_resize()
 static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     double ms_frame_delta, u64 sim_step)
 {
-    GLint polygon_mode = 0;
-    glGetIntegerv(GL_POLYGON_MODE, &polygon_mode);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
     ta_size window_size = { 0 };
     ta_window_sdl_size(tg_window, &window_size.w, &window_size.h);
 
@@ -490,8 +486,6 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
     ta_font_render(quads_queue, font, SCREEN_WRAP_X(-320.0f), 0,
         UI_LAYER_HUD, true, true);
-
-    glPolygonMode(GL_FRONT_AND_BACK, polygon_mode);
 }
 static void game_draw_hud()
 {
@@ -940,6 +934,8 @@ void ta_game_loop()
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
 
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 #if 1
         // Debug render cameras as RGB spheres
         dlb_vec_each(ta_camera *, camera, cameras) {
@@ -1010,28 +1006,21 @@ void ta_game_loop()
             ta_primitive_push_sphere(t_sphere, TA_COLOR_PINK);
         }
         ta_primitive_render(true, false);
-
-        ta_cone cone = { 0 };
-        cone.center = VEC3_ONE;
-        cone.apex = vec3_scalef(VEC3_ONE, 0.3f);
-        cone.radius = 0.3f;
-        ta_primitive_push_cone(cone, TA_COLOR_BLUE);
-
-        ta_primitive_push_arrow(VEC3_ONE, vec3_scalef(VEC3_ONE, 10.0f), TA_COLOR_MAGENTA);
-
-        ta_primitive_render(true, false);
 #endif
         //--------------------------------------------
 
         glClear(GL_DEPTH_BUFFER_BIT);
         if (active_camera->debug_nametags) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug nametags pass...\n");
-
-            GLint polygon_mode = 0;
-            glGetIntegerv(GL_POLYGON_MODE, &polygon_mode);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             game_render_nametags_debug(active_camera);
-            glPolygonMode(GL_FRONT_AND_BACK, polygon_mode);
+        }
+
+        //----------------------------------------------------------------------
+        // Editor UI (world)
+        //----------------------------------------------------------------------
+        if (game.state == TA_GAME_STATE_EDITOR) {
+            ta_log_write(&tg_debug_log, SRC_GAME, " Editor world UI pass...\n");
+            ta_editor_draw_world(sim_alpha);
         }
 
         // Dump any prims from render pass
@@ -1042,7 +1031,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // World axes
         //----------------------------------------------------------------------
-        ta_primitive_push_axes(1.0f);
+        ta_primitive_push_axes_arrow(VEC3_ZERO, 0.3f);
         ta_primitive_render(true, true);
 
         //----------------------------------------------------------------------
@@ -1103,11 +1092,11 @@ void ta_game_loop()
 #endif
 
         //----------------------------------------------------------------------
-        // Editor UI
+        // Editor UI (screen)
         //----------------------------------------------------------------------
         if (game.state == TA_GAME_STATE_EDITOR) {
-            ta_log_write(&tg_debug_log, SRC_GAME, " Editor UI pass...\n");
-            ta_editor_draw(sim_alpha);
+            ta_log_write(&tg_debug_log, SRC_GAME, " Editor screen UI pass...\n");
+            ta_editor_draw_screen(sim_alpha);
         }
 
         //--------------------------------------------

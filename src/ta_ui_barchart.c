@@ -6,10 +6,6 @@
 #include <time.h>
 #include <stdlib.h>
 
-#define x_inc 2
-static float alpha = 0.8f;
-static const ta_rgb color = { 1.0f, 0.0f, 0.0f };
-
 ta_ui_barchart ta_ui_barchart_init(int x, int y, int w, int h)
 {
     ta_ui_barchart barchart = { 0 };
@@ -17,7 +13,7 @@ ta_ui_barchart ta_ui_barchart_init(int x, int y, int w, int h)
     barchart.rect.y = y;
     barchart.rect.w = w;
     barchart.rect.h = h;
-    barchart.sample_count = w / x_inc;
+    barchart.sample_count = w / 2;
     barchart.samples = dlb_calloc(barchart.sample_count, sizeof(*barchart.samples));
     barchart.next_index = 0;
     barchart.smooth_val = barchart.rect.y / 2;
@@ -31,11 +27,14 @@ void ta_ui_barchart_free(ta_ui_barchart *chart)
 
 void ta_ui_barchart_draw(ta_ui_barchart *chart, int x, int y)
 {
+    static float alpha = 0.8f;
+    static const ta_rgb color = { 1.0f, 0.0f, 0.0f };
+
     ta_line_2d line = { 0 };
     ta_rgba color0 = { 0 };
     ta_rgba color1 = { 0 };
     for (int i = 0; i < chart->sample_count; i++) {
-        int pos_x = x_inc * i;
+        int pos_x = 2 * i;
         line.p0.x = (float)pos_x;
         line.p0.y = (float)chart->rect.h;
         line.p1.x = (float)pos_x;

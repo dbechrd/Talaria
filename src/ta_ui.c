@@ -727,9 +727,14 @@ bool ta_ui_toggle_button_end(bool *checked)
     }
     return frame->state.pressed;
 }
-bool ta_ui_toggle_button(const char *name, bool *checked)
+bool ta_ui_toggle_button(const char *name, const char *text, u32 text_len,
+    bool *checked)
 {
-    ui_frame_begin(UI_TOGGLE_BUTTON, name, 0, false);
+    //ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_toggle_button_begin(name, TA_UI_AUTOSIZE);
+    ta_ui_next_margin(0, 0, 0, 0);
+    ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 0);
+    ta_ui_label(0, text, text_len);
     return ta_ui_toggle_button_end(checked);
 }
 bool ta_ui_image(const char *name, ta_texture *texture, int face)

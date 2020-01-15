@@ -6,6 +6,6 @@ struct ta_event;
 void ta_editor_init();
 void ta_editor_select_entity(const char *entity_name);
 const char *ta_editor_selected_entity();
-void ta_editor_draw();
+void ta_editor_draw_screen();
 void ta_editor_hotkeys();
 void ta_editor_event(struct ta_event *event);

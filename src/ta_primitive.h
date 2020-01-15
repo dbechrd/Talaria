@@ -45,13 +45,14 @@ void ta_primitive_push_rect_uv(ta_rect_uv rect_uv, ta_rgba color, float z,
     bool screen, bool top_left);
 void ta_primitive_push_plane(struct ta_plane plane, float radius, ta_rgba color);
 void ta_primitive_push_crosshair(s32 length, s32 thickness);
-void ta_primitive_push_axes(float scale);
 void ta_primitive_push_sphere(ta_sphere sphere, ta_rgba color);
 void ta_primitive_push_rgb_sphere(ta_sphere sphere);
 void ta_primitive_push_cone(ta_cone cone, ta_rgba color);
 void ta_primitive_push_arrow(ta_vec3 origin, ta_vec3 direction, ta_rgba color);
 void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color);
 void ta_primitive_push_obb(ta_obb obb, ta_rgba color);
+void ta_primitive_push_axes_arrow(ta_vec3 position, float scale);
+void ta_primitive_push_axes_cube(ta_vec3 position, float scale);
 void ta_primitive_render_lines(ta_vert_line *queue, struct ta_shader *shader,
     bool clear_queues, bool reset_uniforms);
 void ta_primitive_render_quads(ta_vert_quad *queue, struct ta_shader *shader,
