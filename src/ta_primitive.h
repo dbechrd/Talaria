@@ -34,6 +34,8 @@ void ta_primitive_push_cone(ta_cone cone, ta_rgba color);
 void ta_primitive_push_arrow(ta_vec3 origin, ta_vec3 direction, ta_rgba color);
 void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color);
 void ta_primitive_push_obb(ta_obb obb, ta_rgba color);
+void ta_primitive_push_grid(ta_vec3 center, ta_vec3 normal, float scale,
+    float frequency, ta_rgba color);
 void ta_primitive_push_axes_arrow(ta_vec3 position, float scale);
 void ta_primitive_push_axes_cube(ta_vec3 position, float scale);
 void ta_primitive_render_lines(struct ta_mesh *mesh, struct ta_shader *shader,

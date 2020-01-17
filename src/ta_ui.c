@@ -61,7 +61,6 @@ typedef struct ui_frame {
     u32 index;
     u32 container_idx;
     ui_frame_type type;
-    const char *name;
 
     ta_rect margin;
     ta_rect pad;
@@ -386,14 +385,12 @@ static ta_ui_scroll_state *ui_scroll_state(ui_frame *frame)
     }
     return scroll;
 }
-static void ui_frame_begin(ui_frame_type type, const char *name, void *data,
-    u32 flags)
+static void ui_frame_begin(ui_frame_type type, void *data, u32 flags)
 {
     // Allocate frame
     ui_frame *frame = dlb_vec_alloc(ui_frames);
     frame->index = dlb_vec_len(ui_frames) - 1;
     frame->type = type;
-    frame->name = name;
     frame->data.ptr = data;
     frame->internal_flags = flags;
 
@@ -647,19 +644,19 @@ void ta_ui_spacer(int w, int h)
     container->offset.x += w;
     container->offset.y += h;
 }
-void ta_ui_window_begin(const char *name, ta_ui_window_state *window, u32 flags)
+void ta_ui_window_begin(ta_ui_window_state *window, u32 flags)
 {
     DLB_ASSERT(window);
-    ui_frame_begin(UI_WINDOW, name, window, flags | TA_UI_CONTAINER);
+    ui_frame_begin(UI_WINDOW, window, flags | TA_UI_CONTAINER);
 }
 void ta_ui_window_end()
 {
     ui_frame_end(UI_WINDOW);
 }
-void ta_ui_panel_begin(const char *name, ta_ui_panel_state *panel, u32 flags)
+void ta_ui_panel_begin(ta_ui_panel_state *panel, u32 flags)
 {
     DLB_ASSERT(panel);
-    ui_frame_begin(UI_PANEL, name, panel, flags | TA_UI_CONTAINER);
+    ui_frame_begin(UI_PANEL, panel, flags | TA_UI_CONTAINER);
 }
 void ta_ui_panel_end()
 {
@@ -693,27 +690,27 @@ void ta_ui_panel_end()
     }
 #endif
 }
-void ta_ui_button_begin(const char *name, u32 flags)
+void ta_ui_button_begin(u32 flags)
 {
-    ui_frame_begin(UI_BUTTON, name, 0, flags | TA_UI_CONTAINER);
+    ui_frame_begin(UI_BUTTON, 0, flags | TA_UI_CONTAINER);
 }
 bool ta_ui_button_end()
 {
     ui_frame *frame = ui_frame_end(UI_BUTTON);
     return frame->state.pressed;
 }
-bool ta_ui_button(const char *name, const char *text, u32 text_len)
+bool ta_ui_button(const char *text, u32 text_len)
 {
     ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_button_begin(name, TA_UI_AUTOSIZE);
+    ta_ui_button_begin(TA_UI_AUTOSIZE);
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 0);
-    ta_ui_label(0, text, text_len);
+    ta_ui_label(text, text_len);
     return ta_ui_button_end();
 }
-void ta_ui_toggle_button_begin(const char *name, u32 flags)
+void ta_ui_toggle_button_begin(u32 flags)
 {
-    ui_frame_begin(UI_TOGGLE_BUTTON, name, 0, flags | TA_UI_CONTAINER);
+    ui_frame_begin(UI_TOGGLE_BUTTON, 0, flags | TA_UI_CONTAINER);
 }
 bool ta_ui_toggle_button_end(bool *checked)
 {
@@ -727,17 +724,16 @@ bool ta_ui_toggle_button_end(bool *checked)
     }
     return frame->state.pressed;
 }
-bool ta_ui_toggle_button(const char *name, const char *text, u32 text_len,
-    bool *checked)
+bool ta_ui_toggle_button(const char *text, u32 text_len, bool *checked)
 {
     //ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_toggle_button_begin(name, TA_UI_AUTOSIZE);
+    ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 0);
-    ta_ui_label(0, text, text_len);
+    ta_ui_label(text, text_len);
     return ta_ui_toggle_button_end(checked);
 }
-bool ta_ui_image(const char *name, ta_texture *texture, int face)
+bool ta_ui_image(ta_texture *texture, int face)
 {
 #if UI_DEBUG_NO_TEXTURES
     tex = 0;
@@ -749,14 +745,13 @@ bool ta_ui_image(const char *name, ta_texture *texture, int face)
         }
     }
 
-    ui_frame_begin(UI_IMAGE, name, 0, false);
+    ui_frame_begin(UI_IMAGE, 0, false);
     ui_frame *frame = ui_frame_end(UI_IMAGE);
     frame->texture = texture;
     frame->texture_face = face;
     return frame->state.pressed;
 }
-//bool ta_ui_label(const char *name, const char *text, u32 text_len)
-void ta_ui_label(const char *name, const char *text, u32 text_len)
+void ta_ui_label(const char *text, u32 text_len)
 {
     DLB_ASSERT(text);
     DLB_ASSERT(text_len);
@@ -769,7 +764,7 @@ void ta_ui_label(const char *name, const char *text, u32 text_len)
     ta_ui_next_size(MAX(next_frame_size.w, (int)text_rect.w),
                     MAX(next_frame_size.h, (int)text_rect.h));
 
-    ui_frame_begin(UI_LABEL, name, 0, false);
+    ui_frame_begin(UI_LABEL, 0, false);
     ui_frame *frame = ui_frame_end(UI_LABEL);
     frame->text_rects = text_rects;
     //return frame->state.pressed;
@@ -997,8 +992,8 @@ static void textbox_mouse_down(ui_frame *frame)
     }
 }
 
-bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
-    ta_ui_textbox_state *textbox, u32 flags)
+bool ta_ui_textbox(const char *text, u32 text_len, ta_ui_textbox_state *textbox,
+    u32 flags)
 {
     //DLB_ASSERT(text);
     //DLB_ASSERT(text_len);
@@ -1029,7 +1024,7 @@ bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
     ta_ui_next_size(MAX(next_frame_size.w, (int)text_rect.w),
                     MAX(next_frame_size.h, (int)text_rect.h));
 
-    ui_frame_begin(UI_TEXTBOX, name, textbox, flags);
+    ui_frame_begin(UI_TEXTBOX, textbox, flags);
     ui_frame *frame = ui_frame_end(UI_TEXTBOX);
 
     if (textbox->focused) {
@@ -1112,8 +1107,7 @@ static void drag_float_cancel()
     drag_float_end();
 }
 
-bool ta_ui_textbox_float(const char *name, float *value,
-    ta_ui_textbox_state *textbox, u32 flags)
+bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
 {
     DLB_ASSERT(value);
     DLB_ASSERT(textbox);
@@ -1155,7 +1149,7 @@ bool ta_ui_textbox_float(const char *name, float *value,
     ta_ui_next_size(MAX(next_frame_size.w, (int)text_rect.w),
         MAX(next_frame_size.h, (int)text_rect.h));
 
-    ui_frame_begin(UI_TEXTBOX, name, textbox, flags);
+    ui_frame_begin(UI_TEXTBOX, textbox, flags);
     ui_frame *frame = ui_frame_end(UI_TEXTBOX);
 
     if (textbox->focused) {
@@ -1232,7 +1226,7 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
     DLB_ASSERT(vec_state);
 
     ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_panel_begin(0, &vec_state->panel_state, TA_UI_AUTOSIZE);
+    ta_ui_panel_begin(&vec_state->panel_state, TA_UI_AUTOSIZE);
     if (!multiple_rows) ta_ui_row_begin();
 
     const char *labels[3] = { "x:", "y:", "z:" };
@@ -1240,9 +1234,9 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
     for (int i = 0; i < 3; ++i) {
         if (multiple_rows) ta_ui_row_begin();
 
-        ta_ui_label(0, CSTR(labels[i]));
+        ta_ui_label(CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
-        ta_ui_textbox_float(0, &components[i], state, 0);
+        ta_ui_textbox_float(&components[i], state, 0);
 
         if ((reset_button && multiple_rows && i == 0) ||
             (reset_button && !multiple_rows && i == 2)) {
@@ -1250,7 +1244,7 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
             ta_rgba c = TA_COLOR_DARK_RED;
             ta_ui_next_bg_color(UI_STATE_NONE, c.r, c.g, c.b, c.a);
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.8f, 0.0f, 0.0f, 0.9f);
-            if (ta_ui_button(0, CSTR("Reset"))) {
+            if (ta_ui_button(CSTR("Reset"))) {
                 *vec = VEC3_ZERO;
             }
         }
@@ -1268,7 +1262,7 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
     DLB_ASSERT(vec_state);
 
     ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_panel_begin(0, &vec_state->panel_state, TA_UI_AUTOSIZE);
+    ta_ui_panel_begin(&vec_state->panel_state, TA_UI_AUTOSIZE);
     if (!multiple_rows) ta_ui_row_begin();
 
     const char *labels[4] = { "x:", "y:", "z:", "w:" };
@@ -1276,15 +1270,15 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
     for (int i = 0; i < 4; ++i) {
         if (multiple_rows) ta_ui_row_begin();
 
-        ta_ui_label(0, CSTR(labels[i]));
+        ta_ui_label(CSTR(labels[i]));
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
-        ta_ui_textbox_float(0, &components[i], state, 0);
+        ta_ui_textbox_float(&components[i], state, 0);
 
         if (i == 0 && reset_button) {
             ta_ui_next_margin(6, 1, 0, 1);
             ta_ui_next_bg_color(UI_STATE_NONE, 0.5f, 0.0f, 0.0f, 0.9f);
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-            if (ta_ui_button(0, CSTR("Reset"))) {
+            if (ta_ui_button(CSTR("Reset"))) {
                 *vec = QUAT_IDENT;
             }
         }
@@ -1396,26 +1390,26 @@ static void ui_render_window(ui_frame *frame)
     bg_rect.w = frame->rect.w;
     ta_primitive_push_rect(bg_rect, frame->bg_color[frame->state_type],
         UI_LAYER_EDIT_WINDOW_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
 }
 static void ui_render_panel(ui_frame *frame)
 {
     // Panel background
     ta_primitive_push_rect(frame->rect, frame->bg_color[frame->state_type],
         UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
 }
 static void ui_render_button(ui_frame *frame)
 {
     ta_primitive_push_rect(frame->rect, frame->bg_color[frame->state_type],
         UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
 }
 static void ui_render_toggle_button(ui_frame *frame)
 {
     ta_rgba bg_color = frame->bg_color[frame->state_type];
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
 }
 static void ui_render_image(ui_frame *frame)
 {
@@ -1426,7 +1420,7 @@ static void ui_render_image(ui_frame *frame)
             ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, frame->texture_face);
             ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
             ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-            ta_primitive_render_quads(&primitive_quads, tg_shader_cubemap, true, true);
+            ta_primitive_render_quads(&primitive_quads, tg_shader_cubemap, true, false);
             ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
         } else {
             ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
@@ -1435,7 +1429,7 @@ static void ui_render_image(ui_frame *frame)
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, frame->texture->gl_id);
             ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
             ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-            ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+            ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
         }
     }
@@ -1448,7 +1442,7 @@ static void ui_render_text(float x, float y, ta_rect_uv *text_rects)
                 true, false);
         }
 
-        ta_font_render(&primitive_quads, ui_font, x, y, UI_LAYER_EDIT_1, true, true);
+        ta_font_render(&primitive_quads, ui_font, x, y, UI_LAYER_EDIT_1, true, false);
     }
 }
 static void ui_render_label(ui_frame *frame)
@@ -1459,7 +1453,7 @@ static void ui_render_label(ui_frame *frame)
     }
     ta_primitive_push_rect(frame->rect, frame->bg_color[frame->state_type],
         UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
 
     // Render text
     float x = (float)frame->rect.x + frame->pad.x;
@@ -1471,7 +1465,7 @@ static void ui_render_textbox(ui_frame *frame)
     // Render background
     ta_rgba bg_color = frame->bg_color[frame->state_type];
     ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
 
     // Render text
     int x = frame->rect.x + frame->pad.x;
@@ -1486,7 +1480,7 @@ static void ui_render_textbox(ui_frame *frame)
         cursor_rect.w = 1;
         cursor_rect.h = ui_font->line_height - 2;
         ta_primitive_push_rect(cursor_rect, TA_COLOR_GRAY8, UI_LAYER_EDIT_2);
-        ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+        ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
     }
 }
 static void ui_render_scrollbars(ui_frame *frame)
@@ -1538,7 +1532,7 @@ static void ui_render_scrollbars(ui_frame *frame)
 
         ta_primitive_push_rect(scroll_v_rect, TA_COLOR_GRAY4, UI_LAYER_EDIT_1);
         ta_primitive_push_rect(scroll_v_widget, widget_color, UI_LAYER_EDIT_1);
-        ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+        ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
 
         // Update scroll state for next frame
         if (!ta_mouse_captured()) {
@@ -1575,8 +1569,8 @@ static void ui_render_scrollbars(ui_frame *frame)
 }
 static void ui_render_tooltips()
 {
-    ta_primitive_render_quads(&primitive_quads_tooltip_bg, tg_shader_quads, true, true);
-    ta_font_render(&primitive_quads_tooltip_fg, ui_font, 0, 0, UI_LAYER_TIP, true, true);
+    ta_primitive_render_quads(&primitive_quads_tooltip_bg, tg_shader_quads, true, false);
+    ta_font_render(&primitive_quads_tooltip_fg, ui_font, 0, 0, UI_LAYER_TIP, true, false);
 }
 #if 0
 // TODO: Move this to ta_ui_statusbar
@@ -1597,7 +1591,7 @@ static void ta_ui_render_statusbar()
         const int status_pad_bottom = 20;
         ta_font_render(&primitive_quads, font, (float)status_halfw,
             (float)(WINDOW_H - (font->ascent + status_pad_bottom)),
-            UI_LAYER_TIP, true, true);
+            UI_LAYER_TIP, true, false);
 
         editor.status_msg = 0;
     }

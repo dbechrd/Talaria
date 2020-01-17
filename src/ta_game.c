@@ -485,7 +485,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
     ta_font_render(&primitive_quads, font, SCREEN_WRAP_X(-320.0f), 0,
-        UI_LAYER_HUD, true, true);
+        UI_LAYER_HUD, true, false);
 }
 static void game_draw_hud()
 {
@@ -493,17 +493,17 @@ static void game_draw_hud()
     ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
 
     static ta_ui_window_state window = { 0 };
-    ta_ui_window_begin(0, &window, TA_UI_AUTOSIZE);
+    ta_ui_window_begin(&window, TA_UI_AUTOSIZE);
     ta_ui_row_begin();
     for (u32 i = 0; i < gun->carrying_ammo_max; i++) {
         ta_ui_next_size(20, 20);
         ta_ui_next_pad(2, 2, 2, 2);
         if (i < gun->carrying_ammo) {
             ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
-            ta_ui_image(0, tex, 0);
+            ta_ui_image(tex, 0);
         } else {
             ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_red);
-            ta_ui_image(0, tex, 0);
+            ta_ui_image(tex, 0);
         }
     }
     //ta_ui_pad(0, 4);
@@ -513,10 +513,10 @@ static void game_draw_hud()
         ta_ui_next_pad(2, 2, 2, 2);
         if (i < gun->loaded_ammo) {
             ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
-            ta_ui_image(0, tex, 0);
+            ta_ui_image(tex, 0);
         } else {
             ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_red);
-            ta_ui_image(0, tex, 0);
+            ta_ui_image(tex, 0);
         }
     }
     ta_ui_window_end();
@@ -730,6 +730,8 @@ static void game_render_colliders_debug()
 }
 static void game_render_nametags_debug(ta_camera *camera)
 {
+    glClear(GL_DEPTH_BUFFER_BIT);
+
     ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
     static ta_rect_uv *tag_rects = 0;
 
@@ -777,7 +779,7 @@ static void game_render_nametags_debug(ta_camera *camera)
         tag_background.rect.h = NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
         ta_primitive_push_rect_uv(tag_background, TA_COLOR_DARK_RED, UI_LAYER_HUD_BG,
             false, false);
-        ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+        ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
         ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
         // Name tag text
@@ -794,7 +796,7 @@ static void game_render_nametags_debug(ta_camera *camera)
                 true);
         }
         dlb_vec_zero(tag_rects);
-        ta_font_render(&primitive_quads, font, 0, 0, 0, true, true);
+        ta_font_render(&primitive_quads, font, 0, 0, 0, true, false);
     }
 }
 void ta_game_loop()
@@ -910,11 +912,6 @@ void ta_game_loop()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glStencilMask(0x00);
 
-        // TODO: This is going to make a zillion extranous calls, need to track
-        // current polygon mode globally
-        GLenum camera_poly_mode = active_camera->debug_wireframe ? GL_LINE : GL_FILL;
-        glPolygonMode(GL_FRONT_AND_BACK, camera_poly_mode);
-
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &active_camera->projection);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &active_camera->look_at);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &active_camera->projection);
@@ -925,16 +922,22 @@ void ta_game_loop()
         ta_primitive_render_lines(&primitive_lines_perma, tg_shader_lines, false, false);
         ta_primitive_render(true, false);
 
+        if (active_camera->debug_wireframe) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+
         // TODO: Group by shader / material to minimize redundant uniform calls
         // Render models
         dlb_vec_each(ta_model *, model, models) {
             ta_model_render(model, active_camera);
         }
 
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+        if (active_camera->debug_wireframe) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        // Dump any prims from render pass
+        ta_primitive_render(true, false);
 
         // Debug render cameras as RGB spheres
         dlb_vec_each(ta_camera *, camera, cameras) {
@@ -973,17 +976,11 @@ void ta_game_loop()
                 ta_primitive_push_sphere(light_aoe, color);
             }
         }
+        ta_primitive_render(true, false);
 
         if (active_camera->debug_colliders) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug colliders pass...\n");
             game_render_colliders_debug();
-        }
-        ta_primitive_render(true, false);
-
-        glClear(GL_DEPTH_BUFFER_BIT);
-        if (active_camera->debug_nametags) {
-            ta_log_write(&tg_debug_log, SRC_GAME, " Debug nametags pass...\n");
-            game_render_nametags_debug(active_camera);
         }
 
         //----------------------------------------------------------------------
@@ -994,16 +991,10 @@ void ta_game_loop()
             ta_editor_draw_world(sim_alpha);
         }
 
-        // Dump any prims from render pass
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
-        ta_primitive_render(true, false);
-
-        //----------------------------------------------------------------------
-        // World axes
-        //----------------------------------------------------------------------
-        ta_primitive_push_axes_arrow(VEC3_ZERO, 0.3f);
-        ta_primitive_render(true, true);
+        if (active_camera->debug_nametags) {
+            ta_log_write(&tg_debug_log, SRC_GAME, " Debug nametags pass...\n");
+            game_render_nametags_debug(active_camera);
+        }
 
         //----------------------------------------------------------------------
         // Crosshair
@@ -1019,7 +1010,7 @@ void ta_game_loop()
         //       Use texture atlas; batch everything into one draw call; stop
         //       using stupid RGB placeholders.
         ta_log_write(&tg_debug_log, SRC_GAME, " HUD pass...\n");
-        game_draw_hud();
+        //game_draw_hud();
 
         // TODO: Add "show_fps" flag and bind to key; off by default in release
         ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;

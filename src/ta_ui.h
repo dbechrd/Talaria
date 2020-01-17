@@ -117,24 +117,21 @@ ta_ui_state ta_ui_last_frame_state();
 void ta_ui_row_begin();
 void ta_ui_row_end();
 void ta_ui_spacer(int w, int h);
-void ta_ui_window_begin(const char *name, ta_ui_window_state *window, u32 flags);
+void ta_ui_window_begin(ta_ui_window_state *window, u32 flags);
 void ta_ui_window_end();
-void ta_ui_panel_begin(const char *name, ta_ui_panel_state *panel, u32 flags);
+void ta_ui_panel_begin(ta_ui_panel_state *panel, u32 flags);
 void ta_ui_panel_end();
-void ta_ui_button_begin(const char *name, u32 flags);
+void ta_ui_button_begin(u32 flags);
 bool ta_ui_button_end();
-bool ta_ui_button(const char *name, const char *text, u32 text_len);
-void ta_ui_toggle_button_begin(const char *name, u32 flags);
+bool ta_ui_button(const char *text, u32 text_len);
+void ta_ui_toggle_button_begin(u32 flags);
 bool ta_ui_toggle_button_end(bool *checked);
-bool ta_ui_toggle_button(const char *name, const char *text, u32 text_len,
-    bool *checked);
-bool ta_ui_image(const char *name, struct ta_texture *texture, int face);
-//bool ta_ui_label(const char *name, const char *text, u32 text_len);
-void ta_ui_label(const char *name, const char *text, u32 text_len);
-bool ta_ui_textbox(const char *name, const char *text, u32 text_len,
-    ta_ui_textbox_state *textbox, u32 flags);
-bool ta_ui_textbox_float(const char *name, float *value,
-    ta_ui_textbox_state *textbox, u32 flags);
+bool ta_ui_toggle_button(const char *text, u32 text_len, bool *checked);
+bool ta_ui_image(struct ta_texture *texture, int face);
+void ta_ui_label(const char *text, u32 text_len);
+bool ta_ui_textbox(const char *text, u32 text_len, ta_ui_textbox_state *textbox,
+    u32 flags);
+bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags);
 void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
     bool normalize, bool multiple_rows, bool reset_button);
 void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,

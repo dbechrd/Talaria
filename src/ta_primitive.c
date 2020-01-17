@@ -585,6 +585,46 @@ void ta_primitive_push_cube(ta_vec3 center, float radius, ta_rgba color)
 #undef PUSH_LINE
 }
 
+// NOTE: "scale" is extent of grid from origin to edge (radius), "frequency" is
+// how often to draw a line (spacing). center, normal and color should be pretty
+// self-explanatory.
+void ta_primitive_push_grid(ta_vec3 center, ta_vec3 normal, float scale,
+    float frequency, ta_rgba color)
+{
+    ta_vec3 u = vec3_normalize(vec3_perp(normal));
+    ta_vec3 v = vec3_normalize(vec3_cross(normal, u));
+    ta_vec3 u_inc = vec3_scalef(u, frequency);
+    ta_vec3 v_inc = vec3_scalef(v, frequency);
+
+    ta_vec3 half_u = vec3_scalef(u, scale * 0.5f);
+    ta_vec3 u_min = vec3_sub(center, half_u);
+    ta_vec3 half_v = vec3_scalef(v, scale * 0.5f);
+    ta_vec3 v_min = vec3_sub(center, half_v);
+
+    float lines = scale / frequency;
+    ta_line_3d line;
+
+    // U lines from -v_min to +v_min
+    line.p0 = vec3_sub(v_min, half_u);
+    line.p1 = vec3_add(v_min, half_u);
+    ta_primitive_push_line_3d(line, color, color);
+    for (float i = 0; i < lines; ++i) {
+        line.p0 = vec3_add(line.p0, v_inc);
+        line.p1 = vec3_add(line.p1, v_inc);
+        ta_primitive_push_line_3d(line, color, color);
+    }
+
+    // V lines from -u_min to +u_min
+    line.p0 = vec3_sub(u_min, half_v);
+    line.p1 = vec3_add(u_min, half_v);
+    ta_primitive_push_line_3d(line, color, color);
+    for (float i = 0; i < lines; ++i) {
+        line.p0 = vec3_add(line.p0, u_inc);
+        line.p1 = vec3_add(line.p1, u_inc);
+        ta_primitive_push_line_3d(line, color, color);
+    }
+}
+
 void ta_primitive_push_axes_arrow(ta_vec3 position, float scale)
 {
     ta_primitive_push_arrow(position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
@@ -616,6 +656,12 @@ void ta_primitive_push_axes_cube(ta_vec3 position, float scale)
 void ta_primitive_render_lines(ta_mesh *mesh, struct ta_shader *shader,
     bool clear_buffers, bool reset_uniforms)
 {
+    if (reset_uniforms) {
+        ta_shader_set_mat4(shader, SYM_U_PROJ, &MAT4_IDENT);
+        ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
+        ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
+    }
+
     u32 positions_count = dlb_vec_len(mesh->positions);
     if (positions_count) {
         GLboolean cull_face = 0;
@@ -656,15 +702,16 @@ void ta_primitive_render_lines(ta_mesh *mesh, struct ta_shader *shader,
             dlb_vec_clear(mesh->buffers[i]);
         }
     }
+}
+void ta_primitive_render_quads(ta_mesh *mesh, ta_shader *shader,
+    bool clear_buffers, bool reset_uniforms)
+{
     if (reset_uniforms) {
         ta_shader_set_mat4(shader, SYM_U_PROJ, &MAT4_IDENT);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
         ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
     }
-}
-void ta_primitive_render_quads(ta_mesh *mesh, ta_shader *shader,
-    bool clear_buffers, bool reset_uniforms)
-{
+
     u32 positions_count = dlb_vec_len(mesh->positions);
     if (positions_count) {
         GLboolean cull_face = 0;
@@ -705,11 +752,6 @@ void ta_primitive_render_quads(ta_mesh *mesh, ta_shader *shader,
         for (int i = 0; i < TA_MESH_BUFFER_COUNT; ++i) {
             dlb_vec_clear(mesh->buffers[i]);
         }
-    }
-    if (reset_uniforms) {
-        ta_shader_set_mat4(shader, SYM_U_PROJ, &MAT4_IDENT);
-        ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
-        ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
     }
 }
 void ta_primitive_render(bool clear_buffers, bool reset_uniforms)
