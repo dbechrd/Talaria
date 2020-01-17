@@ -3,43 +3,26 @@
 #include "dlb/dlb_types.h"
 
 struct ta_shader;
+struct ta_mesh;
 
-typedef struct ta_shader_lines_vertex {
-    ta_vec3 position;
-    ta_rgba color;
-} ta_shader_lines_vertex;
+extern struct ta_mesh primitive_lines;
+extern struct ta_mesh primitive_lines_perma;
 
-typedef struct ta_vert_line {
-    ta_shader_lines_vertex verts[2];
-} ta_vert_line;
-
-typedef struct ta_shader_quads_vertex {
-    ta_vec3 position;
-    ta_rgba color;
-    ta_vec2 uv;
-} ta_shader_quads_vertex;
-
-typedef struct ta_vert_quad {
-    ta_shader_quads_vertex verts[6];
-} ta_vert_quad;
-
-extern ta_vert_line *perma_lines_queue;
-extern ta_vert_line *lines_queue;
-extern ta_vert_quad *quads_queue;
-extern ta_vert_quad *tooltip_bg_queue;
-extern ta_vert_quad *tooltip_fg_queue;
+extern struct ta_mesh primitive_quads;
+extern struct ta_mesh primitive_quads_tooltip_bg;
+extern struct ta_mesh primitive_quads_tooltip_fg;
 
 void ta_primitive_init();
 void ta_primitive_push_line_2d(ta_line_2d line_2d, ta_rgba color0,
     ta_rgba color1);
-void ta_primitive_push_line_3d_q(ta_vert_line **queue, ta_line_3d line_3d,
+void ta_primitive_push_line_3d_q(struct ta_mesh *mesh, ta_line_3d line_3d,
     ta_rgba color0, ta_rgba color1);
 void ta_primitive_push_line_3d(ta_line_3d line_3d, ta_rgba color0,
     ta_rgba color1);
-void ta_primitive_push_rect_q(ta_vert_quad **queue, ta_rect rect, ta_rgba color,
+void ta_primitive_push_rect_q(struct ta_mesh *mesh, ta_rect rect, ta_rgba color,
     float z);
 void ta_primitive_push_rect(ta_rect rect, ta_rgba color, float z);
-void ta_primitive_push_rect_uv_q(ta_vert_quad **queue, ta_rect_uv rect_uv,
+void ta_primitive_push_rect_uv_q(struct ta_mesh *mesh, ta_rect_uv rect_uv,
     ta_rgba color, float z, bool screen, bool top_left);
 void ta_primitive_push_rect_uv(ta_rect_uv rect_uv, ta_rgba color, float z,
     bool screen, bool top_left);
@@ -53,8 +36,8 @@ void ta_primitive_push_aabb(ta_aabb aabb, ta_rgba color);
 void ta_primitive_push_obb(ta_obb obb, ta_rgba color);
 void ta_primitive_push_axes_arrow(ta_vec3 position, float scale);
 void ta_primitive_push_axes_cube(ta_vec3 position, float scale);
-void ta_primitive_render_lines(ta_vert_line *queue, struct ta_shader *shader,
-    bool clear_queues, bool reset_uniforms);
-void ta_primitive_render_quads(ta_vert_quad *queue, struct ta_shader *shader,
-    bool clear_queues, bool reset_uniforms);
-void ta_primitive_render(bool clear_queues, bool reset_uniforms);
+void ta_primitive_render_lines(struct ta_mesh *mesh, struct ta_shader *shader,
+    bool clear_buffers, bool reset_uniforms);
+void ta_primitive_render_quads(struct ta_mesh *mesh, struct ta_shader *shader,
+    bool clear_buffers, bool reset_uniforms);
+void ta_primitive_render(bool clear_buffers, bool reset_uniforms);

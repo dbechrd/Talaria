@@ -110,7 +110,7 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
         ta_line_3d line;
         line.p0 = transform->xform.position;
         line.p1 = vec3_add(transform->xform.position, offset_world);
-        ta_primitive_push_line_3d_q(&perma_lines_queue, line, TA_COLOR_GRAY5, TA_COLOR_CYAN);
+        ta_primitive_push_line_3d_q(&primitive_lines_perma, line, TA_COLOR_GRAY5, TA_COLOR_CYAN);
         transform->xform.position = vec3_add(transform->xform.position, offset_world);
 #endif
     }
@@ -427,13 +427,13 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         //ta_line_3d dbg_impulse_a;
         //dbg_impulse_a.p0 = manifold->contacts[i];
         //dbg_impulse_a.p1 = vec3_add(manifold->contacts[i], a_impulse);
-        //ta_primitive_push_line_3d_q(&perma_lines_queue, dbg_impulse_a, TA_COLOR_MAGENTA, TA_COLOR_MAGENTA);
+        //ta_primitive_push_line_3d_q(&primitive_lines_perma, dbg_impulse_a, TA_COLOR_MAGENTA, TA_COLOR_MAGENTA);
         //
         //ta_vec3 b_impulse = vec3_scalef(b_resolve, b->inv_mass);
         //ta_line_3d dbg_impulse_b;
         //dbg_impulse_b.p0 = manifold->contacts[i];
         //dbg_impulse_b.p1 = vec3_add(manifold->contacts[i], b_impulse);
-        //ta_primitive_push_line_3d_q(&perma_lines_queue, dbg_impulse_b, TA_COLOR_CYAN, TA_COLOR_CYAN);
+        //ta_primitive_push_line_3d_q(&primitive_lines_perma, dbg_impulse_b, TA_COLOR_CYAN, TA_COLOR_CYAN);
         //-----------------------------
 
         // Randy's Coloumb friction

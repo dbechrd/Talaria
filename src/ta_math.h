@@ -22,6 +22,7 @@ typedef struct ta_vec2 {
     float y;
 } ta_vec2;
 
+// TODO: Delete and use vec2 everywhere
 typedef struct ta_uv {
     float u;
     float v;

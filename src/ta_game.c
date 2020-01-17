@@ -484,7 +484,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-    ta_font_render(quads_queue, font, SCREEN_WRAP_X(-320.0f), 0,
+    ta_font_render(&primitive_quads, font, SCREEN_WRAP_X(-320.0f), 0,
         UI_LAYER_HUD, true, true);
 }
 static void game_draw_hud()
@@ -777,7 +777,7 @@ static void game_render_nametags_debug(ta_camera *camera)
         tag_background.rect.h = NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
         ta_primitive_push_rect_uv(tag_background, TA_COLOR_DARK_RED, UI_LAYER_HUD_BG,
             false, false);
-        ta_primitive_render_quads(quads_queue, tg_shader_quads, true, true);
+        ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
         ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
         // Name tag text
@@ -794,7 +794,7 @@ static void game_render_nametags_debug(ta_camera *camera)
                 true);
         }
         dlb_vec_zero(tag_rects);
-        ta_font_render(quads_queue, font, 0, 0, 0, true, true);
+        ta_font_render(&primitive_quads, font, 0, 0, 0, true, true);
     }
 }
 void ta_game_loop()
@@ -922,7 +922,7 @@ void ta_game_loop()
 
         // Dump any prims from the collision pass
         game_render_manifolds_debug();
-        ta_primitive_render_lines(perma_lines_queue, tg_shader_lines, false, false);
+        ta_primitive_render_lines(&primitive_lines_perma, tg_shader_lines, false, false);
         ta_primitive_render(true, false);
 
         // TODO: Group by shader / material to minimize redundant uniform calls
@@ -936,7 +936,6 @@ void ta_game_loop()
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-#if 1
         // Debug render cameras as RGB spheres
         dlb_vec_each(ta_camera *, camera, cameras) {
             if (camera->name != tg_e_active_camera) {
@@ -974,40 +973,12 @@ void ta_game_loop()
                 ta_primitive_push_sphere(light_aoe, color);
             }
         }
-        ta_primitive_render(true, false);
-#endif
+
         if (active_camera->debug_colliders) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug colliders pass...\n");
             game_render_colliders_debug();
         }
-
-        //--------------------------------------------
-#if 0
-        static ta_ray ray = { 0 };
-        static ta_obb obb = { 0 };
-        if (vec4_zero(obb.orientation)) {
-            ray.origin.x = 4.0f;
-            ray.origin.y = -2.0f;
-            ray.direction.y = 5.0f;
-            obb.center.x = 3.0f;
-            obb.extents = VEC3_ONE;
-            obb.orientation.z = 0.130526f;
-            obb.orientation.w = 0.991445f;
-            obb.orientation = quat_normalize(obb.orientation);
-        }
-        ray.origin = active_camera->position;
-        ray.direction = active_camera->front;
-        float t = 0;
-        if (ta_ray_v_obb(&ray, &obb, &t)) {
-            ta_vec3 t_pos = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-            ta_sphere t_sphere = { 0 };
-            t_sphere.center = t_pos;
-            t_sphere.radius = 0.1f;
-            ta_primitive_push_sphere(t_sphere, TA_COLOR_PINK);
-        }
         ta_primitive_render(true, false);
-#endif
-        //--------------------------------------------
 
         glClear(GL_DEPTH_BUFFER_BIT);
         if (active_camera->debug_nametags) {
@@ -1048,7 +1019,7 @@ void ta_game_loop()
         //       Use texture atlas; batch everything into one draw call; stop
         //       using stupid RGB placeholders.
         ta_log_write(&tg_debug_log, SRC_GAME, " HUD pass...\n");
-        //ta_game_hud_draw(&tg_game);
+        game_draw_hud();
 
         // TODO: Add "show_fps" flag and bind to key; off by default in release
         ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
@@ -1358,7 +1329,9 @@ void game_command_debug_mouse_lock_toggle()
     ta_mouse_capture_toggle();
 
     // HACK: Too lazy to make a proper keybind for this
-    dlb_vec_clear(perma_lines_queue);
+    for (int i = 0; i < TA_MESH_BUFFER_COUNT; ++i) {
+        dlb_vec_clear(primitive_lines_perma.buffers[i]);
+    }
 }
 void game_command_debug_toggle_wireframe()
 {

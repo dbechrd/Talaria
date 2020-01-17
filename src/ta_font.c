@@ -270,8 +270,8 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
 }
 
 // z postiive for screen, negative for world
-void ta_font_render(ta_vert_quad *queue, ta_font *font, float x, float y,
-    float z, bool clear_queues, bool reset_uniforms)
+void ta_font_render(ta_mesh *mesh, ta_font *font, float x, float y,
+    float z, bool clear_buffers, bool reset_uniforms)
 {
     //glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);
@@ -286,7 +286,7 @@ void ta_font_render(ta_vert_quad *queue, ta_font *font, float x, float y,
         ta_shader_set_mat4(shader, SYM_U_MODEL, &xform);
     }
     ta_shader_set_sampler2d(shader, SYM_U_TEX, font->gl_id);
-    ta_primitive_render_quads(queue, shader, clear_queues, reset_uniforms);
+    ta_primitive_render_quads(mesh, shader, clear_buffers, reset_uniforms);
     ta_shader_set_sampler2d(shader, SYM_U_TEX, 0);
 
     glEnable(GL_DEPTH_TEST);

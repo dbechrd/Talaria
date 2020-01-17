@@ -243,7 +243,7 @@
     <ClCompile Include="src/ta_log.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="src/main.c" />
+    <ClCompile Include="src\main.c" />
     <ClCompile Include="src/ta_mesh.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>

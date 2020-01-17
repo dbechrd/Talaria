@@ -154,58 +154,57 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
 
 void ta_mesh_create(ta_mesh *mesh)
 {
-    glCreateVertexArrays(1, &mesh->vao);
-    glBindVertexArray(mesh->vao);
+    glCreateVertexArrays(1, &mesh->gl_vao);
+    glBindVertexArray(mesh->gl_vao);
 
-    u32 indexes_count = dlb_vec_len(mesh->indexes);
-    u32 positions_count = dlb_vec_len(mesh->positions);
-    u32 colors_count = dlb_vec_len(mesh->colors);
-    u32 uvs_count = dlb_vec_len(mesh->uvs);
-    u32 normals_count = dlb_vec_len(mesh->normals);
-    u32 tangents_count = dlb_vec_len(mesh->tangents);
-
-    if (indexes_count) {
-        glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_INDEX]);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_INDEX]);
+    if (mesh->indexes) {
+        u32 indexes_count = dlb_vec_len(mesh->indexes);
+        glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_INDEX]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_INDEX]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes_count * sizeof(GLuint),
             mesh->indexes, GL_STATIC_DRAW);
     }
-    if (positions_count) {
-        glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_POSITION]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_POSITION]);
+    if (mesh->positions) {
+        u32 positions_count = dlb_vec_len(mesh->positions);
+        glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_POSITION]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_POSITION]);
         glBufferData(GL_ARRAY_BUFFER, positions_count * 3 * sizeof(GLfloat),
             mesh->positions, GL_STATIC_DRAW);
         glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
         glVertexAttribPointer(TA_SHADER_ATTR_POSITION, 3, GL_FLOAT,
             false, 0, 0);
     }
-    if (colors_count) {
-        glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_COLOR]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_COLOR]);
+    if (mesh->colors) {
+        u32 colors_count = dlb_vec_len(mesh->colors);
+        glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_COLOR]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_COLOR]);
         glBufferData(GL_ARRAY_BUFFER, colors_count * 4 * sizeof(GLfloat),
             mesh->colors, GL_STATIC_DRAW);
         glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
-        glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 3, GL_FLOAT, false, 0, 0);
+        glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 4, GL_FLOAT, false, 0, 0);
     }
-    if (uvs_count) {
-        glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_UV]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_UV]);
+    if (mesh->uvs) {
+        u32 uvs_count = dlb_vec_len(mesh->uvs);
+        glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_UV]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_UV]);
         glBufferData(GL_ARRAY_BUFFER, uvs_count * 2 * sizeof(GLfloat), mesh->uvs,
             GL_STATIC_DRAW);
         glEnableVertexAttribArray(TA_SHADER_ATTR_UV);
         glVertexAttribPointer(TA_SHADER_ATTR_UV, 2, GL_FLOAT, false, 0, 0);
     }
-    if (normals_count) {
-        glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_NORMAL]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_NORMAL]);
+    if (mesh->normals) {
+        u32 normals_count = dlb_vec_len(mesh->normals);
+        glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_NORMAL]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_NORMAL]);
         glBufferData(GL_ARRAY_BUFFER, normals_count * 3 * sizeof(GLfloat),
             mesh->normals, GL_STATIC_DRAW);
         glEnableVertexAttribArray(TA_SHADER_ATTR_NORMAL);
         glVertexAttribPointer(TA_SHADER_ATTR_NORMAL, 3, GL_FLOAT, false, 0, 0);
     }
-    if (tangents_count) {
-        glCreateBuffers(1, &mesh->buffers[TA_MESH_BUFFER_TANGENT]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->buffers[TA_MESH_BUFFER_TANGENT]);
+    if (mesh->tangents) {
+        u32 tangents_count = dlb_vec_len(mesh->tangents);
+        glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_TANGENT]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_TANGENT]);
         glBufferData(GL_ARRAY_BUFFER, tangents_count * 3 * sizeof(GLfloat),
             mesh->tangents, GL_STATIC_DRAW);
         glEnableVertexAttribArray(TA_SHADER_ATTR_TANGENT);
@@ -323,7 +322,7 @@ void ta_mesh_log_normals_dbg(ta_mesh *mesh)
 
 void ta_mesh_render(ta_mesh *mesh)
 {
-    glBindVertexArray(mesh->vao);
+    glBindVertexArray(mesh->gl_vao);
     u32 indexes_count = dlb_vec_len(mesh->indexes);
     if (indexes_count) {
         glDrawElements(GL_TRIANGLES, indexes_count, GL_UNSIGNED_INT, 0);
@@ -343,8 +342,8 @@ void ta_mesh_free(ta_mesh *mesh)
     dlb_vec_free(mesh->colors);
     dlb_vec_free(mesh->normals);
     dlb_vec_free(mesh->tangents);
-    glDeleteVertexArrays(1, &mesh->vao);
+    glDeleteVertexArrays(1, &mesh->gl_vao);
     // TODO: This is probably going to break, need to either use gl_ids like
     //       ta_texture_clear() or individually check if each buffer exists.
-    glDeleteBuffers(TA_MESH_BUFFER_COUNT, mesh->buffers);
+    glDeleteBuffers(TA_MESH_BUFFER_COUNT, mesh->gl_buffers);
 }

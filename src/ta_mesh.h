@@ -18,18 +18,24 @@ typedef struct ta_mesh {
     const char *name;
     const char *path;
     ta_vec3 offset;
-    GLuint *indexes;
-    ta_vec3 *positions;
-    ta_vec2 *uvs;
-    ta_rgba *colors;
-    ta_vec3 *normals;
-    ta_vec3 *tangents;
+    union {
+        // NOTE: Order of pointers must match enum
+        struct {
+            ta_vec3 *positions;
+            ta_rgba *colors;
+            ta_vec2 *uvs;
+            ta_vec3 *normals;
+            ta_vec3 *tangents;
+            GLuint *indexes;
+        };
+        void *buffers[TA_MESH_BUFFER_COUNT];
+    };
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;
     ta_line_3d *tangent_lines;
     ta_aabb aabb;
-    GLuint vao;
-    GLuint buffers[TA_MESH_BUFFER_COUNT];
+    GLuint gl_vao;
+    GLuint gl_buffers[TA_MESH_BUFFER_COUNT];
 } ta_mesh;
 
 void ta_mesh_init(ta_mesh *mesh);
