@@ -34,10 +34,16 @@ typedef enum editor_widget {
     EDITOR_WIDGET_SCALE,
 } editor_widget;
 
+typedef enum editor_widget_drag_axis {
+    EDITOR_WIDGET_DRAG_NONE,
+    EDITOR_WIDGET_DRAG_X,
+    EDITOR_WIDGET_DRAG_Y,
+    EDITOR_WIDGET_DRAG_Z,
+} editor_widget_drag_axis;
+
 typedef enum editor_command {
     EDITOR_COMMAND_CLOSE1,
     EDITOR_COMMAND_CLOSE2,
-    EDITOR_COMMAND_SELECT,
     EDITOR_COMMAND_SIM_PAUSE_RESUME,
     EDITOR_COMMAND_SIM_NEXT,
     EDITOR_COMMAND_SIM_NEXT_10,
@@ -49,6 +55,8 @@ static struct {
     ta_scene scene;
     const char *shader_editor_select;
     editor_widget widget;
+    editor_widget_drag_axis widget_drag_axis;
+    float widget_snap_to_grid;
     ta_keybind keybinds[EDITOR_COMMAND_COUNT];
     ta_ui_textbox_state *textbox_editing;
     ta_ui_textbox_state *textbox_dragging;
@@ -73,8 +81,6 @@ void ta_editor_init()
     //dlb_vec_reserve(tg_keybinds, 16);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE1          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE2          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
-    //ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SELECT          ], TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SELECT          ], TA_KEYBIND_HOLD,    SDL_SCANCODE_MOUSE_LEFT);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_PAUSE_RESUME], TA_KEYBIND_PRESS,   SDL_SCANCODE_F5);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT        ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F6);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT_10     ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F7);
@@ -1109,6 +1115,8 @@ void ta_editor_draw_world()
     ta_primitive_push_axes_arrow(0, VEC3_ZERO, 0.3f);
     ta_primitive_render(true, false);
 
+    ta_ray ray = ta_game_camera_ray();
+
     const char *selected_entity = ta_editor_selected_entity();
     if (selected_entity) {
         ta_camera *camera = ta_game_camera();
@@ -1146,7 +1154,111 @@ void ta_editor_draw_world()
 
         switch (editor.widget) {
             case EDITOR_WIDGET_TRANSLATE: {
+                ta_vec3 normal = vec3_sub(cam_trans->xform.position, e_transform->xform.position);
+                ta_plane plane = { 0 };
+                plane.center = e_transform->xform.position;
+
+                switch (editor.widget_drag_axis) {
+                    case EDITOR_WIDGET_DRAG_X: {
+                        normal.x = 0.0f;
+                        normal = vec3_normalize(normal);
+                        plane.normal = normal;
+
+                        float t;
+                        if (ta_ray_v_plane(&ray, &plane, &t)) {
+                            ta_vec3 contact = { 0 };
+                            contact = vec3_scalef(ray.direction, t);
+                            e_transform->xform.position.x = contact.x + cam_trans->xform.position.x;
+                            if (editor.widget_snap_to_grid) {
+                                e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
+                            }
+                        }
+                        break;
+                    } case EDITOR_WIDGET_DRAG_Y: {
+                        normal.y = 0.0f;
+                        normal = vec3_normalize(normal);
+                        plane.normal = normal;
+
+                        float t;
+                        if (ta_ray_v_plane(&ray, &plane, &t)) {
+                            ta_vec3 contact = { 0 };
+                            contact = vec3_scalef(ray.direction, t);
+                            e_transform->xform.position.y = contact.y + cam_trans->xform.position.y;
+                            if (editor.widget_snap_to_grid) {
+                                e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
+                            }
+                        }
+                        break;
+                    } case EDITOR_WIDGET_DRAG_Z: {
+                        normal.z = 0.0f;
+                        normal = vec3_normalize(normal);
+                        plane.normal = normal;
+
+                        float t;
+                        if (ta_ray_v_plane(&ray, &plane, &t)) {
+                            ta_vec3 contact = { 0 };
+                            contact = vec3_scalef(ray.direction, t);
+                            e_transform->xform.position.z = contact.z + cam_trans->xform.position.z;
+                            if (editor.widget_snap_to_grid) {
+                                e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
+                            }
+                        }
+                        break;
+                    }
+                }
+                if (editor.widget_drag_axis) {
+                    ta_primitive_push_grid(0, plane.center, plane.normal, 2.0f, 0.5f, TA_COLOR_YELLOW);
+                }
+
                 ta_primitive_push_axes_arrow(0, e_transform->xform.position, scale);
+
+                float half_scale = scale * 0.5f;
+                float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE;
+
+                ta_aabb hitbox[3] = { 0 };
+                hitbox[0].extents.x = half_scale;
+                hitbox[0].extents.y = radius;
+                hitbox[0].extents.z = radius;
+                hitbox[0].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_X, half_scale));
+                hitbox[1].extents.x = radius;
+                hitbox[1].extents.y = half_scale;
+                hitbox[1].extents.z = radius;
+                hitbox[1].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Y, half_scale));
+                hitbox[2].extents.x = radius;
+                hitbox[2].extents.y = radius;
+                hitbox[2].extents.z = half_scale;
+                hitbox[2].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Z, half_scale));
+
+                if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
+                    float t;
+                    float t_min = FLT_MAX;
+                    for (int i = 0; i < 3; ++i) {
+                        if (ta_ray_v_obb(&ray, &hitbox[i], &t) && t < t_min) {
+                            t_min = t;
+                            editor.widget_drag_axis = EDITOR_WIDGET_DRAG_X + i;
+                        }
+                    }
+                } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
+                    editor.widget_drag_axis = EDITOR_WIDGET_DRAG_NONE;
+                }
+
+                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_X) {
+                    ta_primitive_push_aabb(0, hitbox[0], TA_COLOR_RED);
+                } else {
+                    ta_primitive_push_aabb(0, hitbox[0], TA_COLOR_GRAY3A);
+                }
+
+                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_Y) {
+                    ta_primitive_push_aabb(0, hitbox[1], TA_COLOR_GREEN);
+                } else {
+                    ta_primitive_push_aabb(0, hitbox[1], TA_COLOR_GRAY3A);
+                }
+
+                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_Z) {
+                    ta_primitive_push_aabb(0, hitbox[2], TA_COLOR_BLUE);
+                } else {
+                    ta_primitive_push_aabb(0, hitbox[2], TA_COLOR_GRAY3A);
+                }
 
                 // TODO: multi-axis drag handles
                 //ta_vec3 center = { -35.0f, 3.0f, 0.0f };
@@ -1168,6 +1280,100 @@ void ta_editor_draw_world()
 
         ta_primitive_render(true, false);
     }
+
+    //if (!editor.widget_drag_axis && ta_mouse_captured())
+    if (!editor.widget_drag_axis && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT))
+    {
+        float t = 0.0f;
+        float t_min = FLT_MAX;
+        const char *closest_entity = 0;
+
+        ta_rigid_body *bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
+        dlb_vec_each(ta_rigid_body *, body, bodies) {
+            switch (body->collider.type) {
+                case TA_COLLIDER_PLANE: {
+                    ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+                    ta_plane plane = body->collider.data.plane;
+                    plane.center = vec3_add(plane.center, transform->xform.position);
+                    if (ta_ray_v_plane(&ray, &plane, &t)) {
+                        DLB_ASSERT(t >= 0.0f);
+                        //if (t >= 0.0f && t < t_min) {
+                        if (t < t_min) {
+                            t_min = t;
+                            closest_entity = body->entity_name;
+                        }
+                    }
+                    break;
+                } case TA_COLLIDER_SPHERE: {
+                    ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+                    ta_sphere sphere = body->collider.data.sphere;
+                    sphere.center = vec3_add(sphere.center, transform->xform.position);
+                    if (ta_ray_v_sphere(&ray, &sphere, &t)) {
+                        DLB_ASSERT(t >= 0.0f);
+                        //if (t >= 0.0f && t < t_min) {
+                        if (t < t_min) {
+                            t_min = t;
+                            closest_entity = body->entity_name;
+                        }
+                    }
+                    break;
+                } case TA_COLLIDER_OBB: {
+                    ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+                    ta_obb obb = body->collider.data.obb;
+                    obb.center = vec3_rotate_quat(obb.center, transform->xform.orientation);
+                    obb.center = vec3_add(obb.center, transform->xform.position);
+                    obb.orientation = quat_mul(transform->xform.orientation, obb.orientation);
+                    if (ta_ray_v_obb(&ray, &obb, &t)) {
+                        DLB_ASSERT(t >= 0.0f);
+                        if (t < t_min) {
+                            t_min = t;
+                            closest_entity = body->entity_name;
+                        }
+                    }
+                    break;
+                } default: {
+                    // Ignore unsupported colliders when picking
+                    continue;
+                }
+            }
+        }
+
+        ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+        dlb_vec_each(ta_light *, light, lights) {
+            ta_transform *transform = ta_game_component(light->entity_name,
+                RES_COMP_TRANSFORM);
+            ta_sphere sphere = { 0 };
+            sphere.center = transform->xform.position;
+            sphere.radius = 0.2f;
+            if (ta_ray_v_sphere(&ray, &sphere, &t)) {
+                DLB_ASSERT(t >= 0.0f);
+                //if (t >= 0.0f && t < t_min) {
+                if (t < t_min) {
+                    t_min = t;
+                    closest_entity = light->entity_name;
+                }
+            }
+        }
+
+        if (closest_entity) {
+            ta_vec3 t_pos = vec3_add(ray.origin, vec3_scalef(ray.direction, t_min));
+            ta_sphere t_sphere = { 0 };
+            t_sphere.center = t_pos;
+            t_sphere.radius = 0.1f;
+            ta_primitive_push_sphere(0, t_sphere, TA_COLOR_PINK);
+        } else {
+            //static const char *chamber_0001 = 0;
+            //if (!chamber_0001) {
+            //    chamber_0001 = INTERN("chamber_0001");
+            //}
+            //closest_entity = chamber_0001;
+            ta_editor_select_entity(0);
+        }
+
+        if (closest_entity) {
+            ta_editor_select_entity(closest_entity);
+        }
+    }
 }
 void editor_command_close()
 {
@@ -1177,107 +1383,6 @@ void editor_command_close()
         ta_ui_textbox_clear(editor.textbox_editing);
     }
     ta_game_state_set(ta_game_state_prev());
-}
-void editor_command_select()
-{
-    if (!ta_mouse_captured())
-        return;
-
-    ta_camera *camera = ta_game_camera();
-    ta_transform *cam_trans = ta_game_component(camera->entity_name, RES_COMP_TRANSFORM);
-    ta_ray ray;
-    ray.origin = cam_trans->xform.position;
-    ray.direction = camera->front;
-
-    float t = 0.0f;
-    float t_min = FLT_MAX;
-    const char *closest_entity = 0;
-
-    ta_rigid_body *bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
-    dlb_vec_each(ta_rigid_body *, body, bodies) {
-        switch (body->collider.type) {
-            case TA_COLLIDER_PLANE: {
-                ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
-                ta_plane plane = body->collider.data.plane;
-                plane.center = vec3_add(plane.center, transform->xform.position);
-                if (ta_ray_v_plane(&ray, &plane, &t)) {
-                    DLB_ASSERT(t >= 0.0f);
-                    //if (t >= 0.0f && t < t_min) {
-                    if (t < t_min) {
-                        t_min = t;
-                        closest_entity = body->entity_name;
-                    }
-                }
-                break;
-            } case TA_COLLIDER_SPHERE: {
-                ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
-                ta_sphere sphere = body->collider.data.sphere;
-                sphere.center = vec3_add(sphere.center, transform->xform.position);
-                if (ta_ray_v_sphere(&ray, &sphere, &t)) {
-                    DLB_ASSERT(t >= 0.0f);
-                    //if (t >= 0.0f && t < t_min) {
-                    if (t < t_min) {
-                        t_min = t;
-                        closest_entity = body->entity_name;
-                    }
-                }
-                break;
-            } case TA_COLLIDER_OBB: {
-                ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
-                ta_obb obb = body->collider.data.obb;
-                obb.center = vec3_rotate_quat(obb.center, transform->xform.orientation);
-                obb.center = vec3_add(obb.center, transform->xform.position);
-                obb.orientation = quat_mul(transform->xform.orientation, obb.orientation);
-                if (ta_ray_v_obb(&ray, &obb, &t)) {
-                    DLB_ASSERT(t >= 0.0f);
-                    if (t < t_min) {
-                        t_min = t;
-                        closest_entity = body->entity_name;
-                    }
-                }
-                break;
-            } default: {
-                // Ignore unsupported colliders when picking
-                continue;
-            }
-        }
-    }
-
-    ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
-    dlb_vec_each(ta_light *, light, lights) {
-        ta_transform *transform = ta_game_component(light->entity_name,
-            RES_COMP_TRANSFORM);
-        ta_sphere sphere = { 0 };
-        sphere.center = transform->xform.position;
-        sphere.radius = 0.2f;
-        if (ta_ray_v_sphere(&ray, &sphere, &t)) {
-            DLB_ASSERT(t >= 0.0f);
-            //if (t >= 0.0f && t < t_min) {
-            if (t < t_min) {
-                t_min = t;
-                closest_entity = light->entity_name;
-            }
-        }
-    }
-
-    if (closest_entity) {
-        ta_vec3 t_pos = vec3_add(ray.origin, vec3_scalef(ray.direction, t_min));
-        ta_sphere t_sphere = { 0 };
-        t_sphere.center = t_pos;
-        t_sphere.radius = 0.1f;
-        ta_primitive_push_sphere(0, t_sphere, TA_COLOR_PINK);
-    } else {
-        //static const char *chamber_0001 = 0;
-        //if (!chamber_0001) {
-        //    chamber_0001 = INTERN("chamber_0001");
-        //}
-        //closest_entity = chamber_0001;
-        ta_editor_select_entity(0);
-    }
-
-    if (closest_entity) {
-        ta_editor_select_entity(closest_entity);
-    }
 }
 void editor_command_sim_pause_resume()
 {
@@ -1314,7 +1419,6 @@ void ta_editor_hotkeys()
     static void (*commands[EDITOR_COMMAND_COUNT])() = {
         [EDITOR_COMMAND_CLOSE1]           = editor_command_close,
         [EDITOR_COMMAND_CLOSE2]           = editor_command_close,
-        [EDITOR_COMMAND_SELECT]           = editor_command_select,
         [EDITOR_COMMAND_SIM_PAUSE_RESUME] = editor_command_sim_pause_resume,
         [EDITOR_COMMAND_SIM_NEXT]         = editor_command_sim_next,
         [EDITOR_COMMAND_SIM_NEXT_10]      = editor_command_sim_next_ten,

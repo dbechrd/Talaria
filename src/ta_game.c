@@ -394,6 +394,15 @@ ta_camera *ta_game_camera()
 {
     return ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
 }
+ta_ray ta_game_camera_ray()
+{
+    ta_camera *camera = ta_game_camera();
+    ta_transform *cam_trans = ta_game_component(camera->entity_name, RES_COMP_TRANSFORM);
+    ta_ray ray = { 0 };
+    ray.origin = cam_trans->xform.position;
+    ray.direction = camera->front;
+    return ray;
+}
 ta_player *ta_game_player()
 {
     return ta_game_component(tg_e_player_one, RES_COMP_PLAYER);

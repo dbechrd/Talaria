@@ -15,6 +15,8 @@ struct ta_mesh;
 //#define TA_TRIANGLE_FAN    0x0006
 //#define TA_QUADS           0x0007
 
+#define TA_PRIMITIVE_CONE_RADIUS_SCALE 20.0f
+
 extern struct ta_mesh primitive_lines;
 extern struct ta_mesh primitive_lines_perma;
 

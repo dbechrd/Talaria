@@ -460,7 +460,7 @@ void ta_primitive_push_arrow(ta_mesh *mesh, ta_vec3 origin, ta_vec3 direction,
     ta_cone cone = { 0 };
     cone.apex = vec3_scalef(direction, 0.1f);
     cone.center = vec3_sub(tip, cone.apex);
-    cone.radius = vec3_len(direction) / 30.0f;
+    cone.radius = vec3_len(direction) / TA_PRIMITIVE_CONE_RADIUS_SCALE;
     ta_primitive_push_cone(mesh, cone, color);
 }
 void ta_primitive_push_aabb(ta_mesh *mesh, ta_aabb aabb, ta_rgba color)

@@ -3,6 +3,7 @@
 
 struct ta_event;
 struct ta_player;
+struct ta_ray;
 enum ta_resource_type;
 
 extern const char *tg_font;
@@ -52,6 +53,7 @@ void *ta_game_component_try(const char *entity, enum ta_resource_type type);
 void *ta_game_resource_pool(enum ta_resource_type type);
 void ta_game_load_gltf();
 struct ta_camera *ta_game_camera();
+struct ta_ray ta_game_camera_ray();
 struct ta_player *ta_game_player();
 void ta_game_sim_pause();
 void ta_game_sim_resume();
