@@ -66,6 +66,7 @@ const char *SYM_U_DEBUG_CHANNEL;
 
 // Constants
 const char *SYM_ENTITY_PLAYER_ONE;
+const char *SYM_ENTITY_PLAYER_CAMERA;
 const char *SYM_ENTITY_FREECAM;
 const char *SYM_ENTITY_BACKGROUND_MUSIC;
 const char *SYM_SHADER_EDITOR_SELECT;
@@ -206,6 +207,7 @@ void ta_symbol_init() {
     SYM_U_LIGHTS_SHADOWMAP_ZFAR[7]  = INTERN("u_lights[7].shadowmap_zfar");
     SYM_U_DEBUG_CHANNEL             = INTERN("u_debug_channel");
 
+    SYM_ENTITY_PLAYER_CAMERA    = INTERN("player_camera");
     SYM_ENTITY_PLAYER_ONE       = INTERN("player_one");
     SYM_ENTITY_FREECAM          = INTERN("freecam");
     SYM_ENTITY_BACKGROUND_MUSIC = INTERN("background_music");

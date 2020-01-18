@@ -423,9 +423,9 @@ void ta_schema_register()
     TYPE_START(ta_camera, TYP_CAMERA, ta_camera_init, 0);
     TYPE_FIELD(ta_camera, name,                ATOM_STRING);
     TYPE_FIELD(ta_camera, entity_name,         ATOM_STRING);
-    TYPE_FIELD(ta_camera, position,            TYP_VEC3);
     TYPE_FIELD(ta_camera, position_smooth,     ATOM_FLOAT);
     TYPE_FIELD(ta_camera, position_target_vel, ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, target_xform,        TYP_XFORM);
     TYPE_FIELD(ta_camera, yaw,                 ATOM_FLOAT);
     TYPE_FIELD(ta_camera, yaw_smooth,          ATOM_FLOAT);
     TYPE_FIELD(ta_camera, pitch,               ATOM_FLOAT);
@@ -434,9 +434,9 @@ void ta_schema_register()
     TYPE_FIELD(ta_camera, pitch_max,           ATOM_FLOAT);
     TYPE_FIELD(ta_camera, fov,                 ATOM_FLOAT);
     TYPE_FIELD(ta_camera, znear,               ATOM_FLOAT);
+    TYPE_FIELD(ta_camera, ortho,               ATOM_BOOL);
     TYPE_FIELD(ta_camera, focal_point,         TYP_VEC3);
     TYPE_FIELD(ta_camera, up,                  TYP_VEC3);
-    TYPE_FIELD(ta_camera, ortho,               ATOM_BOOL);
     TYPE_END(ta_camera);
 
     TYPE_START(ta_gun, TYP_GUN, 0, 0);

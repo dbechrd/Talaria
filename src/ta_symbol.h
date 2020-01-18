@@ -89,6 +89,7 @@ extern const char *SYM_U_DEBUG_CHANNEL;
 
 // Constants
 extern const char *SYM_ENTITY_PLAYER_ONE;
+extern const char *SYM_ENTITY_PLAYER_CAMERA;
 extern const char *SYM_ENTITY_FREECAM;
 extern const char *SYM_ENTITY_BACKGROUND_MUSIC;
 extern const char *SYM_SHADER_EDITOR_SELECT;

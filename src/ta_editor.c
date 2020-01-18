@@ -28,6 +28,12 @@
 #include "SDL/SDL.h"
 #include <float.h>
 
+typedef enum editor_widget {
+    EDITOR_WIDGET_TRANSLATE,
+    EDITOR_WIDGET_ROTATE,
+    EDITOR_WIDGET_SCALE,
+} editor_widget;
+
 typedef enum editor_command {
     EDITOR_COMMAND_CLOSE1,
     EDITOR_COMMAND_CLOSE2,
@@ -39,43 +45,32 @@ typedef enum editor_command {
     EDITOR_COMMAND_COUNT
 } editor_command;
 
-typedef struct ta_editor {
-    const char *status_msg;
-    const char *selected_entity;
+static struct {
+    ta_scene scene;
+    const char *shader_editor_select;
+    editor_widget widget;
+    ta_keybind keybinds[EDITOR_COMMAND_COUNT];
     ta_ui_textbox_state *textbox_editing;
     ta_ui_textbox_state *textbox_dragging;
-    ta_keybind keybinds[EDITOR_COMMAND_COUNT];
-    const char *shader_editor_select;
-    ta_scene scene;
-} ta_editor;
-
-#if 0
-typedef struct drag_float_state {
-    float *value;       // pointer to float being dragged
-    bool changed;       // true if float has been dragged at all
-    ta_vec3 cam_offset; // offset of camera from selected object (for chase cam)
-    float cam_position_smooth;      // original position_smooth
-    float cam_position_target_vel;  // original position_target_vel
-} drag_float_state;
-static drag_float_state drag_float;
-#endif
-static ta_editor editor;
+    const char *selected_entity;
+    const char *status_msg;
+} editor;
 
 void ta_editor_init()
 {
-    ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
-    ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing UI styles\n");
-    ta_ui_init(font, &editor.textbox_editing, &editor.textbox_dragging);
-
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Loading editor scene\n");
     ta_scene_load_file(&editor.scene, "data/scene/editor.dml");
     editor.shader_editor_select = SYM_SHADER_EDITOR_SELECT;
 
-    ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing key binds\n");
+    ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing UI styles\n");
+    ta_ui_init(font, &editor.textbox_editing, &editor.textbox_dragging);
 
+    editor.widget = EDITOR_WIDGET_TRANSLATE;
+
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing key binds\n");
     // TODO: Read keybinds from file
     //dlb_vec_reserve(tg_keybinds, 16);
-
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE1          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
     ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE2          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
     //ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SELECT          ], TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
@@ -750,7 +745,8 @@ static void ui_camera_panel()
         ta_ui_textbox_vec3(&camera->target_xform.position, &tpos_textbox, false, false, true);
         static ta_ui_textbox_vec3_state pos_textbox = { 0 };
         ta_ui_row_begin();
-        ta_ui_textbox_vec3(&camera->position, &pos_textbox, false, false, false);
+        ta_transform *cam_trans = ta_game_component(camera->entity_name, RES_COMP_TRANSFORM);
+        ta_ui_textbox_vec3(&cam_trans->xform.position, &pos_textbox, false, false, false);
         ta_ui_row_end();
         static ta_ui_textbox_state pos_smooth_textbox = { 0 };
         ta_ui_textbox_float(&camera->position_smooth, &pos_smooth_textbox, 0);
@@ -1028,62 +1024,6 @@ static void ui_editor_sidebar()
     ta_ui_row_begin();
     categories[category_selected].panel_method();
 }
-void ta_editor_draw_world()
-{
-    // Grid and world axes
-    ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
-    ta_primitive_push_axes_arrow(0, VEC3_ZERO, 0.3f);
-    ta_primitive_render(true, false);
-
-    const char *selected_entity = ta_editor_selected_entity();
-    if (selected_entity) {
-        ta_camera *camera = ta_game_camera();
-
-        // Render selected entity as yellow wireframes
-        ta_model *e_model = ta_game_component_try(selected_entity,
-            RES_COMP_MODEL);
-        if (e_model) {
-            glClear(GL_DEPTH_BUFFER_BIT);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-            ta_shader *shader = ta_scene_find(&editor.scene, RES_SHADER,
-                SYM(editor.shader_editor_select));
-            ta_rgba wire_color = TA_COLOR_YELLOW;
-            double seconds = ta_timer_elapsed_sec();
-            double sine = sin(seconds * 4.0) * 0.5 + 0.5;
-            wire_color.a = (float)(0.25 * (sine * sine) + 0.02);
-            if (camera->debug_no_mesh) {
-                wire_color.a = 0.05f;
-            }
-            ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
-            ta_model_render_shader(e_model, camera, shader);
-
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
-
-        glClear(GL_DEPTH_BUFFER_BIT);
-        ta_transform *e_transform = ta_game_component(selected_entity,
-            RES_COMP_TRANSFORM);
-        float dist = vec3_len(vec3_sub(camera->position,
-            e_transform->xform.position));
-        float scale = MAX(1.0f, dist * 0.1f);
-
-        // Transform widget
-        {
-            ta_primitive_push_axes_arrow(0, e_transform->xform.position, scale);
-
-            //ta_vec3 center = { -35.0f, 3.0f, 0.0f };
-            //ta_primitive_push_grid(vec3_add(center, VEC3_X), VEC3_X, 0.5f, 0.1f, TA_COLOR_RED);
-            //ta_primitive_push_grid(vec3_add(center, VEC3_Y), VEC3_Y, 0.5f, 0.1f, TA_COLOR_GREEN);
-            //ta_primitive_push_grid(vec3_add(center, VEC3_Z), VEC3_Z, 0.5f, 0.1f, TA_COLOR_BLUE);
-        }
-
-        // Scale widget
-        {
-            //ta_primitive_push_axes_cube(e_transform->xform.position, scale);
-        }
-    }
-}
 void ta_editor_draw_screen()
 {
     if (editor.textbox_editing) {
@@ -1100,6 +1040,21 @@ void ta_editor_draw_screen()
     //ta_ui_next_pad(2, 2, 2, 2);
     static ta_ui_window_state window = { 0 };
     ta_ui_window_begin(&window, TA_UI_AUTOSIZE);
+
+    ta_ui_panel_state hotbar_panel = { 0 };
+    ta_ui_panel_begin(&hotbar_panel, TA_UI_AUTOSIZE);
+    ta_ui_row_begin();
+    if (ta_ui_button(CSTR("Trans."))) {
+        editor.widget = EDITOR_WIDGET_TRANSLATE;
+    }
+    if (ta_ui_button(CSTR("Rot."))) {
+        editor.widget = EDITOR_WIDGET_ROTATE;
+    }
+    if (ta_ui_button(CSTR("Scale"))) {
+        editor.widget = EDITOR_WIDGET_SCALE;
+    }
+    ta_ui_panel_end();
+
     ui_editor_sidebar();
 
 #if 0
@@ -1147,7 +1102,73 @@ void ta_editor_draw_screen()
     ta_ui_render();
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render end\n");
 }
+void ta_editor_draw_world()
+{
+    // Grid and world axes
+    ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
+    ta_primitive_push_axes_arrow(0, VEC3_ZERO, 0.3f);
+    ta_primitive_render(true, false);
 
+    const char *selected_entity = ta_editor_selected_entity();
+    if (selected_entity) {
+        ta_camera *camera = ta_game_camera();
+
+        // Render selected entity as yellow wireframes
+        ta_model *e_model = ta_game_component_try(selected_entity,
+            RES_COMP_MODEL);
+        if (e_model) {
+            glClear(GL_DEPTH_BUFFER_BIT);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+            ta_shader *shader = ta_scene_find(&editor.scene, RES_SHADER,
+                SYM(editor.shader_editor_select));
+            ta_rgba wire_color = TA_COLOR_YELLOW;
+            double seconds = ta_timer_elapsed_sec();
+            double sine = sin(seconds * 4.0) * 0.5 + 0.5;
+            wire_color.a = (float)(0.25 * (sine * sine) + 0.02);
+            if (camera->debug_no_mesh) {
+                wire_color.a = 0.05f;
+            }
+            ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
+            ta_model_render_shader(e_model, camera, shader);
+
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+
+        glClear(GL_DEPTH_BUFFER_BIT);
+        ta_transform *e_transform = ta_game_component(selected_entity,
+            RES_COMP_TRANSFORM);
+        ta_transform *cam_trans = ta_game_component(camera->entity_name,
+            RES_COMP_TRANSFORM);
+        float dist = vec3_len(vec3_sub(cam_trans->xform.position,
+            e_transform->xform.position));
+        float scale = MAX(1.0f, dist * 0.1f);
+
+        switch (editor.widget) {
+            case EDITOR_WIDGET_TRANSLATE: {
+                ta_primitive_push_axes_arrow(0, e_transform->xform.position, scale);
+
+                // TODO: multi-axis drag handles
+                //ta_vec3 center = { -35.0f, 3.0f, 0.0f };
+                //ta_primitive_push_grid(vec3_add(center, VEC3_X), VEC3_X, 0.5f, 0.1f, TA_COLOR_RED);
+                //ta_primitive_push_grid(vec3_add(center, VEC3_Y), VEC3_Y, 0.5f, 0.1f, TA_COLOR_GREEN);
+                //ta_primitive_push_grid(vec3_add(center, VEC3_Z), VEC3_Z, 0.5f, 0.1f, TA_COLOR_BLUE);
+                break;
+            } case EDITOR_WIDGET_ROTATE: {
+                ta_sphere sphere = { 0 };
+                sphere.center = e_transform->xform.position;
+                sphere.radius = scale;
+                ta_primitive_push_rgb_sphere(0, sphere);
+                break;
+            } case EDITOR_WIDGET_SCALE: {
+                ta_primitive_push_axes_cube(0, e_transform->xform.position, scale);
+                break;
+            }
+        }
+
+        ta_primitive_render(true, false);
+    }
+}
 void editor_command_close()
 {
     // NOTE: This can't happen at the moment because textbox cancel and editor
@@ -1163,8 +1184,9 @@ void editor_command_select()
         return;
 
     ta_camera *camera = ta_game_camera();
+    ta_transform *cam_trans = ta_game_component(camera->entity_name, RES_COMP_TRANSFORM);
     ta_ray ray;
-    ray.origin = camera->position;
+    ray.origin = cam_trans->xform.position;
     ray.direction = camera->front;
 
     float t = 0.0f;

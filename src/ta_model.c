@@ -72,6 +72,10 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_texture *texture_occlusion = ta_game_by_sym(RES_TEXTURE, material->tex_occlusion ? material->tex_occlusion : SYM_MISSING_OCCLUSION);
         ta_texture *texture_roughness = ta_game_by_sym(RES_TEXTURE, material->tex_roughness ? material->tex_roughness : SYM_MISSING_ROUGHNESS);
 
+        ta_transform *cam_trans = ta_game_component(camera->entity_name,
+            RES_COMP_TRANSFORM);
+        ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &cam_trans->xform.position);
+
         ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
         u32 lights_len = dlb_vec_len(lights);
         u32 u_lights_count = 0;
@@ -82,7 +86,6 @@ void ta_model_render(ta_model *model, ta_camera *camera)
             }
         }
         ta_shader_set_int(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
-        ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &camera->position);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO,    texture_albedo->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_HEIGHT,    texture_height->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_METALLIC,  texture_metallic->gl_id);

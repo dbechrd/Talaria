@@ -352,9 +352,13 @@ bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere,
     if (manifold) {
         ta_vec3 closest = vec3_rotate_quat(closest_obb, obb->orientation);
         closest = vec3_add(closest, obb->center);
-
+        ta_vec3 normal = vec3_sub(closest, sphere->center);
+        // Edge case: Objects at same position, arbitrarily point normal up
+        if (vec3_zero(normal)) {
+            normal = VEC3_Y;
+        }
         manifold->depth = sphere->radius - sqrtf(d2);
-        manifold->normal = vec3_normalize(vec3_sub(closest, sphere->center));
+        manifold->normal = vec3_normalize(normal);
         manifold->contact_count = 1;
         manifold->contacts[0] = closest;
     }

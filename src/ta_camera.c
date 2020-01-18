@@ -1,10 +1,11 @@
 #include "ta_camera.h"
-#include "ta_log.h"
-#include "ta_event.h"
-#include "ta_window.h"
 #include "ta_game.h"
-#include "ta_scene.h"
+#include "ta_event.h"
+#include "ta_log.h"
 #include "ta_mouse.h"
+#include "ta_scene.h"
+#include "ta_transform.h"
+#include "ta_window.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 #include <math.h>
@@ -13,7 +14,6 @@ void ta_camera_init(ta_camera *camera)
 {
     if (!camera->position_smooth)     camera->position_smooth = 1.0f;
     if (!camera->position_target_vel) camera->position_target_vel = 0.1f;
-    camera->target_xform.position =   camera->position;
 
     if (!camera->yaw)                 camera->yaw = 90.0f;
     if (!camera->yaw_smooth)          camera->yaw_smooth = 1.0f;
@@ -41,10 +41,12 @@ void ta_camera_set_ortho(ta_camera *camera, bool ortho)
 
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z)
 {
-    camera->position.x = x;
-    camera->position.y = y;
-    camera->position.z = z;
-    camera->target_xform.position = camera->position;
+    ta_transform *transform = ta_game_component(camera->entity_name,
+        RES_COMP_TRANSFORM);
+    transform->xform.position.x = x;
+    transform->xform.position.y = y;
+    transform->xform.position.z = z;
+    camera->target_xform.position = transform->xform.position;
     camera->dirty = true;
 }
 
@@ -141,10 +143,14 @@ void ta_camera_update(ta_camera *camera, float dt)
         camera->move_buffer = VEC3_ZERO;
     }
 
+    ta_transform *transform = ta_game_component(camera->entity_name,
+        RES_COMP_TRANSFORM);
+
     // Update position
-    ta_vec3 pos_delta = vec3_sub(camera->target_xform.position, camera->position);
+    ta_vec3 pos_delta = vec3_sub(camera->target_xform.position,
+        transform->xform.position);
     if (vec3_len(pos_delta) > camera->follow_distance) {
-        camera->position = vec3_add(camera->position,
+        transform->xform.position = vec3_add(transform->xform.position,
             vec3_scalef(pos_delta, camera->position_smooth));
         camera->dirty = true;
     }
@@ -183,15 +189,16 @@ void ta_camera_update(ta_camera *camera, float dt)
     } else {
         if (camera->dirty) {
             camera->front = vec3_normalize(vec3_sub(camera->focal_point,
-                camera->position));
+                transform->xform.position));
             camera->right = vec3_normalize(vec3_cross(camera->front, camera->up));
         }
     }
 
     // Recalculate look_at
     if (camera->dirty) {
-        camera->look_at = mat4_lookat_fru(camera->position, camera->front,
-            camera->right, camera->up);
+        camera->look_at = mat4_lookat_fru(transform->xform.position,
+            camera->front, camera->right, camera->up);
+        transform->xform.orientation = quat_from_vec_vec(VEC3_NZ, camera->front);
         camera->dirty = false;
     }
 }

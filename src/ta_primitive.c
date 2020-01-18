@@ -205,6 +205,7 @@ void ta_primitive_push_rect_uv(ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color,
 void ta_primitive_push_plane(ta_mesh *mesh, ta_plane plane, float radius,
     ta_rgba color)
 {
+    // TODO: This seems like a hack that could be replaced with vec3_perp
     plane.center = vec3_add(plane.center, VEC3_EPSILON);
     ta_vec3 x = vec3_normalize(vec3_cross(plane.center, plane.normal));
     ta_vec3 y = vec3_normalize(vec3_cross(x, plane.normal));
@@ -224,13 +225,44 @@ void ta_primitive_push_plane(ta_mesh *mesh, ta_plane plane, float radius,
     uv[4].x = 1.0f; uv[4].y = 1.0f; // 1,1
     uv[5].x = 0.0f; uv[5].y = 1.0f; // 0,1
 
-    // Was this way for some reason? Clockwise 2nd triangle!?
-    //uv[0].x = 0.0f; uv[0].y = 0.0f; // 0,0
-    //uv[1].x = 1.0f; uv[1].y = 0.0f; // 1,0
-    //uv[2].x = 0.0f; uv[2].y = 1.0f; // 0,1
-    //uv[3].x = 0.0f; uv[3].y = 1.0f; // 0,1
-    //uv[4].x = 1.0f; uv[4].y = 0.0f; // 1,0
-    //uv[5].x = 1.0f; uv[5].y = 1.0f; // 1,1
+    dlb_vec_push(primitive_quads.positions, v0);
+    dlb_vec_push(primitive_quads.positions, v1);
+    dlb_vec_push(primitive_quads.positions, v2);
+    dlb_vec_push(primitive_quads.positions, v2);
+    dlb_vec_push(primitive_quads.positions, v1);
+    dlb_vec_push(primitive_quads.positions, v3);
+
+    for (int i = 0; i < 6; i++) {
+        dlb_vec_push(primitive_quads.uvs, uv[i]);
+        dlb_vec_push(primitive_quads.colors, color);
+    }
+}
+void ta_primitive_push_billboard(ta_mesh *mesh, ta_plane plane, float radius,
+    ta_rgba color)
+{
+    // TODO: This seems like a useful thing to implement, but not sure how to
+    // implement. Which way should it face? Would nametags fit in this model, or
+    // are the letter quads going to all rotate independently in weird ways?
+#if 0
+    // TODO: This seems like a hack that could be replaced with vec3_perp
+    plane.center = vec3_add(plane.center, VEC3_EPSILON);
+    ta_vec3 x = vec3_normalize(vec3_cross(plane.center, plane.normal));
+    ta_vec3 y = vec3_normalize(vec3_cross(x, plane.normal));
+    x = vec3_scalef(x, radius);
+    y = vec3_scalef(y, radius);
+
+    ta_vec3 v0 = vec3_sub(vec3_sub(plane.center, x), y);
+    ta_vec3 v1 = vec3_add(vec3_sub(plane.center, x), y);
+    ta_vec3 v2 = vec3_sub(vec3_add(plane.center, x), y);
+    ta_vec3 v3 = vec3_add(vec3_add(plane.center, x), y);
+
+    ta_vec2 uv[6];
+    uv[0].x = 0.0f; uv[0].y = 0.0f; // 0,0
+    uv[1].x = 1.0f; uv[1].y = 0.0f; // 1,0
+    uv[2].x = 1.0f; uv[2].y = 1.0f; // 1,1
+    uv[3].x = 0.0f; uv[3].y = 0.0f; // 0,0
+    uv[4].x = 1.0f; uv[4].y = 1.0f; // 1,1
+    uv[5].x = 0.0f; uv[5].y = 1.0f; // 0,1
 
     dlb_vec_push(primitive_quads.positions, v0);
     dlb_vec_push(primitive_quads.positions, v1);
@@ -243,6 +275,7 @@ void ta_primitive_push_plane(ta_mesh *mesh, ta_plane plane, float radius,
         dlb_vec_push(primitive_quads.uvs, uv[i]);
         dlb_vec_push(primitive_quads.colors, color);
     }
+#endif
 }
 void ta_primitive_push_crosshair(ta_mesh *mesh, s32 length, s32 thickness)
 {
@@ -339,19 +372,19 @@ void ta_primitive_push_rgb_sphere(ta_mesh *mesh, ta_sphere sphere)
         line_yz.p1 = sphere.center;
         line_yz.p1.y += cosr;
         line_yz.p1.z += sinr;
-        ta_primitive_push_line_3d(mesh, line_yz, TA_COLOR_WHITE, TA_COLOR_RED);
+        ta_primitive_push_line_3d(mesh, line_yz, TA_COLOR_RED, TA_COLOR_RED);
         line_yz.p0 = line_yz.p1;
 
         line_xz.p1 = sphere.center;
         line_xz.p1.x += cosr;
         line_xz.p1.z += sinr;
-        ta_primitive_push_line_3d(mesh, line_xz, TA_COLOR_WHITE, TA_COLOR_GREEN);
+        ta_primitive_push_line_3d(mesh, line_xz, TA_COLOR_GREEN, TA_COLOR_GREEN);
         line_xz.p0 = line_xz.p1;
 
         line_xy.p1 = sphere.center;
         line_xy.p1.x += cosr;
         line_xy.p1.y += sinr;
-        ta_primitive_push_line_3d(mesh, line_xy, TA_COLOR_WHITE, TA_COLOR_BLUE);
+        ta_primitive_push_line_3d(mesh, line_xy, TA_COLOR_BLUE, TA_COLOR_BLUE);
         line_xy.p0 = line_xy.p1;
     }
 
@@ -364,9 +397,9 @@ void ta_primitive_push_rgb_sphere(ta_mesh *mesh, ta_sphere sphere)
     line_xy.p1 = sphere.center;
     line_xy.p1.x += sphere.radius;
 
-    ta_primitive_push_line_3d(mesh, line_yz, TA_COLOR_WHITE, TA_COLOR_RED);
-    ta_primitive_push_line_3d(mesh, line_xz, TA_COLOR_WHITE, TA_COLOR_GREEN);
-    ta_primitive_push_line_3d(mesh, line_xy, TA_COLOR_WHITE, TA_COLOR_BLUE);
+    ta_primitive_push_line_3d(mesh, line_yz, TA_COLOR_RED, TA_COLOR_RED);
+    ta_primitive_push_line_3d(mesh, line_xz, TA_COLOR_GREEN, TA_COLOR_GREEN);
+    ta_primitive_push_line_3d(mesh, line_xy, TA_COLOR_BLUE, TA_COLOR_BLUE);
 }
 #undef SPHERE_SEG_RAD
 #undef SPHERE_SEGMENTS
@@ -626,19 +659,24 @@ void ta_primitive_push_axes_cube(ta_mesh *mesh, ta_vec3 position, float scale)
     ta_line_3d line;
     line.p0 = position;
 
-    float cube_radius = scale / 30.0f;
+    float cube_radius = scale / 20.0f;
+    float cube_extent = scale - cube_radius;
+    ta_vec3 cube_center;
 
     line.p1 = vec3_add(position, vec3_scalef(VEC3_X, scale));
     ta_primitive_push_line_3d(mesh, line, TA_COLOR_RED, TA_COLOR_RED);
-    ta_primitive_push_cube(mesh, line.p1, cube_radius, TA_COLOR_RED);
+    cube_center = vec3_add(line.p0, vec3_scalef(VEC3_X, cube_extent));
+    ta_primitive_push_cube(mesh, cube_center, cube_radius, TA_COLOR_RED);
 
     line.p1 = vec3_add(position, vec3_scalef(VEC3_Y, scale));
     ta_primitive_push_line_3d(mesh, line, TA_COLOR_GREEN, TA_COLOR_GREEN);
-    ta_primitive_push_cube(mesh, line.p1, cube_radius, TA_COLOR_GREEN);
+    cube_center = vec3_add(line.p0, vec3_scalef(VEC3_Y, cube_extent));
+    ta_primitive_push_cube(mesh, cube_center, cube_radius, TA_COLOR_GREEN);
 
     line.p1 = vec3_add(position, vec3_scalef(VEC3_Z, scale));
     ta_primitive_push_line_3d(mesh, line, TA_COLOR_BLUE, TA_COLOR_BLUE);
-    ta_primitive_push_cube(mesh, line.p1, cube_radius, TA_COLOR_BLUE);
+    cube_center = vec3_add(line.p0, vec3_scalef(VEC3_Z, cube_extent));
+    ta_primitive_push_cube(mesh, cube_center, cube_radius, TA_COLOR_BLUE);
 }
 
 void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, GLenum mode,
