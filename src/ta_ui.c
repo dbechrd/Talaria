@@ -1355,14 +1355,14 @@ void ta_ui_tooltip(const char *text, u32 text_len)
     tooltip_bg.rect.y = offset_y - 2.0f;
     tooltip_bg.rect.w = text_rect.w + 8.0f;
     tooltip_bg.rect.h = text_rect.h + 3.0f;
-    ta_primitive_push_rect_uv_q(&primitive_quads_tooltip_bg, tooltip_bg, TA_COLOR_GRAY3A,
+    ta_primitive_push_rect_uv(&primitive_quads_tooltip_bg, tooltip_bg, TA_COLOR_GRAY3A,
         UI_LAYER_TIP_BG, true, false);
 
     dlb_vec_each(ta_rect_uv *, rect, text_rects) {
         ta_rect_uv offset_rect = *rect;
         offset_rect.rect.x += offset_x;
         offset_rect.rect.y += offset_y;
-        ta_primitive_push_rect_uv_q(&primitive_quads_tooltip_fg, offset_rect,
+        ta_primitive_push_rect_uv(&primitive_quads_tooltip_fg, offset_rect,
             TA_COLOR_WHITE, UI_LAYER_TIP, true, false);
     }
     dlb_vec_zero(text_rects);
@@ -1388,28 +1388,32 @@ static void ui_render_window(ui_frame *frame)
     // Window background
     ta_rect bg_rect = frame->rect;
     bg_rect.w = frame->rect.w;
-    ta_primitive_push_rect(bg_rect, frame->bg_color[frame->state_type],
+    ta_primitive_push_rect(0, bg_rect, frame->bg_color[frame->state_type],
         UI_LAYER_EDIT_WINDOW_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+        true, false);
 }
 static void ui_render_panel(ui_frame *frame)
 {
     // Panel background
-    ta_primitive_push_rect(frame->rect, frame->bg_color[frame->state_type],
+    ta_primitive_push_rect(0, frame->rect, frame->bg_color[frame->state_type],
         UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+        true, false);
 }
 static void ui_render_button(ui_frame *frame)
 {
-    ta_primitive_push_rect(frame->rect, frame->bg_color[frame->state_type],
+    ta_primitive_push_rect(0, frame->rect, frame->bg_color[frame->state_type],
         UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+        true, false);
 }
 static void ui_render_toggle_button(ui_frame *frame)
 {
     ta_rgba bg_color = frame->bg_color[frame->state_type];
-    ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
+    ta_primitive_push_rect(0, frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+        true, false);
 }
 static void ui_render_image(ui_frame *frame)
 {
@@ -1419,8 +1423,9 @@ static void ui_render_image(ui_frame *frame)
             ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, frame->texture->gl_id);
             ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, frame->texture_face);
             ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
-            ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-            ta_primitive_render_quads(&primitive_quads, tg_shader_cubemap, true, false);
+            ta_primitive_push_rect(0, img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+            ta_primitive_render_mesh(&primitive_quads, tg_shader_quads,
+                TA_TRIANGLES, true, false);
             ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
         } else {
             ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
@@ -1428,8 +1433,9 @@ static void ui_render_image(ui_frame *frame)
             ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, frame->texture->gl_id);
             ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
-            ta_primitive_push_rect(img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-            ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
+            ta_primitive_push_rect(0, img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+            ta_primitive_render_mesh(&primitive_quads, tg_shader_quads,
+                TA_TRIANGLES, true, false);
             ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
         }
     }
@@ -1438,7 +1444,7 @@ static void ui_render_text(float x, float y, ta_rect_uv *text_rects)
 {
     if (dlb_vec_len(text_rects)) {
         dlb_vec_each(ta_rect_uv *, rect, text_rects) {
-            ta_primitive_push_rect_uv_q(&primitive_quads, *rect, TA_COLOR_WHITE, 0,
+            ta_primitive_push_rect_uv(&primitive_quads, *rect, TA_COLOR_WHITE, 0,
                 true, false);
         }
 
@@ -1451,9 +1457,10 @@ static void ui_render_label(ui_frame *frame)
     if (frame->bg_color[frame->state_type].a == 0.0f) {
         frame->bg_color[frame->state_type].a = TA_EPSILON;
     }
-    ta_primitive_push_rect(frame->rect, frame->bg_color[frame->state_type],
+    ta_primitive_push_rect(0, frame->rect, frame->bg_color[frame->state_type],
         UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+        true, false);
 
     // Render text
     float x = (float)frame->rect.x + frame->pad.x;
@@ -1464,8 +1471,9 @@ static void ui_render_textbox(ui_frame *frame)
 {
     // Render background
     ta_rgba bg_color = frame->bg_color[frame->state_type];
-    ta_primitive_push_rect(frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
+    ta_primitive_push_rect(0, frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+        true, false);
 
     // Render text
     int x = frame->rect.x + frame->pad.x;
@@ -1479,8 +1487,9 @@ static void ui_render_textbox(ui_frame *frame)
         cursor_rect.y = y + (int)frame->cursor.y + 1;
         cursor_rect.w = 1;
         cursor_rect.h = ui_font->line_height - 2;
-        ta_primitive_push_rect(cursor_rect, TA_COLOR_GRAY8, UI_LAYER_EDIT_2);
-        ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
+        ta_primitive_push_rect(0, cursor_rect, TA_COLOR_GRAY8, UI_LAYER_EDIT_2);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+            true, false);
     }
 }
 static void ui_render_scrollbars(ui_frame *frame)
@@ -1530,9 +1539,10 @@ static void ui_render_scrollbars(ui_frame *frame)
             widget_color = (ta_rgba){ 0.8f, 0.0f, 0.0f, 1.0f };
         }
 
-        ta_primitive_push_rect(scroll_v_rect, TA_COLOR_GRAY4, UI_LAYER_EDIT_1);
-        ta_primitive_push_rect(scroll_v_widget, widget_color, UI_LAYER_EDIT_1);
-        ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
+        ta_primitive_push_rect(0, scroll_v_rect, TA_COLOR_GRAY4, UI_LAYER_EDIT_1);
+        ta_primitive_push_rect(0, scroll_v_widget, widget_color, UI_LAYER_EDIT_1);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+            true, false);
 
         // Update scroll state for next frame
         if (!ta_mouse_captured()) {
@@ -1569,7 +1579,8 @@ static void ui_render_scrollbars(ui_frame *frame)
 }
 static void ui_render_tooltips()
 {
-    ta_primitive_render_quads(&primitive_quads_tooltip_bg, tg_shader_quads, true, false);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+        true, false);
     ta_font_render(&primitive_quads_tooltip_fg, ui_font, 0, 0, UI_LAYER_TIP, true, false);
 }
 #if 0

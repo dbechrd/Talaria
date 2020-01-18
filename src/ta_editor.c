@@ -1031,8 +1031,8 @@ static void ui_editor_sidebar()
 void ta_editor_draw_world()
 {
     // Grid and world axes
-    ta_primitive_push_grid(VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
-    ta_primitive_push_axes_arrow(VEC3_ZERO, 0.3f);
+    ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
+    ta_primitive_push_axes_arrow(0, VEC3_ZERO, 0.3f);
     ta_primitive_render(true, false);
 
     const char *selected_entity = ta_editor_selected_entity();
@@ -1070,7 +1070,7 @@ void ta_editor_draw_world()
 
         // Transform widget
         {
-            ta_primitive_push_axes_arrow(e_transform->xform.position, scale);
+            ta_primitive_push_axes_arrow(0, e_transform->xform.position, scale);
 
             //ta_vec3 center = { -35.0f, 3.0f, 0.0f };
             //ta_primitive_push_grid(vec3_add(center, VEC3_X), VEC3_X, 0.5f, 0.1f, TA_COLOR_RED);
@@ -1243,7 +1243,7 @@ void editor_command_select()
         ta_sphere t_sphere = { 0 };
         t_sphere.center = t_pos;
         t_sphere.radius = 0.1f;
-        ta_primitive_push_sphere(t_sphere, TA_COLOR_PINK);
+        ta_primitive_push_sphere(0, t_sphere, TA_COLOR_PINK);
     } else {
         //static const char *chamber_0001 = 0;
         //if (!chamber_0001) {

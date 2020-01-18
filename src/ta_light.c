@@ -297,8 +297,9 @@ void render_shadowmap_debug_directional(ta_light *light, int x, int y)
     rect.y = y;
     rect.w = resolution;
     rect.h = resolution;
-    ta_primitive_push_rect(rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-    ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, true);
+    ta_primitive_push_rect(0, rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+        true, true);
 
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 }
@@ -332,8 +333,9 @@ void render_shadowmap_debug_point(ta_light *light, int x, int y)
         rect.w = resolution;
         rect.h = resolution;
         ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, face);
-        ta_primitive_push_rect(rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-        ta_primitive_render_quads(&primitive_quads, tg_shader_cubemap, true, true);
+        ta_primitive_push_rect(0, rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_cubemap,
+            TA_TRIANGLES, true, true);
     }
 
     ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);

@@ -39,14 +39,14 @@ ta_camera:
   name: "freecam"
   entity_name: "freecam"
   position:
-    x: 0xBFB8E6F0 (-1.444548)
-    y: 0x406A9B34 (3.665723)
-    z: 0x411274AA (9.153482)
+    x: 0x416F6C90 (14.964005)
+    y: 0x40EF8DD8 (7.486065)
+    z: 0xC0197034 (-2.397473)
   position_smooth: 0x3DCCCCCD (0.100000)
   position_target_vel: 0x3E4CCCCF (0.200000)
-  yaw: 0x4271B6C6 (60.428490)
+  yaw: 0x42E90E37 (116.527763)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1999D91 (-19.201937)
+  pitch: 0xC1400889 (-12.002084)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -57,9 +57,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0x3E2635C9 (0.162315)
-    y: 0x3F71C1ED (0.944365)
-    z: 0xBE9275FC (-0.286056)
+    x: 0xBDBE35AC (-0.092876)
+    y: 0x3F7A6765 (0.978140)
+    z: 0xBE3E84FD (-0.186054)
 ta_camera:
   name: "player_one"
   entity_name: "player_one"
@@ -446,7 +446,7 @@ ta_transform:
   xform:
     position:
       x: 0xC134F153 (-11.308917)
-      y: 0xC676B9FB (-15790.495117)
+      y: 0xC68C0CA1 (-17926.314453)
       z: 0x40C3AD3D (6.114897)
     orientation:
       x: 0x00000000 (0.000000)
@@ -485,7 +485,7 @@ ta_transform:
   xform:
     position:
       x: 0x40928201 (4.578370)
-      y: 0xC676AFFB (-15787.995117)
+      y: 0xC68C07A1 (-17923.814453)
       z: 0x40968FEB (4.705068)
     orientation:
       x: 0x3E9202C9 (0.285177)
@@ -828,6 +828,18 @@ ta_mesh:
 ta_mesh:
   name: "star_0001"
   path: "data/mesh/star.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "rock_mesh"
   offset:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)

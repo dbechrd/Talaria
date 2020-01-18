@@ -70,7 +70,7 @@ void ta_ui_barchart_draw(ta_ui_barchart *chart, int x, int y)
         color1.r = cc.r;
         color1.g = cc.g;
         color1.b = cc.b;
-        ta_primitive_push_line_2d(line, color0, color1);
+        ta_primitive_push_line_2d(0, line, color0, color1);
     }
 
     chart->next_index = (chart->next_index + 1) % chart->sample_count;

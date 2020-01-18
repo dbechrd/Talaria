@@ -420,21 +420,17 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         ta_rigid_body_apply_impulse(a, a_resolve, ra);
         ta_rigid_body_apply_impulse(b, b_resolve, rb);
 
-        //-----------------------------
+#if 0
         // Debug rendering (resolution impulse)
-
-        //ta_vec3 a_impulse = vec3_scalef(a_resolve, a->inv_mass);
-        //ta_line_3d dbg_impulse_a;
-        //dbg_impulse_a.p0 = manifold->contacts[i];
-        //dbg_impulse_a.p1 = vec3_add(manifold->contacts[i], a_impulse);
-        //ta_primitive_push_line_3d_q(&primitive_lines_perma, dbg_impulse_a, TA_COLOR_MAGENTA, TA_COLOR_MAGENTA);
-        //
-        //ta_vec3 b_impulse = vec3_scalef(b_resolve, b->inv_mass);
-        //ta_line_3d dbg_impulse_b;
-        //dbg_impulse_b.p0 = manifold->contacts[i];
-        //dbg_impulse_b.p1 = vec3_add(manifold->contacts[i], b_impulse);
-        //ta_primitive_push_line_3d_q(&primitive_lines_perma, dbg_impulse_b, TA_COLOR_CYAN, TA_COLOR_CYAN);
-        //-----------------------------
+        if (a->inv_mass) {
+            ta_vec3 a_impulse = vec3_scalef(a_resolve, a->inv_mass);
+            ta_primitive_push_arrow(0, manifold->contacts[i], a_impulse, TA_COLOR_MAGENTA);
+        }
+        if (b->inv_mass) {
+            ta_vec3 b_impulse = vec3_scalef(b_resolve, b->inv_mass);
+            ta_primitive_push_arrow(0, manifold->contacts[i], b_impulse, TA_COLOR_CYAN);
+        }
+#endif
 
         // Randy's Coloumb friction
         // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-friction-scene-and-jump-table--gamedev-7756
@@ -471,24 +467,10 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
             //-----------------------------
             // Debug rendering (friction impulse)
             if (a->inv_mass) {
-                ta_line_3d dbg_friction_a = { 0 };
-                dbg_friction_a.p0 = manifold->contacts[i];
-                dbg_friction_a.p1 = vec3_add(manifold->contacts[i], a_friction);
-                ta_primitive_push_line_3d(dbg_friction_a, TA_COLOR_RED, TA_COLOR_RED);
-                ta_sphere dbg_friction_a_cone = { 0 };
-                dbg_friction_a_cone.center = dbg_friction_a.p1;
-                dbg_friction_a_cone.radius = 0.01f;
-                ta_primitive_push_sphere(dbg_friction_a_cone, TA_COLOR_RED);
+                ta_primitive_push_arrow(0, manifold->contacts[i], a_friction, TA_COLOR_RED);
             }
             if (b->inv_mass) {
-                ta_line_3d dbg_friction_b = { 0 };
-                dbg_friction_b.p0 = manifold->contacts[i];
-                dbg_friction_b.p1 = vec3_add(manifold->contacts[i], b_friction);
-                ta_primitive_push_line_3d(dbg_friction_b, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                ta_sphere dbg_friction_b_cone = { 0 };
-                dbg_friction_b_cone.center = dbg_friction_b.p1;
-                dbg_friction_b_cone.radius = 0.01f;
-                ta_primitive_push_sphere(dbg_friction_b_cone, TA_COLOR_GREEN);
+                ta_primitive_push_arrow(0, manifold->contacts[i], b_friction, TA_COLOR_GREEN);
             }
             //-----------------------------
         }

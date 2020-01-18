@@ -193,19 +193,19 @@ ta_aabb ta_collider_world_bounds(ta_collider *collider, ta_xform *xform)
     return result;
 }
 
-void ta_collider_render(ta_collider *collider, ta_rgba color)
+void ta_collider_push(ta_collider *collider, ta_rgba color)
 {
     switch (collider->type) {
         case TA_COLLIDER_PLANE: {
             // TODO: When would we ever actually need an infinite plane collider?
             // These should probably be OBBs or quads (mesh colliders) instead.
-            ta_primitive_push_plane(collider->data.plane, 30.0f, color);
+            ta_primitive_push_plane(0, collider->data.plane, 30.0f, color);
             break;
         } case TA_COLLIDER_SPHERE: {
-            ta_primitive_push_sphere(collider->data.sphere, color);
+            ta_primitive_push_sphere(0, collider->data.sphere, color);
             break;
         } case TA_COLLIDER_OBB: {
-            ta_primitive_push_obb(collider->data.obb, color);
+            ta_primitive_push_obb(0, collider->data.obb, color);
             break;
         } default: {
             DLB_ASSERT(!"Don't know how to render this collider type");

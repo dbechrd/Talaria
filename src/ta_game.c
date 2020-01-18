@@ -476,7 +476,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
     ta_font_push_text(&frame_time_rects, font, CSTR(frame_info), true, 0, 0, 0);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
-        ta_primitive_push_rect_uv(*rect, TA_COLOR_WHITE, 0, true, false);
+        ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, 0, true, false);
     }
     dlb_vec_zero(frame_time_rects);
 
@@ -676,57 +676,54 @@ static void game_render_manifolds_debug()
             ta_sphere dbg_contact_world;
             dbg_contact_world.center = manifold->contacts[i];
             dbg_contact_world.radius = radius;
-            ta_primitive_push_sphere(dbg_contact_world, TA_COLOR_DARK_RED);
+            ta_primitive_push_sphere(0, dbg_contact_world, TA_COLOR_DARK_RED);
             ta_line_3d dbg_contact_normal;
             dbg_contact_normal.p0 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, radius));
             dbg_contact_normal.p1 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, 1.0f - radius));
-            ta_primitive_push_line_3d(dbg_contact_normal, TA_COLOR_DARK_RED, TA_COLOR_DARK_RED);
+            ta_primitive_push_line_3d(0, dbg_contact_normal, TA_COLOR_DARK_RED, TA_COLOR_DARK_RED);
         }
     }
 }
 static void game_render_colliders_debug()
 {
     ta_rigid_body *rigid_bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
+
+    // Local space
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
-        ta_transform *transform = ta_game_component_try(body->entity_name,
-            RES_COMP_TRANSFORM);
-        if (transform) {
-            ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
-            ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->model);
+        ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->model);
 
-            // Local space
-            ta_sphere centroid_local = { 0 };
-            centroid_local.center = body->centroid_local;
-            centroid_local.radius = 0.05f;
-            ta_primitive_push_sphere(centroid_local, TA_COLOR_MAGENTA);
+        ta_sphere centroid_local = { 0 };
+        centroid_local.center = body->centroid_local;
+        centroid_local.radius = 0.06f;
+        ta_primitive_push_sphere(0, centroid_local, TA_COLOR_GREEN);
 
-            ta_rgba narrowphase_color = body->dbg_narrowphase ? TA_COLOR_MAGENTA : TA_COLOR_ORANGE;
-            ta_collider_render(&body->collider, narrowphase_color);
-
-            ta_primitive_render(true, false);
-
-            // World space
-            ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-            ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
-
-            ta_sphere local_origin = { 0 };
-            local_origin.center = transform->xform.position;
-            local_origin.radius = 0.04f;
-            ta_primitive_push_sphere(local_origin, TA_COLOR_PINK);
-
-            ta_sphere centroid_global = { 0 };
-            centroid_global.center = body->centroid_global;
-            centroid_global.radius = 0.1f;
-            ta_primitive_push_sphere(centroid_global, TA_COLOR_CYAN);
-
-            ta_rgba broadphase_color = body->dbg_broadphase ? TA_COLOR_RED : TA_COLOR_GRAY4;
-            ta_primitive_push_aabb(body->aabb, broadphase_color);
-
-            ta_primitive_render(true, false);
-        } else {
-            DLB_ASSERT(transform && "Not valid to have a rigid_body without a transform");
-        }
+        ta_rgba narrowphase_color = body->dbg_narrowphase ? TA_COLOR_MAGENTA : TA_COLOR_ORANGE;
+        ta_collider_push(&body->collider, narrowphase_color);
+        ta_primitive_render(true, false);
     }
+
+    // World space
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+    dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
+        ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+
+        ta_sphere local_origin = { 0 };
+        local_origin.center = transform->xform.position;
+        local_origin.radius = 0.04f;
+        ta_primitive_push_sphere(0, local_origin, TA_COLOR_PINK);
+
+        ta_sphere centroid_global = { 0 };
+        centroid_global.center = body->centroid_global;
+        centroid_global.radius = 0.08f;
+        ta_primitive_push_sphere(0, centroid_global, TA_COLOR_BLUE);
+
+        ta_rgba broadphase_color = body->dbg_broadphase ? TA_COLOR_RED : TA_COLOR_GRAY4;
+        ta_primitive_push_aabb(0, body->aabb, broadphase_color);
+    }
+    ta_primitive_render(true, false);
 }
 static void game_render_nametags_debug(ta_camera *camera)
 {
@@ -777,9 +774,10 @@ static void game_render_nametags_debug(ta_camera *camera)
         tag_background.rect.x -= NDC_W(5.0f);
         tag_background.rect.w = NDC_W(tag_rect.w) + NDC_W(10.0f);
         tag_background.rect.h = NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
-        ta_primitive_push_rect_uv(tag_background, TA_COLOR_DARK_RED, UI_LAYER_HUD_BG,
-            false, false);
-        ta_primitive_render_quads(&primitive_quads, tg_shader_quads, true, false);
+        ta_primitive_push_rect_uv(0, tag_background, TA_COLOR_DARK_RED,
+            UI_LAYER_HUD_BG, false, false);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+            true, false);
         ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
         // Name tag text
@@ -792,8 +790,8 @@ static void game_render_nametags_debug(ta_camera *camera)
         //       make font_render's xform arguments stack with current value
         //       of SYM_U_MODEL.
         dlb_vec_each(ta_rect_uv *, rect, tag_rects) {
-            ta_primitive_push_rect_uv(*rect, TA_COLOR_WHITE, UI_LAYER_HUD, true,
-                true);
+            ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, UI_LAYER_HUD,
+                true, true);
         }
         dlb_vec_zero(tag_rects);
         ta_font_render(&primitive_quads, font, 0, 0, 0, true, false);
@@ -919,7 +917,8 @@ void ta_game_loop()
 
         // Dump any prims from the collision pass
         game_render_manifolds_debug();
-        ta_primitive_render_lines(&primitive_lines_perma, tg_shader_lines, false, false);
+        ta_primitive_render_mesh(&primitive_lines_perma, tg_shader_lines,
+            TA_LINES, false, false);
         ta_primitive_render(true, false);
 
         if (active_camera->debug_wireframe) {
@@ -936,7 +935,6 @@ void ta_game_loop()
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
-        // Dump any prims from render pass
         ta_primitive_render(true, false);
 
         // Debug render cameras as RGB spheres
@@ -945,7 +943,7 @@ void ta_game_loop()
                 ta_sphere sphere = { 0 };
                 sphere.center = camera->position;
                 sphere.radius = 0.2f;
-                ta_primitive_push_rgb_sphere(sphere);
+                ta_primitive_push_rgb_sphere(0, sphere);
                 //ta_primitive_push_sphere(sphere, TA_COLOR_GREEN);
             }
         }
@@ -967,13 +965,13 @@ void ta_game_loop()
                 color.g = light->data.common.color.g;
                 color.b = light->data.common.color.b;
             }
-            ta_primitive_push_sphere(light_pos, color);
+            ta_primitive_push_sphere(0, light_pos, color);
 
             if (active_camera->debug_colliders) {
                 ta_sphere light_aoe = { 0 };
                 light_aoe.center = transform->xform.position;
                 light_aoe.radius = light->shadowmap.zfar;
-                ta_primitive_push_sphere(light_aoe, color);
+                ta_primitive_push_sphere(0, light_aoe, color);
             }
         }
         ta_primitive_render(true, false);
@@ -1000,7 +998,7 @@ void ta_game_loop()
         // Crosshair
         //----------------------------------------------------------------------
         glClear(GL_DEPTH_BUFFER_BIT);
-        ta_primitive_push_crosshair(10, 2);
+        ta_primitive_push_crosshair(0, 10, 2);
         ta_primitive_render(true, true);
 
         //----------------------------------------------------------------------
