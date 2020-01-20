@@ -1003,6 +1003,41 @@ void ta_game_loop()
             game_render_colliders_debug();
         }
 
+        //-----------------
+#if 0
+        static ta_ray ray = { 0 };
+        if (vec3_zero(ray.origin)) {
+            //ray.origin.x = 0.59f;
+            //ray.origin.y = 0.36f;
+            //ray.origin.z = 0.46f;
+            ray.origin.y = 2.0f;
+            ray.origin.z = 1.2f;
+            ray.direction.x = 0.2f;
+            ray.direction.y = 0.2f;
+            ray.direction.z = -1.0f;
+            ray.direction = vec3_normalize(ray.direction);
+        }
+        static ta_quad quad = { 0 };
+        if (vec4_zero(quad.orientation)) {
+            quad.center.y = 2.0f;
+            quad.extents = (ta_vec2){ 1.5f, 0.5f };
+            quad.orientation = QUAT_IDENT;
+        }
+        ta_primitive_push_arrow(0, ray.origin, ray.direction, TA_COLOR_RED);
+        float ray_t = 0.0f;
+        if (ta_ray_v_quad(&ray, &quad, &ray_t)) {
+            ta_primitive_push_quad(0, quad, TA_COLOR_DARK_RED);
+            ta_sphere contact = { 0 };
+            contact.center = vec3_add(ray.origin, vec3_scalef(ray.direction, ray_t));
+            contact.radius = 0.05f;
+            ta_primitive_push_sphere(0, contact, TA_COLOR_YELLOW);
+        } else {
+            ta_primitive_push_quad(0, quad, TA_COLOR_DARK_REDA);
+        }
+        ta_primitive_render(true, false);
+#endif
+        //-----------------
+
         //----------------------------------------------------------------------
         // Editor UI (world)
         //----------------------------------------------------------------------
@@ -1084,24 +1119,30 @@ void ta_game_loop()
         //--------------------------------------------
 #if 0
         static ta_ui_window_state window = { 0 };
-        ta_ui_window_begin(INTERN("test_window"), &window, TA_UI_AUTOSIZE);
-        ta_ui_textbox_vec3_state tb3[4] = { 0 };
-        ta_ui_textbox_vec4_state tb4 = { 0 };
+        u32 flags = TA_UI_AUTOSIZE;
+        ta_ui_window_begin(&window, flags);
+        static ta_ui_textbox_vec3_state tb3[4] = { 0 };
         ta_ui_row_begin();
-        ta_ui_label(0, CSTR("ray.origin     "));
+        ta_ui_label(CSTR("ray.origin      "));
         ta_ui_textbox_vec3(&ray.origin, &tb3[0], 0, 0, 0);
         ta_ui_row_begin();
-        ta_ui_label(0, CSTR("ray.direction  "));
+        ta_ui_label(CSTR("ray.direction   "));
         ta_ui_textbox_vec3(&ray.direction, &tb3[1], 0, 0, 0);
         ta_ui_row_begin();
-        ta_ui_label(0, CSTR("obb.center     "));
-        ta_ui_textbox_vec3(&obb.center, &tb3[2], 0, 0, 0);
+        ta_ui_label(CSTR("quad.center     "));
+        ta_ui_textbox_vec3(&quad.center, &tb3[2], 0, 0, 0);
+        static ta_ui_textbox_vec2_state tb2 = { 0 };
         ta_ui_row_begin();
-        ta_ui_label(0, CSTR("obb.extents    "));
-        ta_ui_textbox_vec3(&obb.extents, &tb3[3], 0, 0, 0);
+        ta_ui_label(CSTR("quad.extents    "));
+        ta_ui_textbox_vec2(&quad.extents, &tb2, 0, 0, 0);
+        static ta_ui_textbox_vec4_state tb4 = { 0 };
         ta_ui_row_begin();
-        ta_ui_label(0, CSTR("obb.orientation"));
-        ta_ui_textbox_vec4(&obb.orientation, &tb4, 1, 0, 0);
+        ta_ui_label(CSTR("quad.orientation"));
+        ta_ui_textbox_vec4(&quad.orientation, &tb4, 1, 0, 0);
+        static ta_ui_textbox_state tb = { 0 };
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("ray_t           "));
+        ta_ui_textbox_float(&ray_t, &tb, TA_UI_AUTOSIZE);
         ta_ui_window_end();
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_ui_render();

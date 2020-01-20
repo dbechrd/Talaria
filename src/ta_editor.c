@@ -39,6 +39,10 @@ typedef enum editor_widget_drag_axis {
     EDITOR_WIDGET_DRAG_X,
     EDITOR_WIDGET_DRAG_Y,
     EDITOR_WIDGET_DRAG_Z,
+    EDITOR_WIDGET_DRAG_YZ,
+    EDITOR_WIDGET_DRAG_XZ,
+    EDITOR_WIDGET_DRAG_XY,
+    EDITOR_WIDGET_DRAG_VIEW,
 } editor_widget_drag_axis;
 
 typedef enum editor_command {
@@ -1150,121 +1154,289 @@ void ta_editor_draw_world()
             RES_COMP_TRANSFORM);
         float dist = vec3_len(vec3_sub(cam_trans->xform.position,
             e_transform->xform.position));
-        float scale = MAX(1.0f, dist * 0.1f);
+        float scale = dist * 0.2f;
 
         switch (editor.widget) {
             case EDITOR_WIDGET_TRANSLATE: {
-                ta_vec3 normal = vec3_sub(cam_trans->xform.position, e_transform->xform.position);
+                // TODO: Would ray_vs_line_closest() be a better way to check this?
                 ta_plane plane = { 0 };
                 plane.center = e_transform->xform.position;
 
                 switch (editor.widget_drag_axis) {
                     case EDITOR_WIDGET_DRAG_X: {
-                        normal.x = 0.0f;
-                        normal = vec3_normalize(normal);
-                        plane.normal = normal;
+                        plane.normal.y = cam_trans->xform.position.y - e_transform->xform.position.y;
+                        plane.normal.z = cam_trans->xform.position.z - e_transform->xform.position.z;
+                        plane.normal = vec3_normalize(plane.normal);
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
                             ta_vec3 contact = { 0 };
-                            contact = vec3_scalef(ray.direction, t);
-                            e_transform->xform.position.x = contact.x + cam_trans->xform.position.x;
+                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            e_transform->xform.position.x = contact.x - scale * 0.5f;
                             if (editor.widget_snap_to_grid) {
                                 e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
                             }
                         }
                         break;
                     } case EDITOR_WIDGET_DRAG_Y: {
-                        normal.y = 0.0f;
-                        normal = vec3_normalize(normal);
-                        plane.normal = normal;
+                        plane.normal.x = cam_trans->xform.position.x - e_transform->xform.position.x;
+                        plane.normal.z = cam_trans->xform.position.z - e_transform->xform.position.z;
+                        plane.normal = vec3_normalize(plane.normal);
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
                             ta_vec3 contact = { 0 };
-                            contact = vec3_scalef(ray.direction, t);
-                            e_transform->xform.position.y = contact.y + cam_trans->xform.position.y;
+                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            e_transform->xform.position.y = contact.y - scale * 0.5f;
                             if (editor.widget_snap_to_grid) {
                                 e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
                             }
                         }
                         break;
                     } case EDITOR_WIDGET_DRAG_Z: {
-                        normal.z = 0.0f;
-                        normal = vec3_normalize(normal);
-                        plane.normal = normal;
+                        plane.normal.x = cam_trans->xform.position.x - e_transform->xform.position.x;
+                        plane.normal.y = cam_trans->xform.position.y - e_transform->xform.position.y;
+                        plane.normal = vec3_normalize(plane.normal);
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
                             ta_vec3 contact = { 0 };
-                            contact = vec3_scalef(ray.direction, t);
-                            e_transform->xform.position.z = contact.z + cam_trans->xform.position.z;
+                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            e_transform->xform.position.z = contact.z - scale * 0.5f;
                             if (editor.widget_snap_to_grid) {
                                 e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
                             }
                         }
                         break;
+                    } case EDITOR_WIDGET_DRAG_YZ: {
+                        plane.normal.x = 1.0f;
+
+                        float t;
+                        if (ta_ray_v_plane(&ray, &plane, &t)) {
+                            ta_vec3 contact = { 0 };
+                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            e_transform->xform.position.y = contact.y - scale * 0.5f;
+                            e_transform->xform.position.z = contact.z - scale * 0.5f;
+                            if (editor.widget_snap_to_grid) {
+                                e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
+                                e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
+                            }
+                        }
+                        break;
+                    } case EDITOR_WIDGET_DRAG_XZ: {
+                        plane.normal.y = 1.0f;
+
+                        float t;
+                        if (ta_ray_v_plane(&ray, &plane, &t)) {
+                            ta_vec3 contact = { 0 };
+                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            e_transform->xform.position.x = contact.x - scale * 0.5f;
+                            e_transform->xform.position.z = contact.z - scale * 0.5f;
+                            if (editor.widget_snap_to_grid) {
+                                e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
+                                e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
+                            }
+                        }
+                        break;
+                    } case EDITOR_WIDGET_DRAG_XY: {
+                        plane.normal.z = 1.0f;
+
+                        float t;
+                        if (ta_ray_v_plane(&ray, &plane, &t)) {
+                            ta_vec3 contact = { 0 };
+                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            e_transform->xform.position.x = contact.x - scale * 0.5f;
+                            e_transform->xform.position.y = contact.y - scale * 0.5f;
+                            if (editor.widget_snap_to_grid) {
+                                e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
+                                e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
+                            }
+                        }
+                        break;
+                    } case EDITOR_WIDGET_DRAG_VIEW: {
+                        plane.normal = vec3_neg(ray.direction);
+                        plane.normal = vec3_normalize(plane.normal);
+
+                        float t;
+                        if (ta_ray_v_plane(&ray, &plane, &t)) {
+                            ta_vec3 contact = { 0 };
+                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            ta_sphere cs = { 0 };
+                            cs.center = contact;
+                            cs.radius = 0.1f;
+                            ta_primitive_push_sphere(0, cs, TA_COLOR_YELLOW);
+                            //e_transform->xform.position.x = contact.x - scale * 0.5f;
+                            //e_transform->xform.position.y = contact.y - scale * 0.5f;
+                            //e_transform->xform.position.z = contact.z - scale * 0.5f;
+                            //if (editor.widget_snap_to_grid) {
+                            //    e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
+                            //    e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
+                            //    e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
+                            //}
+                        }
+                        break;
                     }
                 }
                 if (editor.widget_drag_axis) {
-                    ta_primitive_push_grid(0, plane.center, plane.normal, 2.0f, 0.5f, TA_COLOR_YELLOW);
+                    ta_primitive_push_grid(0, plane.center, plane.normal, 4.0f, 1.0f, TA_COLOR_YELLOW);
                 }
 
-                ta_primitive_push_axes_arrow(0, e_transform->xform.position, scale);
+                // Push translate widget
+                {
+                    // x, y, z arrows
+                    ta_primitive_push_axes_arrow(0, e_transform->xform.position, scale);
 
-                float half_scale = scale * 0.5f;
-                float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE;
+                    // yz, xz, xy planes
 
-                ta_aabb hitbox[3] = { 0 };
-                hitbox[0].extents.x = half_scale;
-                hitbox[0].extents.y = radius;
-                hitbox[0].extents.z = radius;
-                hitbox[0].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_X, half_scale));
-                hitbox[1].extents.x = radius;
-                hitbox[1].extents.y = half_scale;
-                hitbox[1].extents.z = radius;
-                hitbox[1].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Y, half_scale));
-                hitbox[2].extents.x = radius;
-                hitbox[2].extents.y = radius;
-                hitbox[2].extents.z = half_scale;
-                hitbox[2].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Z, half_scale));
+                }
 
-                if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
+                // Hitbox midpoint
+                float midpoint = scale * 0.6f;
+                float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
+
+                // One-axis arrow handles
+                ta_aabb hitbox1d[3] = { 0 };
+                hitbox1d[0].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_X, midpoint));
+                hitbox1d[0].extents.x = scale - midpoint;
+                hitbox1d[0].extents.y = radius;
+                hitbox1d[0].extents.z = radius;
+
+                hitbox1d[1].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Y, midpoint));
+                hitbox1d[1].extents.x = radius;
+                hitbox1d[1].extents.y = scale - midpoint;
+                hitbox1d[1].extents.z = radius;
+
+                hitbox1d[2].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Z, midpoint));
+                hitbox1d[2].extents.x = radius;
+                hitbox1d[2].extents.y = radius;
+                hitbox1d[2].extents.z = scale - midpoint;
+
+                // Two-axis plane handles
+                ta_quad hitbox2d[3] = { 0 };
+                hitbox2d[0].center = e_transform->xform.position;
+                hitbox2d[0].center.y += midpoint;
+                hitbox2d[0].center.z += midpoint;
+                hitbox2d[0].extents.x = radius;
+                hitbox2d[0].extents.y = radius;
+                hitbox2d[0].orientation = quat_from_axis_angle(VEC3_Y, 90.0f);
+
+                hitbox2d[1].center = e_transform->xform.position;
+                hitbox2d[1].center.x += midpoint;
+                hitbox2d[1].center.z += midpoint;
+                hitbox2d[1].extents.x = radius;
+                hitbox2d[1].extents.y = radius;
+                hitbox2d[1].orientation = quat_from_axis_angle(VEC3_X, -90.0f);
+
+                hitbox2d[2].center = e_transform->xform.position;
+                hitbox2d[2].center.x += midpoint;
+                hitbox2d[2].center.y += midpoint;
+                hitbox2d[2].extents.x = radius;
+                hitbox2d[2].extents.y = radius;
+                hitbox2d[2].orientation = QUAT_IDENT;
+
+                // Three-axis view-plane handle
+                ta_aabb hitbox3d = { 0 };
+                hitbox3d.center = e_transform->xform.position;
+                hitbox3d.extents.x = radius;
+                hitbox3d.extents.y = radius;
+                hitbox3d.extents.z = radius;
+
+                if (ta_mouse_captured() && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
                     float t;
                     float t_min = FLT_MAX;
                     for (int i = 0; i < 3; ++i) {
-                        if (ta_ray_v_obb(&ray, &hitbox[i], &t) && t < t_min) {
+                        if (ta_ray_v_aabb(&ray, &hitbox1d[i], &t) && t < t_min) {
                             t_min = t;
                             editor.widget_drag_axis = EDITOR_WIDGET_DRAG_X + i;
                         }
+                    }
+
+                    for (int i = 0; i < 3; ++i) {
+                        if (ta_ray_v_quad(&ray, &hitbox2d[i], &t) && t < t_min) {
+                            t_min = t;
+                            editor.widget_drag_axis = EDITOR_WIDGET_DRAG_YZ + i;
+                        }
+                    }
+
+                    if (ta_ray_v_aabb(&ray, &hitbox3d, &t) && t < t_min) {
+                        t_min = t;
+                        editor.widget_drag_axis = EDITOR_WIDGET_DRAG_VIEW;
                     }
                 } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
                     editor.widget_drag_axis = EDITOR_WIDGET_DRAG_NONE;
                 }
 
+                ta_line_3d x_axis = { 0 };
+                x_axis.p0 = e_transform->xform.position;
+                x_axis.p1 = e_transform->xform.position;
+                x_axis.p0.x = cam_trans->xform.position.x - 10000.0f;
+                x_axis.p1.x = cam_trans->xform.position.x + 10000.0f;
+
+                ta_line_3d y_axis = { 0 };
+                y_axis.p0 = e_transform->xform.position;
+                y_axis.p1 = e_transform->xform.position;
+                y_axis.p0.y = cam_trans->xform.position.y - 10000.0f;
+                y_axis.p1.y = cam_trans->xform.position.y + 10000.0f;
+
+                ta_line_3d z_axis = { 0 };
+                z_axis.p0 = e_transform->xform.position;
+                z_axis.p1 = e_transform->xform.position;
+                z_axis.p0.z = cam_trans->xform.position.z - 10000.0f;
+                z_axis.p1.z = cam_trans->xform.position.z + 10000.0f;
+
                 if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_X) {
-                    ta_primitive_push_aabb(0, hitbox[0], TA_COLOR_RED);
+                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                    ta_primitive_push_aabb(0, hitbox1d[0], TA_COLOR_RED);
                 } else {
-                    ta_primitive_push_aabb(0, hitbox[0], TA_COLOR_GRAY3A);
+                    ta_primitive_push_aabb(0, hitbox1d[0], TA_COLOR_GRAY8);
                 }
 
                 if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_Y) {
-                    ta_primitive_push_aabb(0, hitbox[1], TA_COLOR_GREEN);
+                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                    ta_primitive_push_aabb(0, hitbox1d[1], TA_COLOR_GREEN);
                 } else {
-                    ta_primitive_push_aabb(0, hitbox[1], TA_COLOR_GRAY3A);
+                    ta_primitive_push_aabb(0, hitbox1d[1], TA_COLOR_GRAY8);
                 }
 
                 if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_Z) {
-                    ta_primitive_push_aabb(0, hitbox[2], TA_COLOR_BLUE);
+                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                    ta_primitive_push_aabb(0, hitbox1d[2], TA_COLOR_BLUE);
                 } else {
-                    ta_primitive_push_aabb(0, hitbox[2], TA_COLOR_GRAY3A);
+                    ta_primitive_push_aabb(0, hitbox1d[2], TA_COLOR_GRAY8);
                 }
 
-                // TODO: multi-axis drag handles
-                //ta_vec3 center = { -35.0f, 3.0f, 0.0f };
-                //ta_primitive_push_grid(vec3_add(center, VEC3_X), VEC3_X, 0.5f, 0.1f, TA_COLOR_RED);
-                //ta_primitive_push_grid(vec3_add(center, VEC3_Y), VEC3_Y, 0.5f, 0.1f, TA_COLOR_GREEN);
-                //ta_primitive_push_grid(vec3_add(center, VEC3_Z), VEC3_Z, 0.5f, 0.1f, TA_COLOR_BLUE);
+                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_YZ) {
+                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                    ta_primitive_push_quad(0, hitbox2d[0], TA_COLOR_CYAN);
+                } else {
+                    ta_primitive_push_quad(0, hitbox2d[0], TA_COLOR_GRAY8);
+                }
+
+                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_XZ) {
+                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                    ta_primitive_push_quad(0, hitbox2d[1], TA_COLOR_MAGENTA);
+                } else {
+                    ta_primitive_push_quad(0, hitbox2d[1], TA_COLOR_GRAY8);
+                }
+
+                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_XY) {
+                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                    ta_primitive_push_quad(0, hitbox2d[2], TA_COLOR_YELLOW);
+                } else {
+                    ta_primitive_push_quad(0, hitbox2d[2], TA_COLOR_GRAY8);
+                }
+
+                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_VIEW) {
+                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                    ta_primitive_push_aabb(0, hitbox3d, TA_COLOR_WHITE);
+                } else {
+                    ta_primitive_push_aabb(0, hitbox3d, TA_COLOR_GRAY8);
+                }
                 break;
             } case EDITOR_WIDGET_ROTATE: {
                 ta_sphere sphere = { 0 };
@@ -1281,8 +1453,7 @@ void ta_editor_draw_world()
         ta_primitive_render(true, false);
     }
 
-    //if (!editor.widget_drag_axis && ta_mouse_captured())
-    if (!editor.widget_drag_axis && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT))
+    if (!editor.widget_drag_axis && ta_mouse_captured() && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT))
     {
         float t = 0.0f;
         float t_min = FLT_MAX;

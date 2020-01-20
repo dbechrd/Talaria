@@ -454,11 +454,11 @@ static void ui_frame_begin(ui_frame_type type, void *data, u32 flags)
 static ui_frame *ui_frame_end(ui_frame_type type)
 {
     ui_frame *frame = 0;
-    for (frame = dlb_vec_last(ui_frames); frame != ui_frames; --frame) {
-        if (frame->type == type &&
-            !(frame->internal_flags & TA_UI_CONTAINER_ENDED))
+    for (ui_frame *frm = dlb_vec_last(ui_frames); frm != ui_frames; --frm) {
+        if (frm->type == type &&
+            !(frm->internal_flags & TA_UI_CONTAINER_ENDED))
         {
-            frame = frame;
+            frame = frm;
             break;
         }
     }
@@ -1219,6 +1219,42 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
     frame->cursor = cursor;
     return frame->data.textbox->submit;
 }
+void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state,
+    bool normalize, bool multiple_rows, bool reset_button)
+{
+    DLB_ASSERT(vec);
+    DLB_ASSERT(vec_state);
+
+    ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_panel_begin(&vec_state->panel_state, TA_UI_AUTOSIZE);
+    if (!multiple_rows) ta_ui_row_begin();
+
+    const char *labels[2] = { "x:", "y:" };
+    float *components = (float *)vec;
+    for (int i = 0; i < 2; ++i) {
+        if (multiple_rows) ta_ui_row_begin();
+
+        ta_ui_label(CSTR(labels[i]));
+        ta_ui_textbox_state *state = &vec_state->textbox_states[i];
+        ta_ui_textbox_float(&components[i], state, 0);
+
+        if ((reset_button && multiple_rows && i == 0) ||
+            (reset_button && !multiple_rows && i == 1)) {
+            ta_ui_next_margin(6, 1, 0, 1);
+            ta_rgba c = TA_COLOR_DARK_RED;
+            ta_ui_next_bg_color(UI_STATE_NONE, c.r, c.g, c.b, c.a);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.8f, 0.0f, 0.0f, 0.9f);
+            if (ta_ui_button(CSTR("Reset"))) {
+                *vec = VEC2_ZERO;
+            }
+        }
+    }
+    if (normalize) {
+        *vec = vec2_normalize(*vec);
+    }
+
+    ta_ui_panel_end();
+}
 void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
     bool normalize, bool multiple_rows, bool reset_button)
 {
@@ -1625,7 +1661,7 @@ void ta_ui_render()
     ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
     glClear(GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_SCISSOR_TEST);
+    //glEnable(GL_SCISSOR_TEST);
 
     ta_vec2i scroll_offset = { 0 };
 

@@ -29,6 +29,7 @@ void ta_primitive_push_line_2d(struct ta_mesh *mesh, ta_line_2d line_2d,
     ta_rgba color0, ta_rgba color1);
 void ta_primitive_push_line_3d(struct ta_mesh *mesh, ta_line_3d line_3d,
     ta_rgba color0, ta_rgba color1);
+void ta_primitive_push_quad(struct ta_mesh *mesh, ta_quad quad, ta_rgba color);
 void ta_primitive_push_rect(struct ta_mesh *mesh, ta_rect rect, ta_rgba color,
     float z);
 void ta_primitive_push_rect_uv(struct ta_mesh *mesh, ta_rect_uv rect_uv,

@@ -109,10 +109,11 @@ void ta_primitive_push_line_2d(ta_mesh *mesh, ta_line_2d line2d, ta_rgba color0,
     p1.x = NDC_X(line2d.p1.x);
     p1.y = NDC_Y(line2d.p1.y);
 
-    dlb_vec_push(primitive_lines.positions, p0);
-    dlb_vec_push(primitive_lines.positions, p1);
-    dlb_vec_push(primitive_lines.colors, color0);
-    dlb_vec_push(primitive_lines.colors, color1);
+    if (!mesh) mesh = &primitive_lines;
+    dlb_vec_push(mesh->positions, p0);
+    dlb_vec_push(mesh->positions, p1);
+    dlb_vec_push(mesh->colors, color0);
+    dlb_vec_push(mesh->colors, color1);
 }
 // TODO: Take p0 and p1
 void ta_primitive_push_line_3d(ta_mesh *mesh, ta_line_3d line3d,
@@ -123,6 +124,53 @@ void ta_primitive_push_line_3d(ta_mesh *mesh, ta_line_3d line3d,
     dlb_vec_push(mesh->positions, line3d.p1);
     dlb_vec_push(mesh->colors, color0);
     dlb_vec_push(mesh->colors, color1);
+}
+void ta_primitive_push_quad(ta_mesh *mesh, ta_quad quad, ta_rgba color)
+{
+    if (!mesh) mesh = &primitive_quads;
+    // v3 _______ v2
+    //    |    /|
+    //    |  /  |
+    //    |/____|
+    // v0         v1
+
+    // {v0, v1, v2}, {v0, v2, v3}
+
+    // u,v are +x,+y in quad space
+    ta_vec3 u = vec3_rotate_quat(VEC3_X, quad.orientation);
+    u = vec3_normalize(u);
+    ta_vec3 v = vec3_rotate_quat(VEC3_Y, quad.orientation);
+    //ta_vec3 v = vec3_cross(vec3_normalize(quad.normal), u);
+    v = vec3_normalize(v);
+
+    u = vec3_scalef(u, quad.extents.x);
+    v = vec3_scalef(v, quad.extents.y);
+
+    ta_vec3 v0 = vec3_sub(vec3_sub(quad.center, u), v);
+    ta_vec3 v1 = vec3_add(vec3_sub(quad.center, u), v);
+    ta_vec3 v2 = vec3_sub(vec3_add(quad.center, u), v);
+    ta_vec3 v3 = vec3_add(vec3_add(quad.center, u), v);
+
+    dlb_vec_push(primitive_quads.positions, v0);
+    dlb_vec_push(primitive_quads.positions, v1);
+    dlb_vec_push(primitive_quads.positions, v2);
+    dlb_vec_push(primitive_quads.positions, v2);
+    dlb_vec_push(primitive_quads.positions, v1);
+    dlb_vec_push(primitive_quads.positions, v3);
+
+    static const ta_vec2 uv[6] = {
+        { 0.0f, 0.0f },
+        { 1.0f, 0.0f },
+        { 1.0f, 1.0f },
+        { 0.0f, 0.0f },
+        { 1.0f, 1.0f },
+        { 0.0f, 1.0f },
+    };
+
+    for (int i = 0; i < 6; i++) {
+        dlb_vec_push(primitive_quads.uvs, uv[i]);
+        dlb_vec_push(primitive_quads.colors, color);
+    }
 }
 void ta_primitive_push_rect(ta_mesh *mesh, ta_rect rect, ta_rgba color, float z)
 {
@@ -205,77 +253,47 @@ void ta_primitive_push_rect_uv(ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color,
 void ta_primitive_push_plane(ta_mesh *mesh, ta_plane plane, float radius,
     ta_rgba color)
 {
+    if (!mesh) mesh = &primitive_quads;
+#if 1
+    // u,v are +x,+y in plane space
+    ta_vec3 u = vec3_perp(plane.normal);
+    u = vec3_normalize(u);
+    ta_vec3 v = vec3_cross(vec3_normalize(plane.normal), u);
+    v = vec3_normalize(v);
+#else
     // TODO: This seems like a hack that could be replaced with vec3_perp
     plane.center = vec3_add(plane.center, VEC3_EPSILON);
-    ta_vec3 x = vec3_normalize(vec3_cross(plane.center, plane.normal));
-    ta_vec3 y = vec3_normalize(vec3_cross(x, plane.normal));
-    x = vec3_scalef(x, radius);
-    y = vec3_scalef(y, radius);
-
-    ta_vec3 v0 = vec3_sub(vec3_sub(plane.center, x), y);
-    ta_vec3 v1 = vec3_add(vec3_sub(plane.center, x), y);
-    ta_vec3 v2 = vec3_sub(vec3_add(plane.center, x), y);
-    ta_vec3 v3 = vec3_add(vec3_add(plane.center, x), y);
-
-    ta_vec2 uv[6];
-    uv[0].x = 0.0f; uv[0].y = 0.0f; // 0,0
-    uv[1].x = 1.0f; uv[1].y = 0.0f; // 1,0
-    uv[2].x = 1.0f; uv[2].y = 1.0f; // 1,1
-    uv[3].x = 0.0f; uv[3].y = 0.0f; // 0,0
-    uv[4].x = 1.0f; uv[4].y = 1.0f; // 1,1
-    uv[5].x = 0.0f; uv[5].y = 1.0f; // 0,1
-
-    dlb_vec_push(primitive_quads.positions, v0);
-    dlb_vec_push(primitive_quads.positions, v1);
-    dlb_vec_push(primitive_quads.positions, v2);
-    dlb_vec_push(primitive_quads.positions, v2);
-    dlb_vec_push(primitive_quads.positions, v1);
-    dlb_vec_push(primitive_quads.positions, v3);
-
-    for (int i = 0; i < 6; i++) {
-        dlb_vec_push(primitive_quads.uvs, uv[i]);
-        dlb_vec_push(primitive_quads.colors, color);
-    }
-}
-void ta_primitive_push_billboard(ta_mesh *mesh, ta_plane plane, float radius,
-    ta_rgba color)
-{
-    // TODO: This seems like a useful thing to implement, but not sure how to
-    // implement. Which way should it face? Would nametags fit in this model, or
-    // are the letter quads going to all rotate independently in weird ways?
-#if 0
-    // TODO: This seems like a hack that could be replaced with vec3_perp
-    plane.center = vec3_add(plane.center, VEC3_EPSILON);
-    ta_vec3 x = vec3_normalize(vec3_cross(plane.center, plane.normal));
-    ta_vec3 y = vec3_normalize(vec3_cross(x, plane.normal));
-    x = vec3_scalef(x, radius);
-    y = vec3_scalef(y, radius);
-
-    ta_vec3 v0 = vec3_sub(vec3_sub(plane.center, x), y);
-    ta_vec3 v1 = vec3_add(vec3_sub(plane.center, x), y);
-    ta_vec3 v2 = vec3_sub(vec3_add(plane.center, x), y);
-    ta_vec3 v3 = vec3_add(vec3_add(plane.center, x), y);
-
-    ta_vec2 uv[6];
-    uv[0].x = 0.0f; uv[0].y = 0.0f; // 0,0
-    uv[1].x = 1.0f; uv[1].y = 0.0f; // 1,0
-    uv[2].x = 1.0f; uv[2].y = 1.0f; // 1,1
-    uv[3].x = 0.0f; uv[3].y = 0.0f; // 0,0
-    uv[4].x = 1.0f; uv[4].y = 1.0f; // 1,1
-    uv[5].x = 0.0f; uv[5].y = 1.0f; // 0,1
-
-    dlb_vec_push(primitive_quads.positions, v0);
-    dlb_vec_push(primitive_quads.positions, v1);
-    dlb_vec_push(primitive_quads.positions, v2);
-    dlb_vec_push(primitive_quads.positions, v2);
-    dlb_vec_push(primitive_quads.positions, v1);
-    dlb_vec_push(primitive_quads.positions, v3);
-
-    for (int i = 0; i < 6; i++) {
-        dlb_vec_push(primitive_quads.uvs, uv[i]);
-        dlb_vec_push(primitive_quads.colors, color);
-    }
+    ta_vec3 u = vec3_normalize(vec3_cross(plane.center, plane.normal));
+    ta_vec3 v = vec3_normalize(vec3_cross(x, plane.normal));
 #endif
+
+    u = vec3_scalef(u, radius);
+    v = vec3_scalef(v, radius);
+
+    ta_vec3 v0 = vec3_sub(vec3_sub(plane.center, u), v);
+    ta_vec3 v1 = vec3_add(vec3_sub(plane.center, u), v);
+    ta_vec3 v2 = vec3_sub(vec3_add(plane.center, u), v);
+    ta_vec3 v3 = vec3_add(vec3_add(plane.center, u), v);
+
+    ta_vec2 uv[6];
+    uv[0].x = 0.0f; uv[0].y = 0.0f; // 0,0
+    uv[1].x = 1.0f; uv[1].y = 0.0f; // 1,0
+    uv[2].x = 1.0f; uv[2].y = 1.0f; // 1,1
+    uv[3].x = 0.0f; uv[3].y = 0.0f; // 0,0
+    uv[4].x = 1.0f; uv[4].y = 1.0f; // 1,1
+    uv[5].x = 0.0f; uv[5].y = 1.0f; // 0,1
+
+    dlb_vec_push(mesh->positions, v0);
+    dlb_vec_push(mesh->positions, v1);
+    dlb_vec_push(mesh->positions, v2);
+    dlb_vec_push(mesh->positions, v2);
+    dlb_vec_push(mesh->positions, v1);
+    dlb_vec_push(mesh->positions, v3);
+
+    for (int i = 0; i < 6; i++) {
+        dlb_vec_push(mesh->uvs, uv[i]);
+        dlb_vec_push(mesh->colors, color);
+    }
 }
 void ta_primitive_push_crosshair(ta_mesh *mesh, s32 length, s32 thickness)
 {
@@ -291,8 +309,8 @@ void ta_primitive_push_crosshair(ta_mesh *mesh, s32 length, s32 thickness)
     y.w = thickness;
     y.h = length;
 
-    ta_primitive_push_rect(0, x, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
-    ta_primitive_push_rect(0, y, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
+    ta_primitive_push_rect(mesh, x, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
+    ta_primitive_push_rect(mesh, y, TA_COLOR_WHITE_ALPHA, UI_LAYER_HUD);
 }
 
 #define SPHERE_SEGMENTS 32
@@ -458,7 +476,7 @@ void ta_primitive_push_arrow(ta_mesh *mesh, ta_vec3 origin, ta_vec3 direction,
     ta_primitive_push_line_3d(mesh, line, color, color);
 
     ta_cone cone = { 0 };
-    cone.apex = vec3_scalef(direction, 0.1f);
+    cone.apex = vec3_scalef(direction, 0.2f);
     cone.center = vec3_sub(tip, cone.apex);
     cone.radius = vec3_len(direction) / TA_PRIMITIVE_CONE_RADIUS_SCALE;
     ta_primitive_push_cone(mesh, cone, color);

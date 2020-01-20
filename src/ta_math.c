@@ -50,7 +50,10 @@ const ta_rgba TA_COLOR_INVIS       = { 0.0f, 0.0f, 0.0f, 0.0f };
 const ta_rgba TA_COLOR_BLACK       = { 0.0f, 0.0f, 0.0f, 1.0f };
 const ta_rgba TA_COLOR_RED         = { 1.0f, 0.1f, 0.1f, 1.0f };
 const ta_rgba TA_COLOR_DARK_RED    = { 0.5f, 0.0f, 0.0f, 1.0f };
+const ta_rgba TA_COLOR_DARK_REDA   = { 0.5f, 0.0f, 0.0f, 0.7f };
 const ta_rgba TA_COLOR_GREEN       = { 0.1f, 1.0f, 0.1f, 1.0f };
+const ta_rgba TA_COLOR_DARK_GREEN  = { 0.0f, 0.5f, 0.0f, 1.0f };
+const ta_rgba TA_COLOR_DARK_GREENA = { 0.0f, 0.5f, 0.0f, 0.7f };
 const ta_rgba TA_COLOR_BLUE        = { 0.1f, 0.1f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_BLUE1       = { 0.1f, 0.1f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_BLUE2       = { 0.2f, 0.2f, 1.0f, 1.0f };
@@ -254,7 +257,7 @@ ta_vec3 vec3_normalize(ta_vec3 v)
     if (len) {
         result = vec3_scalef(result, 1.0f / len);
     } else {
-        DLB_ASSERT(!"WARNING: Normalizing zero vector\n");
+        //DLB_ASSERT(!"WARNING: Normalizing zero vector\n");
         result = VEC3_ZERO;
     }
     return result;
@@ -409,7 +412,7 @@ ta_vec4 quat_normalize(ta_vec4 q)
         result.z = q.z * inv_norm;
         result.w = q.w * inv_norm;
     } else {
-        DLB_ASSERT(!"WARNING: Normalizing bad quaternion\n");
+        //DLB_ASSERT(!"WARNING: Normalizing bad quaternion\n");
         result = QUAT_IDENT;
     }
 

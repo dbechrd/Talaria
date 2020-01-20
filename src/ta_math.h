@@ -149,6 +149,12 @@ typedef struct ta_plane {
     ta_vec3 normal;
 } ta_plane;
 
+typedef struct ta_quad {
+    ta_vec3 center;
+    ta_vec2 extents;
+    ta_vec4 orientation;
+} ta_quad;
+
 typedef struct ta_ray {
     ta_vec3 origin;
     ta_vec3 direction;
@@ -185,7 +191,10 @@ extern const ta_rgba TA_COLOR_INVIS;
 extern const ta_rgba TA_COLOR_BLACK;
 extern const ta_rgba TA_COLOR_RED;
 extern const ta_rgba TA_COLOR_DARK_RED;
+extern const ta_rgba TA_COLOR_DARK_REDA;
 extern const ta_rgba TA_COLOR_GREEN;
+extern const ta_rgba TA_COLOR_DARK_GREEN;
+extern const ta_rgba TA_COLOR_DARK_GREENA;
 extern const ta_rgba TA_COLOR_BLUE;
 extern const ta_rgba TA_COLOR_BLUE1;
 extern const ta_rgba TA_COLOR_BLUE2;

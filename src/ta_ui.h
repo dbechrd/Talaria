@@ -85,6 +85,11 @@ typedef struct ta_ui_textbox_state {
     ta_ui_scroll_state scroll;
 } ta_ui_textbox_state;
 
+typedef struct ta_ui_textbox_vec2_state {
+    ta_ui_panel_state panel_state;
+    ta_ui_textbox_state textbox_states[2];
+} ta_ui_textbox_vec2_state;
+
 typedef struct ta_ui_textbox_vec3_state {
     ta_ui_panel_state panel_state;
     ta_ui_textbox_state textbox_states[3];
@@ -132,6 +137,8 @@ void ta_ui_label(const char *text, u32 text_len);
 bool ta_ui_textbox(const char *text, u32 text_len, ta_ui_textbox_state *textbox,
     u32 flags);
 bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags);
+void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state,
+    bool normalize, bool multiple_rows, bool reset_button);
 void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
     bool normalize, bool multiple_rows, bool reset_button);
 void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,

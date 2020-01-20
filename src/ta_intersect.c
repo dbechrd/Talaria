@@ -91,6 +91,49 @@ bool ta_ray_v_plane(const ta_ray *ray, const ta_plane *plane, float *t_intersect
     return true;
 }
 
+bool ta_ray_v_quad(const ta_ray *ray, const ta_quad *quad, float *t_intersect)
+{
+    // Ray in quad local space
+    ta_vec4 orient_inv = quat_inverse(quad->orientation);
+    ta_ray ray_local = { 0 };
+    ray_local.origin = vec3_rotate_quat(vec3_sub(ray->origin, quad->center), orient_inv);
+    ray_local.direction = vec3_rotate_quat(ray->direction, orient_inv);
+
+#if 0
+    // TODO: Cleanup debug code
+    ta_quad local = { 0 };
+    local.extents = quad->extents;
+    local.orientation.w = 1.0f;
+    ta_primitive_push_quad(0, local, TA_COLOR_DARK_GREENA);
+    ta_primitive_push_arrow(0, ray_local.origin, ray_local.direction, TA_COLOR_GREEN);
+#endif
+
+    // NOTE: Simplified version of ray_v_plane because we only care about z in
+    // quad local space.
+    float nr = -ray_local.origin.z;
+    float nd = ray_local.direction.z;
+    if (nd == 0.0f) {
+        return false;  // ray parallel to plane
+    }
+    float t = nr / nd;
+    if (t < 0.0f) {
+        return false;  // ray pointing away from plane
+    }
+
+    ta_vec3 intersect = vec3_add(ray_local.origin,
+        vec3_scalef(ray_local.direction, t));
+    if (fabs(intersect.x) <= quad->extents.x + TA_EPSILON &&
+        fabs(intersect.y) <= quad->extents.y + TA_EPSILON)
+    {
+        // If caller cares about intersection time, populate it
+        if (t_intersect) {
+            *t_intersect = t;
+        }
+        return true;
+    }
+    return false;
+}
+
 bool ta_ray_v_obb(const ta_ray *ray, const ta_obb *obb, float *t_intersect)
 {
     // Ray in obb local space
@@ -160,6 +203,15 @@ bool ta_ray_v_obb(const ta_ray *ray, const ta_obb *obb, float *t_intersect)
         return true;
     }
     return false;
+}
+
+bool ta_ray_v_aabb(const ta_ray *ray, const ta_aabb *aabb, float *t_intersect)
+{
+    ta_obb obb = { 0 };
+    obb.center = aabb->center;
+    obb.extents = aabb->extents;
+    obb.orientation = QUAT_IDENT;
+    return ta_ray_v_obb(ray, &obb, t_intersect);
 }
 
 // TODO: Handle generating manifolds for AABBs. For now, just allow this to be
