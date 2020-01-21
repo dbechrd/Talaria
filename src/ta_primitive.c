@@ -630,19 +630,20 @@ void ta_primitive_push_cube(ta_mesh *mesh, ta_vec3 center, float radius,
 // how often to draw a line (spacing). center, normal and color should be pretty
 // self-explanatory.
 void ta_primitive_push_grid(ta_mesh *mesh, ta_vec3 center, ta_vec3 normal,
-    float scale, float frequency, ta_rgba color)
+    float radius, float frequency, ta_rgba color)
 {
+    DLB_ASSERT(frequency < radius);
     ta_vec3 u = vec3_normalize(vec3_perp(normal));
     ta_vec3 v = vec3_normalize(vec3_cross(normal, u));
     ta_vec3 u_inc = vec3_scalef(u, frequency);
     ta_vec3 v_inc = vec3_scalef(v, frequency);
 
-    ta_vec3 half_u = vec3_scalef(u, scale * 0.5f);
+    ta_vec3 half_u = vec3_scalef(u, radius);
     ta_vec3 u_min = vec3_sub(center, half_u);
-    ta_vec3 half_v = vec3_scalef(v, scale * 0.5f);
+    ta_vec3 half_v = vec3_scalef(v, radius);
     ta_vec3 v_min = vec3_sub(center, half_v);
 
-    float lines = scale / frequency;
+    float lines = radius * 2.0f / frequency;
     ta_line_3d line;
 
     // U lines from -v_min to +v_min

@@ -47,7 +47,7 @@ void ta_primitive_push_arrow(struct ta_mesh *mesh, ta_vec3 origin,
 void ta_primitive_push_aabb(struct ta_mesh *mesh, ta_aabb aabb, ta_rgba color);
 void ta_primitive_push_obb(struct ta_mesh *mesh, ta_obb obb, ta_rgba color);
 void ta_primitive_push_grid(struct ta_mesh *mesh, ta_vec3 center, ta_vec3 normal,
-    float scale, float frequency, ta_rgba color);
+    float radius, float frequency, ta_rgba color);
 void ta_primitive_push_axes_arrow(struct ta_mesh *mesh, ta_vec3 position,
     float scale);
 void ta_primitive_push_axes_cube(struct ta_mesh *mesh, ta_vec3 position,

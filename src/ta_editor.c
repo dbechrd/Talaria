@@ -28,22 +28,25 @@
 #include "SDL/SDL.h"
 #include <float.h>
 
+// Higher level widgets
 typedef enum editor_widget {
-    EDITOR_WIDGET_TRANSLATE,
-    EDITOR_WIDGET_ROTATE,
-    EDITOR_WIDGET_SCALE,
+    WIDGET_NONE,
+    WIDGET_TRANSLATE,
+    WIDGET_ROTATE,
+    WIDGET_SCALE,
 } editor_widget;
 
-typedef enum editor_widget_drag_axis {
-    EDITOR_WIDGET_DRAG_NONE,
-    EDITOR_WIDGET_DRAG_X,
-    EDITOR_WIDGET_DRAG_Y,
-    EDITOR_WIDGET_DRAG_Z,
-    EDITOR_WIDGET_DRAG_YZ,
-    EDITOR_WIDGET_DRAG_XZ,
-    EDITOR_WIDGET_DRAG_XY,
-    EDITOR_WIDGET_DRAG_VIEW,
-} editor_widget_drag_axis;
+// Individual components of a widget (i.e. "handles")
+typedef enum editor_gizmo {
+    GIZMO_NONE,
+    GIZMO_TRANSLATE_X,
+    GIZMO_TRANSLATE_Y,
+    GIZMO_TRANSLATE_Z,
+    GIZMO_TRANSLATE_YZ,
+    GIZMO_TRANSLATE_XZ,
+    GIZMO_TRANSLATE_XY,
+    GIZMO_TRANSLATE_VIEW,
+} editor_gizmo;
 
 typedef enum editor_command {
     EDITOR_COMMAND_CLOSE1,
@@ -59,7 +62,7 @@ static struct {
     ta_scene scene;
     const char *shader_editor_select;
     editor_widget widget;
-    editor_widget_drag_axis widget_drag_axis;
+    editor_gizmo gizmo;
     float widget_snap_to_grid;
     ta_keybind keybinds[EDITOR_COMMAND_COUNT];
     ta_ui_textbox_state *textbox_editing;
@@ -78,7 +81,7 @@ void ta_editor_init()
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing UI styles\n");
     ta_ui_init(font, &editor.textbox_editing, &editor.textbox_dragging);
 
-    editor.widget = EDITOR_WIDGET_TRANSLATE;
+    editor.widget = WIDGET_TRANSLATE;
 
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing key binds\n");
     // TODO: Read keybinds from file
@@ -196,6 +199,13 @@ static void ui_scene_panel()
     ta_ui_panel_end();
 
     ta_ui_panel_end();
+}
+static void ui_texture_face(ta_texture *texture, int face, int resolution)
+{
+    ta_ui_next_margin(0, 0, 0, 0);
+    ta_ui_next_size(resolution, resolution);
+    ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_image(texture, face);
 }
 static void ui_node_panel()
 {
@@ -599,10 +609,7 @@ static void ui_node_panel()
 
                 s32 resolution = light->shadowmap.resolution / 10;
                 if (light->type == TA_LIGHT_DIRECTIONAL) {
-                    ta_ui_next_margin(0, 0, 0, 0);
-                    ta_ui_next_size(resolution, resolution);
-                    ta_ui_next_pad(0, 0, 0, 0);
-                    ta_ui_image(&light->shadowmap.texture, 0);
+                    ui_texture_face(&light->shadowmap.texture, 0, resolution);
                 } else if (light->type == TA_LIGHT_POINT) {
                     // Render cubemap with the following layout:
                     //       ┌────┐                 ┌────┐
@@ -612,25 +619,17 @@ static void ui_node_panel()
                     //  └────┼────┼────┴────┘  └────┼────┼────┴────┘
                     //       | -Y |                 |  3 |
                     //       └────┘                 └────┘
-                    #define face_image(face) \
-                        ta_ui_next_margin(0, 0, 0, 0); \
-                        ta_ui_next_size(resolution, resolution); \
-                        ta_ui_next_pad(0, 0, 0, 0); \
-                        ta_ui_image(&light->shadowmap.texture, face);
-
                     ta_ui_row_begin();
                     ta_ui_spacer(resolution, 0);
-                    face_image(2);
+                    ui_texture_face(&light->shadowmap.texture, 2, resolution);
                     ta_ui_row_begin();
-                    face_image(1);
-                    face_image(5);
-                    face_image(0);
-                    face_image(4);
+                    ui_texture_face(&light->shadowmap.texture, 1, resolution);
+                    ui_texture_face(&light->shadowmap.texture, 5, resolution);
+                    ui_texture_face(&light->shadowmap.texture, 0, resolution);
+                    ui_texture_face(&light->shadowmap.texture, 4, resolution);
                     ta_ui_row_begin();
                     ta_ui_spacer(resolution, 0);
-                    face_image(3);
-
-                    #undef face_image
+                    ui_texture_face(&light->shadowmap.texture, 3, resolution);
                 }
 
                 ta_ui_panel_end();
@@ -1055,13 +1054,13 @@ void ta_editor_draw_screen()
     ta_ui_panel_begin(&hotbar_panel, TA_UI_AUTOSIZE);
     ta_ui_row_begin();
     if (ta_ui_button(CSTR("Trans."))) {
-        editor.widget = EDITOR_WIDGET_TRANSLATE;
+        editor.widget = WIDGET_TRANSLATE;
     }
     if (ta_ui_button(CSTR("Rot."))) {
-        editor.widget = EDITOR_WIDGET_ROTATE;
+        editor.widget = WIDGET_ROTATE;
     }
     if (ta_ui_button(CSTR("Scale"))) {
-        editor.widget = EDITOR_WIDGET_SCALE;
+        editor.widget = WIDGET_SCALE;
     }
     ta_ui_panel_end();
 
@@ -1154,16 +1153,117 @@ void ta_editor_draw_world()
             RES_COMP_TRANSFORM);
         float dist = vec3_len(vec3_sub(cam_trans->xform.position,
             e_transform->xform.position));
-        float scale = dist * 0.2f;
+        float scale = MAX(0.5f, dist * 0.2f);
+
+        // Hitbox midpoint
+        float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
+        float radius_quad = radius * 1.2f;
+
+        ta_line_3d x_axis = { 0 };
+        x_axis.p0 = e_transform->xform.position;
+        x_axis.p1 = e_transform->xform.position;
+        x_axis.p0.x = cam_trans->xform.position.x - 10000.0f;
+        x_axis.p1.x = cam_trans->xform.position.x + 10000.0f;
+
+        ta_line_3d y_axis = { 0 };
+        y_axis.p0 = e_transform->xform.position;
+        y_axis.p1 = e_transform->xform.position;
+        y_axis.p0.y = cam_trans->xform.position.y - 10000.0f;
+        y_axis.p1.y = cam_trans->xform.position.y + 10000.0f;
+
+        ta_line_3d z_axis = { 0 };
+        z_axis.p0 = e_transform->xform.position;
+        z_axis.p1 = e_transform->xform.position;
+        z_axis.p0.z = cam_trans->xform.position.z - 10000.0f;
+        z_axis.p1.z = cam_trans->xform.position.z + 10000.0f;
+
+        // One-axis arrow handles
+        ta_aabb hitbox1d[3] = { 0 };
+        float midpoint1d = scale * 0.6f;
+        float extent1d = scale - midpoint1d;
+        hitbox1d[0].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_X, midpoint1d));
+        hitbox1d[0].extents.x = extent1d;
+        hitbox1d[0].extents.y = radius;
+        hitbox1d[0].extents.z = radius;
+
+        hitbox1d[1].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Y, midpoint1d));
+        hitbox1d[1].extents.x = radius;
+        hitbox1d[1].extents.y = extent1d;
+        hitbox1d[1].extents.z = radius;
+
+        hitbox1d[2].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Z, midpoint1d));
+        hitbox1d[2].extents.x = radius;
+        hitbox1d[2].extents.y = radius;
+        hitbox1d[2].extents.z = extent1d;
+
+        // Two-axis plane handles
+        ta_quad hitbox2d[3] = { 0 };
+        float midpoint2d = scale * 0.5f;
+        hitbox2d[0].center = e_transform->xform.position;
+        hitbox2d[0].center.y += midpoint2d;
+        hitbox2d[0].center.z += midpoint2d;
+        hitbox2d[0].extents.x = radius_quad;
+        hitbox2d[0].extents.y = radius_quad;
+        hitbox2d[0].orientation = quat_from_axis_angle(VEC3_Y, 90.0f);
+
+        hitbox2d[1].center = e_transform->xform.position;
+        hitbox2d[1].center.x += midpoint2d;
+        hitbox2d[1].center.z += midpoint2d;
+        hitbox2d[1].extents.x = radius_quad;
+        hitbox2d[1].extents.y = radius_quad;
+        hitbox2d[1].orientation = quat_from_axis_angle(VEC3_X, -90.0f);
+
+        hitbox2d[2].center = e_transform->xform.position;
+        hitbox2d[2].center.x += midpoint2d;
+        hitbox2d[2].center.y += midpoint2d;
+        hitbox2d[2].extents.x = radius_quad;
+        hitbox2d[2].extents.y = radius_quad;
+        hitbox2d[2].orientation = QUAT_IDENT;
+
+        // Three-axis view-plane handle
+        ta_aabb hitbox3d = { 0 };
+        hitbox3d.center = e_transform->xform.position;
+        hitbox3d.extents.x = radius;
+        hitbox3d.extents.y = radius;
+        hitbox3d.extents.z = radius;
+
+        editor_gizmo nearest_gizmo = GIZMO_NONE;
+
+        float t;
+        float t_min = FLT_MAX;
+        for (int i = 0; i < 3; ++i) {
+            if (ta_ray_v_aabb(&ray, &hitbox1d[i], &t) && t < t_min) {
+                t_min = t;
+                nearest_gizmo = GIZMO_TRANSLATE_X + i;
+            }
+        }
+
+        for (int i = 0; i < 3; ++i) {
+            if (ta_ray_v_quad(&ray, &hitbox2d[i], &t) && t < t_min) {
+                t_min = t;
+                nearest_gizmo = GIZMO_TRANSLATE_YZ + i;
+            }
+        }
+
+        if (ta_ray_v_aabb(&ray, &hitbox3d, &t) && t < t_min) {
+            t_min = t;
+            nearest_gizmo = GIZMO_TRANSLATE_VIEW;
+        }
+
+        if (ta_mouse_captured() && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
+            editor.gizmo = nearest_gizmo;
+        } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
+            editor.gizmo = GIZMO_NONE;
+        }
 
         switch (editor.widget) {
-            case EDITOR_WIDGET_TRANSLATE: {
+            case WIDGET_TRANSLATE: {
                 // TODO: Would ray_vs_line_closest() be a better way to check this?
                 ta_plane plane = { 0 };
                 plane.center = e_transform->xform.position;
 
-                switch (editor.widget_drag_axis) {
-                    case EDITOR_WIDGET_DRAG_X: {
+                switch (editor.gizmo) {
+                    case GIZMO_TRANSLATE_X: {
                         plane.normal.y = cam_trans->xform.position.y - e_transform->xform.position.y;
                         plane.normal.z = cam_trans->xform.position.z - e_transform->xform.position.z;
                         plane.normal = vec3_normalize(plane.normal);
@@ -1177,8 +1277,11 @@ void ta_editor_draw_world()
                                 e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
                             }
                         }
+
+                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                        ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
                         break;
-                    } case EDITOR_WIDGET_DRAG_Y: {
+                    } case GIZMO_TRANSLATE_Y: {
                         plane.normal.x = cam_trans->xform.position.x - e_transform->xform.position.x;
                         plane.normal.z = cam_trans->xform.position.z - e_transform->xform.position.z;
                         plane.normal = vec3_normalize(plane.normal);
@@ -1192,8 +1295,11 @@ void ta_editor_draw_world()
                                 e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
                             }
                         }
+
+                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                        ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
                         break;
-                    } case EDITOR_WIDGET_DRAG_Z: {
+                    } case GIZMO_TRANSLATE_Z: {
                         plane.normal.x = cam_trans->xform.position.x - e_transform->xform.position.x;
                         plane.normal.y = cam_trans->xform.position.y - e_transform->xform.position.y;
                         plane.normal = vec3_normalize(plane.normal);
@@ -1207,53 +1313,68 @@ void ta_editor_draw_world()
                                 e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
                             }
                         }
+
+                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                        ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
                         break;
-                    } case EDITOR_WIDGET_DRAG_YZ: {
+                    } case GIZMO_TRANSLATE_YZ: {
                         plane.normal.x = 1.0f;
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
                             ta_vec3 contact = { 0 };
                             contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                            e_transform->xform.position.y = contact.y - scale * 0.5f;
-                            e_transform->xform.position.z = contact.z - scale * 0.5f;
+                            e_transform->xform.position.y = contact.y - midpoint2d;
+                            e_transform->xform.position.z = contact.z - midpoint2d;
                             if (editor.widget_snap_to_grid) {
                                 e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
                                 e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
                             }
                         }
+
+                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                        ta_primitive_push_quad(0, hitbox2d[0], TA_COLOR_RED);
                         break;
-                    } case EDITOR_WIDGET_DRAG_XZ: {
+                    } case GIZMO_TRANSLATE_XZ: {
                         plane.normal.y = 1.0f;
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
                             ta_vec3 contact = { 0 };
                             contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                            e_transform->xform.position.x = contact.x - scale * 0.5f;
-                            e_transform->xform.position.z = contact.z - scale * 0.5f;
+                            e_transform->xform.position.x = contact.x - midpoint2d;
+                            e_transform->xform.position.z = contact.z - midpoint2d;
                             if (editor.widget_snap_to_grid) {
                                 e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
                                 e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
                             }
                         }
+
+                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                        ta_primitive_push_quad(0, hitbox2d[1], TA_COLOR_GREEN);
                         break;
-                    } case EDITOR_WIDGET_DRAG_XY: {
+                    } case GIZMO_TRANSLATE_XY: {
                         plane.normal.z = 1.0f;
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
                             ta_vec3 contact = { 0 };
                             contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                            e_transform->xform.position.x = contact.x - scale * 0.5f;
-                            e_transform->xform.position.y = contact.y - scale * 0.5f;
+                            e_transform->xform.position.x = contact.x - midpoint2d;
+                            e_transform->xform.position.y = contact.y - midpoint2d;
                             if (editor.widget_snap_to_grid) {
                                 e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
                                 e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
                             }
                         }
+
+                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                        ta_primitive_push_quad(0, hitbox2d[2], TA_COLOR_BLUE);
                         break;
-                    } case EDITOR_WIDGET_DRAG_VIEW: {
+                    } case GIZMO_TRANSLATE_VIEW: {
                         plane.normal = vec3_neg(ray.direction);
                         plane.normal = vec3_normalize(plane.normal);
 
@@ -1274,177 +1395,72 @@ void ta_editor_draw_world()
                             //    e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
                             //}
                         }
+
+                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
                         break;
                     }
                 }
-                if (editor.widget_drag_axis) {
-                    ta_primitive_push_grid(0, plane.center, plane.normal, 4.0f, 1.0f, TA_COLOR_YELLOW);
+
+                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_X) {
+                    //ta_primitive_push_aabb(0, hitbox1d[0], TA_COLOR_RED);
+                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
+                } else if (editor.gizmo != GIZMO_TRANSLATE_X) {
+                    //ta_primitive_push_aabb(0, hitbox1d[0], TA_COLOR_GRAY8);
+                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_X, scale), TA_COLOR_DARK_RED);
                 }
 
-                // Push translate widget
-                {
-                    // x, y, z arrows
-                    ta_primitive_push_axes_arrow(0, e_transform->xform.position, scale);
-
-                    // yz, xz, xy planes
-
+                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_Y) {
+                    //ta_primitive_push_aabb(0, hitbox1d[1], TA_COLOR_GREEN);
+                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
+                } else if (editor.gizmo != GIZMO_TRANSLATE_Y) {
+                    //ta_primitive_push_aabb(0, hitbox1d[1], TA_COLOR_GRAY8);
+                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_DARK_GREEN);
                 }
 
-                // Hitbox midpoint
-                float midpoint = scale * 0.6f;
-                float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
-
-                // One-axis arrow handles
-                ta_aabb hitbox1d[3] = { 0 };
-                hitbox1d[0].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_X, midpoint));
-                hitbox1d[0].extents.x = scale - midpoint;
-                hitbox1d[0].extents.y = radius;
-                hitbox1d[0].extents.z = radius;
-
-                hitbox1d[1].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Y, midpoint));
-                hitbox1d[1].extents.x = radius;
-                hitbox1d[1].extents.y = scale - midpoint;
-                hitbox1d[1].extents.z = radius;
-
-                hitbox1d[2].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Z, midpoint));
-                hitbox1d[2].extents.x = radius;
-                hitbox1d[2].extents.y = radius;
-                hitbox1d[2].extents.z = scale - midpoint;
-
-                // Two-axis plane handles
-                ta_quad hitbox2d[3] = { 0 };
-                hitbox2d[0].center = e_transform->xform.position;
-                hitbox2d[0].center.y += midpoint;
-                hitbox2d[0].center.z += midpoint;
-                hitbox2d[0].extents.x = radius;
-                hitbox2d[0].extents.y = radius;
-                hitbox2d[0].orientation = quat_from_axis_angle(VEC3_Y, 90.0f);
-
-                hitbox2d[1].center = e_transform->xform.position;
-                hitbox2d[1].center.x += midpoint;
-                hitbox2d[1].center.z += midpoint;
-                hitbox2d[1].extents.x = radius;
-                hitbox2d[1].extents.y = radius;
-                hitbox2d[1].orientation = quat_from_axis_angle(VEC3_X, -90.0f);
-
-                hitbox2d[2].center = e_transform->xform.position;
-                hitbox2d[2].center.x += midpoint;
-                hitbox2d[2].center.y += midpoint;
-                hitbox2d[2].extents.x = radius;
-                hitbox2d[2].extents.y = radius;
-                hitbox2d[2].orientation = QUAT_IDENT;
-
-                // Three-axis view-plane handle
-                ta_aabb hitbox3d = { 0 };
-                hitbox3d.center = e_transform->xform.position;
-                hitbox3d.extents.x = radius;
-                hitbox3d.extents.y = radius;
-                hitbox3d.extents.z = radius;
-
-                if (ta_mouse_captured() && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
-                    float t;
-                    float t_min = FLT_MAX;
-                    for (int i = 0; i < 3; ++i) {
-                        if (ta_ray_v_aabb(&ray, &hitbox1d[i], &t) && t < t_min) {
-                            t_min = t;
-                            editor.widget_drag_axis = EDITOR_WIDGET_DRAG_X + i;
-                        }
-                    }
-
-                    for (int i = 0; i < 3; ++i) {
-                        if (ta_ray_v_quad(&ray, &hitbox2d[i], &t) && t < t_min) {
-                            t_min = t;
-                            editor.widget_drag_axis = EDITOR_WIDGET_DRAG_YZ + i;
-                        }
-                    }
-
-                    if (ta_ray_v_aabb(&ray, &hitbox3d, &t) && t < t_min) {
-                        t_min = t;
-                        editor.widget_drag_axis = EDITOR_WIDGET_DRAG_VIEW;
-                    }
-                } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
-                    editor.widget_drag_axis = EDITOR_WIDGET_DRAG_NONE;
+                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_Z) {
+                    //ta_primitive_push_aabb(0, hitbox1d[2], TA_COLOR_BLUE);
+                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
+                } else if (editor.gizmo != GIZMO_TRANSLATE_Z) {
+                    //ta_primitive_push_aabb(0, hitbox1d[2], TA_COLOR_GRAY8);
+                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_DARK_BLUE);
                 }
 
-                ta_line_3d x_axis = { 0 };
-                x_axis.p0 = e_transform->xform.position;
-                x_axis.p1 = e_transform->xform.position;
-                x_axis.p0.x = cam_trans->xform.position.x - 10000.0f;
-                x_axis.p1.x = cam_trans->xform.position.x + 10000.0f;
-
-                ta_line_3d y_axis = { 0 };
-                y_axis.p0 = e_transform->xform.position;
-                y_axis.p1 = e_transform->xform.position;
-                y_axis.p0.y = cam_trans->xform.position.y - 10000.0f;
-                y_axis.p1.y = cam_trans->xform.position.y + 10000.0f;
-
-                ta_line_3d z_axis = { 0 };
-                z_axis.p0 = e_transform->xform.position;
-                z_axis.p1 = e_transform->xform.position;
-                z_axis.p0.z = cam_trans->xform.position.z - 10000.0f;
-                z_axis.p1.z = cam_trans->xform.position.z + 10000.0f;
-
-                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_X) {
-                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                    ta_primitive_push_aabb(0, hitbox1d[0], TA_COLOR_RED);
-                } else {
-                    ta_primitive_push_aabb(0, hitbox1d[0], TA_COLOR_GRAY8);
+                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_YZ) {
+                    ta_primitive_push_quad(0, hitbox2d[0], TA_COLOR_RED);
+                } else if (editor.gizmo != GIZMO_TRANSLATE_YZ) {
+                    ta_primitive_push_quad(0, hitbox2d[0], TA_COLOR_DARK_REDA);
+                    //ta_primitive_push_grid(0, hitbox2d[0].center, VEC3_X, radius_quad, radius_quad / 2.0f, TA_COLOR_DARK_REDA);
                 }
 
-                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_Y) {
-                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                    ta_primitive_push_aabb(0, hitbox1d[1], TA_COLOR_GREEN);
-                } else {
-                    ta_primitive_push_aabb(0, hitbox1d[1], TA_COLOR_GRAY8);
+                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_XZ) {
+                    ta_primitive_push_quad(0, hitbox2d[1], TA_COLOR_GREEN);
+                } else if (editor.gizmo != GIZMO_TRANSLATE_XZ) {
+                    ta_primitive_push_quad(0, hitbox2d[1], TA_COLOR_DARK_GREENA);
+                    //ta_primitive_push_grid(0, hitbox2d[1].center, VEC3_Y, radius_quad, radius_quad / 2.0f, TA_COLOR_DARK_GREENA);
                 }
 
-                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_Z) {
-                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                    ta_primitive_push_aabb(0, hitbox1d[2], TA_COLOR_BLUE);
-                } else {
-                    ta_primitive_push_aabb(0, hitbox1d[2], TA_COLOR_GRAY8);
+                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_XY) {
+                    ta_primitive_push_quad(0, hitbox2d[2], TA_COLOR_BLUE);
+                } else if (editor.gizmo != GIZMO_TRANSLATE_XY) {
+                    ta_primitive_push_quad(0, hitbox2d[2], TA_COLOR_DARK_BLUEA);
+                    //ta_primitive_push_grid(0, hitbox2d[2].center, VEC3_Z, radius_quad, radius_quad / 2.0f, TA_COLOR_DARK_BLUEA);
                 }
 
-                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_YZ) {
-                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                    ta_primitive_push_quad(0, hitbox2d[0], TA_COLOR_CYAN);
-                } else {
-                    ta_primitive_push_quad(0, hitbox2d[0], TA_COLOR_GRAY8);
-                }
-
-                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_XZ) {
-                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                    ta_primitive_push_quad(0, hitbox2d[1], TA_COLOR_MAGENTA);
-                } else {
-                    ta_primitive_push_quad(0, hitbox2d[1], TA_COLOR_GRAY8);
-                }
-
-                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_XY) {
-                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                    ta_primitive_push_quad(0, hitbox2d[2], TA_COLOR_YELLOW);
-                } else {
-                    ta_primitive_push_quad(0, hitbox2d[2], TA_COLOR_GRAY8);
-                }
-
-                if (editor.widget_drag_axis == EDITOR_WIDGET_DRAG_VIEW) {
-                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_VIEW) {
                     ta_primitive_push_aabb(0, hitbox3d, TA_COLOR_WHITE);
-                } else {
+                } else if (editor.gizmo != GIZMO_TRANSLATE_VIEW) {
                     ta_primitive_push_aabb(0, hitbox3d, TA_COLOR_GRAY8);
                 }
                 break;
-            } case EDITOR_WIDGET_ROTATE: {
+            } case WIDGET_ROTATE: {
                 ta_sphere sphere = { 0 };
                 sphere.center = e_transform->xform.position;
                 sphere.radius = scale;
                 ta_primitive_push_rgb_sphere(0, sphere);
                 break;
-            } case EDITOR_WIDGET_SCALE: {
+            } case WIDGET_SCALE: {
                 ta_primitive_push_axes_cube(0, e_transform->xform.position, scale);
                 break;
             }
@@ -1453,7 +1469,7 @@ void ta_editor_draw_world()
         ta_primitive_render(true, false);
     }
 
-    if (!editor.widget_drag_axis && ta_mouse_captured() && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT))
+    if (!editor.gizmo && ta_mouse_captured() && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT))
     {
         float t = 0.0f;
         float t_min = FLT_MAX;

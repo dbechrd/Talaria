@@ -1615,9 +1615,10 @@ static void ui_render_scrollbars(ui_frame *frame)
 }
 static void ui_render_tooltips()
 {
-    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
+    ta_primitive_render_mesh(&primitive_quads_tooltip_bg, tg_shader_quads, TA_TRIANGLES,
         true, false);
-    ta_font_render(&primitive_quads_tooltip_fg, ui_font, 0, 0, UI_LAYER_TIP, true, false);
+    ta_font_render(&primitive_quads_tooltip_fg, ui_font, 0, 0, UI_LAYER_TIP,
+        true, false);
 }
 #if 0
 // TODO: Move this to ta_ui_statusbar
@@ -1657,11 +1658,8 @@ void ta_ui_render()
         [UI_TEXTBOX]        = ui_render_textbox,
     };
 
-    // TODO: Shouldn't have to do this.. not sure where it's being bound
-    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
-
     glClear(GL_DEPTH_BUFFER_BIT);
-    //glEnable(GL_SCISSOR_TEST);
+    glEnable(GL_SCISSOR_TEST);
 
     ta_vec2i scroll_offset = { 0 };
 
