@@ -557,7 +557,7 @@ static bool schema_atom_present(ta_schema_field *field, void *ptr)
             if (*val) present = true;
             break;
         } case ATOM_ENUM: {
-            int *val = ptr;
+            //int *val = ptr;
             present = true;
             break;
         } default: {

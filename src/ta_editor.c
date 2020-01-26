@@ -970,7 +970,7 @@ static void ui_textbox_panel()
     static ta_ui_textbox_state textbox = { 0 };
     static char buf[] = "The quick brown fox jumps over the lazy dog. 1234567890 |||";
     if (ta_ui_textbox(CSTR(buf), &textbox, 0)) {
-        size_t text_len = dlb_vec_len(textbox.buffer);
+        //size_t text_len = dlb_vec_len(textbox.buffer);
         //dlb_memcpy(buf, textbox.buffer, MAX(sizeof(buf) - 1, text_len));
         ta_ui_textbox_clear(&textbox);
     }

@@ -662,8 +662,8 @@ void ta_ui_panel_begin(ta_ui_panel_state *panel, u32 flags)
 }
 void ta_ui_panel_end()
 {
-    ui_frame *frame = ui_frame_end(UI_PANEL);
 #if UI_DEBUG_PANEL
+    ui_frame *frame = ui_frame_end(UI_PANEL);
     if (frame->state.hover) {
         char tex_buf[512] = { 0 };
         int len = snprintf(tex_buf, sizeof(tex_buf),
@@ -690,6 +690,8 @@ void ta_ui_panel_end()
         DLB_ASSERT(len < sizeof(tex_buf));
         ta_ui_tooltip(tex_buf, len);
     }
+#else
+    ui_frame_end(UI_PANEL);
 #endif
 }
 void ta_ui_button_begin(u32 flags)
@@ -1613,7 +1615,6 @@ static void ui_render_scrollbars(ui_frame *frame)
         scroll_v_widget.h = widget_h;
 
         bool widget_hover = rect_contains_mouse(scroll_v_widget);
-        bool down = ta_key_down(SDL_SCANCODE_MOUSE_LEFT);
         ta_rgba widget_color = (ta_rgba){ 0.6f, 0.0f, 0.0f, 1.0f };
         if (widget_hover && !dragging_v) {
             widget_color = (ta_rgba){ 0.8f, 0.0f, 0.0f, 1.0f };
@@ -1706,19 +1707,10 @@ void ta_ui_render()
     glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_SCISSOR_TEST);
 
-    ta_vec2i scroll_offset = { 0 };
-
     dlb_vec_each(ui_frame *, frame, ui_frames) {
         if (frame->internal_flags & TA_UI_INVISIBLE || !ui_renderers[frame->type]) {
             continue;
         }
-
-        // NOTE: Can't do this, because will be desync'd with all layout pass
-        // (e.g. tooltip locations and mouse hover, etc.). Need to accumulate
-        // scroll_offset in all containers during layout pass, then apply to
-        // children controls.. somehow.
-        //frame->rect.x -= scroll_offset.x;
-        //frame->rect.y -= scroll_offset.y;
 
         frame->clip_rect = TA_RECT_ZERO;
         frame->clip_rect.w = WINDOW_W;

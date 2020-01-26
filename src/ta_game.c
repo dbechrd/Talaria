@@ -1256,7 +1256,7 @@ static void spawn_bullet(ta_vec3 position)
     };
     static int next_idx = 0;
     DLB_ASSERT(next_idx < ARRAY_COUNT(bullet_names));
-    const char *name = ta_symbol_intern(bullet_names[next_idx], strlen(bullet_names[next_idx]));
+    //const char *name = ta_symbol_intern(bullet_names[next_idx], strlen(bullet_names[next_idx]));
     next_idx++;
 
     UNUSED(position);

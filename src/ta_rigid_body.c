@@ -251,6 +251,8 @@ static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a,
     ta_transform *btrans = ta_game_component(b->entity_name, RES_COMP_TRANSFORM);
 
     UNUSED(manifold);
+    UNUSED(atrans);
+    UNUSED(btrans);
     return false;
 }
 

@@ -17,9 +17,6 @@
 void gltf_dump(cgltf_data *data)
 {
     printf("Type: %s\n", data->file_type == cgltf_file_type_gltf ? "GLTF" : "GLB");
-    void* file_data;
-
-    cgltf_asset asset;
 
     printf("asset:\n");
     printf("  copyright: %s\n", data->asset.copyright);
@@ -311,7 +308,7 @@ void ta_gltf_load(ta_gltf *gltf)
         if (gltf_mesh->primitives->indices->count) {
             cgltf_accessor *accessor = gltf_mesh->primitives->indices;
             cgltf_size data_offset = accessor->buffer_view->offset;
-            cgltf_size data_size = accessor->buffer_view->size;
+            //cgltf_size data_size = accessor->buffer_view->size;
             char *data = accessor->buffer_view->buffer->data;
 
             DLB_ASSERT(accessor->type == cgltf_type_scalar);

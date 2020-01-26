@@ -282,7 +282,7 @@ void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name,
     DLB_ASSERT(type >= RES_COMP_COUNT && type < RES_COUNT);
 
     ta_schema_field_type schema_type = res_to_typ(type);
-    size_t size = tg_schemas[schema_type].size;
+    //size_t size = tg_schemas[schema_type].size;
 
     // TODO: Find resource
     DLB_ASSERT(0);

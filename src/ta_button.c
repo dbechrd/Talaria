@@ -45,8 +45,8 @@ void e_button_update(ta_e_button *button)
         RES_COMP_RIGID_BODY);
 
     button->state_prev = button->state;
-#if 0
-    if (ta_rigid_body_intersect(player_body, button_body, 0)) {
+#if 1
+    if (ta_rigid_body_intersect(0, player_body, button_body)) {
         button->state = TA_BUTTON_ACTIVE;
     } else {
         button->state = TA_BUTTON_INACTIVE;

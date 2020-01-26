@@ -4,6 +4,8 @@
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
 
+#pragma warning(push)
+#pragma warning(disable: 26451)
 #define STBI_ASSERT(x) DLB_ASSERT(x)
 #define STBI_MALLOC dlb_malloc
 #define STBI_REALLOC dlb_realloc
@@ -12,6 +14,7 @@
 #define STBI_ONLY_TGA
 #define STB_IMAGE_IMPLEMENTATION
 #include "misc/stb_image.h"
+#pragma warning(pop)
 
 void ta_texture_init(ta_texture *tex)
 {
@@ -51,7 +54,6 @@ static void *read_tga(const char *filename, u32 *width, u32 *height, u8 *channel
     FILE *f;
     size_t read;
     void *pixels;
-    int row;
 
     f = fopen(filename, "rb");
 
@@ -72,12 +74,6 @@ static void *read_tga(const char *filename, u32 *width, u32 *height, u8 *channel
         fclose(f);
         return NULL;
     }
-    //if (header.bits_per_pixel != 24) {
-    //    fprintf(stderr, "%s is not a 24-bit uncompressed RGB tga file\n",
-    //        filename);
-    //    fclose(f);
-    //    return NULL;
-    //}
     DLB_ASSERT(header.bits_per_pixel == 8 || header.bits_per_pixel == 24 ||
         header.bits_per_pixel == 32);
 
@@ -89,7 +85,7 @@ static void *read_tga(const char *filename, u32 *width, u32 *height, u8 *channel
         }
     }
 
-    color_map_size = le_short(header.color_map_length) *
+    color_map_size = (size_t)le_short(header.color_map_length) *
         (header.color_map_depth / 8);
     for (i = 0; i < color_map_size; ++i) {
         if (getc(f) == EOF) {
@@ -102,7 +98,7 @@ static void *read_tga(const char *filename, u32 *width, u32 *height, u8 *channel
     *width = (u32)le_short(header.width);
     *height = (u32)le_short(header.height);
     *channels = (u8)header.bits_per_pixel / 8;
-    pixels_size = *width * *height * *channels;
+    pixels_size = (size_t)*width * *height * *channels;
     pixels = dlb_malloc(pixels_size);
     DLB_ASSERT(pixels);
 
