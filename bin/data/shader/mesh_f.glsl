@@ -199,12 +199,11 @@ void main()
                     shadow_map_depth *= u_lights[i].shadowmap_zfar;
                     shadow_bias = 0.001;
 
-#if 1
+#if 0
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
 #else
                     // Soft shadows
-                    // TODO: Clean this crap up via:
-                    // https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
+                    // TODO: Clean this crap up!
 				    float ss_bias = 0.04;
                     float ss_count = 0.0;
 				    for (float x = -1.0; x <= 1.0; x += 1.0) {
@@ -220,6 +219,26 @@ void main()
 				    }
                     shadow /= ss_count;
 		            shadow = smoothstep(0.01, 1.0, shadow);
+
+                    // // https://learnopengl.com/Advanced-Lighting/Shadows/Point-Shadows
+                    // float shadow  = 0.0;
+                    // float bias    = 0.05;
+                    // float samples = 4.0;
+                    // float offset  = 0.1;
+                    // for(float x = -offset; x < offset; x += offset / (samples * 0.5))
+                    // {
+                    //     for(float y = -offset; y < offset; y += offset / (samples * 0.5))
+                    //     {
+                    //         for(float z = -offset; z < offset; z += offset / (samples * 0.5))
+                    //         {
+                    //             float closestDepth = texture(depthMap, fragToLight + vec3(x, y, z)).r;
+                    //             closestDepth *= far_plane;   // Undo mapping [0;1]
+                    //             if(currentDepth - bias > closestDepth)
+                    //                 shadow += 1.0;
+                    //         }
+                    //     }
+                    // }
+                    // shadow /= (samples * samples * samples);
 #endif
                 }
 

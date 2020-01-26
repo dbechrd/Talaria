@@ -56,7 +56,7 @@ typedef struct ta_shader_uniform {
 } ta_shader_uniform;
 
 typedef struct ta_shader {
-    u32 index;
+    size_t index;
     const char *name;
     const char *path_vert;
     const char *path_frag;

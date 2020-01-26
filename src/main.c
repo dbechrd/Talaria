@@ -1,44 +1,3 @@
-// Include all other .c files (i.e. "unity build"). Compilation go vroom, vroom!
-#include "ta_audio.c"
-#include "ta_buffer.c"
-#include "ta_button.c"
-#include "ta_camera.c"
-#include "ta_collider.c"
-#include "ta_editor.c"
-#include "ta_event.c"
-#include "ta_file.c"
-#include "ta_font.c"
-#include "ta_game.c"
-#include "ta_gltf.c"
-#include "ta_intersect.c"
-#include "ta_json.c"
-#include "ta_key.c"
-#include "ta_keybind.c"
-#include "ta_light.c"
-#include "ta_log.c"
-#include "ta_material.c"
-#include "ta_math.c"
-#include "ta_mesh.c"
-#include "ta_model.c"
-#include "ta_mouse.c"
-#include "ta_parse.c"
-#include "ta_primitive.c"
-#include "ta_render.c"
-#include "ta_rigid_body.c"
-#include "ta_scene.c"
-#include "ta_schema.c"
-#include "ta_shader.c"
-#include "ta_symbol.c"
-#include "ta_texture.c"
-#include "ta_timer.c"
-#include "ta_token.c"
-#include "ta_transform.c"
-#include "ta_ui.c"
-#include "ta_ui_barchart.c"
-#include "ta_viewport.c"
-#include "ta_window.c"
-#include "gl3w.c"
-
 #include "ta_audio.h"
 #include "ta_editor.h"
 #include "ta_game.h"
@@ -51,33 +10,10 @@
 #include "ta_timer.h"
 #include "ta_window.h"
 #include "dlb/dlb_types.h"
+#include "dlb/dlb_hash.h"
+#include "dlb/dlb_index.h"
 #include "misc/gl3w.h"
 #include "SDL/SDL.h"
-
-// Single-header implementations
-#define DLB_MURMUR3_IMPLEMENTATION
-#include "dlb/dlb_murmur3.h"
-#undef DLB_MURMUR3_IMPLEMENTATION
-
-#define DLB_VECTOR_IMPLEMENTATION
-#include "dlb/dlb_vector.h"
-#undef DLB_VECTOR_IMPLEMENTATION
-
-#define DLB_HASH_IMPLEMENTATION
-#define DLB_HASH_TEST
-#include "dlb/dlb_hash.h"
-#undef DLB_HASH_TEST
-#undef DLB_HASH_IMPLEMENTATION
-
-#define DLB_BITSET_TEST
-#include "dlb/dlb_bitset.h"
-#undef DLB_BITSET_TEST
-
-#define DLB_INDEX_IMPLEMENTATION
-#define DLB_INDEX_TEST
-#include "dlb/dlb_index.h"
-#undef DLB_INDEX_TEST
-#undef DLB_INDEX_IMPLEMENTATION
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
@@ -180,3 +116,85 @@ int main(int argc, char *argv[])
     ta_log_free(&tg_debug_log);
     return 0;
 }
+
+// Include all other .c files (i.e. "unity build"). Compilation go vroom, vroom!
+#include "ta_audio.c"
+#include "ta_buffer.c"
+#include "ta_button.c"
+#include "ta_camera.c"
+#include "ta_collider.c"
+#include "ta_editor.c"
+#include "ta_event.c"
+#include "ta_file.c"
+#include "ta_font.c"
+#include "ta_game.c"
+#include "ta_gltf.c"
+#include "ta_intersect.c"
+#include "ta_json.c"
+#include "ta_key.c"
+#include "ta_keybind.c"
+#include "ta_light.c"
+#include "ta_log.c"
+#include "ta_material.c"
+#include "ta_math.c"
+#include "ta_mesh.c"
+#include "ta_model.c"
+#include "ta_mouse.c"
+#include "ta_parse.c"
+#include "ta_primitive.c"
+#include "ta_render.c"
+#include "ta_rigid_body.c"
+#include "ta_scene.c"
+#include "ta_schema.c"
+#include "ta_shader.c"
+#include "ta_symbol.c"
+#include "ta_texture.c"
+#include "ta_timer.c"
+#include "ta_token.c"
+#include "ta_transform.c"
+#include "ta_ui.c"
+#include "ta_ui_barchart.c"
+#include "ta_viewport.c"
+#include "ta_window.c"
+#include "gl3w.c"
+
+// Single-header implementations
+#define DLB_MURMUR3_IMPLEMENTATION
+#include "dlb/dlb_murmur3.h"
+#undef DLB_MURMUR3_IMPLEMENTATION
+
+#define DLB_VECTOR_IMPLEMENTATION
+#include "dlb/dlb_vector.h"
+#undef DLB_VECTOR_IMPLEMENTATION
+
+#define DLB_HASH_IMPLEMENTATION
+#define DLB_HASH_TEST
+#include "dlb/dlb_hash.h"
+#undef DLB_HASH_TEST
+#undef DLB_HASH_IMPLEMENTATION
+
+#define DLB_BITSET_TEST
+#include "dlb/dlb_bitset.h"
+#undef DLB_BITSET_TEST
+
+#define DLB_INDEX_IMPLEMENTATION
+#define DLB_INDEX_TEST
+#include "dlb/dlb_index.h"
+#undef DLB_INDEX_TEST
+#undef DLB_INDEX_IMPLEMENTATION
+
+#define CGLTF_IMPLEMENTATION
+#include "misc/cgltf.h"
+#undef CGLTF_IMPLEMENTATION
+
+#undef KB
+#undef MB
+#undef GB
+#pragma warning(push)
+#pragma warning(disable: 6262)
+#pragma warning(disable: 6237)
+#pragma warning(disable: 6239)
+#pragma warning(disable: 6240)
+#pragma warning(disable: 6326)
+#include "lz4.c"
+#pragma warning(pop)

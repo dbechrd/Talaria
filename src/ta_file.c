@@ -51,15 +51,15 @@ void ta_file_debug_context(ta_file *f)
     fprintf(stderr, "^\n\n");
 }
 
-static const char *char_printable(const char *c) {
+static const char *char_printable(char c) {
     // HACK: Static buffer, don't hold pointers to this
     static char buf[2] = { 0 };
-    if (isprint(*c)) {
-        buf[0] = *c;
+    if (isprint((int)c)) {
+        buf[0] = c;
         return buf;
     }
 
-    switch (*c) {
+    switch (c) {
         case '\t': return "\\t";
         case '\r': return "\\r";
         case '\n': return "\\n";
@@ -145,7 +145,7 @@ char ta_file_char_escaped(ta_file *f)
         default:
             PANIC_FILE(f,
                 "[PARSE_ERROR] Invalid escape sequence in char literal '%s'."
-                "\n", char_printable(&c)
+                "\n", char_printable(c)
             );
     }
     return c;
@@ -198,7 +198,7 @@ char ta_file_read(ta_file *f, char *buf, size_t count, const char *valid_chars,
                 PANIC_FILE(f,
                     "[PARSE_ERROR] Unexpected character '%s' in expression "
                     "starting at %d:%d. Expected [%s] or delimeter [%s].\n",
-                    char_printable(&c), (int)pos_start.line,
+                    char_printable(c), (int)pos_start.line,
                     (int)pos_start.column, valid_chars, delims
                 );
             } else {
@@ -228,7 +228,7 @@ int ta_file_expect_char(ta_file *f, const char *chars, int times) {
         char next = ta_file_peek(f);
         PANIC_FILE(f,
             "[PARSE_ERROR] Missing expected character [%s]. Found '%s' instead."
-            "\n", chars, char_printable(&next)
+            "\n", chars, char_printable(next)
         );
     }
     return count;

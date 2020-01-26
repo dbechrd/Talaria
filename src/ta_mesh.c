@@ -158,14 +158,14 @@ void ta_mesh_create(ta_mesh *mesh)
     glBindVertexArray(mesh->gl_vao);
 
     if (mesh->indexes) {
-        u32 indexes_count = dlb_vec_len(mesh->indexes);
+        size_t indexes_count = dlb_vec_len(mesh->indexes);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_INDEX]);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_INDEX]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes_count * sizeof(GLuint),
             mesh->indexes, GL_STATIC_DRAW);
     }
     if (mesh->positions) {
-        u32 positions_count = dlb_vec_len(mesh->positions);
+        size_t positions_count = dlb_vec_len(mesh->positions);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_POSITION]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_POSITION]);
         glBufferData(GL_ARRAY_BUFFER, positions_count * 3 * sizeof(GLfloat),
@@ -175,7 +175,7 @@ void ta_mesh_create(ta_mesh *mesh)
             false, 0, 0);
     }
     if (mesh->colors) {
-        u32 colors_count = dlb_vec_len(mesh->colors);
+        size_t colors_count = dlb_vec_len(mesh->colors);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_COLOR]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_COLOR]);
         glBufferData(GL_ARRAY_BUFFER, colors_count * 4 * sizeof(GLfloat),
@@ -184,7 +184,7 @@ void ta_mesh_create(ta_mesh *mesh)
         glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 4, GL_FLOAT, false, 0, 0);
     }
     if (mesh->uvs) {
-        u32 uvs_count = dlb_vec_len(mesh->uvs);
+        size_t uvs_count = dlb_vec_len(mesh->uvs);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_UV]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_UV]);
         glBufferData(GL_ARRAY_BUFFER, uvs_count * 2 * sizeof(GLfloat), mesh->uvs,
@@ -193,7 +193,7 @@ void ta_mesh_create(ta_mesh *mesh)
         glVertexAttribPointer(TA_SHADER_ATTR_UV, 2, GL_FLOAT, false, 0, 0);
     }
     if (mesh->normals) {
-        u32 normals_count = dlb_vec_len(mesh->normals);
+        size_t normals_count = dlb_vec_len(mesh->normals);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_NORMAL]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_NORMAL]);
         glBufferData(GL_ARRAY_BUFFER, normals_count * 3 * sizeof(GLfloat),
@@ -202,7 +202,7 @@ void ta_mesh_create(ta_mesh *mesh)
         glVertexAttribPointer(TA_SHADER_ATTR_NORMAL, 3, GL_FLOAT, false, 0, 0);
     }
     if (mesh->tangents) {
-        u32 tangents_count = dlb_vec_len(mesh->tangents);
+        size_t tangents_count = dlb_vec_len(mesh->tangents);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_TANGENT]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_TANGENT]);
         glBufferData(GL_ARRAY_BUFFER, tangents_count * 3 * sizeof(GLfloat),
@@ -224,17 +224,17 @@ void ta_mesh_init_normals(ta_mesh *mesh, float scale)
 {
     DLB_ASSERT(!mesh->vertex_normals);
 
-    u32 normals_count = dlb_vec_len(mesh->normals);
+    size_t normals_count = dlb_vec_len(mesh->normals);
     DLB_ASSERT(normals_count > 0);
     DLB_ASSERT(normals_count == dlb_vec_len(mesh->positions));
     dlb_vec_reserve(mesh->vertex_normals, normals_count);
 
-    u32 face_count = normals_count / 3;
+    size_t face_count = normals_count / 3;
     dlb_vec_reserve(mesh->face_normals, face_count);
     dlb_vec_reserve(mesh->tangent_lines, face_count);
 
     ta_line_3d *line;
-    u32 i = 0;
+    size_t i = 0;
     for (; i < face_count; i++) {
         line = dlb_vec_alloc(mesh->vertex_normals);
         ta_vec3 vertex_normal = vec3_scalef(mesh->normals[i], scale);
@@ -323,12 +323,12 @@ void ta_mesh_log_normals_dbg(ta_mesh *mesh)
 void ta_mesh_render(ta_mesh *mesh)
 {
     glBindVertexArray(mesh->gl_vao);
-    u32 indexes_count = dlb_vec_len(mesh->indexes);
+    size_t indexes_count = dlb_vec_len(mesh->indexes);
     if (indexes_count) {
-        glDrawElements(GL_TRIANGLES, indexes_count, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, (GLsizei)indexes_count, GL_UNSIGNED_INT, 0);
     } else {
-        u32 positions_count = dlb_vec_len(mesh->positions);
-        glDrawArrays(GL_TRIANGLES, 0, positions_count);
+        size_t positions_count = dlb_vec_len(mesh->positions);
+        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)positions_count);
     }
     glBindVertexArray(0);
 }

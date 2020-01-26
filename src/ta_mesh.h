@@ -13,8 +13,10 @@ enum {
     TA_MESH_BUFFER_COUNT
 };
 
+#pragma warning(push)
+#pragma warning(disable: 4201)
 typedef struct ta_mesh {
-    u32 index;
+    size_t index;
     const char *name;
     const char *path;
     ta_vec3 offset;
@@ -37,6 +39,7 @@ typedef struct ta_mesh {
     GLuint gl_vao;
     GLuint gl_buffers[TA_MESH_BUFFER_COUNT];
 } ta_mesh;
+#pragma warning(pop)
 
 void ta_mesh_init(ta_mesh *mesh);
 void ta_mesh_load_file(ta_mesh *mesh, const char *filename);

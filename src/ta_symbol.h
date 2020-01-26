@@ -2,22 +2,22 @@
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_memory.h"
 
-#define dlb_symbol__hdr(s) ((dlb_symbol__hdr *)((char *)s - sizeof(dlb_symbol__hdr)))
+typedef struct dlb_symbol__hdr {
+    size_t len;
+} dlb_symbol__hdr;
 
+#define dlb_symbol__hdr(s) ((dlb_symbol__hdr *)((char *)s - sizeof(dlb_symbol__hdr)))
 #define dlb_symbol_len(s) ((s) ? dlb_symbol__hdr(s)->len : 0)
+
 //#define dlb_symbol_end(s) ((s) + dlb_symbol_len(s))
 //#define dlb_symbol_last(s) (&(s)[dlb_symbol__hdr(s)->len-1])
 //#define dlb_symbol_cstr(s) (dlb_symbol__alloc((s), sizeof(s)))
 #define dlb_symbol_alloc(s, len) (dlb_symbol__alloc((s), (len)))
 #define dlb_symbol_free(s) ((s) ? (dlb_free(dlb_symbol__hdr(s)), (s) = NULL) : 0)
 
-typedef struct dlb_symbol__hdr {
-    u32 len;
-} dlb_symbol__hdr;
-
 // TODO: Use arena allocator for symbols (see dlb_string.h)
-static inline char *dlb_symbol__alloc(const char *buf, u32 len) {
-    u32 new_size = sizeof(dlb_symbol__hdr) + len + 1;
+static inline char *dlb_symbol__alloc(const char *buf, size_t len) {
+    size_t new_size = sizeof(dlb_symbol__hdr) + len + 1;
     dlb_symbol__hdr *sym = dlb_calloc(1, new_size);
     sym->len = len;
     char *str = (char *)sym + sizeof(dlb_symbol__hdr);
@@ -27,6 +27,7 @@ static inline char *dlb_symbol__alloc(const char *buf, u32 len) {
 }
 
 #define SYM(s) (s), dlb_symbol_len(s)
+#define SYM32(s) (s), (u32)dlb_symbol_len(s)
 #define INTERN(s) ta_symbol_intern(CSTR(s))
 
 // Special identifiers
@@ -100,5 +101,5 @@ extern const char *SYM_MISSING_NORMAL;
 extern const char *SYM_MISSING_OCCLUSION;
 extern const char *SYM_MISSING_ROUGHNESS;
 
-const char *ta_symbol_intern(const char *s, u32 len);
+const char *ta_symbol_intern(const char *s, size_t len);
 void ta_symbol_init();

@@ -119,17 +119,17 @@ static GL3WglProc get_proc(const char *proc)
 static struct
 {
     int major, minor;
-} version;
+} gl3w_version;
 
-static int parse_version(void)
+static int parse_gl3w_version(void)
 {
     if (!glGetIntegerv)
         return -1;
 
-    glGetIntegerv(GL_MAJOR_VERSION, &version.major);
-    glGetIntegerv(GL_MINOR_VERSION, &version.minor);
+    glGetIntegerv(GL_MAJOR_VERSION, &gl3w_version.major);
+    glGetIntegerv(GL_MINOR_VERSION, &gl3w_version.minor);
 
-    if (version.major < 3)
+    if (gl3w_version.major < 3)
         return -1;
     return 0;
 }
@@ -141,16 +141,16 @@ int gl3wInit(void)
     open_libgl();
     load_procs();
     close_libgl();
-    return parse_version();
+    return parse_gl3w_version();
 }
 
 int gl3wIsSupported(int major, int minor)
 {
     if (major < 3)
         return 0;
-    if (version.major == major)
-        return version.minor >= minor;
-    return version.major >= major;
+    if (gl3w_version.major == major)
+        return gl3w_version.minor >= minor;
+    return gl3w_version.major >= major;
 }
 
 GL3WglProc gl3wGetProcAddress(const char *proc)

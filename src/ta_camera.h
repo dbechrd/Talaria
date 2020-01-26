@@ -20,7 +20,7 @@ typedef enum ta_shader_debug_channel {
 } ta_shader_debug_channel;
 
 typedef struct ta_camera {
-    u32 index;
+    size_t index;
     const char *name;
     const char *entity_name;
     float position_smooth;      // how fast to blend to target [0, 1]

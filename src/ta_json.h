@@ -1,5 +1,6 @@
 #pragma once
 #include "dlb/dlb_types.h"
+#include "misc/cgltf.h"
 
 struct jsmntok_t;
 

@@ -52,7 +52,7 @@ static token *token_read(ta_file *f, token **tokens)
         {
             ta_file_expect_char(f, C_WHITESPACE, 1);
             token_type prev_token_type = TOKEN_UNKNOWN;
-            int tokens_len = dlb_vec_len(*tokens);
+            size_t tokens_len = dlb_vec_len(*tokens);
             if (tokens_len > 1) {
                 prev_token_type = (tok - 1)->type;
             }
@@ -378,12 +378,12 @@ void tokens_parse(ta_scene *scene, token *tokens)
         int indent;
         u32 resource_id; // 0 = not a resource (i.e. field)
         ta_schema_field_type type;
-        u32 array_len;   // 0 = not array, 1 = vector, >1 = fixed array size
-        u32 array_elem;  // Current element of array we're writing to
+        size_t array_len;   // 0 = not array, 1 = vector, >1 = fixed array size
+        size_t array_elem;  // Current element of array we're writing to
         const char *name;
-        u32 index;       // pool index (resource_data)
+        size_t index;       // pool index (resource_data)
         void *ptr;
-        u32 size;
+        size_t size;
         bool is_union_type;
         bool is_union;
         int union_type;
@@ -628,7 +628,7 @@ void tokens_parse(ta_scene *scene, token *tokens)
                             resource->index = stack[sp-1].index;
                             DLB_ASSERT(resource->name == tok->value.string);  // TODO: Cleanup
 
-                            u32 hash = dlb_murmur3(SYM(resource->name));
+                            u32 hash = dlb_murmur3(SYM32(resource->name));
                             dlb_index_insert(&scene->index_by_name[res_type], hash,
                                 resource->index);
                         } else {
@@ -642,7 +642,7 @@ void tokens_parse(ta_scene *scene, token *tokens)
                             comp->index = stack[sp-1].index;
                             DLB_ASSERT(comp->entity_name == tok->value.string);  // TODO: Cleanup
 
-                            u32 hash = dlb_murmur3(SYM(comp->entity_name));
+                            u32 hash = dlb_murmur3(SYM32(comp->entity_name));
                             dlb_index_insert(&scene->index_by_entity[res_type], hash,
                                 comp->index);
                         } else {

@@ -80,4 +80,4 @@ void ta_log_init_file(ta_log *log, const char *filename, bool flush, bool echo,
 void ta_log_flush(ta_log *log);
 void ta_log_write(ta_log *log, u32 src, const char *fmt, ...);
 //void ta_log_append(ta_log *log, const char* fmt, ...);
-//void ta_log_free(ta_log *log);
+void ta_log_free(ta_log *log);

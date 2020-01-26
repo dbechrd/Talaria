@@ -20,7 +20,7 @@ static ta_event_queue event_queue;
 
 void ta_event_push(ta_event *event)
 {
-    u32 cap = dlb_vec_cap(event_queue.buffer);
+    size_t cap = dlb_vec_cap(event_queue.buffer);
     if (event_queue.count == cap) {
         bool has_items = cap > 0;
         cap = MAX(16, cap * 2);

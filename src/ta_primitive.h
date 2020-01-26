@@ -53,5 +53,5 @@ void ta_primitive_push_axes_arrow(struct ta_mesh *mesh, ta_vec3 position,
 void ta_primitive_push_axes_cube(struct ta_mesh *mesh, ta_vec3 position,
     float scale);
 void ta_primitive_render_mesh(struct ta_mesh *mesh, struct ta_shader *shader,
-    GLenum mode,  bool clear_buffers, bool reset_uniforms);
+    int mode, bool clear_buffers, bool reset_uniforms);
 void ta_primitive_render(bool clear_buffers, bool reset_uniforms);

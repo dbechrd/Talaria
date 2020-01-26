@@ -2,6 +2,7 @@
 #include "ta_light.h"
 #include "ta_model.h"
 #include "ta_primitive.h"
+#include "ta_schema.h"
 #include "ta_shader.h"
 #include "ta_symbol.h"
 #include "ta_texture.h"
@@ -215,7 +216,7 @@ static void shadowpass_render_directional(ta_light *light, ta_model *models)
         ta_model_shadow_pass(model, shader, &light_pv);
     }
 
-    ta_shader_unbind(shader);
+    ta_shader_unbind();
 }
 
 // Draw into shadowmap from light perspective
@@ -263,7 +264,7 @@ static void shadowpass_render_point(ta_light *light, ta_model *models)
         }
     }
 
-    ta_shader_unbind(shader);
+    ta_shader_unbind();
 }
 
 void ta_light_shadowpass_render(ta_light *light, ta_model *models)

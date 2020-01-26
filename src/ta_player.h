@@ -2,7 +2,7 @@
 #include "dlb/dlb_types.h"
 
 typedef struct ta_player {
-    u32 index;
+    size_t index;
     const char *name;
     const char *entity_name;
     const char *e_gun;
@@ -11,10 +11,10 @@ typedef struct ta_player {
 
 //void ta_player_equip_next();
 //void ta_player_equip_prev();
-//void ta_player_equip_by_index(u32 index);
+//void ta_player_equip_by_index(size_t index);
 
 typedef struct ta_gun {
-    u32 index;
+    size_t index;
     const char *name;
     const char *entity_name;
     u32 carrying_ammo;       // # of rounds of extra ammo

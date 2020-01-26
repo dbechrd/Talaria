@@ -39,7 +39,7 @@ typedef struct ta_light_spot {
 
 typedef struct ta_light_shadowmap {
     const char *shader;
-    GLsizei resolution;
+    u32 resolution;
     float znear;
     float zfar;
 
@@ -49,7 +49,7 @@ typedef struct ta_light_shadowmap {
 } ta_light_shadowmap;
 
 typedef struct ta_light {
-    u32 index;
+    size_t index;
     const char *name;
     const char *entity_name;
     bool disabled;

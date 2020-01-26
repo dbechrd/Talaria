@@ -9,7 +9,7 @@ struct ta_manifold;
 // http://allenchou.net/2013/12/game-physics-introduction/
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
 typedef struct ta_rigid_body {
-    u32 index;         // TODO: Comment what this is for
+    size_t index;      // TODO: Comment what this is for
     const char *name;  // TODO: Comment what this is for
     const char *entity_name;
     ta_aabb aabb;

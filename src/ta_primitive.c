@@ -698,7 +698,7 @@ void ta_primitive_push_axes_cube(ta_mesh *mesh, ta_vec3 position, float scale)
     ta_primitive_push_cube(mesh, cube_center, cube_radius, TA_COLOR_BLUE);
 }
 
-void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, GLenum mode,
+void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
     bool clear_buffers, bool reset_uniforms)
 {
     // TODO: Move this out into its own explicit call, it's more confusing here
@@ -710,7 +710,7 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, GLenum mode,
     }
 
     // TODO: This is basically just mesh_render, use that instead
-    u32 positions_count = dlb_vec_len(mesh->positions);
+    size_t positions_count = dlb_vec_len(mesh->positions);
     if (positions_count) {
         GLboolean cull_face = 0;
         glGetBooleanv(GL_CULL_FACE, &cull_face);
@@ -718,27 +718,27 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, GLenum mode,
 
         // Update buffers (resize if necessary)
         for (int i = 0; i < TA_MESH_BUFFER_COUNT; ++i) {
-            int queue_bytes = dlb_vec_size(mesh->buffers[i]);
+            size_t queue_bytes = dlb_vec_size(mesh->buffers[i]);
             if (!queue_bytes) {
                 continue;
             }
 
             int buffer_size = 0;
-            glGetNamedBufferParameteriv(mesh->gl_buffers[i],
-                GL_BUFFER_SIZE, &buffer_size);
+            glGetNamedBufferParameteriv(mesh->gl_buffers[i], GL_BUFFER_SIZE,
+                &buffer_size);
             if (queue_bytes > buffer_size) {
                 glNamedBufferData(mesh->gl_buffers[i], queue_bytes,
                     mesh->buffers[i], GL_DYNAMIC_DRAW);
             } else {
-                glNamedBufferSubData(mesh->gl_buffers[i], 0,
-                    queue_bytes, mesh->buffers[i]);
+                glNamedBufferSubData(mesh->gl_buffers[i], 0, queue_bytes,
+                    mesh->buffers[i]);
             }
         }
 
         // Draw quads
         ta_shader_bind(shader);
         glBindVertexArray(mesh->gl_vao);
-        glDrawArrays(mode, 0, positions_count);
+        glDrawArrays(mode, 0, (GLsizei)positions_count);
         glBindVertexArray(0);
         ta_shader_unbind();
 

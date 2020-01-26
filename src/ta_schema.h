@@ -89,13 +89,13 @@ typedef enum ta_resource_type {
 
 // All resource structs must start with this header
 typedef struct ta_resource {
-    u32 index;
+    size_t index;
     const char *name;
 } ta_resource;
 
 // All component structs must start with this header
 typedef struct ta_component {
-    u32 index;
+    size_t index;
     const char *name;
     const char *entity_name;
 } ta_component;
@@ -108,9 +108,9 @@ typedef const char *(enum_to_str)(int);
 typedef struct ta_schema_field {
     ta_schema_field_type type;
     const char *name;
-    u32 offset;
-    u32 size;
-    u32 array_len;  // Note: 0 = not array, 1 = vector, >1 = fixed array size
+    size_t offset;
+    size_t size;
+    size_t array_len;  // Note: 0 = not array, 1 = vector, >1 = fixed array size
     bool is_alias;
     enum_to_str *enum_converter;
     bool is_union_type;
@@ -124,7 +124,7 @@ typedef void (schema_free)(void *ptr);
 typedef struct ta_schema {
     ta_schema_field_type type;
     const char *name;
-    u32 size;
+    size_t size;
     schema_init *init;
     schema_free *free;
     ta_schema_field *fields;

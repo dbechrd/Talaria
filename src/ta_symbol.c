@@ -220,7 +220,7 @@ void ta_symbol_init() {
     SYM_MISSING_ROUGHNESS       = INTERN("missing_roughness");
 }
 
-const char *ta_symbol_intern(const char *s, u32 len) {
+const char *ta_symbol_intern(const char *s, size_t len) {
     DLB_ASSERT(len);
     DLB_ASSERT(len < TA_SYMBOL_MAX_LEN);
 

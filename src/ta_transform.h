@@ -3,7 +3,7 @@
 #include "dlb/dlb_types.h"
 
 typedef struct ta_transform {
-    u32 index;
+    size_t index;
     const char *name;
     const char *entity_name;
     ta_xform xform;

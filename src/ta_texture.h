@@ -4,13 +4,13 @@
 #include "misc/gl3w.h"
 
 typedef struct ta_texture {
-    u32 index;
+    size_t index;
     const char *name;
     const char *path;  // File path
     u8 *pixels;        // Pixel data (if inlined instead of via path)
-    int width;         // Size of texture (pixels)
-    int height;
-    int channels;      // Number of color channels (1, 2, 4)
+    u32 width;         // Size of texture (pixels)
+    u32 height;
+    u8 channels;       // Number of color channels (1, 2, 4)
     bool linear;       // True if linear color space. E.g. metallic, etc.
     bool repeat;       // true = REPEAT, false = CLAMP_TO_EDGE
     bool cubemap;      // True if texture is a cubemap texture

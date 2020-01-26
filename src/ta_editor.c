@@ -225,7 +225,7 @@ static void ui_node_panel()
     }
 
     // TODO: Accelerate search (e.g. trie) if it gets slow
-    u32 query_len = dlb_vec_len(search_box.buffer);
+    size_t query_len = dlb_vec_len(search_box.buffer);
     if (query_len) {
         static const char **search_results = 0;
         dlb_vec_clear(search_results);
@@ -271,7 +271,7 @@ static void ui_node_panel()
             ta_text_entry_submit(uid_editor);
         }
         if (ta_text_entry_submitted(uid_editor)) {
-            u32 text_len = 0;
+            size_t text_len = 0;
             char *text = ta_text_entry_text(uid_editor, &text_len);
 
 #if 0
@@ -902,7 +902,7 @@ static void ui_mesh_panel()
             char tex_buf[1024] = { 0 };
             int len = snprintf(tex_buf, sizeof(tex_buf),
                 "name         : %s\n"
-                "vertex count : %u",
+                "vertex count : %zu",
                 mesh->name,
                 dlb_vec_len(mesh->positions)
             );
@@ -946,7 +946,7 @@ static void ui_texture_panel()
             int len = snprintf(tex_buf, sizeof(tex_buf),
                 "name: %s\n"
                 "path: %s\n"
-                "glid: %d",
+                "glid: %u",
                 texture->name,
                 texture->path,
                 texture->gl_id);
@@ -970,18 +970,18 @@ static void ui_textbox_panel()
     static ta_ui_textbox_state textbox = { 0 };
     static char buf[] = "The quick brown fox jumps over the lazy dog. 1234567890 |||";
     if (ta_ui_textbox(CSTR(buf), &textbox, 0)) {
-        u32 text_len = dlb_vec_len(textbox.buffer);
+        size_t text_len = dlb_vec_len(textbox.buffer);
         //dlb_memcpy(buf, textbox.buffer, MAX(sizeof(buf) - 1, text_len));
         ta_ui_textbox_clear(&textbox);
     }
     ta_ui_row_end();
 
     char tb_buffer[20] = { 0 };
-    snprintf(CSTR(tb_buffer), "Length: %d", dlb_vec_len(textbox.buffer));
+    snprintf(CSTR(tb_buffer), "Length: %zu", dlb_vec_len(textbox.buffer));
     ta_ui_label(CSTR(tb_buffer));
 
     char tb_cursor[20] = { 0 };
-    snprintf(CSTR(tb_cursor), "Cursor: %d", textbox.cursor);
+    snprintf(CSTR(tb_cursor), "Cursor: %zu", textbox.cursor);
     ta_ui_label(CSTR(tb_cursor));
 
     ta_ui_panel_end();
@@ -1024,7 +1024,7 @@ static void ui_editor_sidebar()
         if (active && category_selected != i) {
             category_selected = i;
             if (editor.textbox_editing) {
-                ta_ui_textbox_clear(editor.textbox_editing);
+                ta_ui_textbox_cancel(editor.textbox_editing);
             }
         }
     }
@@ -1110,6 +1110,99 @@ void ta_editor_draw_screen()
     glClear(GL_DEPTH_BUFFER_BIT);
     ta_ui_render();
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render end\n");
+
+    //--------------------------------------------------------------------------
+    // Console window
+    //--------------------------------------------------------------------------
+    ta_ui_next_offset(200, 0);
+    ta_ui_next_size(WINDOW_W - 400, 0);
+    ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);
+    static ta_ui_window_state console_window = { 0 };
+    ta_ui_window_begin(&console_window, TA_UI_AUTOSIZE_H);
+
+    static char *console_history = 0;
+    if (!console_history) {
+        static const char console_welcome[] = "---------- Talaria OS v0.1 ----------";
+        dlb_vec_reserve(console_history, sizeof(console_welcome));
+        dlb_memcpy(console_history, CSTR(console_welcome));
+        dlb_vec_hdr(console_history)->len = sizeof(console_welcome) - 1;
+    }
+    ta_ui_next_margin(0, 0, 0, 0);
+    ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_label(console_history, dlb_vec_len(console_history));
+
+    ta_ui_row_begin();
+    ta_ui_next_margin(0, 0, 0, 0);
+    ta_ui_next_pad(0, 0, 0, 0);
+    static const char cmd_prompt[] = "root@talaria.dev:~# ";
+    ta_ui_label(CSTR(cmd_prompt));
+
+    ta_ui_next_size(WINDOW_W - 440, 15);
+    ta_ui_next_margin(0, 0, 0, 0);
+    ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);
+    static ta_ui_textbox_state console_textbox = { 0 };
+    if (ta_ui_textbox(0, 0, &console_textbox, TA_UI_AUTOSIZE)) {
+        char *resp = 0;
+        bool clear = false;
+        bool exit = false;
+
+        size_t text_len = dlb_vec_len(console_textbox.buffer);
+        if (text_len) {
+            if (!strncmp(console_textbox.buffer, CSTR("exit"))) {
+                dlb_vec_free(console_history);
+                text_len = 0;
+                clear = true;
+                exit = true;
+            } else if (!strncmp(console_textbox.buffer, CSTR("clear"))) {
+                dlb_vec_free(console_history);
+                text_len = 0;
+                clear = true;
+            } else if (!strncmp(console_textbox.buffer, CSTR("42"))) {
+                const char resp_42[] = "The answer to life, the universe, and everything.";
+                dlb_vec_reserve(resp, sizeof(resp_42));
+                dlb_memcpy(resp, CSTR(resp_42));
+                dlb_vec_hdr(resp)->len = sizeof(resp_42) - 1;
+            } else {
+                const char resp_error[] = "Unrecognized command.";
+                dlb_vec_reserve(resp, sizeof(resp_error));
+                dlb_memcpy(resp, CSTR(resp_error));
+                dlb_vec_hdr(resp)->len = sizeof(resp_error) - 1;
+            }
+        }
+        if (!clear) {
+            if (resp) {
+                dlb_vec_push(console_textbox.buffer, '\n');
+                text_len++;
+            }
+            size_t hist_len = dlb_vec_len(console_history);
+            size_t prompt_len = sizeof(cmd_prompt) - 1;
+            size_t resp_len = dlb_vec_len(resp);
+            dlb_vec_reserve(console_history, hist_len + 1 + prompt_len + text_len + resp_len);
+            console_history[hist_len] = '\n';
+            hist_len++;
+            dlb_memcpy(console_history + hist_len, CSTR(cmd_prompt));
+            dlb_memcpy(console_history + hist_len + prompt_len, console_textbox.buffer, text_len);
+            dlb_memcpy(console_history + hist_len + prompt_len + text_len, resp, resp_len);
+            dlb_vec_hdr(console_history)->len = hist_len + prompt_len + text_len + resp_len;
+        }
+        if (exit) {
+            ta_ui_textbox_cancel(&console_textbox);
+            // TODO: Hide console window
+        } else {
+            ta_ui_textbox_clear(&console_textbox);
+        }
+        console_window.scroll.percent.y = 1.0f;
+    }
+
+    ta_ui_window_end();
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI layout end\n");
+
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render begin\n");
+    glClear(GL_DEPTH_BUFFER_BIT);
+    ta_ui_render();
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render end\n");
+    //--------------------------------------------------------------------------
 }
 void ta_editor_draw_world()
 {
@@ -1229,25 +1322,27 @@ void ta_editor_draw_world()
 
         editor_gizmo nearest_gizmo = GIZMO_NONE;
 
-        float t;
-        float t_min = FLT_MAX;
-        for (int i = 0; i < 3; ++i) {
-            if (ta_ray_v_aabb(&ray, &hitbox1d[i], &t) && t < t_min) {
-                t_min = t;
-                nearest_gizmo = GIZMO_TRANSLATE_X + i;
+        {
+            float t;
+            float t_min = FLT_MAX;
+            for (int i = 0; i < 3; ++i) {
+                if (ta_ray_v_aabb(&ray, &hitbox1d[i], &t) && t < t_min) {
+                    t_min = t;
+                    nearest_gizmo = GIZMO_TRANSLATE_X + i;
+                }
             }
-        }
 
-        for (int i = 0; i < 3; ++i) {
-            if (ta_ray_v_quad(&ray, &hitbox2d[i], &t) && t < t_min) {
-                t_min = t;
-                nearest_gizmo = GIZMO_TRANSLATE_YZ + i;
+            for (int i = 0; i < 3; ++i) {
+                if (ta_ray_v_quad(&ray, &hitbox2d[i], &t) && t < t_min) {
+                    t_min = t;
+                    nearest_gizmo = GIZMO_TRANSLATE_YZ + i;
+                }
             }
-        }
 
-        if (ta_ray_v_aabb(&ray, &hitbox3d, &t) && t < t_min) {
-            t_min = t;
-            nearest_gizmo = GIZMO_TRANSLATE_VIEW;
+            if (ta_ray_v_aabb(&ray, &hitbox3d, &t) && t < t_min) {
+                t_min = t;
+                nearest_gizmo = GIZMO_TRANSLATE_VIEW;
+            }
         }
 
         if (ta_mouse_captured() && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
@@ -1562,16 +1657,16 @@ void ta_editor_draw_world()
         }
     }
 }
-void editor_command_close()
+static void editor_command_close()
 {
     // NOTE: This can't happen at the moment because textbox cancel and editor
     // close are both bound to Escape. Just to be safe.
     if (editor.textbox_editing) {
-        ta_ui_textbox_clear(editor.textbox_editing);
+        ta_ui_textbox_cancel(editor.textbox_editing);
     }
     ta_game_state_set(ta_game_state_prev());
 }
-void editor_command_sim_pause_resume()
+static void editor_command_sim_pause_resume()
 {
     if (ta_game_sim_running()) {
         ta_game_sim_pause();
@@ -1579,19 +1674,19 @@ void editor_command_sim_pause_resume()
         ta_game_sim_resume();
     }
 }
-void editor_command_sim_next()
+static void editor_command_sim_next()
 {
     if (ta_game_sim_paused()) {
         ta_game_sim_step_n_frames(1);
     }
 }
-void editor_command_sim_next_ten()
+static void editor_command_sim_next_ten()
 {
     if (ta_game_sim_paused()) {
         ta_game_sim_step_n_frames(10);
     }
 }
-void editor_command_sim_while_held()
+static void editor_command_sim_while_held()
 {
     if (ta_game_sim_paused()) {
         ta_game_sim_step_n_frames(1);

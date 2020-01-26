@@ -137,9 +137,9 @@ ta_resource_type typ_to_res(ta_schema_field_type type)
 }
 
 static void type_field_add(ta_schema *schema, ta_schema_field_type type,
-    const char *name, u32 offset, u32 size, u32 array_len, bool is_alias,
-    enum_to_str *enum_converter, bool is_union_type, bool in_union,
-    int union_type)
+    const char *name, size_t offset, size_t size, size_t array_len,
+    bool is_alias, enum_to_str *enum_converter, bool is_union_type,
+    bool in_union, int union_type)
 {
     ta_schema_field *field = dlb_vec_alloc(schema->fields);
     field->type = type;
@@ -296,7 +296,7 @@ void ta_schema_register()
 
     TYPE_START(ta_light_shadowmap, TYP_LIGHT_SHADOWMAP, 0, 0);
     TYPE_FIELD(ta_light_shadowmap, shader,     ATOM_STRING);
-    TYPE_FIELD(ta_light_shadowmap, resolution, ATOM_INT);
+    TYPE_FIELD(ta_light_shadowmap, resolution, ATOM_UINT);
     TYPE_FIELD(ta_light_shadowmap, znear,      ATOM_FLOAT);
     TYPE_FIELD(ta_light_shadowmap, zfar,       ATOM_FLOAT);
     TYPE_END(ta_light_shadowmap);
@@ -541,7 +541,7 @@ static bool schema_atom_present(ta_schema_field *field, void *ptr)
             if (*val) present = true;
             break;
         } case ATOM_INT: {
-            int *val = ptr;
+            s32 *val = ptr;
             if (*val) present = true;
             break;
         } case ATOM_UINT: {
@@ -579,7 +579,7 @@ static void schema_atom_print(FILE *f, ta_schema_field *field, void *ptr)
             fprintf(f, "%u", *val);
             break;
         } case ATOM_INT: {
-            int *val = ptr;
+            s32 *val = ptr;
             fprintf(f, "%d", *val);
             break;
         } case ATOM_UINT: {
@@ -638,7 +638,7 @@ void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
             //DLB_ASSERT(!in_array && "Don't know how to print nested arrays");
 
             u8 *arr = (ptr + field->offset);
-            u32 arr_len = field->array_len;
+            size_t arr_len = field->array_len;
             if (arr_len == 1) {
                 arr = *(void **)(ptr + field->offset);
                 arr_len = dlb_vec_len(arr);
@@ -712,7 +712,7 @@ static void schema_atom_print_json(FILE *f, ta_schema_field *field, void *ptr)
             fprintf(f, "%u", *val);
             break;
         } case ATOM_INT: {
-            int *val = ptr;
+            s32 *val = ptr;
             fprintf(f, "%d", *val);
             break;
         } case ATOM_UINT: {
@@ -749,8 +749,8 @@ void ta_schema_print_json(FILE *f, ta_schema_field_type type, u8 *ptr, int level
     //       detect errors more easily.
     int union_type = -9001;
 
-    u32 field_count = dlb_vec_len(schema->fields);
-    for (u32 field_idx = 0; field_idx < field_count; ++field_idx) {
+    size_t field_count = dlb_vec_len(schema->fields);
+    for (size_t field_idx = 0; field_idx < field_count; ++field_idx) {
         ta_schema_field *field = &schema->fields[field_idx];
         if (field->is_alias) {
             continue;
@@ -763,7 +763,7 @@ void ta_schema_print_json(FILE *f, ta_schema_field_type type, u8 *ptr, int level
 
         if (field->array_len) {
             u8 *arr = field_ptr;
-            u32 arr_len = field->array_len;
+            size_t arr_len = field->array_len;
             if (arr_len) {
                 if (arr_len == 1) {
                     arr = *(void **)field_ptr;
@@ -780,7 +780,7 @@ void ta_schema_print_json(FILE *f, ta_schema_field_type type, u8 *ptr, int level
 
             indent(f, level + 1);
             fprintf(f, "\"%s\": [", field->name);
-            for (u32 arr_idx = 0; arr_idx < arr_len; ++arr_idx) {
+            for (size_t arr_idx = 0; arr_idx < arr_len; ++arr_idx) {
                 if (field->type < TYP_COUNT) {
                     fprintf(f, "\n");
                     indent(f, level + 2);
@@ -834,6 +834,7 @@ void ta_schema_print_json(FILE *f, ta_schema_field_type type, u8 *ptr, int level
                     indent(f, level + 1);
                     fprintf(f, "\"%s\": ", field->name);
                     schema_atom_print_json(f, field, field_ptr);
+                    fflush(f);
                     //if (field->type == ATOM_ENUM && field->enum_converter) {
                     //    int enum_type = *(int *)(ptr + field->offset);
                     //    const char *enum_str = field->enum_converter(enum_type);

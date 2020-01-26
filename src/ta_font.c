@@ -1,20 +1,24 @@
 #include "ta_font.h"
-#include "ta_file.h"
-#include "ta_texture.h"
-#include "ta_scene.h"
-#include "ta_game.h"
-#include "ta_primitive.h"
-#include "ta_log.h"
-#include "ta_symbol.h"
-#include "ta_window.h"
-#include "ta_shader.h"
 #include "ta_buffer.h"
+#include "ta_file.h"
+#include "ta_game.h"
+#include "ta_log.h"
+#include "ta_mesh.h"
+#include "ta_primitive.h"
+#include "ta_scene.h"
+#include "ta_shader.h"
+#include "ta_symbol.h"
+#include "ta_texture.h"
+#include "ta_window.h"
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
 #include "misc/gl3w.h"
 
+#pragma warning(push)
+#pragma warning(disable: 6385)
 #define STB_TRUETYPE_IMPLEMENTATION
 #include "misc/stb_truetype.h"
+#pragma warning(pop)
 
 void ta_font_init(ta_font *font)
 {
@@ -176,7 +180,7 @@ static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
 }
 
 ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
-    u32 text_len, bool screen, u32 *cursor_idx, ta_vec2 *cursor_offset,
+    size_t text_len, bool screen, size_t *cursor_idx, ta_vec2 *cursor_offset,
     const ta_vec2i *mouse_coords)
 {
     DLB_ASSERT(rects);
@@ -197,7 +201,7 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
     bool cursor_set = false;
 
     // Loop until i == text_len or, if text_len is 0, we hit a nil character
-    u32 i = 0;
+    size_t i = 0;
     for (; ((text_len) ? i < text_len : text[i]); i++) {
         if (!cursor_set && !mouse_coords && cursor_idx && *cursor_idx == i) {
             cursor = position;

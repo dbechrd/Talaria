@@ -58,8 +58,8 @@ static struct {
 } next_frame_dirty;
 
 typedef struct ui_frame {
-    u32 index;
-    u32 container_idx;
+    size_t index;
+    size_t container_idx;
     ui_frame_type type;
 
     ta_rect margin;
@@ -242,8 +242,10 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
     ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOF],   TA_KEYBIND_PRESS,   SDL_SCANCODE_LSHIFT, SDL_SCANCODE_END);
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_DELETE],       TA_KEYBIND_HOLD,    SDL_SCANCODE_DELETE);
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_BACKSPACE],    TA_KEYBIND_HOLD,    SDL_SCANCODE_BACKSPACE);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_PRESS,   SDL_SCANCODE_KP_ENTER);
+    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
+    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_PRESS,   SDL_SCANCODE_KP_ENTER);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_HOLD,   SDL_SCANCODE_RETURN);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_HOLD,   SDL_SCANCODE_KP_ENTER);
     ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL],       TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
 }
 void ta_ui_set_font(ta_font *font)
@@ -277,7 +279,7 @@ void ta_ui_set_cursor(ui_cursor_type cursor_type)
     ui_set_cursor(cursor);
 }
 #if 1
-static ta_rgba ui_random_color(u32 frame_idx, ui_state_type state)
+static ta_rgba ui_random_color(size_t frame_idx, ui_state_type state)
 {
 #if 1
     int seed = state;
@@ -287,9 +289,9 @@ static ta_rgba ui_random_color(u32 frame_idx, ui_state_type state)
         seed += UI_COUNT * state;
     }
 #endif
-    // HACK: Generate random colors based on name of control
+    // HACK: Generate random colors based on index of control
     ta_rgba color;
-    u32 hash = dlb_murmur3(&frame_idx, sizeof(frame_idx));
+    u32 hash = dlb_murmur3(&frame_idx, (u32)sizeof(frame_idx));
     color.r = ((hash >> (seed     )) & 255) / 255.0f;
     color.g = ((hash >> (seed +  8)) & 255) / 255.0f;
     color.b = ((hash >> (seed + 16)) & 255) / 255.0f;
@@ -298,18 +300,19 @@ static ta_rgba ui_random_color(u32 frame_idx, ui_state_type state)
 }
 #endif
 // returns closest parent container index
-static u32 ui_container(u32 frame_idx)
+static size_t ui_container(size_t frame_idx)
 {
     DLB_ASSERT(dlb_vec_len(ui_frames));
     DLB_ASSERT(frame_idx <= dlb_vec_len(ui_frames));
 
-    int idx = 0;
+    size_t idx = 0;
 
     // note: UI_ROOT is its own parent
     if (frame_idx) {
         // TODO: Could just keep track of most recent container? Idk.. this most
         // likely only runs for 1-2 iterations worst case right now.
-        for (int i = frame_idx - 1; i >= 0; i--) {
+        for (size_t i = frame_idx; i > 0;) {
+            i--;
             if (ui_frames[i].internal_flags & TA_UI_CONTAINER &&
                 !(ui_frames[i].internal_flags & TA_UI_CONTAINER_ENDED))
             {
@@ -319,21 +322,20 @@ static u32 ui_container(u32 frame_idx)
         }
     }
 
-    DLB_ASSERT(idx >= 0 && idx < (int)dlb_vec_len(ui_frames));
+    DLB_ASSERT(idx < dlb_vec_len(ui_frames));
     return idx;
 }
 static inline ui_frame *ui_container_last()
 {
-    u32 container_idx = ui_container(dlb_vec_len(ui_frames));
+    size_t container_idx = ui_container(dlb_vec_len(ui_frames));
     return &ui_frames[container_idx];
 }
-static void ui_pop(u32 frame_idx)
+static void ui_pop(size_t frame_idx)
 {
     DLB_ASSERT(dlb_vec_len(ui_frames));
     DLB_ASSERT(frame_idx <= dlb_vec_len(ui_frames));
 
     ui_frame *frame = dlb_vec_last(ui_frames);
-    u8 found = 0;
     while (frame->index != frame_idx) {
         dlb_vec_popz(ui_frames);
         frame--;
@@ -699,7 +701,7 @@ bool ta_ui_button_end()
     ui_frame *frame = ui_frame_end(UI_BUTTON);
     return frame->state.pressed;
 }
-bool ta_ui_button(const char *text, u32 text_len)
+bool ta_ui_button(const char *text, size_t text_len)
 {
     ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_button_begin(TA_UI_AUTOSIZE);
@@ -724,7 +726,7 @@ bool ta_ui_toggle_button_end(bool *checked)
     }
     return frame->state.pressed;
 }
-bool ta_ui_toggle_button(const char *text, u32 text_len, bool *checked)
+bool ta_ui_toggle_button(const char *text, size_t text_len, bool *checked)
 {
     //ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
@@ -751,7 +753,7 @@ bool ta_ui_image(ta_texture *texture, int face)
     frame->texture_face = face;
     return frame->state.pressed;
 }
-void ta_ui_label(const char *text, u32 text_len)
+void ta_ui_label(const char *text, size_t text_len)
 {
     DLB_ASSERT(text);
     DLB_ASSERT(text_len);
@@ -808,7 +810,7 @@ static void textbox_command_cursor_right(ta_ui_textbox_state *textbox)
     if (textbox_repeat_valid(&last_repeat_ms, &repeating,
         &textbox_keybinds[TEXTBOX_COMMAND_CURSOR_RIGHT]))
     {
-        u32 len = dlb_vec_len(textbox->buffer);
+        size_t len = dlb_vec_len(textbox->buffer);
         if (textbox->cursor < len) {
             textbox->cursor++;
         }
@@ -845,7 +847,7 @@ static void textbox_command_cursor_bol(ta_ui_textbox_state *textbox)
 }
 static void textbox_command_cursor_eol(ta_ui_textbox_state *textbox)
 {
-    u32 len = dlb_vec_len(textbox->buffer);
+    size_t len = dlb_vec_len(textbox->buffer);
     while (textbox->cursor < len && textbox->buffer[textbox->cursor + 1] != '\n') {
         textbox->cursor++;
     }
@@ -856,13 +858,13 @@ static void textbox_command_cursor_bof(ta_ui_textbox_state *textbox)
 }
 static void textbox_command_cursor_eof(ta_ui_textbox_state *textbox)
 {
-    u32 len = dlb_vec_len(textbox->buffer);
+    size_t len = dlb_vec_len(textbox->buffer);
     textbox->cursor = len;
 }
 static void textbox_delete(ta_ui_textbox_state *textbox)
 {
     // TODO: dlb_vec_remove_at
-    u32 len = dlb_vec_len(textbox->buffer);
+    size_t len = dlb_vec_len(textbox->buffer);
     if (textbox->cursor < len) {
         dlb_memcpy(
             textbox->buffer + textbox->cursor,
@@ -915,12 +917,43 @@ static void textbox_unfocus(ta_ui_textbox_state *textbox)
     textbox->selection_start = 0;
     textbox->selection_len = 0;
 }
-static void textbox_command_submit(ta_ui_textbox_state *textbox)
+static void textbox_clear(ta_ui_textbox_state *textbox)
+{
+    textbox->submit = false;
+    dlb_vec_zero(textbox->buffer);
+    textbox->cursor = 0;
+    textbox->selection_start = 0;
+    textbox->selection_len = 0;
+}
+static void textbox_submit(ta_ui_textbox_state *textbox)
 {
     textbox->submit = true;
     // TODO: Unfocus and free on client's request, after they've been able to
     // use the buffer contents for whatever they need.
-    textbox_unfocus(textbox);
+    // NOTE: Don't want to unfocus console after entering a command!
+    //textbox_unfocus(textbox);
+}
+static void textbox_command_submit1(ta_ui_textbox_state *textbox)
+{
+    static double last_repeat_ms = 0;
+    static bool repeating = false;
+
+    if (textbox_repeat_valid(&last_repeat_ms, &repeating,
+        &textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1]))
+    {
+        textbox_submit(textbox);
+    }
+}
+static void textbox_command_submit2(ta_ui_textbox_state *textbox)
+{
+    static double last_repeat_ms = 0;
+    static bool repeating = false;
+
+    if (textbox_repeat_valid(&last_repeat_ms, &repeating,
+        &textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2]))
+    {
+        textbox_submit(textbox);
+    }
 }
 static void textbox_command_cancel(ta_ui_textbox_state *textbox)
 {
@@ -941,13 +974,14 @@ static void (*textbox_commands[TEXTBOX_COMMAND_COUNT])(ta_ui_textbox_state *text
     [TEXTBOX_COMMAND_CURSOR_EOF]   = textbox_command_cursor_eof,
     [TEXTBOX_COMMAND_DELETE]       = textbox_command_delete,
     [TEXTBOX_COMMAND_BACKSPACE]    = textbox_command_backspace,
-    [TEXTBOX_COMMAND_SUBMIT1]      = textbox_command_submit,
-    [TEXTBOX_COMMAND_SUBMIT2]      = textbox_command_submit,
+    [TEXTBOX_COMMAND_SUBMIT1]      = textbox_command_submit1,
+    [TEXTBOX_COMMAND_SUBMIT2]      = textbox_command_submit2,
     [TEXTBOX_COMMAND_CANCEL]       = textbox_command_cancel,
 };
 
 // TODO: Run filter on input string.. maybe?
-static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text, u32 text_len)
+static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text,
+    size_t text_len)
 {
     if (textbox->buffer) {
         dlb_vec_zero(textbox->buffer);
@@ -957,7 +991,7 @@ static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text, u32
     dlb_vec_hdr(textbox->buffer)->len = text_len;
 
     // Ensure buffer is nil-terminated
-    u32 new_len = dlb_vec_len(textbox->buffer);
+    size_t new_len = dlb_vec_len(textbox->buffer);
     DLB_ASSERT(textbox->buffer[new_len] == '\0');
 
     // TODO: Set cursor (and selection?) based on where user clicked
@@ -992,7 +1026,7 @@ static void textbox_mouse_down(ui_frame *frame)
     }
 }
 
-bool ta_ui_textbox(const char *text, u32 text_len, ta_ui_textbox_state *textbox,
+bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textbox,
     u32 flags)
 {
     //DLB_ASSERT(text);
@@ -1011,7 +1045,7 @@ bool ta_ui_textbox(const char *text, u32 text_len, ta_ui_textbox_state *textbox,
         }
 
         // If still editing, render buffer
-        u32 buffer_len = dlb_vec_len(textbox->buffer);
+        size_t buffer_len = dlb_vec_len(textbox->buffer);
         text_rect = ta_font_push_text(&text_rects, ui_font, textbox->buffer,
             buffer_len, true, &textbox->cursor, &cursor, mouse_coords);
     } else if (text) {
@@ -1050,12 +1084,17 @@ bool ta_ui_textbox(const char *text, u32 text_len, ta_ui_textbox_state *textbox,
         if (frame->state.down) {
             textbox_mouse_down(frame);
         } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
-            textbox_command_submit(textbox);
+            // NOTE: But for console window, I want focus lost with any button to
+            // mean cancel.. the correct behavior is based on the use-case. This
+            // code can't be globally shared.
+            //textbox_submit(textbox);
+            textbox_unfocus(textbox);
         } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
             // TODO(cleanup): Right click usually means cancel, but in the case
             // of search box I want to right click to rotate camera without
             // losing my search results, sooo...
-            textbox_command_submit(textbox);
+            //textbox_submit(textbox);
+            textbox_unfocus(textbox);
             //textbox_command_cancel(textbox);
         }
     }
@@ -1133,7 +1172,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
         }
 
         // If still editing, render buffer
-        u32 buffer_len = dlb_vec_len(textbox->buffer);
+        size_t buffer_len = dlb_vec_len(textbox->buffer);
         text_rect = ta_font_push_text(&text_rects, ui_font, textbox->buffer,
             buffer_len, true, &textbox->cursor, &cursor, mouse_coords);
     } else {
@@ -1172,7 +1211,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
             }
             textbox_mouse_down(frame);
         } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
-            textbox_command_submit(textbox);
+            textbox_submit(textbox);
         } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
             textbox_command_cancel(textbox);
         }
@@ -1338,8 +1377,8 @@ bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
     }
 
     // TODO: dlb_vec_insert_at
-    u32 len = dlb_vec_len(textbox->buffer);
-    dlb_vec_reserve(textbox->buffer, len + 2);  // reserve 1 extra for nil
+    size_t len = dlb_vec_len(textbox->buffer);
+    dlb_vec_reserve(textbox->buffer, len + 2);  // reserve 2, for c and nil
     dlb_memmove(
         textbox->buffer + textbox->cursor + 1,
         textbox->buffer + textbox->cursor,
@@ -1350,17 +1389,22 @@ bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
     textbox->cursor++;
 
     // Ensure buffer is nil-terminated
-    u32 new_len = dlb_vec_len(textbox->buffer);
+    size_t new_len = dlb_vec_len(textbox->buffer);
     DLB_ASSERT(textbox->buffer[new_len] == '\0');
 
     return true;
 }
+void ta_ui_textbox_clear(ta_ui_textbox_state *textbox)
+{
+    DLB_ASSERT(textbox);
+    textbox_clear(textbox);
+}
 void ta_ui_textbox_submit(ta_ui_textbox_state *textbox)
 {
     DLB_ASSERT(textbox);
-    textbox_command_submit(textbox);
+    textbox_submit(textbox);
 }
-void ta_ui_textbox_clear(ta_ui_textbox_state *textbox)
+void ta_ui_textbox_cancel(ta_ui_textbox_state *textbox)
 {
     DLB_ASSERT(textbox);
     textbox_command_cancel(textbox);
@@ -1377,7 +1421,7 @@ void ta_ui_tooltip_end(const char *name)
     // TODO: Make this a container
     DLB_ASSERT(0);
 }
-void ta_ui_tooltip(const char *text, u32 text_len)
+void ta_ui_tooltip(const char *text, size_t text_len)
 {
     ta_rect_uv *text_rects = 0;
     ta_rectf text_rect = ta_font_push_text(&text_rects, ui_font, text, text_len,
@@ -1604,13 +1648,14 @@ static void ui_render_scrollbars(ui_frame *frame)
             if (dragging_v) {
                 delta_y = ta_mouse_dy();
             }
-
-            if (delta_y) {
-                scroll->percent.y += (float)delta_y / scroll_space_v;
-                scroll->percent.y = clampf(scroll->percent.y, 0.0f, 1.0f);
-                scroll->pixels.y = (int)(scroll->percent.y * overflow_y);
-            }
+            scroll->percent.y += (float)delta_y / scroll_space_v;
         }
+
+        scroll->percent.y = clampf(scroll->percent.y, 0.0f, 1.0f);
+        scroll->pixels.y = (int)(scroll->percent.y * overflow_y);
+    } else {
+        scroll->percent.y = 0.0f;
+        scroll->pixels.y = 0;
     }
 }
 static void ui_render_tooltips()
@@ -1678,7 +1723,7 @@ void ta_ui_render()
         frame->clip_rect = TA_RECT_ZERO;
         frame->clip_rect.w = WINDOW_W;
         frame->clip_rect.h = WINDOW_H;
-        u32 container_idx = frame->container_idx;
+        size_t container_idx = frame->container_idx;
         while(container_idx) {
             DLB_ASSERT(container_idx < dlb_vec_len(ui_frames));
             ui_frame *container = &ui_frames[container_idx];

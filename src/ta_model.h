@@ -4,7 +4,7 @@
 #include "dlb/dlb_types.h"
 
 typedef struct ta_model {
-    u32 index;
+    size_t index;
     const char *name;
     const char *entity_name;
     // TODO: Do I need mesh groups, or should i just have multiple mesh components?

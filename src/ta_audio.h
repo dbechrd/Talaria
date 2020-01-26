@@ -12,7 +12,7 @@ typedef struct ta_audio_listener {
 } ta_audio_listener;
 
 typedef struct ta_audio_buffer {
-    u32 index;
+    size_t index;
     const char *name;
     const char *path;           // File path
     struct ta_buffer samples;   // Audio data (if inlined instead of via path)
@@ -26,7 +26,7 @@ typedef enum ta_audio_source_state {
 } ta_audio_source_state;
 
 typedef struct ta_audio_source {
-    u32 index;
+    size_t index;
     const char *name;
     const char *entity_name;
     const char *audio_buffer;

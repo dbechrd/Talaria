@@ -42,14 +42,14 @@ void ta_scene_save_file_json(ta_scene *scene, const char *filename);
 void ta_scene_print_json(ta_scene *scene, FILE *hnd);
 
 // Resources
-void *ta_scene_alloc(ta_scene *scene, enum ta_resource_type type, const char *name, u32 name_len);
-void ta_scene_destroy(ta_scene *scene, enum ta_resource_type type, const char *name, u32 name_len);
+void *ta_scene_alloc(ta_scene *scene, enum ta_resource_type type, const char *name, size_t name_len);
+void ta_scene_destroy(ta_scene *scene, enum ta_resource_type type, const char *name, size_t name_len);
 void *ta_scene_find_at(ta_scene *scene, enum ta_resource_type type, u32 index);
-void *ta_scene_find_try(ta_scene *scene, enum ta_resource_type type, const char *name, u32 name_len);
-void *ta_scene_find(ta_scene *scene, enum ta_resource_type type, const char *name, u32 name_len);
-void *ta_scene_find_or_default(ta_scene *scene, enum ta_resource_type type, const char *name, u32 name_len);
+void *ta_scene_find_try(ta_scene *scene, enum ta_resource_type type, const char *name, size_t name_len);
+void *ta_scene_find(ta_scene *scene, enum ta_resource_type type, const char *name, size_t name_len);
+void *ta_scene_find_or_default(ta_scene *scene, enum ta_resource_type type, const char *name, size_t name_len);
 
 // Entities/components (just resources w/ special name and some extra error handling)
-void *ta_scene_component_add(ta_scene *scene, const char *entity, enum ta_resource_type type, const char *name, u32 name_len);
+void *ta_scene_component_add(ta_scene *scene, const char *entity, enum ta_resource_type type, const char *name, size_t name_len);
 void *ta_scene_component_try(ta_scene *scene, const char *entity, enum ta_resource_type type);
 void *ta_scene_component(ta_scene *scene, const char *entity, enum ta_resource_type type);

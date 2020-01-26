@@ -77,7 +77,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &cam_trans->xform.position);
 
         ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
-        u32 lights_len = dlb_vec_len(lights);
+        size_t lights_len = dlb_vec_len(lights);
         u32 u_lights_count = 0;
         for (u32 i = 0; i < lights_len; ++i) {
             if (!lights[i].disabled) {

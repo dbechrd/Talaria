@@ -8,7 +8,7 @@
 struct ta_mesh;
 
 typedef struct ta_font {
-    u32 index;
+    size_t index;
     const char *name;
     const char *path;
     float pixel_height;
@@ -36,7 +36,7 @@ void ta_font_load_path(ta_font *font, const char *path);
 void ta_font_delete(ta_font *font);
 void ta_font_free(ta_font *font);
 ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
-    u32 text_len, bool screen, u32 *cursor_idx, ta_vec2 *cursor_offset,
+    size_t text_len, bool screen, size_t *cursor_idx, ta_vec2 *cursor_offset,
     const ta_vec2i *mouse_coords);
 void ta_font_render(struct ta_mesh *mesh, ta_font *font, float x, float y,
     float z, bool clear_buffers, bool reset_uniforms);

@@ -11,6 +11,7 @@
 #include "ta_keybind.h"
 #include "ta_light.h"
 #include "ta_log.h"
+#include "ta_mesh.h"
 #include "ta_model.h"
 #include "ta_mouse.h"
 #include "ta_player.h"
@@ -109,16 +110,10 @@ const char *game_state_str(ta_game_state state)
     }
 };
 
-/* JSMN_PARENT_LINKS is necessary to make parsing large structures linear in input size */
-#define JSMN_PARENT_LINKS
-/* JSMN_STRICT is necessary to reject invalid JSON documents */
-#define JSMN_STRICT
-#include "ta_json.h"
-
 static int thread_test(void *data)
 {
     UNUSED(data);
-    ta_json_test();
+    //ta_json_test();
     return 0;
 }
 
@@ -218,7 +213,8 @@ void ta_game_init()
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
     ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
-    ta_game_load_gltf();
+    //ta_game_load_gltf("data/mesh/rock_0001.gltf");
+    //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
 
     //--------------------------------------------------------------------------
     // Simulation
@@ -326,26 +322,26 @@ void ta_game_state_set(ta_game_state state)
         }
     }
 }
-void *ta_game_alloc(enum ta_resource_type type, const char *name, u32 name_len)
+void *ta_game_alloc(enum ta_resource_type type, const char *name, size_t name_len)
 {
     return ta_scene_alloc(&game.scene, type, name, name_len);
 }
-void ta_game_destroy(enum ta_resource_type type, const char *name, u32 name_len)
+void ta_game_destroy(enum ta_resource_type type, const char *name, size_t name_len)
 {
     ta_scene_destroy(&game.scene, type, name, name_len);
 }
 // If not found, ASSERT
-void *ta_game_by_name(ta_resource_type type, const char *name, u32 name_len)
+void *ta_game_by_name(ta_resource_type type, const char *name, size_t name_len)
 {
     return ta_scene_find(&game.scene, type, name, name_len);
 }
 // If not found, returns NULL
-void *ta_game_by_name_try(ta_resource_type type, const char *name, u32 name_len)
+void *ta_game_by_name_try(ta_resource_type type, const char *name, size_t name_len)
 {
     return ta_scene_find_try(&game.scene, type, name, name_len);
 }
 // If not found, returns the first resource of the given type
-void *ta_game_by_name_or_default(ta_resource_type type, const char *name, u32 name_len)
+void *ta_game_by_name_or_default(ta_resource_type type, const char *name, size_t name_len)
 {
     return ta_scene_find_or_default(&game.scene, type, name, name_len);
 }
@@ -362,7 +358,7 @@ void *ta_game_by_sym_or_default(enum ta_resource_type type, const char *sym)
     return ta_game_by_name_or_default(type, SYM(sym));
 }
 void *ta_game_component_add(const char *entity, ta_resource_type type,
-    const char *name, u32 name_len)
+    const char *name, size_t name_len)
 {
     return ta_scene_component_add(&game.scene, entity, type, name, name_len);
 }
@@ -378,17 +374,17 @@ void *ta_game_resource_pool(ta_resource_type type)
 {
     return game.scene.resource_data[type];
 }
-void ta_game_load_gltf()
+void ta_game_load_gltf(const char *filename)
 {
-    ta_gltf rock_gltf = { 0 };
+    ta_gltf gltf = { 0 };
     //err = ta_gltf_parse(data, "F:/Users/User/Rez/Models/bee.glb");
-    int err = ta_gltf_parse_file(&rock_gltf, "data/mesh/rock_0001.gltf");
+    int err = ta_gltf_parse_file(&gltf, filename);
     if (err) {
         ta_log_write(&tg_debug_log, SRC_SYSTEM, "Failed to load gltf model\n");
         DLB_ASSERT(0);
     }
-    ta_gltf_load(&rock_gltf);
-    ta_gltf_free(&rock_gltf);
+    ta_gltf_load(&gltf);
+    ta_gltf_free(&gltf);
 }
 ta_camera *ta_game_camera()
 {
@@ -1043,7 +1039,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         if (game.state == TA_GAME_STATE_EDITOR) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor world UI pass...\n");
-            ta_editor_draw_world(sim_alpha);
+            ta_editor_draw_world();
         }
 
         if (active_camera->debug_nametags) {
@@ -1113,7 +1109,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         if (game.state == TA_GAME_STATE_EDITOR) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor screen UI pass...\n");
-            ta_editor_draw_screen(sim_alpha);
+            ta_editor_draw_screen();
         }
 
         //--------------------------------------------

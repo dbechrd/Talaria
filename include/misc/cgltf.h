@@ -110,6 +110,7 @@ typedef struct cgltf_options
 	cgltf_file_type type; /* invalid == auto detect */
 	cgltf_size json_token_count; /* 0 == auto */
 	void* (*memory_alloc)(void* user, cgltf_size size);
+	void* (*memory_calloc)(void *user, cgltf_size count, size_t size);
 	void (*memory_free) (void* user, void* ptr);
 	void* memory_user_data;
 } cgltf_options;
@@ -599,33 +600,6 @@ cgltf_size cgltf_accessor_unpack_floats(const cgltf_accessor* accessor, cgltf_fl
 
 cgltf_result cgltf_copy_extras_json(const cgltf_data* data, const cgltf_extras* extras, char* dest, cgltf_size* dest_size);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* #ifndef CGLTF_H_INCLUDED__ */
-
-/*
- *
- * Stop now, if you are only interested in the API.
- * Below, you find the implementation.
- *
- */
-
-#ifdef __INTELLISENSE__
-/* This makes MSVC intellisense work. */
-#define CGLTF_IMPLEMENTATION
-#endif
-
-#ifdef CGLTF_IMPLEMENTATION
-
-#include <stdint.h> /* For uint8_t, uint32_t */
-#include <string.h> /* For strncpy */
-#include <stdlib.h> /* For malloc, free */
-#include <stdio.h>  /* For fopen */
-#include <limits.h> /* For UINT_MAX etc */
-
-#if 0
 /* JSMN_PARENT_LINKS is necessary to make parsing large structures linear in input size */
 #define JSMN_PARENT_LINKS
 
@@ -633,11 +607,11 @@ cgltf_result cgltf_copy_extras_json(const cgltf_data* data, const cgltf_extras* 
 #define JSMN_STRICT
 
 /*
- * -- jsmn.h start --
- * Source: https://github.com/zserge/jsmn
- * License: MIT
- */
-typedef enum {
+* -- jsmn.h start --
+* Source: https://github.com/zserge/jsmn
+* License: MIT
+*/
+typedef enum jsmntype_t {
 	JSMN_UNDEFINED = 0,
 	JSMN_OBJECT = 1,
 	JSMN_ARRAY = 2,
@@ -652,7 +626,7 @@ enum jsmnerr {
 	/* The string is not a full JSON packet, more bytes expected */
 	JSMN_ERROR_PART = -3
 };
-typedef struct {
+typedef struct jsmntok_t {
 	jsmntype_t type;
 	int start;
 	int end;
@@ -661,18 +635,42 @@ typedef struct {
 	int parent;
 #endif
 } jsmntok_t;
-typedef struct {
+typedef struct jsmn_parser {
 	unsigned int pos; /* offset in the JSON string */
 	unsigned int toknext; /* next token to allocate */
 	int toksuper; /* superior token node, e.g parent object or array */
 } jsmn_parser;
-static void jsmn_init(jsmn_parser *parser);
-static int jsmn_parse(jsmn_parser *parser, const char *js, size_t len, jsmntok_t *tokens, size_t num_tokens);
+void jsmn_init(jsmn_parser *parser);
+int jsmn_parse(jsmn_parser *parser, const char *js, size_t len, jsmntok_t *tokens, size_t num_tokens);
 /*
- * -- jsmn.h end --
- */
+* -- jsmn.h end --
+*/
+
+#ifdef __cplusplus
+}
 #endif
 
+#endif /* #ifndef CGLTF_H_INCLUDED__ */
+
+/*
+ *
+ * Stop now, if you are only interested in the API.
+ * Below, you find the implementation.
+ *
+ */
+
+//#ifdef __INTELLISENSE__
+///* This makes MSVC intellisense work. */
+//#define CGLTF_IMPLEMENTATION
+//#endif
+
+#ifdef CGLTF_IMPLEMENTATION
+
+#include <stdint.h> /* For uint8_t, uint32_t */
+#include <string.h> /* For strncpy */
+#include <stdlib.h> /* For malloc, free */
+#include <stdio.h>  /* For fopen */
+#include <limits.h> /* For UINT_MAX etc */
 
 static const cgltf_size GlbHeaderSize = 12;
 static const cgltf_size GlbChunkHeaderSize = 8;
@@ -687,6 +685,12 @@ static void* cgltf_default_alloc(void* user, cgltf_size size)
 	return malloc(size);
 }
 
+static void* cgltf_default_calloc(void *user, cgltf_size count, size_t size)
+{
+	(void)user;
+	return calloc(count, size);
+}
+
 static void cgltf_default_free(void* user, void* ptr)
 {
 	(void)user;
@@ -699,12 +703,11 @@ static void* cgltf_calloc(cgltf_options* options, size_t element_size, cgltf_siz
 	{
 		return NULL;
 	}
-	void* result = options->memory_alloc(options->memory_user_data, element_size * count);
+	void* result = options->memory_calloc(options->memory_user_data, count, element_size);
 	if (!result)
 	{
 		return NULL;
 	}
-	memset(result, 0, element_size * count);
 	return result;
 }
 
@@ -726,6 +729,10 @@ cgltf_result cgltf_parse(const cgltf_options* options, const void* data, cgltf_s
 	if (fixed_options.memory_alloc == NULL)
 	{
 		fixed_options.memory_alloc = &cgltf_default_alloc;
+	}
+	if (fixed_options.memory_calloc == NULL)
+	{
+		fixed_options.memory_calloc = &cgltf_default_calloc;
 	}
 	if (fixed_options.memory_free == NULL)
 	{
@@ -4489,7 +4496,6 @@ static int cgltf_fixup_pointers(cgltf_data* data)
 	return 0;
 }
 
-#if 0
 /*
  * -- jsmn.c start --
  * Source: https://github.com/zserge/jsmn
@@ -4664,7 +4670,7 @@ static int jsmn_parse_string(jsmn_parser *parser, const char *js,
 /**
  * Parse JSON string and fill tokens.
  */
-static int jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
+int jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
 	       jsmntok_t *tokens, size_t num_tokens) {
 	int r;
 	int i;
@@ -4822,7 +4828,7 @@ static int jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
  * Creates a new parser based over a given  buffer with an array of tokens
  * available.
  */
-static void jsmn_init(jsmn_parser *parser) {
+void jsmn_init(jsmn_parser *parser) {
 	parser->pos = 0;
 	parser->toknext = 0;
 	parser->toksuper = -1;
@@ -4830,7 +4836,6 @@ static void jsmn_init(jsmn_parser *parser) {
 /*
  * -- jsmn.c end --
  */
-#endif
 
 #endif /* #ifdef CGLTF_IMPLEMENTATION */
 

@@ -30,7 +30,7 @@ static short le_short(unsigned char *bytes)
     return bytes[0] | ((char)bytes[1] << 8);
 }
 
-static void *read_tga(const char *filename, int *width, int *height, int *channels)
+static void *read_tga(const char *filename, u32 *width, u32 *height, u8 *channels)
 {
     struct tga_header
     {
@@ -99,9 +99,9 @@ static void *read_tga(const char *filename, int *width, int *height, int *channe
         }
     }
 
-    *width = le_short(header.width);
-    *height = le_short(header.height);
-    *channels = header.bits_per_pixel / 8;
+    *width = (u32)le_short(header.width);
+    *height = (u32)le_short(header.height);
+    *channels = (u8)header.bits_per_pixel / 8;
     pixels_size = *width * *height * *channels;
     pixels = dlb_malloc(pixels_size);
     DLB_ASSERT(pixels);
@@ -134,7 +134,8 @@ void ta_texture_load_path(ta_texture *tex, const char *path)
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Loading texture from disk %s...\n",
         path);
     // Load pixel data from file
-    int w, h, channels;
+    u32 w, h;
+    u8 channels;
 #if 0
     stbi_set_flip_vertically_on_load(true);
     u8 *pixels = stbi_load(tex->path, &w, &h, &channels, tex->channels);
