@@ -119,10 +119,10 @@ int main(int argc, char *argv[])
 
 // Include all other .c files (i.e. "unity build"). Compilation go vroom, vroom!
 #include "ta_audio.c"
-#include "ta_buffer.c"
 #include "ta_button.c"
 #include "ta_camera.c"
 #include "ta_collider.c"
+#include "ta_console.c"
 #include "ta_editor.c"
 #include "ta_event.c"
 #include "ta_file.c"

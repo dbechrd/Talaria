@@ -1,5 +1,4 @@
 #include "ta_font.h"
-#include "ta_buffer.h"
 #include "ta_file.h"
 #include "ta_game.h"
 #include "ta_log.h"
@@ -35,10 +34,10 @@ void ta_font_init(ta_font *font)
 
 void ta_font_load_path(ta_font *font, const char *path)
 {
-    ta_buffer buf = ta_file_read_all(path);
-    DLB_ASSERT(buf.length);
+    char *buf = ta_file_read_all(path);
+    DLB_ASSERT(buf);
 
-    if (!stbtt_InitFont(&font->font_info, buf.data, 0)) {
+    if (!stbtt_InitFont(&font->font_info, (u8 *)buf, 0)) {
         ta_log_write(&tg_debug_log, SRC_FONT, "Failed to initialize font %s\n",
             path);
         DLB_ASSERT(!"Failed to initialize font!");
@@ -133,7 +132,7 @@ void ta_font_load_path(ta_font *font, const char *path)
         GL_UNSIGNED_BYTE, pixels);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-    ta_buffer_free(buf);
+    dlb_vec_free(buf);
     dlb_free(pixels);
 }
 

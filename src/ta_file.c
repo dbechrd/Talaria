@@ -1,6 +1,5 @@
 #include "ta_file.h"
 #include "ta_log.h"
-#include "ta_buffer.h"
 #include "dlb/dlb_memory.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -240,16 +239,14 @@ int ta_file_allow_char(ta_file *f, const char *chars, int times) {
     return count;
 }
 
-ta_buffer ta_file_read_all(const char *filename)
+char *ta_file_read_all(const char *filename)
 {
-    ta_buffer buffer = { 0 };
-
     // Open file
     FILE *fs = fopen(filename, "rb");
     if (!fs) {
         ta_log_write(&tg_debug_log, SRC_FILE, "Unable to open %s for reading\n",
             filename);
-        return buffer;
+        return 0;
     }
 
     // Calculate length
@@ -265,13 +262,9 @@ ta_buffer ta_file_read_all(const char *filename)
     // Empty file
     DLB_ASSERT(tell > 0);
 
-    // Allocate buffer
-    ta_buffer_init(&buffer, tell + 1);
-    DLB_ASSERT(buffer.data);
-
-    // Read into buffer, null-terminate
-    fread(buffer.data, 1, tell, fs);
-    buffer.data[tell] = 0;
+    char *buffer = 0;
+    dlb_vec_reserve(buffer, tell + 1);  // extra byte for nil
+    dlb_vec_hdr(buffer)->len = fread(buffer, 1, tell, fs);
 
     // Close file
     fclose(fs);

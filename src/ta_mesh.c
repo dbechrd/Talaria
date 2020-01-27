@@ -1,5 +1,4 @@
 #include "ta_mesh.h"
-#include "ta_buffer.h"
 #include "ta_file.h"
 #include "ta_game.h"
 #include "ta_log.h"
@@ -30,8 +29,8 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
     // Load OBJ file
     // =========================================================================
 
-    ta_buffer buf = ta_file_read_all(mesh->path);
-    if (!buf.length) {
+    char *buf = ta_file_read_all(mesh->path);
+    if (!buf) {
         DLB_ASSERT(!"ta_mesh_init: Failed to read obj file");
     }
 
@@ -43,7 +42,7 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
 
     unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
     int ret = tinyobj_parse_obj(&attrib, &shapes, &num_shapes, &materials,
-        &num_materials, (char *)buf.data, buf.length, flags);
+        &num_materials, buf, dlb_vec_len(buf), flags);
     if (ret != TINYOBJ_SUCCESS) {
         DLB_ASSERT(!"ta_mesh_init: Failed to parse obj file");
     }
@@ -149,7 +148,7 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
     tinyobj_attrib_free(&attrib);
     tinyobj_shapes_free(shapes, num_shapes);
     tinyobj_materials_free(materials, num_materials);
-    ta_buffer_free(buf);
+    dlb_vec_free(buf);
 }
 
 void ta_mesh_create(ta_mesh *mesh)

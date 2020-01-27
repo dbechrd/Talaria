@@ -4,7 +4,6 @@
 #include "dlb/dlb_index.h"
 
 struct ta_file;
-struct ta_buffer;
 struct ta_shader;
 struct ta_camera;
 enum ta_resource_type;
@@ -35,7 +34,7 @@ void ta_scene_init(ta_scene *scene);
 void ta_scene_load(ta_scene *scene, struct ta_file *file);
 void ta_scene_load_file(ta_scene *scene, const char *filename);
 void ta_scene_free(ta_scene *scene);
-void ta_scene_save(struct ta_buffer *buffer);
+void ta_scene_save(char *buffer);
 void ta_scene_save_file(ta_scene *scene, const char *filename);
 void ta_scene_print(ta_scene *scene, FILE *hnd);
 void ta_scene_save_file_json(ta_scene *scene, const char *filename);

@@ -1,5 +1,4 @@
 #include "ta_gltf.h"
-#include "ta_buffer.h"
 #include "ta_game.h"
 #include "ta_json.h"
 #include "ta_log.h"
@@ -96,7 +95,7 @@ void gltf_dump(cgltf_data *data)
         printf("  target names count: %zu\n", mesh->target_names_count);
         printf("  weights count: %zu\n", mesh->weights_count);
         if (mesh->extras.start_offset) {
-            u8 *extras = (u8 *)data->json + mesh->extras.start_offset;
+            const char *extras = data->json + mesh->extras.start_offset;
             size_t extras_len = mesh->extras.end_offset - mesh->extras.start_offset;
 
             printf("  extras: (%zu bytes)\n", extras_len);

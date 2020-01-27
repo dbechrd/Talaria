@@ -1,4 +1,3 @@
-#include "ta_buffer.h"
 #include "ta_file.h"
 #include "ta_light.h"
 #include "ta_log.h"
@@ -45,13 +44,13 @@ static void show_info_log(GLuint shader)
     GLint length = 0;
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
     if (length) {
-        ta_buffer buf = { 0 };
-        ta_buffer_init(&buf, length);
-        glGetShaderInfoLog(shader, buf.length, NULL, (GLchar *)buf.data);
+        char *buf = 0;
+        dlb_vec_reserve(buf, length);
+        dlb_vec_hdr(buf)->len = length;
+        glGetShaderInfoLog(shader, (GLsizei)dlb_vec_len(buf), NULL, buf);
         ta_log_write(&tg_debug_log, SRC_SHADER,
             "\n---[OpenGL Info Log]------------------------------------------------------------\n"
-            "%s\n", buf.data);
-        ta_buffer_free(buf);
+            "%s\n", buf);
     } else {
         ta_log_write(&tg_debug_log, SRC_SHADER,
             "\n---[OpenGL Info Log]------------------------------------------------------------\n"
@@ -60,12 +59,14 @@ static void show_info_log(GLuint shader)
     DLB_ASSERT(!"show_info_log: GL error occurred");
 };
 
-static GLuint ta_shader_compile(GLenum type, ta_buffer buf)
+static GLuint ta_shader_compile(GLenum type, char *buf)
 {
     GLuint shader = glCreateShader(type);
 
     // Read shader source
-    glShaderSource(shader, 1, &(GLchar *)buf.data, (GLint *)&buf.length);
+    GLint len = (GLint)dlb_vec_len(buf);
+    // TODO(cleanup): void * (idk wtf OpenGL wants.. const bullshit)
+    glShaderSource(shader, 1, &(GLchar *)buf, &len);
 
     // Compile shader
     GLint status;
@@ -82,15 +83,13 @@ static GLuint ta_shader_compile(GLenum type, ta_buffer buf)
 
 static GLuint ta_shader_compile_file(GLenum type, const char *filename)
 {
-    ta_buffer buf = ta_file_read_all(filename);
-
+    char *buf = ta_file_read_all(filename);
     GLint shader = ta_shader_compile(type, buf);
     if (!shader) {
         ta_log_write(&tg_debug_log, SRC_SHADER, "Failed to compile shader '%s'\n",
             filename);
     }
-
-    ta_buffer_free(buf);
+    dlb_vec_free(buf);
     return shader;
 }
 

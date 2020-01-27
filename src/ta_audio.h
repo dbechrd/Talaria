@@ -1,5 +1,4 @@
 #pragma once
-#include "ta_buffer.h"
 #include "dlb/dlb_types.h"
 #include "AL/al.h"
 #include "AL/alc.h"
@@ -14,9 +13,9 @@ typedef struct ta_audio_listener {
 typedef struct ta_audio_buffer {
     size_t index;
     const char *name;
-    const char *path;           // File path
-    struct ta_buffer samples;   // Audio data (if inlined instead of via path)
-    ALuint al_buffer_id;        // OpenAL buffer id
+    const char *path;     // File path
+    char *samples;        // Audio data (if inlined instead of via path)
+    ALuint al_buffer_id;  // OpenAL buffer id
 } ta_audio_buffer;
 
 typedef enum ta_audio_source_state {
@@ -50,7 +49,7 @@ void ta_audio_listener_toggle(ta_audio_listener *audio);
 
 void ta_audio_buffer_init(ta_audio_buffer *buffer);
 void ta_audio_buffer_load_path(ta_audio_buffer *buffer, const char *path);
-void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, ta_buffer samples);
+void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, char *samples);
 void ta_audio_buffer_load(ta_audio_buffer *buffer);
 double ta_audio_buffer_duration_ms(ta_audio_buffer *buffer);
 void ta_audio_buffer_free(ta_audio_buffer *buffer);

@@ -2,6 +2,7 @@
 #include "ta_button.h"
 #include "ta_camera.h"
 #include "ta_collider.h"
+#include "ta_console.h"
 #include "ta_editor.h"
 #include "ta_event.h"
 #include "ta_font.h"
@@ -1110,6 +1111,7 @@ void ta_game_loop()
         if (game.state == TA_GAME_STATE_EDITOR) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor screen UI pass...\n");
             ta_editor_draw_screen();
+            ta_console_draw_screen();
         }
 
         //--------------------------------------------

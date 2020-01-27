@@ -1,10 +1,9 @@
 #include "ta_json.h"
-#include "ta_buffer.h"
 #include "ta_file.h"
 #include "dlb/dlb_vector.h"
 #include "misc/cgltf.h"
 
-int ta_json_dump(const u8 *js, jsmntok_t *t, size_t count, int indent) {
+int ta_json_dump(const char *js, jsmntok_t *t, size_t count, int indent) {
     jsmntok_t *key;
     if (count == 0) {
         return 0;
@@ -69,15 +68,15 @@ static void json_log_jsmn_error(int err_code)
     }
 }
 
-ta_json_result ta_json_parse(const u8* json_data, size_t json_len,
-    jsmntok_t** tokens)
+ta_json_result ta_json_parse(const char *json_data, size_t json_len,
+    jsmntok_t **tokens)
 {
     jsmn_parser parser = { 0 };
 
     // TODO(dlb): Cache JSON token count in header somewhere so that we can skip
     // this additional pre-scan to count tokens
     if (dlb_vec_cap(*tokens) == 0) {
-        int token_count = jsmn_parse(&parser, (const char*)json_data, json_len, NULL, 0);
+        int token_count = jsmn_parse(&parser, json_data, json_len, NULL, 0);
         if (token_count <= 0) {
             return ta_json_result_invalid_json;
         }
@@ -91,7 +90,7 @@ ta_json_result ta_json_parse(const u8* json_data, size_t json_len,
     jsmn_init(&parser);
 
     size_t tokens_max = dlb_vec_cap(*tokens);
-    int token_count = jsmn_parse(&parser, (const char*)json_data, json_len, *tokens, (unsigned int)tokens_max);
+    int token_count = jsmn_parse(&parser, json_data, json_len, *tokens, (unsigned int)tokens_max);
     if (token_count <= 0) {
         dlb_vec_free(*tokens);
         json_log_jsmn_error(token_count);
@@ -110,17 +109,17 @@ ta_json_result ta_json_parse(const u8* json_data, size_t json_len,
 void ta_json_test()
 {
     //ta_buffer test_json = ta_file_read_all("test.json");
-    ta_buffer test_json = ta_file_read_all("data/scene/scene.json");
-    if (!test_json.length) {
+    char *test_json = ta_file_read_all("data/scene/scene.json");
+    if (!dlb_vec_len(test_json)) {
         return;
     }
 
     jsmntok_t *tokens = 0;
-    ta_json_parse(test_json.data, test_json.length, &tokens);
+    ta_json_parse(test_json, dlb_vec_len(test_json), &tokens);
     DLB_ASSERT(tokens);
 
     //ta_json_dump(test_json.data, tokens, dlb_vec_len(tokens), 0);
 
     dlb_vec_free(tokens);
-    ta_buffer_free(test_json);
+    dlb_vec_free(test_json);
 }

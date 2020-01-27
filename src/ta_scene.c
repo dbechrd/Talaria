@@ -1,5 +1,4 @@
 #include "ta_audio.h"
-#include "ta_buffer.h"
 #include "ta_button.h"
 #include "ta_camera.h"
 #include "ta_editor.h"
@@ -169,7 +168,7 @@ void ta_scene_free(ta_scene *scene)
         dlb_index_free(&scene->index_by_name[res_type]);
     }
 }
-void ta_scene_save(ta_buffer *buffer)
+void ta_scene_save(char *buffer)
 {
     UNUSED(buffer);
     // TODO: Write scene to memory buffer
