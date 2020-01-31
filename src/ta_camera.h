@@ -42,6 +42,7 @@ typedef struct ta_camera {
     ta_vec3 up;
     ta_vec3 front;
     ta_vec3 right;
+    ta_mat4 frustum;            // look_at without the translation
     ta_mat4 look_at;
     ta_mat4 projection;
     ta_vec3 move_buffer;        // Delta for current frame

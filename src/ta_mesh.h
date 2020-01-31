@@ -41,6 +41,8 @@ typedef struct ta_mesh {
 } ta_mesh;
 #pragma warning(pop)
 
+ta_mesh *tg_mesh_default;
+
 void ta_mesh_init(ta_mesh *mesh);
 void ta_mesh_load_file(ta_mesh *mesh, const char *filename);
 void ta_mesh_create(ta_mesh *mesh);

@@ -19,12 +19,13 @@ typedef struct ta_texture {
         const char *path;           // File path
         const char *path_faces[6];  // File paths (6 cubemap faces)
     } data;
-    u8 *pixels;        // Pixel data (if inlined instead of via path)
-    u32 width;         // Size of texture (pixels)
+    u8 *pixels;   // Pixel data (if inlined instead of via path)
+    u32 width;    // Size of texture (pixels)
     u32 height;
-    u8 channels;       // Number of color channels (1, 2, 4)
-    bool linear;       // True if linear color space. E.g. metallic, etc.
-    bool repeat;       // true = REPEAT, false = CLAMP_TO_EDGE
+    u8 channels;  // Number of color channels (1, 2, 4)
+    bool linear;  // True if linear color space. E.g. metallic, etc.
+    bool repeat;  // true = REPEAT, false = CLAMP_TO_EDGE
+    bool flip_y;  // vertical flip pixel data when loading
     GLint gl_filter_min;
     GLint gl_filter_mag;
     GLuint gl_id;

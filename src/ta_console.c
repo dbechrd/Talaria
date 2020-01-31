@@ -111,8 +111,10 @@ void ta_console_draw_screen()
 {
     ta_log_write(&tg_debug_log, SRC_CONSOLE, "UI layout end\n");
 
-    ta_ui_next_offset(200, 0);
-    ta_ui_next_size(WINDOW_W - 400, 0);
+    int offset = 480;
+    int window_w = 640;
+    ta_ui_next_offset(offset, 0);
+    ta_ui_next_size(window_w, 0);
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);
     static ta_ui_window_state console_window = { 0 };
     ta_ui_window_begin(&console_window, TA_UI_AUTOSIZE_H);
@@ -130,7 +132,7 @@ void ta_console_draw_screen()
     ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_label(CSTR(console_prompt));
 
-    ta_ui_next_size(WINDOW_W - 440, 15);
+    ta_ui_next_size(window_w - 40, 15);
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);

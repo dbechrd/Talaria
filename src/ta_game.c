@@ -216,6 +216,7 @@ void ta_game_init()
 
     //ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
+    tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
 
     //--------------------------------------------------------------------------
     // Simulation
@@ -679,6 +680,26 @@ static void game_simulate(ta_camera *active_camera, float dt)
         e_button_update(button);
     }
 }
+static void game_render_skybox()
+{
+    ta_texture *skybox = ta_game_by_name_try(RES_TEXTURE, SYM(INTERN("miramar_skybox")));
+    if (skybox) {
+        ta_camera *camera = ta_game_camera();
+        ta_shader *shader = ta_game_by_name(RES_SHADER, SYM(INTERN("skybox")));
+        ta_mesh *mesh = ta_game_by_name(RES_MESH, SYM(INTERN("prim_skybox")));
+        ta_shader_set_sampler_cube(shader, SYM_U_TEX, skybox->gl_id);
+        ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
+        ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->frustum);
+
+        glDisable(GL_CULL_FACE);
+        glDepthMask(GL_FALSE);
+        ta_shader_bind(shader);
+        ta_mesh_render(mesh);
+        ta_shader_unbind();
+        glDepthMask(GL_TRUE);
+        glEnable(GL_CULL_FACE);
+    }
+}
 static void game_render_manifolds_debug()
 {
     const float radius = 0.05f;
@@ -947,6 +968,8 @@ void ta_game_loop()
         if (active_camera->debug_wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
+
+        game_render_skybox();
 
         ta_primitive_render(true, false);
 

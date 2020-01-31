@@ -50,9 +50,9 @@
       "position_target_vel": "0x3E4CCCCF (0.200000)",
       "target_xform": {
         "position": {
-          "x": "0x418B3903 (17.402838)",
-          "y": "0x41260737 (10.376761)",
-          "z": "0x3EB2C33C (0.349146)"
+          "x": "0x416C3825 (14.763707)",
+          "y": "0x410AD281 (8.676393)",
+          "z": "0xBFB9E29A (-1.452228)"
         },
         "orientation": {
           "x": "0x00000000 (0.000000)",
@@ -61,9 +61,9 @@
           "w": "0x00000000 (0.000000)"
         }
       },
-      "yaw": "0x42EA3EDA (117.122757)",
+      "yaw": "0x42EBA57E (117.823227)",
       "yaw_smooth": "0x3F333333 (0.700000)",
-      "pitch": "0xC1999DEF (-19.202116)",
+      "pitch": "0xC1366794 (-11.400288)",
       "pitch_smooth": "0x3F333333 (0.700000)",
       "pitch_min": "0xC2B40000 (-90.000000)",
       "pitch_max": "0x42B40000 (90.000000)",
@@ -76,9 +76,9 @@
         "z": "0x00000000 (0.000000)"
       },
       "up": {
-        "x": "0xBE198B60 (-0.149946)",
-        "y": "0x3F71C1DE (0.944364)",
-        "z": "0xBE95E115 (-0.292733)"
+        "x": "0xBDBCF1B4 (-0.092258)",
+        "y": "0x3F7AF2FD (0.980270)",
+        "z": "0xBE3301A1 (-0.174811)"
       }
     },
     {
@@ -504,15 +504,15 @@
       "entity_name": "freecam",
       "xform": {
         "position": {
-          "x": "0x418B3908 (17.402847)",
-          "y": "0x41260732 (10.376757)",
-          "z": "0x3EB2C338 (0.349146)"
+          "x": "0x416C382A (14.763712)",
+          "y": "0x410AD27C (8.676388)",
+          "z": "0xBFB9E29E (-1.452228)"
         },
         "orientation": {
-          "x": "0xBE2F8AC8 (-0.171428)",
-          "y": "0x3E65C927 (0.224400)",
+          "x": "0xBDD17EA9 (-0.102292)",
+          "y": "0x3E727676 (0.236780)",
           "z": "0x00000000 (0.000000)",
-          "w": "0x3F7594B5 (0.959300)"
+          "w": "0x3F77567A (0.966163)"
         }
       }
     },
@@ -561,9 +561,9 @@
         },
         "orientation": {
           "x": "0x00000000 (0.000000)",
-          "y": "0x3E70EF9C (0.235289)",
+          "y": "0x00000000 (0.000000)",
           "z": "0x00000000 (0.000000)",
-          "w": "0x3F78D01C (0.971925)"
+          "w": "0x3F800000 (1.000000)"
         }
       }
     },
@@ -573,7 +573,7 @@
       "xform": {
         "position": {
           "x": "0x40C78674 (6.235163)",
-          "y": "0x3F7EEFBD (0.995846)",
+          "y": "0x3F7EEFBE (0.995846)",
           "z": "0xC19EEDEB (-19.866171)"
         },
         "orientation": {
@@ -607,7 +607,7 @@
       "xform": {
         "position": {
           "x": "0xC134F153 (-11.308917)",
-          "y": "0xC70AF4E8 (-35572.906250)",
+          "y": "0xC715A0A0 (-38304.625000)",
           "z": "0x40C3AD3D (6.114897)"
         },
         "orientation": {
@@ -658,7 +658,7 @@
       "xform": {
         "position": {
           "x": "0x40928201 (4.578370)",
-          "y": "0xC70AF26B (-35570.417969)",
+          "y": "0xC7159E23 (-38302.136719)",
           "z": "0x40968FEB (4.705068)"
         },
         "orientation": {
@@ -1219,6 +1219,33 @@
         {
           "name": "u_face",
           "type": 0
+        },
+
+        {
+          "name": "u_tex",
+          "type": 10
+        }
+      ]
+    },
+    {
+      "name": "skybox",
+      "path_vert": "data/shader/skybox_v.glsl",
+      "path_frag": "data/shader/skybox_f.glsl",
+      "attributes": [
+        {
+          "name": "attr_position",
+          "type": 5
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "u_proj",
+          "type": 8
+        },
+
+        {
+          "name": "u_view",
+          "type": 8
         },
 
         {
@@ -1817,6 +1844,7 @@
       "channels": 4,
       "linear": false,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1830,6 +1858,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1843,6 +1872,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1856,6 +1886,7 @@
       "channels": 3,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1869,6 +1900,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1882,6 +1914,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1895,6 +1928,7 @@
       "channels": 4,
       "linear": false,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1908,6 +1942,7 @@
       "channels": 4,
       "linear": false,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1920,6 +1955,7 @@
       "channels": 3,
       "linear": false,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1932,6 +1968,7 @@
       "channels": 3,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1944,6 +1981,7 @@
       "channels": 3,
       "linear": false,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1956,6 +1994,7 @@
       "channels": 3,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1968,6 +2007,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1980,6 +2020,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -1992,6 +2033,7 @@
       "channels": 4,
       "linear": true,
       "repeat": false,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2004,6 +2046,7 @@
       "channels": 3,
       "linear": false,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2016,6 +2059,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2028,6 +2072,7 @@
       "channels": 3,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2040,6 +2085,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2052,6 +2098,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2064,6 +2111,7 @@
       "channels": 3,
       "linear": false,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2076,6 +2124,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2088,6 +2137,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2100,6 +2150,7 @@
       "channels": 3,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2112,6 +2163,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2124,6 +2176,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2136,6 +2189,7 @@
       "channels": 1,
       "linear": false,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2148,6 +2202,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2160,6 +2215,7 @@
       "channels": 3,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2172,6 +2228,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2184,6 +2241,7 @@
       "channels": 1,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2196,6 +2254,7 @@
       "channels": 3,
       "linear": false,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2208,6 +2267,7 @@
       "channels": 3,
       "linear": false,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
@@ -2220,18 +2280,20 @@
       "channels": 3,
       "linear": true,
       "repeat": true,
+      "flip_y": false,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     },
     {
       "name": "miramar_skybox",
       "type": 1,
-      "path_faces": ["data/texture/miramar_rt.tga", "data/texture/miramar_lf.tga", "data/texture/miramar_up.tga", "data/texture/miramar_dn.tga", "data/texture/miramar_bk.tga", "data/texture/miramar_ft.tga"],
+      "path_faces": ["data/texture/miramar_rt.tga", "data/texture/miramar_lf.tga", "data/texture/miramar_up.tga", "data/texture/miramar_dn.tga", "data/texture/miramar_ft.tga", "data/texture/miramar_bk.tga"],
       "width": 1024,
       "height": 1024,
       "channels": 3,
       "linear": false,
       "repeat": false,
+      "flip_y": true,
       "gl_filter_min": 9987,
       "gl_filter_mag": 9728
     }

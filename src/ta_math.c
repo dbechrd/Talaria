@@ -1122,6 +1122,25 @@ ta_mat4 mat4_ortho(float left, float right, float top, float bottom,
     return mat;
 }
 
+ta_mat4 mat4_frustum(ta_vec3 front, ta_vec3 right, ta_vec3 up)
+{
+    // [ rx, ry, rz, 0 ]
+    // [ ux, uy, uz, 0 ]
+    // [ dx, dy, dz, 0 ]
+    // [  0,  0,  0, 1 ]
+    ta_mat4 transform = { 0 };
+    transform.data.v[0].x = right.x;
+    transform.data.v[0].y = right.y;
+    transform.data.v[0].z = right.z;
+    transform.data.v[1].x = up.x;
+    transform.data.v[1].y = up.y;
+    transform.data.v[1].z = up.z;
+    transform.data.v[2].x = -front.x;
+    transform.data.v[2].y = -front.y;
+    transform.data.v[2].z = -front.z;
+    transform.data.v[3].w = 1.0f;
+    return transform;
+}
 ta_mat4 mat4_lookat_fru(ta_vec3 position, ta_vec3 front, ta_vec3 right,
     ta_vec3 up)
 {

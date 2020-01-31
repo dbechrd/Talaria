@@ -15,6 +15,8 @@
 #define TINYOBJ_LOADER_C_IMPLEMENTATION
 #include "misc/tinyobj_loader_c.h"
 
+ta_mesh *tg_mesh_default;
+
 void ta_mesh_init(ta_mesh *mesh)
 {
     if (mesh->path) {
@@ -321,6 +323,10 @@ void ta_mesh_log_normals_dbg(ta_mesh *mesh)
 
 void ta_mesh_render(ta_mesh *mesh)
 {
+    if (!mesh->gl_vao) {
+        mesh = tg_mesh_default;
+        DLB_ASSERT(mesh);  // No mesh & no default mesh, this seems undesirable!
+    }
     glBindVertexArray(mesh->gl_vao);
     size_t indexes_count = dlb_vec_len(mesh->indexes);
     if (indexes_count) {

@@ -196,6 +196,7 @@ void ta_camera_update(ta_camera *camera, float dt)
 
     // Recalculate look_at
     if (camera->dirty) {
+        camera->frustum = mat4_frustum(camera->front, camera->right, camera->up);
         camera->look_at = mat4_lookat_fru(transform->xform.position,
             camera->front, camera->right, camera->up);
         transform->xform.orientation = quat_from_vec_vec(VEC3_NZ, camera->front);

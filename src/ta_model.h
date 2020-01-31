@@ -15,6 +15,7 @@ typedef struct ta_model {
     bool invisible;
     bool cast_shadows;
     bool receive_shadows;  // TODO: Pass as flag to PBR shader, skip shadows if false
+    bool debug_skip_serialize;  // HACK: Exclude GLTF models from scene file
 } ta_model;
 
 struct ta_camera;

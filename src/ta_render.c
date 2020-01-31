@@ -145,7 +145,7 @@ static void ta_render_init_gl()
     DLB_ASSERT(stencilSize == 8);
 
     // Depth buffer
-    glDepthFunc(GL_LEQUAL);    // Default GL_LESS
+    glDepthFunc(GL_LEQUAL);    // Default GL_LESS (LEQUAL required for skybox)
     glEnable(GL_DEPTH_TEST);   // Default off
     glEnable(GL_CULL_FACE);    // Backface culling
     glCullFace(GL_BACK);

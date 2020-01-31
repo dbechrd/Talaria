@@ -399,6 +399,7 @@ void ta_schema_register()
     TYPE_FIELD(ta_texture, channels,         ATOM_INT);
     TYPE_FIELD(ta_texture, linear,           ATOM_BOOL);
     TYPE_FIELD(ta_texture, repeat,           ATOM_BOOL);
+    TYPE_FIELD(ta_texture, flip_y,           ATOM_BOOL);
     TYPE_FIELD(ta_texture, gl_filter_min,    ATOM_INT);
     TYPE_FIELD(ta_texture, gl_filter_mag,    ATOM_INT);
     TYPE_END(ta_texture);

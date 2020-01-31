@@ -24,9 +24,10 @@
 #define UI_DEBUG_NO_TEXTURES    0
 #define UI_DEBUG_RANDOM_COLORS  0
 
-#define WIDGET_PAD              1
+#define SCROLL_WIDGET_PAD       1
 #define SCROLL_WIDGET_THICKNESS 8
 #define SCROLL_WIDGET_H_MIN     4
+#define SCROLL_THICKNESS        (SCROLL_WIDGET_THICKNESS + SCROLL_WIDGET_PAD * 2)
 #define SCROLL_WHEEL_SPEED      17
 
 // internal flags
@@ -481,10 +482,10 @@ static ui_frame *ui_frame_end(ui_frame_type type)
         // NOTE: This will grow containers without auto-size as well.. oh well
         // for now. Fix if it's ever actually a problem.
         if (frame->content_size.h > frame->rect.h) {
-            frame->rect.w += SCROLL_WIDGET_THICKNESS;
+            frame->rect.w += SCROLL_THICKNESS;
         }
         if (frame->content_size.w > frame->rect.w) {
-            frame->rect.h += SCROLL_WIDGET_THICKNESS;
+            frame->rect.h += SCROLL_THICKNESS;
         }
 
         if (frame->type == UI_WINDOW) {
@@ -1605,9 +1606,9 @@ static void ui_render_scrollbars(ui_frame *frame)
     // Vertical scrollbar
     if (overflow_y > 0) {
         ta_rect scroll_v_rect = { 0 };
-        scroll_v_rect.x = frame->rect.x + frame->content_size.w;
+        scroll_v_rect.w = SCROLL_THICKNESS;
+        scroll_v_rect.x = frame->rect.x + frame->rect.w - scroll_v_rect.w;
         scroll_v_rect.y = frame->rect.y;
-        scroll_v_rect.w = SCROLL_WIDGET_THICKNESS;
         scroll_v_rect.h = frame->rect.h;
 
         float widget_h_pct = (float)frame->rect.h / frame->content_size.h;
@@ -1616,8 +1617,8 @@ static void ui_render_scrollbars(ui_frame *frame)
         int scroll_v = (int)(scroll->percent.y * scroll_space_v);
 
         ta_rect scroll_v_widget = { 0 };
-        scroll_v_widget.x = frame->rect.x + frame->content_size.w;
         scroll_v_widget.w = SCROLL_WIDGET_THICKNESS;
+        scroll_v_widget.x = frame->rect.x + frame->rect.w - scroll_v_widget.w - SCROLL_WIDGET_PAD;
         scroll_v_widget.y = frame->rect.y + scroll_v;
         scroll_v_widget.h = widget_h;
 

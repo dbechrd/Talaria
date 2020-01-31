@@ -92,7 +92,8 @@ static short texture_le_short(unsigned char *bytes)
 {
     return bytes[0] | ((char)bytes[1] << 8);
 }
-static u8 *texture_read_tga(const char *path, u32 *width, u32 *height, u8 *channels)
+static u8 *texture_read_tga(const char *path, u32 *width, u32 *height,
+    u8 *channels, bool flip_y)
 {
     struct tga_header
     {
@@ -161,16 +162,16 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height, u8 *chann
     pixels = dlb_malloc(pixels_size);
     DLB_ASSERT(pixels);
 
-#if 0
-    // Vertical flip
-    read = 0;
-    int row_width = *width * *channels;
-    for (row = *height - 1; row >= 0; --row) {
-        read += fread((char *)pixels + row * row_width, 1, row_width, f);
+    if (flip_y) {
+        // Vertical flip (slower)
+        read = 0;
+        int row_width = *width * *channels;
+        for (int row = *height - 1; row >= 0; --row) {
+            read += fread((char *)pixels + row * row_width, 1, row_width, f);
+        }
+    } else {
+        read = fread(pixels, 1, pixels_size, f);
     }
-#else
-    read = fread(pixels, 1, pixels_size, f);
-#endif
     fclose(f);
 
     if (read != pixels_size) {
@@ -250,7 +251,8 @@ void ta_texture_load(ta_texture *tex)
             u32 width = 0;
             u32 height = 0;
             u8 channels = 0;
-            u8 *pixels = texture_read_tga(path, &width, &height, &channels);
+            u8 *pixels = texture_read_tga(path, &width, &height, &channels,
+                tex->flip_y);
             if (!pixels) {
                 ta_log_write(&tg_debug_log, SRC_TEXTURE, "Failed to load tex: %s\n",
                     path);
