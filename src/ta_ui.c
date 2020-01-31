@@ -1307,12 +1307,15 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
     ta_ui_panel_begin(&vec_state->panel_state, TA_UI_AUTOSIZE);
     if (!multiple_rows) ta_ui_row_begin();
 
-    const char *labels[3] = { "x:", "y:", "z:" };
+    static struct {
+        const char *text;
+        size_t len;
+    } labels[3] = { CSTR("x:"), CSTR("y:"), CSTR("z:") };
     float *components = (float *)vec;
     for (int i = 0; i < 3; ++i) {
         if (multiple_rows) ta_ui_row_begin();
 
-        ta_ui_label(CSTR(labels[i]));
+        ta_ui_label(labels[i].text, labels[i].len);
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
 
@@ -1343,12 +1346,15 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
     ta_ui_panel_begin(&vec_state->panel_state, TA_UI_AUTOSIZE);
     if (!multiple_rows) ta_ui_row_begin();
 
-    const char *labels[4] = { "x:", "y:", "z:", "w:" };
+    static struct {
+        const char *text;
+        size_t len;
+    } labels[4] = { CSTR("x:"), CSTR("y:"), CSTR("z:"), CSTR("w:") };
     float *components = (float *)vec;
     for (int i = 0; i < 4; ++i) {
         if (multiple_rows) ta_ui_row_begin();
 
-        ta_ui_label(CSTR(labels[i]));
+        ta_ui_label(labels[i].text, labels[i].len);
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
 

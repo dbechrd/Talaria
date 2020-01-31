@@ -593,6 +593,18 @@ static void ui_node_panel()
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
+            ta_ui_next_bg_color(UI_STATE_ALL, light->data.common.color.r,
+                light->data.common.color.g, light->data.common.color.b, 1.0f);
+            ta_ui_label(CSTR("color:"));
+            static ta_ui_textbox_vec3_state color_editor = { 0 };
+            ta_ui_textbox_vec3((ta_vec3 *)&light->data.common.color,
+                &color_editor, false, true, false);
+            light->data.common.color.r = clampf(light->data.common.color.r, 0.0f, 1.0f);
+            light->data.common.color.g = clampf(light->data.common.color.g, 0.0f, 1.0f);
+            light->data.common.color.b = clampf(light->data.common.color.b, 0.0f, 1.0f);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("shadow map:"));
             static bool show_shadow_map = true;
             if (show_shadow_map) {

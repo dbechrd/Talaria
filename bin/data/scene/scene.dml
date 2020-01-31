@@ -42,17 +42,17 @@ ta_camera:
   position_target_vel: 0x3E4CCCCF (0.200000)
   target_xform:
     position:
-      x: 0x416C3825 (14.763707)
-      y: 0x410AD281 (8.676393)
-      z: 0xBFB9E29A (-1.452228)
+      x: 0x40D4DD44 (6.652010)
+      y: 0x40E7AB0B (7.239629)
+      z: 0xBEEC5087 (-0.461552)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x00000000 (0.000000)
-  yaw: 0x42EBA57E (117.823227)
+  yaw: 0x428B0BC5 (69.522987)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1366794 (-11.400288)
+  pitch: 0x40FFFDE8 (7.999744)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -63,9 +63,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBDBCF1B4 (-0.092258)
-    y: 0x3F7AF2FD (0.980270)
-    z: 0xBE3301A1 (-0.174811)
+    x: 0xBD476A8A (-0.048686)
+    y: 0x3F7D823E (0.990269)
+    z: 0x3E058105 (0.130375)
 ta_camera:
   name: "player_camera"
   entity_name: "player_camera"
@@ -121,9 +121,9 @@ ta_light:
   directional:
     intensity: 0x3F800000 (1.000000)
     color:
-      r: 0x3F800000 (1.000000)
-      g: 0x3F800000 (1.000000)
-      b: 0x3F800000 (1.000000)
+      r: 0x3E570A3A (0.210000)
+      g: 0x3EC28F55 (0.380000)
+      b: 0x3F2147B2 (0.630000)
   shadowmap:
     shader: "shadow_dir"
     resolution: 4096
@@ -405,14 +405,14 @@ ta_transform:
   entity_name: "freecam"
   xform:
     position:
-      x: 0x416C382A (14.763712)
-      y: 0x410AD27C (8.676388)
-      z: 0xBFB9E29E (-1.452228)
+      x: 0x40D4DD40 (6.652008)
+      y: 0x40E7AB06 (7.239627)
+      z: 0xBEEC5082 (-0.461552)
     orientation:
-      x: 0xBDD17EA9 (-0.102292)
-      y: 0x3E727676 (0.236780)
+      x: 0x3D912821 (0.070877)
+      y: 0xBE34AA9F (-0.176432)
       z: 0x00000000 (0.000000)
-      w: 0x3F77567A (0.966163)
+      w: 0x3F7B547A (0.981758)
 ta_transform:
   name: "player_one"
   entity_name: "player_one"
@@ -484,7 +484,7 @@ ta_transform:
   xform:
     position:
       x: 0xC134F153 (-11.308917)
-      y: 0xC715A0A0 (-38304.625000)
+      y: 0xC7231E5B (-41758.355469)
       z: 0x40C3AD3D (6.114897)
     orientation:
       x: 0x00000000 (0.000000)
@@ -502,8 +502,8 @@ ta_transform:
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
-      z: 0x3F1BB0BA (0.608165)
-      w: 0x3F4B3727 (0.793810)
+      z: 0x3F1BB0BB (0.608165)
+      w: 0x3F4B3729 (0.793810)
 ta_transform:
   name: "column_0003"
   entity_name: "column_0003"
@@ -523,7 +523,7 @@ ta_transform:
   xform:
     position:
       x: 0x40928201 (4.578370)
-      y: 0xC7159E23 (-38302.136719)
+      y: 0xC7231BDE (-41755.867188)
       z: 0x40968FEB (4.705068)
     orientation:
       x: 0x3E9202C9 (0.285177)
