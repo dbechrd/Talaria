@@ -735,7 +735,7 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
             }
         }
 
-        // Draw quads
+        // Draw the primitives
         ta_shader_bind(shader);
         glBindVertexArray(mesh->gl_vao);
         glDrawArrays(mode, 0, (GLsizei)positions_count);

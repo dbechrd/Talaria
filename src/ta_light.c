@@ -80,31 +80,28 @@ void ta_light_init(ta_light *light)
 
 static void shadowmap_directional_create(ta_light *light)
 {
+    // TODO: Use ta_texture_create or whatever
+    light->shadowmap.texture.type = TA_TEXTURE_2D;
     light->shadowmap.texture.width = light->shadowmap.resolution;
     light->shadowmap.texture.height = light->shadowmap.resolution;
-    light->shadowmap.texture.cubemap = false;
+    light->shadowmap.texture.gl_filter_min = GL_LINEAR; // GL_NEAREST;
+    light->shadowmap.texture.gl_filter_mag = GL_LINEAR; // GL_NEAREST;
 
-    glGenTextures(1, &light->shadowmap.texture.gl_id);
-    glBindTexture(GL_TEXTURE_2D, light->shadowmap.texture.gl_id);
-
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    ta_texture_create_and_bind(&light->shadowmap.texture);
+    // TODO: Specify wrap mode as part of texture params, not sure if border
+    // mode/color is worth refactoring out though.
     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     float borderColor[4] = { 0 };
     //float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+    // TOOD: Not sure if this if these formats are worth refactoring out either
     // TODO: Should internalformat be GL_DEPTH_COMPONENT16 instead?
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, light->shadowmap.resolution,
-        light->shadowmap.resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0
-    );
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+        light->shadowmap.resolution, light->shadowmap.resolution, 0,
+        GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
     glGenFramebuffers(1, &light->shadowmap.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
@@ -119,30 +116,23 @@ static void shadowmap_directional_create(ta_light *light)
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    ta_texture_unbind(&light->shadowmap.texture);
 }
 
 static void shadowmap_point_create(ta_light *light)
 {
+    // TODO: Use ta_texture_create or whatever
+    light->shadowmap.texture.type = TA_TEXTURE_CUBEMAP;
     light->shadowmap.texture.width = light->shadowmap.resolution;
     light->shadowmap.texture.height = light->shadowmap.resolution;
-    light->shadowmap.texture.cubemap = true;
+    light->shadowmap.texture.gl_filter_min = GL_LINEAR; // GL_NEAREST;
+    light->shadowmap.texture.gl_filter_mag = GL_LINEAR; // GL_NEAREST;
 
-    glGenTextures(1, &light->shadowmap.texture.gl_id);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, light->shadowmap.texture.gl_id);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    //glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+    ta_texture_create_and_bind(&light->shadowmap.texture);
     for (int i = 0; i < 6; ++i) {
-        glTexImage2D(
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT24,
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT24,
             light->shadowmap.resolution, light->shadowmap.resolution, 0,
-            GL_DEPTH_COMPONENT, GL_FLOAT, NULL
-        );
+            GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     }
 
     glGenFramebuffers(1, &light->shadowmap.framebuffer);
@@ -158,7 +148,7 @@ static void shadowmap_point_create(ta_light *light)
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    ta_texture_unbind(&light->shadowmap.texture);
 }
 
 ta_vec3 ta_light_position(ta_light *light)

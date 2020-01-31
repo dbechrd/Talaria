@@ -9,6 +9,8 @@ typedef enum console_cmd_type {
     CONSOLE_CMD_CLEAR,
     CONSOLE_CMD_MOTD,
     CONSOLE_CMD_LIFE,
+    CONSOLE_CMD_PING,
+    CONSOLE_CMD_CAT,
 
     // NOTE: Unknown must be the last command
     CONSOLE_CMD_UNKNOWN,
@@ -44,9 +46,17 @@ static void console_cmd_motd(char **history)
         "MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD\n"
     ));
 }
-static void console_cmd_life(char **history)
+static void console_cmd_42(char **history)
 {
     console_history_push(history, CSTR("The answer to life, the universe, and everything."));
+}
+static void console_cmd_ping(char **history)
+{
+    console_history_push(history, CSTR("pong"));
+}
+static void console_cmd_cat(char **history)
+{
+    console_history_push(history, CSTR("=^_^=  *meow*"));
 }
 static void console_cmd_unknown(char **history)
 {
@@ -64,7 +74,9 @@ static console_cmd_type console_exec(char **history, char *command)
         [CONSOLE_CMD_EXIT]    = { CSTR0("exit"),  console_cmd_clear,   false },
         [CONSOLE_CMD_CLEAR]   = { CSTR0("clear"), console_cmd_clear,   false },
         [CONSOLE_CMD_MOTD]    = { CSTR0("motd"),  console_cmd_motd,    true },
-        [CONSOLE_CMD_LIFE]    = { CSTR0("42"),    console_cmd_life,    true },
+        [CONSOLE_CMD_LIFE]    = { CSTR0("42"),    console_cmd_42,      true },
+        [CONSOLE_CMD_PING]    = { CSTR0("ping"),  console_cmd_ping,    true },
+        [CONSOLE_CMD_CAT]     = { CSTR0("cat"),   console_cmd_cat,     true },
         [CONSOLE_CMD_UNKNOWN] = { 0, 0,           console_cmd_unknown, true }
     };
 

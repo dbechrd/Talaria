@@ -143,6 +143,7 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
     bool normalize, bool multiple_rows, bool reset_button);
 void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
     bool normalize, bool multiple_rows, bool reset_button);
+void ta_ui_textbox_focus(ta_ui_textbox_state *textbox);
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c);
 void ta_ui_textbox_clear(ta_ui_textbox_state *textbox);
 void ta_ui_textbox_submit(ta_ui_textbox_state *textbox);

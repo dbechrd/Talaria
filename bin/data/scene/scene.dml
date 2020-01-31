@@ -484,7 +484,7 @@ ta_transform:
   xform:
     position:
       x: 0xC134F153 (-11.308917)
-      y: 0xC70AD7AB (-35543.667969)
+      y: 0xC70AF4E8 (-35572.906250)
       z: 0x40C3AD3D (6.114897)
     orientation:
       x: 0x00000000 (0.000000)
@@ -502,8 +502,8 @@ ta_transform:
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
-      z: 0x3F1BB0BB (0.608165)
-      w: 0x3F4B3729 (0.793810)
+      z: 0x3F1BB0BA (0.608165)
+      w: 0x3F4B3727 (0.793810)
 ta_transform:
   name: "column_0003"
   entity_name: "column_0003"
@@ -523,7 +523,7 @@ ta_transform:
   xform:
     position:
       x: 0x40928201 (4.578370)
-      y: 0xC70AD52E (-35541.179688)
+      y: 0xC70AF26B (-35570.417969)
       z: 0x40968FEB (4.705068)
     orientation:
       x: 0x3E9202C9 (0.285177)
@@ -1919,262 +1919,373 @@ ta_shader:
 #-------------------------------------------------------------------------------
 ta_texture:
   name: "missing_albedo"
+  type: 0  # TA_TEXTURE_2D
   pixels: [255, 0, 255, 255, ]
   width: 1
   height: 1
   channels: 4
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "missing_height"
+  type: 0  # TA_TEXTURE_2D
   pixels: [0, ]
   width: 1
   height: 1
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "missing_metallic"
+  type: 0  # TA_TEXTURE_2D
   pixels: [0, ]
   width: 1
   height: 1
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "missing_normal"
+  type: 0  # TA_TEXTURE_2D
   pixels: [127, 127, 255, ]
   width: 1
   height: 1
   channels: 3
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "missing_occlusion"
+  type: 0  # TA_TEXTURE_2D
   pixels: [255, ]
   width: 1
   height: 1
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "missing_roughness"
+  type: 0  # TA_TEXTURE_2D
   pixels: [127, ]
   width: 1
   height: 1
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "white_albedo"
+  type: 0  # TA_TEXTURE_2D
   pixels: [255, 255, 255, 255, ]
   width: 1
   height: 1
   channels: 4
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "red_albedo"
+  type: 0  # TA_TEXTURE_2D
   pixels: [255, 0, 0, 255, ]
   width: 1
   height: 1
   channels: 4
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "test_diff"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/pbr_default_0.tga"
   width: 32
   height: 32
   channels: 3
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "test_mrao"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/pbr_default_1.tga"
   width: 32
   height: 32
   channels: 3
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "cobble_albedo"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_albedo.tga"
   width: 512
   height: 512
   channels: 3
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "cobble_normal"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_normal.tga"
   width: 512
   height: 512
   channels: 3
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "cobble_occlusion"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_occlusion.tga"
   width: 512
   height: 512
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "cobble_roughness"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_roughness.tga"
   width: 512
   height: 512
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "audio_icon"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/audio_icon.tga"
   width: 32
   height: 32
   channels: 4
   linear: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_albedo"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_albedo.tga"
   width: 1024
   height: 1024
   channels: 3
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_height"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_height.tga"
   width: 1024
   height: 1024
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_normal"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_normal.tga"
   width: 1024
   height: 1024
   channels: 3
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_occlusion"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
   width: 1024
   height: 1024
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_roughness"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_roughness.tga"
   width: 1024
   height: 1024
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_albedo"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_albedo.tga"
   width: 1024
   height: 1024
   channels: 3
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_height"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_height.tga"
   width: 1024
   height: 1024
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_metallic"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_metallic.tga"
   width: 1024
   height: 1024
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_normal"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_normal.tga"
   width: 1024
   height: 1024
   channels: 3
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_occlusion"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_occlusion.tga"
   width: 1024
   height: 1024
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_roughness"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_roughness.tga"
   width: 1024
   height: 1024
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "acoustic_foam_albedo"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_albedo.tga"
   width: 1024
   height: 1024
   channels: 1
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "acoustic_foam_height"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_height.tga"
   width: 1024
   height: 1024
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "acoustic_foam_normal"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_normal.tga"
   width: 1024
   height: 1024
   channels: 3
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "acoustic_foam_occlusion"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_occlusion.tga"
   width: 1024
   height: 1024
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "acoustic_foam_roughness"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_roughness.tga"
   width: 1024
   height: 1024
   channels: 1
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "star_albedo"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/star_albedo.tga"
   width: 1024
   height: 1024
   channels: 3
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "martin_luther"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/martin_luther.tga"
   width: 512
   height: 512
   channels: 3
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
 ta_texture:
   name: "sphere_albedo"
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/sphere_albedo.tga"
   width: 1024
   height: 1024
   channels: 3
   linear: true
   repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "miramar_skybox"
+  type: 1  # TA_TEXTURE_CUBEMAP
+  path_faces: ["data/texture/miramar_rt.tga", "data/texture/miramar_lf.tga", "data/texture/miramar_up.tga", "data/texture/miramar_dn.tga", "data/texture/miramar_bk.tga", "data/texture/miramar_ft.tga", ]
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728

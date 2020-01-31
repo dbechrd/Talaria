@@ -376,7 +376,7 @@ void tokens_parse(ta_scene *scene, token *tokens)
 {
     struct {
         int indent;
-        u32 resource_id; // 0 = not a resource (i.e. field)
+        u32 resource_id;    // 0 = not a resource (i.e. field)
         ta_schema_field_type type;
         size_t array_len;   // 0 = not array, 1 = vector, >1 = fixed array size
         size_t array_elem;  // Current element of array we're writing to
@@ -390,12 +390,10 @@ void tokens_parse(ta_scene *scene, token *tokens)
     } stack[8] = { 0 };
 
     int indent = 0;  // Current line indent counter
+    int sp = 0;      // "Stack pointer" index into stack
+    int braces = 0;  // Current level of curly braces
+    int array = 0;   // Current level of square brackets
     bool expect_array_start = false;
-
-    //int level = 0;   // Current level of indentation
-    int sp = 0;          // "Stack pointer" index into stack
-    int braces = 0;      // Current level of curly braces
-    int array = 0;       // Current level of square brackets
 
     dlb_vec_each(token *, tok, tokens) {
         switch (tok->type) {
@@ -611,13 +609,22 @@ void tokens_parse(ta_scene *scene, token *tokens)
                 }
                 DLB_ASSERT(sp > 0);
 
-                if (stack[sp].array_len) {
-                    // NOTE: Fixed-sized atomic arrays not supported
-                    DLB_ASSERT(stack[sp].array_len == 1);
+                size_t arr_len = stack[sp].array_len;
+                if (arr_len == 1) {
+                    // Dynamic array (vector)
                     DLB_ASSERT(stack[sp].ptr);
                     const char ***arr = stack[sp].ptr;
                     dlb_vec_push(*arr, tok->value.string);
+                } else if (arr_len > 1) {
+                    // Static array
+                    DLB_ASSERT(stack[sp].ptr);
+                    const char **arr = stack[sp].ptr;
+                    size_t arr_idx = stack[sp].array_elem;
+                    DLB_ASSERT(arr_idx < arr_len);
+                    arr[arr_idx] = tok->value.string;
+                    stack[sp].array_elem++;
                 } else {
+                    // String
                     const char **fp = stack[sp].ptr;
                     *fp = tok->value.string;
                     if (stack[sp].name == SYM_NAME) {
@@ -626,7 +633,9 @@ void tokens_parse(ta_scene *scene, token *tokens)
                         if (res_type < RES_COUNT) {
                             ta_resource *resource = stack[sp-1].ptr;
                             resource->index = stack[sp-1].index;
-                            DLB_ASSERT(resource->name == tok->value.string);  // TODO: Cleanup
+                            if (resource->name != tok->value.string) {
+                                BAD_TOKEN();
+                            }
 
                             u32 hash = dlb_murmur3(SYM32(resource->name));
                             dlb_index_insert(&scene->index_by_name[res_type], hash,
@@ -640,7 +649,9 @@ void tokens_parse(ta_scene *scene, token *tokens)
                         if (res_type < RES_COMP_COUNT) {
                             ta_component *comp = stack[sp-1].ptr;
                             comp->index = stack[sp-1].index;
-                            DLB_ASSERT(comp->entity_name == tok->value.string);  // TODO: Cleanup
+                            if (comp->entity_name != tok->value.string) {
+                                BAD_TOKEN();
+                            }
 
                             u32 hash = dlb_murmur3(SYM32(comp->entity_name));
                             dlb_index_insert(&scene->index_by_entity[res_type], hash,

@@ -53,6 +53,7 @@ void main()
     vertex.normal = attr_normal;
     vertex.tangent = attr_tangent;
 
+    // TODO: Calculate model inverse on CPU side
     mat3 normal_matrix = transpose(inverse(mat3(u_model)));
     vec3 T = normalize(normal_matrix * attr_tangent);
     vec3 N = normalize(normal_matrix * attr_normal);

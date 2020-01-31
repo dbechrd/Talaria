@@ -948,7 +948,7 @@ static void ui_texture_panel()
                 "path: %s\n"
                 "glid: %u",
                 texture->name,
-                texture->path,
+                texture->data.path,
                 texture->gl_id);
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);

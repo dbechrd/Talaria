@@ -160,6 +160,9 @@ static void ta_render_init_gl()
 
     // Gamma correction
     //glEnable(GL_FRAMEBUFFER_SRGB);
+
+    // Seamless filtering across cubemap seams
+    glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 }
 
 void ta_render_init()

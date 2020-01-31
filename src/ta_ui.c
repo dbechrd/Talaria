@@ -1366,6 +1366,13 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
 
     ta_ui_panel_end();
 }
+void ta_ui_textbox_focus(ta_ui_textbox_state *textbox)
+{
+    // TODO: Would be nice to focus console textbox when console is clicked
+    DLB_ASSERT(!"Doesn't work for some reason, probably related to mouse_down");
+    DLB_ASSERT(textbox);
+    textbox_focus(textbox);
+}
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
 {
     DLB_ASSERT(textbox);
@@ -1500,7 +1507,7 @@ static void ui_render_toggle_button(ui_frame *frame)
 static void ui_render_image(ui_frame *frame)
 {
     if (frame->texture) {
-        if (frame->texture->cubemap) {
+        if (frame->texture->type == TA_TEXTURE_CUBEMAP) {
             DLB_ASSERT(frame->texture_face >= 0 && frame->texture_face <= 6);
             ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, frame->texture->gl_id);
             ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, frame->texture_face);
