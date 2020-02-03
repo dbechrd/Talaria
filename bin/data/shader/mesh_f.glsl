@@ -174,13 +174,30 @@ void main()
                 attenuation = u_lights[i].intensity;
 
                 if (u_lights[i].cast_shadows) {
+                    shadow_bias = 0.00001;
+#if 0
                     shadow_map_depth = texture(u_lights[i].shadowmap2d, projCoords.st).r;
                     // TODO: Better bias based on direction of light? This code
                     // doesn't work, but tried to write it based on:
                     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
                     //shadow_bias = max(0.05 * (1.0 - dot(N, u_lights[i].direction)), 0.001);
-                    shadow_bias = 0.00001;
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
+#else
+                    // Soft shadows
+                    // TODO: Clean this crap up!
+				    float ss_bias = shadow_bias;//0.004;
+                    float ss_count = 0.0;
+				    for (float x = -1.0; x <= 1.0; x += 1.0) {
+					    for (float y = -1.0; y <= 1.0; y += 1.0) {
+							vec2 ss_offset = vec2(x, y) * 0.001;
+							float ss_depth = texture(u_lights[i].shadowmap2d, projCoords.st + ss_offset).r;
+			                shadow += step(ss_depth, dist - ss_bias);
+                            ss_count += 1.0;
+					    }
+				    }
+                    shadow /= ss_count;
+#endif
+
                     if (projCoords.z > 1.0) {
                         shadow = 0.0;
                     }
@@ -195,24 +212,22 @@ void main()
                 attenuation = u_lights[i].intensity / dist * dist;
 
                 if (u_lights[i].cast_shadows) {
+                    shadow_bias = 0.05;
+#if 0
                     shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
                     shadow_map_depth *= u_lights[i].shadowmap_zfar;
-                    shadow_bias = 0.001;
-
-#if 0
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
 #else
                     // Soft shadows
                     // TODO: Clean this crap up!
-				    float ss_bias = 0.04;
                     float ss_count = 0.0;
 				    for (float x = -1.0; x <= 1.0; x += 1.0) {
 					    for (float y = -1.0; y <= 1.0; y += 1.0) {
 					        for (float z = -1.0; z <= 1.0; z += 1.0) {
-							    vec3 ss_offset = vec3(x, y, z) * 0.04;
+							    vec3 ss_offset = vec3(x, y, z) * 0.004 * dist;
 							    float ss_depth = texture(u_lights[i].shadowmap3d, -fragToLight + ss_offset).r;
 							    ss_depth *= u_lights[i].shadowmap_zfar;
-			                    shadow += step(ss_depth, dist - ss_bias);
+			                    shadow += step(ss_depth, dist - shadow_bias);
                                 ss_count += 1.0;
 					        }
 					    }
@@ -272,13 +287,15 @@ void main()
         //L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
         L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
         //L0 += mtl_albedo * (1.0 - shadow);
-
-        final_color = vec4(vec3(shadow), 1.0);
     }
 
+    mtl_albedo = mix(mtl_albedo, vec3(0.18, 0.28, 0.35), 0.5);
     vec3 ambient = 0.01 * mtl_albedo * mtl_occlusion;
     vec3 color = ambient + L0;
+
+    // Tone mapping (Reinhard operator)
     color /= color + vec3(1.0);
+    // Gamma correction
     color = pow(color, vec3(1.0 / 2.2));
 
     final_color = vec4(color, mtl_opacity);

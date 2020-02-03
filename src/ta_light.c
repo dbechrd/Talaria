@@ -99,7 +99,7 @@ static void shadowmap_directional_create(ta_light *light)
 
     // TOOD: Not sure if this if these formats are worth refactoring out either
     // TODO: Should internalformat be GL_DEPTH_COMPONENT16 instead?
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16,
         light->shadowmap.resolution, light->shadowmap.resolution, 0,
         GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
@@ -107,6 +107,9 @@ static void shadowmap_directional_create(ta_light *light)
     glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
         light->shadowmap.texture.gl_id, 0);
+    // For reflection maps
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+    //    light->shadowmap.texture.gl_id, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
@@ -130,7 +133,7 @@ static void shadowmap_point_create(ta_light *light)
 
     ta_texture_create_and_bind(&light->shadowmap.texture);
     for (int i = 0; i < 6; ++i) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT24,
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT16,
             light->shadowmap.resolution, light->shadowmap.resolution, 0,
             GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     }

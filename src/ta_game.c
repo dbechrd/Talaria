@@ -923,7 +923,7 @@ void ta_game_loop()
         // TODO: Try VSM, then CSM.
         // NOTE: If we switch to back face culling it will prevent light leaks, but
         // cause a lot more jitter on the lit side. :(
-        glCullFace(GL_FRONT);
+        //glCullFace(GL_FRONT);
         //glClearColor(FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX);
         //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -931,7 +931,7 @@ void ta_game_loop()
             ta_light_shadowpass_render(light, models);
         }
         ta_shader_unbind();
-        glCullFace(GL_BACK);
+        //glCullFace(GL_BACK);
         glViewport(0, 0, WINDOW_W, WINDOW_H);
 
         //----------------------------------------------------------------------

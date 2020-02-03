@@ -42,30 +42,30 @@ ta_camera:
   position_target_vel: 0x3E4CCCCF (0.200000)
   target_xform:
     position:
-      x: 0x40D4DD44 (6.652010)
-      y: 0x40E7AB0B (7.239629)
-      z: 0xBEEC5087 (-0.461552)
+      x: 0x4195FF0B (18.749533)
+      y: 0x411023F3 (9.008777)
+      z: 0xC00572D8 (-2.085135)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x00000000 (0.000000)
-  yaw: 0x428B0BC5 (69.522987)
+  yaw: 0x431FCFF2 (159.812286)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0x40FFFDE8 (7.999744)
+  pitch: 0xC11335E2 (-9.200655)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
-  fov: 0x42960000 (75.000000)
+  fov: 0x42B3FFFD (89.999977)
   znear: 0x3C23D712 (0.010000)
   focal_point:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBD476A8A (-0.048686)
-    y: 0x3F7D823E (0.990269)
-    z: 0x3E058105 (0.130375)
+    x: 0xBE19ABE7 (-0.150070)
+    y: 0x3F7CB4D9 (0.987135)
+    z: 0xBD6202C0 (-0.055178)
 ta_camera:
   name: "player_camera"
   entity_name: "player_camera"
@@ -73,9 +73,9 @@ ta_camera:
   position_target_vel: 0x3E4CCCCD (0.200000)
   target_xform:
     position:
-      x: 0x409B26D1 (4.848488)
+      x: 0x413DB6B3 (11.857104)
       y: 0x40DFFF2F (6.999900)
-      z: 0xC0685215 (-3.630010)
+      z: 0xC05A500E (-3.411136)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -119,11 +119,11 @@ ta_light:
   cast_shadows: true
   type: 1  # TA_LIGHT_DIRECTIONAL
   directional:
-    intensity: 0x3F800000 (1.000000)
+    intensity: 0x3FD99A50 (1.700022)
     color:
-      r: 0x3E570A3A (0.210000)
-      g: 0x3EC28F55 (0.380000)
-      b: 0x3F2147B2 (0.630000)
+      r: 0x3E3851EC (0.180000)
+      g: 0x3E8F5C2E (0.280000)
+      b: 0x3EB33342 (0.350000)
   shadowmap:
     shader: "shadow_dir"
     resolution: 4096
@@ -149,6 +149,7 @@ ta_light:
 ta_light:
   name: "light_point_0003"
   entity_name: "light_point_0003"
+  disabled: true
   cast_shadows: true
   type: 2  # TA_LIGHT_POINT
   point:
@@ -168,11 +169,11 @@ ta_light:
   cast_shadows: true
   type: 2  # TA_LIGHT_POINT
   point:
-    intensity: 0x40000000 (2.000000)
+    intensity: 0x40400009 (3.000002)
     color:
-      r: 0x3F800000 (1.000000)
-      g: 0x3F800000 (1.000000)
-      b: 0x3F666666 (0.900000)
+      r: 0x3E3851E8 (0.180000)
+      g: 0x3E8F5C33 (0.280000)
+      b: 0x3EB33332 (0.350000)
   shadowmap:
     shader: "shadow_point"
     resolution: 1024
@@ -275,14 +276,14 @@ ta_transform:
   entity_name: "light_sun"
   xform:
     position:
-      x: 0x4185AE14 (16.709999)
-      y: 0x41F2F5C6 (30.370007)
-      z: 0xC208E146 (-34.219994)
+      x: 0x411D14B0 (9.817551)
+      y: 0x418FF00E (17.992214)
+      z: 0xC19B45DF (-19.409117)
     orientation:
-      x: 0xBE7E427D (-0.248301)
-      y: 0x3F713FC1 (0.942379)
-      z: 0xBE659666 (-0.224207)
-      w: 0x34D245B7 (0.000000)
+      x: 0xBE7E7FA2 (-0.248534)
+      y: 0x3ED529FF (0.416336)
+      z: 0x398ED556 (0.000272)
+      w: 0x3F5FE4AC (0.874583)
 ta_transform:
   name: "light_point_0002"
   entity_name: "light_point_0002"
@@ -314,9 +315,9 @@ ta_transform:
   entity_name: "light_point_0004"
   xform:
     position:
-      x: 0x4192A037 (18.328230)
-      y: 0x40ED87EA (7.422841)
-      z: 0xC1DBEE83 (-27.491461)
+      x: 0x41251779 (10.318231)
+      y: 0x4104B219 (8.293481)
+      z: 0xC194BAEC (-18.591270)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -405,35 +406,35 @@ ta_transform:
   entity_name: "freecam"
   xform:
     position:
-      x: 0x40D4DD40 (6.652008)
-      y: 0x40E7AB06 (7.239627)
-      z: 0xBEEC5082 (-0.461552)
+      x: 0x4195FF06 (18.749523)
+      y: 0x411023EE (9.008772)
+      z: 0xC00572DC (-2.085135)
     orientation:
-      x: 0x3D912821 (0.070877)
-      y: 0xBE34AA9F (-0.176432)
+      x: 0xBDC7FA99 (-0.097646)
+      y: 0x3F10D8AF (0.565806)
       z: 0x00000000 (0.000000)
-      w: 0x3F7B547A (0.981758)
+      w: 0x3F5198AE (0.818736)
 ta_transform:
   name: "player_one"
   entity_name: "player_one"
   xform:
     position:
-      x: 0x409B26D1 (4.848488)
+      x: 0x413DB713 (11.857196)
       y: 0x409FFF2F (4.999900)
-      z: 0xC0685215 (-3.630010)
+      z: 0xC05A4B80 (-3.410858)
     orientation:
-      x: 0xBE70D4E7 (-0.235187)
-      y: 0xBF1F64AD (-0.622630)
-      z: 0x3EF37C76 (0.475559)
-      w: 0x3F1340BE (0.575207)
+      x: 0xBF4E77F1 (-0.806518)
+      y: 0xBEBC0EB0 (-0.367300)
+      z: 0x3EED3070 (0.463260)
+      w: 0x3B53F573 (0.003234)
 ta_transform:
   name: "player_camera"
   entity_name: "player_camera"
   xform:
     position:
-      x: 0x409B26D0 (4.848488)
+      x: 0x413DB6D2 (11.857134)
       y: 0x40DFFF30 (6.999901)
-      z: 0xC0685216 (-3.630010)
+      z: 0xC05A4E89 (-3.411043)
     orientation:
       x: 0xBD6431E4 (-0.055712)
       y: 0xBE28333A (-0.164258)
@@ -457,9 +458,9 @@ ta_transform:
   entity_name: "sphere2"
   xform:
     position:
-      x: 0x40C78674 (6.235163)
-      y: 0x3F7EEFBE (0.995846)
-      z: 0xC19EEDEB (-19.866171)
+      x: 0x41482557 (12.509116)
+      y: 0x3F7EEFBD (0.995846)
+      z: 0xC1AF1B83 (-21.888433)
     orientation:
       x: 0x3DFD7BD2 (0.123771)
       y: 0xBD5043A6 (-0.050846)
@@ -484,7 +485,7 @@ ta_transform:
   xform:
     position:
       x: 0xC134F153 (-11.308917)
-      y: 0xC7231E5B (-41758.355469)
+      y: 0xC7BC3D75 (-96378.914063)
       z: 0x40C3AD3D (6.114897)
     orientation:
       x: 0x00000000 (0.000000)
@@ -502,8 +503,8 @@ ta_transform:
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
-      z: 0x3F1BB0BB (0.608165)
-      w: 0x3F4B3729 (0.793810)
+      z: 0x3F1BB0BA (0.608165)
+      w: 0x3F4B3727 (0.793810)
 ta_transform:
   name: "column_0003"
   entity_name: "column_0003"
@@ -523,7 +524,7 @@ ta_transform:
   xform:
     position:
       x: 0x40928201 (4.578370)
-      y: 0xC7231BDE (-41755.867188)
+      y: 0xC7BC3C37 (-96376.429688)
       z: 0x40968FEB (4.705068)
     orientation:
       x: 0x3E9202C9 (0.285177)
@@ -619,7 +620,6 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   mass: 0x3F800000 (1.000000)
-  no_gravity: true
 ta_rigid_body:
   name: "rock_0001"
   entity_name: "rock_0001"

@@ -16,7 +16,7 @@
 //       orientation stop changing at the same time. Not sure if there's a way
 //       to calculate these analytically.
 #define DV_EPSILON 0.001f     // minimum velocity required to affect position
-#define DTHETA_EPSILON 0.08f  // minimum magnitude required to affect orientation
+#define DTHETA_EPSILON 0.04f  // minimum magnitude required to affect orientation
 
 const char *ta_collider_type_str(int type)
 {
