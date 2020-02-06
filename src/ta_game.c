@@ -212,7 +212,7 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading first scene...\n");
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
-    ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
+    //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
     //ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
@@ -255,8 +255,8 @@ void ta_game_init()
         RES_COMP_AUDIO_SOURCE);
     DLB_ASSERT(bg_music_src);
 
-    ta_audio_listener_set_volume(&tg_audio, 1.0f);
-    ta_audio_listener_mute(&tg_audio);
+    ta_audio_listener_set_volume(&tg_audio, 0.03f);
+    //ta_audio_listener_mute(&tg_audio);
     ta_audio_source_play_loop(bg_music_src);
 
     //--------------------------------------------------------------------------

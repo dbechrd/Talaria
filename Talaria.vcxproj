@@ -62,31 +62,31 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <IntDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>obj\Win32\$(Configuration)\</OutDir>
+    <IntDir>obj\Win32\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)$(PlatformArchitecture)_d</TargetName>
-    <LibraryPath>lib\$(PlatformTarget)\;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <LibraryPath>lib\Win32\;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <IntDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>obj\Win32\$(Configuration)\</OutDir>
+    <IntDir>obj\Win32\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
-    <LibraryPath>lib\$(PlatformTarget)\;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
+    <LibraryPath>lib\Win32\;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);$(NETFXKitsDir)Lib\um\x86</LibraryPath>
     <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <IntDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>obj\Win64\$(Configuration)\</OutDir>
+    <IntDir>obj\Win64\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)$(PlatformArchitecture)_d</TargetName>
-    <LibraryPath>lib\$(PlatformTarget)\;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <LibraryPath>lib\Win64\;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</OutDir>
-    <IntDir>obj\$(ProjectName)\$(PlatformTarget)\$(Configuration)\</IntDir>
+    <OutDir>obj\Win64\$(Configuration)\</OutDir>
+    <IntDir>obj\Win64\$(Configuration)\</IntDir>
     <TargetName>$(ProjectName)$(PlatformArchitecture)</TargetName>
-    <LibraryPath>lib\$(PlatformTarget)\;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
+    <LibraryPath>lib\Win64\;$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(NETFXKitsDir)Lib\um\x64</LibraryPath>
     <IncludePath>$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

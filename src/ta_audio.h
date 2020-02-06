@@ -39,13 +39,13 @@ struct ta_buffer;
 
 extern ta_audio_listener tg_audio;
 
-void ta_audio_listener_init(ta_audio_listener *audio);
+void ta_audio_listener_init(ta_audio_listener *listener);
 float ta_audio_listener_get_volume(ta_audio_listener *listener);
-void ta_audio_listener_set_volume(ta_audio_listener *audio, float volume);
-bool ta_audio_listener_muted(ta_audio_listener *audio);
-void ta_audio_listener_mute(ta_audio_listener *audio);
-void ta_audio_listener_unmute(ta_audio_listener *audio);
-void ta_audio_listener_toggle(ta_audio_listener *audio);
+void ta_audio_listener_set_volume(ta_audio_listener *listener, float volume);
+bool ta_audio_listener_muted(ta_audio_listener *listener);
+void ta_audio_listener_mute(ta_audio_listener *listener);
+void ta_audio_listener_unmute(ta_audio_listener *listener);
+void ta_audio_listener_toggle(ta_audio_listener *listener);
 
 void ta_audio_buffer_init(ta_audio_buffer *buffer);
 void ta_audio_buffer_load_path(ta_audio_buffer *buffer, const char *path);
