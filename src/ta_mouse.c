@@ -139,7 +139,7 @@ void ta_mouse_event(ta_event *event)
         } case INPUT_EVENT_MOUSE_SCROLL: {
             mouse.scroll_dx += event->data.mouse_scroll.x;
             mouse.scroll_dy += event->data.mouse_scroll.y;
-            if (event->data.mouse_scroll.flipped) {
+            if (!event->data.mouse_scroll.flipped) {
                 mouse.scroll_dy *= -1;
             }
         }

@@ -35,7 +35,6 @@ DLB_ASSERT_HANDLER(handle_assert)
         "----------------------------------------\n",
         filename, line, expr
     );
-    ta_window_msgbox(tg_window, SDL_MESSAGEBOX_ERROR, "ASSERT", buf);
 #endif
     exit(-1);
 }

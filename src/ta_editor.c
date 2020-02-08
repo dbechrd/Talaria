@@ -1659,7 +1659,7 @@ static bool ta_editor_textbox_event(ta_event *event)
             break;
         } case INPUT_EVENT_KEY_PRESS: {
             // Consume all unhandled keystrokes when text editor is active
-            //if (event->data.key_press.scancode == SDL_SCANCODE_RETURN) {
+            //if (event->data.key_press.key == GLFW_KEY_ENTER) {
             //    ta_ui_textbox_insert(editor.active_textbox, '\n');
             //}
             handled = true;

@@ -22,8 +22,6 @@ void ta_audio_listener_init(ta_audio_listener *listener)
         listener->volume = 1.0f;
     }
 
-    size_t blah = sizeof(long);
-
     ta_log_write(&tg_debug_log, SRC_AUDIO, "Enumerating devices...\n");
     const char *devices = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
     const char *s = devices;
