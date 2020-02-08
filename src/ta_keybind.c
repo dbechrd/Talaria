@@ -4,12 +4,11 @@
 #include "ta_event.h"
 #include "ta_key.h"
 #include "dlb/dlb_vector.h"
-#include "SDL/SDL.h"
 
 void ta_keybind_init1(ta_keybind *keybind, u32 triggers, ta_key key1)
 {
     DLB_ASSERT(triggers);
-    DLB_ASSERT(key1 < TA_SCANCODE_COUNT);
+    DLB_ASSERT(key1 < TA_KEY_COUNT);
     keybind->triggers = triggers;
     keybind->keys[0] = key1;
 }
@@ -18,8 +17,8 @@ void ta_keybind_init2(ta_keybind *keybind, u32 triggers, ta_key key1,
     ta_key key2)
 {
     DLB_ASSERT(triggers);
-    DLB_ASSERT(key1 < TA_SCANCODE_COUNT);
-    DLB_ASSERT(key2 < TA_SCANCODE_COUNT);
+    DLB_ASSERT(key1 < TA_KEY_COUNT);
+    DLB_ASSERT(key2 < TA_KEY_COUNT);
     keybind->triggers = triggers;
     keybind->keys[0] = key1;
     keybind->keys[1] = key2;
@@ -29,9 +28,9 @@ void ta_keybind_init3(ta_keybind *keybind, u32 triggers, ta_key key1,
     ta_key key2, ta_key key3)
 {
     DLB_ASSERT(triggers);
-    DLB_ASSERT(key1 < TA_SCANCODE_COUNT);
-    DLB_ASSERT(key2 < TA_SCANCODE_COUNT);
-    DLB_ASSERT(key3 < TA_SCANCODE_COUNT);
+    DLB_ASSERT(key1 < TA_KEY_COUNT);
+    DLB_ASSERT(key2 < TA_KEY_COUNT);
+    DLB_ASSERT(key3 < TA_KEY_COUNT);
     keybind->triggers = triggers;
     keybind->keys[0] = key1;
     keybind->keys[1] = key2;

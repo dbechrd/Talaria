@@ -68,7 +68,8 @@ typedef struct ta_log {
     u32 src_include;    // bitmap, 1 = log this source
     u32 src_exclude;    // bitmap, 1 = exclude this source (overrides include)
     u32 level_filter;
-    struct SDL_mutex *mutex;
+    //struct SDL_mutex *mutex;
+    void *mutex;
 } ta_log;
 
 extern ta_log tg_debug_log;

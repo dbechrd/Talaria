@@ -1,6 +1,6 @@
 #include "ta_timer.h"
 #include "dlb/dlb_types.h"
-#include "SDL/SDL_timer.h"
+#include "GLFW/glfw3.h"
 
 static u64 perf_frequency;
 static double perf_frequency_ms;
@@ -10,16 +10,16 @@ static u64 perf_epoch;
 void ta_timer_init()
 {
     // 10,000,000 (per second)
-    perf_frequency = SDL_GetPerformanceFrequency();
+    perf_frequency = glfwGetTimerFrequency();
     // 10,000 (per millisecond)
     perf_frequency_ms = perf_frequency / 1000.0;
     perf_frequency_us = perf_frequency_ms / 1000.0;
-    perf_epoch = SDL_GetPerformanceCounter();
+    perf_epoch = glfwGetTimerValue();
 }
 
 u64 ta_timer_elapsed_ticks()
 {
-    u64 now = SDL_GetPerformanceCounter();
+    u64 now = glfwGetTimerValue();
     u64 elapsed_ticks = now - perf_epoch;
     return elapsed_ticks;
 }

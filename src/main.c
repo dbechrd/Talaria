@@ -4,7 +4,6 @@
 #include "ta_log.h"
 #include "ta_mouse.h"
 #include "ta_primitive.h"
-#include "ta_render.h"
 #include "ta_schema.h"
 #include "ta_symbol.h"
 #include "ta_timer.h"
@@ -13,7 +12,7 @@
 #include "dlb/dlb_hash.h"
 #include "dlb/dlb_index.h"
 #include "misc/gl3w.h"
-#include "SDL/SDL.h"
+#include "GLFW/glfw3.h"
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
@@ -69,7 +68,12 @@ void ndc_tests() {
 }
 
 // Random thoughts
-// https://en.wikipedia.org/wiki/Accumulator_(energy)
+// https://en.wikipedia.org/wiki/Accumulator_(energy)%20
+
+static void window_glfw_error(int code, const char* description)
+{
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "glfw3 error code %d: %s\n", code, description);
+}
 
 // NOTE: Only works in Subsystem:Console mode?
 //#undef main
@@ -77,6 +81,13 @@ int main(int argc, char *argv[])
 {
     UNUSED(argc);
     UNUSED(argv);
+
+    glfwSetErrorCallback(window_glfw_error);
+
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "glfwCreateWindow...\n");
+    if (!glfwInit()) {
+        DLB_ASSERT(!"ta_window_init: glfwInit failed.\n");
+    }
 
     ta_timer_init();
     ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_ALL,
@@ -90,6 +101,7 @@ int main(int argc, char *argv[])
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Registering schema...\n");
     ta_schema_register();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing window...\n");
+
     ta_window_init(tg_window, 1600, 900, false);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running ndc_tests...\n");
     ndc_tests();
@@ -97,8 +109,6 @@ int main(int argc, char *argv[])
     ta_audio_listener_init(&tg_audio);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing mouse...\n");
     ta_mouse_init();
-    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing renderer...\n");
-    ta_render_init();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing primitives...\n");
     ta_primitive_init();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing game...\n");
@@ -108,12 +118,12 @@ int main(int argc, char *argv[])
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Starting game loop...\n");
     ta_game_loop();
 
-
-    // TODO: Free *EVERYTHING* (at least in debug mode.. to check memory leaks)
+    // TODO: Free *EVERYTHING* (at least in debug mode.. to check for memory leaks)
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Cleaning up...\n");
     ta_window_free(tg_window);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Goodbye.\n\n");
     ta_log_free(&tg_debug_log);
+    glfwTerminate();
     return 0;
 }
 
@@ -142,7 +152,6 @@ int main(int argc, char *argv[])
 #include "ta_mouse.c"
 #include "ta_parse.c"
 #include "ta_primitive.c"
-#include "ta_render.c"
 #include "ta_rigid_body.c"
 #include "ta_scene.c"
 #include "ta_schema.c"

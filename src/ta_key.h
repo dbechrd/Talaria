@@ -1,21 +1,15 @@
 #pragma once
 #include "dlb/dlb_types.h"
+#include "GLFW/glfw3.h"
 
 struct ta_event;
 
-// HACK: We later ASSERT this is == SDL_NUM_SCANCODES, but this prevents us from
-// having to #include massive SDL header and dependencies
-#define TA_SDL_NUM_SCANCODES 512
-
 enum {
-    SDL_SCANCODE_MOUSE_LEFT = TA_SDL_NUM_SCANCODES,
-    SDL_SCANCODE_MOUSE_MIDDLE,
-    SDL_SCANCODE_MOUSE_RIGHT,
-    SDL_SCANCODE_MOUSE_X1,
-    SDL_SCANCODE_MOUSE_X2,
-    TA_SCANCODE_COUNT
+    GLFW_KEY_MOUSE_LEFT = GLFW_KEY_LAST + 1,
+    GLFW_KEY_MOUSE_RIGHT,
+    GLFW_KEY_MOUSE_MIDDLE,
+    TA_KEY_COUNT
 };
-#define TA_KEY(code) SDL_SCANCODE_##code
 
 typedef s32 ta_key;
 

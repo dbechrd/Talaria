@@ -24,8 +24,6 @@
 #include "ta_ui.h"
 #include "ta_window.h"
 #include "dlb/dlb_vector.h"
-#include "SDL/SDL_keycode.h"
-#include "SDL/SDL.h"
 #include <float.h>
 
 // Higher level widgets
@@ -86,12 +84,12 @@ void ta_editor_init()
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing key binds\n");
     // TODO: Read keybinds from file
     //dlb_vec_reserve(tg_keybinds, 16);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE1          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_GRAVE);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE2          ], TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_PAUSE_RESUME], TA_KEYBIND_PRESS,   SDL_SCANCODE_F5);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT        ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F6);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT_10     ], TA_KEYBIND_PRESS,   SDL_SCANCODE_F7);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_WHILE_HELD  ], TA_KEYBIND_HOLD,    SDL_SCANCODE_F8);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE1          ], TA_KEYBIND_RELEASE, GLFW_KEY_GRAVE_ACCENT);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE2          ], TA_KEYBIND_RELEASE, GLFW_KEY_ESCAPE);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_PAUSE_RESUME], TA_KEYBIND_PRESS,   GLFW_KEY_F5);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT        ], TA_KEYBIND_PRESS,   GLFW_KEY_F6);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT_10     ], TA_KEYBIND_PRESS,   GLFW_KEY_F7);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_WHILE_HELD  ], TA_KEYBIND_HOLD,    GLFW_KEY_F8);
 }
 void ta_editor_select_entity(const char *entity_name)
 {
@@ -1272,9 +1270,9 @@ void ta_editor_draw_world()
             }
         }
 
-        if (ta_mouse_captured() && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
+        if (ta_mouse_captured() && ta_key_pressed(GLFW_KEY_MOUSE_LEFT)) {
             editor.gizmo = nearest_gizmo;
-        } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
+        } else if (!ta_key_down(GLFW_KEY_MOUSE_LEFT)) {
             editor.gizmo = GIZMO_NONE;
         }
 
@@ -1491,7 +1489,7 @@ void ta_editor_draw_world()
         ta_primitive_render(true, false);
     }
 
-    if (!editor.gizmo && ta_mouse_captured() && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT))
+    if (!editor.gizmo && ta_mouse_captured() && ta_key_pressed(GLFW_KEY_MOUSE_LEFT))
     {
         float t = 0.0f;
         float t_min = FLT_MAX;
@@ -1651,7 +1649,12 @@ static bool ta_editor_textbox_event(ta_event *event)
 
     switch (event->type) {
         case INPUT_EVENT_TEXT_INPUT: {
-            ta_ui_textbox_insert(editor.textbox_editing, event->data.text_input.chr);
+            // TODO: How to actually handle codepoints?
+            u32 codepoint = event->data.text_input.codepoint;
+            if (codepoint >= 32 && codepoint < 127) {
+                char chr = (char)codepoint;
+                ta_ui_textbox_insert(editor.textbox_editing, chr);
+            }
             handled = true;
             break;
         } case INPUT_EVENT_KEY_PRESS: {

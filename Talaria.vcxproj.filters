@@ -17,9 +17,6 @@
     <ClCompile Include="src/ta_primitive.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src/ta_render.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src/ta_shader.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -140,9 +137,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src/ta_primitive.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src/ta_render.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src/ta_shader.h">

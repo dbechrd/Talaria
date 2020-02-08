@@ -5,7 +5,7 @@
 #include "ta_button_state.h"
 #include "ta_game.h"
 #include "ta_window.h"
-#include "SDL/SDL.h"
+#include "GLFW/glfw3.h"
 
 typedef struct ta_mouse {
     int x;
@@ -26,7 +26,7 @@ static ta_mouse mouse;
 
 void ta_mouse_init()
 {
-    SDL_GetMouseState(&mouse.x, &mouse.y);
+    ta_window_get_cursor_pos(tg_window, &mouse.x, &mouse.y);
     //mouse.captured = true;
     //SDL_SetRelativeMouseMode(mouse.captured);
 }
@@ -37,12 +37,12 @@ void ta_mouse_capture_set(bool capture)
     if (mouse.captured == capture) return;
 
     if (capture) {
-        SDL_SetRelativeMouseMode(true);
+        ta_window_set_cursor_mode(tg_window, GLFW_CURSOR_DISABLED);
         mouse.captured = true;
         mouse.capture_x = mouse.x;
         mouse.capture_y = mouse.y;
     } else {
-        SDL_SetRelativeMouseMode(false);
+        ta_window_set_cursor_mode(tg_window, GLFW_CURSOR_NORMAL);
         ta_mouse_move(mouse.capture_x, mouse.capture_y);
         mouse.captured = false;
         mouse.capture_x = 0;
@@ -66,13 +66,13 @@ void ta_mouse_drag_begin()
     mouse.dragging = true;
     mouse.drag_x = mouse.x;
     mouse.drag_y = mouse.y;
-    SDL_SetRelativeMouseMode(true);
+    ta_window_set_cursor_mode(tg_window, GLFW_CURSOR_DISABLED);
 }
 
 void ta_mouse_drag_end()
 {
     DLB_ASSERT(mouse.dragging);
-    SDL_SetRelativeMouseMode(mouse.captured);
+    ta_window_set_cursor_mode(tg_window, mouse.captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
     ta_mouse_move(mouse.drag_x, mouse.drag_y);
     mouse.dragging = false;
     mouse.drag_x = 0;
@@ -116,8 +116,7 @@ int ta_mouse_scroll_dy()
 
 void ta_mouse_move(int x, int y)
 {
-    SDL_Window *window = ta_window_sdl(tg_window);
-    SDL_WarpMouseInWindow(window, x, y);
+    ta_window_set_cursor_pos(tg_window, x, y);
 }
 
 void ta_mouse_reset_relative()

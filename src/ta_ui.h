@@ -31,7 +31,7 @@ typedef enum ui_frame_type {
 
 typedef enum ui_cursor_type {
     UI_CURSOR_ARROW,
-    UI_CURSOR_SIZEWE,
+    UI_CURSOR_HRESIZE,
     UI_CURSOR_IBEAM,
     UI_CURSOR_COUNT
 } ui_cursor_type;

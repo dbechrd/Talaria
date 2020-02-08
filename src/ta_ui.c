@@ -17,8 +17,6 @@
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_murmur3.h"
 #include "misc/gl3w.h"
-#include "SDL/SDL_keyboard.h"
-#include "SDL/SDL_mouse.h"
 
 #define UI_DEBUG_PANEL          0
 #define UI_DEBUG_NO_TEXTURES    0
@@ -117,11 +115,11 @@ typedef enum ui_textbox_command {
 static ta_font *ui_font;
 static ta_ui_textbox_state **ui_textbox_editing;
 static ta_ui_textbox_state **ui_textbox_dragging;
-static SDL_Cursor *ui_cursor_arrow;    // normal mouse pointer
-static SDL_Cursor *ui_cursor_size_we;  // left/right arrow "<->" cursor
-static SDL_Cursor *ui_cursor_ibeam;     // text edit ibeam "I" cursor
-static SDL_Cursor *ui_active_cursor;    // current cursor being used
-static bool ui_active_cursor_changed;   // (SetCursor is *expensive*)
+static GLFWcursor *ui_cursor_arrow;    // normal mouse pointer
+static GLFWcursor *ui_cursor_hresize;  // left/right arrow "<->" cursor
+static GLFWcursor *ui_cursor_ibeam;    // text edit ibeam "I" cursor
+static GLFWcursor *ui_active_cursor;   // current cursor being used
+static bool ui_active_cursor_changed;  // (SetCursor is *expensive*)
 
 static ui_style ui_default_style[UI_COUNT] = { 0 };
 static ta_vec2i next_frame_pos_relative;
@@ -147,9 +145,9 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
     ui_font = font;
     ui_textbox_editing = textbox_editing;
     ui_textbox_dragging = textbox_dragging;
-    ui_cursor_arrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
-    ui_cursor_size_we = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
-    ui_cursor_ibeam = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+    ui_cursor_arrow   = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+    ui_cursor_hresize = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+    ui_cursor_ibeam   = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
 
     // Reserve element zero for UI_ROOT
     dlb_vec_alloc(ui_frames);
@@ -233,28 +231,28 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_ACTIVE]  = TA_COLOR_INVIS;
 
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_RIGHT], TA_KEYBIND_HOLD,    SDL_SCANCODE_RIGHT);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_LEFT],  TA_KEYBIND_HOLD,    SDL_SCANCODE_LEFT);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_DOWN],  TA_KEYBIND_PRESS,   SDL_SCANCODE_DOWN);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_UP],    TA_KEYBIND_PRESS,   SDL_SCANCODE_UP);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOL],   TA_KEYBIND_PRESS,   SDL_SCANCODE_HOME);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOL],   TA_KEYBIND_PRESS,   SDL_SCANCODE_END);
-    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOF],   TA_KEYBIND_PRESS,   SDL_SCANCODE_LSHIFT, SDL_SCANCODE_HOME);
-    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOF],   TA_KEYBIND_PRESS,   SDL_SCANCODE_LSHIFT, SDL_SCANCODE_END);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_DELETE],       TA_KEYBIND_HOLD,    SDL_SCANCODE_DELETE);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_BACKSPACE],    TA_KEYBIND_HOLD,    SDL_SCANCODE_BACKSPACE);
-    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_PRESS,   SDL_SCANCODE_RETURN);
-    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_PRESS,   SDL_SCANCODE_KP_ENTER);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_HOLD,   SDL_SCANCODE_RETURN);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_HOLD,   SDL_SCANCODE_KP_ENTER);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL],       TA_KEYBIND_RELEASE, SDL_SCANCODE_ESCAPE);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_RIGHT], TA_KEYBIND_HOLD,    GLFW_KEY_RIGHT);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_LEFT],  TA_KEYBIND_HOLD,    GLFW_KEY_LEFT);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_DOWN],  TA_KEYBIND_PRESS,   GLFW_KEY_DOWN);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_UP],    TA_KEYBIND_PRESS,   GLFW_KEY_UP);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOL],   TA_KEYBIND_PRESS,   GLFW_KEY_HOME);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOL],   TA_KEYBIND_PRESS,   GLFW_KEY_END);
+    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOF],   TA_KEYBIND_PRESS,   GLFW_KEY_LEFT_SHIFT, GLFW_KEY_HOME);
+    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOF],   TA_KEYBIND_PRESS,   GLFW_KEY_LEFT_SHIFT, GLFW_KEY_END);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_DELETE],       TA_KEYBIND_HOLD,    GLFW_KEY_DELETE);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_BACKSPACE],    TA_KEYBIND_HOLD,    GLFW_KEY_BACKSPACE);
+    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_PRESS,   GLFW_KEY_ENTER);
+    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_PRESS,   GLFW_KEY_KP_ENTER);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_HOLD,    GLFW_KEY_ENTER);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_HOLD,    GLFW_KEY_KP_ENTER);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL],       TA_KEYBIND_RELEASE, GLFW_KEY_ESCAPE);
 }
 void ta_ui_set_font(ta_font *font)
 {
     DLB_ASSERT(font);
     ui_font = font;
 }
-void ui_set_cursor(SDL_Cursor *cursor)
+void ui_set_cursor(GLFWcursor *cursor)
 {
     if (ui_active_cursor == cursor) return;
     ui_active_cursor = cursor;
@@ -262,13 +260,13 @@ void ui_set_cursor(SDL_Cursor *cursor)
 }
 void ta_ui_set_cursor(ui_cursor_type cursor_type)
 {
-    SDL_Cursor *cursor = ui_cursor_arrow;
+    GLFWcursor *cursor = ui_cursor_arrow;
     switch (cursor_type) {
         case UI_CURSOR_ARROW: {
             cursor = ui_cursor_arrow;
             break;
-        } case UI_CURSOR_SIZEWE: {
-            cursor = ui_cursor_size_we;
+        } case UI_CURSOR_HRESIZE: {
+            cursor = ui_cursor_hresize;
             break;
         } case UI_CURSOR_IBEAM: {
             cursor = ui_cursor_ibeam;
@@ -518,12 +516,12 @@ static ui_frame *ui_frame_end(ui_frame_type type)
     {
         frame->state_type = UI_STATE_HOVER;
         frame->state.hover = true;
-        if (ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
+        if (ta_key_down(GLFW_KEY_MOUSE_LEFT)) {
             frame->state_type = UI_STATE_DOWN;
             frame->state.down = true;
-            frame->state.pressed = ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT);
+            frame->state.pressed = ta_key_pressed(GLFW_KEY_MOUSE_LEFT);
         } else {
-            frame->state.released = ta_key_released(SDL_SCANCODE_MOUSE_LEFT);
+            frame->state.released = ta_key_released(GLFW_KEY_MOUSE_LEFT);
         }
     }
     last_frame_state = &frame->state;
@@ -1088,13 +1086,13 @@ bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textb
     if (textbox->buffer) {
         if (frame->state.down) {
             textbox_mouse_down(frame);
-        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
+        } else if (ta_key_pressed(GLFW_KEY_MOUSE_LEFT)) {
             // NOTE: But for console window, I want focus lost with any button to
             // mean cancel.. the correct behavior is based on the use-case. This
             // code can't be globally shared.
             //textbox_submit(textbox);
             textbox_unfocus(textbox);
-        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
+        } else if (ta_key_pressed(GLFW_KEY_MOUSE_RIGHT)) {
             // TODO(cleanup): Right click usually means cancel, but in the case
             // of search box I want to right click to rotate camera without
             // losing my search results, sooo...
@@ -1215,9 +1213,9 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
                 textbox_focus(textbox);
             }
             textbox_mouse_down(frame);
-        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
+        } else if (ta_key_pressed(GLFW_KEY_MOUSE_LEFT)) {
             textbox_submit(textbox);
-        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
+        } else if (ta_key_pressed(GLFW_KEY_MOUSE_RIGHT)) {
             textbox_command_cancel(textbox);
         }
     } else {
@@ -1226,7 +1224,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
             drag_float_begin(textbox, value);
         } else if (drag_float.value == value) {
             drag_float_update(0.01f);
-            if (ta_key_released(SDL_SCANCODE_MOUSE_LEFT)) {
+            if (ta_key_released(GLFW_KEY_MOUSE_LEFT)) {
                 // If drag ended and value didn't change, start edit mode
                 if (!drag_float_end()) {
                     char text[16] = { 0 };
@@ -1239,7 +1237,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
             // TODO: I want right-click to cancel drag, but it's also bound to
             // rotate camera right now and cancel drag works but it rotates the
             // camera a huge amount which is annoying and gross.
-            //} else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
+            //} else if (ta_key_pressed(GLFW_KEY_MOUSE_RIGHT)) {
             //    drag_float_cancel();
             } else {
                 ta_keybind_update(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL]);
@@ -1256,7 +1254,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
         *value = parse_float(textbox->buffer);
         ta_ui_textbox_clear(textbox);
     } else if (ta_ui_last_frame_state().hover && !textbox->focused) {
-        ui_set_cursor(ui_cursor_size_we);
+        ui_set_cursor(ui_cursor_hresize);
     }
 
     frame->text_rects = text_rects;
@@ -1645,7 +1643,7 @@ static void ui_render_scrollbars(ui_frame *frame)
         if (!ta_mouse_captured()) {
             int delta_y = 0;
 
-            if (widget_hover && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT))
+            if (widget_hover && ta_key_pressed(GLFW_KEY_MOUSE_LEFT))
             {
                 // Mouse drag
                 //scrollbar_y_frame_idx = frame->index;
@@ -1654,7 +1652,7 @@ static void ui_render_scrollbars(ui_frame *frame)
             } else if (!dragging_v && rect_contains_mouse(frame->rect)) {
                 // Scroll wheel
                 delta_y = ta_mouse_scroll_dy() * SCROLL_WHEEL_SPEED;
-            } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
+            } else if (!ta_key_down(GLFW_KEY_MOUSE_LEFT)) {
                 // Not dragging
                 if (dragging_v) {
                     dragging_v = false;
@@ -1757,7 +1755,7 @@ void ta_ui_render()
     dlb_vec_alloc(ui_frames);  // reserve UI_ROOT
 
     if (ui_active_cursor_changed) {
-        SDL_SetCursor(ui_active_cursor);
+        ui_set_cursor(ui_active_cursor);
         ui_active_cursor_changed = false;
     }
 }

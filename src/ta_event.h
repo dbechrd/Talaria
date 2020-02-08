@@ -52,16 +52,14 @@ typedef struct ta_event_mouse_scroll_event {
     bool flipped;
 } ta_event_mouse_scroll_event;
 
-typedef struct ta_event_key_press_event {
+typedef struct ta_event_key_event {
+    s32 key;
     s32 scancode;
-} ta_event_key_press_event;
-
-typedef struct ta_event_key_release_event {
-    s32 scancode;
-} ta_event_key_release_event;
+    s32 mods;
+} ta_event_key_event;
 
 typedef struct ta_event_key_text_input_event {
-    char chr;
+    u32 codepoint;
 } ta_event_key_text_input_event;
 
 typedef struct ta_event_camera_rotate_event {
@@ -80,8 +78,7 @@ typedef struct ta_event {
         ta_event_window_resize_event window_resize;
         ta_event_mouse_move_event mouse_move;
         ta_event_mouse_scroll_event mouse_scroll;
-        ta_event_key_press_event key_press;
-        ta_event_key_release_event key_release;
+        ta_event_key_event key;
         ta_event_key_text_input_event text_input;
 
         // TODO: Move game-specific events out of this struct?

@@ -1,8 +1,6 @@
 #include "ta_log.h"
 #include "ta_timer.h"
 #include "dlb/dlb_vector.h"
-#include "SDL/SDL_Timer.h"
-#include "SDL/SDL_Thread.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <time.h>
@@ -13,20 +11,24 @@
 
 // NOTE: I don't expect lock/unlock to ever error, but if it's a real thing that
 // happens I'll refactor this to handle it better.
-#define TA_LOCK(mutex) assert(!SDL_LockMutex(mutex));
-#define TA_UNLOCK(mutex) assert(!SDL_UnlockMutex(mutex));
+//#define TA_LOCK(mutex) assert(!SDL_LockMutex(mutex))
+//#define TA_UNLOCK(mutex) assert(!SDL_UnlockMutex(mutex))
+#define TA_LOCK(mutex)
+#define TA_UNLOCK(mutex)
 #define MAX_THREADS 8
 
 ta_log tg_debug_log;
 
+//typedef SDL_threadID ta_thread_id;
+typedef unsigned int ta_thread_id;
 static struct {
-    SDL_threadID thread_id;
+    ta_thread_id thread_id;
     double last_write_ms;
 } thread_times[MAX_THREADS];
 
-static void thread_set_last_write(SDL_threadID thread_id, double time_ms)
+static void thread_set_last_write(ta_thread_id thread_id, double time_ms)
 {
-    assert(thread_id);
+    //assert(thread_id);
 
     for (int i = 0; i < MAX_THREADS; ++i) {
         if (thread_times[i].thread_id == thread_id) {
@@ -44,13 +46,14 @@ static void thread_set_last_write(SDL_threadID thread_id, double time_ms)
     assert(!"Thread table is full. Do clean-up or increase MAX_THREADS");
 }
 
-static double thread_get_last_write(SDL_threadID thread_id)
+static double thread_get_last_write(ta_thread_id thread_id)
 {
-    assert(thread_id);
+    //assert(thread_id);
     double time_ms = 0;
     for (int i = 0; i < MAX_THREADS; ++i) {
         if (thread_times[i].thread_id == thread_id) {
             time_ms = thread_times[i].last_write_ms;
+            break;
         }
     }
     return time_ms;
@@ -93,8 +96,8 @@ void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
     log->echo = echo;
     log->src_include = src_include;
     log->src_exclude = src_exclude;
-    log->mutex = SDL_CreateMutex();
-    assert(log->mutex);
+    //log->mutex = SDL_CreateMutex();
+    //assert(log->mutex);
 
     TA_LOCK(log->mutex);
     fprintf(log->stream,
@@ -133,7 +136,7 @@ static void ta_log_write_timestamp(ta_log *log, u32 src)
     double elapsed_sec = ta_timer_elapsed_sec();
     double elapsed_ms = ta_timer_elapsed_ms();
 
-    SDL_threadID thread_id = SDL_ThreadID();
+    ta_thread_id thread_id = 0; //SDL_ThreadID();
     double ms_since_last_write = elapsed_ms - thread_get_last_write(thread_id);
     thread_set_last_write(thread_id, elapsed_ms);
 
@@ -189,6 +192,6 @@ void ta_log_free(ta_log *log)
         fclose(log->stream);
     }
     if (log->mutex) {
-        SDL_DestroyMutex(log->mutex);
+        //SDL_DestroyMutex(log->mutex);
     }
 }
