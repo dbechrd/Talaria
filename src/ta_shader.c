@@ -131,8 +131,7 @@ static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
     return location;
 }
 
-static ta_shader_attribute *find_attribute_by_name(ta_shader *shader,
-    const char *name, ta_glsl_type type)
+static ta_shader_attribute *find_attribute_by_name(ta_shader *shader, const char *name, ta_glsl_type type)
 {
     ta_shader_attribute *result = 0;
     dlb_vec_each(ta_shader_attribute *, attr, shader->attributes) {
@@ -145,8 +144,7 @@ static ta_shader_attribute *find_attribute_by_name(ta_shader *shader,
     return result;
 }
 
-static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms,
-    const char *name, ta_glsl_type type)
+static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, const char *name, ta_glsl_type type)
 {
     ta_shader_uniform *result = 0;
     dlb_vec_each(ta_shader_uniform *, uniform, uniforms) {
@@ -231,16 +229,11 @@ void ta_shader_load(ta_shader *shader)
     }
 
     // Ensure vertex attributes are at the correct locations
-    ta_shader_attribute *attr_pos =
-        find_attribute_by_name(shader, SYM_ATTR_POSITION, TA_GLSL_VEC3);
-    ta_shader_attribute *attr_col =
-        find_attribute_by_name(shader, SYM_ATTR_COLOR,    TA_GLSL_VEC4);
-    ta_shader_attribute *attr_uv =
-        find_attribute_by_name(shader, SYM_ATTR_UV,       TA_GLSL_VEC2);
-    ta_shader_attribute *attr_norm =
-        find_attribute_by_name(shader, SYM_ATTR_NORMAL,   TA_GLSL_VEC3);
-    ta_shader_attribute *attr_tang =
-        find_attribute_by_name(shader, SYM_ATTR_TANGENT,   TA_GLSL_VEC3);
+    ta_shader_attribute *attr_pos  = find_attribute_by_name(shader, SYM_ATTR_POSITION, TA_GLSL_VEC3);
+    ta_shader_attribute *attr_col  = find_attribute_by_name(shader, SYM_ATTR_COLOR,    TA_GLSL_VEC4);
+    ta_shader_attribute *attr_uv   = find_attribute_by_name(shader, SYM_ATTR_UV,       TA_GLSL_VEC2);
+    ta_shader_attribute *attr_norm = find_attribute_by_name(shader, SYM_ATTR_NORMAL,   TA_GLSL_VEC3);
+    ta_shader_attribute *attr_tang = find_attribute_by_name(shader, SYM_ATTR_TANGENT,  TA_GLSL_VEC4);
 
     DLB_ASSERT(!attr_pos  || attr_pos->location  < 0 || attr_pos->location  == TA_SHADER_ATTR_POSITION);
     DLB_ASSERT(!attr_col  || attr_col->location  < 0 || attr_col->location  == TA_SHADER_ATTR_COLOR);

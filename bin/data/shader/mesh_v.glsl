@@ -4,7 +4,7 @@ layout(location = 0) in vec3 attr_position;
 layout(location = 1) in vec4 attr_color;
 layout(location = 2) in vec2 attr_uv;
 layout(location = 3) in vec3 attr_normal;
-layout(location = 4) in vec3 attr_tangent;
+layout(location = 4) in vec4 attr_tangent;
 
 struct Light {
     float intensity;
@@ -51,11 +51,11 @@ void main()
 	vertex.color = attr_color;
 	vertex.uv = attr_uv;
     vertex.normal = attr_normal;
-    vertex.tangent = attr_tangent;
+    vertex.tangent = attr_tangent.xyz;
 
     // TODO: Calculate model inverse on CPU side
     mat3 normal_matrix = transpose(inverse(mat3(u_model)));
-    vec3 T = normalize(normal_matrix * attr_tangent);
+    vec3 T = normalize(normal_matrix * attr_tangent.xyz);
     vec3 N = normalize(normal_matrix * attr_normal);
     T = normalize(T - dot(T, N) * N);  // re-orthogonalize T with respect to N
     vec3 B = cross(N, T);

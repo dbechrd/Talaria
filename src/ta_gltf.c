@@ -223,76 +223,78 @@ cgltf_result ta_gltf_parse_file(ta_gltf *gltf, const char *filename)
     return err;
 }
 
-void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, int type)
+void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute_type attr_type)
 {
-    cgltf_type acc_type = accessor->type;
-    cgltf_size acc_count = accessor->count;
+    static const ta_mesh_buffer_type mesh_buffer_idx[] = {
+        [cgltf_attribute_type_position] = TA_MESH_BUFFER_POSITION,
+        [cgltf_attribute_type_normal  ] = TA_MESH_BUFFER_NORMAL,
+        [cgltf_attribute_type_tangent ] = TA_MESH_BUFFER_TANGENT,
+        [cgltf_attribute_type_texcoord] = TA_MESH_BUFFER_UV,
+        [cgltf_attribute_type_color   ] = TA_MESH_BUFFER_COLOR,
+        [cgltf_attribute_type_joints  ] = TA_MESH_BUFFER_JOINTS,
+        [cgltf_attribute_type_weights ] = TA_MESH_BUFFER_WEIGHTS,
+    };
+
     cgltf_size data_size = accessor->buffer_view->size;
-    void *data = (char *)accessor->buffer_view->buffer->data +
-        accessor->buffer_view->offset;
+    void *data = (char *)accessor->buffer_view->buffer->data + accessor->buffer_view->offset;
+
+    // Ensure buffers have been loaded
+    DLB_ASSERT(data_size);
+    DLB_ASSERT(data);
+
+    // TODO: Return error and load placeholder asset gracefully
+    DLB_ASSERT(accessor->type != cgltf_attribute_type_invalid);
 
     // NOTE: We don't support interleaved vertex attributes for now
     DLB_ASSERT(accessor->buffer_view->stride == 0);
 
-    switch (type) {
+    // TODO: Make a size lookup table for each TA_MESH_BUFFER type and use dlb_vec_reserve_size()
+    switch (attr_type) {
         case cgltf_attribute_type_position: {
-            DLB_ASSERT(acc_type == cgltf_type_vec3);
-            DLB_ASSERT(data_size == sizeof(*mesh->positions) * acc_count);
-            dlb_vec_reserve(mesh->positions, acc_count);
-            dlb_vec_hdr(mesh->positions)->len = acc_count;
-            dlb_memcpy(mesh->positions, data, data_size);
+            DLB_ASSERT(accessor->type == cgltf_type_vec3);
+            DLB_ASSERT(data_size == sizeof(*mesh->positions) * accessor->count);
+            dlb_vec_reserve(mesh->positions, accessor->count);
             break;
         } case cgltf_attribute_type_normal: {
-            DLB_ASSERT(acc_type == cgltf_type_vec3);
-            DLB_ASSERT(data_size == sizeof(*mesh->normals) * acc_count);
-            dlb_vec_reserve(mesh->normals, acc_count);
-            dlb_vec_hdr(mesh->normals)->len = acc_count;
-            dlb_memcpy(mesh->normals, data, data_size);
+            DLB_ASSERT(accessor->type == cgltf_type_vec3);
+            DLB_ASSERT(data_size == sizeof(*mesh->normals) * accessor->count);
+            dlb_vec_reserve(mesh->normals, accessor->count);
             break;
         } case cgltf_attribute_type_tangent: {
-            DLB_ASSERT(acc_type == cgltf_type_vec4);
-            //DLB_ASSERT(data_size == sizeof(*mesh->tangents) * acc_count);
-            dlb_vec_reserve(mesh->tangents, acc_count);
-            dlb_vec_hdr(mesh->tangents)->len = acc_count;
-            float *comp = data;
-            for (cgltf_size i = 0; i < accessor->count; ++i) {
-                mesh->tangents[i].x = comp[i*4];
-                mesh->tangents[i].y = comp[i*4+1];
-                mesh->tangents[i].z = comp[i*4+2];
-            }
+            DLB_ASSERT(accessor->type == cgltf_type_vec4);
+            DLB_ASSERT(data_size == sizeof(*mesh->tangents) * accessor->count);
+            dlb_vec_reserve(mesh->tangents, accessor->count);
             break;
         } case cgltf_attribute_type_texcoord: {
-            DLB_ASSERT(acc_type == cgltf_type_vec2);
-            DLB_ASSERT(data_size == sizeof(*mesh->uvs) * acc_count);
-            dlb_vec_reserve(mesh->uvs, acc_count);
-            dlb_vec_hdr(mesh->uvs)->len = acc_count;
-            dlb_memcpy(mesh->uvs, data, data_size);
+            DLB_ASSERT(accessor->type == cgltf_type_vec2);
+            DLB_ASSERT(data_size == sizeof(*mesh->uvs) * accessor->count);
+            dlb_vec_reserve(mesh->uvs, accessor->count);
             break;
         } case cgltf_attribute_type_color: {
-            DLB_ASSERT(acc_type == cgltf_type_vec4);
-            DLB_ASSERT(data_size == sizeof(*mesh->colors) * acc_count);
-            dlb_vec_reserve(mesh->colors, acc_count);
-            dlb_vec_hdr(mesh->colors)->len = acc_count;
-            dlb_memcpy(mesh->colors, data, data_size);
+            DLB_ASSERT(accessor->type == cgltf_type_vec4);
+            DLB_ASSERT(data_size == sizeof(*mesh->colors) * accessor->count);
+            dlb_vec_reserve(mesh->colors, accessor->count);
             break;
         } case cgltf_attribute_type_joints: {
-            DLB_ASSERT(acc_type == cgltf_type_vec4);
-            //DLB_ASSERT(data_size == sizeof(*mesh->joints) * data_count);
-            //dlb_vec_reserve(mesh->joints, data_count);
-            //dlb_vec_hdr(mesh->joints)->len = data_count;
-            //dlb_memcpy(mesh->joints, data, data_size);
+            DLB_ASSERT(accessor->type == cgltf_type_vec4);
+            DLB_ASSERT(data_size == sizeof(*mesh->joints) * accessor->count);
+            dlb_vec_reserve(mesh->joints, accessor->count);
             break;
         } case cgltf_attribute_type_weights: {
-            DLB_ASSERT(acc_type == cgltf_type_vec4);
-            //DLB_ASSERT(data_size == sizeof(*mesh->weights) * data_count);
-            //dlb_vec_reserve(mesh->weights, data_count);
-            //dlb_vec_hdr(mesh->weights)->len = data_count;
-            //dlb_memcpy(mesh->weights, data, data_size);
+            DLB_ASSERT(accessor->type == cgltf_type_vec4);
+            DLB_ASSERT(data_size == sizeof(*mesh->weights) * accessor->count);
+            dlb_vec_reserve(mesh->weights, accessor->count);
             break;
         } default: {
+            DLB_ASSERT(!"Unexpected gltf attribute type");
             break;
         }
     }
+
+    ta_mesh_buffer_type mesh_buffer_type = mesh_buffer_idx[attr_type];
+    void *buffer = mesh->buffers[mesh_buffer_type];
+    dlb_vec_hdr(buffer)->len = accessor->count;
+    dlb_memcpy(buffer, data, data_size);
 }
 
 void ta_gltf_load(ta_gltf *gltf)
@@ -306,49 +308,40 @@ void ta_gltf_load(ta_gltf *gltf)
         }
         if (gltf_mesh->primitives->indices->count) {
             cgltf_accessor *accessor = gltf_mesh->primitives->indices;
-            cgltf_size data_offset = accessor->buffer_view->offset;
             //cgltf_size data_size = accessor->buffer_view->size;
-            char *data = accessor->buffer_view->buffer->data;
+            void *data = (char *)accessor->buffer_view->buffer->data + accessor->buffer_view->offset;
+            DLB_ASSERT(data);
 
             DLB_ASSERT(accessor->type == cgltf_type_scalar);
             dlb_vec_reserve(mesh->indexes, accessor->count);
             dlb_vec_hdr(mesh->indexes)->len = accessor->count;
 
-            void *data_start = data + data_offset;
-
+            // TODO(perf): Make sure all input data is already the correct size
+            // Convert indices to u32
             switch (accessor->component_type)
             {
-                case cgltf_component_type_r_8: {
+                case cgltf_component_type_r_8:
+                case cgltf_component_type_r_8u:
                     for (cgltf_size i = 0; i < accessor->count; ++i) {
-                        mesh->indexes[i] = ((s8 *)data_start)[i];
+                        mesh->indexes[i] = ((u8 *)data)[i];
                     }
                     break;
-                } case cgltf_component_type_r_8u: {
+                case cgltf_component_type_r_16:
+                case cgltf_component_type_r_16u:
                     for (cgltf_size i = 0; i < accessor->count; ++i) {
-                        mesh->indexes[i] = ((u8 *)data_start)[i];
+                        mesh->indexes[i] = ((u16 *)data)[i];
                     }
                     break;
-                } case cgltf_component_type_r_16: {
+                case cgltf_component_type_r_32u:
                     for (cgltf_size i = 0; i < accessor->count; ++i) {
-                        mesh->indexes[i] = ((s16 *)data_start)[i];
+                        mesh->indexes[i] = ((u32 *)data)[i];
                     }
                     break;
-                } case cgltf_component_type_r_16u: {
-                    for (cgltf_size i = 0; i < accessor->count; ++i) {
-                        mesh->indexes[i] = ((u16 *)data_start)[i];
-                    }
-                    break;
-                } case cgltf_component_type_r_32u: {
-                    for (cgltf_size i = 0; i < accessor->count; ++i) {
-                        mesh->indexes[i] = ((u32 *)data_start)[i];
-                    }
-                    break;
-                } case cgltf_component_type_r_32f: {
-                } case cgltf_component_type_invalid: {
-                } default: {
+                case cgltf_component_type_r_32f:
+                case cgltf_component_type_invalid:
+                default:
                     DLB_ASSERT(!"invalid index component type");
                     break;
-                }
             }
         }
 

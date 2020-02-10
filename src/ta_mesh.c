@@ -118,15 +118,21 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
             ta_vec2 delta_uv1 = vec2_sub(uvs[1], uvs[0]);
             ta_vec2 delta_uv2 = vec2_sub(uvs[2], uvs[0]);
 
+            // TODO: Use MikkTSpace (http://www.mikktspace.com/) (or, just pre-calculate in Blender and store on disk)
             ta_vec3 tangent = { 0 };
             float f = 1.0f / (delta_uv1.x * delta_uv2.y - delta_uv2.x * delta_uv1.y);
             tangent.x = f * (delta_uv2.y * edge1.x - delta_uv1.y * edge2.x);
             tangent.y = f * (delta_uv2.y * edge1.y - delta_uv1.y * edge2.y);
             tangent.z = f * (delta_uv2.y * edge1.z - delta_uv1.y * edge2.z);
             tangent = vec3_normalize(tangent);
-            dlb_vec_push(mesh->tangents, tangent);
-            dlb_vec_push(mesh->tangents, tangent);
-            dlb_vec_push(mesh->tangents, tangent);
+            ta_vec4 tangent4 = { 0 };
+            tangent4.x = tangent.x;
+            tangent4.y = tangent.y;
+            tangent4.z = tangent.z;
+            tangent4.w = 1.0f;
+            dlb_vec_push(mesh->tangents, tangent4);
+            dlb_vec_push(mesh->tangents, tangent4);
+            dlb_vec_push(mesh->tangents, tangent4);
         }
 
         ta_mesh_create(mesh);
@@ -158,29 +164,19 @@ void ta_mesh_create(ta_mesh *mesh)
     glCreateVertexArrays(1, &mesh->gl_vao);
     glBindVertexArray(mesh->gl_vao);
 
-    if (mesh->indexes) {
-        size_t indexes_count = dlb_vec_len(mesh->indexes);
-        glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_INDEX]);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_INDEX]);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes_count * sizeof(GLuint),
-            mesh->indexes, GL_STATIC_DRAW);
-    }
     if (mesh->positions) {
         size_t positions_count = dlb_vec_len(mesh->positions);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_POSITION]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_POSITION]);
-        glBufferData(GL_ARRAY_BUFFER, positions_count * 3 * sizeof(GLfloat),
-            mesh->positions, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, positions_count * 3 * sizeof(GLfloat), mesh->positions, GL_STATIC_DRAW);
         glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
-        glVertexAttribPointer(TA_SHADER_ATTR_POSITION, 3, GL_FLOAT,
-            false, 0, 0);
+        glVertexAttribPointer(TA_SHADER_ATTR_POSITION, 3, GL_FLOAT, false, 0, 0);
     }
     if (mesh->colors) {
         size_t colors_count = dlb_vec_len(mesh->colors);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_COLOR]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_COLOR]);
-        glBufferData(GL_ARRAY_BUFFER, colors_count * 4 * sizeof(GLfloat),
-            mesh->colors, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, colors_count * 4 * sizeof(GLfloat), mesh->colors, GL_STATIC_DRAW);
         glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
         glVertexAttribPointer(TA_SHADER_ATTR_COLOR, 4, GL_FLOAT, false, 0, 0);
     }
@@ -188,8 +184,7 @@ void ta_mesh_create(ta_mesh *mesh)
         size_t uvs_count = dlb_vec_len(mesh->uvs);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_UV]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_UV]);
-        glBufferData(GL_ARRAY_BUFFER, uvs_count * 2 * sizeof(GLfloat), mesh->uvs,
-            GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, uvs_count * 2 * sizeof(GLfloat), mesh->uvs, GL_STATIC_DRAW);
         glEnableVertexAttribArray(TA_SHADER_ATTR_UV);
         glVertexAttribPointer(TA_SHADER_ATTR_UV, 2, GL_FLOAT, false, 0, 0);
     }
@@ -197,8 +192,7 @@ void ta_mesh_create(ta_mesh *mesh)
         size_t normals_count = dlb_vec_len(mesh->normals);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_NORMAL]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_NORMAL]);
-        glBufferData(GL_ARRAY_BUFFER, normals_count * 3 * sizeof(GLfloat),
-            mesh->normals, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, normals_count * 3 * sizeof(GLfloat), mesh->normals, GL_STATIC_DRAW);
         glEnableVertexAttribArray(TA_SHADER_ATTR_NORMAL);
         glVertexAttribPointer(TA_SHADER_ATTR_NORMAL, 3, GL_FLOAT, false, 0, 0);
     }
@@ -206,17 +200,26 @@ void ta_mesh_create(ta_mesh *mesh)
         size_t tangents_count = dlb_vec_len(mesh->tangents);
         glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_TANGENT]);
         glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_TANGENT]);
-        glBufferData(GL_ARRAY_BUFFER, tangents_count * 3 * sizeof(GLfloat),
-            mesh->tangents, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, tangents_count * 4 * sizeof(GLfloat), mesh->tangents, GL_STATIC_DRAW);
         glEnableVertexAttribArray(TA_SHADER_ATTR_TANGENT);
-        glVertexAttribPointer(TA_SHADER_ATTR_TANGENT, 3, GL_FLOAT, false, 0, 0);
+        glVertexAttribPointer(TA_SHADER_ATTR_TANGENT, 4, GL_FLOAT, false, 0, 0);
+    }
+    if (mesh->joints) {
+        DLB_ASSERT(!"This type of mesh init doesn't currently support joints");
+    }
+    if (mesh->weights) {
+        DLB_ASSERT(!"This type of mesh init doesn't currently support weights");
+    }
+    if (mesh->indexes) {
+        size_t indexes_count = dlb_vec_len(mesh->indexes);
+        glCreateBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_INDEX]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_INDEX]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes_count * sizeof(GLuint), mesh->indexes, GL_STATIC_DRAW);
     }
 
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    if (mesh->indexes) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    }
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 // NOTE: Leave this separate from mesh_group load because it's only useful in
@@ -254,8 +257,11 @@ void ta_mesh_init_normals(ta_mesh *mesh, float scale)
         line->p1 = vec3_add(face_center, face_normal);
 
         line = dlb_vec_alloc(mesh->tangent_lines);
-        ta_vec3 t0 = mesh->tangents[i * 3];
-        ta_vec3 tangent = vec3_scalef(t0, scale);
+        ta_vec4 t_orig = mesh->tangents[i * 3];
+        ta_vec3 tangent = { 0 };
+        tangent.x = t_orig.x * scale;
+        tangent.y = t_orig.y * scale;
+        tangent.z = t_orig.z * scale;
         line->p0 = face_center;
         line->p1 = vec3_add(face_center, tangent);
     }

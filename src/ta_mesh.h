@@ -3,15 +3,17 @@
 #include "ta_math.h"
 #include "misc/gl3w.h"
 
-enum {
+typedef enum ta_mesh_buffer_type {
     TA_MESH_BUFFER_POSITION,
     TA_MESH_BUFFER_COLOR,
     TA_MESH_BUFFER_UV,
     TA_MESH_BUFFER_NORMAL,
     TA_MESH_BUFFER_TANGENT,
+    TA_MESH_BUFFER_JOINTS,
+    TA_MESH_BUFFER_WEIGHTS,
     TA_MESH_BUFFER_INDEX,
     TA_MESH_BUFFER_COUNT
-};
+} ta_mesh_buffer_type;
 
 #pragma warning(push)
 #pragma warning(disable: 4201)
@@ -27,7 +29,9 @@ typedef struct ta_mesh {
             ta_rgba *colors;
             ta_vec2 *uvs;
             ta_vec3 *normals;
-            ta_vec3 *tangents;
+            ta_vec4 *tangents;
+            ta_vec3 *joints;
+            ta_vec3 *weights;
             GLuint *indexes;
         };
         void *buffers[TA_MESH_BUFFER_COUNT];

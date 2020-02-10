@@ -1077,7 +1077,7 @@ ta_shader:
     },
     {
       name: "attr_tangent",
-      type: 5,  # TA_GLSL_VEC3
+      type: 6,  # TA_GLSL_VEC4
     },
   ]
   uniforms: [
