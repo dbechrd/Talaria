@@ -923,7 +923,7 @@ static void textbox_unfocus(ta_ui_textbox_state *textbox)
 static void textbox_clear(ta_ui_textbox_state *textbox)
 {
     textbox->submit = false;
-    dlb_vec_zero(textbox->buffer);
+    dlb_vec_free(textbox->buffer);
     textbox->cursor = 0;
     textbox->selection_start = 0;
     textbox->selection_len = 0;
@@ -1159,9 +1159,9 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
         ta_ui_next_size(50, 0);
     }
 
-    if (textbox->submit) {
-        ta_ui_textbox_clear(textbox);
-    }
+    //if (textbox->submit) {
+    //    ta_ui_textbox_clear(textbox);
+    //}
 
     ta_rect_uv *text_rects = 0;
     ta_vec2 cursor = { 0 };
@@ -1253,6 +1253,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
     if (frame->data.textbox->submit) {
         *value = parse_float(textbox->buffer);
         ta_ui_textbox_clear(textbox);
+        textbox_unfocus(textbox);
     } else if (ta_ui_last_frame_state().hover && !textbox->focused) {
         ui_set_cursor(ui_cursor_hresize);
     }
@@ -1383,7 +1384,7 @@ void ta_ui_textbox_focus(ta_ui_textbox_state *textbox)
 bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
 {
     DLB_ASSERT(textbox);
-    DLB_ASSERT(textbox->buffer);
+    //DLB_ASSERT(textbox->buffer);
 
     if (!textbox->filter) {
         textbox->filter = ta_textbox_filter_default;

@@ -12,3 +12,5 @@ typedef struct ta_material {
     const char *tex_occlusion;
     const char *tex_roughness;
 } ta_material;
+
+void ta_material_init(ta_material *material);

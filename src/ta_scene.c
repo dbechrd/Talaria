@@ -136,9 +136,9 @@ void ta_scene_load(ta_scene *scene, ta_file *file)
             ta_log_write(&tg_debug_log, SRC_SCENE, "Initializing %s\n",
                 ta_schema_field_type_str(schema_type));
             size_t size = tg_schemas[schema_type].size;
-            void *pool = scene->resource_data[res_type];
+            ta_resource *pool = scene->resource_data[res_type];
             u8 *end = dlb_vec_end_size(pool, size);
-            for (u8 *ptr = pool; ptr != end; ptr += size) {
+            for (u8 *ptr = (u8 *)pool; ptr != end; ptr += size) {
                 tg_schemas[schema_type].init(ptr);
             }
         }
@@ -158,9 +158,9 @@ void ta_scene_free(ta_scene *scene)
         ta_schema_field_type schema_type = res_to_typ(res_type);
         if (tg_schemas[schema_type].free) {
             size_t size = tg_schemas[schema_type].size;
-            void *pool = scene->resource_data[res_type];
+            ta_resource *pool = scene->resource_data[res_type];
             u8 *end = dlb_vec_end_size(pool, size);
-            for (u8 *ptr = pool; ptr != end; ptr += size) {
+            for (u8 *ptr = (u8 *)pool; ptr != end; ptr += size) {
                 tg_schemas[schema_type].free(ptr);
             }
         }
@@ -168,8 +168,9 @@ void ta_scene_free(ta_scene *scene)
         dlb_index_free(&scene->index_by_name[res_type]);
     }
 }
-void ta_scene_save(char *buffer)
+void ta_scene_save(ta_scene *scene, char *buffer)
 {
+    UNUSED(scene);
     UNUSED(buffer);
     // TODO: Write scene to memory buffer
     DLB_ASSERT(0);
@@ -193,9 +194,9 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
 
         size_t size = tg_schemas[schema_type].size;
-        void *pool = scene->resource_data[res_type];
+        ta_resource *pool = scene->resource_data[res_type];
         u8 *end = dlb_vec_end_size(pool, size);
-        for (u8 *ptr = pool; ptr != end; ptr += size) {
+        for (u8 *ptr = (u8 *)pool; ptr != end; ptr += size) {
             ta_schema_print(hnd, schema_type, ptr, 0, 0);
         }
     }
@@ -224,9 +225,9 @@ void ta_scene_print_json(ta_scene *scene, FILE *f)
 
         fprintf(f, "  \"%s\": [\n", schema->name);
 
-        void *pool = scene->resource_data[res_type];
+        ta_resource *pool = scene->resource_data[res_type];
         size_t pool_len = dlb_vec_len(pool);
-        u8 *ptr = pool;
+        u8 *ptr = (u8 *)pool;
         for (size_t i = 0; i < pool_len; ++i) {
             fprintf(f, "    {\n");
             ta_schema_print_json(f, schema_type, ptr, 2, 0);
@@ -247,8 +248,7 @@ void ta_scene_print_json(ta_scene *scene, FILE *f)
     fprintf(f, "}\n");
     fflush(f);
 }
-void *ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name,
-    size_t name_len)
+void *ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name, size_t name_len)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(type < RES_COUNT);
@@ -272,8 +272,7 @@ void *ta_scene_alloc(ta_scene *scene, ta_resource_type type, const char *name,
 
     return res;
 }
-void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name,
-    size_t name_len)
+void ta_scene_destroy(ta_scene *scene, ta_resource_type type, const char *name, size_t name_len)
 {
     DLB_ASSERT(scene);
     // TODO: if type is a component type, find and update parent entity:
@@ -314,8 +313,7 @@ void *ta_scene_find_at(ta_scene *scene, ta_resource_type type, u32 index)
     return resource;
 }
 // If not found, returns NULL
-void *ta_scene_find_try(ta_scene *scene, ta_resource_type type, const char *name,
-    size_t name_len)
+void *ta_scene_find_try(ta_scene *scene, ta_resource_type type, const char *name, size_t name_len)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(name);
@@ -335,16 +333,14 @@ void *ta_scene_find_try(ta_scene *scene, ta_resource_type type, const char *name
     return 0;
 }
 // If not found, ASSERT
-void *ta_scene_find(ta_scene *scene, ta_resource_type type,
-    const char *name, size_t name_len)
+void *ta_scene_find(ta_scene *scene, ta_resource_type type, const char *name, size_t name_len)
 {
     void *resource = ta_scene_find_try(scene, type, name, name_len);
     DLB_ASSERT(resource);
     return resource;
 }
 // If not found, returns the first resource of the given type
-void *ta_scene_find_or_default(ta_scene *scene, ta_resource_type type,
-    const char *name, size_t name_len)
+void *ta_scene_find_or_default(ta_scene *scene, ta_resource_type type, const char *name, size_t name_len)
 {
     ta_schema_field_type schema_type = res_to_typ(type);
     size_t size = tg_schemas[schema_type].size;
@@ -355,8 +351,7 @@ void *ta_scene_find_or_default(ta_scene *scene, ta_resource_type type,
     }
     return resource;
 }
-void *ta_scene_component_add(ta_scene *scene, const char *entity,
-    ta_resource_type type, const char *name, size_t name_len)
+void *ta_scene_component_add(ta_scene *scene, const char *entity, ta_resource_type type, const char *name, size_t name_len)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
@@ -375,8 +370,7 @@ void *ta_scene_component_add(ta_scene *scene, const char *entity,
 
     return component;
 }
-void *ta_scene_component_try(ta_scene *scene, const char *entity,
-    ta_resource_type type)
+void *ta_scene_component_try(ta_scene *scene, const char *entity, ta_resource_type type)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(entity);
@@ -400,8 +394,7 @@ void *ta_scene_component_try(ta_scene *scene, const char *entity,
 
     return component;
 }
-void *ta_scene_component(ta_scene *scene, const char *entity,
-    ta_resource_type type)
+void *ta_scene_component(ta_scene *scene, const char *entity, ta_resource_type type)
 {
     DLB_ASSERT(scene);
     DLB_ASSERT(entity);

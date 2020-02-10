@@ -1,11 +1,12 @@
 #include "ta_material.h"
-#include "ta_schema.h"
-#include "ta_scene.h"
-#include "ta_shader.h"
-#include "ta_texture.h"
-#include "ta_game.h"
+#include "ta_symbol.h"
 
-void delete_me(int material)
+void ta_material_init(ta_material *material)
 {
-    UNUSED(material);
+    if (!material->tex_albedo)    { material->tex_albedo    = SYM_MISSING_ALBEDO; }
+    if (!material->tex_height)    { material->tex_height    = SYM_MISSING_HEIGHT; }
+    if (!material->tex_metallic)  { material->tex_metallic  = SYM_MISSING_METALLIC; }
+    if (!material->tex_normal)    { material->tex_normal    = SYM_MISSING_NORMAL; }
+    if (!material->tex_occlusion) { material->tex_occlusion = SYM_MISSING_OCCLUSION; }
+    if (!material->tex_roughness) { material->tex_roughness = SYM_MISSING_ROUGHNESS; }
 }

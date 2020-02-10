@@ -173,17 +173,17 @@ static void ui_scene_panel()
     }
 
     ta_ui_row_begin();
-    if (tg_audio.muted) {
+    if (tg_audio_listener.muted) {
         ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
         ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
         if (ta_ui_button(CSTR("Unmute"))) {
-            ta_audio_listener_unmute(&tg_audio);
+            ta_audio_listener_unmute(&tg_audio_listener);
         }
     } else {
         ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
         ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
         if (ta_ui_button(CSTR("Mute"))) {
-            ta_audio_listener_mute(&tg_audio);
+            ta_audio_listener_mute(&tg_audio_listener);
         }
     }
 
@@ -191,7 +191,7 @@ static void ui_scene_panel()
     // TODO: Make this a drag float
     char tex_buf[16] = { 0 };
     int len = snprintf(tex_buf, sizeof(tex_buf), "%.2f",
-        ta_audio_listener_get_volume(&tg_audio));
+        ta_audio_listener_get_volume(&tg_audio_listener));
     DLB_ASSERT(len < sizeof(tex_buf));
     ta_ui_label(tex_buf, len);
     ta_ui_panel_end();
@@ -674,8 +674,7 @@ static void ui_audio_panel()
     const char *audio_request_name = 0;
 
     ta_ui_row_begin();
-    dlb_vec_each(ta_audio_buffer *, audio_buffer,
-        ta_game_resource_pool(RES_AUDIO_BUFFER))
+    dlb_vec_each(ta_audio_buffer *, audio_buffer, ta_game_resource_pool(RES_AUDIO_BUFFER))
     {
 #if 0
         int node_panel_id = -1;

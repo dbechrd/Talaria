@@ -161,6 +161,9 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
 
     body->dbg_broadphase = false;
     body->dbg_narrowphase = false;
+
+    // HACK: Cast const away to prevent MSVC warnings about nonsensical const incompatibility
+    dlb_vec_zero((char **)body->colliding_with);
 }
 
 static bool intersector_plane_v_sphere(ta_manifold *manifold,
@@ -276,10 +279,6 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a,
     // If this gets called at all, these two bodies are broadphase intersecting.
     a->dbg_broadphase = true;
     b->dbg_broadphase = true;
-
-    if (a->trigger || b->trigger) {
-        return false;
-    }
 
     bool collided = false;
     bool swap_ab = (a->collider.type > b->collider.type);

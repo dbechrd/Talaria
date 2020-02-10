@@ -363,7 +363,7 @@ void ta_schema_register()
     TYPE_FIELD(ta_font, shader,       ATOM_STRING);
     TYPE_END(ta_font);
 
-    TYPE_START(ta_material, TYP_MATERIAL, 0, 0);
+    TYPE_START(ta_material, TYP_MATERIAL, ta_material_init, 0);
     TYPE_FIELD(ta_material, name,          ATOM_STRING);
     TYPE_FIELD(ta_material, shader,        ATOM_STRING);
     TYPE_FIELD(ta_material, tex_albedo,    ATOM_STRING);

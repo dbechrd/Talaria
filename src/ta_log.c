@@ -102,7 +102,7 @@ void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
     TA_LOCK(log->mutex);
     fprintf(log->stream,
         "[     Timestamp     ][Thread][  Elapsed  ][  Delta   ][ Source  ][       Message       ]\n"
-        "--------------------------------------------------------------------------------\n");
+        "----------------------------------------------------------------------------------------\n");
     TA_UNLOCK(log->mutex);
 }
 

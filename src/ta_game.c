@@ -200,7 +200,7 @@ void ta_game_init()
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
-    //ta_game_load_gltf("data/mesh/rock_0001.gltf");
+    ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
 
@@ -241,7 +241,7 @@ void ta_game_init()
         RES_COMP_AUDIO_SOURCE);
     DLB_ASSERT(bg_music_src);
 
-    ta_audio_listener_set_volume(&tg_audio, 0.03f);
+    ta_audio_listener_set_volume(&tg_audio_listener, 0.03f);
     //ta_audio_listener_mute(&tg_audio);
     ta_audio_source_play_loop(bg_music_src);
 
@@ -360,7 +360,8 @@ void *ta_game_component_try(const char *entity, ta_resource_type type)
 }
 void *ta_game_resource_pool(ta_resource_type type)
 {
-    return game.scene.resource_data[type];
+    void *pool = game.scene.resource_data[type];
+    return pool;
 }
 void ta_game_load_gltf(const char *filename)
 {
@@ -461,8 +462,8 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
         sim_step,
         game_state_str(ta_game_state_current()),
         game_state_str(ta_game_state_prev()),
-        ta_audio_listener_get_volume(&tg_audio),
-        ta_audio_listener_muted(&tg_audio) ? " (muted)" : "",
+        ta_audio_listener_get_volume(&tg_audio_listener),
+        ta_audio_listener_muted(&tg_audio_listener) ? " (muted)" : "",
         camera->fov,
         window_size.w,
         window_size.h
@@ -557,9 +558,9 @@ static void collision_broadphase(ta_rigid_body_pair **pairs,
     dlb_vec_each(ta_rigid_body *, a, rigid_bodies) {
         dlb_vec_range(ta_rigid_body *, b, a + 1, dlb_vec_end(rigid_bodies)) {
             // Don't let entities collide with themselves
-            if (a->entity_name == b->entity_name) {
+            if (a->entity_name == b->entity_name)
                 continue;
-            }
+
             // HACK: Skip AABB broadphase for planes, makes no sense (always
             //       collect them as potential pairs)
             if (a->collider.type == TA_COLLIDER_PLANE ||
@@ -627,6 +628,10 @@ static void game_simulate(ta_camera *active_camera, float dt)
             dlb_vec_each(ta_manifold *, manifold, game.manifolds) {
                 // Resolution
                 ta_rigid_body_resolve_collision(manifold, dt);
+
+                // Update colliding_with lists
+                dlb_vec_push(manifold->a->colliding_with, manifold->b->entity_name);
+                dlb_vec_push(manifold->b->colliding_with, manifold->a->entity_name);
             }
         }
 
@@ -1071,7 +1076,7 @@ void ta_game_loop()
         //       Use texture atlas; batch everything into one draw call; stop
         //       using stupid RGB placeholders.
         ta_log_write(&tg_debug_log, SRC_GAME, " HUD pass...\n");
-        //game_draw_hud();
+        game_draw_hud();
 
         // TODO: Add "show_fps" flag and bind to key; off by default in release
         ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
@@ -1123,7 +1128,6 @@ void ta_game_loop()
             ta_console_draw_screen();
         }
 
-        //--------------------------------------------
 #if 0
         static ta_ui_window_state window = { 0 };
         u32 flags = TA_UI_AUTOSIZE;
@@ -1154,16 +1158,20 @@ void ta_game_loop()
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_ui_render();
 #endif
-        //--------------------------------------------
+        //----------------------------------------------------------------------
+        // Audio
+        //----------------------------------------------------------------------
+        ta_log_write(&tg_debug_log, SRC_GAME, " Audio update...\n");
+        ta_audio_update();
 
+        //----------------------------------------------------------------------
+        // BOOM! It's swap time, baby! Show the player all of our hard work.
+        //----------------------------------------------------------------------
         // NOTE: This confirms rendering is being deferred until swap buffers,
         // but it's much slower (~5ms), so don't actually use it.
         //ta_log_write(&tg_debug_log, SRC_GAME, " glFinish...\n");
         //glFinish();
 
-        //----------------------------------------------------------------------
-        // BOOM! It's swap time, baby! Show the player all of our hard work.
-        //----------------------------------------------------------------------
         ta_log_write(&tg_debug_log, SRC_GAME, " Swap...\n");
         ta_window_swap(tg_window);
 
@@ -1494,9 +1502,9 @@ void ta_game_event(ta_event *event)
             //event->data.button.button_name;
             ta_player *player = ta_game_player();
             ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
-            if (gun->carrying_ammo == 0 && gun->loaded_ammo == 0) {
+            //if (gun->carrying_ammo == 0 && gun->loaded_ammo == 0) {
                 gun->carrying_ammo = gun->carrying_ammo_max;
-            }
+            //}
 
 #if 0
             // TODO: Should audio source subscribe to this event somehow,

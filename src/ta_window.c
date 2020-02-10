@@ -11,7 +11,7 @@
 typedef struct ta_window {
     int width;
     int height;
-    GLFWwindow *glfw_window;
+    struct GLFWwindow *glfw_window;
     bool vsync;
 } ta_window;
 ta_window window__internal;
@@ -239,12 +239,24 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     // TODO: Disable GL errors in release mode for performance?
     //glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GLFW_TRUE);
 #endif
+    if (!fullscreen) {
+        // Delay displaying window so we can center it first
+        glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+    }
 
     ta_log_write(&tg_debug_log, SRC_WINDOW, "glfwCreateWindow...\n");
     window->glfw_window = glfwCreateWindow(w, h, "Talaria", fullscreen ? monitor : 0, 0);
     if (!window->glfw_window) {
         ta_log_write(&tg_debug_log, SRC_WINDOW, "glfwCreateWindow error\n");
         DLB_ASSERT(!"ta_window_init: glfwCreateWindow failed");
+    }
+
+    if (!fullscreen) {
+        // Center window
+        int cx = (mode->width - w) / 2;
+        int cy = (mode->height - h) / 2;
+        glfwSetWindowPos(window->glfw_window, cx, cy);
+        glfwShowWindow(window->glfw_window);
     }
 
     // Register event callbacks
@@ -270,6 +282,11 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 
     glfwSwapInterval(1);
     glfwGetFramebufferSize(window->glfw_window, &window->width, &window->height);
+
+    // Draw something as soon as humanly possible (just a dark gray for now to get rid of the default white)
+    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    ta_window_swap(tg_window);
 
     ta_log_write(&tg_debug_log, SRC_WINDOW, "Initializing OpenGL state...\n");
 #if _DEBUG
@@ -330,8 +347,6 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 
     // Seamless filtering across cubemap seams
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-
 
     // Use raw input when cursor disabled (for camera rotation)
     if (glfwRawMouseMotionSupported()) {

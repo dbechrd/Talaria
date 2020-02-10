@@ -26,8 +26,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
     }
     DLB_ASSERT(dlb_vec_len(model->meshes));
 
-    ta_transform *transform = ta_game_component(model->entity_name,
-        RES_COMP_TRANSFORM);
+    ta_transform *transform = ta_game_component(model->entity_name, RES_COMP_TRANSFORM);
 
     ta_mat4 light_pvm = mat4_mul(light_pv, &transform->model);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
@@ -59,21 +58,19 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     }
     DLB_ASSERT(dlb_vec_len(model->meshes));
 
-    ta_transform *transform = ta_game_component(model->entity_name,
-        RES_COMP_TRANSFORM);
+    ta_transform *transform = ta_game_component(model->entity_name, RES_COMP_TRANSFORM);
 
     if (!camera->debug_no_mesh) {
         ta_material *material = ta_game_by_sym(RES_MATERIAL, model->material);
         ta_shader *shader = ta_game_by_sym(RES_SHADER, material->shader);
-        ta_texture *texture_albedo    = ta_game_by_sym(RES_TEXTURE, material->tex_albedo    ? material->tex_albedo    : SYM_MISSING_ALBEDO);
-        ta_texture *texture_height    = ta_game_by_sym(RES_TEXTURE, material->tex_height    ? material->tex_height    : SYM_MISSING_HEIGHT);
-        ta_texture *texture_metallic  = ta_game_by_sym(RES_TEXTURE, material->tex_metallic  ? material->tex_metallic  : SYM_MISSING_METALLIC);
-        ta_texture *texture_normal    = ta_game_by_sym(RES_TEXTURE, material->tex_normal    ? material->tex_normal    : SYM_MISSING_NORMAL);
-        ta_texture *texture_occlusion = ta_game_by_sym(RES_TEXTURE, material->tex_occlusion ? material->tex_occlusion : SYM_MISSING_OCCLUSION);
-        ta_texture *texture_roughness = ta_game_by_sym(RES_TEXTURE, material->tex_roughness ? material->tex_roughness : SYM_MISSING_ROUGHNESS);
+        ta_texture *texture_albedo    = ta_game_by_sym(RES_TEXTURE, material->tex_albedo);
+        ta_texture *texture_height    = ta_game_by_sym(RES_TEXTURE, material->tex_height);
+        ta_texture *texture_metallic  = ta_game_by_sym(RES_TEXTURE, material->tex_metallic);
+        ta_texture *texture_normal    = ta_game_by_sym(RES_TEXTURE, material->tex_normal);
+        ta_texture *texture_occlusion = ta_game_by_sym(RES_TEXTURE, material->tex_occlusion);
+        ta_texture *texture_roughness = ta_game_by_sym(RES_TEXTURE, material->tex_roughness);
 
-        ta_transform *cam_trans = ta_game_component(camera->entity_name,
-            RES_COMP_TRANSFORM);
+        ta_transform *cam_trans = ta_game_component(camera->entity_name, RES_COMP_TRANSFORM);
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &cam_trans->xform.position);
 
         ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);

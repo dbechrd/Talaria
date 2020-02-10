@@ -69,7 +69,7 @@ void ta_event_events()
     ta_mouse_reset_relative();
     ta_log_write(&tg_debug_log, SRC_EVENT, "  key reset changed...\n");
     ta_key_reset_changed();
-    ta_log_write(&tg_debug_log, SRC_WINDOW, "  glfwPollEvents...\n");
+    ta_log_write(&tg_debug_log, SRC_EVENT, "  glfwPollEvents...\n");
     glfwPollEvents();
 
     if (ta_game_state_current() == TA_GAME_STATE_EDITOR) {

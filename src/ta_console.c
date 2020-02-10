@@ -138,8 +138,7 @@ void ta_console_draw_screen()
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);
     static ta_ui_textbox_state console_textbox = { 0 };
     if (ta_ui_textbox(0, 0, &console_textbox, TA_UI_AUTOSIZE)) {
-        console_cmd_type cmd_type = console_exec(&console_history,
-            console_textbox.buffer);
+        console_cmd_type cmd_type = console_exec(&console_history, console_textbox.buffer);
         if (cmd_type == CONSOLE_CMD_EXIT) {
             ta_ui_textbox_cancel(&console_textbox);
             // TODO: Hide console window

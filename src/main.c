@@ -71,7 +71,7 @@ void ndc_tests() {
 
 static void window_glfw_error(int code, const char* description)
 {
-    ta_log_write(&tg_debug_log, SRC_WINDOW, "glfw3 error code %d: %s\n", code, description);
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "glfw3 error code %d: %s\n", code, description);
 }
 
 // NOTE: Only works in Subsystem:Console mode?
@@ -83,9 +83,9 @@ int main(int argc, char *argv[])
 
     glfwSetErrorCallback(window_glfw_error);
 
-    ta_log_write(&tg_debug_log, SRC_WINDOW, "glfwCreateWindow...\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "glfwCreateWindow...\n");
     if (!glfwInit()) {
-        DLB_ASSERT(!"ta_window_init: glfwInit failed.\n");
+        DLB_ASSERT(!"glfwInit failed.\n");
     }
 
     ta_timer_init();
@@ -100,12 +100,13 @@ int main(int argc, char *argv[])
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Registering schema...\n");
     ta_schema_register();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing window...\n");
-
     ta_window_init(tg_window, 1600, 900, false);
+    //ta_window_init(tg_window, 1920, 1080, true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running ndc_tests...\n");
     ndc_tests();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing audio...\n");
-    ta_audio_listener_init(&tg_audio);
+    ta_audio_init();
+    ta_audio_listener_init(&tg_audio_listener);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing mouse...\n");
     ta_mouse_init();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing primitives...\n");
@@ -119,6 +120,7 @@ int main(int argc, char *argv[])
 
     // TODO: Free *EVERYTHING* (at least in debug mode.. to check for memory leaks)
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Cleaning up...\n");
+    ta_audio_free();
     ta_window_free(tg_window);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Goodbye.\n\n");
     ta_log_free(&tg_debug_log);

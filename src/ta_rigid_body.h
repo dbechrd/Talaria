@@ -87,6 +87,8 @@ typedef struct ta_rigid_body {
     // TODO(cleanup): Random debug shit
     bool dbg_broadphase;
     bool dbg_narrowphase;
+
+    const char **colliding_with;
 } ta_rigid_body;
 
 typedef struct ta_rigid_body_pair {
@@ -100,6 +102,5 @@ void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force);
 void ta_rigid_body_apply_force_at(ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
 void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
 void ta_rigid_body_update(ta_rigid_body *body, float dt);
-bool ta_rigid_body_intersect(struct ta_manifold *manifold, ta_rigid_body *a,
-    ta_rigid_body *b);
+bool ta_rigid_body_intersect(struct ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
 void ta_rigid_body_resolve_collision(struct ta_manifold *manifold, float dt);

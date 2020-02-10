@@ -6,6 +6,12 @@
 #include "ta_math.h"
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
+#pragma warning(push)
+#pragma warning(disable: 4201)  // nameless struct/union
+#include "fmod/core/fmod.h"
+#include "fmod/core/fmod_errors.h"
+#include "fmod_strings.h"
+#pragma warning(pop)
 #include "AL/al.h"
 #include "AL/alc.h"
 #include "AL/alext.h"
@@ -14,32 +20,94 @@
 #define TA_AUDIO_SAMPLE_RATE 44100
 #define TA_AUDIO_SAMPLES_PER_MS (TA_AUDIO_SAMPLE_RATE / 1000.0)
 
-ta_audio_listener tg_audio;
+ALCdevice *audio_openal_device;
+ALCcontext *audio_openal_context;
 
-void ta_audio_listener_init(ta_audio_listener *listener)
+struct {
+    FMOD_SYSTEM *fmod_system;
+    FMOD_CHANNEL *fmod_channel;
+    FMOD_SOUND **fmod_sounds;
+} audio_state;
+
+ta_audio_listener tg_audio_listener;
+
+void audio_fmod_check(FMOD_RESULT result, const char *file, int line)
 {
-    if (!listener->volume) {
-        listener->volume = 1.0f;
+    if (result != FMOD_OK) {
+        ta_log_write(&tg_debug_log, SRC_AUDIO, "%s(%d): FMOD Error %d: %s\n", file, line, result,
+            FMOD_ErrorString(result));
     }
+}
+#define TA_FMOD(result) audio_fmod_check(result, __FILE__, __LINE__)
+
+FMOD_RESULT F_CALLBACK audio_fmod_callback(FMOD_SYSTEM *system, FMOD_SYSTEM_CALLBACK_TYPE type, void *commanddata1,
+    void *commanddata2, void *userdata)
+{
+    UNUSED(system);
+    UNUSED(commanddata2);
+    UNUSED(userdata);
+
+    if (type == FMOD_SYSTEM_CALLBACK_ERROR) {
+        FMOD_ERRORCALLBACK_INFO *info = commanddata1;
+        ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD Error:\n");
+        ta_log_write(&tg_debug_log, SRC_AUDIO, "  %s(%p)\n", FMOD_ErrorCallback_InstanceTypeString(info->instancetype), info->instance);
+        ta_log_write(&tg_debug_log, SRC_AUDIO, "  %s(%s)\n", info->functionname, info->functionparams);
+    }
+    return FMOD_OK;
+}
+
+void ta_audio_init()
+{
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Create...\n");
+    TA_FMOD(FMOD_System_Create(&audio_state.fmod_system));
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Create done.\n");
+    TA_FMOD(FMOD_System_SetCallback(audio_state.fmod_system, audio_fmod_callback, FMOD_SYSTEM_CALLBACK_ERROR));
+
+    unsigned int version;
+    FMOD_System_GetVersion(audio_state.fmod_system, &version);
+    if (version < FMOD_VERSION) {
+        ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD lib version %08x doesn't match header version %08x", version,
+            FMOD_VERSION);
+    }
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Init...\n");
+    FMOD_System_Init(audio_state.fmod_system, 32, FMOD_INIT_NORMAL, 0);
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Init done.\n");
+
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD creating sounds...\n");
+    FMOD_SOUND **sound1 = dlb_vec_alloc(audio_state.fmod_sounds);
+    FMOD_SOUND **sound2 = dlb_vec_alloc(audio_state.fmod_sounds);
+    FMOD_SOUND **sound3 = dlb_vec_alloc(audio_state.fmod_sounds);
+    /* drumloop.wav has embedded loop points which automatically makes looping turn on, use FMOD_LOOP_OFF to disable */
+    FMOD_System_CreateSound(audio_state.fmod_system, "data/sfx/drumloop.wav", FMOD_DEFAULT, 0, sound1);
+    FMOD_Sound_SetMode(*sound1, FMOD_LOOP_OFF);
+    FMOD_System_CreateSound(audio_state.fmod_system, "data/sfx/jaguar.wav", FMOD_DEFAULT, 0, sound2);
+    FMOD_System_CreateSound(audio_state.fmod_system, "data/sfx/swish.wav", FMOD_DEFAULT, 0, sound3);
+
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD playing sounds...\n");
+    FMOD_System_PlaySound(audio_state.fmod_system, *sound1, 0, false, &audio_state.fmod_channel);
+    FMOD_System_PlaySound(audio_state.fmod_system, *sound2, 0, false, &audio_state.fmod_channel);
+    FMOD_System_PlaySound(audio_state.fmod_system, *sound3, 0, false, &audio_state.fmod_channel);
+
+
 
     ta_log_write(&tg_debug_log, SRC_AUDIO, "Enumerating devices...\n");
-    const char *devices = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
-    const char *s = devices;
     const char *desired_device = 0;
-    while (*s)
-    {
-        ta_log_write(&tg_debug_log, SRC_AUDIO, "  Device: %s\n", s);
-        if (!strcmp(s, "OpenAL Soft on Speakers (High Definition Audio Device)")) {
-            desired_device = s;
-        }
-        while (*s) { s++; }
-        s++;
-    }
+    //const char *devices = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
+    //const char *s = devices;
+    //while (*s)
+    //{
+    //    ta_log_write(&tg_debug_log, SRC_AUDIO, "  Device: %s\n", s);
+    //    if (!strcmp(s, "OpenAL Soft on Speakers (High Definition Audio Device)")) {
+    //        desired_device = s;
+    //    }
+    //    while (*s) { s++; }
+    //    s++;
+    //}
 
     // TODO: Allow user to set which device they want to use
     ta_log_write(&tg_debug_log, SRC_AUDIO, "alcOpenDevice...\n");
-    listener->al_device = alcOpenDevice(desired_device);
-    if (!listener->al_device)
+    audio_openal_device = alcOpenDevice(desired_device);
+    if (!audio_openal_device)
     {
         DLB_ASSERT(!"Failed to open listener context");
         return;
@@ -52,8 +120,8 @@ void ta_audio_listener_init(ta_audio_listener *listener)
         ALC_HRTF_SOFT, ALC_TRUE,
         0
     };
-    listener->al_context = alcCreateContext(listener->al_device, attrlist);
-    if (!listener->al_context)
+    audio_openal_context = alcCreateContext(audio_openal_device, attrlist);
+    if (!audio_openal_context)
     {
         DLB_ASSERT(!"Failed to create listener context");
         return;
@@ -61,7 +129,7 @@ void ta_audio_listener_init(ta_audio_listener *listener)
 
     // TODO: Can I have more than one context, is that useful?
     ta_log_write(&tg_debug_log, SRC_AUDIO, "alcMakeContextCurrent...\n");
-    if (!alcMakeContextCurrent(listener->al_context))
+    if (!alcMakeContextCurrent(audio_openal_context))
     {
         DLB_ASSERT(!"Failed to activate listener context");
         return;
@@ -81,11 +149,63 @@ void ta_audio_listener_init(ta_audio_listener *listener)
     // ALC_HRTF_HEADPHONES_DETECTED_SOFT        0x0004
     // ALC_HRTF_UNSUPPORTED_FORMAT_SOFT         0x0005
     int hrtf_value = 0;
-    alcGetIntegerv(listener->al_device, ALC_HRTF_STATUS_SOFT, 1, &hrtf_value);
-
-    ta_audio_listener_set_volume(listener, listener->volume);
+    alcGetIntegerv(audio_openal_device, ALC_HRTF_STATUS_SOFT, 1, &hrtf_value);
 }
 
+void ta_audio_update()
+{
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Update...\n");
+    FMOD_System_Update(audio_state.fmod_system);
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Update done.\n");
+
+    if (audio_state.fmod_channel) {
+        bool playing = 0;
+        bool paused = 0;
+        unsigned int ms = 0;
+        FMOD_SOUND *currentsound = 0;
+        unsigned int lenms = 0;
+
+        FMOD_Channel_IsPlaying(audio_state.fmod_channel, &playing);
+        FMOD_Channel_GetPaused(audio_state.fmod_channel, &paused);
+        FMOD_Channel_GetPosition(audio_state.fmod_channel, &ms, FMOD_TIMEUNIT_MS);
+        FMOD_Channel_GetCurrentSound(audio_state.fmod_channel, &currentsound);
+        if (currentsound) {
+            FMOD_Sound_GetLength(currentsound, &lenms, FMOD_TIMEUNIT_MS);
+        }
+        ta_log_write(&tg_debug_log, SRC_AUDIO, "Time %02d:%02d:%02d/%02d:%02d:%02d : %s\n",
+            ms / 1000 / 60,
+            ms / 1000 % 60,
+            ms / 10 % 100,
+            lenms / 1000 / 60,
+            lenms / 1000 % 60,
+            lenms / 10 % 100,
+            paused ? "Paused " : playing ? "Playing" : "Stopped"
+        );
+    }
+
+    int channelsplaying = 0;
+    FMOD_System_GetChannelsPlaying(audio_state.fmod_system, &channelsplaying, 0);
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD channels playing: %d\n", channelsplaying);
+}
+
+void ta_audio_free()
+{
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD cleanup...\n");
+    dlb_vec_each(FMOD_SOUND **, sound, audio_state.fmod_sounds) {
+        FMOD_Sound_Release(*sound);
+    }
+    FMOD_System_Close(audio_state.fmod_system);
+    FMOD_System_Release(audio_state.fmod_system);
+    ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD cleanup done.\n");
+}
+
+void ta_audio_listener_init(ta_audio_listener *listener)
+{
+    if (!listener->volume) {
+        listener->volume = 1.0f;
+    }
+    ta_audio_listener_set_volume(listener, listener->volume);
+}
 float ta_audio_listener_get_volume(ta_audio_listener *listener)
 {
     return listener->volume;
