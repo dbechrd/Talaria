@@ -24,34 +24,22 @@ extern struct ta_mesh primitive_quads;
 extern struct ta_mesh primitive_quads_tooltip_bg;
 extern struct ta_mesh primitive_quads_tooltip_fg;
 
-void ta_primitive_init();
-void ta_primitive_push_line_2d(struct ta_mesh *mesh, ta_line_2d line_2d,
-    ta_rgba color0, ta_rgba color1);
-void ta_primitive_push_line_3d(struct ta_mesh *mesh, ta_line_3d line_3d,
-    ta_rgba color0, ta_rgba color1);
-void ta_primitive_push_quad(struct ta_mesh *mesh, ta_quad quad, ta_rgba color);
-void ta_primitive_push_rect(struct ta_mesh *mesh, ta_rect rect, ta_rgba color,
-    float z);
-void ta_primitive_push_rect_uv(struct ta_mesh *mesh, ta_rect_uv rect_uv,
-    ta_rgba color, float z, bool screen, bool top_left);
-void ta_primitive_push_plane(struct ta_mesh *mesh, struct ta_plane plane,
-    float radius, ta_rgba color);
-void ta_primitive_push_crosshair(struct ta_mesh *mesh, s32 length,
-    s32 thickness);
-void ta_primitive_push_sphere(struct ta_mesh *mesh, ta_sphere sphere,
-    ta_rgba color);
-void ta_primitive_push_rgb_sphere(struct ta_mesh *mesh, ta_sphere sphere);
-void ta_primitive_push_cone(struct ta_mesh *mesh, ta_cone cone, ta_rgba color);
-void ta_primitive_push_arrow(struct ta_mesh *mesh, ta_vec3 origin,
-    ta_vec3 direction, ta_rgba color);
-void ta_primitive_push_aabb(struct ta_mesh *mesh, ta_aabb aabb, ta_rgba color);
-void ta_primitive_push_obb(struct ta_mesh *mesh, ta_obb obb, ta_rgba color);
-void ta_primitive_push_grid(struct ta_mesh *mesh, ta_vec3 center, ta_vec3 normal,
-    float radius, float frequency, ta_rgba color);
-void ta_primitive_push_axes_arrow(struct ta_mesh *mesh, ta_vec3 position,
-    float scale);
-void ta_primitive_push_axes_cube(struct ta_mesh *mesh, ta_vec3 position,
-    float scale);
-void ta_primitive_render_mesh(struct ta_mesh *mesh, struct ta_shader *shader,
-    int mode, bool clear_buffers, bool reset_uniforms);
-void ta_primitive_render(bool clear_buffers, bool reset_uniforms);
+void ta_primitive_init              ();
+void ta_primitive_push_line_2d      (struct ta_mesh *mesh, ta_line_2d line_2d, ta_rgba color0, ta_rgba color1);
+void ta_primitive_push_line_3d      (struct ta_mesh *mesh, ta_line_3d line_3d, ta_rgba color0, ta_rgba color1);
+void ta_primitive_push_quad         (struct ta_mesh *mesh, ta_quad quad, ta_rgba color);
+void ta_primitive_push_rect         (struct ta_mesh *mesh, ta_rect rect, ta_rgba color, float z);
+void ta_primitive_push_rect_uv      (struct ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color, float z, bool screen, bool top_left);
+void ta_primitive_push_plane        (struct ta_mesh *mesh, struct ta_plane plane, float radius, ta_rgba color);
+void ta_primitive_push_crosshair    (struct ta_mesh *mesh, s32 length, s32 thickness);
+void ta_primitive_push_sphere       (struct ta_mesh *mesh, ta_sphere sphere, ta_rgba color);
+void ta_primitive_push_rgb_sphere   (struct ta_mesh *mesh, ta_sphere sphere);
+void ta_primitive_push_cone         (struct ta_mesh *mesh, ta_cone cone, ta_rgba color);
+void ta_primitive_push_arrow        (struct ta_mesh *mesh, ta_vec3 origin, ta_vec3 direction, ta_rgba color);
+void ta_primitive_push_aabb         (struct ta_mesh *mesh, ta_aabb aabb, ta_rgba color);
+void ta_primitive_push_obb          (struct ta_mesh *mesh, ta_obb obb, ta_rgba color);
+void ta_primitive_push_grid         (struct ta_mesh *mesh, ta_vec3 center, ta_vec3 normal, float radius, float frequency, ta_rgba color);
+void ta_primitive_push_axes_arrow   (struct ta_mesh *mesh, ta_vec3 position, float scale);
+void ta_primitive_push_axes_cube    (struct ta_mesh *mesh, ta_vec3 position, float scale);
+void ta_primitive_render_mesh       (struct ta_mesh *mesh, struct ta_shader *shader, int mode, bool clear_buffers, bool reset_uniforms);
+void ta_primitive_render            (bool clear_buffers, bool reset_uniforms);

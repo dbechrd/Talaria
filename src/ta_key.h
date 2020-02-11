@@ -13,9 +13,9 @@ enum {
 
 typedef s32 ta_key;
 
-bool ta_key_down(ta_key key);
-bool ta_key_up(ta_key key);
-bool ta_key_pressed(ta_key key);
-bool ta_key_released(ta_key key);
-void ta_key_reset_changed();
-void ta_key_event(struct ta_event *event);
+bool ta_key_down        (ta_key key);
+bool ta_key_up          (ta_key key);
+bool ta_key_pressed     (ta_key key);
+bool ta_key_released    (ta_key key);
+void ta_key_clear       ();
+void ta_key_event       (struct ta_event *event);

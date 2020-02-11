@@ -16,7 +16,9 @@
 #include "AL/alc.h"
 #include "AL/alext.h"
 #include <string.h>
+#include <math.h>
 
+#define AUDIO_ASSERT 0  // change to 1 to assert that states are valid
 #define TA_AUDIO_SAMPLE_RATE 44100
 #define TA_AUDIO_SAMPLES_PER_MS (TA_AUDIO_SAMPLE_RATE / 1000.0)
 
@@ -151,7 +153,6 @@ void ta_audio_init()
     int hrtf_value = 0;
     alcGetIntegerv(audio_openal_device, ALC_HRTF_STATUS_SOFT, 1, &hrtf_value);
 }
-
 void ta_audio_update()
 {
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Update...\n");
@@ -187,7 +188,6 @@ void ta_audio_update()
     FMOD_System_GetChannelsPlaying(audio_state.fmod_system, &channelsplaying, 0);
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD channels playing: %d\n", channelsplaying);
 }
-
 void ta_audio_free()
 {
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD cleanup...\n");
@@ -213,27 +213,27 @@ float ta_audio_listener_get_volume(ta_audio_listener *listener)
 void ta_audio_listener_set_volume(ta_audio_listener *listener, float volume)
 {
     listener->volume = volume;
-    if (!listener->muted) {
+    if (!listener->mute) {
         alListenerf(AL_GAIN, listener->volume);
     }
 }
 bool ta_audio_listener_muted(ta_audio_listener *listener)
 {
-    return listener->muted;
+    return listener->mute;
 }
 void ta_audio_listener_mute(ta_audio_listener *listener)
 {
-    listener->muted = true;
+    listener->mute = true;
     alListenerf(AL_GAIN, 0.0f);
 }
 void ta_audio_listener_unmute(ta_audio_listener *listener)
 {
-    listener->muted = false;
+    listener->mute = false;
     alListenerf(AL_GAIN, listener->volume);
 }
 void ta_audio_listener_toggle(ta_audio_listener *listener)
 {
-    if (listener->muted) {
+    if (listener->mute) {
         ta_audio_listener_unmute(listener);
     } else {
         ta_audio_listener_mute(listener);
@@ -269,7 +269,6 @@ void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, char *samples)
 {
     buffer->samples = samples;
 }
-#include <math.h>
 void ta_audio_buffer_load(ta_audio_buffer *buffer)
 {
     DLB_ASSERT(buffer->samples);
@@ -358,10 +357,11 @@ void ta_audio_source_set_gain(ta_audio_source *source, float gain)
     source->gain = gain;
     alSourcef(source->al_source_id, AL_GAIN, source->gain);
 }
-void ta_audio_source_set_buffer(ta_audio_source *source,
-    const char *audio_buffer)
+void ta_audio_source_set_buffer(ta_audio_source *source, const char *audio_buffer)
 {
-    if (ta_audio_source_get_state(source) != TA_AUDIO_STOPPED) {
+    ta_audio_source_state state = 0;
+    ta_audio_source_get_state(source, &state);
+    if (state != TA_AUDIO_STOPPED) {
         ta_audio_source_stop(source);
     }
     if (source->audio_buffer != audio_buffer)
@@ -380,12 +380,10 @@ static ALenum al_source_state(ta_audio_source *source)
     alGetSourcei(source->al_source_id, AL_SOURCE_STATE, &state);
     return state;
 }
-ta_audio_source_state ta_audio_source_get_state(ta_audio_source *source)
+void ta_audio_source_get_state(ta_audio_source *source, ta_audio_source_state *state)
 {
-    ta_audio_source_state state = al_source_state(source);
-    return state;
+    *state = (ta_audio_source_state)al_source_state(source);
 }
-#define AUDIO_ASSERT 0
 void ta_audio_source_play(ta_audio_source *source)
 {
     DLB_ASSERT(source->al_source_id);
@@ -406,8 +404,7 @@ void ta_audio_source_play(ta_audio_source *source)
     DLB_ASSERT(al_source_state(source) == AL_PLAYING);
 #endif
 }
-void ta_audio_source_play_name(ta_audio_source *source,
-    const char *audio_buffer)
+void ta_audio_source_play_name(ta_audio_source *source, const char *audio_buffer)
 {
     ta_audio_source_set_buffer(source, audio_buffer);
     ta_audio_source_play(source);
@@ -432,8 +429,7 @@ void ta_audio_source_play_loop(ta_audio_source *source)
     DLB_ASSERT(al_source_state(source) == AL_PLAYING);
 #endif
 }
-void ta_audio_source_play_loop_name(ta_audio_source *source,
-    const char *audio_buffer)
+void ta_audio_source_play_loop_name(ta_audio_source *source, const char *audio_buffer)
 {
     ta_audio_source_set_buffer(source, audio_buffer);
     ta_audio_source_play_loop(source);

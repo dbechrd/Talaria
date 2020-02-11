@@ -6,11 +6,72 @@
 #include "ta_scene.h"
 #include "dlb/dlb_vector.h"
 
+#define MAX_COMMENT_LEN     256
+#define MAX_IDENT_LEN       31
+#define MAX_NUMBER_LEN      64
+#define MAX_STRING_LEN      1024
+
+#define MAX_INT_LEN         32
+#define MAX_FLOAT_LEN       64
+#define MAX_FLOAT_HEX_LEN   8
+#define MAX_FLOAT_HEX_DELTA 0.00001f
+
+#define C__DIGIT            "0123456789"
+#define C__SIGN             "+-"
+#define C__ALPHA_LOWER      "abcdefghijklmnopqrstuvwxyz"
+#define C__ALPHA_UPPER      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define C__ALPHA            C__ALPHA_LOWER C__ALPHA_UPPER
+#define C__ALPHA_NUM        C__ALPHA C__DIGIT
+#define C__ALPHA_SPECIAL    C__ALPHA_NUM "`~!@#$%^&*()-_=+[{]}\\|;:,<.>/?'"
+
+#define C_WHITESPACE        " "
+
+#define C_NEWLINE           "\n"
+
+#define C_COMMENT_START     "#"
+#define C_COMMENT           C__ALPHA_SPECIAL " \t\""
+#define C_COMMENT_END       "\n"
+
+#define C_IDENT             C__ALPHA_LOWER C__DIGIT "_"
+#define C_IDENT_END         ":"
+#define C_IDENT_ID_START    "["
+#define C_IDENT_ID          C__DIGIT
+#define C_IDENT_ID_END      "]"
+#define IDENT_NAME          "name"
+#define IDENT_ENTITY        "entity"
+#define KEYWORD_NULL        "null"
+#define KEYWORD_TRUE        "true"
+#define KEYWORD_FALSE       "false"
+
+#define C_NUMBER_HEX        C__DIGIT "abcdefABCDEF"
+#define C_NUMBER_BINARY     "01"
+#define C_NUMBER_SIGN       C__SIGN
+#define C_NUMBER_INT        C__DIGIT
+#define C_NUMBER_FLOAT      C__DIGIT "."
+
+#define C_STRING            C__ALPHA_SPECIAL C_WHITESPACE
+
+#define C_ARRAY_START       "["
+#define C_ARRAY_END         "]"
+
+#define C_OBJECT_START      "{"
+#define C_OBJECT_END        "}"
+
+#define C_LIST_SEPARATOR    ","
+
+// Special identifiers
+const char *SYM_NAME;
+const char *SYM_ENTITY_NAME;
+
+// DML keywords
+const char *SYM_NULL;
+const char *SYM_TRUE;
+const char *SYM_FALSE;
+
 #define PANIC_HEADER "%s:%llu:%llu: error: "
 #define FILE_POS_ARGS scene->filename, tok->file_pos.line, tok->file_pos.column
 #define OPEN_VS_CODE() debug_open_in_vs_code(FILE_POS_ARGS)
-#define BAD_TOKEN() bad_token(scene, tok, \
-    ta_schema_field_type_str(stack[sp - (array > 0)].type), \
+#define BAD_TOKEN() bad_token(scene, tok, stack[sp - (array > 0)].type, \
     (stack[sp - (array > 0)].array_len > 0 ? " (array)" : ""), \
     (stack[sp - (array > 0)].is_union_type > 0 ? " (union)" : ""))
 
@@ -111,7 +172,7 @@ static token *token_read(ta_file *f, token **tokens)
                 tok->type = TOKEN_BOOL;
                 tok->value.as_bool = false;
             } else {
-                PANIC_FILE(f, "Expected : after identifier '%s'\n", tok->value.string);
+                PANIC_FILE(f, "Expected ':' after identifier '%s'\n", tok->value.string);
             }
             break;
         }
@@ -228,8 +289,18 @@ static token *token_read(ta_file *f, token **tokens)
     }
     return tok;
 }
+static void token_init_symbols()
+{
+    if (SYM_NAME) return;
+    SYM_NAME         = INTERN(IDENT_NAME);
+    SYM_ENTITY_NAME  = INTERN(IDENT_ENTITY);
+    SYM_NULL         = INTERN(KEYWORD_NULL);
+    SYM_TRUE         = INTERN(KEYWORD_TRUE);
+    SYM_FALSE        = INTERN(KEYWORD_FALSE);
+}
 token *tokenize(ta_file *f)
 {
+    token_init_symbols();
     token *tokens = 0;
     while (token_read(f, &tokens)->type != TOKEN_EOF) {}
     return tokens;
@@ -366,10 +437,12 @@ static void debug_open_in_vs_code(const char *filename, u64 line, u64 column)
     snprintf(buf, sizeof(buf) - 1, "start /b code -g %s:%llu:%llu", filename, line, column+1);
     system(buf);
 }
-static void bad_token(ta_scene *scene, token *tok, const char *typ, const char *arr, const char *uni) {
+static void bad_token(ta_scene *scene, token *tok, ta_schema_field_type type, const char *arr, const char *uni) {
     OPEN_VS_CODE();
-    PANIC(PANIC_HEADER "expected %s%s%s, found (%s) instead.\n",
-        FILE_POS_ARGS, typ, arr, uni, token_type_str(tok->type)
+    const char *type_str = 0;
+    ta_schema_field_type_str(type, type_str);
+    PANIC(PANIC_HEADER "expected %s%s%s, found (%s) instead.\n", FILE_POS_ARGS, type_str, arr, uni,
+        token_type_str(tok->type)
     )
 }
 void tokens_parse(ta_scene *scene, token *tokens)
@@ -380,6 +453,7 @@ void tokens_parse(ta_scene *scene, token *tokens)
         ta_schema_field_type type;
         size_t array_len;   // 0 = not array, 1 = vector, >1 = fixed array size
         size_t array_elem;  // Current element of array we're writing to
+        ta_res_type res_type;
         const char *name;
         size_t index;       // pool index (resource_data)
         void *ptr;
@@ -454,33 +528,29 @@ void tokens_parse(ta_scene *scene, token *tokens)
                 }
 
                 if (sp) {
-                    ta_schema_field *field = ta_schema_field_find(stack[sp-1].type,
-                        tok->value.string);
+                    ta_schema_field *field = 0;
+                    ta_schema_field_find(stack[sp-1].type, tok->value.string, &field);
                     if (!field) {
                         OPEN_VS_CODE();
-                        PANIC(PANIC_HEADER "unexpected field '%s' in '%s' (%s)\n",
-                            FILE_POS_ARGS,
-                            tok->value.string,
-                            stack[sp-1].name,
-                            ta_schema_field_type_str(stack[sp-1].type));
+                        const char *type_str = 0;
+                        ta_schema_field_type_str(stack[sp-1].type, type_str);
+                        PANIC(PANIC_HEADER "unexpected field '%s' in '%s' (%s)\n", FILE_POS_ARGS, tok->value.string,
+                            stack[sp-1].name, type_str);
                     }
                     if (field->in_union) {
                         if (!stack[sp-1].is_union) {
                             OPEN_VS_CODE();
+                            const char *type_str = 0;
+                            ta_schema_field_type_str(stack[sp-1].type, type_str);
                             PANIC(PANIC_HEADER "unexpected union field '%s' before union type field found in '%s' (%s)\n",
-                                FILE_POS_ARGS,
-                                tok->value.string,
-                                stack[sp-1].name,
-                                ta_schema_field_type_str(stack[sp-1].type));
+                                FILE_POS_ARGS, tok->value.string, stack[sp-1].name, type_str);
                         }
                         if (field->union_type != stack[sp-1].union_type) {
                             OPEN_VS_CODE();
+                            const char *type_str = 0;
+                            ta_schema_field_type_str(stack[sp-1].type, type_str);
                             PANIC(PANIC_HEADER "unexpected union field '%s' in %s (%s) with union_type = %d\n",
-                                FILE_POS_ARGS,
-                                tok->value.string,
-                                stack[sp-1].name,
-                                ta_schema_field_type_str(stack[sp-1].type),
-                                stack[sp-1].union_type);
+                                FILE_POS_ARGS, tok->value.string, stack[sp-1].name, type_str, stack[sp-1].union_type);
                         }
                     }
                     DLB_ASSERT(field->type);
@@ -497,14 +567,15 @@ void tokens_parse(ta_scene *scene, token *tokens)
                     stack[sp].is_union = false;
                     stack[sp].union_type = 0;
                 } else {
-                    ta_schema *schema = ta_schema_find_by_name(tok->value.string, tok->length);
+                    ta_schema *schema = 0;
+                    ta_schema_find_by_name(tok->value.string, tok->length, &schema);
                     if (!schema) {
                         OPEN_VS_CODE();
                         PANIC(PANIC_HEADER "unexpected type name '%s'\n",
                             FILE_POS_ARGS,
                             tok->value.string);
                     }
-                    ta_resource_type res_type = typ_to_res(schema->type);
+                    ta_res_type res_type = typ_to_res(schema->type);
                     if (res_type == RES_COUNT) {
                         OPEN_VS_CODE();
                         PANIC(PANIC_HEADER "type '%s' is not a scene-level resource type.\n",
@@ -517,6 +588,7 @@ void tokens_parse(ta_scene *scene, token *tokens)
                     stack[sp].array_len = 0;
                     stack[sp].array_elem = 0;
                     stack[sp].name = tok->value.string;
+                    stack[sp].res_type = res_type;
                     stack[sp].index = dlb_vec_len(scene->resource_data[res_type]);
                     stack[sp].ptr = dlb_vec_alloc_size(scene->resource_data[res_type], schema->size);
                     stack[sp].size = schema->size;
@@ -629,33 +701,33 @@ void tokens_parse(ta_scene *scene, token *tokens)
                     *fp = tok->value.string;
                     if (stack[sp].name == SYM_NAME) {
                         // NOTE: Ignore "name" fields for non-resource types
-                        ta_resource_type res_type = typ_to_res(stack[sp-1].type);
+                        ta_res_type res_type = typ_to_res(stack[sp-1].type);
                         if (res_type < RES_COUNT) {
                             ta_resource *resource = stack[sp-1].ptr;
+                            resource->res_type = res_type;
                             resource->index = stack[sp-1].index;
                             if (resource->name != tok->value.string) {
                                 BAD_TOKEN();
                             }
 
                             u32 hash = dlb_murmur3(SYM32(resource->name));
-                            dlb_index_insert(&scene->index_by_name[res_type], hash,
-                                resource->index);
+                            dlb_index_insert(&scene->index_by_name[res_type], hash, resource->index);
                         } else {
                             DLB_ASSERT(1);
                         }
                     } else if (stack[sp].name == SYM_ENTITY_NAME) {
-                        // NOTE: Ignore "entity_name" fields for non-component types
-                        ta_resource_type res_type = typ_to_res(stack[sp-1].type);
+                        // NOTE: Ignore "entity" fields for non-component types
+                        ta_res_type res_type = typ_to_res(stack[sp-1].type);
                         if (res_type < RES_COMP_COUNT) {
                             ta_component *comp = stack[sp-1].ptr;
+                            comp->res_type = res_type;
                             comp->index = stack[sp-1].index;
-                            if (comp->entity_name != tok->value.string) {
+                            if (comp->entity != tok->value.string) {
                                 BAD_TOKEN();
                             }
 
-                            u32 hash = dlb_murmur3(SYM32(comp->entity_name));
-                            dlb_index_insert(&scene->index_by_entity[res_type], hash,
-                                comp->index);
+                            u32 hash = dlb_murmur3(SYM32(comp->entity));
+                            dlb_index_insert(&scene->index_by_entity[res_type], hash, comp->index);
                         } else {
                             DLB_ASSERT(1);
                         }

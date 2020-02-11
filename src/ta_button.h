@@ -1,5 +1,5 @@
 #pragma once
-#include "ta_uid.h"
+#include "ta_schema.h"
 #include "dlb/dlb_types.h"
 
 typedef enum e_button_state {
@@ -8,15 +8,15 @@ typedef enum e_button_state {
 } e_button_state;
 
 typedef struct ta_e_button {
-    size_t index;
-    const char *name;
-    const char *entity_name;
-    e_button_state state;
-    e_button_state state_prev;
-    const char *sfx_activated;  // TODO: Some sort of event-based sound effects handling?
-    const char *sfx_active;
-    const char *sfx_deactivated;
+    TA_COMPONENT_HEADER
+    e_button_state  state;              // current button state
+    e_button_state  state_prev;         // previous button state
+
+    // TODO: Some sort of event-based sound effects handling?
+    const char      *sfx_activated;     // sound effect when button activated
+    const char      *sfx_active;        // sound effect while button active
+    const char      *sfx_deactivated;   // sound effect when button deactivated
 } ta_e_button;
 
-void e_button_init(ta_e_button *button);
-void e_button_update(ta_e_button *button);
+void e_button_init      (ta_e_button *button);
+void e_button_update    (ta_e_button *button);

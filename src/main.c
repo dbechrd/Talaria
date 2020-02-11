@@ -80,7 +80,6 @@ int main(int argc, char *argv[])
 {
     UNUSED(argc);
     UNUSED(argv);
-
     glfwSetErrorCallback(window_glfw_error);
 
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "glfwCreateWindow...\n");

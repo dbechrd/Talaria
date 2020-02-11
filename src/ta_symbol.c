@@ -6,15 +6,6 @@
 
 #define TA_SYMBOL_MAX_LEN 256
 
-// Special identifiers
-const char *SYM_NAME;
-const char *SYM_ENTITY_NAME;
-
-// DML keywords
-const char *SYM_NULL;
-const char *SYM_TRUE;
-const char *SYM_FALSE;
-
 // GLSL types
 const char *SYM_GLINT;
 const char *SYM_GLUINT;
@@ -84,12 +75,6 @@ static dlb_hash symbol_table;
 
 void ta_symbol_init() {
     dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 512);
-
-    SYM_NAME         = INTERN(IDENT_NAME);
-    SYM_ENTITY_NAME  = INTERN(IDENT_ENTITY_NAME);
-    SYM_NULL         = INTERN(KEYWORD_NULL);
-    SYM_TRUE         = INTERN(KEYWORD_TRUE);
-    SYM_FALSE        = INTERN(KEYWORD_FALSE);
 
     SYM_GLINT     = INTERN("glint");
     SYM_GLUINT    = INTERN("gluint");

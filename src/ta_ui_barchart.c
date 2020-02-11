@@ -6,18 +6,16 @@
 #include <time.h>
 #include <stdlib.h>
 
-ta_ui_barchart ta_ui_barchart_init(int x, int y, int w, int h)
+void ta_ui_barchart_init(ta_ui_barchart *chart, int x, int y, int w, int h)
 {
-    ta_ui_barchart barchart = { 0 };
-    barchart.rect.x = x;
-    barchart.rect.y = y;
-    barchart.rect.w = w;
-    barchart.rect.h = h;
-    barchart.sample_count = w / 2;
-    barchart.samples = dlb_calloc(barchart.sample_count, sizeof(*barchart.samples));
-    barchart.next_index = 0;
-    barchart.smooth_val = barchart.rect.y / 2;
-    return barchart;
+    chart->rect.x = x;
+    chart->rect.y = y;
+    chart->rect.w = w;
+    chart->rect.h = h;
+    chart->sample_count = w / 2;
+    chart->samples = dlb_calloc(chart->sample_count, sizeof(*chart->samples));
+    chart->next_index = 0;
+    chart->smooth_val = chart->rect.y / 2;
 }
 
 void ta_ui_barchart_free(ta_ui_barchart *chart)

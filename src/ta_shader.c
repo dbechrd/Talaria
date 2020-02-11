@@ -170,7 +170,7 @@ static void shader_print_uniforms(ta_shader *shader)
     for (GLint i = 0; i < count; i++) {
         glGetActiveUniform(shader->program_id, (GLuint)i,
             shader->max_uniform_name_len, &length, &size, &type, name);
-        //ta_log_write(&tg_debug_log, SRC_SHADER, "   Uniform #%d Name: %s Type: %u\n",
+        //ta_log_write(&tg_debug_log, SRC_SHADER, "   Uniform #%d Name: %s Type: %u_light\n",
         //    i, name, type);
     }
     dlb_free(name);
@@ -372,8 +372,8 @@ void ta_shader_set_mat3(ta_shader *shader, const char *name, const ta_mat3 *m)
 void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT4);
-    //u->value.mat4 = *m;
-    //u->dirty = true;
+    //u_light->value.mat4 = *m;
+    //u_light->dirty = true;
     if (!mat4_equal(&u->value.mat4, m)) {
         u->value.mat4 = *m;
         u->dirty = true;
@@ -383,43 +383,22 @@ void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
 void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     ta_light *light)
 {
-    // TODO: Use the other set calls above to eliminate duplicate sets once
-    // that's implemented for the basic types.
-    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
+    // TODO: Use the other set calls above to eliminate duplicate sets once that's implemented for the basic types.
+    ta_shader_uniform *u_light          = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
+    ta_shader_uniform *u_intensity      = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_INTENSITY[index],      TA_GLSL_FLOAT);
+    ta_shader_uniform *u_position       = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_POSITION[index],       TA_GLSL_VEC3);
+    ta_shader_uniform *u_color          = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_COLOR[index],          TA_GLSL_VEC3);
+    ta_shader_uniform *u_type           = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_TYPE[index],           TA_GLSL_INT);
+    ta_shader_uniform *u_direction      = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_DIRECTION[index],      TA_GLSL_VEC3);
+    ta_shader_uniform *u_cast_shadows   = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_CAST_SHADOWS[index],   TA_GLSL_BOOL);
+    ta_shader_uniform *u_shadowmap2d    = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP2D[index],    TA_GLSL_SAMPLER2D);
+    ta_shader_uniform *u_shadowmap3d    = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP3D[index],    TA_GLSL_SAMPLER_CUBE);
+    ta_shader_uniform *u_shadowmap_zfar = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP_ZFAR[index], TA_GLSL_FLOAT);
+    ta_shader_uniform *u_light_pv       = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_LIGHT_PV[index],       TA_GLSL_MAT4);
 
-    ta_shader_uniform *u_intensity =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_INTENSITY[index],
-            TA_GLSL_FLOAT);
-    ta_shader_uniform *u_position =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_POSITION[index],
-            TA_GLSL_VEC3);
-    ta_shader_uniform *u_color =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_COLOR[index],
-            TA_GLSL_VEC3);
-    ta_shader_uniform *u_type =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_TYPE[index],
-            TA_GLSL_INT);
-    ta_shader_uniform *u_direction =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_DIRECTION[index],
-            TA_GLSL_VEC3);
-    ta_shader_uniform *u_cast_shadows =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_CAST_SHADOWS[index],
-            TA_GLSL_BOOL);
-    ta_shader_uniform *u_shadowmap2d =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP2D[index],
-            TA_GLSL_SAMPLER2D);
-    ta_shader_uniform *u_shadowmap3d =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP3D[index],
-            TA_GLSL_SAMPLER_CUBE);
-    ta_shader_uniform *u_shadowmap_zfar =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_SHADOWMAP_ZFAR[index],
-            TA_GLSL_FLOAT);
-    ta_shader_uniform *u_light_pv =
-        find_uniform_by_name(u->value.properties, SYM_U_LIGHTS_LIGHT_PV[index],
-            TA_GLSL_MAT4);
-
-    u_intensity->value.glfloat        = light->data.common.intensity;
-    u_color->value.rgb                = light->data.common.color;
+    // Set default values (some are overridden for specific light types below)
+    u_intensity->value.glfloat        = light->intensity;
+    u_color->value.rgb                = light->color;
     u_position->value.vec3            = ta_light_position(light);
     u_type->value.glint               = light->type;
     u_direction->value.vec3           = VEC3_ZERO;
@@ -429,6 +408,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     u_shadowmap_zfar->value.glfloat   = 0;
     u_light_pv->value.mat4            = MAT4_IDENT;
 
+    // Light type-dependent properties
     switch (light->type) {
         case TA_LIGHT_AMBIENT:
             break;
@@ -450,7 +430,8 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index,
             DLB_ASSERT(!"Don't know how to initialize this type of light");
     }
 
-    u->dirty = true;
+    // Mark all light uniforms as dirty
+    u_light->dirty = true;
     u_intensity->dirty = true;
     u_color->dirty = true;
     u_position->dirty = true;
@@ -544,11 +525,9 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
     }
 }
 
-ta_shader_uniform *ta_shader_state_save(ta_shader *shader)
+void ta_shader_state_save(ta_shader *shader, ta_shader_uniform *store)
 {
-    ta_shader_uniform *store = 0;
     shader_store_uniforms(store, shader->uniforms);
-    return store;
 }
 
 void ta_shader_state_load(ta_shader_uniform *uniforms)

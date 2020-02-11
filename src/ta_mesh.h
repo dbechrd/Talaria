@@ -1,5 +1,4 @@
 #pragma once
-#include "ta_uid.h"
 #include "ta_math.h"
 #include "misc/gl3w.h"
 
@@ -18,8 +17,7 @@ typedef enum ta_mesh_buffer_type {
 #pragma warning(push)
 #pragma warning(disable: 4201)
 typedef struct ta_mesh {
-    size_t index;
-    const char *name;
+    TA_RESOURCE_HEADER
     const char *path;
     ta_vec3 offset;
     union {
@@ -47,10 +45,10 @@ typedef struct ta_mesh {
 
 ta_mesh *tg_mesh_default;
 
-void ta_mesh_init(ta_mesh *mesh);
-void ta_mesh_load_file(ta_mesh *mesh, const char *filename);
-void ta_mesh_create(ta_mesh *mesh);
-void ta_mesh_init_normals(ta_mesh *mesh, float scale);
-void ta_mesh_push_normals(ta_mesh *mesh);
-void ta_mesh_render(ta_mesh *mesh);
-void ta_mesh_free(ta_mesh *mesh);
+void ta_mesh_init           (ta_mesh *mesh);
+void ta_mesh_load_file      (ta_mesh *mesh, const char *filename);
+void ta_mesh_create         (ta_mesh *mesh);
+void ta_mesh_init_normals   (ta_mesh *mesh, float scale);
+void ta_mesh_push_normals   (ta_mesh *mesh);
+void ta_mesh_render         (ta_mesh *mesh);
+void ta_mesh_free           (ta_mesh *mesh);

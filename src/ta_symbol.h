@@ -30,15 +30,6 @@ static inline char *dlb_symbol__alloc(const char *buf, size_t len) {
 #define SYM32(s) (s), (u32)dlb_symbol_len(s)
 #define INTERN(s) ta_symbol_intern(CSTR(s))
 
-// Special identifiers
-extern const char *SYM_NAME;
-extern const char *SYM_ENTITY_NAME;
-
-// DML keywords
-extern const char *SYM_NULL;
-extern const char *SYM_TRUE;
-extern const char *SYM_FALSE;
-
 // GLSL types
 extern const char *SYM_GLINT;
 extern const char *SYM_GLUINT;

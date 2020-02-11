@@ -1,5 +1,5 @@
 #pragma once
-#include "ta_uid.h"
+#include "ta_schema.h"
 #include "ta_math.h"
 #include "ta_collider.h"
 #include "dlb/dlb_types.h"
@@ -9,11 +9,9 @@ struct ta_manifold;
 // http://allenchou.net/2013/12/game-physics-introduction/
 // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-core-engine--gamedev-7493
 typedef struct ta_rigid_body {
-    size_t index;      // TODO: Comment what this is for
-    const char *name;  // TODO: Comment what this is for
-    const char *entity_name;
-    ta_aabb aabb;
-    ta_collider collider;
+    TA_COMPONENT_HEADER
+    ta_aabb     aabb;           // axis-aligned bounding box
+    ta_collider collider;       // body collider
 
     // David's state variables
     // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf p. D16
@@ -96,11 +94,11 @@ typedef struct ta_rigid_body_pair {
     ta_rigid_body *b;
 } ta_rigid_body_pair;
 
-const char *ta_collider_type_str(int type);
-void ta_rigid_body_init(ta_rigid_body *body);
-void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force);
-void ta_rigid_body_apply_force_at(ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
-void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
-void ta_rigid_body_update(ta_rigid_body *body, float dt);
-bool ta_rigid_body_intersect(struct ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
-void ta_rigid_body_resolve_collision(struct ta_manifold *manifold, float dt);
+const char *ta_collider_type_str        (int type);
+void ta_rigid_body_init                 (ta_rigid_body *body);
+void ta_rigid_body_apply_force          (ta_rigid_body *body, ta_vec3 force);
+void ta_rigid_body_apply_force_at       (ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
+void ta_rigid_body_apply_impulse        (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
+void ta_rigid_body_update               (ta_rigid_body *body, float dt);
+bool ta_rigid_body_intersect            (struct ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
+void ta_rigid_body_resolve_collision    (struct ta_manifold *manifold, float dt);

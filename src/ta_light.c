@@ -35,8 +35,8 @@ const char *ta_light_type_str(int type)
 
 void ta_light_init(ta_light *light)
 {
-    if (!light->data.common.intensity) {
-        light->data.common.intensity = DEFAULT_LIGHT_INTENSITY;
+    if (!light->intensity) {
+        light->intensity = DEFAULT_LIGHT_INTENSITY;
     }
     if (light->type != TA_LIGHT_AMBIENT) {
         if (!light->shadowmap.resolution) {
@@ -156,12 +156,12 @@ static void shadowmap_point_create(ta_light *light)
 
 ta_vec3 ta_light_position(ta_light *light)
 {
-    ta_transform *transform = ta_game_component(light->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
     return transform->xform.position;
 }
 ta_vec3 ta_light_direction(ta_light *light)
 {
-    ta_transform *transform = ta_game_component(light->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
 
     // Lights with identity orientation don't cast shadows; give them a nudge
     if (quat_equal(transform->xform.orientation, QUAT_IDENT)) {

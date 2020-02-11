@@ -1,5 +1,6 @@
 #include "ta_file.h"
 #include "ta_log.h"
+#include "dlb/dlb_vector.h"
 #include "dlb/dlb_memory.h"
 #include <ctype.h>
 #include <stdlib.h>
@@ -12,19 +13,17 @@ static const char *file_mode_str(ta_file_mode mode) {
     }
 }
 
-ta_file *ta_file_open(const char *filename, ta_file_mode mode) {
+void ta_file_open(ta_file *file, const char *filename, ta_file_mode mode) {
     FILE *hnd = fopen(filename, file_mode_str(mode));
     if (!hnd) {
         perror("fopen error");
         PANIC("Failed to open file: %s\n", filename);
     }
-    ta_file *file = dlb_calloc(1, sizeof(*file));
     file->filename = filename;
     file->mode = mode;
     file->hnd = hnd;
     file->pos.line = 1;
     file->pos.column = 1;
-    return file;
 }
 
 void ta_file_close(ta_file *f) {
@@ -244,8 +243,7 @@ char *ta_file_read_all(const char *filename)
     // Open file
     FILE *fs = fopen(filename, "rb");
     if (!fs) {
-        ta_log_write(&tg_debug_log, SRC_FILE, "Unable to open %s for reading\n",
-            filename);
+        ta_log_write(&tg_debug_log, SRC_FILE, "Unable to open %s for reading\n", filename);
         return 0;
     }
 
@@ -253,8 +251,7 @@ char *ta_file_read_all(const char *filename)
     fseek(fs, 0, SEEK_END);
     long tell = ftell(fs);
     if (tell < 0) {
-        ta_log_write(&tg_debug_log, SRC_FILE, "Unable to determine length of %s\n",
-            filename);
+        ta_log_write(&tg_debug_log, SRC_FILE, "Unable to determine length of %s\n", filename);
         DLB_ASSERT(!"ta_file_read_all: failed to calculate file length");
     }
     rewind(fs);

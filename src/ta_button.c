@@ -39,7 +39,7 @@ void e_button_update(ta_e_button *button)
     //       EVENT_BUTTON_DEACTIVATED
     //       EVENT_BUTTON_STATE_CHANGED
 
-    ta_rigid_body *button_body = ta_game_component(button->entity_name, RES_COMP_RIGID_BODY);
+    ta_rigid_body *button_body = ta_game_component(button->entity, RES_COMP_RIGID_BODY);
     button->state_prev = button->state;
 #if 1
     dlb_vec_each(const char **, entity, button_body->colliding_with) {

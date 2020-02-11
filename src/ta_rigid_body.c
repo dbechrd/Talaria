@@ -82,7 +82,7 @@ void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 c
 
 void ta_rigid_body_update(ta_rigid_body *body, float dt)
 {
-    ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
 
     // Update inverse mass when mass changes (editor UI)
     body->inv_mass = body->mass ? 1.0f / body->mass : 0.0f;
@@ -172,8 +172,8 @@ static bool intersector_plane_v_sphere(ta_manifold *manifold,
     DLB_ASSERT(a->collider.type == TA_COLLIDER_PLANE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
 
-    ta_transform *atrans = ta_game_component(a->entity_name, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
+    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
     ta_plane plane_a = a->collider.data.plane;
     plane_a.center = vec3_rotate_quat(plane_a.center, atrans->xform.orientation);
@@ -191,8 +191,8 @@ static bool intersector_plane_v_obb(ta_manifold *manifold,
     DLB_ASSERT(a->collider.type == TA_COLLIDER_PLANE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
 
-    ta_transform *atrans = ta_game_component(a->entity_name, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
+    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
     ta_plane plane_a = a->collider.data.plane;
     plane_a.center = vec3_rotate_quat(plane_a.center, atrans->xform.orientation);
@@ -211,8 +211,8 @@ static bool intersector_sphere_v_sphere(ta_manifold *manifold,
     DLB_ASSERT(a->collider.type == TA_COLLIDER_SPHERE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
 
-    ta_transform *atrans = ta_game_component(a->entity_name, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
+    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
     ta_sphere sphere_a = a->collider.data.sphere;
     sphere_a.center = vec3_rotate_quat(sphere_a.center, atrans->xform.orientation);
@@ -230,8 +230,8 @@ static bool intersector_sphere_v_obb(ta_manifold *manifold,
     DLB_ASSERT(a->collider.type == TA_COLLIDER_SPHERE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
 
-    ta_transform *atrans = ta_game_component(a->entity_name, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
+    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
     ta_sphere sphere_a = a->collider.data.sphere;
     sphere_a.center = vec3_rotate_quat(sphere_a.center, atrans->xform.orientation);
@@ -250,8 +250,8 @@ static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a,
     DLB_ASSERT(a->collider.type == TA_COLLIDER_OBB);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
 
-    ta_transform *atrans = ta_game_component(a->entity_name, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
+    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
     UNUSED(manifold);
     UNUSED(atrans);
@@ -331,8 +331,8 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
 
     ta_rigid_body *a = manifold->a;
     ta_rigid_body *b = manifold->b;
-    ta_transform *atrans = ta_game_component(a->entity_name, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
+    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
     // Trigger colliders don't need any resolution
     if (a->trigger || b->trigger) {
@@ -480,16 +480,13 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     // Positional correction
     const float slop = TA_EPSILON;
     const float percent = 1.0f;
-    float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) *
-        percent;
+    float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) * percent;
     ta_vec3 correction = vec3_scalef(manifold->normal, c);
 
-    //ta_transform *atrans = ta_game_component(RES_COMP_TRANSFORM, a->entity_name);
-    //ta_transform *btrans = ta_game_component(RES_COMP_TRANSFORM, b->entity_name);
-    atrans->xform.position =
-        vec3_sub(atrans->xform.position, vec3_scalef(correction, a->inv_mass));
-    btrans->xform.position =
-        vec3_add(btrans->xform.position, vec3_scalef(correction, b->inv_mass));
+    //ta_transform *atrans = ta_game_component(RES_COMP_TRANSFORM, a->entity);
+    //ta_transform *btrans = ta_game_component(RES_COMP_TRANSFORM, b->entity);
+    atrans->xform.position = vec3_sub(atrans->xform.position, vec3_scalef(correction, a->inv_mass));
+    btrans->xform.position = vec3_add(btrans->xform.position, vec3_scalef(correction, b->inv_mass));
 
     a->centroid_global = vec3_rotate_quat(a->centroid_local, atrans->xform.orientation);
     a->centroid_global = vec3_add(a->centroid_global, atrans->xform.position);

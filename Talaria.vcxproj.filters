@@ -205,9 +205,6 @@
     <ClInclude Include="src\ta_button.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\ta_uid.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\ta_collider.h">
       <Filter>Header Files</Filter>
     </ClInclude>

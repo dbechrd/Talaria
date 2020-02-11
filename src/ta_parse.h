@@ -1,61 +1,9 @@
 #pragma once
 
-#define MAX_COMMENT_LEN     256
-#define MAX_IDENT_LEN       31
-#define MAX_NUMBER_LEN      64
-#define MAX_STRING_LEN      1024
+unsigned int parse_uint       (char *buf);
+int          parse_int_binary (char *buf);
+int          parse_int_hex    (char *buf);
+int          parse_int        (char *buf);
+float        parse_float      (char *buf);
 
-#define MAX_INT_LEN         32
-#define MAX_FLOAT_LEN       64
-#define MAX_FLOAT_HEX_LEN   8
-#define MAX_FLOAT_HEX_DELTA 0.00001f
-
-#define C__DIGIT            "0123456789"
-#define C__SIGN             "+-"
-#define C__ALPHA_LOWER      "abcdefghijklmnopqrstuvwxyz"
-#define C__ALPHA_UPPER      "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define C__ALPHA            C__ALPHA_LOWER C__ALPHA_UPPER
-#define C__ALPHA_NUM        C__ALPHA C__DIGIT
-#define C__ALPHA_SPECIAL    C__ALPHA_NUM "`~!@#$%^&*()-_=+[{]}\\|;:,<.>/?'"
-
-#define C_WHITESPACE        " "
-
-#define C_NEWLINE          "\n"
-
-#define C_COMMENT_START     "#"
-#define C_COMMENT           C__ALPHA_SPECIAL " \t\""
-#define C_COMMENT_END       "\n"
-
-#define C_IDENT             C__ALPHA_LOWER C__DIGIT "_"
-#define C_IDENT_END         ":"
-#define C_IDENT_ID_START    "["
-#define C_IDENT_ID          C__DIGIT
-#define C_IDENT_ID_END      "]"
-#define IDENT_NAME          "name"
-#define IDENT_ENTITY_NAME   "entity_name"
-#define KEYWORD_NULL        "null"
-#define KEYWORD_TRUE        "true"
-#define KEYWORD_FALSE       "false"
-
-#define C_NUMBER_HEX        C__DIGIT "abcdefABCDEF"
-#define C_NUMBER_BINARY     "01"
-#define C_NUMBER_SIGN       C__SIGN
-#define C_NUMBER_INT        C__DIGIT
-#define C_NUMBER_FLOAT      C__DIGIT "."
-
-#define C_STRING            C__ALPHA_SPECIAL C_WHITESPACE
-
-#define C_ARRAY_START       "["
-#define C_ARRAY_END         "]"
-
-#define C_OBJECT_START      "{"
-#define C_OBJECT_END        "}"
-
-#define C_LIST_SEPARATOR    ","
-
-unsigned int parse_uint(char *buf);
-int parse_int_binary(char *buf);
-int parse_int_hex(char *buf);
-int parse_int(char *buf);
-float parse_float(char *buf);
 void parse_tests();

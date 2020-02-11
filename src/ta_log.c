@@ -63,6 +63,7 @@ const char *ta_log_source_str(ta_log_source src) {
     switch(src) {
         case SRC_ASSERT:     return "ASSERT";
         case SRC_AUDIO:      return "AUDIO";
+        case SRC_CONSOLE:    return "CONSOLE";
         case SRC_EDITOR:     return "EDITOR";
         case SRC_EVENT:      return "EVENT";
         case SRC_FILE:       return "FILE";

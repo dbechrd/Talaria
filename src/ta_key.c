@@ -29,7 +29,7 @@ bool ta_key_released(ta_key key)
     return released;
 }
 
-void ta_key_reset_changed()
+void ta_key_clear()
 {
     for (int i = 0; i < TA_KEY_COUNT; ++i) {
         keys[i].changed = false;
@@ -39,7 +39,8 @@ void ta_key_reset_changed()
 void ta_key_event(ta_event *event)
 {
     switch (event->type) {
-        case INPUT_EVENT_KEY_PRESS: case INPUT_EVENT_KEY_RELEASE: {
+        case INPUT_EVENT_KEY_PRESS:
+        case INPUT_EVENT_KEY_RELEASE: {
             u8 down = (event->type == INPUT_EVENT_KEY_PRESS);
             u8 changed = keys[event->data.key.key].down != down;
             keys[event->data.key.key].down = down;

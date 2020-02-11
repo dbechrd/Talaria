@@ -178,9 +178,8 @@ static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
     //return rect->rect.h + b->yoff;
 }
 
-ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
-    size_t text_len, bool screen, size_t *cursor_idx, ta_vec2 *cursor_offset,
-    const ta_vec2i *mouse_coords)
+ta_rectf ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool screen, size_t *cursor_idx,
+    ta_vec2 *cursor_offset, const ta_vec2i *mouse_coords, ta_rect_uv **rects)
 {
     DLB_ASSERT(rects);
     if (text_len) {
@@ -273,8 +272,7 @@ ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
 }
 
 // z postiive for screen, negative for world
-void ta_font_render(ta_mesh *mesh, ta_font *font, float x, float y,
-    float z, bool clear_buffers, bool reset_uniforms)
+void ta_font_render(ta_font *font, float x, float y, float z, bool clear_buffers, bool reset_uniforms, ta_mesh *mesh)
 {
     //glDisable(GL_CULL_FACE);
     glDisable(GL_DEPTH_TEST);

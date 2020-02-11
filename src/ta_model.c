@@ -26,7 +26,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
     }
     DLB_ASSERT(dlb_vec_len(model->meshes));
 
-    ta_transform *transform = ta_game_component(model->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *transform = ta_game_component(model->entity, RES_COMP_TRANSFORM);
 
     ta_mat4 light_pvm = mat4_mul(light_pv, &transform->model);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
@@ -58,7 +58,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     }
     DLB_ASSERT(dlb_vec_len(model->meshes));
 
-    ta_transform *transform = ta_game_component(model->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *transform = ta_game_component(model->entity, RES_COMP_TRANSFORM);
 
     if (!camera->debug_no_mesh) {
         ta_material *material = ta_game_by_sym(RES_MATERIAL, model->material);
@@ -70,7 +70,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_texture *texture_occlusion = ta_game_by_sym(RES_TEXTURE, material->tex_occlusion);
         ta_texture *texture_roughness = ta_game_by_sym(RES_TEXTURE, material->tex_roughness);
 
-        ta_transform *cam_trans = ta_game_component(camera->entity_name, RES_COMP_TRANSFORM);
+        ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &cam_trans->xform.position);
 
         ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
@@ -89,7 +89,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_shader_set_sampler2d(shader, SYM_U_TEX_NORMAL,    texture_normal->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_OCCLUSION, texture_occlusion->gl_id);
         ta_shader_set_sampler2d(shader, SYM_U_TEX_ROUGHNESS, texture_roughness->gl_id);
-        ta_shader_set_int(shader, SYM_U_DEBUG_CHANNEL, camera->debug_channel);
+        ta_shader_set_int(shader, SYM_U_DEBUG_CHANNEL, camera->dbg_channel);
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
         dlb_vec_each(const char **, mesh_name, model->meshes) {
@@ -125,7 +125,7 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
     DLB_ASSERT(camera);
     DLB_ASSERT(shader);
 
-    ta_transform *transform = ta_game_component(model->entity_name,
+    ta_transform *transform = ta_game_component(model->entity,
         RES_COMP_TRANSFORM);
 
     ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);

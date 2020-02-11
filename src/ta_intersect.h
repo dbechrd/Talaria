@@ -23,17 +23,13 @@ typedef struct ta_manifold {
 // optional (if not provided, will just return true/false and not fill out
 // contact properties).
 
-bool ta_ray_v_sphere(const ta_ray *ray, const ta_sphere *sphere, float *t_intersect);
-bool ta_ray_v_plane(const ta_ray *ray, const ta_plane *plane, float *t_intersect);
-bool ta_ray_v_quad(const ta_ray *ray, const ta_quad *quad, float *t_intersect);
-bool ta_ray_v_obb(const ta_ray *ray, const ta_obb *obb, float *t_intersect);
-bool ta_ray_v_aabb(const ta_ray *ray, const ta_aabb *aabb, float *t_intersect);
-bool ta_aabb_v_aabb(const struct ta_aabb *a, const struct ta_aabb *b);
-bool ta_plane_v_sphere(struct ta_manifold *manifold, const struct ta_plane *plane,
-    const struct ta_sphere *sphere);
-bool ta_plane_v_obb(struct ta_manifold *manifold, const struct ta_plane *plane,
-    const struct ta_obb *obb);
-bool ta_sphere_v_sphere(struct ta_manifold *manifold, const struct ta_sphere *a,
-    const struct ta_sphere *b);
-bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere,
-    const ta_obb *obb);
+bool ta_ray_v_sphere    (const ta_ray *ray, const ta_sphere *sphere, float *t_intersect);
+bool ta_ray_v_plane     (const ta_ray *ray, const ta_plane *plane, float *t_intersect);
+bool ta_ray_v_quad      (const ta_ray *ray, const ta_quad *quad, float *t_intersect);
+bool ta_ray_v_obb       (const ta_ray *ray, const ta_obb *obb, float *t_intersect);
+bool ta_ray_v_aabb      (const ta_ray *ray, const ta_aabb *aabb, float *t_intersect);
+bool ta_aabb_v_aabb     (const struct ta_aabb *a, const struct ta_aabb *b);
+bool ta_plane_v_sphere  (struct ta_manifold *manifold, const struct ta_plane *plane, const struct ta_sphere *sphere);
+bool ta_plane_v_obb     (struct ta_manifold *manifold, const struct ta_plane *plane, const struct ta_obb *obb);
+bool ta_sphere_v_sphere (struct ta_manifold *manifold, const struct ta_sphere *a, const struct ta_sphere *b);
+bool ta_sphere_v_obb    (ta_manifold *manifold, const ta_sphere *sphere, const ta_obb *obb);

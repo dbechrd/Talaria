@@ -10,6 +10,6 @@ typedef struct ta_ui_barchart {
     int smooth_val;
 } ta_ui_barchart;
 
-ta_ui_barchart ta_ui_barchart_init(int x, int y, int w, int h);
+void ta_ui_barchart_init(ta_ui_barchart *chart, int x, int y, int w, int h);
 void ta_ui_barchart_free(ta_ui_barchart *chart);
 void ta_ui_barchart_draw(ta_ui_barchart *chart, int x, int y);

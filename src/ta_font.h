@@ -1,5 +1,5 @@
 #pragma once
-#include "ta_uid.h"
+#include "ta_schema.h"
 #include "ta_math.h"
 #include "dlb/dlb_types.h"
 #include "misc/stb_truetype.h"
@@ -8,35 +8,32 @@
 struct ta_mesh;
 
 typedef struct ta_font {
-    size_t index;
-    const char *name;
-    const char *path;
-    float pixel_height;
-    const char *shader;  // TODO: This doesn't belong here
+    TA_RESOURCE_HEADER
+    const char  *path;          // relative path to font file
+    float       pixel_height;   // height of bitmap font to generate, in pixels
+    const char  *shader;        // shader to use to render this font                //TODO: This doesn't belong here
 
-    int first_char;
-    int last_char;
-    stbtt_bakedchar *chars;
+    int first_char;             // first ASCII code to start generating bitmaps from (inclusive)
+    int last_char;              // last ASCII code generate bitmap for (inclusive)
+    stbtt_bakedchar *chars;     // [stb_truetype] baked characters (size info per character generated)
+    stbtt_fontinfo font_info;   // [stb_truetype] misc. font properties
+    float scale;                //
+    int ascent;                 //
+    int descent;                //
+    int line_height;            //
+    int left_bearing;           //
+    ta_rect bbox;               //
 
-    stbtt_fontinfo font_info;
-    float scale;
-    int ascent;
-    int descent;
-    int line_height;
-    int left_bearing;
-    ta_rect bbox;
-
-    int tex_w;
-    int tex_h;
-    GLuint gl_id;
+    int tex_w;                  // bitmap font texture width in pixels
+    int tex_h;                  // bitmap font texture height in pixels
+    GLuint gl_id;               // [OpenGL] bitmap font texture id
 } ta_font;
 
-void ta_font_init(ta_font *font);
-void ta_font_load_path(ta_font *font, const char *path);
-void ta_font_delete(ta_font *font);
-void ta_font_free(ta_font *font);
-ta_rectf ta_font_push_text(ta_rect_uv **rects, ta_font *font, const char *text,
-    size_t text_len, bool screen, size_t *cursor_idx, ta_vec2 *cursor_offset,
-    const ta_vec2i *mouse_coords);
-void ta_font_render(struct ta_mesh *mesh, ta_font *font, float x, float y,
-    float z, bool clear_buffers, bool reset_uniforms);
+void ta_font_init           (ta_font *font);
+void ta_font_load_path      (ta_font *font, const char *path);
+void ta_font_delete         (ta_font *font);
+void ta_font_free           (ta_font *font);
+ta_rectf ta_font_push_text  (ta_font *font, const char *text, size_t text_len, bool screen, size_t *cursor_idx,
+                             ta_vec2 *cursor_offset, const ta_vec2i *mouse_coords, ta_rect_uv **rects);
+void ta_font_render         (ta_font *font, float x, float y, float z, bool clear_buffers, bool reset_uniforms,
+                             struct ta_mesh *mesh);

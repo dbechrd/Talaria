@@ -160,33 +160,7 @@ typedef struct ta_ray {
     ta_vec3 direction;
 } ta_ray;
 
-extern const ta_vec2 VEC2_ZERO;
-extern const ta_vec2 VEC2_ONE;
-extern const ta_vec2 VEC2_X;
-extern const ta_vec2 VEC2_Y;
-extern const ta_vec2 VEC2_NX;
-extern const ta_vec2 VEC2_NY;
-extern const ta_vec2 VEC2_MIN;
-extern const ta_vec2 VEC2_MAX;
-extern const ta_vec2 VEC2_EPSILON;
-
-extern const ta_vec3 VEC3_ZERO;
-extern const ta_vec3 VEC3_ONE;
-extern const ta_vec3 VEC3_X;
-extern const ta_vec3 VEC3_Y;
-extern const ta_vec3 VEC3_Z;
-extern const ta_vec3 VEC3_NX;
-extern const ta_vec3 VEC3_NY;
-extern const ta_vec3 VEC3_NZ;
-extern const ta_vec3 VEC3_MIN;
-extern const ta_vec3 VEC3_MAX;
-extern const ta_vec3 VEC3_EPSILON;
-
-extern const ta_vec4 QUAT_IDENT;
-extern const ta_mat3 MAT3_IDENT;
-extern const ta_mat3 MAT3_ZERO;
-extern const ta_mat4 MAT4_IDENT;
-
+// Colors
 extern const ta_rgba TA_COLOR_INVIS;
 extern const ta_rgba TA_COLOR_BLACK;
 extern const ta_rgba TA_COLOR_RED;
@@ -230,101 +204,133 @@ extern const ta_rgba TA_COLOR_SHADOW;
 extern const ta_size TA_SIZE_ZERO;
 extern const ta_vec2i TA_VEC2I_ZERO;
 
-int clamp(int d, int min, int max);
-float clampf(float f, float min, float max);
+// Misc. utilities
+int     clamp                   (int d, int min, int max);
+float   clampf                  (float f, float min, float max);
 
-void vec2_print(FILE *file, ta_vec2 v);
-int vec2_zero(ta_vec2 v);
-int vec2_tiny(ta_vec2 v);
-int vec2_equal(ta_vec2 a, ta_vec2 b);
-ta_vec2 vec2_neg(ta_vec2 v);
-ta_vec2 vec2_add(ta_vec2 a, ta_vec2 b);
-ta_vec2 vec2_sub(ta_vec2 a, ta_vec2 b);
-ta_vec2 vec2_scalef(ta_vec2 a, float s);
-float vec2_len(ta_vec2 v);
-float vec2_len2(ta_vec2 v);
-ta_vec2 vec2_normalize(ta_vec2 v);
+// Vector2
+extern const ta_vec2 VEC2_ZERO;
+extern const ta_vec2 VEC2_ONE;
+extern const ta_vec2 VEC2_X;
+extern const ta_vec2 VEC2_Y;
+extern const ta_vec2 VEC2_NX;
+extern const ta_vec2 VEC2_NY;
+extern const ta_vec2 VEC2_MIN;
+extern const ta_vec2 VEC2_MAX;
+extern const ta_vec2 VEC2_EPSILON;
 
-void vec3_print(FILE *file, ta_vec3 v);
-int vec3_zero(ta_vec3 v);
-int vec3_tiny(ta_vec3 v);
-int vec3_equal(ta_vec3 a, ta_vec3 b);
-ta_vec3 vec3_neg(ta_vec3 v);
-ta_vec3 vec3_add(ta_vec3 a, ta_vec3 b);
-ta_vec3 vec3_sub(ta_vec3 a, ta_vec3 b);
-ta_vec3 vec3_scalef(ta_vec3 a, float s);
-float vec3_len(ta_vec3 v);
-float vec3_len2(ta_vec3 v);
-ta_vec3 vec3_normalize(ta_vec3 v);
-float vec3_dot(ta_vec3 a, ta_vec3 b);
-ta_vec3 vec3_cross(ta_vec3 a, ta_vec3 b);
-ta_vec3 vec3_lerp(ta_vec3 a, ta_vec3 b, float w);
-ta_vec3 vec3_rotate_quat(ta_vec3 v, ta_vec4 q);
-ta_vec3 vec3_perp(ta_vec3 v);
+void    vec2_print              (FILE *file, ta_vec2 v);
+int     vec2_zero               (ta_vec2 v);
+int     vec2_tiny               (ta_vec2 v);
+int     vec2_equal              (ta_vec2 a, ta_vec2 b);
+ta_vec2 vec2_neg                (ta_vec2 v);
+ta_vec2 vec2_add                (ta_vec2 a, ta_vec2 b);
+ta_vec2 vec2_sub                (ta_vec2 a, ta_vec2 b);
+ta_vec2 vec2_scalef             (ta_vec2 a, float s);
+float   vec2_len                (ta_vec2 v);
+float   vec2_len2               (ta_vec2 v);
+ta_vec2 vec2_normalize          (ta_vec2 v);
 
-void vec4_print(FILE *file, ta_vec4 v);
-int vec4_zero(ta_vec4 v);
-int vec4_tiny(ta_vec4 v);
-int vec4_equal(ta_vec4 a, ta_vec4 b);
+// Vector3
+extern const ta_vec3 VEC3_ZERO;
+extern const ta_vec3 VEC3_ONE;
+extern const ta_vec3 VEC3_X;
+extern const ta_vec3 VEC3_Y;
+extern const ta_vec3 VEC3_Z;
+extern const ta_vec3 VEC3_NX;
+extern const ta_vec3 VEC3_NY;
+extern const ta_vec3 VEC3_NZ;
+extern const ta_vec3 VEC3_MIN;
+extern const ta_vec3 VEC3_MAX;
+extern const ta_vec3 VEC3_EPSILON;
 
-void quat_print(FILE *file, ta_vec4 q);
-int quat_zero(ta_vec4 v);
-int quat_ident(ta_vec4 q);
-int quat_equal(ta_vec4 a, ta_vec4 b);
-ta_vec4 quat_from_axis_angle(ta_vec3 axis, float deg);
-ta_vec4 quat_from_vec_vec(ta_vec3 from, ta_vec3 to);
-float quat_norm_sq(ta_vec4 q);
-float quat_norm(ta_vec4 q);
-ta_vec4 quat_normalize(ta_vec4 q);
-ta_vec4 quat_conjugate(ta_vec4 q);
-ta_vec4 quat_inverse(ta_vec4 q);
-ta_vec4 quat_mul(ta_vec4 a, ta_vec4 b);
-float quat_dot(ta_vec4 a, ta_vec4 b);
-ta_vec4 quat_nlerp(ta_vec4 a, ta_vec4 b, float w);
-ta_vec4 quat_slerp(ta_vec4 a, ta_vec4 b, float w);
+void    vec3_print              (FILE *file, ta_vec3 v);
+int     vec3_zero               (ta_vec3 v);
+int     vec3_tiny               (ta_vec3 v);
+int     vec3_equal              (ta_vec3 a, ta_vec3 b);
+ta_vec3 vec3_neg                (ta_vec3 v);
+ta_vec3 vec3_add                (ta_vec3 a, ta_vec3 b);
+ta_vec3 vec3_sub                (ta_vec3 a, ta_vec3 b);
+ta_vec3 vec3_scalef             (ta_vec3 a, float s);
+float   vec3_len                (ta_vec3 v);
+float   vec3_len2               (ta_vec3 v);
+ta_vec3 vec3_normalize          (ta_vec3 v);
+float   vec3_dot                (ta_vec3 a, ta_vec3 b);
+ta_vec3 vec3_cross              (ta_vec3 a, ta_vec3 b);
+ta_vec3 vec3_lerp               (ta_vec3 a, ta_vec3 b, float w);
+ta_vec3 vec3_rotate_quat        (ta_vec3 v, ta_vec4 q);
+ta_vec3 vec3_perp               (ta_vec3 v);
 
-void mat3_print(FILE *file, const ta_mat3 *m);
-ta_mat3 mat3_init(
-    float m00, float m01, float m02,
-    float m10, float m11, float m12,
-    float m20, float m21, float m22);
-int mat3_equal(const ta_mat3 *a, const ta_mat3 *b);
-ta_mat3 mat3_transpose(const ta_mat3 *m);
-ta_mat3 mat3_rotate_x(float deg);
-ta_mat3 mat3_rotate_y(float deg);
-ta_mat3 mat3_rotate_z(float deg);
-ta_mat3 mat3_rotate_quat(ta_vec4 q);
-ta_mat3 mat3_mul(const ta_mat3 *a, const ta_mat3 *b);
-ta_vec3 mat3_mul_vec3(const ta_mat3 *m, ta_vec3 v);
-ta_rgb mat3_mul_rgb(const ta_mat3 *m, ta_rgb v);
-ta_mat3 mat3_hue_rotation(float degrees);
-float mat3_deter(const ta_mat3 *m);
+// Vector4 & Quaternion
+extern const ta_vec4 QUAT_IDENT;
 
-void mat4_print(FILE *file, const ta_mat4 *m);
-ta_mat4 mat4_init(
-    float m00, float m01, float m02, float m03,
-    float m10, float m11, float m12, float m13,
-    float m20, float m21, float m22, float m23,
-    float m30, float m31, float m32, float m33);
-int mat4_equal(const ta_mat4 *a, const ta_mat4 *b);
-ta_mat4 mat4_transpose(const ta_mat4 *m);
-ta_mat4 mat4_translate(ta_vec3 v);
-ta_mat4 mat4_scale(ta_vec3 s);
-ta_mat4 mat4_scalef(float s);
-ta_mat4 mat4_rotate_x(float deg);
-ta_mat4 mat4_rotate_y(float deg);
-ta_mat4 mat4_rotate_z(float deg);
-ta_mat4 mat4_rotate_quat(ta_vec4 q);
-ta_mat4 mat4_mul(const ta_mat4 *a, const ta_mat4 *b);
-float mat4_det(const ta_mat4 *mat);
-int mat4_inverse(const ta_mat4 *m, ta_mat4 *result);
-ta_mat4 mat4_perspective(float fov_deg, float aspect, float znear, float zfar);
-ta_mat4 mat4_perspective_inf(float fov_deg, float aspect, float znear);
-ta_mat4 mat4_ortho(float left, float right, float bottom, float top,
-    float znear, float zfar);
-ta_mat4 mat4_frustum(ta_vec3 front, ta_vec3 right, ta_vec3 up);
-ta_mat4 mat4_lookat_fru(ta_vec3 position, ta_vec3 front, ta_vec3 right,
-    ta_vec3 up);
-ta_mat4 mat4_lookat(ta_vec3 position, ta_vec3 target, ta_vec3 world_up);
+void    vec4_print              (FILE *file, ta_vec4 v);
+int     vec4_zero               (ta_vec4 v);
+int     vec4_tiny               (ta_vec4 v);
+int     vec4_equal              (ta_vec4 a, ta_vec4 b);
 
+void    quat_print              (FILE *file, ta_vec4 q);
+int     quat_zero               (ta_vec4 v);
+int     quat_ident              (ta_vec4 q);
+int     quat_equal              (ta_vec4 a, ta_vec4 b);
+ta_vec4 quat_from_axis_angle    (ta_vec3 axis, float deg);
+ta_vec4 quat_from_vec_vec       (ta_vec3 from, ta_vec3 to);
+float   quat_norm_sq            (ta_vec4 q);
+float   quat_norm               (ta_vec4 q);
+ta_vec4 quat_normalize          (ta_vec4 q);
+ta_vec4 quat_conjugate          (ta_vec4 q);
+ta_vec4 quat_inverse            (ta_vec4 q);
+ta_vec4 quat_mul                (ta_vec4 a, ta_vec4 b);
+float   quat_dot                (ta_vec4 a, ta_vec4 b);
+ta_vec4 quat_nlerp              (ta_vec4 a, ta_vec4 b, float w);
+ta_vec4 quat_slerp              (ta_vec4 a, ta_vec4 b, float w);
+
+// Matrix3
+extern const ta_mat3 MAT3_IDENT;
+extern const ta_mat3 MAT3_ZERO;
+
+void    mat3_print              (FILE *file, const ta_mat3 *m);
+ta_mat3 mat3_init               (float m00, float m01, float m02,
+                                 float m10, float m11, float m12,
+                                 float m20, float m21, float m22);
+int     mat3_equal              (const ta_mat3 *a, const ta_mat3 *b);
+ta_mat3 mat3_transpose          (const ta_mat3 *m);
+ta_mat3 mat3_rotate_x           (float deg);
+ta_mat3 mat3_rotate_y           (float deg);
+ta_mat3 mat3_rotate_z           (float deg);
+ta_mat3 mat3_rotate_quat        (ta_vec4 q);
+ta_mat3 mat3_mul                (const ta_mat3 *a, const ta_mat3 *b);
+ta_vec3 mat3_mul_vec3           (const ta_mat3 *m, ta_vec3 v);
+ta_rgb  mat3_mul_rgb            (const ta_mat3 *m, ta_rgb v);
+ta_mat3 mat3_hue_rotation       (float degrees);
+float   mat3_deter              (const ta_mat3 *m);
+
+// Matrix4
+extern const ta_mat4 MAT4_IDENT;
+
+void    mat4_print              (FILE *file, const ta_mat4 *m);
+ta_mat4 mat4_init               (float m00, float m01, float m02, float m03,
+                                 float m10, float m11, float m12, float m13,
+                                 float m20, float m21, float m22, float m23,
+                                 float m30, float m31, float m32, float m33);
+int     mat4_equal              (const ta_mat4 *a, const ta_mat4 *b);
+ta_mat4 mat4_transpose          (const ta_mat4 *m);
+ta_mat4 mat4_translate          (ta_vec3 v);
+ta_mat4 mat4_scale              (ta_vec3 s);
+ta_mat4 mat4_scalef             (float s);
+ta_mat4 mat4_rotate_x           (float deg);
+ta_mat4 mat4_rotate_y           (float deg);
+ta_mat4 mat4_rotate_z           (float deg);
+ta_mat4 mat4_rotate_quat        (ta_vec4 q);
+ta_mat4 mat4_mul                (const ta_mat4 *a, const ta_mat4 *b);
+float   mat4_det                (const ta_mat4 *mat);
+int     mat4_inverse            (const ta_mat4 *m, ta_mat4 *result);
+ta_mat4 mat4_perspective        (float fov_deg, float aspect, float znear, float zfar);
+ta_mat4 mat4_perspective_inf    (float fov_deg, float aspect, float znear);
+ta_mat4 mat4_ortho              (float left, float right, float bottom, float top, float znear, float zfar);
+ta_mat4 mat4_frustum            (ta_vec3 front, ta_vec3 right, ta_vec3 up);
+ta_mat4 mat4_lookat_fru         (ta_vec3 position, ta_vec3 front, ta_vec3 right, ta_vec3 up);
+ta_mat4 mat4_lookat             (ta_vec3 position, ta_vec3 target, ta_vec3 world_up);
+
+// Tests
 void ta_math_test();

@@ -41,7 +41,7 @@ void ta_camera_set_ortho(ta_camera *camera, bool ortho)
 
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z)
 {
-    ta_transform *transform = ta_game_component(camera->entity_name,
+    ta_transform *transform = ta_game_component(camera->entity,
         RES_COMP_TRANSFORM);
     transform->xform.position.x = x;
     transform->xform.position.y = y;
@@ -143,7 +143,7 @@ void ta_camera_update(ta_camera *camera, float dt)
         camera->move_buffer = VEC3_ZERO;
     }
 
-    ta_transform *transform = ta_game_component(camera->entity_name,
+    ta_transform *transform = ta_game_component(camera->entity,
         RES_COMP_TRANSFORM);
 
     // Update position

@@ -25,17 +25,17 @@ typedef enum token_type {
 } token_type;
 
 typedef struct token {
-    token_type type;
-    u32 length;
+    token_type type;  // Token type
+    u32 length;       // Token length (for arrays and strings)
     union {
-        bool as_bool;
-        s32 as_int;
-        float as_float;
-        s32 *int_array;
-        float *float_array;
-        const char *string;
+        bool        as_bool;  // NOTE: These are only prefixed with "as_" to avoid colliding with reserved keywords
+        s32         as_int;
+        float       as_float;
+        s32         *int_array;
+        float       *float_array;
+        const char  *string;
     } value;
-    ta_file_pos file_pos;
+    ta_file_pos file_pos;  // DEBUG: Track file position for better error messages
 } token;
 
 token *tokenize(ta_file *f);

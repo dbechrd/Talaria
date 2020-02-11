@@ -65,10 +65,8 @@ bool ta_event_peek(ta_event *event)
 }
 void ta_event_events()
 {
-    ta_log_write(&tg_debug_log, SRC_EVENT, "  mouse reset relative...\n");
     ta_mouse_reset_relative();
-    ta_log_write(&tg_debug_log, SRC_EVENT, "  key reset changed...\n");
-    ta_key_reset_changed();
+    ta_key_clear();
     ta_log_write(&tg_debug_log, SRC_EVENT, "  glfwPollEvents...\n");
     glfwPollEvents();
 

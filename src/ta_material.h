@@ -1,16 +1,15 @@
 #pragma once
-#include "ta_uid.h"
+#include "ta_schema.h"
 
 typedef struct ta_material {
-    size_t index;
-    const char *name;
-    const char *shader;
-    const char *tex_albedo;
-    const char *tex_height;
-    const char *tex_metallic;
-    const char *tex_normal;
-    const char *tex_occlusion;
-    const char *tex_roughness;
+    TA_RESOURCE_HEADER
+    const char *shader;         // shader name
+    const char *tex_albedo;     // relative path to texture file
+    const char *tex_height;     // relative path to texture file
+    const char *tex_metallic;   // relative path to texture file
+    const char *tex_normal;     // relative path to texture file
+    const char *tex_occlusion;  // relative path to texture file
+    const char *tex_roughness;  // relative path to texture file
 } ta_material;
 
 void ta_material_init(ta_material *material);

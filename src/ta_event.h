@@ -75,19 +75,19 @@ typedef struct ta_event {
     ta_event_type type;
     bool handled;
     union {
-        ta_event_window_resize_event window_resize;
-        ta_event_mouse_move_event mouse_move;
-        ta_event_mouse_scroll_event mouse_scroll;
-        ta_event_key_event key;
+        ta_event_window_resize_event  window_resize;
+        ta_event_mouse_move_event     mouse_move;
+        ta_event_mouse_scroll_event   mouse_scroll;
+        ta_event_key_event            key;
         ta_event_key_text_input_event text_input;
 
         // TODO: Move game-specific events out of this struct?
-        ta_event_camera_rotate_event camera_rotate;
-        ta_event_button_event button;
+        ta_event_camera_rotate_event  camera_rotate;
+        ta_event_button_event         button;           // NOTE: This is for in-game big, red button entities, not input
     } data;
 } ta_event;
 
-void ta_event_push(ta_event *event);
-bool ta_event_pop(ta_event *event);
-bool ta_event_peek(ta_event *event);
-void ta_event_events();
+void ta_event_push      (ta_event *event);
+bool ta_event_pop       (ta_event *event);
+bool ta_event_peek      (ta_event *event);
+void ta_event_events    ();

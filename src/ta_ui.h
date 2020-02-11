@@ -101,56 +101,55 @@ typedef struct ta_ui_textbox_vec4_state {
 } ta_ui_textbox_vec4_state;
 
 // container flags
-#define TA_UI_AUTOSIZE_W      0x00000001  // auto-grow container to fit contents
-#define TA_UI_AUTOSIZE_H      0x00000002  // auto-grow container to fit contents
-#define TA_UI_AUTOSIZE        (TA_UI_AUTOSIZE_W | TA_UI_AUTOSIZE_H)
+#define TA_UI_AUTOSIZE_W        0x00000001  // auto-grow container to fit contents
+#define TA_UI_AUTOSIZE_H        0x00000002  // auto-grow container to fit contents
+#define TA_UI_AUTOSIZE          (TA_UI_AUTOSIZE_W | TA_UI_AUTOSIZE_H)
 
-void ta_ui_init(struct ta_font *font, ta_ui_textbox_state **textbox_editing,
-    ta_ui_textbox_state **textbox_dragging);
-void ta_ui_set_font(struct ta_font *font);
-void ta_ui_set_cursor(ui_cursor_type cursor_type);
+// Initialization
+void ta_ui_init                 (struct ta_font *font, ta_ui_textbox_state **textbox_editing, ta_ui_textbox_state **textbox_dragging);
+void ta_ui_set_font             (struct ta_font *font);
+void ta_ui_set_cursor           (ui_cursor_type cursor_type);
 
-void ta_ui_next_margin(int left, int top, int right, int bottom);
-void ta_ui_next_pad(int left, int top, int right, int bottom);
-void ta_ui_next_offset(int x, int y);
-void ta_ui_next_size(int w, int h);
-void ta_ui_next_invisible();
-void ta_ui_next_bg_color(ui_state_type state, float r, float g, float b, float a);
-void ta_ui_next_fg_color(ui_state_type state, float r, float g, float b, float a);
+// Styles
+void ta_ui_next_margin          (int left, int top, int right, int bottom);
+void ta_ui_next_pad             (int left, int top, int right, int bottom);
+void ta_ui_next_offset          (int x, int y);
+void ta_ui_next_size            (int w, int h);
+void ta_ui_next_invisible       ();
+void ta_ui_next_bg_color        (ui_state_type state, float r, float g, float b, float a);
+void ta_ui_next_fg_color        (ui_state_type state, float r, float g, float b, float a);
+ta_ui_state ta_ui_last_state    ();
 
-ta_ui_state ta_ui_last_frame_state();
-void ta_ui_row_begin();
-void ta_ui_row_end();
-void ta_ui_spacer(int w, int h);
-void ta_ui_window_begin(ta_ui_window_state *window, u32 flags);
-void ta_ui_window_end();
-void ta_ui_panel_begin(ta_ui_panel_state *panel, u32 flags);
-void ta_ui_panel_end();
-void ta_ui_button_begin(u32 flags);
-bool ta_ui_button_end();
-bool ta_ui_button(const char *text, size_t text_len);
-void ta_ui_toggle_button_begin(u32 flags);
-bool ta_ui_toggle_button_end(bool *checked);
-bool ta_ui_toggle_button(const char *text, size_t text_len, bool *checked);
-bool ta_ui_image(struct ta_texture *texture, int face);
-void ta_ui_label(const char *text, size_t text_len);
-bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textbox,
-    u32 flags);
-bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags);
-void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state,
-    bool normalize, bool multiple_rows, bool reset_button);
-void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
-    bool normalize, bool multiple_rows, bool reset_button);
-void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
-    bool normalize, bool multiple_rows, bool reset_button);
-void ta_ui_textbox_focus(ta_ui_textbox_state *textbox);
-bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c);
-void ta_ui_textbox_clear(ta_ui_textbox_state *textbox);
-void ta_ui_textbox_submit(ta_ui_textbox_state *textbox);
-void ta_ui_textbox_cancel(ta_ui_textbox_state *textbox);
-void ta_ui_tooltip_begin(const char *name);
-void ta_ui_tooltip_end(const char *name);
-void ta_ui_tooltip(const char *text, size_t text_len);
-//void ta_ui_statusbar();
+// Controls
+void ta_ui_row_begin            ();
+void ta_ui_row_end              ();
+void ta_ui_spacer               (int w, int h);
+void ta_ui_window_begin         (ta_ui_window_state *window, u32 flags);
+void ta_ui_window_end           ();
+void ta_ui_panel_begin          (ta_ui_panel_state *panel, u32 flags);
+void ta_ui_panel_end            ();
+void ta_ui_button_begin         (u32 flags);
+bool ta_ui_button_end           ();
+bool ta_ui_button               (const char *text, size_t text_len);
+void ta_ui_toggle_button_begin  (u32 flags);
+bool ta_ui_toggle_button_end    (bool *checked);
+bool ta_ui_toggle_button        (const char *text, size_t text_len, bool *checked);
+bool ta_ui_image                (struct ta_texture *texture, int face);
+void ta_ui_label                (const char *text, size_t text_len);
+bool ta_ui_textbox              (const char *text, size_t text_len, ta_ui_textbox_state *textbox, u32 flags);
+bool ta_ui_textbox_float        (float *value, ta_ui_textbox_state *textbox, u32 flags);
+void ta_ui_textbox_vec2         (ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state, bool normalize, bool multiple_rows, bool reset_button);
+void ta_ui_textbox_vec3         (ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state, bool normalize, bool multiple_rows, bool reset_button);
+void ta_ui_textbox_vec4         (ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state, bool normalize, bool multiple_rows, bool reset_button);
+void ta_ui_textbox_focus        (ta_ui_textbox_state *textbox);
+bool ta_ui_textbox_insert       (ta_ui_textbox_state *textbox, char c);
+void ta_ui_textbox_clear        (ta_ui_textbox_state *textbox);
+void ta_ui_textbox_submit       (ta_ui_textbox_state *textbox);
+void ta_ui_textbox_cancel       (ta_ui_textbox_state *textbox);
+void ta_ui_tooltip_begin        (const char *name);
+void ta_ui_tooltip_end          (const char *name);
+void ta_ui_tooltip              (const char *text, size_t text_len);
+//void ta_ui_statusbar            ();
 
+// Actions
 void ta_ui_render();

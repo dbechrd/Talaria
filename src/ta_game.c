@@ -80,21 +80,20 @@ typedef enum game_command {
 } game_command;
 
 typedef struct ta_game {
-    ta_game_state state;
-    ta_game_state state_prev;
-    int simulate;  // -1 = on, 0 = off, 1+ = simulate N frames
-    bool vsync;
-    u64 frame_num;
-    u64 sim_step;
+    ta_game_state state;        // current game state
+    ta_game_state state_prev;   // previous game state
+    bool vsync;                 // if true, v-sync is enabled
+    u64 frame_num;              // current frame number
+    int simulate;               // physics sim: -1 = on, 0 = off, 1+ = simulate N frames
+    u64 sim_step;               // current simulation step
+    ta_scene scene;             // active scene
+    ta_camera minimap_camera;   // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
     ta_keybind keybinds[TA_GAME_STATE_COUNT][GAME_COMMAND_COUNT];
-    ta_scene scene;
 
-    // TODO: Move this to DML?
-    ta_camera minimap_camera;
-
-    // Temp data, need to persist between frames for when sim is paused
-    ta_manifold *manifolds;
-    ta_rigid_body_pair *pairs;
+    // HACK: Temp data, need to persist between frames for debug rendering to work when sim is paused
+    // TODO(cleanup): Holding pointers across frames is a _BAD IDEA_. At the very least, hold names instead.
+    ta_rigid_body_pair *pairs;  // Array of most recent broadphase pairs
+    ta_manifold *manifolds;     // Array of most recent collision manifolds
 } ta_game;
 
 static ta_game game;
@@ -310,55 +309,54 @@ void ta_game_state_set(ta_game_state state)
         }
     }
 }
-void *ta_game_alloc(enum ta_resource_type type, const char *name, size_t name_len)
+void *ta_game_alloc(ta_res_type type, const char *name, size_t name_len)
 {
     return ta_scene_alloc(&game.scene, type, name, name_len);
 }
-void ta_game_destroy(enum ta_resource_type type, const char *name, size_t name_len)
+void ta_game_destroy(ta_res_type type, const char *name, size_t name_len)
 {
     ta_scene_destroy(&game.scene, type, name, name_len);
 }
 // If not found, ASSERT
-void *ta_game_by_name(ta_resource_type type, const char *name, size_t name_len)
+void *ta_game_by_name(ta_res_type type, const char *name, size_t name_len)
 {
     return ta_scene_find(&game.scene, type, name, name_len);
 }
 // If not found, returns NULL
-void *ta_game_by_name_try(ta_resource_type type, const char *name, size_t name_len)
+void *ta_game_by_name_try(ta_res_type type, const char *name, size_t name_len)
 {
     return ta_scene_find_try(&game.scene, type, name, name_len);
 }
 // If not found, returns the first resource of the given type
-void *ta_game_by_name_or_default(ta_resource_type type, const char *name, size_t name_len)
+void *ta_game_by_name_or_default(ta_res_type type, const char *name, size_t name_len)
 {
     return ta_scene_find_or_default(&game.scene, type, name, name_len);
 }
-void *ta_game_by_sym(enum ta_resource_type type, const char *sym)
+void *ta_game_by_sym(ta_res_type type, const char *sym)
 {
     return ta_game_by_name(type, SYM(sym));
 }
-void *ta_game_by_sym_try(enum ta_resource_type type, const char *sym)
+void *ta_game_by_sym_try(ta_res_type type, const char *sym)
 {
     return ta_game_by_name_try(type, SYM(sym));
 }
-void *ta_game_by_sym_or_default(enum ta_resource_type type, const char *sym)
+void *ta_game_by_sym_or_default(ta_res_type type, const char *sym)
 {
     return ta_game_by_name_or_default(type, SYM(sym));
 }
-void *ta_game_component_add(const char *entity, ta_resource_type type,
-    const char *name, size_t name_len)
+void *ta_game_component_add(const char *entity, ta_res_type type, const char *name, size_t name_len)
 {
     return ta_scene_component_add(&game.scene, entity, type, name, name_len);
 }
-void *ta_game_component(const char *entity, ta_resource_type type)
+void *ta_game_component(const char *entity, ta_res_type type)
 {
     return ta_scene_component(&game.scene, entity, type);
 }
-void *ta_game_component_try(const char *entity, ta_resource_type type)
+void *ta_game_component_try(const char *entity, ta_res_type type)
 {
     return ta_scene_component_try(&game.scene, entity, type);
 }
-void *ta_game_resource_pool(ta_resource_type type)
+void *ta_game_resource_pool(ta_res_type type)
 {
     void *pool = game.scene.resource_data[type];
     return pool;
@@ -382,7 +380,7 @@ ta_camera *ta_game_camera()
 ta_ray ta_game_camera_ray()
 {
     ta_camera *camera = ta_game_camera();
-    ta_transform *cam_trans = ta_game_component(camera->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
     ta_ray ray = { 0 };
     ray.origin = cam_trans->xform.position;
     ray.direction = camera->front;
@@ -430,8 +428,7 @@ void ta_game_window_resize()
         }
     }
 }
-static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
-    double ms_frame_delta, u64 sim_step)
+static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_frame_delta, u64 sim_step)
 {
     ta_size window_size = { 0 };
     ta_window_size(tg_window, &window_size.w, &window_size.h);
@@ -472,7 +469,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
 
     static ta_rect_uv *frame_time_rects = 0;
     ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
-    ta_font_push_text(&frame_time_rects, font, CSTR(frame_info), true, 0, 0, 0);
+    ta_font_push_text(font, CSTR(frame_info), true, 0, 0, 0, &frame_time_rects);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
         ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, 0, true, false);
     }
@@ -482,8 +479,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time,
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-    ta_font_render(&primitive_quads, font, SCREEN_WRAP_X(-320.0f), 0,
-        UI_LAYER_HUD, true, false);
+    ta_font_render(font, SCREEN_WRAP_X(-320.0f), 0, UI_LAYER_HUD, true, false, &primitive_quads);
 }
 static void game_draw_hud()
 {
@@ -520,8 +516,7 @@ static void game_draw_hud()
     ta_ui_window_end();
     ta_ui_render();
 }
-static void collision_broadphase(ta_rigid_body_pair **pairs,
-    ta_rigid_body *rigid_bodies, double dt)
+static void collision_broadphase(ta_rigid_body_pair **pairs, ta_rigid_body *rigid_bodies, double dt)
 {
     // Box2D supports 16 collision categories. For each fixture you can
     // specify which category it belongs to. You also specify what other
@@ -558,7 +553,7 @@ static void collision_broadphase(ta_rigid_body_pair **pairs,
     dlb_vec_each(ta_rigid_body *, a, rigid_bodies) {
         dlb_vec_range(ta_rigid_body *, b, a + 1, dlb_vec_end(rigid_bodies)) {
             // Don't let entities collide with themselves
-            if (a->entity_name == b->entity_name)
+            if (a->entity == b->entity)
                 continue;
 
             // HACK: Skip AABB broadphase for planes, makes no sense (always
@@ -574,8 +569,7 @@ static void collision_broadphase(ta_rigid_body_pair **pairs,
         }
     }
 }
-static void collision_narrowphase(ta_manifold **manifolds,
-    ta_rigid_body_pair *pairs, double dt)
+static void collision_narrowphase(ta_manifold **manifolds, ta_rigid_body_pair *pairs, double dt)
 {
     UNUSED(dt);
 
@@ -592,7 +586,7 @@ static void game_simulate(ta_camera *active_camera, float dt)
 
     ta_transform *player_transform = ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
     ta_camera *player_cam = ta_game_component(tg_e_player_camera, RES_COMP_CAMERA);
-    ta_transform *active_cam_trans = ta_game_component(active_camera->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *active_cam_trans = ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
 
     // Target player camera
     ta_camera_set_target_pos_absolute(player_cam,
@@ -617,8 +611,8 @@ static void game_simulate(ta_camera *active_camera, float dt)
             ta_rigid_body_update(body, dt);
         }
 
-        dlb_vec_zero(game.manifolds);
         dlb_vec_zero(game.pairs);
+        dlb_vec_zero(game.manifolds);
 
         // Broad phase
         collision_broadphase(&game.pairs, rigid_bodies, dt);
@@ -630,8 +624,8 @@ static void game_simulate(ta_camera *active_camera, float dt)
                 ta_rigid_body_resolve_collision(manifold, dt);
 
                 // Update colliding_with lists
-                dlb_vec_push(manifold->a->colliding_with, manifold->b->entity_name);
-                dlb_vec_push(manifold->b->colliding_with, manifold->a->entity_name);
+                dlb_vec_push(manifold->a->colliding_with, manifold->b->entity);
+                dlb_vec_push(manifold->b->colliding_with, manifold->a->entity);
             }
         }
 
@@ -713,7 +707,7 @@ static void game_render_colliders_debug()
 
     // Local space
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
-        ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+        ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->model);
 
@@ -731,7 +725,7 @@ static void game_render_colliders_debug()
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
-        ta_transform *transform = ta_game_component(body->entity_name, RES_COMP_TRANSFORM);
+        ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
 
         ta_sphere local_origin = { 0 };
         local_origin.center = transform->xform.position;
@@ -758,12 +752,11 @@ static void game_render_nametags_debug(ta_camera *camera)
     ta_mat4 projection = camera->projection;
     //ta_mat4 projection = mat4_ortho(-10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 20.0f);
 
-    ta_transform *cam_trans = ta_game_component(camera->entity_name, RES_COMP_TRANSFORM);
+    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
 
     ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
     dlb_vec_each(ta_transform *, transform, transforms) {
-        ta_rectf tag_rect = ta_font_push_text(&tag_rects, font,
-            SYM(transform->name), true, 0, 0, 0);
+        ta_rectf tag_rect = ta_font_push_text(font, SYM(transform->name), true, 0, 0, 0, &tag_rects);
 
         ta_vec3 tag_pos = transform->xform.position;
         ta_vec3 tag_to_cam = vec3_sub(cam_trans->xform.position, tag_pos);
@@ -771,8 +764,7 @@ static void game_render_nametags_debug(ta_camera *camera)
         tag_to_cam.y *= 0.0f;
         float tag_scalef = MAX(vec3_len(tag_to_cam), 4.0f);
 
-        ta_vec3 tag_offset = tag_offset = vec3_scalef(camera->right,
-            NDC_W(tag_rect.w) / 2.0f * tag_scalef);
+        ta_vec3 tag_offset = tag_offset = vec3_scalef(camera->right, NDC_W(tag_rect.w) / 2.0f * tag_scalef);
         ta_vec3 tag_pos_off = vec3_sub(tag_pos, tag_offset);
 
         ta_mat4 tag_rot = mat4_lookat(VEC3_ZERO, tag_to_cam, VEC3_Y);
@@ -799,10 +791,8 @@ static void game_render_nametags_debug(ta_camera *camera)
         tag_background.rect.x -= NDC_W(5.0f);
         tag_background.rect.w = NDC_W(tag_rect.w) + NDC_W(10.0f);
         tag_background.rect.h = NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
-        ta_primitive_push_rect_uv(0, tag_background, TA_COLOR_DARK_RED,
-            UI_LAYER_HUD_BG, false, false);
-        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
-            true, false);
+        ta_primitive_push_rect_uv(0, tag_background, TA_COLOR_DARK_RED, UI_LAYER_HUD_BG, false, false);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
         ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
 
         // Name tag text
@@ -815,11 +805,10 @@ static void game_render_nametags_debug(ta_camera *camera)
         //       make font_render's xform arguments stack with current value
         //       of SYM_U_MODEL.
         dlb_vec_each(ta_rect_uv *, rect, tag_rects) {
-            ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, UI_LAYER_HUD,
-                true, true);
+            ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, UI_LAYER_HUD, true, true);
         }
         dlb_vec_zero(tag_rects);
-        ta_font_render(&primitive_quads, font, 0, 0, 0, true, false);
+        ta_font_render(font, 0, 0, 0, true, false, &primitive_quads);
     }
 }
 void ta_game_loop()
@@ -829,8 +818,8 @@ void ta_game_loop()
     ////////////////////////////////////////////////////////////////////////////
 
     // TODO: Cleanup
-    ta_ui_barchart chart = ta_ui_barchart_init(10, 10, MAX(0, WINDOW_W - 20), 30);
-    UNUSED(chart);
+    ta_ui_barchart chart = { 0 };
+    ta_ui_barchart_init(&chart, 10, 10, MAX(0, WINDOW_W - 20), 30);
 
     // Eric Catto - Soft Constraints (GDC 2011)
     // Semi-implicit Euler will eventually blow up if you take big time steps. A
@@ -967,7 +956,7 @@ void ta_game_loop()
         // Debug render cameras as RGB spheres
         dlb_vec_each(ta_camera *, camera, cameras) {
             if (camera->name != tg_e_active_camera) {
-                ta_transform *cam_trans = ta_game_component(camera->entity_name, RES_COMP_TRANSFORM);
+                ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
                 ta_obb obb = { 0 };
                 obb.center = cam_trans->xform.position;
                 obb.extents = (ta_vec3){ 0.2f, 0.2f, 0.2f };
@@ -982,7 +971,7 @@ void ta_game_loop()
         }
         // Debug render light as spheres of the light's color
         dlb_vec_each(ta_light *, light, lights) {
-            ta_transform *transform = ta_game_component(light->entity_name,
+            ta_transform *transform = ta_game_component(light->entity,
                 RES_COMP_TRANSFORM);
 
             ta_sphere light_pos = { 0 };
@@ -994,9 +983,9 @@ void ta_game_loop()
                 color.g = 0.5f;
                 color.b = 0.5f;
             } else {
-                color.r = light->data.common.color.r;
-                color.g = light->data.common.color.g;
-                color.b = light->data.common.color.b;
+                color.r = light->color.r;
+                color.g = light->color.g;
+                color.b = light->color.b;
             }
             ta_primitive_push_sphere(0, light_pos, color);
 
