@@ -43,8 +43,7 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
     size_t num_materials = 0;
 
     unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
-    int ret = tinyobj_parse_obj(&attrib, &shapes, &num_shapes, &materials,
-        &num_materials, buf, dlb_vec_len(buf), flags);
+    int ret = tinyobj_parse_obj(&attrib, &shapes, &num_shapes, &materials, &num_materials, buf, dlb_vec_len(buf), flags);
     if (ret != TINYOBJ_SUCCESS) {
         DLB_ASSERT(!"ta_mesh_init: Failed to parse obj file");
     }

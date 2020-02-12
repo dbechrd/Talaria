@@ -724,14 +724,11 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
             }
 
             int buffer_size = 0;
-            glGetNamedBufferParameteriv(mesh->gl_buffers[i], GL_BUFFER_SIZE,
-                &buffer_size);
+            glGetNamedBufferParameteriv(mesh->gl_buffers[i], GL_BUFFER_SIZE, &buffer_size);
             if (queue_bytes > buffer_size) {
-                glNamedBufferData(mesh->gl_buffers[i], queue_bytes,
-                    mesh->buffers[i], GL_DYNAMIC_DRAW);
+                glNamedBufferData(mesh->gl_buffers[i], queue_bytes, mesh->buffers[i], GL_DYNAMIC_DRAW);
             } else {
-                glNamedBufferSubData(mesh->gl_buffers[i], 0, queue_bytes,
-                    mesh->buffers[i]);
+                glNamedBufferSubData(mesh->gl_buffers[i], 0, queue_bytes, mesh->buffers[i]);
             }
         }
 

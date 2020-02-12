@@ -219,10 +219,8 @@ void ta_shader_load(ta_shader *shader)
     glBindAttribLocation(program_id, TA_SHADER_ATTR_TANGENT,  "attr_tangent");
     ta_shader_program_link(program_id);
 
-    glGetProgramiv(shader->program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH,
-        &shader->max_attrib_name_len);
-    glGetProgramiv(shader->program_id, GL_ACTIVE_UNIFORM_MAX_LENGTH,
-        &shader->max_uniform_name_len);
+    glGetProgramiv(shader->program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &shader->max_attrib_name_len);
+    glGetProgramiv(shader->program_id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &shader->max_uniform_name_len);
 
     dlb_vec_each(ta_shader_attribute *, attr, shader->attributes) {
         attr->location = ta_shader_attribute_location(shader, attr->name);
