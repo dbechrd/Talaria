@@ -23,15 +23,15 @@ void gltf_dump(cgltf_data *data)
     printf("  version: %s\n", data->asset.version);
     printf("  min_version: %s\n", data->asset.min_version);
 
-    printf("extensions_used: %zu\n", dlb_vec_len(data->extensions_used));
-    if (data->extensions_used_count) {
-        for (size_t i = 0; i < data->extensions_used_count; ++i) {
-            printf("  name: %s\n", data->extensions_used[i]);
+    printf("extensions_used: %zu\n", dlb_vec_len(data->extensions_used_v));
+    if (data->extensions_used_v) {
+        dlb_vec_each(char **, extension, data->extensions_used_v) {
+            printf("  %s\n", *extension);
         }
     }
-    printf("extensions_required: %zu\n", dlb_vec_len(data->extensions_required));
-    dlb_vec_each(const char **, extension, data->extensions_required) {
-        printf("  name: %s\n", *extension);
+    printf("extensions_required: %zu\n", dlb_vec_len(data->extensions_required_v));
+    dlb_vec_each(const char **, extension, data->extensions_required_v) {
+        printf("  %s\n", *extension);
     }
 
     printf("json:\n");
@@ -43,57 +43,54 @@ void gltf_dump(cgltf_data *data)
     printf("  size: %zu bytes\n", data->bin_size);
     printf("  data: <binary blob>\n");
 
-    printf("accessors: %zu\n", dlb_vec_len(data->accessors));
-    //if (data->accessors_count) {
-    //    gltf_each(cgltf_accessor *, accessor, data->accessors) {
-    //        printf("  type: %d\n", accessor->type);
-    //    }
-    //}
-    printf("animations: %zu\n", dlb_vec_len(data->animations));
-    dlb_vec_each(cgltf_animation *, animation, data->animations) {
+    printf("accessors: %zu\n", dlb_vec_len(data->accessors_v));
+    dlb_vec_each(cgltf_accessor *, accessor, data->accessors_v) {
+        printf("  type: %d\n", accessor->type);
+        //printf("  type: %d\n", accessor->buffer_view.);
+    }
+    printf("animations: %zu\n", dlb_vec_len(data->animations_v));
+    dlb_vec_each(cgltf_animation *, animation, data->animations_v) {
         printf("  name: %s\n", animation->name);
-        dlb_vec_each(cgltf_animation_channel *, channel, animation->channels) {
+        dlb_vec_each(cgltf_animation_channel *, channel, animation->channels_v) {
             printf("    sampler\n");
             printf("      interpolation: %d\n", channel->sampler->interpolation);
             printf("    target node: %s\n", channel->target_node->name);
             printf("    target path: %d\n", channel->target_path);
         }
     }
-    printf("buffer_views: %zu\n", dlb_vec_len(data->buffer_views));
-    //if (data->buffer_views) {
-    //    gltf_each(cgltf_buffer_view *, buffer_view, data->buffer_views) {
-    //        printf("  type: %d\n", buffer_view->type);
-    //    }
-    //}
-    printf("buffers: %zu\n", dlb_vec_len(data->buffers));
-    dlb_vec_each(cgltf_buffer *, buffer, data->buffers) {
+    printf("buffer_views: %zu\n", dlb_vec_len(data->buffer_views_v));
+    dlb_vec_each(cgltf_buffer_view *, buffer_view, data->buffer_views_v) {
+        printf("  type: %d\n", buffer_view->type);
+    }
+    printf("buffers: %zu\n", dlb_vec_len(data->buffers_v));
+    dlb_vec_each(cgltf_buffer *, buffer, data->buffers_v) {
         printf("  size: %zu\n", buffer->size);
     }
-    printf("cameras: %zu\n", dlb_vec_len(data->cameras));
-    dlb_vec_each(cgltf_camera *, camera, data->cameras) {
+    printf("cameras: %zu\n", dlb_vec_len(data->cameras_v));
+    dlb_vec_each(cgltf_camera *, camera, data->cameras_v) {
         printf("  name: %s\n", camera->name);
     }
-    printf("images: %zu\n", dlb_vec_len(data->images));
-    dlb_vec_each(cgltf_image *, image, data->images) {
+    printf("images: %zu\n", dlb_vec_len(data->images_v));
+    dlb_vec_each(cgltf_image *, image, data->images_v) {
         printf("  name: %s\n", image->name);
         printf("  mime_type: %s\n", image->mime_type);
         printf("  uri: %s\n", image->uri);
         printf("  buffer_view type: %d\n", image->buffer_view->type);
     }
-    printf("lights: %zu\n", dlb_vec_len(data->lights));
-    dlb_vec_each(cgltf_light *, light, data->lights) {
+    printf("lights: %zu\n", dlb_vec_len(data->lights_v));
+    dlb_vec_each(cgltf_light *, light, data->lights_v) {
         printf("  name: %s\n", light->name);
     }
-    printf("materials: %zu\n", dlb_vec_len(data->materials));
-    dlb_vec_each(cgltf_material *, material, data->materials) {
+    printf("materials: %zu\n", dlb_vec_len(data->materials_v));
+    dlb_vec_each(cgltf_material *, material, data->materials_v) {
         printf("  name: %s\n", material->name);
     }
-    printf("meshes: %zu\n", dlb_vec_len(data->meshes));
-    dlb_vec_each(cgltf_mesh *, mesh, data->meshes) {
+    printf("meshes: %zu\n", dlb_vec_len(data->meshes_v));
+    dlb_vec_each(cgltf_mesh *, mesh, data->meshes_v) {
         printf("  name: %s\n", mesh->name);
-        printf("  primitives count: %zu\n", mesh->primitives_count);
-        printf("  target names count: %zu\n", mesh->target_names_count);
-        printf("  weights count: %zu\n", mesh->weights_count);
+        printf("  primitives count: %zu\n",   dlb_vec_len(mesh->primitives_v));
+        printf("  target names count: %zu\n", dlb_vec_len(mesh->target_names_v));
+        printf("  weights count: %zu\n",      dlb_vec_len(mesh->weights_v));
         if (mesh->extras.start_offset) {
             const char *extras = data->json + mesh->extras.start_offset;
             size_t extras_len = mesh->extras.end_offset - mesh->extras.start_offset;
@@ -109,8 +106,8 @@ void gltf_dump(cgltf_data *data)
             dlb_vec_free(tokens);
         }
     }
-    printf("nodes: %zu\n", dlb_vec_len(data->nodes));
-    dlb_vec_each(cgltf_node *, node, data->nodes) {
+    printf("nodes: %zu\n", dlb_vec_len(data->nodes_v));
+    dlb_vec_each(cgltf_node *, node, data->nodes_v) {
         printf("  name: %s\n", node->name);
         if (node->camera) {
             printf("    camera: %s\n", node->camera->name);
@@ -124,24 +121,24 @@ void gltf_dump(cgltf_data *data)
         if (node->skin) {
             printf("    skin: %s\n", node->skin->name);
         }
-        if (node->children_count) {
-            printf("    children count: %zu\n", node->children_count);
+        if (node->children_v) {
+            printf("    children count: %zu\n", dlb_vec_len(node->children_v));
         }
     }
-    printf("samplers: %zu\n", dlb_vec_len(data->samplers));
-    dlb_vec_each(cgltf_sampler *, sampler, data->samplers) {
+    printf("samplers: %zu\n", dlb_vec_len(data->samplers_v));
+    dlb_vec_each(cgltf_sampler *, sampler, data->samplers_v) {
         printf("  min_filter: %d\n", sampler->min_filter);
     }
-    printf("scenes: %zu\n", dlb_vec_len(data->scenes));
-    dlb_vec_each(cgltf_scene *, scene, data->scenes) {
+    printf("scenes: %zu\n", dlb_vec_len(data->scenes_v));
+    dlb_vec_each(cgltf_scene *, scene, data->scenes_v) {
         printf("  name: %s\n", scene->name);
     }
-    printf("skins: %zu\n", dlb_vec_len(data->skins));
-    dlb_vec_each(cgltf_skin *, skin, data->skins) {
+    printf("skins: %zu\n", dlb_vec_len(data->skins_v));
+    dlb_vec_each(cgltf_skin *, skin, data->skins_v) {
         printf("  name: %s\n", skin->name);
     }
-    printf("textures: %zu\n", dlb_vec_len(data->textures));
-    dlb_vec_each(cgltf_texture *, texture, data->textures) {
+    printf("textures: %zu\n", dlb_vec_len(data->textures_v));
+    dlb_vec_each(cgltf_texture *, texture, data->textures_v) {
         printf("  name: %s\n", texture->name);
     }
 
@@ -155,7 +152,7 @@ static void* ta_cgltf_alloc(void* user, cgltf_size size)
 {
     (void)user;
     void *ptr = 0;
-    dlb_vec_reserve_size(ptr, 1, size);
+    dlb_vec_alloc_count_size(ptr, 1, size);
     return ptr;
 }
 
@@ -163,9 +160,8 @@ static void* ta_cgltf_calloc(void* user, cgltf_size count, size_t size)
 {
     (void)user;
     void *ptr = 0;
-    dlb_vec_reserve_size(ptr, count, size);
     // NOTE: Assuming cgltf always fills up the buffers it requests
-    dlb_vec_hdr(ptr)->len = count;
+    dlb_vec_alloc_count_size(ptr, count, size);
     return ptr;
 }
 
@@ -299,15 +295,15 @@ void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute
 
 void ta_gltf_load(ta_gltf *gltf)
 {
-    dlb_vec_each(cgltf_mesh *, gltf_mesh, gltf->data->meshes) {
+    dlb_vec_each(cgltf_mesh *, gltf_mesh, gltf->data->meshes_v) {
         const char *name = gltf_mesh->name;
         ta_mesh *mesh = ta_game_alloc(RES_MESH, name, strlen(name));
 
-        dlb_vec_each(cgltf_attribute *, attr, gltf_mesh->primitives->attributes) {
+        dlb_vec_each(cgltf_attribute *, attr, gltf_mesh->primitives_v->attributes_v) {
             gltf_mesh_accessor(mesh, attr->data, attr->type);
         }
-        if (gltf_mesh->primitives->indices->count) {
-            cgltf_accessor *accessor = gltf_mesh->primitives->indices;
+        if (gltf_mesh->primitives_v->indices->count) {
+            cgltf_accessor *accessor = gltf_mesh->primitives_v->indices;
             //cgltf_size data_size = accessor->buffer_view->size;
             void *data = (char *)accessor->buffer_view->buffer->data + accessor->buffer_view->offset;
             DLB_ASSERT(data);
