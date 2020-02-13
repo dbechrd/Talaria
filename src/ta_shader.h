@@ -1,6 +1,6 @@
 #pragma once
 #include "ta_math.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 typedef enum ta_shader_attr {
     TA_SHADER_ATTR_POSITION = 0,

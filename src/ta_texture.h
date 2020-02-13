@@ -1,7 +1,7 @@
 #pragma once
 #include "ta_schema.h"
 #include "dlb/dlb_types.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 typedef enum ta_texture_type {
     TA_TEXTURE_2D,

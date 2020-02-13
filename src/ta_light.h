@@ -3,7 +3,7 @@
 #include "ta_math.h"
 #include "ta_texture.h"
 #include "dlb/dlb_types.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 struct ta_model;
 struct ta_shader;

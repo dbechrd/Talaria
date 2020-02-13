@@ -6,7 +6,7 @@
 #include "ta_symbol.h"
 #include "ta_window.h"
 #include "dlb/dlb_vector.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 #include <math.h>
 
 ta_mesh primitive_lines;
@@ -724,13 +724,15 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
             }
 
             int buffer_size = 0;
-            glGetNamedBufferParameteriv(mesh->gl_buffers[i], GL_BUFFER_SIZE, &buffer_size);
+            glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[i]);
+            glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size);
             if (queue_bytes > buffer_size) {
-                glNamedBufferData(mesh->gl_buffers[i], queue_bytes, mesh->buffers[i], GL_DYNAMIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, queue_bytes, mesh->buffers[i], GL_DYNAMIC_DRAW);
             } else {
-                glNamedBufferSubData(mesh->gl_buffers[i], 0, queue_bytes, mesh->buffers[i]);
+                glBufferSubData(GL_ARRAY_BUFFER, 0, queue_bytes, mesh->buffers[i]);
             }
         }
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
 
         // Draw the primitives
         ta_shader_bind(shader);
@@ -752,8 +754,6 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
 }
 void ta_primitive_render(bool clear_buffers, bool reset_uniforms)
 {
-    ta_primitive_render_mesh(&primitive_lines, tg_shader_lines, TA_LINES,
-        clear_buffers, reset_uniforms);
-    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
-        clear_buffers, reset_uniforms);
+    ta_primitive_render_mesh(&primitive_lines, tg_shader_lines, TA_LINES, clear_buffers, reset_uniforms);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, clear_buffers, reset_uniforms);
 }

@@ -5,7 +5,7 @@
 #include "ta_symbol.h"
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 ta_shader *tg_shader_lines;
 ta_shader *tg_shader_quads;

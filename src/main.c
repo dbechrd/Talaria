@@ -8,10 +8,10 @@
 #include "ta_symbol.h"
 #include "ta_timer.h"
 #include "ta_window.h"
+#include "misc/glad.h"
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_hash.h"
 #include "dlb/dlb_index.h"
-#include "misc/gl3w.h"
 #include "GLFW/glfw3.h"
 
 DLB_ASSERT_HANDLER(handle_assert)
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
 #include "ta_ui_barchart.c"
 #include "ta_viewport.c"
 #include "ta_window.c"
-#include "gl3w.c"
+#include "glad.c"
 
 // Single-header implementations
 #define DLB_MURMUR3_IMPLEMENTATION

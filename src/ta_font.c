@@ -11,7 +11,7 @@
 #include "ta_window.h"
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 #pragma warning(push)
 #pragma warning(disable: 6385)

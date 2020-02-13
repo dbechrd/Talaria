@@ -10,7 +10,7 @@
 #include "ta_window.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_index.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 #define DEFAULT_LIGHT_INTENSITY         1.0f
 #define DEFAULT_SHADOWMAP_RESOLUTION    1024

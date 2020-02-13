@@ -2,7 +2,7 @@
 #include "ta_window.h"
 #include "ta_mouse.h"
 #include "ta_game.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 typedef struct viewport {
     ta_rect viewport_rect;

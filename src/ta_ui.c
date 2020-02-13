@@ -16,7 +16,7 @@
 #include "ta_parse.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_murmur3.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 #define UI_DEBUG_PANEL          0
 #define UI_DEBUG_NO_TEXTURES    0

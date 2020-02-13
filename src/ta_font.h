@@ -3,7 +3,7 @@
 #include "ta_math.h"
 #include "dlb/dlb_types.h"
 #include "misc/stb_truetype.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 struct ta_mesh;
 

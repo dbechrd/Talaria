@@ -1,6 +1,6 @@
 #pragma once
 #include "ta_math.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 typedef enum ta_mesh_buffer_type {
     TA_MESH_BUFFER_POSITION,

@@ -29,7 +29,7 @@
 #include "ta_window.h"
 #include "dlb/dlb_vector.h"
 #include "GLFW/glfw3.h"
-#include "misc/gl3w.h"
+#include "misc/glad.h"
 
 // TODO: Ewwww globals
 const char *tg_font;

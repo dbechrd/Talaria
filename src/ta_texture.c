@@ -70,7 +70,7 @@ void ta_texture_create_and_bind(ta_texture *tex)
         tex->width, tex->height, tex->channels);
 
     GLenum target = texture_target(tex);
-    glCreateTextures(target, 1, &tex->gl_id);
+    glGenTextures(1, &tex->gl_id);
     glBindTexture(target, tex->gl_id);
 
     GLint param = tex->repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
