@@ -1660,9 +1660,6 @@ cgltf_size cgltf_accessor_read_index(const cgltf_accessor* accessor, cgltf_size 
 #define CGLTF_PTRFIXUP(var, data) if (var) { if ((cgltf_size)var > dlb_vec_len(data)) { return CGLTF_ERROR_JSON; } var = &data[(cgltf_size)var-1]; }
 #define CGLTF_PTRFIXUP_REQ(var, data) if (!var || (cgltf_size)var > dlb_vec_len(data)) { return CGLTF_ERROR_JSON; } var = &data[(cgltf_size)var-1];
 
-#define ____CGLTF_PTRFIXUP(var, data, size) if (var) { if ((cgltf_size)var > size) { return CGLTF_ERROR_JSON; } var = &data[(cgltf_size)var-1]; }
-#define ____CGLTF_PTRFIXUP_REQ(var, data, size) if (!var || (cgltf_size)var > size) { return CGLTF_ERROR_JSON; } var = &data[(cgltf_size)var-1];
-
 static int cgltf_json_strcmp(jsmntok_t const* tok, const uint8_t* json_chunk, const char* str)
 {
 	CGLTF_CHECK_TOKTYPE(*tok, JSMN_STRING);
@@ -1813,16 +1810,15 @@ static int cgltf_parse_json_array(cgltf_options* options, jsmntok_t const* token
 static int cgltf_parse_json_string_array(cgltf_options* options, jsmntok_t const* tokens, int i, const uint8_t* json_chunk, char*** out_array)
 {
     CGLTF_CHECK_TOKTYPE(tokens[i], JSMN_ARRAY);
-    i = cgltf_parse_json_array(options, tokens, i, json_chunk, sizeof(char*), (void**)out_array);
+	i = cgltf_parse_json_array(options, tokens, i, json_chunk, sizeof(char*), (void**)out_array);
     if (i < 0)
     {
         return i;
     }
 
-	// TODO: This might break badly
-	dlb_vec_each(char ***, arr, out_array)
+	dlb_vec_each(char **, str, *out_array)
     {
-        i = cgltf_parse_json_string(options, tokens, i, json_chunk, *arr);
+        i = cgltf_parse_json_string(options, tokens, i, json_chunk, str);
         if (i < 0)
         {
             return i;

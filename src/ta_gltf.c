@@ -15,24 +15,8 @@
 
 void gltf_dump(cgltf_data *data)
 {
+#define PRNTID(label, vec, ptr) printf(label"[%zu @ %p]\n", (ptr) - (vec), (ptr))
     printf("Type: %s\n", data->file_type == cgltf_file_type_gltf ? "GLTF" : "GLB");
-
-    printf("asset:\n");
-    printf("  copyright: %s\n", data->asset.copyright);
-    printf("  generator: %s\n", data->asset.generator);
-    printf("  version: %s\n", data->asset.version);
-    printf("  min_version: %s\n", data->asset.min_version);
-
-    printf("extensions_used: %zu\n", dlb_vec_len(data->extensions_used_v));
-    if (data->extensions_used_v) {
-        dlb_vec_each(char **, extension, data->extensions_used_v) {
-            printf("  %s\n", *extension);
-        }
-    }
-    printf("extensions_required: %zu\n", dlb_vec_len(data->extensions_required_v));
-    dlb_vec_each(const char **, extension, data->extensions_required_v) {
-        printf("  %s\n", *extension);
-    }
 
     printf("json:\n");
     printf("  size: %zu bytes\n", data->json_size);
@@ -42,6 +26,64 @@ void gltf_dump(cgltf_data *data)
     printf("bin:\n");
     printf("  size: %zu bytes\n", data->bin_size);
     printf("  data: <binary blob>\n");
+
+    printf("asset:\n");
+    if (data->asset.copyright)   printf("  copyright: %s\n",   data->asset.copyright);
+    if (data->asset.generator)   printf("  generator: %s\n",   data->asset.generator);
+    if (data->asset.version)     printf("  version: %s\n",     data->asset.version);
+    if (data->asset.min_version) printf("  min_version: %s\n", data->asset.min_version);
+
+    if (data->extensions_used_v) {
+        printf("extensions_used:\n");
+        dlb_vec_each(char **, extension, data->extensions_used_v) {
+            printf("  %s\n", *extension);
+        }
+    }
+    if (data->extensions_required_v) {
+        printf("extensions_required:\n");
+        dlb_vec_each(const char **, extension, data->extensions_required_v) {
+            printf("  %s\n", *extension);
+        }
+    }
+
+    PRNTID("scene: ", data->scenes_v, data->scene);
+    if (data->scenes_v) {
+        printf("scenes:\n");
+        dlb_vec_each(cgltf_scene *, scene, data->scenes_v) {
+            printf("  %s", scene->name);
+            PRNTID(" ", data->scenes_v, scene);
+            printf("    nodes:\n");
+            dlb_vec_each(cgltf_node **, node_p, scene->nodes_v) {
+                cgltf_node *node = *node_p;
+                printf("      %s", node->name);
+                PRNTID(" ", *scene->nodes_v, node);
+                //if (node->parent) PRNTID("        parent: ", *scene->nodes_v, node->parent);
+                //if (node->children_v) {
+                //    printf("        children\n");
+                //    dlb_vec_each(cgltf_node **, child_p, node->children_v) {
+                //        cgltf_node *child = *child_p;
+                //        PRNTID("          child: ", *scene->nodes_v, child);
+                //    }
+                //}
+                //if (node->skin)   PRNTID("        skin: ", data->skins_v, node->skin);
+                //if (node->mesh)   PRNTID("        mesh: ", data->meshes_v, node->mesh);
+                //if (node->camera) PRNTID("        camera: ", data->cameras_v, node->camera);
+                //if (node->light)  PRNTID("        light: ", data->lights_v, node->light);
+                //
+                //cgltf_float* weights_v;
+                //cgltf_bool has_translation;
+                //cgltf_bool has_rotation;
+                //cgltf_bool has_scale;
+                //cgltf_bool has_matrix;
+                //cgltf_float translation[3];
+                //cgltf_float rotation[4];
+                //cgltf_float scale[3];
+                //cgltf_float matrix[16];
+                //cgltf_extras extras;
+
+            }
+        }
+    }
 
     printf("accessors: %zu\n", dlb_vec_len(data->accessors_v));
     dlb_vec_each(cgltf_accessor *, accessor, data->accessors_v) {
@@ -129,10 +171,7 @@ void gltf_dump(cgltf_data *data)
     dlb_vec_each(cgltf_sampler *, sampler, data->samplers_v) {
         printf("  min_filter: %d\n", sampler->min_filter);
     }
-    printf("scenes: %zu\n", dlb_vec_len(data->scenes_v));
-    dlb_vec_each(cgltf_scene *, scene, data->scenes_v) {
-        printf("  name: %s\n", scene->name);
-    }
+
     printf("skins: %zu\n", dlb_vec_len(data->skins_v));
     dlb_vec_each(cgltf_skin *, skin, data->skins_v) {
         printf("  name: %s\n", skin->name);
@@ -146,6 +185,7 @@ void gltf_dump(cgltf_data *data)
     //cgltf_extras extras;
 
     printf("\n");
+#undef VEC_IDX
 }
 
 static void* ta_cgltf_alloc(void* user, cgltf_size size)

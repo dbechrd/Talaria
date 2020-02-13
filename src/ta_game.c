@@ -199,6 +199,7 @@ void ta_game_init()
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
+    ta_game_load_gltf("data/mesh/hier_test.gltf");
     ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
