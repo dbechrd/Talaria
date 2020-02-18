@@ -1,3 +1,5 @@
+#include "glad.c"
+#include "GLFW/glfw3.h"
 #include "ta_audio.h"
 #include "ta_editor.h"
 #include "ta_game.h"
@@ -12,7 +14,6 @@
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_hash.h"
 #include "dlb/dlb_index.h"
-#include "GLFW/glfw3.h"
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
@@ -88,8 +89,7 @@ int main(int argc, char *argv[])
     }
 
     ta_timer_init();
-    ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_ALL,
-        SRC_EVENT | SRC_GAME | SRC_EDITOR);
+    ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_ALL, 0);
     srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
@@ -114,6 +114,9 @@ int main(int argc, char *argv[])
     ta_game_init();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing editor...\n");
     ta_editor_init();
+
+    // TODO: Change log_level instead once that's implemented. This is dumb. I just don't want debug/info.
+    tg_debug_log.src_exclude |= SRC_AUDIO | SRC_CONSOLE | SRC_EVENT | SRC_GAME | SRC_EDITOR;
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Starting game loop...\n");
     ta_game_loop();
 
@@ -165,7 +168,6 @@ int main(int argc, char *argv[])
 #include "ta_ui_barchart.c"
 #include "ta_viewport.c"
 #include "ta_window.c"
-#include "glad.c"
 
 // Single-header implementations
 #define DLB_MURMUR3_IMPLEMENTATION

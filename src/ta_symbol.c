@@ -36,11 +36,12 @@ const char *SYM_U_LIGHT_ZFAR;
 const char *SYM_U_CAMERA_POS;
 const char *SYM_U_TEX;
 const char *SYM_U_TEX_ALBEDO;
-const char *SYM_U_TEX_HEIGHT;
+const char *SYM_U_TEX_EMISSION;
 const char *SYM_U_TEX_METALLIC;
+const char *SYM_U_TEX_ROUGHNESS;
+const char *SYM_U_TEX_HEIGHT;
 const char *SYM_U_TEX_NORMAL;
 const char *SYM_U_TEX_OCCLUSION;
-const char *SYM_U_TEX_ROUGHNESS;
 const char *SYM_U_LIGHTS_COUNT;
 const char *SYM_U_LIGHTS;
 const char *SYM_U_LIGHTS_INTENSITY[8];
@@ -62,11 +63,12 @@ const char *SYM_ENTITY_FREECAM;
 const char *SYM_ENTITY_BACKGROUND_MUSIC;
 const char *SYM_SHADER_EDITOR_SELECT;
 const char *SYM_MISSING_ALBEDO;
-const char *SYM_MISSING_HEIGHT;
+const char *SYM_MISSING_EMISSION;
 const char *SYM_MISSING_METALLIC;
+const char *SYM_MISSING_ROUGHNESS;
+const char *SYM_MISSING_HEIGHT;
 const char *SYM_MISSING_NORMAL;
 const char *SYM_MISSING_OCCLUSION;
-const char *SYM_MISSING_ROUGHNESS;
 
 // TODO: It may be useful to have multiple symbol tables to allow freeing
 //       symbols that are no longer in use (e.g. table per scene file). This
@@ -103,11 +105,12 @@ void ta_symbol_init() {
     SYM_U_CAMERA_POS    = INTERN("u_camera_pos");
     SYM_U_TEX           = INTERN("u_tex");
     SYM_U_TEX_ALBEDO    = INTERN("u_tex_albedo");
-    SYM_U_TEX_HEIGHT    = INTERN("u_tex_height");
+    SYM_U_TEX_EMISSION  = INTERN("u_tex_emission");
     SYM_U_TEX_METALLIC  = INTERN("u_tex_metallic");
+    SYM_U_TEX_ROUGHNESS = INTERN("u_tex_roughness");
     SYM_U_TEX_NORMAL    = INTERN("u_tex_normal");
     SYM_U_TEX_OCCLUSION = INTERN("u_tex_occlusion");
-    SYM_U_TEX_ROUGHNESS = INTERN("u_tex_roughness");
+    SYM_U_TEX_HEIGHT    = INTERN("u_tex_height");
     SYM_U_LIGHTS_COUNT  = INTERN("u_lights_count");
     SYM_U_LIGHTS        = INTERN("u_lights");
     SYM_U_LIGHTS_INTENSITY[0]       = INTERN("u_lights[0].intensity");
@@ -198,11 +201,12 @@ void ta_symbol_init() {
     SYM_ENTITY_BACKGROUND_MUSIC = INTERN("background_music");
     SYM_SHADER_EDITOR_SELECT    = INTERN("editor_select");
     SYM_MISSING_ALBEDO          = INTERN("missing_albedo");
-    SYM_MISSING_HEIGHT          = INTERN("missing_height");
+    SYM_MISSING_EMISSION        = INTERN("missing_emission");
     SYM_MISSING_METALLIC        = INTERN("missing_metallic");
+    SYM_MISSING_ROUGHNESS       = INTERN("missing_roughness");
+    SYM_MISSING_HEIGHT          = INTERN("missing_height");
     SYM_MISSING_NORMAL          = INTERN("missing_normal");
     SYM_MISSING_OCCLUSION       = INTERN("missing_occlusion");
-    SYM_MISSING_ROUGHNESS       = INTERN("missing_roughness");
 }
 
 const char *ta_symbol_intern(const char *s, size_t len) {

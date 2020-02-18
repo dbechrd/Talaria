@@ -617,7 +617,7 @@ int jsmn_parse(jsmn_parser *parser, const char *js, size_t len, jsmntok_t *token
 
 #ifdef __INTELLISENSE__
 /* This makes MSVC intellisense work. */
-#define CGLTF_IMPLEMENTATION
+//#define CGLTF_IMPLEMENTATION
 #endif
 
 #ifdef CGLTF_IMPLEMENTATION

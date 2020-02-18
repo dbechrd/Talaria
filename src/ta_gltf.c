@@ -15,7 +15,7 @@
 
 void gltf_dump(cgltf_data *data)
 {
-#define PRNTID(label, vec, ptr) printf(label"[%zu @ %p]\n", (ptr) - (vec), (ptr))
+#define PRNTID(label, vec, ptr) printf(label"%s [%zu @ %p]\n", (ptr)->name, (ptr) - (vec), (ptr))
     printf("Type: %s\n", data->file_type == cgltf_file_type_gltf ? "GLTF" : "GLB");
 
     printf("json:\n");
@@ -46,49 +46,181 @@ void gltf_dump(cgltf_data *data)
         }
     }
 
+    if (data->lights_v) {
+        printf("lights:\n");
+        dlb_vec_each(cgltf_light *, light, data->lights_v) {
+            PRNTID("  ", data->lights_v, light);
+            printf("    type: %d\n", light->type);
+            printf("    intensity: %f\n", light->intensity);
+            printf("    color: %f %f %f\n", light->color[0], light->color[1], light->color[2]);
+        }
+    }
+
     PRNTID("scene: ", data->scenes_v, data->scene);
     if (data->scenes_v) {
         printf("scenes:\n");
         dlb_vec_each(cgltf_scene *, scene, data->scenes_v) {
-            printf("  %s", scene->name);
-            PRNTID(" ", data->scenes_v, scene);
+            PRNTID("  ", data->scenes_v, scene);
             printf("    nodes:\n");
             dlb_vec_each(cgltf_node **, node_p, scene->nodes_v) {
                 cgltf_node *node = *node_p;
-                printf("      %s", node->name);
-                PRNTID(" ", *scene->nodes_v, node);
-                //if (node->parent) PRNTID("        parent: ", *scene->nodes_v, node->parent);
-                //if (node->children_v) {
-                //    printf("        children\n");
-                //    dlb_vec_each(cgltf_node **, child_p, node->children_v) {
-                //        cgltf_node *child = *child_p;
-                //        PRNTID("          child: ", *scene->nodes_v, child);
-                //    }
-                //}
-                //if (node->skin)   PRNTID("        skin: ", data->skins_v, node->skin);
-                //if (node->mesh)   PRNTID("        mesh: ", data->meshes_v, node->mesh);
-                //if (node->camera) PRNTID("        camera: ", data->cameras_v, node->camera);
-                //if (node->light)  PRNTID("        light: ", data->lights_v, node->light);
-                //
-                //cgltf_float* weights_v;
-                //cgltf_bool has_translation;
-                //cgltf_bool has_rotation;
-                //cgltf_bool has_scale;
-                //cgltf_bool has_matrix;
-                //cgltf_float translation[3];
-                //cgltf_float rotation[4];
-                //cgltf_float scale[3];
-                //cgltf_float matrix[16];
-                //cgltf_extras extras;
-
+                PRNTID("      ", *scene->nodes_v, node);
             }
         }
     }
 
+
+    printf("nodes:\n");
+    dlb_vec_each(cgltf_node *, node, data->nodes_v) {
+        PRNTID("  ", data->nodes_v, node);
+        if (node->parent) {
+            PRNTID("    parent: ", data->nodes_v, node->parent);
+        }
+        if (node->children_v) {
+            printf("    children:\n");
+            dlb_vec_each(cgltf_node **, child_p, node->children_v) {
+                cgltf_node *child = *child_p;
+                PRNTID("      ", data->nodes_v, child);
+            }
+        }
+        if (node->skin)   PRNTID("    skin: ", data->skins_v, node->skin);
+        if (node->mesh)   PRNTID("    mesh: ", data->meshes_v, node->mesh);
+        if (node->camera) PRNTID("    camera: ", data->cameras_v, node->camera);
+        if (node->light)  PRNTID("    light: ", data->lights_v, node->light);
+        if (node->has_rotation) {
+            printf("    rotation: %f %f %f %f\n", node->rotation[0], node->rotation[1], node->rotation[2], node->rotation[3]);
+        }
+        if (node->has_scale) {
+            ta_vec3 scale = { 0 };
+            scale.x = node->scale[0];
+            scale.y = node->scale[1];
+            scale.z = node->scale[2];
+            DLB_ASSERT(vec3_equal(scale, VEC3_ONE) && "Non-uniform scale not supported");
+        }
+        if (node->has_translation) {
+            printf("    translation: %f %f %f\n", node->translation[0], node->translation[1], node->translation[2]);
+        }
+        //
+        //cgltf_float* weights_v;
+        //cgltf_bool has_matrix;
+        //cgltf_float matrix[16];
+    }
+
+    if (data->cameras_v) {
+        printf("cameras:\n");
+        dlb_vec_each(cgltf_camera *, camera, data->cameras_v) {
+            PRNTID("  ", data->cameras_v, camera);
+            if (camera->type == cgltf_camera_type_perspective) {
+                printf("    type: perspective\n");
+                printf("    aspect_ratio: %f\n", camera->data.perspective.aspect_ratio);
+                printf("    yfov: %f\n", camera->data.perspective.yfov);
+                printf("    znear: %f\n", camera->data.perspective.znear);
+                printf("    zfar: %f\n", camera->data.perspective.zfar);
+            } else if (camera->type == cgltf_camera_type_orthographic) {
+                printf("    type: orthographic\n");
+                printf("    xmag: %f\n", camera->data.orthographic.xmag);
+                printf("    ymag: %f\n", camera->data.orthographic.ymag);
+                printf("    znear: %f\n", camera->data.orthographic.znear);
+                printf("    zfar: %f\n", camera->data.orthographic.zfar);
+            }
+        }
+    }
+
+
+    if (data->materials_v) {
+        printf("materials:\n");
+        dlb_vec_each(cgltf_material *, material, data->materials_v) {
+            PRNTID("  ", data->materials_v, material);
+            if (material->has_pbr_metallic_roughness) {
+                cgltf_pbr_metallic_roughness *pbr = &material->pbr_metallic_roughness;
+                printf("    pbr_metallic_roughness:\n");
+                if (pbr->base_color_texture.texture) {
+                    printf("      base_color_texture:\n");
+                    PRNTID("        texture: ", data->textures_v, pbr->base_color_texture.texture);
+                    //              TODO: Other properties
+                }
+                if (pbr->metallic_roughness_texture.texture) {
+                    printf("      metallic_roughness_texture:\n");
+                    PRNTID("        texture: ", data->textures_v, pbr->metallic_roughness_texture.texture);
+                    //              TODO: Other properties
+                }
+                printf("      base_color_factor: %f %f %f %f\n", pbr->base_color_factor[0], pbr->base_color_factor[1], pbr->base_color_factor[2], pbr->base_color_factor[3]);
+                printf("      metallic_factor: %f\n", pbr->metallic_factor);
+                printf("      roughness_factor: %f\n", pbr->roughness_factor);
+            }
+            if (material->has_pbr_specular_glossiness) {
+                cgltf_pbr_specular_glossiness *spec = &material->pbr_specular_glossiness;
+                printf("    pbr_specular_glossiness:\n");
+                if (spec->diffuse_texture.texture) {
+                    printf("      diffuse_texture:\n");
+                    PRNTID("        texture: ", data->textures_v, spec->diffuse_texture.texture);
+                    //              TODO: Other properties
+                }
+                if (spec->specular_glossiness_texture.texture) {
+                    printf("      metallic_roughness_texture:\n");
+                    PRNTID("        texture: ", data->textures_v, spec->specular_glossiness_texture.texture);
+                    //              TODO: Other properties
+                }
+                printf("      diffuse_factor: %f %f %f %f\n", spec->diffuse_factor[0], spec->diffuse_factor[1], spec->diffuse_factor[2], spec->diffuse_factor[3]);
+                printf("      specular_factor: %f %f %f\n", spec->specular_factor[0], spec->specular_factor[1], spec->specular_factor[2]);
+                printf("      glossiness_factor: %f\n", spec->glossiness_factor);
+            }
+            if (material->normal_texture.texture) {
+                printf("    normal_texture:\n");
+                PRNTID("      texture: ", data->textures_v, material->normal_texture.texture);
+            }
+            if (material->occlusion_texture.texture) {
+                printf("    occlusion_texture:\n");
+                PRNTID("      texture: ", data->textures_v, material->occlusion_texture.texture);
+            }
+            if (material->emissive_texture.texture) {
+                printf("    emissive_texture:\n");
+                PRNTID("      texture: ", data->textures_v, material->emissive_texture.texture);
+            }
+            printf("    emissive_factor: %f %f %f\n", material->emissive_factor[0], material->emissive_factor[1], material->emissive_factor[2]);
+            printf("    alpha_mode: %d\n", material->alpha_mode);
+            printf("    alpha_cutoff: %f\n", material->alpha_cutoff);
+            printf("    double_sided: %s\n", material->double_sided ? "True" : "False");
+            printf("    unlit: %s\n", material->unlit ? "True" : "False");
+        }
+    }
+
+
+    if (data->meshes_v) {
+        printf("meshes:\n");
+        dlb_vec_each(cgltf_mesh *, mesh, data->meshes_v) {
+            printf("  name: %s\n", mesh->name);
+            printf("  primitives count: %zu\n",   dlb_vec_len(mesh->primitives_v));
+            printf("  target names count: %zu\n", dlb_vec_len(mesh->target_names_v));
+            printf("  weights count: %zu\n",      dlb_vec_len(mesh->weights_v));
+            if (mesh->extras.start_offset) {
+                const char *extras = data->json + mesh->extras.start_offset;
+                size_t extras_len = mesh->extras.end_offset - mesh->extras.start_offset;
+
+                printf("  extras: (%zu bytes)\n", extras_len);
+                printf("    json: %*.s\n", (int)extras_len, extras);
+                printf("    dump:\n");
+
+                jsmntok_t *tokens = 0;
+                ta_json_parse(extras, extras_len, &tokens);
+                DLB_ASSERT(tokens);
+                ta_json_dump(extras, tokens, dlb_vec_len(tokens), 3);
+                dlb_vec_free(tokens);
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
     printf("accessors: %zu\n", dlb_vec_len(data->accessors_v));
     dlb_vec_each(cgltf_accessor *, accessor, data->accessors_v) {
         printf("  type: %d\n", accessor->type);
-        //printf("  type: %d\n", accessor->buffer_view.);
     }
     printf("animations: %zu\n", dlb_vec_len(data->animations_v));
     dlb_vec_each(cgltf_animation *, animation, data->animations_v) {
@@ -108,10 +240,7 @@ void gltf_dump(cgltf_data *data)
     dlb_vec_each(cgltf_buffer *, buffer, data->buffers_v) {
         printf("  size: %zu\n", buffer->size);
     }
-    printf("cameras: %zu\n", dlb_vec_len(data->cameras_v));
-    dlb_vec_each(cgltf_camera *, camera, data->cameras_v) {
-        printf("  name: %s\n", camera->name);
-    }
+
     printf("images: %zu\n", dlb_vec_len(data->images_v));
     dlb_vec_each(cgltf_image *, image, data->images_v) {
         printf("  name: %s\n", image->name);
@@ -119,54 +248,8 @@ void gltf_dump(cgltf_data *data)
         printf("  uri: %s\n", image->uri);
         printf("  buffer_view type: %d\n", image->buffer_view->type);
     }
-    printf("lights: %zu\n", dlb_vec_len(data->lights_v));
-    dlb_vec_each(cgltf_light *, light, data->lights_v) {
-        printf("  name: %s\n", light->name);
-    }
-    printf("materials: %zu\n", dlb_vec_len(data->materials_v));
-    dlb_vec_each(cgltf_material *, material, data->materials_v) {
-        printf("  name: %s\n", material->name);
-    }
-    printf("meshes: %zu\n", dlb_vec_len(data->meshes_v));
-    dlb_vec_each(cgltf_mesh *, mesh, data->meshes_v) {
-        printf("  name: %s\n", mesh->name);
-        printf("  primitives count: %zu\n",   dlb_vec_len(mesh->primitives_v));
-        printf("  target names count: %zu\n", dlb_vec_len(mesh->target_names_v));
-        printf("  weights count: %zu\n",      dlb_vec_len(mesh->weights_v));
-        if (mesh->extras.start_offset) {
-            const char *extras = data->json + mesh->extras.start_offset;
-            size_t extras_len = mesh->extras.end_offset - mesh->extras.start_offset;
 
-            printf("  extras: (%zu bytes)\n", extras_len);
-            printf("    json: %*.s\n", (int)extras_len, extras);
-            printf("    dump:\n");
 
-            jsmntok_t *tokens = 0;
-            ta_json_parse(extras, extras_len, &tokens);
-            DLB_ASSERT(tokens);
-            ta_json_dump(extras, tokens, dlb_vec_len(tokens), 3);
-            dlb_vec_free(tokens);
-        }
-    }
-    printf("nodes: %zu\n", dlb_vec_len(data->nodes_v));
-    dlb_vec_each(cgltf_node *, node, data->nodes_v) {
-        printf("  name: %s\n", node->name);
-        if (node->camera) {
-            printf("    camera: %s\n", node->camera->name);
-        }
-        if (node->light) {
-            printf("    light: %s\n", node->light->name);
-        }
-        if (node->mesh) {
-            printf("    mesh: %s\n", node->mesh->name);
-        }
-        if (node->skin) {
-            printf("    skin: %s\n", node->skin->name);
-        }
-        if (node->children_v) {
-            printf("    children count: %zu\n", dlb_vec_len(node->children_v));
-        }
-    }
     printf("samplers: %zu\n", dlb_vec_len(data->samplers_v));
     dlb_vec_each(cgltf_sampler *, sampler, data->samplers_v) {
         printf("  min_filter: %d\n", sampler->min_filter);
@@ -211,7 +294,7 @@ static void ta_cgltf_free(void* user, void* ptr)
     dlb_vec_free(ptr);
 }
 
-cgltf_result ta_gltf_parse_file(ta_gltf *gltf, const char *filename)
+cgltf_result ta_gltf_parse_file(ta_gltf *gltf)
 {
     static const char *ta_cgltf_error_str[] = {
         [cgltf_result_success] = "cgltf_result_success",
@@ -232,15 +315,15 @@ cgltf_result ta_gltf_parse_file(ta_gltf *gltf, const char *filename)
     options.memory_free = &ta_cgltf_free;
     cgltf_result err;
 
-    ta_log_write(&tg_debug_log, SRC_GLTF, "parsing %s\n", filename);
-    err = cgltf_parse_file(&options, filename, &gltf->data);
+    ta_log_write(&tg_debug_log, SRC_GLTF, "parsing %s\n", gltf->filename);
+    err = cgltf_parse_file(&options, gltf->filename, &gltf->data);
     if (err) {
         printf("cgltf_parse_file error: %s", ta_cgltf_error_str[err]);
         return err;
     }
 
     ta_log_write(&tg_debug_log, SRC_GLTF, "loading buffers\n");
-    err = cgltf_load_buffers(&options, gltf->data, filename);
+    err = cgltf_load_buffers(&options, gltf->data, gltf->filename);
     if (err) {
         printf("cgltf_load_buffers error: %s", ta_cgltf_error_str[err]);
         return err;
@@ -253,9 +336,10 @@ cgltf_result ta_gltf_parse_file(ta_gltf *gltf, const char *filename)
         return err;
     }
 
-    ta_log_write(&tg_debug_log, SRC_GLTF, "successfully loaded %s\n", filename);
+    ta_log_write(&tg_debug_log, SRC_GLTF, "dumping\n");
     gltf_dump(gltf->data);
 
+    ta_log_write(&tg_debug_log, SRC_GLTF, "successfully parsed %s\n", gltf->filename);
     return err;
 }
 
@@ -335,10 +419,12 @@ void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute
 
 void ta_gltf_load(ta_gltf *gltf)
 {
+    ta_log_write(&tg_debug_log, SRC_GLTF, "ta_gltf_load %s\n", gltf->filename);
     dlb_vec_each(cgltf_mesh *, gltf_mesh, gltf->data->meshes_v) {
-        const char *name = gltf_mesh->name;
-        ta_mesh *mesh = ta_game_alloc(RES_MESH, name, strlen(name));
+        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", gltf_mesh->name);
+        ta_mesh *mesh = ta_game_alloc(RES_MESH, gltf_mesh->name, strlen(gltf_mesh->name));
 
+        ta_log_write(&tg_debug_log, SRC_GLTF, "copying attributes\n");
         dlb_vec_each(cgltf_attribute *, attr, gltf_mesh->primitives_v->attributes_v) {
             gltf_mesh_accessor(mesh, attr->data, attr->type);
         }
@@ -381,9 +467,12 @@ void ta_gltf_load(ta_gltf *gltf)
             }
         }
 
+        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_create\n");
         ta_mesh_create(mesh);
+        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_init_normals\n");
         ta_mesh_init_normals(mesh, 0.1f);
     }
+    ta_log_write(&tg_debug_log, SRC_GLTF, "successfully loaded meshes for %s\n", gltf->filename);
 }
 
 void ta_gltf_free(ta_gltf *gltf)

@@ -440,7 +440,7 @@ static void debug_open_in_vs_code(const char *filename, u64 line, u64 column)
 static void bad_token(ta_scene *scene, token *tok, ta_schema_field_type type, const char *arr, const char *uni) {
     OPEN_VS_CODE();
     const char *type_str = 0;
-    ta_schema_field_type_str(type, type_str);
+    ta_schema_field_type_str(type, &type_str);
     PANIC(PANIC_HEADER "expected %s%s%s, found (%s) instead.\n", FILE_POS_ARGS, type_str, arr, uni,
         token_type_str(tok->type)
     )
@@ -533,7 +533,7 @@ void tokens_parse(ta_scene *scene, token *tokens)
                     if (!field) {
                         OPEN_VS_CODE();
                         const char *type_str = 0;
-                        ta_schema_field_type_str(stack[sp-1].type, type_str);
+                        ta_schema_field_type_str(stack[sp-1].type, &type_str);
                         PANIC(PANIC_HEADER "unexpected field '%s' in '%s' (%s)\n", FILE_POS_ARGS, tok->value.string,
                             stack[sp-1].name, type_str);
                     }
@@ -541,14 +541,14 @@ void tokens_parse(ta_scene *scene, token *tokens)
                         if (!stack[sp-1].is_union) {
                             OPEN_VS_CODE();
                             const char *type_str = 0;
-                            ta_schema_field_type_str(stack[sp-1].type, type_str);
+                            ta_schema_field_type_str(stack[sp-1].type, &type_str);
                             PANIC(PANIC_HEADER "unexpected union field '%s' before union type field found in '%s' (%s)\n",
                                 FILE_POS_ARGS, tok->value.string, stack[sp-1].name, type_str);
                         }
                         if (field->union_type != stack[sp-1].union_type) {
                             OPEN_VS_CODE();
                             const char *type_str = 0;
-                            ta_schema_field_type_str(stack[sp-1].type, type_str);
+                            ta_schema_field_type_str(stack[sp-1].type, &type_str);
                             PANIC(PANIC_HEADER "unexpected union field '%s' in %s (%s) with union_type = %d\n",
                                 FILE_POS_ARGS, tok->value.string, stack[sp-1].name, type_str, stack[sp-1].union_type);
                         }

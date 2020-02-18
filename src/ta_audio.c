@@ -17,6 +17,7 @@
 #include "AL/alext.h"
 #include <string.h>
 #include <math.h>
+#include <combaseapi.h>
 
 #define AUDIO_ASSERT 0  // change to 1 to assert that states are valid
 #define TA_AUDIO_SAMPLE_RATE 44100
@@ -49,17 +50,36 @@ FMOD_RESULT F_CALLBACK audio_fmod_callback(FMOD_SYSTEM *system, FMOD_SYSTEM_CALL
     UNUSED(commanddata2);
     UNUSED(userdata);
 
+    FMOD_RESULT result = FMOD_OK;
     if (type == FMOD_SYSTEM_CALLBACK_ERROR) {
         FMOD_ERRORCALLBACK_INFO *info = commanddata1;
+        // Ignore channels that have stopped playing or were stolen
+        switch (info->instancetype) {
+            case FMOD_ERRORCALLBACK_INSTANCETYPE_CHANNELCONTROL:
+                if (info->result == FMOD_ERR_INVALID_HANDLE ||
+                    info->result == FMOD_ERR_CHANNEL_STOLEN) {
+                    return result;
+                }
+            case FMOD_ERRORCALLBACK_INSTANCETYPE_CHANNEL:
+                if (info->result == FMOD_ERR_INVALID_HANDLE ||
+                    info->result == FMOD_ERR_CHANNEL_STOLEN) {
+                    return result;
+                }
+        }
         ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD Error:\n");
+        ta_log_write(&tg_debug_log, SRC_AUDIO, "  %d(%s)\n", info->result, FMOD_ErrorString(info->result));
         ta_log_write(&tg_debug_log, SRC_AUDIO, "  %s(%p)\n", FMOD_ErrorCallback_InstanceTypeString(info->instancetype), info->instance);
         ta_log_write(&tg_debug_log, SRC_AUDIO, "  %s(%s)\n", info->functionname, info->functionparams);
     }
-    return FMOD_OK;
+    return result;
 }
 
 void ta_audio_init()
 {
+    HRESULT com_result = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
+    if (com_result != S_OK) {
+        ta_log_write(&tg_debug_log, SRC_AUDIO, "CoInitializeEx returned unexpected code %d\n", com_result);
+    }
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Create...\n");
     TA_FMOD(FMOD_System_Create(&audio_state.fmod_system));
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Create done.\n");
@@ -68,7 +88,7 @@ void ta_audio_init()
     unsigned int version;
     FMOD_System_GetVersion(audio_state.fmod_system, &version);
     if (version < FMOD_VERSION) {
-        ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD lib version %08x doesn't match header version %08x", version,
+        ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD lib version %08x doesn't match header version %08x\n", version,
             FMOD_VERSION);
     }
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Init...\n");
@@ -90,9 +110,7 @@ void ta_audio_init()
     FMOD_System_PlaySound(audio_state.fmod_system, *sound2, 0, false, &audio_state.fmod_channel);
     FMOD_System_PlaySound(audio_state.fmod_system, *sound3, 0, false, &audio_state.fmod_channel);
 
-
-
-    ta_log_write(&tg_debug_log, SRC_AUDIO, "Enumerating devices...\n");
+    //ta_log_write(&tg_debug_log, SRC_AUDIO, "Enumerating devices...\n");
     const char *desired_device = 0;
     //const char *devices = alcGetString(NULL, ALC_ALL_DEVICES_SPECIFIER);
     //const char *s = devices;
@@ -196,6 +214,7 @@ void ta_audio_free()
     }
     FMOD_System_Close(audio_state.fmod_system);
     FMOD_System_Release(audio_state.fmod_system);
+    CoUninitialize();
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD cleanup done.\n");
 }
 

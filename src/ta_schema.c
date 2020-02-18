@@ -25,57 +25,57 @@
 ta_schema tg_schemas[TYP_COUNT];
 static dlb_hash schemas_by_name;
 
-void ta_schema_field_type_str(ta_schema_field_type type, const char *str)
+void ta_schema_field_type_str(ta_schema_field_type type, const char **str)
 {
     switch(type) {
-        case TYP_NULL:              str = "TYP_NULL";               break;
-        /// Misc. field types ////////////////////////////////////////////
-        case TYP_VEC2:              str = "TYP_VEC2";               break;
-        case TYP_VEC3:              str = "TYP_VEC3";               break;
-        case TYP_VEC4:              str = "TYP_VEC4";               break;
-        case TYP_MAT3:              str = "TYP_MAT3";               break;
-        case TYP_MAT4:              str = "TYP_MAT4";               break;
-        case TYP_XFORM:             str = "TYP_XFORM";              break;
-        case TYP_RGB:               str = "TYP_RGB";                break;
-        case TYP_RGBA:              str = "TYP_RGBA";               break;
-        case TYP_RGBA_U8:           str = "TYP_RGBA_U8";            break;
-        case TYP_LIGHT_AMBIENT:     str = "TYP_LIGHT_AMBIENT";      break;
-        case TYP_LIGHT_DIRECTIONAL: str = "TYP_LIGHT_DIRECTIONAL";  break;
-        case TYP_LIGHT_POINT:       str = "TYP_LIGHT_POINT";        break;
-        case TYP_LIGHT_SPOT:        str = "TYP_LIGHT_SPOT";         break;
-        case TYP_LIGHT_SHADOWMAP:   str = "TYP_LIGHT_SHADOWMAP";    break;
-        case TYP_SHADER_ATTRIBUTE:  str = "TYP_SHADER_ATTRIBUTE";   break;
-        case TYP_SHADER_UNIFORM:    str = "TYP_SHADER_UNIFORM";     break;
-        case TYP_PLANE:             str = "TYP_PLANE";              break;
-        case TYP_SPHERE:            str = "TYP_SPHERE";             break;
-        case TYP_AABB:              str = "TYP_AABB";               break;
-        case TYP_OBB:               str = "TYP_OBB";                break;
-        case TYP_COLLIDER:          str = "TYP_COLLIDER";           break;
-        /// Component types //////////////////////////////////////////////
-        case TYP_AUDIO_SOURCE:      str = "TYP_AUDIO_SOURCE";       break;
-        case TYP_BUTTON:            str = "TYP_BUTTON";             break;
-        case TYP_CAMERA:            str = "TYP_CAMERA";             break;
-        case TYP_GUN:               str = "TYP_GUN";                break;
-        case TYP_LIGHT:             str = "TYP_LIGHT";              break;
-        case TYP_MODEL:             str = "TYP_MODEL";              break;
-        case TYP_PLAYER:            str = "TYP_PLAYER";             break;
-        case TYP_TRANSFORM:         str = "TYP_TRANSFORM";          break;
-        case TYP_RIGID_BODY:        str = "TYP_RIGID_BODY";         break;
-        /// Resource types ///////////////////////////////////////////////
-        case TYP_AUDIO_BUFFER:      str = "TYP_AUDIO_BUFFER";       break;
-        case TYP_FONT:              str = "TYP_FONT";               break;
-        case TYP_MATERIAL:          str = "TYP_MATERIAL";           break;
-        case TYP_MESH:              str = "TYP_MESH";               break;
-        case TYP_SHADER:            str = "TYP_SHADER";             break;
-        case TYP_TEXTURE:           str = "TYP_TEXTURE";            break;
-        /// Atomic types /////////////////////////////////////////////////
-        case ATOM_BOOL:             str = "ATOM_BOOL";              break;
-        case ATOM_UINT8:            str = "ATOM_UINT8";             break;
-        case ATOM_INT:              str = "ATOM_INT";               break;
-        case ATOM_UINT:             str = "ATOM_UINT";              break;
-        case ATOM_FLOAT:            str = "ATOM_FLOAT";             break;
-        case ATOM_STRING:           str = "ATOM_STRING";            break;
-        case ATOM_ENUM:             str = "ATOM_ENUM";              break;
+        case TYP_NULL:              *str = "TYP_NULL";               break;
+        /// Misc. field types /////////////////////////////////////////////
+        case TYP_VEC2:              *str = "TYP_VEC2";               break;
+        case TYP_VEC3:              *str = "TYP_VEC3";               break;
+        case TYP_VEC4:              *str = "TYP_VEC4";               break;
+        case TYP_MAT3:              *str = "TYP_MAT3";               break;
+        case TYP_MAT4:              *str = "TYP_MAT4";               break;
+        case TYP_XFORM:             *str = "TYP_XFORM";              break;
+        case TYP_RGB:               *str = "TYP_RGB";                break;
+        case TYP_RGBA:              *str = "TYP_RGBA";               break;
+        case TYP_RGBA_U8:           *str = "TYP_RGBA_U8";            break;
+        case TYP_LIGHT_AMBIENT:     *str = "TYP_LIGHT_AMBIENT";      break;
+        case TYP_LIGHT_DIRECTIONAL: *str = "TYP_LIGHT_DIRECTIONAL";  break;
+        case TYP_LIGHT_POINT:       *str = "TYP_LIGHT_POINT";        break;
+        case TYP_LIGHT_SPOT:        *str = "TYP_LIGHT_SPOT";         break;
+        case TYP_LIGHT_SHADOWMAP:   *str = "TYP_LIGHT_SHADOWMAP";    break;
+        case TYP_SHADER_ATTRIBUTE:  *str = "TYP_SHADER_ATTRIBUTE";   break;
+        case TYP_SHADER_UNIFORM:    *str = "TYP_SHADER_UNIFORM";     break;
+        case TYP_PLANE:             *str = "TYP_PLANE";              break;
+        case TYP_SPHERE:            *str = "TYP_SPHERE";             break;
+        case TYP_AABB:              *str = "TYP_AABB";               break;
+        case TYP_OBB:               *str = "TYP_OBB";                break;
+        case TYP_COLLIDER:          *str = "TYP_COLLIDER";           break;
+        /// Component types ///////////////////////////////////////////////
+        case TYP_AUDIO_SOURCE:      *str = "TYP_AUDIO_SOURCE";       break;
+        case TYP_BUTTON:            *str = "TYP_BUTTON";             break;
+        case TYP_CAMERA:            *str = "TYP_CAMERA";             break;
+        case TYP_GUN:               *str = "TYP_GUN";                break;
+        case TYP_LIGHT:             *str = "TYP_LIGHT";              break;
+        case TYP_MODEL:             *str = "TYP_MODEL";              break;
+        case TYP_PLAYER:            *str = "TYP_PLAYER";             break;
+        case TYP_TRANSFORM:         *str = "TYP_TRANSFORM";          break;
+        case TYP_RIGID_BODY:        *str = "TYP_RIGID_BODY";         break;
+        /// Resource types ////////////////////////////////////////////////
+        case TYP_AUDIO_BUFFER:      *str = "TYP_AUDIO_BUFFER";       break;
+        case TYP_FONT:              *str = "TYP_FONT";               break;
+        case TYP_MATERIAL:          *str = "TYP_MATERIAL";           break;
+        case TYP_MESH:              *str = "TYP_MESH";               break;
+        case TYP_SHADER:            *str = "TYP_SHADER";             break;
+        case TYP_TEXTURE:           *str = "TYP_TEXTURE";            break;
+        /// Atomic types //////////////////////////////////////////////////
+        case ATOM_BOOL:             *str = "ATOM_BOOL";              break;
+        case ATOM_UINT8:            *str = "ATOM_UINT8";             break;
+        case ATOM_INT:              *str = "ATOM_INT";               break;
+        case ATOM_UINT:             *str = "ATOM_UINT";              break;
+        case ATOM_FLOAT:            *str = "ATOM_FLOAT";             break;
+        case ATOM_STRING:           *str = "ATOM_STRING";            break;
+        case ATOM_ENUM:             *str = "ATOM_ENUM";              break;
         default:
             DLB_ASSERT(!"<UNKNOWN_TA_FIELD_TYPE>");
             return;
@@ -354,14 +354,19 @@ void ta_schema_register()
     TYPE_END    (ta_font);
 
     TYPE_START  (ta_material, TYP_MATERIAL, ta_material_init, 0);
-    TYPE_FIELD  (ta_material, name,          ATOM_STRING);
-    TYPE_FIELD  (ta_material, shader,        ATOM_STRING);
-    TYPE_FIELD  (ta_material, tex_albedo,    ATOM_STRING);
-    TYPE_FIELD  (ta_material, tex_height,    ATOM_STRING);
-    TYPE_FIELD  (ta_material, tex_metallic,  ATOM_STRING);
-    TYPE_FIELD  (ta_material, tex_normal,    ATOM_STRING);
-    TYPE_FIELD  (ta_material, tex_occlusion, ATOM_STRING);
-    TYPE_FIELD  (ta_material, tex_roughness, ATOM_STRING);
+    TYPE_FIELD  (ta_material, name,              ATOM_STRING);
+    TYPE_FIELD  (ta_material, shader,            ATOM_STRING);
+    TYPE_FIELD  (ta_material, albedo_factor,     TYP_RGBA);
+    TYPE_FIELD  (ta_material, albedo_texture,    ATOM_STRING);
+    TYPE_FIELD  (ta_material, emission_factor,   TYP_RGB);
+    TYPE_FIELD  (ta_material, emission_texture,  ATOM_STRING);
+    TYPE_FIELD  (ta_material, metallic_factor,   ATOM_FLOAT);
+    TYPE_FIELD  (ta_material, metallic_texture,  ATOM_STRING);
+    TYPE_FIELD  (ta_material, roughness_factor,  ATOM_FLOAT);
+    TYPE_FIELD  (ta_material, roughness_texture, ATOM_STRING);
+    TYPE_FIELD  (ta_material, height_texture,    ATOM_STRING);
+    TYPE_FIELD  (ta_material, normal_texture,    ATOM_STRING);
+    TYPE_FIELD  (ta_material, occlusion_texture, ATOM_STRING);
     TYPE_END    (ta_material);
 
     TYPE_START  (ta_mesh, TYP_MESH, ta_mesh_init, ta_mesh_free);
@@ -451,9 +456,9 @@ void ta_schema_register()
     TYPE_FIELD      (ta_light, intensity,    ATOM_FLOAT);
     TYPE_FIELD      (ta_light, color,        TYP_RGB);
     TYPE_UNION_TYPE (ta_light, type,         ATOM_ENUM, ta_light_type_str);
-    TYPE_UNION_FIELD(ta_light, ambient,      TYP_LIGHT_AMBIENT,     data, TA_LIGHT_AMBIENT);
-    TYPE_UNION_FIELD(ta_light, directional,  TYP_LIGHT_DIRECTIONAL, data, TA_LIGHT_DIRECTIONAL);
-    TYPE_UNION_FIELD(ta_light, point,        TYP_LIGHT_POINT,       data, TA_LIGHT_POINT);
+    //TYPE_UNION_FIELD(ta_light, ambient,      TYP_LIGHT_AMBIENT,     data, TA_LIGHT_AMBIENT);
+    //TYPE_UNION_FIELD(ta_light, directional,  TYP_LIGHT_DIRECTIONAL, data, TA_LIGHT_DIRECTIONAL);
+    //TYPE_UNION_FIELD(ta_light, point,        TYP_LIGHT_POINT,       data, TA_LIGHT_POINT);
     TYPE_UNION_FIELD(ta_light, spot,         TYP_LIGHT_SPOT,        data, TA_LIGHT_SPOT);
     TYPE_FIELD      (ta_light, shadowmap,    TYP_LIGHT_SHADOWMAP);
     TYPE_FIELD      (ta_light, disabled,     ATOM_BOOL);

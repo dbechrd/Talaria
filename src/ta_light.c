@@ -1,5 +1,6 @@
 #include "ta_game.h"
 #include "ta_light.h"
+#include "ta_log.h"
 #include "ta_model.h"
 #include "ta_primitive.h"
 #include "ta_schema.h"
@@ -80,14 +81,15 @@ void ta_light_init(ta_light *light)
 
 static void shadowmap_directional_create(ta_light *light)
 {
-    // TODO: Use ta_texture_create or whatever
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "shadowmap_directional_create\n");
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "texture_create_and_bind\n");
     light->shadowmap.texture.type = TA_TEXTURE_2D;
     light->shadowmap.texture.width = light->shadowmap.resolution;
     light->shadowmap.texture.height = light->shadowmap.resolution;
     light->shadowmap.texture.gl_filter_min = GL_LINEAR; // GL_NEAREST;
     light->shadowmap.texture.gl_filter_mag = GL_LINEAR; // GL_NEAREST;
-
     ta_texture_create_and_bind(&light->shadowmap.texture);
+
     // TODO: Specify wrap mode as part of texture params, not sure if border
     // mode/color is worth refactoring out though.
     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
@@ -97,12 +99,13 @@ static void shadowmap_directional_create(ta_light *light)
     //float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
 
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
     // TOOD: Not sure if this if these formats are worth refactoring out either
     // TODO: Should internalformat be GL_DEPTH_COMPONENT16 instead?
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16,
-        light->shadowmap.resolution, light->shadowmap.resolution, 0,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, light->shadowmap.resolution, light->shadowmap.resolution, 0,
         GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
     glGenFramebuffers(1, &light->shadowmap.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
@@ -113,31 +116,35 @@ static void shadowmap_directional_create(ta_light *light)
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "glCheckFramebufferStatus\n");
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
     }
 
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "unbind buffer and texture\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ta_texture_unbind(&light->shadowmap.texture);
 }
 
 static void shadowmap_point_create(ta_light *light)
 {
-    // TODO: Use ta_texture_create or whatever
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "shadowmap_point_create\n");
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "texture_create_and_bind\n");
     light->shadowmap.texture.type = TA_TEXTURE_CUBEMAP;
     light->shadowmap.texture.width = light->shadowmap.resolution;
     light->shadowmap.texture.height = light->shadowmap.resolution;
     light->shadowmap.texture.gl_filter_min = GL_LINEAR; // GL_NEAREST;
     light->shadowmap.texture.gl_filter_mag = GL_LINEAR; // GL_NEAREST;
-
     ta_texture_create_and_bind(&light->shadowmap.texture);
+
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
     for (int i = 0; i < 6; ++i) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT16,
-            light->shadowmap.resolution, light->shadowmap.resolution, 0,
-            GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT16, light->shadowmap.resolution,
+            light->shadowmap.resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     }
 
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
     glGenFramebuffers(1, &light->shadowmap.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
@@ -145,11 +152,13 @@ static void shadowmap_point_create(ta_light *light)
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "glCheckFramebufferStatus\n");
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
     }
 
+    ta_log_write(&tg_debug_log, SRC_LIGHT, "unbind buffer and texture\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ta_texture_unbind(&light->shadowmap.texture);
 }

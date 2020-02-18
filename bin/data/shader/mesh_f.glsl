@@ -73,11 +73,12 @@ uniform Material u_material;
 
 // TODO: Combine these as above for performance; want ease-of-use for dev
 uniform sampler2D u_tex_albedo;
-uniform sampler2D u_tex_height;
+uniform sampler2D u_tex_emission;
 uniform sampler2D u_tex_metallic;
+uniform sampler2D u_tex_roughness;
+uniform sampler2D u_tex_height;
 uniform sampler2D u_tex_normal;
 uniform sampler2D u_tex_occlusion;
-uniform sampler2D u_tex_roughness;
 
 #define LIGHT_AMBIENT       0
 #define LIGHT_DIRECTIONAL   1
@@ -124,19 +125,26 @@ uniform bool u_selected;
 #define DBG_MTL_OCCLUSION   10
 uniform int u_debug_channel;
 
+vec2 ParallaxMapping(sampler2D heightmap, vec2 texCoords, vec3 viewDir);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 FresnelSchlick(float cosTheta, vec3 F0);
 
 void main()
 {
+    vec3 V = normalize(vertex.tbn_camera_pos - vertex.tbn_position);
     vec2 vertex_uv = vertex.uv;// * 8.0;
+    vertex_uv = ParallaxMapping(u_tex_height, vertex_uv, V);
+    // Edge artifacts can sometimes be cleaned up like so, but I don't like this idea since it disallows UVs > 1.0
+    //if (vertex_uv.x > 1.0 || vertex_uv.y > 1.0 || vertex_uv.x < 0.0 || vertex_uv.y < 0.0)
+    //    discard;
+
     // TODO: Use defaults if texture not present
     // NOTE: Currently implemented in ta_model.c, maybe it should stay there?
     vec4  tex_albedo    = texture(u_tex_albedo,    vertex_uv);
     vec3  mtl_albedo    = tex_albedo.rgb;                           // default: none
     float mtl_opacity   = tex_albedo.a;                             // default: 1.0
-    float mtl_height    = texture(u_tex_height,    vertex_uv).r;    // default: 0.0
+    //float mtl_height    = texture(u_tex_height,    vertex_uv).r;    // default: 0.0
     float mtl_metallic  = texture(u_tex_metallic,  vertex_uv).r;    // default: 0.0
     vec3  mtl_normal    = texture(u_tex_normal,    vertex_uv).rgb;  // default: vec3(0.0, 0.0, 1.0)
     float mtl_occlusion = texture(u_tex_occlusion, vertex_uv).r;    // default: 0.0
@@ -144,7 +152,6 @@ void main()
     mtl_roughness = max(mtl_roughness, 0.001);
 
     vec3 N = normalize(mtl_normal * 2.0 - 1.0);
-    vec3 V = normalize(vertex.tbn_camera_pos - vertex.tbn_position);
 
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, mtl_albedo, mtl_metallic);
@@ -359,6 +366,20 @@ void main()
             final_color = dbg_mtl_occlusion;
             break;
     };
+}
+
+vec2 ParallaxMapping(sampler2D heightmap, vec2 texCoords, vec3 viewDir)
+{
+    // TODO: Make this a uniform and material property
+    const float u_height_factor = 0.02;
+
+    //float height = texture(heightmap, texCoords).r;
+    // NOTE: Invert to get depth instead of height
+    // https://learnopengl.com/Advanced-Lighting/Parallax-Mapping
+    float height = 1.0 - texture(heightmap, texCoords).r;
+
+    vec2 p = viewDir.xy / viewDir.z * (height * u_height_factor);
+    return texCoords - p;
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

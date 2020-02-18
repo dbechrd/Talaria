@@ -28,7 +28,6 @@ void ta_file_open(ta_file *file, const char *filename, ta_file_mode mode) {
 
 void ta_file_close(ta_file *f) {
     fclose(f->hnd);
-    dlb_free(f);
 }
 
 void ta_file_debug_context(ta_file *f)

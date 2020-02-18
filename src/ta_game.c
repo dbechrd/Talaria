@@ -199,9 +199,10 @@ void ta_game_init()
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
-    ta_game_load_gltf("data/mesh/hier_test.gltf");
-    ta_game_load_gltf("data/mesh/rock_0001.gltf");
+    //ta_game_load_gltf("data/mesh/hier_test.gltf");
+    //ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
+    ta_game_load_gltf("data/mesh/button.gltf");
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
 
     //--------------------------------------------------------------------------
@@ -366,7 +367,8 @@ void ta_game_load_gltf(const char *filename)
 {
     ta_gltf gltf = { 0 };
     //err = ta_gltf_parse(data, "F:/Users/User/Rez/Models/bee.glb");
-    int err = ta_gltf_parse_file(&gltf, filename);
+    gltf.filename = filename;
+    int err = ta_gltf_parse_file(&gltf);
     if (err) {
         ta_log_write(&tg_debug_log, SRC_SYSTEM, "Failed to load gltf model\n");
         DLB_ASSERT(0);

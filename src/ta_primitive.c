@@ -25,11 +25,25 @@ void ta_primitive_init()
     dlb_vec_reserve(primitive_lines.colors, 128);
     ta_mesh_create(&primitive_lines);
 
+    dlb_vec_reserve(primitive_lines_perma.positions, 128);
+    dlb_vec_reserve(primitive_lines_perma.colors, 128);
+    ta_mesh_create(&primitive_lines_perma);
+
     ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing quads...\n");
     dlb_vec_reserve(primitive_quads.positions, 128);
     dlb_vec_reserve(primitive_quads.colors, 128);
     dlb_vec_reserve(primitive_quads.uvs, 128);
     ta_mesh_create(&primitive_quads);
+
+    ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing tooltips...\n");
+    dlb_vec_reserve(primitive_quads_tooltip_bg.positions, 6);
+    dlb_vec_reserve(primitive_quads_tooltip_bg.colors, 6);
+    dlb_vec_reserve(primitive_quads_tooltip_bg.uvs, 6);
+    ta_mesh_create(&primitive_quads_tooltip_bg);
+    dlb_vec_reserve(primitive_quads_tooltip_fg.positions, 6);
+    dlb_vec_reserve(primitive_quads_tooltip_fg.colors, 6);
+    dlb_vec_reserve(primitive_quads_tooltip_fg.uvs, 6);
+    ta_mesh_create(&primitive_quads_tooltip_fg);
 }
 
 #if 0
@@ -722,6 +736,9 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
             if (!queue_bytes) {
                 continue;
             }
+            // There's data in the mesh, butbut no GL buffer exists (could create on-demand instead of asserting, but
+            // this seems undesirable).
+            DLB_ASSERT(mesh->gl_buffers[i]);
 
             int buffer_size = 0;
             glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[i]);

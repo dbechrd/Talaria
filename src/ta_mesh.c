@@ -228,8 +228,12 @@ void ta_mesh_init_normals(ta_mesh *mesh, float scale)
     DLB_ASSERT(!mesh->vertex_normals);
 
     size_t normals_count = dlb_vec_len(mesh->normals);
-    DLB_ASSERT(normals_count > 0);
+    DLB_ASSERT(normals_count > 0);  // Did you forget to export normals?
     DLB_ASSERT(normals_count == dlb_vec_len(mesh->positions));
+    size_t tangents_count = dlb_vec_len(mesh->tangents);
+    DLB_ASSERT(tangents_count > 0);  // Did you forget to export tangents (or triangulate faces before gltf export)?
+    DLB_ASSERT(tangents_count == dlb_vec_len(mesh->positions));
+
     dlb_vec_reserve(mesh->vertex_normals, normals_count);
 
     size_t face_count = normals_count / 3;

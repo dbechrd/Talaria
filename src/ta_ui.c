@@ -355,8 +355,8 @@ static ta_rect rect_intersect(ta_rect a, ta_rect b)
     ta_rect result = { 0 };
     result.x = MAX(a.x, b.x);
     result.y = MAX(a.y, b.y);
-    result.w = MIN(a.x + a.w, b.x + b.w) - result.x;
-    result.h = MIN(a.y + a.h, b.y + b.h) - result.y;
+    result.w = MAX(0, MIN(a.x + a.w, b.x + b.w) - result.x);
+    result.h = MAX(0, MIN(a.y + a.h, b.y + b.h) - result.y);
     return result;
 }
 static bool rect_contains_mouse(ta_rect rect)
@@ -1659,8 +1659,10 @@ static void ui_render_scrollbars(ui_frame *frame)
 }
 static void ui_render_tooltips()
 {
-    ta_primitive_render_mesh(&primitive_quads_tooltip_bg, tg_shader_quads, TA_TRIANGLES, true, false);
-    ta_font_render(ui_font, 0, 0, UI_LAYER_TIP, true, false, &primitive_quads_tooltip_fg);
+    if (primitive_quads_tooltip_fg.positions) {
+        ta_primitive_render_mesh(&primitive_quads_tooltip_bg, tg_shader_quads, TA_TRIANGLES, true, false);
+        ta_font_render(ui_font, 0, 0, UI_LAYER_TIP, true, false, &primitive_quads_tooltip_fg);
+    }
 }
 #if 0
 // TODO: Move this to ta_ui_statusbar
@@ -1704,28 +1706,36 @@ void ta_ui_render()
     glEnable(GL_SCISSOR_TEST);
 
     dlb_vec_each(ui_frame *, frame, ui_frames) {
-        if (frame->internal_flags & TA_UI_INVISIBLE || !ui_renderers[frame->type]) {
-            continue;
+        if (!(frame->internal_flags & TA_UI_INVISIBLE) && ui_renderers[frame->type]) {
+            frame->clip_rect = TA_RECT_ZERO;
+            frame->clip_rect.w = WINDOW_W;
+            frame->clip_rect.h = WINDOW_H;
+            size_t container_idx = frame->container_idx;
+            while(container_idx) {
+                DLB_ASSERT(container_idx < dlb_vec_len(ui_frames));
+                ui_frame *container = &ui_frames[container_idx];
+                frame->clip_rect = rect_intersect(frame->clip_rect, container->rect);
+                if (!frame->clip_rect.w || !frame->clip_rect.h) {
+                    break;
+                }
+                container_idx = container->container_idx;
+            }
+
+            // NOTE: If overlap has zero width/height, there's nothing to render
+            if (frame->clip_rect.w && frame->clip_rect.h) {
+                int inv_y = WINDOW_H - (frame->clip_rect.y + frame->clip_rect.h);
+                // Note: OpenGL generates error 1281 (invalid value) if w/h is negative
+                DLB_ASSERT(frame->clip_rect.w >= 0);
+                DLB_ASSERT(frame->clip_rect.h >= 0);
+                glScissor(frame->clip_rect.x, inv_y, frame->clip_rect.w, frame->clip_rect.h);
+
+                ui_renderers[frame->type](frame);
+                ui_render_scrollbars(frame);
+            }
         }
 
-        frame->clip_rect = TA_RECT_ZERO;
-        frame->clip_rect.w = WINDOW_W;
-        frame->clip_rect.h = WINDOW_H;
-        size_t container_idx = frame->container_idx;
-        while(container_idx) {
-            DLB_ASSERT(container_idx < dlb_vec_len(ui_frames));
-            ui_frame *container = &ui_frames[container_idx];
-            frame->clip_rect = rect_intersect(frame->clip_rect, container->rect);
-            container_idx = container->container_idx;
-        }
-        int inv_y = WINDOW_H - (frame->clip_rect.y + frame->clip_rect.h);
-        glScissor(frame->clip_rect.x, inv_y, frame->clip_rect.w, frame->clip_rect.h);
-
-        ui_renderers[frame->type](frame);
-        ui_render_scrollbars(frame);
-
-        // Free any per-frame memory
-        dlb_vec_free(frame->text_rects);
+        // Clear any per-frame memory
+        dlb_vec_zero(frame->text_rects);
     }
 
     glDisable(GL_SCISSOR_TEST);

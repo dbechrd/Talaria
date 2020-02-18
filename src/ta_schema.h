@@ -139,7 +139,7 @@ typedef struct ta_schema {
 
 extern ta_schema tg_schemas[TYP_COUNT];
 
-void ta_schema_field_type_str   (ta_schema_field_type type, const char *str);
+void ta_schema_field_type_str   (ta_schema_field_type type, const char **str);
 void ta_schema_register         ();
 void ta_schema_find_by_name     (const char *name, int len, ta_schema **schema);
 void ta_schema_field_find       (ta_schema_field_type type, const char *name, ta_schema_field **field);

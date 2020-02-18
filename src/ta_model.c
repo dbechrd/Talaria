@@ -63,12 +63,12 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     if (!camera->debug_no_mesh) {
         ta_material *material = ta_game_by_sym(RES_MATERIAL, model->material);
         ta_shader *shader = ta_game_by_sym(RES_SHADER, material->shader);
-        ta_texture *texture_albedo    = ta_game_by_sym(RES_TEXTURE, material->tex_albedo);
-        ta_texture *texture_height    = ta_game_by_sym(RES_TEXTURE, material->tex_height);
-        ta_texture *texture_metallic  = ta_game_by_sym(RES_TEXTURE, material->tex_metallic);
-        ta_texture *texture_normal    = ta_game_by_sym(RES_TEXTURE, material->tex_normal);
-        ta_texture *texture_occlusion = ta_game_by_sym(RES_TEXTURE, material->tex_occlusion);
-        ta_texture *texture_roughness = ta_game_by_sym(RES_TEXTURE, material->tex_roughness);
+        ta_texture *albedo_texture    = ta_game_by_sym(RES_TEXTURE, material->albedo_texture);
+        ta_texture *height_texture    = ta_game_by_sym(RES_TEXTURE, material->height_texture);
+        ta_texture *metallic_texture  = ta_game_by_sym(RES_TEXTURE, material->metallic_texture);
+        ta_texture *normal_texture    = ta_game_by_sym(RES_TEXTURE, material->normal_texture);
+        ta_texture *occlusion_texture = ta_game_by_sym(RES_TEXTURE, material->occlusion_texture);
+        ta_texture *roughness_texture = ta_game_by_sym(RES_TEXTURE, material->roughness_texture);
 
         ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &cam_trans->xform.position);
@@ -83,12 +83,12 @@ void ta_model_render(ta_model *model, ta_camera *camera)
             }
         }
         ta_shader_set_int(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO,    texture_albedo->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_HEIGHT,    texture_height->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_METALLIC,  texture_metallic->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_NORMAL,    texture_normal->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_OCCLUSION, texture_occlusion->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_ROUGHNESS, texture_roughness->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO,    albedo_texture->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_HEIGHT,    height_texture->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_METALLIC,  metallic_texture->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_NORMAL,    normal_texture->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_OCCLUSION, occlusion_texture->gl_id);
+        ta_shader_set_sampler2d(shader, SYM_U_TEX_ROUGHNESS, roughness_texture->gl_id);
         ta_shader_set_int(shader, SYM_U_DEBUG_CHANNEL, camera->dbg_channel);
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);

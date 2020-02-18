@@ -42,30 +42,30 @@ ta_camera:
   position_target_vel: 0x3E4CCCCF (0.200000)
   target_xform:
     position:
-      x: 0x4195FF0B (18.749533)
-      y: 0x411023F3 (9.008777)
-      z: 0xC00572D8 (-2.085135)
+      x: 0x41848A4C (16.567528)
+      y: 0x4108533B (8.520320)
+      z: 0xBFD04C81 (-1.627335)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x00000000 (0.000000)
-  yaw: 0x431FCFF2 (159.812286)
+  yaw: 0x42FC38EF (126.111198)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC11335E2 (-9.200655)
+  pitch: 0xC1B2679F (-22.300596)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
-  fov: 0x42B3FFFD (89.999977)
+  fov: 0x428C0000 (70.000000)
   znear: 0x3C23D712 (0.010000)
   focal_point:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBE19ABE7 (-0.150070)
-    y: 0x3F7CB4D9 (0.987135)
-    z: 0xBD6202C0 (-0.055178)
+    x: 0xBE6501D7 (-0.223640)
+    y: 0x3F6CDA47 (0.925206)
+    z: 0xBE9CF589 (-0.306561)
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -73,9 +73,9 @@ ta_camera:
   position_target_vel: 0x3E4CCCCD (0.200000)
   target_xform:
     position:
-      x: 0x413DB6B3 (11.857104)
+      x: 0x413DB713 (11.857196)
       y: 0x40DFFF2F (6.999900)
-      z: 0xC05A500E (-3.411136)
+      z: 0xC05A4B80 (-3.410858)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -116,65 +116,65 @@ ta_gun:
 ta_light:
   name: "light_sun"
   entity: "light_sun"
-  cast_shadows: true
-  type: 1  # TA_LIGHT_DIRECTIONAL
   intensity: 0x3FD99A50 (1.700022)
   color:
     r: 0x3E3851EC (0.180000)
     g: 0x3E8F5C2E (0.280000)
     b: 0x3EB33342 (0.350000)
+  type: 1  # TA_LIGHT_DIRECTIONAL
   shadowmap:
     shader: "shadow_dir"
     resolution: 4096
     znear: 0xC2200000 (-40.000000)
     zfar: 0x42200000 (40.000000)
+  cast_shadows: true
 ta_light:
   name: "light_point_0002"
   entity: "light_point_0002"
-  disabled: true
-  cast_shadows: true
-  type: 2  # TA_LIGHT_POINT
   intensity: 0x3F800000 (1.000000)
   color:
     r: 0x3F800000 (1.000000)
     g: 0x3F800000 (1.000000)
     b: 0x3F800000 (1.000000)
+  type: 2  # TA_LIGHT_POINT
   shadowmap:
     shader: "shadow_point"
     resolution: 1024
     znear: 0x3DCCCCCD (0.100000)
     zfar: 0x42C80000 (100.000000)
+  disabled: true
+  cast_shadows: true
 ta_light:
   name: "light_point_0003"
   entity: "light_point_0003"
-  disabled: true
-  cast_shadows: true
-  type: 2  # TA_LIGHT_POINT
   intensity: 0x3E99999A (0.300000)
   color:
     r: 0x3F800000 (1.000000)
     g: 0x3E4CCCCD (0.200000)
     b: 0x00000000 (0.000000)
+  type: 2  # TA_LIGHT_POINT
   shadowmap:
     shader: "shadow_point"
     resolution: 1024
     znear: 0x3DCCCCCD (0.100000)
     zfar: 0x42C80000 (100.000000)
+  disabled: true
+  cast_shadows: true
 ta_light:
   name: "light_point_0004"
   entity: "light_point_0004"
-  cast_shadows: true
-  type: 2  # TA_LIGHT_POINT
   intensity: 0x40400009 (3.000002)
   color:
     r: 0x3E3851E8 (0.180000)
     g: 0x3E8F5C33 (0.280000)
     b: 0x3EB33332 (0.350000)
+  type: 2  # TA_LIGHT_POINT
   shadowmap:
     shader: "shadow_point"
     resolution: 1024
     znear: 0x3DCCCCCD (0.100000)
     zfar: 0x42C80000 (100.000000)
+  cast_shadows: true
 #-------------------------------------------------------------------------------
 # TYP_MODEL
 #-------------------------------------------------------------------------------
@@ -182,7 +182,7 @@ ta_model:
   name: "chamber_0001"
   entity: "chamber_0001"
   meshes: ["chamber_0001", ]
-  material: "metal_plate_019"
+  material: "terrazzo"
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -197,7 +197,7 @@ ta_model:
   name: "button_0001"
   entity: "button_0001"
   meshes: ["button", ]
-  material: "terrazzo"
+  material: "metal_plate_019"
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -276,10 +276,10 @@ ta_transform:
       y: 0x418FF00E (17.992214)
       z: 0xC19B45DF (-19.409117)
     orientation:
-      x: 0xBE7E7FA2 (-0.248534)
-      y: 0x3ED529FF (0.416336)
-      z: 0x398ED556 (0.000272)
-      w: 0x3F5FE4AC (0.874583)
+      x: 0xBE7E7FA0 (-0.248534)
+      y: 0x3ED529FD (0.416336)
+      z: 0x398ED555 (0.000272)
+      w: 0x3F5FE4AA (0.874583)
 ta_transform:
   name: "light_point_0002"
   entity: "light_point_0002"
@@ -402,14 +402,14 @@ ta_transform:
   entity: "freecam"
   xform:
     position:
-      x: 0x4195FF06 (18.749523)
-      y: 0x411023EE (9.008772)
-      z: 0xC00572DC (-2.085135)
+      x: 0x41848A50 (16.567535)
+      y: 0x41085336 (8.520315)
+      z: 0xBFD04C86 (-1.627335)
     orientation:
-      x: 0xBDC7FA99 (-0.097646)
-      y: 0x3F10D8AF (0.565806)
+      x: 0xBE4FDA3B (-0.202981)
+      y: 0x3E955645 (0.291674)
       z: 0x00000000 (0.000000)
-      w: 0x3F5198AE (0.818736)
+      w: 0x3F6F4AA3 (0.934733)
 ta_transform:
   name: "player_one"
   entity: "player_one"
@@ -428,9 +428,9 @@ ta_transform:
   entity: "player_camera"
   xform:
     position:
-      x: 0x413DB6D2 (11.857134)
+      x: 0x413DB712 (11.857195)
       y: 0x40DFFF30 (6.999901)
-      z: 0xC05A4E89 (-3.411043)
+      z: 0xC05A4B80 (-3.410858)
     orientation:
       x: 0xBD6431E4 (-0.055712)
       y: 0xBE28333A (-0.164258)
@@ -481,7 +481,7 @@ ta_transform:
   xform:
     position:
       x: 0xC134F153 (-11.308917)
-      y: 0xC7BC3D75 (-96378.914063)
+      y: 0xC7C73881 (-102001.007813)
       z: 0x40C3AD3D (6.114897)
     orientation:
       x: 0x00000000 (0.000000)
@@ -499,8 +499,8 @@ ta_transform:
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
-      z: 0x3F1BB0BA (0.608165)
-      w: 0x3F4B3727 (0.793810)
+      z: 0x3F1BB0BB (0.608165)
+      w: 0x3F4B3729 (0.793810)
 ta_transform:
   name: "column_0003"
   entity: "column_0003"
@@ -520,7 +520,7 @@ ta_transform:
   xform:
     position:
       x: 0x40928201 (4.578370)
-      y: 0xC7BC3C37 (-96376.429688)
+      y: 0xC7C73743 (-101998.523438)
       z: 0x40968FEB (4.705068)
     orientation:
       x: 0x3E9202C9 (0.285177)
@@ -763,51 +763,155 @@ ta_font:
 ta_material:
   name: "red"
   shader: "mesh"
-  tex_albedo: "red_albedo"
+  albedo_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+    a: 0x00000000 (0.000000)
+  albedo_texture: "red_albedo"
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  emission_texture: "missing_emission"
+  metallic_texture: "missing_metallic"
+  roughness_texture: "missing_roughness"
+  height_texture: "missing_height"
+  normal_texture: "missing_normal"
+  occlusion_texture: "missing_occlusion"
 ta_material:
   name: "test"
   shader: "mesh"
-  tex_albedo: "white_albedo"
+  albedo_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+    a: 0x00000000 (0.000000)
+  albedo_texture: "white_albedo"
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  emission_texture: "missing_emission"
+  metallic_texture: "missing_metallic"
+  roughness_texture: "missing_roughness"
+  height_texture: "missing_height"
+  normal_texture: "missing_normal"
+  occlusion_texture: "missing_occlusion"
 ta_material:
   name: "cobble"
   shader: "mesh"
-  tex_albedo: "cobble_albedo"
-  tex_normal: "cobble_normal"
-  tex_occlusion: "cobble_occlusion"
-  tex_roughness: "cobble_roughness"
+  albedo_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+    a: 0x00000000 (0.000000)
+  albedo_texture: "cobble_albedo"
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  emission_texture: "missing_emission"
+  metallic_texture: "missing_metallic"
+  roughness_texture: "cobble_roughness"
+  height_texture: "missing_height"
+  normal_texture: "cobble_normal"
+  occlusion_texture: "cobble_occlusion"
 ta_material:
   name: "terrazzo"
   shader: "mesh"
-  tex_albedo: "terrazzo_albedo"
-  tex_height: "terrazzo_height"
-  tex_normal: "terrazzo_normal"
-  tex_occlusion: "terrazzo_occlusion"
-  tex_roughness: "terrazzo_roughness"
+  albedo_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+    a: 0x00000000 (0.000000)
+  albedo_texture: "terrazzo_albedo"
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  emission_texture: "missing_emission"
+  metallic_texture: "missing_metallic"
+  roughness_texture: "terrazzo_roughness"
+  height_texture: "terrazzo_height"
+  normal_texture: "terrazzo_normal"
+  occlusion_texture: "terrazzo_occlusion"
 ta_material:
   name: "metal_plate_019"
   shader: "mesh"
-  tex_albedo: "metal_plate_019_albedo"
-  tex_height: "metal_plate_019_height"
-  tex_metallic: "metal_plate_019_metallic"
-  tex_normal: "metal_plate_019_normal"
-  tex_occlusion: "metal_plate_019_occlusion"
-  tex_roughness: "metal_plate_019_roughness"
+  albedo_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+    a: 0x00000000 (0.000000)
+  albedo_texture: "metal_plate_019_albedo"
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  emission_texture: "missing_emission"
+  metallic_texture: "metal_plate_019_metallic"
+  roughness_texture: "metal_plate_019_roughness"
+  height_texture: "metal_plate_019_height"
+  normal_texture: "metal_plate_019_normal"
+  occlusion_texture: "metal_plate_019_occlusion"
 ta_material:
   name: "acoustic_foam"
   shader: "mesh"
-  tex_albedo: "acoustic_foam_albedo"
-  tex_height: "acoustic_foam_height"
-  tex_normal: "acoustic_foam_normal"
-  tex_occlusion: "acoustic_foam_occlusion"
-  tex_roughness: "acoustic_foam_roughness"
+  albedo_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+    a: 0x00000000 (0.000000)
+  albedo_texture: "acoustic_foam_albedo"
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  emission_texture: "missing_emission"
+  metallic_texture: "missing_metallic"
+  roughness_texture: "acoustic_foam_roughness"
+  height_texture: "acoustic_foam_height"
+  normal_texture: "acoustic_foam_normal"
+  occlusion_texture: "acoustic_foam_occlusion"
 ta_material:
   name: "column_0001"
   shader: "mesh"
-  tex_albedo: "red_albedo"
+  albedo_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+    a: 0x00000000 (0.000000)
+  albedo_texture: "red_albedo"
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  emission_texture: "missing_emission"
+  metallic_texture: "missing_metallic"
+  roughness_texture: "missing_roughness"
+  height_texture: "missing_height"
+  normal_texture: "missing_normal"
+  occlusion_texture: "missing_occlusion"
 ta_material:
   name: "star_0001"
   shader: "mesh"
-  tex_albedo: "star_albedo"
+  albedo_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+    a: 0x00000000 (0.000000)
+  albedo_texture: "star_albedo"
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  emission_texture: "missing_emission"
+  metallic_texture: "missing_metallic"
+  roughness_texture: "missing_roughness"
+  height_texture: "missing_height"
+  normal_texture: "missing_normal"
+  occlusion_texture: "missing_occlusion"
 #-------------------------------------------------------------------------------
 # TYP_MESH
 #-------------------------------------------------------------------------------
@@ -883,6 +987,12 @@ ta_mesh:
     z: 0x00000000 (0.000000)
 ta_mesh:
   name: "rock_mesh"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "button_pad"
   offset:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)
@@ -1116,11 +1226,19 @@ ta_shader:
       type: 3,  # TA_GLSL_SAMPLER2D
     },
     {
-      name: "u_tex_height",
+      name: "u_tex_emission",
       type: 3,  # TA_GLSL_SAMPLER2D
     },
     {
       name: "u_tex_metallic",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+    {
+      name: "u_tex_roughness",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+    {
+      name: "u_tex_height",
       type: 3,  # TA_GLSL_SAMPLER2D
     },
     {
@@ -1129,10 +1247,6 @@ ta_shader:
     },
     {
       name: "u_tex_occlusion",
-      type: 3,  # TA_GLSL_SAMPLER2D
-    },
-    {
-      name: "u_tex_roughness",
       type: 3,  # TA_GLSL_SAMPLER2D
     },
     {
@@ -1536,7 +1650,18 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "missing_height"
+  name: "missing_emission"
+  type: 0  # TA_TEXTURE_2D
+  pixels: [0, 0, 0, ]
+  width: 1
+  height: 1
+  channels: 1
+  linear: true
+  repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "missing_metallic"
   type: 0  # TA_TEXTURE_2D
   pixels: [0, ]
   width: 1
@@ -1547,7 +1672,18 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "missing_metallic"
+  name: "missing_roughness"
+  type: 0  # TA_TEXTURE_2D
+  pixels: [127, ]
+  width: 1
+  height: 1
+  channels: 1
+  linear: true
+  repeat: true
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "missing_height"
   type: 0  # TA_TEXTURE_2D
   pixels: [0, ]
   width: 1
@@ -1572,17 +1708,6 @@ ta_texture:
   name: "missing_occlusion"
   type: 0  # TA_TEXTURE_2D
   pixels: [255, ]
-  width: 1
-  height: 1
-  channels: 1
-  linear: true
-  repeat: true
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
-ta_texture:
-  name: "missing_roughness"
-  type: 0  # TA_TEXTURE_2D
-  pixels: [127, ]
   width: 1
   height: 1
   channels: 1

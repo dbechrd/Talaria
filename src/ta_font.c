@@ -287,8 +287,7 @@ void ta_font_render(ta_font *font, float x, float y, float z, bool clear_buffers
         ta_shader_set_mat4(shader, SYM_U_MODEL, &xform);
     }
     ta_shader_set_sampler2d(shader, SYM_U_TEX, font->gl_id);
-    ta_primitive_render_mesh(mesh, shader, TA_TRIANGLES, clear_buffers,
-        reset_uniforms);
+    ta_primitive_render_mesh(mesh, shader, TA_TRIANGLES, clear_buffers, reset_uniforms);
     ta_shader_set_sampler2d(shader, SYM_U_TEX, 0);
 
     glEnable(GL_DEPTH_TEST);

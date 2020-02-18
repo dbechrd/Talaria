@@ -869,24 +869,34 @@ static void ui_material_panel()
             }
         }
         if (ta_ui_last_state().hover) {
-            char tex_buf[1024] = { 0 };
+            char tex_buf[2048] = { 0 };
             int len = snprintf(tex_buf, sizeof(tex_buf),
-                "name         : %s\n"
-                "shader       : %s\n"
-                "tex_albedo   : %s\n"
-                "tex_height   : %s\n"
-                "tex_metallic : %s\n"
-                "tex_normal   : %s\n"
-                "tex_occlusion: %s\n"
-                "tex_roughness: %s",
+                "name             : %s\n"
+                "shader           : %s\n"
+                "albedo_factor    : %f %f %f %f\n"
+                "albedo_texture   : %s\n"
+                "emission_factor  : %f %f %f\n"
+                "emission_texture : %s\n"
+                "metallic_factor  : %f\n"
+                "metallic_texture : %s\n"
+                "roughness_factor : %f\n"
+                "roughness_texture: %s\n"
+                "normal_texture   : %s\n"
+                "occlusion_texture: %s\n"
+                "height_texture   : %s",
                 material->name,
                 material->shader,
-                material->tex_albedo,
-                material->tex_height,
-                material->tex_metallic,
-                material->tex_normal,
-                material->tex_occlusion,
-                material->tex_roughness
+                material->albedo_factor.r, material->albedo_factor.g, material->albedo_factor.b, material->albedo_factor.a,
+                material->albedo_texture,
+                material->emission_factor.r, material->emission_factor.g, material->emission_factor.b,
+                material->emission_texture,
+                material->metallic_factor,
+                material->metallic_texture,
+                material->roughness_factor,
+                material->roughness_texture,
+                material->normal_texture,
+                material->occlusion_texture,
+                material->height_texture
             );
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
@@ -955,7 +965,7 @@ static void ui_texture_panel()
                 if (model && model->material) {
                     ta_material *material = ta_game_by_sym(RES_MATERIAL,
                         model->material);
-                    material->tex_albedo = texture->name;
+                    material->albedo_texture = texture->name;
                 }
             }
         }

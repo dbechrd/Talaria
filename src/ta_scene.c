@@ -134,7 +134,7 @@ void ta_scene_load(ta_scene *scene, ta_file *file)
         ta_schema_field_type schema_type = res_to_typ(res_type);
         if (tg_schemas[schema_type].init) {
             const char *schema_type_str = 0;
-            ta_schema_field_type_str(schema_type, schema_type_str);
+            ta_schema_field_type_str(schema_type, &schema_type_str);
             ta_log_write(&tg_debug_log, SRC_SCENE, "Initializing %s\n", schema_type_str);
             size_t size = tg_schemas[schema_type].size;
             ta_resource *pool = scene->resource_data[res_type];
@@ -194,7 +194,7 @@ void ta_scene_print(ta_scene *scene, FILE *hnd)
     for (ta_res_type res_type = 0; res_type < RES_COUNT; ++res_type) {
         ta_schema_field_type schema_type = res_to_typ(res_type);
         const char *schema_type_str = 0;
-        ta_schema_field_type_str(schema_type, schema_type_str);
+        ta_schema_field_type_str(schema_type, &schema_type_str);
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
         fprintf(hnd, "# %s\n", schema_type_str);
         fprintf(hnd, "#-------------------------------------------------------------------------------\n");
