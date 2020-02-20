@@ -62,8 +62,8 @@ typedef struct ta_shader {
     const char          *path_frag;             // relative file path to fragment shader
     GLint               max_attrib_name_len;    // [DEBUG] max length of a vertex attribute name
     GLint               max_uniform_name_len;   // [DEBUG] max length of a shader uniform name
-    ta_shader_attribute *attributes;            // shader vertex attributes
-    ta_shader_uniform   *uniforms;              // shader uniforms
+    ta_shader_attribute *attributes;            // Array of vertex attributes
+    ta_shader_uniform   *uniforms;              // Array of uniforms
     GLuint              program_id;             // [GL] shader program id
 } ta_shader;
 

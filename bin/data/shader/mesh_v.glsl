@@ -58,7 +58,7 @@ void main()
     vec3 T = normalize(normal_matrix * attr_tangent.xyz);
     vec3 N = normalize(normal_matrix * attr_normal);
     T = normalize(T - dot(T, N) * N);  // re-orthogonalize T with respect to N
-    vec3 B = cross(N, T);
+    vec3 B = cross(N, T) * attr_tangent.w;  // glTF requires tangents to specify direction via w-component
     mat3 TBN = transpose(mat3(T, B, N));
 
     vertex.tbn_normal = TBN * normalize(vec3(u_model * vec4(attr_normal, 0.0)));

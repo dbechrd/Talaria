@@ -351,17 +351,17 @@ static void ui_node_panel()
     if (model_expanded) {
         ta_model *model = ta_game_component_try(entity, RES_COMP_MODEL);
         if (model) {
-            // TODO: List all the meshes
-            DLB_ASSERT(dlb_vec_len(model->meshes) > 0);
-            ta_ui_row_begin();
-            ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("meshes[0]:"));
-            ta_ui_label(SYM(model->meshes[0]));
-
-            ta_ui_row_begin();
-            ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("material:"));
-            ta_ui_label(SYM(model->material));
+            // List all of the model pieces
+            dlb_vec_each(ta_piece *, piece, model->pieces) {
+                ta_ui_row_begin();
+                ta_ui_next_size(label_width, 0);
+                ta_ui_label(CSTR("mesh:"));
+                ta_ui_label(SYM(piece->mesh));
+                ta_ui_row_begin();
+                ta_ui_next_size(label_width, 0);
+                ta_ui_label(CSTR("material:"));
+                ta_ui_label(SYM(piece->material));
+            }
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -858,13 +858,13 @@ static void ui_material_panel()
         ta_ui_next_size(200, 0);
         ta_ui_next_margin(0, 2, 0, 0);
         ta_ui_next_pad(4, 4, 4, 4);
-        //ta_ui_next_size(material->width, material->height);
         if (ta_ui_button(SYM(material->name))) {
             const char *entity = ta_editor_selected_entity();
             if (entity) {
                 ta_model *model = ta_game_component_try(entity, RES_COMP_MODEL);
-                if (model) {
-                    model->material = material->name;
+                if (model && model->pieces) {
+                    // TODO: Select material per piece, not per model. For now, arbitrarily set material of first piece
+                    model->pieces[0].material = material->name;
                 }
             }
         }
@@ -919,9 +919,9 @@ static void ui_mesh_panel()
             const char *entity = ta_editor_selected_entity();
             if (entity) {
                 ta_model *model = ta_game_component_try(entity, RES_COMP_MODEL);
-                if (model) {
-                    dlb_vec_clear(model->meshes);
-                    dlb_vec_push(model->meshes, mesh->name);
+                if (model && model->pieces) {
+                    // TODO: Select mesh per piece, not per model. For now, arbitrarily set mesh of first piece
+                    model->pieces[0].mesh = mesh->name;
                 }
             }
         }
@@ -959,15 +959,17 @@ static void ui_texture_panel()
         ta_ui_next_size(68, 68);
         ta_ui_image(texture, 0);
         if (ta_ui_button_end()) {
+            // TODO: Set textures in the materials tab, this is way too ambiguous
+#if 0
             const char *entity = ta_editor_selected_entity();
             if (entity) {
                 ta_model *model = ta_game_component_try(entity, RES_COMP_MODEL);
                 if (model && model->material) {
-                    ta_material *material = ta_game_by_sym(RES_MATERIAL,
-                        model->material);
+                    ta_material *material = ta_game_by_sym(RES_MATERIAL, model->material);
                     material->albedo_texture = texture->name;
                 }
             }
+#endif
         }
         if (ta_ui_last_state().hover) {
             char tex_buf[256] = { 0 };
@@ -1691,43 +1693,3 @@ void ta_editor_event(ta_event *event)
         event->handled = ta_editor_textbox_event(event);
     }
 }
-
-#if 0
-// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-if (show_demo_window)
-ImGui::ShowDemoWindow(&show_demo_window);
-
-// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-{
-    static float f = 0.0f;
-    static int counter = 0;
-
-    ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-    ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-    ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-    ImGui::Checkbox("Another Window", &show_another_window);
-
-    ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-    ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-    if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-        counter++;
-    ImGui::SameLine();
-    ImGui::Text("counter = %d", counter);
-
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    ImGui::End();
-}
-
-// 3. Show another simple window.
-if (show_another_window)
-{
-    ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-    ImGui::Text("Hello from another window!");
-    if (ImGui::Button("Close Me"))
-        show_another_window = false;
-    ImGui::End();
-}
-
-#endif

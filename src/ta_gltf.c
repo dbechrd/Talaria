@@ -3,6 +3,7 @@
 #include "ta_json.h"
 #include "ta_log.h"
 #include "ta_mesh.h"
+#include "ta_model.h"
 #include "ta_schema.h"
 #include "ta_symbol.h"
 #include "dlb/dlb_types.h"
@@ -420,52 +421,79 @@ void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute
 void ta_gltf_load(ta_gltf *gltf)
 {
     ta_log_write(&tg_debug_log, SRC_GLTF, "ta_gltf_load %s\n", gltf->filename);
+
+    dlb_vec_each(cgltf_node *, gltf_node, gltf->data->nodes_v) {
+        UNUSED(gltf_node);
+    }
+
+    // TODO: Load materials
+    dlb_vec_each(cgltf_material *, gltf_material, gltf->data->materials_v) {
+        UNUSED(gltf_material);
+    }
+
     dlb_vec_each(cgltf_mesh *, gltf_mesh, gltf->data->meshes_v) {
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", gltf_mesh->name);
         ta_mesh *mesh = ta_game_alloc(RES_MESH, gltf_mesh->name, strlen(gltf_mesh->name));
 
-        ta_log_write(&tg_debug_log, SRC_GLTF, "copying attributes\n");
-        dlb_vec_each(cgltf_attribute *, attr, gltf_mesh->primitives_v->attributes_v) {
-            gltf_mesh_accessor(mesh, attr->data, attr->type);
-        }
-        if (gltf_mesh->primitives_v->indices->count) {
-            cgltf_accessor *accessor = gltf_mesh->primitives_v->indices;
-            //cgltf_size data_size = accessor->buffer_view->size;
-            void *data = (char *)accessor->buffer_view->buffer->data + accessor->buffer_view->offset;
-            DLB_ASSERT(data);
+        dlb_vec_each(cgltf_primitive *, gltf_prim, gltf_mesh->primitives_v) {
+            if (gltf_prim != gltf_mesh->primitives_v)
+                break;  // TODO: Handle loading multiple primitives
 
-            DLB_ASSERT(accessor->type == cgltf_type_scalar);
-            dlb_vec_reserve(mesh->indexes, accessor->count);
-            dlb_vec_hdr(mesh->indexes)->len = accessor->count;
+            DLB_ASSERT(gltf_prim->type == cgltf_primitive_type_triangles);
+            cgltf_material* material;
+            cgltf_morph_target* targets_v;
 
-            // TODO(perf): Make sure all input data is already the correct size
-            // Convert indices to u32
-            switch (accessor->component_type)
-            {
-                case cgltf_component_type_r_8:
-                case cgltf_component_type_r_8u:
-                    for (cgltf_size i = 0; i < accessor->count; ++i) {
-                        mesh->indexes[i] = ((u8 *)data)[i];
-                    }
-                    break;
-                case cgltf_component_type_r_16:
-                case cgltf_component_type_r_16u:
-                    for (cgltf_size i = 0; i < accessor->count; ++i) {
-                        mesh->indexes[i] = ((u16 *)data)[i];
-                    }
-                    break;
-                case cgltf_component_type_r_32u:
-                    for (cgltf_size i = 0; i < accessor->count; ++i) {
-                        mesh->indexes[i] = ((u32 *)data)[i];
-                    }
-                    break;
-                case cgltf_component_type_r_32f:
-                case cgltf_component_type_invalid:
-                default:
-                    DLB_ASSERT(!"invalid index component type");
-                    break;
+            //ta_piece piece = { 0 };
+            //piece.mesh = "mesh0";
+            //piece.material = ta_symbol_intern(material->name, strlen(material->name));
+
+            ta_log_write(&tg_debug_log, SRC_GLTF, "copying attributes\n");
+            dlb_vec_each(cgltf_attribute *, attr, gltf_prim->attributes_v) {
+                gltf_mesh_accessor(mesh, attr->data, attr->type);
+            }
+            if (gltf_prim->indices->count) {
+                cgltf_accessor *accessor = gltf_prim->indices;
+                //cgltf_size data_size = accessor->buffer_view->size;
+                void *data = (char *)accessor->buffer_view->buffer->data + accessor->buffer_view->offset;
+                DLB_ASSERT(data);
+
+                DLB_ASSERT(accessor->type == cgltf_type_scalar);
+                dlb_vec_reserve(mesh->indexes, accessor->count);
+                dlb_vec_hdr(mesh->indexes)->len = accessor->count;
+
+                // TODO(perf): Make sure all input data is already the correct size
+                // Convert indices to u32
+                switch (accessor->component_type)
+                {
+                    case cgltf_component_type_r_8:
+                    case cgltf_component_type_r_8u:
+                        for (cgltf_size i = 0; i < accessor->count; ++i) {
+                            mesh->indexes[i] = ((u8 *)data)[i];
+                        }
+                        break;
+                    case cgltf_component_type_r_16:
+                    case cgltf_component_type_r_16u:
+                        for (cgltf_size i = 0; i < accessor->count; ++i) {
+                            mesh->indexes[i] = ((u16 *)data)[i];
+                        }
+                        break;
+                    case cgltf_component_type_r_32u:
+                        for (cgltf_size i = 0; i < accessor->count; ++i) {
+                            mesh->indexes[i] = ((u32 *)data)[i];
+                        }
+                        break;
+                    case cgltf_component_type_r_32f:
+                    case cgltf_component_type_invalid:
+                    default:
+                        DLB_ASSERT(!"invalid index component type");
+                        break;
+                }
             }
         }
+        //dlb_vec_each(const char **, gltf_target, gltf_mesh->target_names_v) {
+        //    const char *target = *gltf_target;
+        //    UNUSED(target);
+        //}
 
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_create\n");
         ta_mesh_create(mesh);

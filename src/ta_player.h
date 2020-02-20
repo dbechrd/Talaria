@@ -22,3 +22,5 @@ typedef struct ta_gun {
     const char *sfx_reload;         // reload
     const char *sfx_empty;          // out of ammo
 } ta_gun;
+
+void ta_player_free(ta_player *player);

@@ -33,6 +33,7 @@ typedef enum ta_schema_field_type {
     TYP_AABB,
     TYP_OBB,
     TYP_COLLIDER,
+    TYP_PIECE,
 
     // Component types
     TYP_AUDIO_SOURCE,

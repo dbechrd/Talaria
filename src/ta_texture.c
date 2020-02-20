@@ -231,9 +231,6 @@ static void texture_generate_mipmap(ta_texture *tex)
 
 void ta_texture_load(ta_texture *tex)
 {
-    // TODO(cleanup): I don't like that this implicitly calls init, but schema
-    // only has one constructor slot for now, and it needs to set default modes.
-    ta_texture_init(tex);
     ta_texture_create_and_bind(tex);
 
     // Pixel textures contain inlined pixel data, path should be null

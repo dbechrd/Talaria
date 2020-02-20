@@ -181,79 +181,68 @@ ta_light:
 ta_model:
   name: "chamber_0001"
   entity: "chamber_0001"
-  meshes: ["chamber_0001", ]
-  material: "terrazzo"
+  pieces: [{mesh: "chamber_0001", material: "terrazzo"}]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "wakeup"
   entity: "wakeup"
-  meshes: ["wakeup", ]
-  material: "cobble"
+  pieces: [{mesh: "wakeup", material: "cobble"}]
   invisible: true
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "button_0001"
   entity: "button_0001"
-  meshes: ["button", ]
-  material: "metal_plate_019"
+  pieces: [{mesh: "button", material: "metal_plate_019"}]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "player_one"
   entity: "player_one"
-  meshes: ["prim_sphere", ]
-  material: "metal_plate_019"
+  pieces: [{mesh: "prim_sphere", material: "metal_plate_019"}]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "rock_0001"
   entity: "rock_0001"
-  meshes: ["rock_mesh", ]
-  material: "cobble"
+  pieces: [{mesh: "rock_mesh", material: "cobble"}]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "sphere2"
   entity: "sphere2"
-  meshes: ["prim_sphere", ]
-  material: "red"
+  pieces: [{mesh: "prim_sphere", material: "red"}]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "shadow_test_1"
   entity: "shadow_test_1"
-  meshes: ["letter_r", ]
-  material: "test"
+  pieces: [{mesh: "letter_r", material: "test"}]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0001"
   entity: "column_0001"
-  meshes: ["column_0001", ]
-  material: "test"
+  pieces: [{mesh: "column_0001", material: "test"}]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0002"
   entity: "column_0002"
-  meshes: ["column_0001", ]
-  material: "test"
+  pieces: [{mesh: "column_0001", material: "test"}]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0003"
   entity: "column_0003"
-  meshes: ["column_0001", ]
-  material: "test"
+  pieces: [{mesh: "column_0001", material: "test"}]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "star_0001"
   entity: "star_0001"
-  meshes: ["star_0001", ]
-  material: "star_0001"
+  pieces: [{mesh: "star_0001", material: "star_0001"}]
   cast_shadows: true
   receive_shadows: true
 #-------------------------------------------------------------------------------

@@ -15,6 +15,11 @@
 #include "ta_editor.h"
 #include "dlb/dlb_vector.h"
 
+void ta_model_free(ta_model *model)
+{
+    dlb_vec_free(model->pieces);
+}
+
 void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
 {
     DLB_ASSERT(model);
@@ -24,14 +29,14 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
     if (model->invisible || !model->cast_shadows) {
         return;
     }
-    DLB_ASSERT(dlb_vec_len(model->meshes));
+    DLB_ASSERT(dlb_vec_len(model->pieces));
 
     ta_transform *transform = ta_game_component(model->entity, RES_COMP_TRANSFORM);
 
     ta_mat4 light_pvm = mat4_mul(light_pv, &transform->model);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
-    dlb_vec_each(const char **, mesh_name, model->meshes) {
-        ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+    dlb_vec_each(ta_piece *, piece, model->pieces) {
+        ta_mesh *mesh = ta_game_by_sym(RES_MESH, piece->mesh);
         if (vec3_zero(mesh->offset)) {
             ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
         } else {
@@ -56,44 +61,46 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     if (camera->debug_no_mesh && !camera->debug_normals) {
         return;
     }
-    DLB_ASSERT(dlb_vec_len(model->meshes));
+    DLB_ASSERT(dlb_vec_len(model->pieces));
 
     ta_transform *transform = ta_game_component(model->entity, RES_COMP_TRANSFORM);
 
     if (!camera->debug_no_mesh) {
-        ta_material *material = ta_game_by_sym(RES_MATERIAL, model->material);
-        ta_shader *shader = ta_game_by_sym(RES_SHADER, material->shader);
-        ta_texture *albedo_texture    = ta_game_by_sym(RES_TEXTURE, material->albedo_texture);
-        ta_texture *height_texture    = ta_game_by_sym(RES_TEXTURE, material->height_texture);
-        ta_texture *metallic_texture  = ta_game_by_sym(RES_TEXTURE, material->metallic_texture);
-        ta_texture *normal_texture    = ta_game_by_sym(RES_TEXTURE, material->normal_texture);
-        ta_texture *occlusion_texture = ta_game_by_sym(RES_TEXTURE, material->occlusion_texture);
-        ta_texture *roughness_texture = ta_game_by_sym(RES_TEXTURE, material->roughness_texture);
+        // TODO(perf): This probably does a lot of redundant work for models with multiple meshes
+        dlb_vec_each(ta_piece *, piece, model->pieces) {
+            ta_mesh *mesh = ta_game_by_sym(RES_MESH, piece->mesh);
+            ta_material *material          = ta_game_by_sym(RES_MATERIAL, piece->material);
+            ta_shader   *shader            = ta_game_by_sym(RES_SHADER,   material->shader);
+            ta_texture  *albedo_texture    = ta_game_by_sym(RES_TEXTURE,  material->albedo_texture);
+            ta_texture  *height_texture    = ta_game_by_sym(RES_TEXTURE,  material->height_texture);
+            ta_texture  *metallic_texture  = ta_game_by_sym(RES_TEXTURE,  material->metallic_texture);
+            ta_texture  *normal_texture    = ta_game_by_sym(RES_TEXTURE,  material->normal_texture);
+            ta_texture  *occlusion_texture = ta_game_by_sym(RES_TEXTURE,  material->occlusion_texture);
+            ta_texture  *roughness_texture = ta_game_by_sym(RES_TEXTURE,  material->roughness_texture);
 
-        ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
-        ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &cam_trans->xform.position);
+            ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+            ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &cam_trans->xform.position);
 
-        ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
-        size_t lights_len = dlb_vec_len(lights);
-        u32 u_lights_count = 0;
-        for (u32 i = 0; i < lights_len; ++i) {
-            if (!lights[i].disabled) {
-                ta_shader_set_light(shader, SYM_U_LIGHTS, u_lights_count, &lights[i]);
-                u_lights_count++;
+            ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+            size_t lights_len = dlb_vec_len(lights);
+            u32 u_lights_count = 0;
+            for (u32 i = 0; i < lights_len; ++i) {
+                if (!lights[i].disabled) {
+                    ta_shader_set_light(shader, SYM_U_LIGHTS, u_lights_count, &lights[i]);
+                    u_lights_count++;
+                }
             }
-        }
-        ta_shader_set_int(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_ALBEDO,    albedo_texture->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_HEIGHT,    height_texture->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_METALLIC,  metallic_texture->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_NORMAL,    normal_texture->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_OCCLUSION, occlusion_texture->gl_id);
-        ta_shader_set_sampler2d(shader, SYM_U_TEX_ROUGHNESS, roughness_texture->gl_id);
-        ta_shader_set_int(shader, SYM_U_DEBUG_CHANNEL, camera->dbg_channel);
-        ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
-        ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
-        dlb_vec_each(const char **, mesh_name, model->meshes) {
-            ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+            ta_shader_set_int       (shader, SYM_U_LIGHTS_COUNT,  u_lights_count);
+            ta_shader_set_sampler2d (shader, SYM_U_TEX_ALBEDO,    albedo_texture->gl_id);
+            ta_shader_set_sampler2d (shader, SYM_U_TEX_HEIGHT,    height_texture->gl_id);
+            ta_shader_set_sampler2d (shader, SYM_U_TEX_METALLIC,  metallic_texture->gl_id);
+            ta_shader_set_sampler2d (shader, SYM_U_TEX_NORMAL,    normal_texture->gl_id);
+            ta_shader_set_sampler2d (shader, SYM_U_TEX_OCCLUSION, occlusion_texture->gl_id);
+            ta_shader_set_sampler2d (shader, SYM_U_TEX_ROUGHNESS, roughness_texture->gl_id);
+            ta_shader_set_int       (shader, SYM_U_DEBUG_CHANNEL, camera->dbg_channel);
+            ta_shader_set_mat4      (shader, SYM_U_PROJ,          &camera->projection);
+            ta_shader_set_mat4      (shader, SYM_U_VIEW,          &camera->look_at);
+
             if (vec3_zero(mesh->offset)) {
                 ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
             } else {
@@ -110,8 +117,8 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     if (camera->debug_normals) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->model);
-        dlb_vec_each(const char **, mesh_name, model->meshes) {
-            ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+        dlb_vec_each(ta_piece *, piece, model->pieces) {
+            ta_mesh *mesh = ta_game_by_sym(RES_MESH, piece->mesh);
             ta_mesh_push_normals(mesh);
             ta_primitive_render(true, false);
         }
@@ -130,8 +137,8 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera,
 
     ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
-    dlb_vec_each(const char **, mesh_name, model->meshes) {
-        ta_mesh *mesh = ta_game_by_sym(RES_MESH, *mesh_name);
+    dlb_vec_each(ta_piece *, piece, model->pieces) {
+        ta_mesh *mesh = ta_game_by_sym(RES_MESH, piece->mesh);
         if (vec3_zero(mesh->offset)) {
             ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->model);
         } else {

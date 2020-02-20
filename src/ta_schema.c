@@ -51,6 +51,7 @@ void ta_schema_field_type_str(ta_schema_field_type type, const char **str)
         case TYP_AABB:              *str = "TYP_AABB";               break;
         case TYP_OBB:               *str = "TYP_OBB";                break;
         case TYP_COLLIDER:          *str = "TYP_COLLIDER";           break;
+        case TYP_PIECE:             *str = "TYP_PIECE";              break;
         /// Component types ///////////////////////////////////////////////
         case TYP_AUDIO_SOURCE:      *str = "TYP_AUDIO_SOURCE";       break;
         case TYP_BUTTON:            *str = "TYP_BUTTON";             break;
@@ -338,6 +339,11 @@ void ta_schema_register()
     TYPE_UNION_FIELD(ta_collider, obb,    TYP_OBB,    data, TA_COLLIDER_OBB);
     TYPE_END        (ta_collider);
 
+    TYPE_START  (ta_piece, TYP_PIECE, 0, 0);
+    TYPE_FIELD  (ta_piece, mesh,     ATOM_STRING);
+    TYPE_FIELD  (ta_piece, material, ATOM_STRING);
+    TYPE_END    (ta_piece);
+
     //--------------------------------------------------------------------------
     // Resource types
     //--------------------------------------------------------------------------
@@ -370,12 +376,12 @@ void ta_schema_register()
     TYPE_END    (ta_material);
 
     TYPE_START  (ta_mesh, TYP_MESH, ta_mesh_init, ta_mesh_free);
-    TYPE_FIELD  (ta_mesh, name,   ATOM_STRING);
-    TYPE_FIELD  (ta_mesh, path,   ATOM_STRING);
-    TYPE_FIELD  (ta_mesh, offset, TYP_VEC3);
+    TYPE_FIELD  (ta_mesh, name,     ATOM_STRING);
+    TYPE_FIELD  (ta_mesh, path,     ATOM_STRING);
+    TYPE_FIELD  (ta_mesh, offset,   TYP_VEC3);
     TYPE_END    (ta_mesh);
 
-    TYPE_START  (ta_shader, TYP_SHADER, ta_shader_load, 0);
+    TYPE_START  (ta_shader, TYP_SHADER, ta_shader_init, ta_shader_free);
     TYPE_FIELD  (ta_shader, name,       ATOM_STRING);
     TYPE_FIELD  (ta_shader, path_vert,  ATOM_STRING);
     TYPE_FIELD  (ta_shader, path_frag,  ATOM_STRING);
@@ -383,7 +389,7 @@ void ta_schema_register()
     TYPE_VECTOR (ta_shader, uniforms,   TYP_SHADER_UNIFORM);
     TYPE_END    (ta_shader);
 
-    TYPE_START      (ta_texture, TYP_TEXTURE, ta_texture_load, ta_texture_free);
+    TYPE_START      (ta_texture, TYP_TEXTURE, ta_texture_init, ta_texture_free);
     TYPE_FIELD      (ta_texture, name,          ATOM_STRING);
     TYPE_UNION_TYPE (ta_texture, type,          ATOM_ENUM, ta_texture_type_str);
     TYPE_UNION_FIELD(ta_texture, path,          ATOM_STRING, data, TA_TEXTURE_2D);
@@ -465,30 +471,31 @@ void ta_schema_register()
     TYPE_FIELD      (ta_light, cast_shadows, ATOM_BOOL);
     TYPE_END        (ta_light);
 
-    TYPE_START  (ta_model, TYP_MODEL, 0, 0);
+    TYPE_START  (ta_model, TYP_MODEL, 0, ta_model_free);
     TYPE_FIELD  (ta_model, name,            ATOM_STRING);
     TYPE_FIELD  (ta_model, entity,          ATOM_STRING);
-    TYPE_VECTOR (ta_model, meshes,          ATOM_STRING);
-    TYPE_FIELD  (ta_model, material,        ATOM_STRING);
+    TYPE_VECTOR (ta_model, pieces,          TYP_PIECE);
     TYPE_FIELD  (ta_model, invisible,       ATOM_BOOL);
     TYPE_FIELD  (ta_model, cast_shadows,    ATOM_BOOL);
     TYPE_FIELD  (ta_model, receive_shadows, ATOM_BOOL);
     TYPE_END    (ta_model);
 
-    TYPE_START  (ta_player, TYP_PLAYER, 0, 0);
+    TYPE_START  (ta_player, TYP_PLAYER, 0, ta_player_free);
     TYPE_FIELD  (ta_player, name,   ATOM_STRING);
     TYPE_FIELD  (ta_player, entity, ATOM_STRING);
     TYPE_FIELD  (ta_player, e_gun,  ATOM_STRING);
     TYPE_VECTOR (ta_player, e_guns, ATOM_STRING);
     TYPE_END    (ta_player);
 
-    TYPE_START  (ta_transform, TYP_TRANSFORM, ta_transform_init, 0);
-    TYPE_FIELD  (ta_transform, name,   ATOM_STRING);
-    TYPE_FIELD  (ta_transform, entity, ATOM_STRING);
-    TYPE_FIELD  (ta_transform, xform,  TYP_XFORM);
+    TYPE_START  (ta_transform, TYP_TRANSFORM, ta_transform_init, ta_transform_free);
+    TYPE_FIELD  (ta_transform, name,     ATOM_STRING);
+    TYPE_FIELD  (ta_transform, entity,   ATOM_STRING);
+    TYPE_FIELD  (ta_transform, xform,    TYP_XFORM);
+    TYPE_FIELD  (ta_transform, parent,   ATOM_STRING);
+    TYPE_VECTOR (ta_transform, children, ATOM_STRING);
     TYPE_END    (ta_transform);
 
-    TYPE_START  (ta_rigid_body, TYP_RIGID_BODY, ta_rigid_body_init, 0);
+    TYPE_START  (ta_rigid_body, TYP_RIGID_BODY, ta_rigid_body_init, ta_rigid_body_free);
     TYPE_FIELD  (ta_rigid_body, name,       ATOM_STRING);
     TYPE_FIELD  (ta_rigid_body, entity,     ATOM_STRING);
     TYPE_FIELD  (ta_rigid_body, collider,   TYP_COLLIDER);

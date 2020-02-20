@@ -86,7 +86,7 @@ typedef struct ta_rigid_body {
     bool dbg_broadphase;
     bool dbg_narrowphase;
 
-    const char **colliding_with;
+    const char **colliding_with;    // array of rigid bodies that are colliding with this one
 } ta_rigid_body;
 
 typedef struct ta_rigid_body_pair {

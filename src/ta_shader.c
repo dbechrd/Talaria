@@ -58,7 +58,6 @@ static void show_info_log(GLuint shader)
     }
     DLB_ASSERT(!"show_info_log: GL error occurred");
 };
-
 static GLuint ta_shader_compile(GLenum type, char *buf)
 {
     GLuint shader = glCreateShader(type);
@@ -80,7 +79,6 @@ static GLuint ta_shader_compile(GLenum type, char *buf)
 
     return shader;
 }
-
 static GLuint ta_shader_compile_file(GLenum type, const char *filename)
 {
     char *buf = ta_file_read_all(filename);
@@ -92,7 +90,6 @@ static GLuint ta_shader_compile_file(GLenum type, const char *filename)
     dlb_vec_free(buf);
     return shader;
 }
-
 static void ta_shader_program_link(GLuint program)
 {
     glLinkProgram(program);
@@ -106,7 +103,6 @@ static void ta_shader_program_link(GLuint program)
         DLB_ASSERT(!"ta_shader_program_link: failed to link shader program");
     }
 }
-
 static GLint ta_shader_attribute_location(ta_shader *shader, const char *name)
 {
     GLint location = glGetAttribLocation(shader->program_id, name);
@@ -118,7 +114,6 @@ static GLint ta_shader_attribute_location(ta_shader *shader, const char *name)
     }
     return location;
 }
-
 static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
 {
     GLint location = glGetUniformLocation(shader->program_id, name);
@@ -130,7 +125,6 @@ static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
     }
     return location;
 }
-
 static ta_shader_attribute *find_attribute_by_name(ta_shader *shader, const char *name, ta_glsl_type type)
 {
     ta_shader_attribute *result = 0;
@@ -143,7 +137,6 @@ static ta_shader_attribute *find_attribute_by_name(ta_shader *shader, const char
     DLB_ASSERT(!result || result->type == type);
     return result;
 }
-
 static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, const char *name, ta_glsl_type type)
 {
     ta_shader_uniform *result = 0;
@@ -156,7 +149,6 @@ static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, cons
     DLB_ASSERT(result && result->type == type);
     return result;
 }
-
 static void shader_print_uniforms(ta_shader *shader)
 {
     GLint count;
@@ -175,7 +167,6 @@ static void shader_print_uniforms(ta_shader *shader)
     }
     dlb_free(name);
 }
-
 static void shader_init_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
 {
     dlb_vec_each(ta_shader_uniform *, uniform, uniforms) {
@@ -187,7 +178,6 @@ static void shader_init_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
         uniform->dirty = true;
     }
 }
-
 void ta_shader_load(ta_shader *shader)
 {
     DLB_ASSERT(shader->path_vert);
@@ -257,11 +247,13 @@ void ta_shader_delete(ta_shader *shader)
         glDeleteProgram(shader->program_id);
     }
 }
-
 void ta_shader_free(ta_shader *shader)
 {
     ta_shader_delete(shader);
     dlb_vec_free(shader->attributes);
+    dlb_vec_each(ta_shader_uniform *, uniform, shader->uniforms) {
+        dlb_vec_free(uniform->value.properties);
+    }
     dlb_vec_free(shader->uniforms);
 }
 
@@ -273,7 +265,6 @@ void ta_shader_set_bool(ta_shader *shader, const char *name, GLboolean value)
         u->dirty = true;
     }
 }
-
 void ta_shader_set_int(ta_shader *shader, const char *name, GLint value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_INT);
@@ -282,7 +273,6 @@ void ta_shader_set_int(ta_shader *shader, const char *name, GLint value)
         u->dirty = true;
     }
 }
-
 void ta_shader_set_uint(ta_shader *shader, const char *name, GLuint value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_UINT);
@@ -291,7 +281,6 @@ void ta_shader_set_uint(ta_shader *shader, const char *name, GLuint value)
         u->dirty = true;
     }
 }
-
 void ta_shader_set_float(ta_shader *shader, const char *name, GLfloat value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_FLOAT);
@@ -300,37 +289,24 @@ void ta_shader_set_float(ta_shader *shader, const char *name, GLfloat value)
         u->dirty = true;
     }
 }
-
 void ta_shader_set_sampler2d(ta_shader *shader, const char *name, GLuint tex_id)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D);
-#if 0
-    // NOTE: This doesn't work for some reason, probably related to tex_id == 0
-    if (u->value.sampler2d != tex_id) {
+    // TODO: Figure out why this doesn't work
+    //if (u->value.sampler2d != tex_id || tex_id == 0) {
         u->value.sampler2d = tex_id;
         u->dirty = true;
-    }
-#else
-    u->value.sampler2d = tex_id;
-    u->dirty = true;
-#endif
+    //}
 }
-
 void ta_shader_set_sampler_cube(ta_shader *shader, const char *name, GLuint tex_id)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER_CUBE);
-#if 0
-    // NOTE: This doesn't work for some reason, probably related to tex_id == 0
-    if (u->value.sampler_cube != tex_id) {
+    // TODO: Figure out why this doesn't work
+    //if (u->value.sampler_cube != tex_id || tex_id == 0) {
         u->value.sampler_cube = tex_id;
         u->dirty = true;
-    }
-#else
-    u->value.sampler_cube = tex_id;
-    u->dirty = true;
-#endif
+    //}
 }
-
 void ta_shader_set_vec2(ta_shader *shader, const char *name, const ta_vec2 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC2);
@@ -339,7 +315,6 @@ void ta_shader_set_vec2(ta_shader *shader, const char *name, const ta_vec2 *v)
         u->dirty = true;
     }
 }
-
 void ta_shader_set_vec3(ta_shader *shader, const char *name, const ta_vec3 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC3);
@@ -348,7 +323,6 @@ void ta_shader_set_vec3(ta_shader *shader, const char *name, const ta_vec3 *v)
         u->dirty = true;
     }
 }
-
 void ta_shader_set_vec4(ta_shader *shader, const char *name, const ta_vec4 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC4);
@@ -357,7 +331,6 @@ void ta_shader_set_vec4(ta_shader *shader, const char *name, const ta_vec4 *v)
         u->dirty = true;
     }
 }
-
 void ta_shader_set_mat3(ta_shader *shader, const char *name, const ta_mat3 *m)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT3);
@@ -366,7 +339,6 @@ void ta_shader_set_mat3(ta_shader *shader, const char *name, const ta_mat3 *m)
         u->dirty = true;
     }
 }
-
 void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT4);
@@ -377,7 +349,6 @@ void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
         u->dirty = true;
     }
 }
-
 void ta_shader_set_light(ta_shader *shader, const char *name, int index,
     ta_light *light)
 {
@@ -457,7 +428,6 @@ static void shader_store_uniforms(ta_shader_uniform *store,
         }
     }
 }
-
 static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
 {
     dlb_vec_each(ta_shader_uniform *, u, uniforms) {
@@ -527,24 +497,22 @@ void ta_shader_state_save(ta_shader *shader, ta_shader_uniform *store)
 {
     shader_store_uniforms(store, shader->uniforms);
 }
-
 void ta_shader_state_load(ta_shader_uniform *uniforms)
 {
     int tex_count = 0;
     shader_bind_uniforms(uniforms, &tex_count);
 }
 
-static GLuint bound_program_id = 0;
+static GLuint shader_bound_program_id = 0;
 void ta_shader_bind(ta_shader *shader)
 {
     DLB_ASSERT(shader->program_id);
-    if (bound_program_id != shader->program_id) {
+    if (shader_bound_program_id != shader->program_id) {
         glUseProgram(shader->program_id);
-        bound_program_id = shader->program_id;
+        shader_bound_program_id = shader->program_id;
     }
     ta_shader_state_load(shader->uniforms);
 }
-
 void ta_shader_unbind()
 {
 #if 0  // TODO: Test turning this off
