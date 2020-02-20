@@ -1,4 +1,5 @@
 #include "ta_player.h"
+#include "dlb/dlb_vector.h"
 
 void ta_player_free(ta_player *player)
 {

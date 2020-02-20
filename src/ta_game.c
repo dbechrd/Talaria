@@ -298,9 +298,10 @@ void ta_game_state_set(ta_game_state state)
         } case TA_GAME_STATE_FREE_CAM: {
             ta_camera *freecam = ta_game_component(tg_e_freecam, RES_COMP_CAMERA);
             ta_transform *trans = ta_game_component(tg_e_freecam, RES_COMP_TRANSFORM);
+            // HACK: Set freecam position instantly to player cam location. This will *not* work correctly if freecam
+            // has a parent. Needs to somehow use xform_world instead.
             if (vec3_zero(trans->xform.position)) {
-                ta_camera *active_cam = ta_game_component(tg_e_active_camera,
-                    RES_COMP_CAMERA);
+                ta_camera *active_cam = ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
                 freecam->target_xform.position = active_cam->target_xform.position;
                 trans->xform.position = freecam->target_xform.position;
             }
@@ -385,7 +386,7 @@ ta_ray ta_game_camera_ray()
     ta_camera *camera = ta_game_camera();
     ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
     ta_ray ray = { 0 };
-    ray.origin = cam_trans->xform.position;
+    ray.origin = cam_trans->xform_world.position;
     ray.direction = camera->front;
     return ray;
 }
@@ -592,14 +593,12 @@ static void game_simulate(ta_camera *active_camera, float dt)
     ta_transform *active_cam_trans = ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
 
     // Target player camera
-    ta_camera_set_target_pos_absolute(player_cam,
-        vec3_add(player_transform->xform.position,
-        (ta_vec3) { 0.0f, 2.0f, 0.0f }));
+    ta_camera_set_target_pos_absolute(player_cam, vec3_add(player_transform->xform_world.position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
 
     // Target minimap camera
-    ta_vec3 minimap_target_pos = active_cam_trans->xform.position;
+    ta_vec3 minimap_target_pos = active_cam_trans->xform_world.position;
     minimap_target_pos.y += 50.0f;
-    game.minimap_camera.focal_point = active_cam_trans->xform.position;
+    game.minimap_camera.focal_point = active_cam_trans->xform_world.position;
     ta_camera_set_target_pos_absolute(&game.minimap_camera, minimap_target_pos);
 
     if (game.simulate) {
@@ -639,14 +638,6 @@ static void game_simulate(ta_camera *active_camera, float dt)
     dlb_vec_each(ta_camera *, cam, ta_game_resource_pool(RES_COMP_CAMERA)) {
         ta_camera_update(cam, dt);
     }
-
-    // TODO: dlb_vec_each(ta_audio_listener_update)
-    ta_vec3 fwd_up[2];
-    fwd_up[0] = active_camera->front;
-    fwd_up[1] = active_camera->up;
-    alListenerfv(AL_ORIENTATION, (float *)fwd_up);
-    alListenerfv(AL_POSITION, (float *)&active_cam_trans->xform.position);
-    //alListenerfv(AL_VELOCITY, (float *)&tg_game.camera->velocity);
 
     // TODO: dlb_vec_each(ta_audio_source_update)
 
@@ -711,8 +702,8 @@ static void game_render_colliders_debug()
     // Local space
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
         ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->model);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->model);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->world);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->world);
 
         ta_sphere centroid_local = { 0 };
         centroid_local.center = body->centroid_local;
@@ -731,7 +722,7 @@ static void game_render_colliders_debug()
         ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
 
         ta_sphere local_origin = { 0 };
-        local_origin.center = transform->xform.position;
+        local_origin.center = transform->xform_world.position;
         local_origin.radius = 0.04f;
         ta_primitive_push_sphere(0, local_origin, TA_COLOR_PINK);
 
@@ -761,8 +752,8 @@ static void game_render_nametags_debug(ta_camera *camera)
     dlb_vec_each(ta_transform *, transform, transforms) {
         ta_rectf tag_rect = ta_font_push_text(font, SYM(transform->name), true, 0, 0, 0, &tag_rects);
 
-        ta_vec3 tag_pos = transform->xform.position;
-        ta_vec3 tag_to_cam = vec3_sub(cam_trans->xform.position, tag_pos);
+        ta_vec3 tag_pos = transform->xform_world.position;
+        ta_vec3 tag_to_cam = vec3_sub(cam_trans->xform_world.position, tag_pos);
         tag_to_cam.z *= -1.0f;
         tag_to_cam.y *= 0.0f;
         float tag_scalef = MAX(vec3_len(tag_to_cam), 4.0f);
@@ -894,9 +885,7 @@ void ta_game_loop()
         float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
 
         // Update transforms (model matrix and lerp)
-        dlb_vec_each(ta_transform *, transform, transforms) {
-            ta_transform_update(transform, sim_alpha);
-        }
+        ta_transform_update_all(transforms, sim_alpha);
 
         //----------------------------------------------------------------------
         // Shadow pass
@@ -934,8 +923,7 @@ void ta_game_loop()
 
         // Dump any prims from the collision pass
         game_render_manifolds_debug();
-        ta_primitive_render_mesh(&primitive_lines_perma, tg_shader_lines,
-            TA_LINES, false, false);
+        ta_primitive_render_mesh(&primitive_lines_perma, tg_shader_lines, TA_LINES, false, false);
         ta_primitive_render(true, false);
 
         if (active_camera->debug_wireframe) {
@@ -961,9 +949,9 @@ void ta_game_loop()
             if (camera->name != tg_e_active_camera) {
                 ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
                 ta_obb obb = { 0 };
-                obb.center = cam_trans->xform.position;
+                obb.center = cam_trans->xform_world.position;
                 obb.extents = (ta_vec3){ 0.2f, 0.2f, 0.2f };
-                obb.orientation = cam_trans->xform.orientation;
+                obb.orientation = cam_trans->xform_world.orientation;
                 ta_primitive_push_obb(0, obb, TA_COLOR_WHITE);
                 ta_vec3 dir = vec3_rotate_quat(VEC3_NZ, obb.orientation);
                 ta_primitive_push_arrow(0, obb.center, dir, TA_COLOR_WHITE);
@@ -974,11 +962,10 @@ void ta_game_loop()
         }
         // Debug render light as spheres of the light's color
         dlb_vec_each(ta_light *, light, lights) {
-            ta_transform *transform = ta_game_component(light->entity,
-                RES_COMP_TRANSFORM);
+            ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
 
             ta_sphere light_pos = { 0 };
-            light_pos.center = transform->xform.position;
+            light_pos.center = transform->xform_world.position;
             light_pos.radius = 0.2f;
             ta_rgba color = { 0 };
             if (light->disabled) {
@@ -994,7 +981,7 @@ void ta_game_loop()
 
             if (active_camera->debug_colliders) {
                 ta_sphere light_aoe = { 0 };
-                light_aoe.center = transform->xform.position;
+                light_aoe.center = transform->xform_world.position;
                 light_aoe.radius = light->shadowmap.zfar;
                 ta_primitive_push_sphere(0, light_aoe, color);
             }
@@ -1074,8 +1061,7 @@ void ta_game_loop()
         ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
         game.frame_num++;
         ta_log_write(&tg_debug_log, SRC_GAME, " FPS pass...\n");
-        game_draw_frame_info(game.frame_num, ms_frame_time, ms_frame_delta,
-            game.sim_step);
+        game_draw_frame_info(game.frame_num, ms_frame_time, ms_frame_delta, game.sim_step);
 
 #if 0
         //----------------------------------------------------------------------
@@ -1153,6 +1139,15 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Audio
         //----------------------------------------------------------------------
+        // TODO: dlb_vec_each(ta_audio_listener_update)
+        ta_transform *active_cam_trans = ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
+        ta_vec3 fwd_up[2];
+        fwd_up[0] = active_camera->front;
+        fwd_up[1] = active_camera->up;
+        alListenerfv(AL_ORIENTATION, (float *)fwd_up);
+        alListenerfv(AL_POSITION, (float *)&active_cam_trans->xform_world.position);
+        //alListenerfv(AL_VELOCITY, (float *)&tg_game.camera->velocity);
+
         ta_log_write(&tg_debug_log, SRC_GAME, " Audio update...\n");
         ta_audio_update();
 

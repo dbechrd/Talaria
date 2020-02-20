@@ -89,6 +89,10 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
 {
     ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
 
+    // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should consider
+    // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
+    DLB_ASSERT(!transform->parent);
+
     // Update inverse mass when mass changes (editor UI)
     body->inv_mass = body->mass ? 1.0f / body->mass : 0.0f;
 
@@ -264,11 +268,9 @@ static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a,
     return false;
 }
 
-bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a,
-    ta_rigid_body *b)
+bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b)
 {
-    typedef bool (intersector)(ta_manifold *manifold, const ta_rigid_body *a,
-        const ta_rigid_body *b);
+    typedef bool (intersector)(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b);
 
     static intersector *intersectors[TA_COLLIDER_COUNT][TA_COLLIDER_COUNT] = {
         [TA_COLLIDER_PLANE][TA_COLLIDER_SPHERE] = intersector_plane_v_sphere,
@@ -338,6 +340,11 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     ta_rigid_body *b = manifold->b;
     ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
     ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
+
+    // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should consider
+    // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
+    DLB_ASSERT(!atrans->parent);
+    DLB_ASSERT(!btrans->parent);
 
     // Trigger colliders don't need any resolution
     if (a->trigger || b->trigger) {

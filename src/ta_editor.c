@@ -328,9 +328,8 @@ static void ui_node_panel()
         ta_ui_next_size(label_width, 0);
         ta_ui_label(CSTR("position:"));
         static ta_ui_textbox_vec3_state textbox = { 0 };
-        ta_ui_textbox_vec3(&transform->xform.position, &textbox, false, true, true);
+        ta_ui_textbox_vec3(&transform->xform.position, &textbox, false, false, true);
 
-        ta_ui_spacer(0, 6);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(CSTR("orientation:"));
@@ -338,8 +337,32 @@ static void ui_node_panel()
         // the components need to be in the range [0.0, 1.0]. Let's create a
         // ta_ui_label_vec4, then figure out how to edit rotations (Euler XYZ).
         static ta_ui_textbox_vec4_state orient_editors = { 0 };
-        ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors, true,
-            true, true);
+        ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors, true, false, true);
+
+        char text[256] = { 0 };
+        int text_len = 0;
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(CSTR("position_world:"));
+        text_len = snprintf(CSTR(text),
+            "%.3f, %.3f, %.3f",
+            transform->xform_world.position.x,
+            transform->xform_world.position.y,
+            transform->xform_world.position.z);
+        DLB_ASSERT(text_len < sizeof(text));
+        ta_ui_label(CSTR(text));
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(CSTR("orientation_world:"));
+        text_len = snprintf(CSTR(text),
+            "%.3f, %.3f, %.3f, %.3f",
+            transform->xform_world.orientation.x,
+            transform->xform_world.orientation.y,
+            transform->xform_world.orientation.z,
+            transform->xform_world.orientation.w);
+        DLB_ASSERT(text_len < sizeof(text));
+        ta_ui_label(CSTR(text));
     }
 
     ta_ui_row_end();
@@ -1176,12 +1199,9 @@ void ta_editor_draw_world()
         }
 
         glClear(GL_DEPTH_BUFFER_BIT);
-        ta_transform *e_transform = ta_game_component(selected_entity,
-            RES_COMP_TRANSFORM);
-        ta_transform *cam_trans = ta_game_component(camera->entity,
-            RES_COMP_TRANSFORM);
-        float dist = vec3_len(vec3_sub(cam_trans->xform.position,
-            e_transform->xform.position));
+        ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+        ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+        float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
         float scale = MAX(0.5f, dist * 0.2f);
 
         // Hitbox midpoint
@@ -1189,38 +1209,38 @@ void ta_editor_draw_world()
         float radius_quad = radius * 1.2f;
 
         ta_line_3d x_axis = { 0 };
-        x_axis.p0 = e_transform->xform.position;
-        x_axis.p1 = e_transform->xform.position;
-        x_axis.p0.x = cam_trans->xform.position.x - 10000.0f;
-        x_axis.p1.x = cam_trans->xform.position.x + 10000.0f;
+        x_axis.p0 = e_transform->xform_world.position;
+        x_axis.p1 = e_transform->xform_world.position;
+        x_axis.p0.x = cam_trans->xform_world.position.x - 10000.0f;
+        x_axis.p1.x = cam_trans->xform_world.position.x + 10000.0f;
 
         ta_line_3d y_axis = { 0 };
-        y_axis.p0 = e_transform->xform.position;
-        y_axis.p1 = e_transform->xform.position;
-        y_axis.p0.y = cam_trans->xform.position.y - 10000.0f;
-        y_axis.p1.y = cam_trans->xform.position.y + 10000.0f;
+        y_axis.p0 = e_transform->xform_world.position;
+        y_axis.p1 = e_transform->xform_world.position;
+        y_axis.p0.y = cam_trans->xform_world.position.y - 10000.0f;
+        y_axis.p1.y = cam_trans->xform_world.position.y + 10000.0f;
 
         ta_line_3d z_axis = { 0 };
-        z_axis.p0 = e_transform->xform.position;
-        z_axis.p1 = e_transform->xform.position;
-        z_axis.p0.z = cam_trans->xform.position.z - 10000.0f;
-        z_axis.p1.z = cam_trans->xform.position.z + 10000.0f;
+        z_axis.p0 = e_transform->xform_world.position;
+        z_axis.p1 = e_transform->xform_world.position;
+        z_axis.p0.z = cam_trans->xform_world.position.z - 10000.0f;
+        z_axis.p1.z = cam_trans->xform_world.position.z + 10000.0f;
 
         // One-axis arrow handles
         ta_aabb hitbox1d[3] = { 0 };
         float midpoint1d = scale * 0.6f;
         float extent1d = scale - midpoint1d;
-        hitbox1d[0].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_X, midpoint1d));
+        hitbox1d[0].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_X, midpoint1d));
         hitbox1d[0].extents.x = extent1d;
         hitbox1d[0].extents.y = radius;
         hitbox1d[0].extents.z = radius;
 
-        hitbox1d[1].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Y, midpoint1d));
+        hitbox1d[1].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_Y, midpoint1d));
         hitbox1d[1].extents.x = radius;
         hitbox1d[1].extents.y = extent1d;
         hitbox1d[1].extents.z = radius;
 
-        hitbox1d[2].center = vec3_add(e_transform->xform.position, vec3_scalef(VEC3_Z, midpoint1d));
+        hitbox1d[2].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_Z, midpoint1d));
         hitbox1d[2].extents.x = radius;
         hitbox1d[2].extents.y = radius;
         hitbox1d[2].extents.z = extent1d;
@@ -1228,21 +1248,21 @@ void ta_editor_draw_world()
         // Two-axis plane handles
         ta_quad hitbox2d[3] = { 0 };
         float midpoint2d = scale * 0.5f;
-        hitbox2d[0].center = e_transform->xform.position;
+        hitbox2d[0].center = e_transform->xform_world.position;
         hitbox2d[0].center.y += midpoint2d;
         hitbox2d[0].center.z += midpoint2d;
         hitbox2d[0].extents.x = radius_quad;
         hitbox2d[0].extents.y = radius_quad;
         hitbox2d[0].orientation = quat_from_axis_angle(VEC3_Y, 90.0f);
 
-        hitbox2d[1].center = e_transform->xform.position;
+        hitbox2d[1].center = e_transform->xform_world.position;
         hitbox2d[1].center.x += midpoint2d;
         hitbox2d[1].center.z += midpoint2d;
         hitbox2d[1].extents.x = radius_quad;
         hitbox2d[1].extents.y = radius_quad;
         hitbox2d[1].orientation = quat_from_axis_angle(VEC3_X, -90.0f);
 
-        hitbox2d[2].center = e_transform->xform.position;
+        hitbox2d[2].center = e_transform->xform_world.position;
         hitbox2d[2].center.x += midpoint2d;
         hitbox2d[2].center.y += midpoint2d;
         hitbox2d[2].extents.x = radius_quad;
@@ -1251,7 +1271,7 @@ void ta_editor_draw_world()
 
         // Three-axis view-plane handle
         ta_aabb hitbox3d = { 0 };
-        hitbox3d.center = e_transform->xform.position;
+        hitbox3d.center = e_transform->xform_world.position;
         hitbox3d.extents.x = radius;
         hitbox3d.extents.y = radius;
         hitbox3d.extents.z = radius;
@@ -1291,12 +1311,12 @@ void ta_editor_draw_world()
             case WIDGET_TRANSLATE: {
                 // TODO: Would ray_vs_line_closest() be a better way to check this?
                 ta_plane plane = { 0 };
-                plane.center = e_transform->xform.position;
+                plane.center = e_transform->xform_world.position;
 
                 switch (editor.gizmo) {
                     case GIZMO_TRANSLATE_X: {
-                        plane.normal.y = cam_trans->xform.position.y - e_transform->xform.position.y;
-                        plane.normal.z = cam_trans->xform.position.z - e_transform->xform.position.z;
+                        plane.normal.y = cam_trans->xform_world.position.y - e_transform->xform_world.position.y;
+                        plane.normal.z = cam_trans->xform_world.position.z - e_transform->xform_world.position.z;
                         plane.normal = vec3_normalize(plane.normal);
 
                         float t;
@@ -1310,11 +1330,11 @@ void ta_editor_draw_world()
                         }
 
                         ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                        ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
+                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
                         break;
                     } case GIZMO_TRANSLATE_Y: {
-                        plane.normal.x = cam_trans->xform.position.x - e_transform->xform.position.x;
-                        plane.normal.z = cam_trans->xform.position.z - e_transform->xform.position.z;
+                        plane.normal.x = cam_trans->xform_world.position.x - e_transform->xform_world.position.x;
+                        plane.normal.z = cam_trans->xform_world.position.z - e_transform->xform_world.position.z;
                         plane.normal = vec3_normalize(plane.normal);
 
                         float t;
@@ -1328,11 +1348,11 @@ void ta_editor_draw_world()
                         }
 
                         ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                        ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
+                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
                         break;
                     } case GIZMO_TRANSLATE_Z: {
-                        plane.normal.x = cam_trans->xform.position.x - e_transform->xform.position.x;
-                        plane.normal.y = cam_trans->xform.position.y - e_transform->xform.position.y;
+                        plane.normal.x = cam_trans->xform_world.position.x - e_transform->xform_world.position.x;
+                        plane.normal.y = cam_trans->xform_world.position.y - e_transform->xform_world.position.y;
                         plane.normal = vec3_normalize(plane.normal);
 
                         float t;
@@ -1346,7 +1366,7 @@ void ta_editor_draw_world()
                         }
 
                         ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                        ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
+                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
                         break;
                     } case GIZMO_TRANSLATE_YZ: {
                         plane.normal.x = 1.0f;
@@ -1436,26 +1456,26 @@ void ta_editor_draw_world()
 
                 if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_X) {
                     //ta_primitive_push_aabb(0, hitbox1d[0], TA_COLOR_RED);
-                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
+                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
                 } else if (editor.gizmo != GIZMO_TRANSLATE_X) {
                     //ta_primitive_push_aabb(0, hitbox1d[0], TA_COLOR_GRAY8);
-                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_X, scale), TA_COLOR_DARK_RED);
+                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_X, scale), TA_COLOR_DARK_RED);
                 }
 
                 if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_Y) {
                     //ta_primitive_push_aabb(0, hitbox1d[1], TA_COLOR_GREEN);
-                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
+                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
                 } else if (editor.gizmo != GIZMO_TRANSLATE_Y) {
                     //ta_primitive_push_aabb(0, hitbox1d[1], TA_COLOR_GRAY8);
-                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_DARK_GREEN);
+                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_DARK_GREEN);
                 }
 
                 if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_Z) {
                     //ta_primitive_push_aabb(0, hitbox1d[2], TA_COLOR_BLUE);
-                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
+                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
                 } else if (editor.gizmo != GIZMO_TRANSLATE_Z) {
                     //ta_primitive_push_aabb(0, hitbox1d[2], TA_COLOR_GRAY8);
-                    ta_primitive_push_arrow(0, e_transform->xform.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_DARK_BLUE);
+                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_DARK_BLUE);
                 }
 
                 if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_YZ) {
@@ -1487,12 +1507,12 @@ void ta_editor_draw_world()
                 break;
             } case WIDGET_ROTATE: {
                 ta_sphere sphere = { 0 };
-                sphere.center = e_transform->xform.position;
+                sphere.center = e_transform->xform_world.position;
                 sphere.radius = scale;
                 ta_primitive_push_rgb_sphere(0, sphere);
                 break;
             } case WIDGET_SCALE: {
-                ta_primitive_push_axes_cube(0, e_transform->xform.position, scale);
+                ta_primitive_push_axes_cube(0, e_transform->xform_world.position, scale);
                 break;
             }
         }
@@ -1512,7 +1532,7 @@ void ta_editor_draw_world()
                 case TA_COLLIDER_PLANE: {
                     ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
                     ta_plane plane = body->collider.data.plane;
-                    plane.center = vec3_add(plane.center, transform->xform.position);
+                    plane.center = vec3_add(plane.center, transform->xform_world.position);
                     if (ta_ray_v_plane(&ray, &plane, &t)) {
                         DLB_ASSERT(t >= 0.0f);
                         //if (t >= 0.0f && t < t_min) {
@@ -1525,7 +1545,7 @@ void ta_editor_draw_world()
                 } case TA_COLLIDER_SPHERE: {
                     ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
                     ta_sphere sphere = body->collider.data.sphere;
-                    sphere.center = vec3_add(sphere.center, transform->xform.position);
+                    sphere.center = vec3_add(sphere.center, transform->xform_world.position);
                     if (ta_ray_v_sphere(&ray, &sphere, &t)) {
                         DLB_ASSERT(t >= 0.0f);
                         //if (t >= 0.0f && t < t_min) {
@@ -1538,9 +1558,9 @@ void ta_editor_draw_world()
                 } case TA_COLLIDER_OBB: {
                     ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
                     ta_obb obb = body->collider.data.obb;
-                    obb.center = vec3_rotate_quat(obb.center, transform->xform.orientation);
-                    obb.center = vec3_add(obb.center, transform->xform.position);
-                    obb.orientation = quat_mul(transform->xform.orientation, obb.orientation);
+                    obb.center = vec3_rotate_quat(obb.center, transform->xform_world.orientation);
+                    obb.center = vec3_add(obb.center, transform->xform_world.position);
+                    obb.orientation = quat_mul(transform->xform_world.orientation, obb.orientation);
                     if (ta_ray_v_obb(&ray, &obb, &t)) {
                         DLB_ASSERT(t >= 0.0f);
                         if (t < t_min) {
@@ -1558,10 +1578,9 @@ void ta_editor_draw_world()
 
         ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
         dlb_vec_each(ta_light *, light, lights) {
-            ta_transform *transform = ta_game_component(light->entity,
-                RES_COMP_TRANSFORM);
+            ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
             ta_sphere sphere = { 0 };
-            sphere.center = transform->xform.position;
+            sphere.center = transform->xform_world.position;
             sphere.radius = 0.2f;
             if (ta_ray_v_sphere(&ray, &sphere, &t)) {
                 DLB_ASSERT(t >= 0.0f);

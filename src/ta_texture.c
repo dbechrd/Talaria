@@ -231,6 +231,7 @@ static void texture_generate_mipmap(ta_texture *tex)
 
 void ta_texture_load(ta_texture *tex)
 {
+    ta_texture_init(tex);
     ta_texture_create_and_bind(tex);
 
     // Pixel textures contain inlined pixel data, path should be null

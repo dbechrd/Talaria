@@ -42,17 +42,17 @@ ta_camera:
   position_target_vel: 0x3E4CCCCF (0.200000)
   target_xform:
     position:
-      x: 0x41848A4C (16.567528)
-      y: 0x4108533B (8.520320)
-      z: 0xBFD04C81 (-1.627335)
+      x: 0x3F7E4AEF (0.993331)
+      y: 0x40B3AAF9 (5.614621)
+      z: 0xC0F8A0D7 (-7.769634)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x00000000 (0.000000)
-  yaw: 0x42FC38EF (126.111198)
+  yaw: 0x42AC3A5C (86.113983)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1B2679F (-22.300596)
+  pitch: 0xBFD9BA49 (-1.700997)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -63,9 +63,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBE6501D7 (-0.223640)
-    y: 0x3F6CDA47 (0.925206)
-    z: 0xBE9CF589 (-0.306561)
+    x: 0x3B03D6EF (0.002012)
+    y: 0x3F7FE320 (0.999559)
+    z: 0xBCF29BFE (-0.029615)
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -158,7 +158,6 @@ ta_light:
     resolution: 1024
     znear: 0x3DCCCCCD (0.100000)
     zfar: 0x42C80000 (100.000000)
-  disabled: true
   cast_shadows: true
 ta_light:
   name: "light_point_0004"
@@ -181,68 +180,123 @@ ta_light:
 ta_model:
   name: "chamber_0001"
   entity: "chamber_0001"
-  pieces: [{mesh: "chamber_0001", material: "terrazzo"}]
+  pieces: [
+    {
+      mesh: "chamber_0001",
+      material: "terrazzo",
+    },
+  ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "wakeup"
   entity: "wakeup"
-  pieces: [{mesh: "wakeup", material: "cobble"}]
+  pieces: [
+    {
+      mesh: "wakeup",
+      material: "cobble",
+    },
+  ]
   invisible: true
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "button_0001"
   entity: "button_0001"
-  pieces: [{mesh: "button", material: "metal_plate_019"}]
+  pieces: [
+    {
+      mesh: "button",
+      material: "metal_plate_019",
+    },
+  ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "player_one"
   entity: "player_one"
-  pieces: [{mesh: "prim_sphere", material: "metal_plate_019"}]
+  pieces: [
+    {
+      mesh: "prim_sphere",
+      material: "metal_plate_019",
+    },
+  ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "rock_0001"
   entity: "rock_0001"
-  pieces: [{mesh: "rock_mesh", material: "cobble"}]
+  pieces: [
+    {
+      mesh: "rock_mesh",
+      material: "cobble",
+    },
+  ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "sphere2"
   entity: "sphere2"
-  pieces: [{mesh: "prim_sphere", material: "red"}]
+  pieces: [
+    {
+      mesh: "prim_sphere",
+      material: "red",
+    },
+  ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "shadow_test_1"
   entity: "shadow_test_1"
-  pieces: [{mesh: "letter_r", material: "test"}]
+  pieces: [
+    {
+      mesh: "letter_r",
+      material: "test",
+    },
+  ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0001"
   entity: "column_0001"
-  pieces: [{mesh: "column_0001", material: "test"}]
+  pieces: [
+    {
+      mesh: "column_0001",
+      material: "test",
+    },
+  ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0002"
   entity: "column_0002"
-  pieces: [{mesh: "column_0001", material: "test"}]
+  pieces: [
+    {
+      mesh: "column_0001",
+      material: "test",
+    },
+  ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0003"
   entity: "column_0003"
-  pieces: [{mesh: "column_0001", material: "test"}]
+  pieces: [
+    {
+      mesh: "column_0001",
+      material: "test",
+    },
+  ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "star_0001"
   entity: "star_0001"
-  pieces: [{mesh: "star_0001", material: "star_0001"}]
+  pieces: [
+    {
+      mesh: "star_0001",
+      material: "star_0001",
+    },
+  ]
   cast_shadows: true
   receive_shadows: true
 #-------------------------------------------------------------------------------
@@ -285,11 +339,12 @@ ta_transform:
 ta_transform:
   name: "light_point_0003"
   entity: "light_point_0003"
+  parent: "button_0001"
   xform:
     position:
-      x: 0x412147AF (10.080001)
-      y: 0x402E05B2 (2.719098)
-      z: 0xC18F709A (-17.929981)
+      x: -0.5
+      y: 1.0
+      z: -0.5
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -391,14 +446,14 @@ ta_transform:
   entity: "freecam"
   xform:
     position:
-      x: 0x41848A50 (16.567535)
-      y: 0x41085336 (8.520315)
-      z: 0xBFD04C86 (-1.627335)
+      x: 0x3F7E4AEA (0.993331)
+      y: 0x40B3AAFE (5.614623)
+      z: 0xC0F8A0DC (-7.769636)
     orientation:
-      x: 0xBE4FDA3B (-0.202981)
-      y: 0x3E955645 (0.291674)
-      z: 0x00000000 (0.000000)
-      w: 0x3F6F4AA3 (0.934733)
+      x: 0xBC7355CA (-0.014852)
+      y: 0xBD0AD499 (-0.033894)
+      z: 0x80000000 (-0.000000)
+      w: 0x3F7FD31E (0.999315)
 ta_transform:
   name: "player_one"
   entity: "player_one"
@@ -470,7 +525,7 @@ ta_transform:
   xform:
     position:
       x: 0xC134F153 (-11.308917)
-      y: 0xC7C73881 (-102001.007813)
+      y: 0xC7CC51D7 (-104611.679688)
       z: 0x40C3AD3D (6.114897)
     orientation:
       x: 0x00000000 (0.000000)
@@ -509,7 +564,7 @@ ta_transform:
   xform:
     position:
       x: 0x40928201 (4.578370)
-      y: 0xC7C73743 (-101998.523438)
+      y: 0xC7CC5099 (-104609.195313)
       z: 0x40968FEB (4.705068)
     orientation:
       x: 0x3E9202C9 (0.285177)
@@ -982,6 +1037,18 @@ ta_mesh:
     z: 0x00000000 (0.000000)
 ta_mesh:
   name: "button_pad"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "button_pad.001"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "button_pad.001"
   offset:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)

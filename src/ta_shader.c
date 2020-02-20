@@ -349,8 +349,7 @@ void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
         u->dirty = true;
     }
 }
-void ta_shader_set_light(ta_shader *shader, const char *name, int index,
-    ta_light *light)
+void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_light *light)
 {
     // TODO: Use the other set calls above to eliminate duplicate sets once that's implemented for the basic types.
     ta_shader_uniform *u_light          = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);

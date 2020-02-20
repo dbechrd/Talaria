@@ -166,19 +166,19 @@ static void shadowmap_point_create(ta_light *light)
 ta_vec3 ta_light_position(ta_light *light)
 {
     ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
-    return transform->xform.position;
+    return transform->xform_world.position;
 }
 ta_vec3 ta_light_direction(ta_light *light)
 {
     ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
 
     // Lights with identity orientation don't cast shadows; give them a nudge
-    if (quat_equal(transform->xform.orientation, QUAT_IDENT)) {
-        transform->xform.orientation.x += TA_EPSILON;
-        transform->xform.orientation = quat_normalize(transform->xform.orientation);
+    if (quat_equal(transform->xform_world.orientation, QUAT_IDENT)) {
+        transform->xform_world.orientation.x += TA_EPSILON;
+        transform->xform_world.orientation = quat_normalize(transform->xform_world.orientation);
     }
     // Default light direction is directly down
-    ta_vec3 direction = vec3_rotate_quat(VEC3_NY, transform->xform.orientation);
+    ta_vec3 direction = vec3_rotate_quat(VEC3_NY, transform->xform_world.orientation);
     direction = vec3_normalize(direction);
     return direction;
 }

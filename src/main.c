@@ -152,6 +152,7 @@ int main(int argc, char *argv[])
 #include "ta_model.c"
 #include "ta_mouse.c"
 #include "ta_parse.c"
+#include "ta_player.c"
 #include "ta_primitive.c"
 #include "ta_rigid_body.c"
 #include "ta_scene.c"

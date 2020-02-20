@@ -1358,7 +1358,8 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
 
-        if (i == 0 && reset_button) {
+        if ((reset_button && multiple_rows && i == 0) ||
+            (reset_button && !multiple_rows && i == 3)) {
             ta_ui_next_margin(6, 1, 0, 1);
             ta_ui_next_bg_color(UI_STATE_NONE, 0.5f, 0.0f, 0.0f, 1.0f);
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.7f, 0.0f, 0.0f, 1.0f);
