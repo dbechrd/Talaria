@@ -44,6 +44,7 @@ typedef enum editor_gizmo {
     GIZMO_TRANSLATE_XZ,
     GIZMO_TRANSLATE_XY,
     GIZMO_TRANSLATE_VIEW,
+    GIZMO_COUNT
 } editor_gizmo;
 
 typedef enum editor_command {
@@ -1167,7 +1168,7 @@ void ta_editor_draw_world()
 {
     // Grid and world axes
     ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
-    ta_primitive_push_axes_arrow(0, VEC3_ZERO, 0.3f);
+    ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.3f);
     ta_primitive_render(true, false);
 
     ta_ray ray = ta_game_camera_ray();
@@ -1203,10 +1204,7 @@ void ta_editor_draw_world()
         ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
         float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
         float scale = MAX(0.5f, dist * 0.2f);
-
-        // Hitbox midpoint
         float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
-        float radius_quad = radius * 1.2f;
 
         ta_line_3d x_axis = { 0 };
         x_axis.p0 = e_transform->xform_world.position;
@@ -1228,7 +1226,7 @@ void ta_editor_draw_world()
 
         // One-axis arrow handles
         ta_aabb hitbox1d[3] = { 0 };
-        float midpoint1d = scale * 0.6f;
+        float midpoint1d = scale * 0.5f;
         float extent1d = scale - midpoint1d;
         hitbox1d[0].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_X, midpoint1d));
         hitbox1d[0].extents.x = extent1d;
@@ -1248,6 +1246,7 @@ void ta_editor_draw_world()
         // Two-axis plane handles
         ta_quad hitbox2d[3] = { 0 };
         float midpoint2d = scale * 0.5f;
+        float radius_quad = radius * 1.2f;
         hitbox2d[0].center = e_transform->xform_world.position;
         hitbox2d[0].center.y += midpoint2d;
         hitbox2d[0].center.z += midpoint2d;
@@ -1295,12 +1294,14 @@ void ta_editor_draw_world()
                 }
             }
 
-            if (ta_ray_v_aabb(&ray, &hitbox3d, &t) && t < t_min) {
+            // NOTE: This feels more responsive when it takes precedence above the invisible arrow bboxes
+            if (ta_ray_v_aabb(&ray, &hitbox3d, &t)) {  // && t < t_min) {
                 t_min = t;
                 nearest_gizmo = GIZMO_TRANSLATE_VIEW;
             }
         }
 
+        // Set gizmo to nearest on mouse click, clear on release
         if (ta_mouse_captured() && ta_key_pressed(GLFW_KEY_MOUSE_LEFT)) {
             editor.gizmo = nearest_gizmo;
         } else if (!ta_key_down(GLFW_KEY_MOUSE_LEFT)) {
@@ -1309,6 +1310,48 @@ void ta_editor_draw_world()
 
         switch (editor.widget) {
             case WIDGET_TRANSLATE: {
+                //------------------------------------------------------------------------------------------------------
+                // Render passive gizmo details
+                //------------------------------------------------------------------------------------------------------
+                ta_rgba gizmo_color[GIZMO_COUNT] = { 0 };
+                gizmo_color[GIZMO_TRANSLATE_X] = TA_COLOR_DARK_RED;
+                gizmo_color[GIZMO_TRANSLATE_Y] = TA_COLOR_DARK_GREEN;
+                gizmo_color[GIZMO_TRANSLATE_Z] = TA_COLOR_DARK_BLUE;
+                gizmo_color[GIZMO_TRANSLATE_YZ] = TA_COLOR_DARK_REDA;
+                gizmo_color[GIZMO_TRANSLATE_XZ] = TA_COLOR_DARK_GREENA;
+                gizmo_color[GIZMO_TRANSLATE_XY] = TA_COLOR_DARK_BLUEA;
+                gizmo_color[GIZMO_TRANSLATE_VIEW] = TA_COLOR_WHITE;
+                ta_rgba gizmo_hover[GIZMO_COUNT] = { 0 };
+                gizmo_hover[GIZMO_TRANSLATE_X] = TA_COLOR_RED;
+                gizmo_hover[GIZMO_TRANSLATE_Y] = TA_COLOR_GREEN;
+                gizmo_hover[GIZMO_TRANSLATE_Z] = TA_COLOR_BLUE;
+                gizmo_hover[GIZMO_TRANSLATE_YZ] = TA_COLOR_RED;
+                gizmo_hover[GIZMO_TRANSLATE_XZ] = TA_COLOR_GREEN;
+                gizmo_hover[GIZMO_TRANSLATE_XY] = TA_COLOR_BLUE;
+                gizmo_hover[GIZMO_TRANSLATE_VIEW] = TA_COLOR_GRAY6;
+
+                // Highlight active gizmo, or nearest gizmo if none active
+                for (int gizmo = GIZMO_NONE + 1; gizmo < GIZMO_COUNT; ++gizmo) {
+                    if (editor.gizmo == gizmo || (!editor.gizmo && nearest_gizmo == gizmo)) {
+                        gizmo_color[gizmo] = gizmo_hover[gizmo];
+                    }
+                }
+
+                // 1D handles
+                ta_primitive_push_axes_arrow_color(0, e_transform->xform_world.position, QUAT_IDENT, scale,
+                    gizmo_color[GIZMO_TRANSLATE_X], gizmo_color[GIZMO_TRANSLATE_Y], gizmo_color[GIZMO_TRANSLATE_Z]);
+
+                // 2D handles
+                ta_primitive_push_quad(0, hitbox2d[0], gizmo_color[GIZMO_TRANSLATE_YZ]);
+                ta_primitive_push_quad(0, hitbox2d[1], gizmo_color[GIZMO_TRANSLATE_XZ]);
+                ta_primitive_push_quad(0, hitbox2d[2], gizmo_color[GIZMO_TRANSLATE_XY]);
+
+                // 3D handle
+                ta_primitive_push_aabb(0, hitbox3d, gizmo_color[GIZMO_TRANSLATE_VIEW]);
+
+                //------------------------------------------------------------------------------------------------------
+                // Render active gizmo details
+                //------------------------------------------------------------------------------------------------------
                 // TODO: Would ray_vs_line_closest() be a better way to check this?
                 ta_plane plane = { 0 };
                 plane.center = e_transform->xform_world.position;
@@ -1454,56 +1497,6 @@ void ta_editor_draw_world()
                     }
                 }
 
-                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_X) {
-                    //ta_primitive_push_aabb(0, hitbox1d[0], TA_COLOR_RED);
-                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
-                } else if (editor.gizmo != GIZMO_TRANSLATE_X) {
-                    //ta_primitive_push_aabb(0, hitbox1d[0], TA_COLOR_GRAY8);
-                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_X, scale), TA_COLOR_DARK_RED);
-                }
-
-                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_Y) {
-                    //ta_primitive_push_aabb(0, hitbox1d[1], TA_COLOR_GREEN);
-                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
-                } else if (editor.gizmo != GIZMO_TRANSLATE_Y) {
-                    //ta_primitive_push_aabb(0, hitbox1d[1], TA_COLOR_GRAY8);
-                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_DARK_GREEN);
-                }
-
-                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_Z) {
-                    //ta_primitive_push_aabb(0, hitbox1d[2], TA_COLOR_BLUE);
-                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
-                } else if (editor.gizmo != GIZMO_TRANSLATE_Z) {
-                    //ta_primitive_push_aabb(0, hitbox1d[2], TA_COLOR_GRAY8);
-                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_DARK_BLUE);
-                }
-
-                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_YZ) {
-                    ta_primitive_push_quad(0, hitbox2d[0], TA_COLOR_RED);
-                } else if (editor.gizmo != GIZMO_TRANSLATE_YZ) {
-                    ta_primitive_push_quad(0, hitbox2d[0], TA_COLOR_DARK_REDA);
-                    //ta_primitive_push_grid(0, hitbox2d[0].center, VEC3_X, radius_quad, radius_quad / 2.0f, TA_COLOR_DARK_REDA);
-                }
-
-                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_XZ) {
-                    ta_primitive_push_quad(0, hitbox2d[1], TA_COLOR_GREEN);
-                } else if (editor.gizmo != GIZMO_TRANSLATE_XZ) {
-                    ta_primitive_push_quad(0, hitbox2d[1], TA_COLOR_DARK_GREENA);
-                    //ta_primitive_push_grid(0, hitbox2d[1].center, VEC3_Y, radius_quad, radius_quad / 2.0f, TA_COLOR_DARK_GREENA);
-                }
-
-                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_XY) {
-                    ta_primitive_push_quad(0, hitbox2d[2], TA_COLOR_BLUE);
-                } else if (editor.gizmo != GIZMO_TRANSLATE_XY) {
-                    ta_primitive_push_quad(0, hitbox2d[2], TA_COLOR_DARK_BLUEA);
-                    //ta_primitive_push_grid(0, hitbox2d[2].center, VEC3_Z, radius_quad, radius_quad / 2.0f, TA_COLOR_DARK_BLUEA);
-                }
-
-                if (!editor.gizmo && nearest_gizmo == GIZMO_TRANSLATE_VIEW) {
-                    ta_primitive_push_aabb(0, hitbox3d, TA_COLOR_WHITE);
-                } else if (editor.gizmo != GIZMO_TRANSLATE_VIEW) {
-                    ta_primitive_push_aabb(0, hitbox3d, TA_COLOR_GRAY8);
-                }
                 break;
             } case WIDGET_ROTATE: {
                 ta_sphere sphere = { 0 };

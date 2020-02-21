@@ -680,11 +680,24 @@ void ta_primitive_push_grid(ta_mesh *mesh, ta_vec3 center, ta_vec3 normal,
         ta_primitive_push_line_3d(mesh, line, color, color);
     }
 }
-void ta_primitive_push_axes_arrow(ta_mesh *mesh, ta_vec3 position, float scale)
+void ta_primitive_push_axes_arrow_color(ta_mesh *mesh, ta_vec3 position, ta_vec4 orientation, float scale, ta_rgba cx,
+    ta_rgba cy, ta_rgba cz)
 {
-    ta_primitive_push_arrow(mesh, position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
-    ta_primitive_push_arrow(mesh, position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
-    ta_primitive_push_arrow(mesh, position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
+    ta_vec3 x = VEC3_X;
+    ta_vec3 y = VEC3_Y;
+    ta_vec3 z = VEC3_Z;
+    if (!quat_ident(orientation)) {
+        x = vec3_rotate_quat(x, orientation);
+        y = vec3_rotate_quat(y, orientation);
+        z = vec3_rotate_quat(z, orientation);
+    }
+    ta_primitive_push_arrow(mesh, position, vec3_scalef(x, scale), cx);
+    ta_primitive_push_arrow(mesh, position, vec3_scalef(y, scale), cy);
+    ta_primitive_push_arrow(mesh, position, vec3_scalef(z, scale), cz);
+}
+void ta_primitive_push_axes_arrow(ta_mesh *mesh, ta_vec3 position, ta_vec4 orientation, float scale)
+{
+    ta_primitive_push_axes_arrow_color(mesh, position, orientation, scale, TA_COLOR_RED, TA_COLOR_GREEN, TA_COLOR_BLUE);
 }
 void ta_primitive_push_axes_cube(ta_mesh *mesh, ta_vec3 position, float scale)
 {
