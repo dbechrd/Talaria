@@ -231,21 +231,21 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_ACTIVE]  = TA_COLOR_INVIS;
 
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_RIGHT], TA_KEYBIND_HOLD,    GLFW_KEY_RIGHT);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_LEFT],  TA_KEYBIND_HOLD,    GLFW_KEY_LEFT);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_DOWN],  TA_KEYBIND_PRESS,   GLFW_KEY_DOWN);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_UP],    TA_KEYBIND_PRESS,   GLFW_KEY_UP);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOL],   TA_KEYBIND_PRESS,   GLFW_KEY_HOME);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOL],   TA_KEYBIND_PRESS,   GLFW_KEY_END);
-    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOF],   TA_KEYBIND_PRESS,   GLFW_KEY_LEFT_SHIFT, GLFW_KEY_HOME);
-    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOF],   TA_KEYBIND_PRESS,   GLFW_KEY_LEFT_SHIFT, GLFW_KEY_END);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_DELETE],       TA_KEYBIND_HOLD,    GLFW_KEY_DELETE);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_BACKSPACE],    TA_KEYBIND_HOLD,    GLFW_KEY_BACKSPACE);
-    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_PRESS,   GLFW_KEY_ENTER);
-    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_PRESS,   GLFW_KEY_KP_ENTER);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_HOLD,    GLFW_KEY_ENTER);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_HOLD,    GLFW_KEY_KP_ENTER);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL],       TA_KEYBIND_RELEASE, GLFW_KEY_ESCAPE);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_RIGHT], TA_KEYBIND_HOLD,  GLFW_KEY_RIGHT);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_LEFT],  TA_KEYBIND_HOLD,  GLFW_KEY_LEFT);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_DOWN],  TA_KEYBIND_PRESS, GLFW_KEY_DOWN);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_UP],    TA_KEYBIND_PRESS, GLFW_KEY_UP);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOL],   TA_KEYBIND_PRESS, GLFW_KEY_HOME);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOL],   TA_KEYBIND_PRESS, GLFW_KEY_END);
+    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOF],   TA_KEYBIND_PRESS, GLFW_KEY_LEFT_SHIFT, GLFW_KEY_HOME);
+    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOF],   TA_KEYBIND_PRESS, GLFW_KEY_LEFT_SHIFT, GLFW_KEY_END);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_DELETE],       TA_KEYBIND_HOLD,  GLFW_KEY_DELETE);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_BACKSPACE],    TA_KEYBIND_HOLD,  GLFW_KEY_BACKSPACE);
+    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_PRESS, GLFW_KEY_ENTER);
+    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_PRESS, GLFW_KEY_KP_ENTER);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_HOLD,  GLFW_KEY_ENTER);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_HOLD,  GLFW_KEY_KP_ENTER);
+    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL],       TA_KEYBIND_PRESS, GLFW_KEY_ESCAPE);
 }
 void ta_ui_set_font(ta_font *font)
 {
@@ -1070,6 +1070,7 @@ bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textb
             ta_keybind_update(&textbox_keybinds[cmd]);
             if (ta_keybind_triggered(&textbox_keybinds[cmd])) {
                 textbox_commands[cmd](textbox);
+                ta_keybind_mark_handled(&textbox_keybinds[cmd]);
             }
         }
         frame->state_type = UI_STATE_ACTIVE;
@@ -1199,6 +1200,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
             ta_keybind_update(&textbox_keybinds[cmd]);
             if (ta_keybind_triggered(&textbox_keybinds[cmd])) {
                 textbox_commands[cmd](textbox);
+                ta_keybind_mark_handled(&textbox_keybinds[cmd]);
             }
         }
         frame->state_type = UI_STATE_ACTIVE;

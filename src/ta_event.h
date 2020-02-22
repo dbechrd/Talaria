@@ -87,7 +87,8 @@ typedef struct ta_event {
     } data;
 } ta_event;
 
-void ta_event_push      (ta_event *event);
-bool ta_event_pop       (ta_event *event);
-bool ta_event_peek      (ta_event *event);
-void ta_event_events    ();
+void ta_event_push    (ta_event *event);
+bool ta_event_pop     (ta_event *event);
+bool ta_event_peek    (ta_event *event);
+void ta_event_events  ();
+void ta_event_process ();

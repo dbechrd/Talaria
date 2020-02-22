@@ -66,7 +66,7 @@ bool ta_event_peek(ta_event *event)
 void ta_event_events()
 {
     ta_mouse_reset_relative();
-    ta_key_clear();
+    ta_key_clear_all();
     ta_log_write(&tg_debug_log, SRC_EVENT, "  glfwPollEvents...\n");
     glfwPollEvents();
 

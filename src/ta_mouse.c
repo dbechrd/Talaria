@@ -2,7 +2,6 @@
 #include "ta_event.h"
 #include "ta_log.h"
 #include "ta_timer.h"
-#include "ta_button_state.h"
 #include "ta_game.h"
 #include "ta_window.h"
 #include "GLFW/glfw3.h"

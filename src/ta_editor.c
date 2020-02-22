@@ -28,7 +28,6 @@
 
 // Higher level widgets
 typedef enum editor_widget {
-    WIDGET_NONE,
     WIDGET_TRANSLATE,
     WIDGET_ROTATE,
     WIDGET_SCALE,
@@ -48,8 +47,8 @@ typedef enum editor_gizmo {
 } editor_gizmo;
 
 typedef enum editor_command {
-    EDITOR_COMMAND_CLOSE1,
-    EDITOR_COMMAND_CLOSE2,
+    EDITOR_COMMAND_CLOSE,
+    EDITOR_COMMAND_CANCEL,
     EDITOR_COMMAND_SIM_PAUSE_RESUME,
     EDITOR_COMMAND_SIM_NEXT,
     EDITOR_COMMAND_SIM_NEXT_10,
@@ -58,16 +57,18 @@ typedef enum editor_command {
 } editor_command;
 
 static struct {
-    ta_scene scene;
-    const char *shader_editor_select;
-    editor_widget widget;
-    editor_gizmo gizmo;
-    float widget_snap_to_grid;
-    ta_keybind keybinds[EDITOR_COMMAND_COUNT];
+    ta_scene            scene;
+    const char          *shader_editor_select;
+    editor_widget       widget;
+    editor_gizmo        gizmo;
+    ta_vec3             gizmo_start_hit;                 // if gizmo active, starting contact point of gizmo in world space
+    ta_xform            gizmo_start_xform;
+    float               widget_snap_to_grid;
+    ta_keybind          keybinds[EDITOR_COMMAND_COUNT];
     ta_ui_textbox_state *textbox_editing;
     ta_ui_textbox_state *textbox_dragging;
-    const char *selected_entity;
-    const char *status_msg;
+    const char          *selected_entity;
+    const char          *status_msg;
 } editor;
 
 void ta_editor_init()
@@ -85,12 +86,12 @@ void ta_editor_init()
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing key binds\n");
     // TODO: Read keybinds from file
     //dlb_vec_reserve(tg_keybinds, 16);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE1          ], TA_KEYBIND_RELEASE, GLFW_KEY_GRAVE_ACCENT);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE2          ], TA_KEYBIND_RELEASE, GLFW_KEY_ESCAPE);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_PAUSE_RESUME], TA_KEYBIND_PRESS,   GLFW_KEY_F5);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT        ], TA_KEYBIND_PRESS,   GLFW_KEY_F6);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT_10     ], TA_KEYBIND_PRESS,   GLFW_KEY_F7);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_WHILE_HELD  ], TA_KEYBIND_HOLD,    GLFW_KEY_F8);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CANCEL          ], TA_KEYBIND_PRESS, GLFW_KEY_ESCAPE);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE           ], TA_KEYBIND_PRESS, GLFW_KEY_GRAVE_ACCENT);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_PAUSE_RESUME], TA_KEYBIND_PRESS, GLFW_KEY_F5);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT        ], TA_KEYBIND_PRESS, GLFW_KEY_F6);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT_10     ], TA_KEYBIND_PRESS, GLFW_KEY_F7);
+    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_WHILE_HELD  ], TA_KEYBIND_HOLD,  GLFW_KEY_F8);
 }
 void ta_editor_select_entity(const char *entity)
 {
@@ -165,7 +166,6 @@ static void ui_scene_panel()
             ta_window_set_vsync(tg_window, false);
         }
     } else {
-
         ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
         ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
         if (ta_ui_button(CSTR("Off"))) {
@@ -1164,6 +1164,32 @@ void ta_editor_draw_screen()
     ta_ui_render();
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render end\n");
 }
+static void editor_gizmo_end(bool keep_changes)
+{
+    DLB_ASSERT(editor.gizmo);
+
+    if (!keep_changes) {
+        const char *selected_entity = ta_editor_selected_entity();
+        if (selected_entity) {
+            switch (editor.widget) {
+                case WIDGET_TRANSLATE:
+                case WIDGET_ROTATE: {
+                    ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+                    e_transform->xform = editor.gizmo_start_xform;
+                    break;
+                }
+            }
+        }
+    }
+
+    editor.gizmo = GIZMO_NONE;
+#if _DEBUG
+    // NOTE: These should never be used with gizmo is NONE, but invalidate for easier debugging
+    editor.gizmo_start_hit = VEC3_ZERO;
+    editor.gizmo_start_xform.position = VEC3_ZERO;
+    editor.gizmo_start_xform.orientation = QUAT_IDENT;
+#endif
+}
 void ta_editor_draw_world()
 {
     // Grid and world axes
@@ -1200,119 +1226,104 @@ void ta_editor_draw_world()
         }
 
         glClear(GL_DEPTH_BUFFER_BIT);
+
         ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
         ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
         float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
         float scale = MAX(0.5f, dist * 0.2f);
         float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
 
-        ta_line_3d x_axis = { 0 };
-        x_axis.p0 = e_transform->xform_world.position;
-        x_axis.p1 = e_transform->xform_world.position;
-        x_axis.p0.x = cam_trans->xform_world.position.x - 10000.0f;
-        x_axis.p1.x = cam_trans->xform_world.position.x + 10000.0f;
-
-        ta_line_3d y_axis = { 0 };
-        y_axis.p0 = e_transform->xform_world.position;
-        y_axis.p1 = e_transform->xform_world.position;
-        y_axis.p0.y = cam_trans->xform_world.position.y - 10000.0f;
-        y_axis.p1.y = cam_trans->xform_world.position.y + 10000.0f;
-
-        ta_line_3d z_axis = { 0 };
-        z_axis.p0 = e_transform->xform_world.position;
-        z_axis.p1 = e_transform->xform_world.position;
-        z_axis.p0.z = cam_trans->xform_world.position.z - 10000.0f;
-        z_axis.p1.z = cam_trans->xform_world.position.z + 10000.0f;
-
-        // One-axis arrow handles
-        ta_aabb hitbox1d[3] = { 0 };
-        float midpoint1d = scale * 0.5f;
-        float extent1d = scale - midpoint1d;
-        hitbox1d[0].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_X, midpoint1d));
-        hitbox1d[0].extents.x = extent1d;
-        hitbox1d[0].extents.y = radius;
-        hitbox1d[0].extents.z = radius;
-
-        hitbox1d[1].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_Y, midpoint1d));
-        hitbox1d[1].extents.x = radius;
-        hitbox1d[1].extents.y = extent1d;
-        hitbox1d[1].extents.z = radius;
-
-        hitbox1d[2].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_Z, midpoint1d));
-        hitbox1d[2].extents.x = radius;
-        hitbox1d[2].extents.y = radius;
-        hitbox1d[2].extents.z = extent1d;
-
-        // Two-axis plane handles
-        ta_quad hitbox2d[3] = { 0 };
-        float midpoint2d = scale * 0.5f;
-        float radius_quad = radius * 1.2f;
-        hitbox2d[0].center = e_transform->xform_world.position;
-        hitbox2d[0].center.y += midpoint2d;
-        hitbox2d[0].center.z += midpoint2d;
-        hitbox2d[0].extents.x = radius_quad;
-        hitbox2d[0].extents.y = radius_quad;
-        hitbox2d[0].orientation = quat_from_axis_angle(VEC3_Y, 90.0f);
-
-        hitbox2d[1].center = e_transform->xform_world.position;
-        hitbox2d[1].center.x += midpoint2d;
-        hitbox2d[1].center.z += midpoint2d;
-        hitbox2d[1].extents.x = radius_quad;
-        hitbox2d[1].extents.y = radius_quad;
-        hitbox2d[1].orientation = quat_from_axis_angle(VEC3_X, -90.0f);
-
-        hitbox2d[2].center = e_transform->xform_world.position;
-        hitbox2d[2].center.x += midpoint2d;
-        hitbox2d[2].center.y += midpoint2d;
-        hitbox2d[2].extents.x = radius_quad;
-        hitbox2d[2].extents.y = radius_quad;
-        hitbox2d[2].orientation = QUAT_IDENT;
-
-        // Three-axis view-plane handle
-        ta_aabb hitbox3d = { 0 };
-        hitbox3d.center = e_transform->xform_world.position;
-        hitbox3d.extents.x = radius;
-        hitbox3d.extents.y = radius;
-        hitbox3d.extents.z = radius;
-
-        editor_gizmo nearest_gizmo = GIZMO_NONE;
-
-        {
-            float t;
-            float t_min = FLT_MAX;
-            for (int i = 0; i < 3; ++i) {
-                if (ta_ray_v_aabb(&ray, &hitbox1d[i], &t) && t < t_min) {
-                    t_min = t;
-                    nearest_gizmo = GIZMO_TRANSLATE_X + i;
-                }
-            }
-
-            for (int i = 0; i < 3; ++i) {
-                if (ta_ray_v_quad(&ray, &hitbox2d[i], &t) && t < t_min) {
-                    t_min = t;
-                    nearest_gizmo = GIZMO_TRANSLATE_YZ + i;
-                }
-            }
-
-            // NOTE: This feels more responsive when it takes precedence above the invisible arrow bboxes
-            if (ta_ray_v_aabb(&ray, &hitbox3d, &t)) {  // && t < t_min) {
-                t_min = t;
-                nearest_gizmo = GIZMO_TRANSLATE_VIEW;
-            }
-        }
-
-        // Set gizmo to nearest on mouse click, clear on release
-        if (ta_mouse_captured() && ta_key_pressed(GLFW_KEY_MOUSE_LEFT)) {
-            editor.gizmo = nearest_gizmo;
-        } else if (!ta_key_down(GLFW_KEY_MOUSE_LEFT)) {
-            editor.gizmo = GIZMO_NONE;
-        }
-
         switch (editor.widget) {
             case WIDGET_TRANSLATE: {
-                //------------------------------------------------------------------------------------------------------
+                // One-axis arrow handles
+                ta_aabb hitbox1d[3] = { 0 };
+                float midpoint1d = scale * 0.5f;
+                float extent1d = scale - midpoint1d;
+                hitbox1d[0].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_X, midpoint1d));
+                hitbox1d[0].extents.x = extent1d;
+                hitbox1d[0].extents.y = radius;
+                hitbox1d[0].extents.z = radius;
+
+                hitbox1d[1].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_Y, midpoint1d));
+                hitbox1d[1].extents.x = radius;
+                hitbox1d[1].extents.y = extent1d;
+                hitbox1d[1].extents.z = radius;
+
+                hitbox1d[2].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_Z, midpoint1d));
+                hitbox1d[2].extents.x = radius;
+                hitbox1d[2].extents.y = radius;
+                hitbox1d[2].extents.z = extent1d;
+
+                // Two-axis plane handles
+                ta_quad hitbox2d[3] = { 0 };
+                float midpoint2d = scale * 0.5f;
+                float radius_quad = radius * 1.2f;
+                hitbox2d[0].center = e_transform->xform_world.position;
+                hitbox2d[0].center.y += midpoint2d;
+                hitbox2d[0].center.z += midpoint2d;
+                hitbox2d[0].extents.x = radius_quad;
+                hitbox2d[0].extents.y = radius_quad;
+                hitbox2d[0].orientation = quat_from_axis_angle(VEC3_Y, 90.0f);
+
+                hitbox2d[1].center = e_transform->xform_world.position;
+                hitbox2d[1].center.x += midpoint2d;
+                hitbox2d[1].center.z += midpoint2d;
+                hitbox2d[1].extents.x = radius_quad;
+                hitbox2d[1].extents.y = radius_quad;
+                hitbox2d[1].orientation = quat_from_axis_angle(VEC3_X, -90.0f);
+
+                hitbox2d[2].center = e_transform->xform_world.position;
+                hitbox2d[2].center.x += midpoint2d;
+                hitbox2d[2].center.y += midpoint2d;
+                hitbox2d[2].extents.x = radius_quad;
+                hitbox2d[2].extents.y = radius_quad;
+                hitbox2d[2].orientation = QUAT_IDENT;
+
+                // Three-axis view-plane handle
+                ta_aabb hitbox3d = { 0 };
+                hitbox3d.center = e_transform->xform_world.position;
+                hitbox3d.extents.x = radius;
+                hitbox3d.extents.y = radius;
+                hitbox3d.extents.z = radius;
+
+                editor_gizmo nearest_gizmo = GIZMO_NONE;
+
+                {
+                    float t;
+                    float t_min = FLT_MAX;
+                    for (int i = 0; i < 3; ++i) {
+                        if (ta_ray_v_aabb(&ray, &hitbox1d[i], &t) && t < t_min) {
+                            t_min = t;
+                            nearest_gizmo = GIZMO_TRANSLATE_X + i;
+                        }
+                    }
+
+                    for (int i = 0; i < 3; ++i) {
+                        if (ta_ray_v_quad(&ray, &hitbox2d[i], &t) && t < t_min) {
+                            t_min = t;
+                            nearest_gizmo = GIZMO_TRANSLATE_YZ + i;
+                        }
+                    }
+
+                    // NOTE: This feels more responsive when it takes precedence above the invisible arrow bboxes
+                    if (ta_ray_v_aabb(&ray, &hitbox3d, &t)) {  // && t < t_min) {
+                        t_min = t;
+                        nearest_gizmo = GIZMO_TRANSLATE_VIEW;
+                    }
+
+                    // Set gizmo to nearest on mouse click, clear on release
+                    if (ta_mouse_captured() && ta_key_pressed(GLFW_KEY_MOUSE_LEFT)) {
+                        editor.gizmo = nearest_gizmo;
+                        editor.gizmo_start_hit = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                        editor.gizmo_start_xform = e_transform->xform;
+                    } else if (editor.gizmo && !ta_key_down(GLFW_KEY_MOUSE_LEFT)) {
+                        editor_gizmo_end(true);
+                    }
+                }
+
+                //--------------------------------------------------------
                 // Render passive gizmo details
-                //------------------------------------------------------------------------------------------------------
+                //--------------------------------------------------------
                 ta_rgba gizmo_color[GIZMO_COUNT] = { 0 };
                 gizmo_color[GIZMO_TRANSLATE_X] = TA_COLOR_DARK_RED;
                 gizmo_color[GIZMO_TRANSLATE_Y] = TA_COLOR_DARK_GREEN;
@@ -1320,7 +1331,7 @@ void ta_editor_draw_world()
                 gizmo_color[GIZMO_TRANSLATE_YZ] = TA_COLOR_DARK_REDA;
                 gizmo_color[GIZMO_TRANSLATE_XZ] = TA_COLOR_DARK_GREENA;
                 gizmo_color[GIZMO_TRANSLATE_XY] = TA_COLOR_DARK_BLUEA;
-                gizmo_color[GIZMO_TRANSLATE_VIEW] = TA_COLOR_WHITE;
+                gizmo_color[GIZMO_TRANSLATE_VIEW] = TA_COLOR_GRAY6;
                 ta_rgba gizmo_hover[GIZMO_COUNT] = { 0 };
                 gizmo_hover[GIZMO_TRANSLATE_X] = TA_COLOR_RED;
                 gizmo_hover[GIZMO_TRANSLATE_Y] = TA_COLOR_GREEN;
@@ -1328,7 +1339,7 @@ void ta_editor_draw_world()
                 gizmo_hover[GIZMO_TRANSLATE_YZ] = TA_COLOR_RED;
                 gizmo_hover[GIZMO_TRANSLATE_XZ] = TA_COLOR_GREEN;
                 gizmo_hover[GIZMO_TRANSLATE_XY] = TA_COLOR_BLUE;
-                gizmo_hover[GIZMO_TRANSLATE_VIEW] = TA_COLOR_GRAY6;
+                gizmo_hover[GIZMO_TRANSLATE_VIEW] = TA_COLOR_WHITE;
 
                 // Highlight active gizmo, or nearest gizmo if none active
                 for (int gizmo = GIZMO_NONE + 1; gizmo < GIZMO_COUNT; ++gizmo) {
@@ -1349,9 +1360,27 @@ void ta_editor_draw_world()
                 // 3D handle
                 ta_primitive_push_aabb(0, hitbox3d, gizmo_color[GIZMO_TRANSLATE_VIEW]);
 
-                //------------------------------------------------------------------------------------------------------
+                //--------------------------------------------------------
                 // Render active gizmo details
-                //------------------------------------------------------------------------------------------------------
+                //--------------------------------------------------------
+                ta_line_3d x_axis = { 0 };
+                x_axis.p0 = e_transform->xform_world.position;
+                x_axis.p1 = e_transform->xform_world.position;
+                x_axis.p0.x = cam_trans->xform_world.position.x - 10000.0f;
+                x_axis.p1.x = cam_trans->xform_world.position.x + 10000.0f;
+
+                ta_line_3d y_axis = { 0 };
+                y_axis.p0 = e_transform->xform_world.position;
+                y_axis.p1 = e_transform->xform_world.position;
+                y_axis.p0.y = cam_trans->xform_world.position.y - 10000.0f;
+                y_axis.p1.y = cam_trans->xform_world.position.y + 10000.0f;
+
+                ta_line_3d z_axis = { 0 };
+                z_axis.p0 = e_transform->xform_world.position;
+                z_axis.p1 = e_transform->xform_world.position;
+                z_axis.p0.z = cam_trans->xform_world.position.z - 10000.0f;
+                z_axis.p1.z = cam_trans->xform_world.position.z + 10000.0f;
+
                 // TODO: Would ray_vs_line_closest() be a better way to check this?
                 ta_plane plane = { 0 };
                 plane.center = e_transform->xform_world.position;
@@ -1364,8 +1393,7 @@ void ta_editor_draw_world()
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = { 0 };
-                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
                             e_transform->xform.position.x = contact.x - scale * 0.5f;
                             if (editor.widget_snap_to_grid) {
                                 e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
@@ -1382,8 +1410,7 @@ void ta_editor_draw_world()
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = { 0 };
-                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
                             e_transform->xform.position.y = contact.y - scale * 0.5f;
                             if (editor.widget_snap_to_grid) {
                                 e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
@@ -1400,8 +1427,7 @@ void ta_editor_draw_world()
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = { 0 };
-                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
                             e_transform->xform.position.z = contact.z - scale * 0.5f;
                             if (editor.widget_snap_to_grid) {
                                 e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
@@ -1416,8 +1442,7 @@ void ta_editor_draw_world()
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = { 0 };
-                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
                             e_transform->xform.position.y = contact.y - midpoint2d;
                             e_transform->xform.position.z = contact.z - midpoint2d;
                             if (editor.widget_snap_to_grid) {
@@ -1435,8 +1460,7 @@ void ta_editor_draw_world()
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = { 0 };
-                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
                             e_transform->xform.position.x = contact.x - midpoint2d;
                             e_transform->xform.position.z = contact.z - midpoint2d;
                             if (editor.widget_snap_to_grid) {
@@ -1454,8 +1478,7 @@ void ta_editor_draw_world()
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = { 0 };
-                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
                             e_transform->xform.position.x = contact.x - midpoint2d;
                             e_transform->xform.position.y = contact.y - midpoint2d;
                             if (editor.widget_snap_to_grid) {
@@ -1474,8 +1497,7 @@ void ta_editor_draw_world()
 
                         float t;
                         if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = { 0 };
-                            contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
                             ta_sphere cs = { 0 };
                             cs.center = contact;
                             cs.radius = 0.1f;
@@ -1605,10 +1627,22 @@ void ta_editor_draw_world()
         }
     }
 }
+static void editor_command_cancel()
+{
+    if (editor.gizmo) {
+        editor_gizmo_end(false);
+    } else if (editor.textbox_editing) {
+        ta_ui_textbox_cancel(editor.textbox_editing);
+    } else {
+        ta_game_state_set(ta_game_state_prev());
+    }
+}
 static void editor_command_close()
 {
-    // NOTE: This can't happen at the moment because textbox cancel and editor
-    // close are both bound to Escape. Just to be safe.
+    // TODO: If outstanding changes, prompt before closing editor
+    if (editor.gizmo) {
+        editor_gizmo_end(false);
+    }
     if (editor.textbox_editing) {
         ta_ui_textbox_cancel(editor.textbox_editing);
     }
@@ -1647,8 +1681,8 @@ void ta_editor_hotkeys()
         return;
 
     static void (*commands[EDITOR_COMMAND_COUNT])() = {
-        [EDITOR_COMMAND_CLOSE1]           = editor_command_close,
-        [EDITOR_COMMAND_CLOSE2]           = editor_command_close,
+        [EDITOR_COMMAND_CANCEL]           = editor_command_cancel,
+        [EDITOR_COMMAND_CLOSE]            = editor_command_close,
         [EDITOR_COMMAND_SIM_PAUSE_RESUME] = editor_command_sim_pause_resume,
         [EDITOR_COMMAND_SIM_NEXT]         = editor_command_sim_next,
         [EDITOR_COMMAND_SIM_NEXT_10]      = editor_command_sim_next_ten,
@@ -1659,6 +1693,7 @@ void ta_editor_hotkeys()
         ta_keybind_update(&editor.keybinds[cmd]);
         if (ta_keybind_triggered(&editor.keybinds[cmd])) {
             commands[cmd]();
+            ta_keybind_mark_handled(&editor.keybinds[cmd]);
         }
     }
 

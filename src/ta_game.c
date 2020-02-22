@@ -126,27 +126,27 @@ void ta_game_init()
 
     //--------------------------------------------------------------------------
     // PLAY
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_FREE_CAM],                TA_KEYBIND_RELEASE, GLFW_KEY_X);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_EDITOR],                  TA_KEYBIND_RELEASE, GLFW_KEY_GRAVE_ACCENT);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_SHUTDOWN],                TA_KEYBIND_RELEASE, GLFW_KEY_ESCAPE);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_MOVE_FORWARD],     TA_KEYBIND_HOLD,    GLFW_KEY_W);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_MOVE_BACKWARD],    TA_KEYBIND_HOLD,    GLFW_KEY_S);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_MOVE_RIGHT],       TA_KEYBIND_HOLD,    GLFW_KEY_D);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_MOVE_LEFT],        TA_KEYBIND_HOLD,    GLFW_KEY_A);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_JUMP],             TA_KEYBIND_PRESS,   GLFW_KEY_SPACE);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_SHOOT],            TA_KEYBIND_PRESS,   GLFW_KEY_MOUSE_LEFT);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_MOUSE_LOCK_TOGGLE], TA_KEYBIND_PRESS,   GLFW_KEY_M);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME],  TA_KEYBIND_PRESS,   GLFW_KEY_1);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_MESH],       TA_KEYBIND_PRESS,   GLFW_KEY_2);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS],  TA_KEYBIND_PRESS,   GLFW_KEY_3);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_NAMETAGS],   TA_KEYBIND_PRESS,   GLFW_KEY_4);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS,   GLFW_KEY_5);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_FREE_CAM],                TA_KEYBIND_PRESS, GLFW_KEY_X);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_EDITOR],                  TA_KEYBIND_PRESS, GLFW_KEY_GRAVE_ACCENT);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_SHUTDOWN],                TA_KEYBIND_PRESS, GLFW_KEY_ESCAPE);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_MOVE_FORWARD],     TA_KEYBIND_HOLD,  GLFW_KEY_W);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_MOVE_BACKWARD],    TA_KEYBIND_HOLD,  GLFW_KEY_S);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_MOVE_RIGHT],       TA_KEYBIND_HOLD,  GLFW_KEY_D);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_MOVE_LEFT],        TA_KEYBIND_HOLD,  GLFW_KEY_A);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_JUMP],             TA_KEYBIND_PRESS, GLFW_KEY_SPACE);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_PLAYER_SHOOT],            TA_KEYBIND_PRESS, GLFW_KEY_MOUSE_LEFT);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_MOUSE_LOCK_TOGGLE], TA_KEYBIND_PRESS, GLFW_KEY_M);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_WIREFRAME],  TA_KEYBIND_PRESS, GLFW_KEY_1);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_MESH],       TA_KEYBIND_PRESS, GLFW_KEY_2);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_COLLIDERS],  TA_KEYBIND_PRESS, GLFW_KEY_3);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_NAMETAGS],   TA_KEYBIND_PRESS, GLFW_KEY_4);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_PLAY][GAME_COMMAND_DEBUG_TOGGLE_NORMALS],    TA_KEYBIND_PRESS, GLFW_KEY_5);
 
     //--------------------------------------------------------------------------
     // FREE_CAM
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_PLAY],                    TA_KEYBIND_RELEASE, GLFW_KEY_X);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_EDITOR],                  TA_KEYBIND_RELEASE, GLFW_KEY_GRAVE_ACCENT);
-    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_SHUTDOWN],                TA_KEYBIND_RELEASE, GLFW_KEY_ESCAPE);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_PLAY],                    TA_KEYBIND_PRESS,   GLFW_KEY_X);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_EDITOR],                  TA_KEYBIND_PRESS,   GLFW_KEY_GRAVE_ACCENT);
+    ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_SHUTDOWN],                TA_KEYBIND_PRESS,   GLFW_KEY_ESCAPE);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_PLAYER_MOVE_FORWARD],     TA_KEYBIND_HOLD,    GLFW_KEY_I);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_PLAYER_MOVE_BACKWARD],    TA_KEYBIND_HOLD,    GLFW_KEY_K);
     ta_keybind_init1(&game.keybinds[TA_GAME_STATE_FREE_CAM][GAME_COMMAND_PLAYER_MOVE_RIGHT],       TA_KEYBIND_HOLD,    GLFW_KEY_L);
@@ -1445,6 +1445,7 @@ void ta_game_hotkeys()
     for (game_command cmd = 0; cmd < GAME_COMMAND_COUNT; ++cmd) {
         ta_keybind_update(&game.keybinds[game.state][cmd]);
         if (ta_keybind_triggered(&game.keybinds[game.state][cmd])) {
+            ta_keybind_mark_handled(&game.keybinds[game.state][cmd]);
             commands[cmd]();
         }
     }
