@@ -16,14 +16,76 @@ extern const char *tg_e_player_one;
 extern const char *tg_e_active_camera;
 
 typedef enum ta_game_state {
-    TA_GAME_STATE_STARTUP,
-    TA_GAME_STATE_PLAY,
-    TA_GAME_STATE_FREE_CAM,
-    TA_GAME_STATE_EDITOR,
-    TA_GAME_STATE_SHUTDOWN,
-    TA_GAME_STATE_COUNT
+    TA_STATE_STARTUP  = 1 << 0,
+    TA_STATE_PLAY     = 1 << 1,
+    TA_STATE_FREE_CAM = 1 << 2,
+    TA_STATE_EDITOR   = 1 << 3,
+    TA_STATE_TEXTBOX  = 1 << 4,
+    TA_STATE_SHUTDOWN = 1 << 5,
 } ta_game_state;
 const char *game_state_str(ta_game_state state);
+
+typedef enum ta_command {
+    // Game events
+    COMMAND_PLAY,
+    COMMAND_FREE_CAM,
+    COMMAND_EDITOR,
+    COMMAND_SHUTDOWN,
+
+    // Player events
+    COMMAND_PLAYER_MOVE_FORWARD,
+    COMMAND_PLAYER_MOVE_BACKWARD,
+    COMMAND_PLAYER_MOVE_RIGHT,
+    COMMAND_PLAYER_MOVE_LEFT,
+    COMMAND_PLAYER_JUMP,
+    COMMAND_PLAYER_SHOOT,
+
+    // Camera events
+    COMMAND_CAMERA_MOVE_FORWARD,
+    COMMAND_CAMERA_MOVE_BACKWARD,
+    COMMAND_CAMERA_MOVE_RIGHT,
+    COMMAND_CAMERA_MOVE_LEFT,
+    COMMAND_CAMERA_MOVE_UP,
+    COMMAND_CAMERA_MOVE_DOWN,
+
+    // Debug events
+    COMMAND_DEBUG_MOUSE_LOCK,
+    COMMAND_DEBUG_MOUSE_UNLOCK,
+    COMMAND_DEBUG_MOUSE_LOCK_TOGGLE,
+    COMMAND_DEBUG_TOGGLE_WIREFRAME,
+    COMMAND_DEBUG_TOGGLE_MESH,
+    COMMAND_DEBUG_TOGGLE_COLLIDERS,
+    COMMAND_DEBUG_TOGGLE_NAMETAGS,
+    COMMAND_DEBUG_TOGGLE_NORMALS,
+
+    // Editor commands
+    COMMAND_EDITOR_SELECT,
+    COMMAND_EDITOR_SELECT_RELEASE,
+    COMMAND_EDITOR_CANCEL,
+    COMMAND_EDITOR_CLOSE,
+    COMMAND_EDITOR_SIM_PAUSE_RESUME,
+    COMMAND_EDITOR_SIM_NEXT,
+    COMMAND_EDITOR_SIM_NEXT_10,
+    COMMAND_EDITOR_SIM_WHILE_HELD,
+
+    // Textbox commands
+    COMMAND_TEXTBOX_CURSOR_RIGHT,
+    COMMAND_TEXTBOX_CURSOR_LEFT,
+    COMMAND_TEXTBOX_CURSOR_DOWN,
+    COMMAND_TEXTBOX_CURSOR_UP,
+    COMMAND_TEXTBOX_CURSOR_BOL,
+    COMMAND_TEXTBOX_CURSOR_EOL,
+    COMMAND_TEXTBOX_CURSOR_BOF,
+    COMMAND_TEXTBOX_CURSOR_EOF,
+    COMMAND_TEXTBOX_DELETE,
+    COMMAND_TEXTBOX_BACKSPACE,
+    COMMAND_TEXTBOX_SUBMIT1,
+    COMMAND_TEXTBOX_SUBMIT2,
+    COMMAND_TEXTBOX_CANCEL,
+
+    COMMAND_COUNT
+} ta_command;
+const char *ta_command_str(ta_command cmd);
 
 void ta_game_init                   ();
 ta_game_state ta_game_state_current ();
@@ -54,6 +116,6 @@ u64 ta_game_sim_step                ();
 u64 ta_game_frame_num               ();
 void ta_game_window_resize          ();
 void ta_game_loop                   ();
-void ta_game_hotkeys                ();
+void ta_game_update_keybinds                ();
 void ta_game_event                  (struct ta_event *event);
 void ta_game_save                   ();

@@ -94,23 +94,6 @@ typedef struct ui_frame {
     } data;
 } ui_frame;
 
-typedef enum ui_textbox_command {
-    TEXTBOX_COMMAND_CURSOR_RIGHT,
-    TEXTBOX_COMMAND_CURSOR_LEFT,
-    TEXTBOX_COMMAND_CURSOR_DOWN,
-    TEXTBOX_COMMAND_CURSOR_UP,
-    TEXTBOX_COMMAND_CURSOR_BOL,
-    TEXTBOX_COMMAND_CURSOR_EOL,
-    TEXTBOX_COMMAND_CURSOR_BOF,
-    TEXTBOX_COMMAND_CURSOR_EOF,
-    TEXTBOX_COMMAND_DELETE,
-    TEXTBOX_COMMAND_BACKSPACE,
-    TEXTBOX_COMMAND_SUBMIT1,
-    TEXTBOX_COMMAND_SUBMIT2,
-    TEXTBOX_COMMAND_CANCEL,
-    TEXTBOX_COMMAND_COUNT
-} ui_textbox_command;
-
 // Internal state
 static ta_font *ui_font;
 static ta_ui_textbox_state **ui_textbox_editing;
@@ -128,8 +111,6 @@ static ui_style next_frame_style;
 static ta_ui_state *last_frame_state;
 
 static ui_frame *ui_frames;
-
-static ta_keybind textbox_keybinds[TEXTBOX_COMMAND_COUNT] = { 0 };
 
 static void ui_row_end(ui_frame *container);
 
@@ -230,22 +211,6 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_HOVER]   = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
     //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_ACTIVE]  = TA_COLOR_INVIS;
-
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_RIGHT], TA_KEYBIND_HOLD,  GLFW_KEY_RIGHT);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_LEFT],  TA_KEYBIND_HOLD,  GLFW_KEY_LEFT);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_DOWN],  TA_KEYBIND_PRESS, GLFW_KEY_DOWN);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_UP],    TA_KEYBIND_PRESS, GLFW_KEY_UP);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOL],   TA_KEYBIND_PRESS, GLFW_KEY_HOME);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOL],   TA_KEYBIND_PRESS, GLFW_KEY_END);
-    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_BOF],   TA_KEYBIND_PRESS, GLFW_KEY_LEFT_SHIFT, GLFW_KEY_HOME);
-    ta_keybind_init2(&textbox_keybinds[TEXTBOX_COMMAND_CURSOR_EOF],   TA_KEYBIND_PRESS, GLFW_KEY_LEFT_SHIFT, GLFW_KEY_END);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_DELETE],       TA_KEYBIND_HOLD,  GLFW_KEY_DELETE);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_BACKSPACE],    TA_KEYBIND_HOLD,  GLFW_KEY_BACKSPACE);
-    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_PRESS, GLFW_KEY_ENTER);
-    //ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_PRESS, GLFW_KEY_KP_ENTER);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1],      TA_KEYBIND_HOLD,  GLFW_KEY_ENTER);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2],      TA_KEYBIND_HOLD,  GLFW_KEY_KP_ENTER);
-    ta_keybind_init1(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL],       TA_KEYBIND_PRESS, GLFW_KEY_ESCAPE);
 }
 void ta_ui_set_font(ta_font *font)
 {
@@ -776,14 +741,15 @@ void ta_ui_label(const char *text, size_t text_len)
     //return frame->state.pressed;
 }
 
-static bool textbox_repeat_valid(double *last_time, bool *repeating,
-    const ta_keybind *keybind)
+// TODO: Move this to the keybind and support it more generally
+static bool textbox_repeat_valid(double *last_time, bool *repeating, ta_command command)
 {
     DLB_ASSERT(last_time);
     DLB_ASSERT(repeating);
-    DLB_ASSERT(keybind);
 
-    bool first = ta_keybind_pressed(keybind);
+    UNUSED(command);
+
+    bool first = false; //keybind->triggered && keybind->changed;
     double timer_ms = ta_timer_elapsed_ms();
     double delta_ms = timer_ms - *last_time;
 
@@ -799,68 +765,62 @@ static bool textbox_repeat_valid(double *last_time, bool *repeating,
 }
 static bool textbox_filter_default(char c)
 {
-    if ((c >= ui_font->first_char && c <= ui_font->last_char) ||
-        c == '\n')
-    {
+    if ((c >= ui_font->first_char && c <= ui_font->last_char) || c == '\n') {
         return true;
     }
     return false;
 }
-static void textbox_command_cursor_right(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_right(ta_ui_textbox_state *textbox)
 {
     static double last_repeat_ms = 0;
     static bool repeating = false;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating,
-        &textbox_keybinds[TEXTBOX_COMMAND_CURSOR_RIGHT]))
-    {
+    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_CURSOR_RIGHT)) {
         size_t len = dlb_vec_len(textbox->buffer);
         if (textbox->cursor < len) {
             textbox->cursor++;
         }
     }
 }
-static void textbox_command_cursor_left(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_left(ta_ui_textbox_state *textbox)
 {
     static double last_repeat_ms = 0;
     static bool repeating = false;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating,
-        &textbox_keybinds[TEXTBOX_COMMAND_CURSOR_LEFT]))
-    {
+    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_CURSOR_LEFT)) {
         if (textbox->cursor) {
             textbox->cursor--;
         }
     }
 }
-static void textbox_command_cursor_down(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_down(ta_ui_textbox_state *textbox)
 {
     //TODO: Move cursor up
     UNUSED(textbox);
 }
-static void textbox_command_cursor_up(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_up(ta_ui_textbox_state *textbox)
 {
     //TODO: Move cursor down
     UNUSED(textbox);
 }
-static void textbox_command_cursor_bol(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_bol(ta_ui_textbox_state *textbox)
 {
     while (textbox->cursor && textbox->buffer[textbox->cursor - 1] != '\n') {
         textbox->cursor--;
     }
 }
-static void textbox_command_cursor_eol(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_eol(ta_ui_textbox_state *textbox)
 {
     size_t len = dlb_vec_len(textbox->buffer);
     while (textbox->cursor < len && textbox->buffer[textbox->cursor + 1] != '\n') {
         textbox->cursor++;
     }
 }
-static void textbox_command_cursor_bof(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_bof(ta_ui_textbox_state *textbox)
 {
     textbox->cursor = 0;
 }
-static void textbox_command_cursor_eof(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_eof(ta_ui_textbox_state *textbox)
 {
     size_t len = dlb_vec_len(textbox->buffer);
     textbox->cursor = len;
@@ -879,25 +839,22 @@ static void textbox_delete(ta_ui_textbox_state *textbox)
         dlb_vec_hdr(textbox->buffer)->len--;
     }
 }
-static void textbox_command_delete(ta_ui_textbox_state *textbox)
+void textbox_command_delete(ta_ui_textbox_state *textbox)
 {
     static double last_repeat_ms = 0;
     static bool repeating = false;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating,
-        &textbox_keybinds[TEXTBOX_COMMAND_DELETE]))
+    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_DELETE))
     {
         textbox_delete(textbox);
     }
 }
-static void textbox_command_backspace(ta_ui_textbox_state *textbox)
+void textbox_command_backspace(ta_ui_textbox_state *textbox)
 {
     static double last_repeat_ms = 0;
     static bool repeating = false;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating,
-        &textbox_keybinds[TEXTBOX_COMMAND_BACKSPACE]))
-    {
+    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_BACKSPACE)) {
         if (textbox->cursor) {
             textbox->cursor--;
             textbox_delete(textbox);
@@ -937,29 +894,25 @@ static void textbox_submit(ta_ui_textbox_state *textbox)
     // NOTE: Don't want to unfocus console after entering a command!
     //textbox_unfocus(textbox);
 }
-static void textbox_command_submit1(ta_ui_textbox_state *textbox)
+void textbox_command_submit1(ta_ui_textbox_state *textbox)
 {
     static double last_repeat_ms = 0;
     static bool repeating = false;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating,
-        &textbox_keybinds[TEXTBOX_COMMAND_SUBMIT1]))
-    {
+    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_SUBMIT1)) {
         textbox_submit(textbox);
     }
 }
-static void textbox_command_submit2(ta_ui_textbox_state *textbox)
+void textbox_command_submit2(ta_ui_textbox_state *textbox)
 {
     static double last_repeat_ms = 0;
     static bool repeating = false;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating,
-        &textbox_keybinds[TEXTBOX_COMMAND_SUBMIT2]))
-    {
+    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_SUBMIT2)) {
         textbox_submit(textbox);
     }
 }
-static void textbox_command_cancel(ta_ui_textbox_state *textbox)
+void textbox_command_cancel(ta_ui_textbox_state *textbox)
 {
     textbox->submit = false;
     dlb_vec_free(textbox->buffer);
@@ -967,25 +920,9 @@ static void textbox_command_cancel(ta_ui_textbox_state *textbox)
 }
 
 ta_textbox_filter *ta_textbox_filter_default = &textbox_filter_default;
-static void (*textbox_commands[TEXTBOX_COMMAND_COUNT])(ta_ui_textbox_state *textbox) = {
-    [TEXTBOX_COMMAND_CURSOR_RIGHT] = textbox_command_cursor_right,
-    [TEXTBOX_COMMAND_CURSOR_LEFT]  = textbox_command_cursor_left,
-    [TEXTBOX_COMMAND_CURSOR_DOWN]  = textbox_command_cursor_down,
-    [TEXTBOX_COMMAND_CURSOR_UP]    = textbox_command_cursor_up,
-    [TEXTBOX_COMMAND_CURSOR_BOL]   = textbox_command_cursor_bol,
-    [TEXTBOX_COMMAND_CURSOR_EOL]   = textbox_command_cursor_eol,
-    [TEXTBOX_COMMAND_CURSOR_BOF]   = textbox_command_cursor_bof,
-    [TEXTBOX_COMMAND_CURSOR_EOF]   = textbox_command_cursor_eof,
-    [TEXTBOX_COMMAND_DELETE]       = textbox_command_delete,
-    [TEXTBOX_COMMAND_BACKSPACE]    = textbox_command_backspace,
-    [TEXTBOX_COMMAND_SUBMIT1]      = textbox_command_submit1,
-    [TEXTBOX_COMMAND_SUBMIT2]      = textbox_command_submit2,
-    [TEXTBOX_COMMAND_CANCEL]       = textbox_command_cancel,
-};
 
 // TODO: Run filter on input string.. maybe?
-static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text,
-    size_t text_len)
+static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text, size_t text_len)
 {
     if (textbox->buffer) {
         dlb_vec_zero(textbox->buffer);
@@ -1065,14 +1002,16 @@ bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textb
     ui_frame *frame = ui_frame_end(UI_TEXTBOX);
 
     if (textbox->focused) {
+#if 0
+        // TODO: cleanup
         // Textbox is active, handle hotkeys
         for (ui_textbox_command cmd = 0; cmd < TEXTBOX_COMMAND_COUNT; ++cmd) {
-            ta_keybind_update(&textbox_keybinds[cmd]);
+            ta_keybind_update(&textbox_keybinds[cmd], "ta_ui_textbox");
             if (ta_keybind_triggered(&textbox_keybinds[cmd])) {
                 textbox_commands[cmd](textbox);
-                ta_keybind_mark_handled(&textbox_keybinds[cmd]);
             }
         }
+#endif
         frame->state_type = UI_STATE_ACTIVE;
         textbox->focus_changed = false;
     }
@@ -1195,14 +1134,16 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
     ui_frame *frame = ui_frame_end(UI_TEXTBOX);
 
     if (textbox->focused) {
+#if 0
+        // TODO: cleanup
         // Textbox is active, handle hotkeys
         for (ui_textbox_command cmd = 0; cmd < TEXTBOX_COMMAND_COUNT; ++cmd) {
-            ta_keybind_update(&textbox_keybinds[cmd]);
+            ta_keybind_update(&textbox_keybinds[cmd], "ta_ui_textbox_float");
             if (ta_keybind_triggered(&textbox_keybinds[cmd])) {
                 textbox_commands[cmd](textbox);
-                ta_keybind_mark_handled(&textbox_keybinds[cmd]);
             }
         }
+#endif
         frame->state_type = UI_STATE_ACTIVE;
         textbox->focus_changed = false;
     }
@@ -1241,12 +1182,15 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
             //} else if (ta_key_pressed(GLFW_KEY_MOUSE_RIGHT)) {
             //    drag_float_cancel();
             } else {
-                ta_keybind_update(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL]);
+#if 0
+                // TODO: fix this
+                ta_keybind_update(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL], "ta_ui_textbox_float_2");
                 if (ta_keybind_triggered(&textbox_keybinds[TEXTBOX_COMMAND_CANCEL])) {
                     drag_float_cancel();
                 } else {
                     frame->state_type = UI_STATE_ACTIVE;
                 }
+#endif
             }
         }
     }

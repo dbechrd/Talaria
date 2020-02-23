@@ -3,6 +3,7 @@
 #include "GLFW/glfw3.h"
 
 struct ta_event;
+struct ta_keybind;
 
 enum {
     GLFW_KEY_MOUSE_LEFT = GLFW_KEY_LAST + 1,
@@ -14,16 +15,26 @@ enum {
 typedef s32 ta_key;
 
 typedef struct ta_key_state {
-    u8      down;            // button is currently down
-    u8      changed;         // state changed since last frame
-    u8      handled;         // global handled state to prevent double actions
-    double  last_change_ms;  // time of last state change in milliseconds
+    u8     down;                    // button is currently down
+    u8     changed;                 // state changed since last frame
+    double last_change_ms;          // time of last state change in milliseconds
+    const struct ta_keybind *lock;  // pointer to keybind currently consuming this key, if any
 } ta_key_state;
 
-bool ta_key_down         (ta_key key);
-bool ta_key_up           (ta_key key);
-bool ta_key_pressed      (ta_key key);
-bool ta_key_released     (ta_key key);
-void ta_key_mark_handled (ta_key key);
-void ta_key_clear_all    ();
-void ta_key_event        (struct ta_event *event);
+// Query key states
+bool ta_key_down          (ta_key key);
+bool ta_key_up            (ta_key key);
+bool ta_key_pressed       (ta_key key);
+bool ta_key_released      (ta_key key);
+
+// Reset key state changed flags
+void ta_key_reset_changed ();
+
+// Mutexes for keybind handling
+bool ta_key_available     (const struct ta_keybind *keybind, ta_key key);
+void ta_key_lock          (const struct ta_keybind *keybind, ta_key key);
+void ta_key_unlock        (const struct ta_keybind *keybind, ta_key key);
+void ta_key_unlock_all    ();
+
+// Handle key events
+void ta_key_event         (struct ta_event *event);

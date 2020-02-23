@@ -17,6 +17,29 @@ typedef struct ta_event_queue {
 
 static ta_event_queue event_queue;
 
+const char *event_type_str(ta_event_type type)
+{
+    switch (type) {
+        // Window events
+        case WINDOW_EVENT_RESIZE:             return "WINDOW_EVENT_RESIZE";
+        // Input events
+        case INPUT_EVENT_MOUSE_MOVE:          return "INPUT_EVENT_MOUSE_MOVE";
+        case INPUT_EVENT_MOUSE_SCROLL:        return "INPUT_EVENT_MOUSE_SCROLL";
+        case INPUT_EVENT_KEY_PRESS:           return "INPUT_EVENT_KEY_PRESS";
+        case INPUT_EVENT_KEY_RELEASE:         return "INPUT_EVENT_KEY_RELEASE";
+        case INPUT_EVENT_TEXT_INPUT:          return "INPUT_EVENT_TEXT_INPUT";
+        // Game events
+        case GAME_EVENT_SHUTDOWN:             return "GAME_EVENT_SHUTDOWN";
+        case GAME_EVENT_CAMERA_ROTATE:        return "GAME_EVENT_CAMERA_ROTATE";
+        case GAME_EVENT_BUTTON_ACTIVATED:     return "GAME_EVENT_BUTTON_ACTIVATED";
+        case GAME_EVENT_BUTTON_DEACTIVATED:   return "GAME_EVENT_BUTTON_DEACTIVATED";
+        case GAME_EVENT_BUTTON_STATE_CHANGED: return "GAME_EVENT_BUTTON_STATE_CHANGED";
+        default:
+            DLB_ASSERT(!"Unknown event type");
+            return 0;
+    }
+}
+
 void ta_event_push(ta_event *event)
 {
     size_t cap = dlb_vec_cap(event_queue.buffer);
@@ -66,23 +89,19 @@ bool ta_event_peek(ta_event *event)
 void ta_event_events()
 {
     ta_mouse_reset_relative();
-    ta_key_clear_all();
+    ta_key_reset_changed();
     ta_log_write(&tg_debug_log, SRC_EVENT, "  glfwPollEvents...\n");
     glfwPollEvents();
 
-    if (ta_game_state_current() == TA_GAME_STATE_EDITOR) {
-        ta_log_write(&tg_debug_log, SRC_EVENT, "  editor hotkeys...\n");
-        ta_editor_hotkeys();
-    } else {
-        ta_log_write(&tg_debug_log, SRC_EVENT, "  game hotkeys...\n");
-        ta_game_hotkeys();
-    }
+    ta_log_write(&tg_debug_log, SRC_EVENT, "  updating keybinds...\n");
+    ta_game_update_keybinds();
 
     ta_log_write(&tg_debug_log, SRC_EVENT, "  event pop loop...\n");
     ta_event event;
     while (ta_event_pop(&event)) {
-        ta_log_write(&tg_debug_log, SRC_EVENT, "  event type = %d\n", event.type);
-        if (ta_game_state_current() == TA_GAME_STATE_EDITOR) {
+        ta_log_write(&tg_debug_log, SRC_EVENT, "  event type = %s\n", event_type_str(event.type));
+        //printf("\nevent type = %s", event_type_str(event.type));
+        if (ta_game_state_current() == TA_STATE_EDITOR) {
             ta_log_write(&tg_debug_log, SRC_EVENT, "   editor event...\n");
             ta_editor_event(&event);
             if (event.handled) continue;

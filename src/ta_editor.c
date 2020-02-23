@@ -46,25 +46,29 @@ typedef enum editor_gizmo {
     GIZMO_COUNT
 } editor_gizmo;
 
-typedef enum editor_command {
-    EDITOR_COMMAND_CLOSE,
-    EDITOR_COMMAND_CANCEL,
-    EDITOR_COMMAND_SIM_PAUSE_RESUME,
-    EDITOR_COMMAND_SIM_NEXT,
-    EDITOR_COMMAND_SIM_NEXT_10,
-    EDITOR_COMMAND_SIM_WHILE_HELD,
-    EDITOR_COMMAND_COUNT
-} editor_command;
-
 static struct {
-    ta_scene            scene;
-    const char          *shader_editor_select;
-    editor_widget       widget;
-    editor_gizmo        gizmo;
-    ta_vec3             gizmo_start_hit;                 // if gizmo active, starting contact point of gizmo in world space
-    ta_xform            gizmo_start_xform;
+    ta_scene        scene;
+    const char      *shader_editor_select;
+    editor_widget   widget;
+    editor_gizmo    gizmo;
+    //ta_vec3         gizmo_start_hit;  // if gizmo active, starting contact point of gizmo in world space
+    ta_xform        gizmo_start_xform;  // if gizmo active, starting xform of entity being transformed
+
+    union {
+        struct {
+            ta_aabb hitbox1d[3];        // One-axis arrow handles
+            ta_quad hitbox2d[3];        // Two-axis plane handles
+            ta_aabb hitbox3d;           // Three-axis view-plane handle
+        } transform;
+        struct {
+            int unused;
+        } rotate;
+        struct {
+            int unused;
+        } scale;
+    } gizmos;
+
     float               widget_snap_to_grid;
-    ta_keybind          keybinds[EDITOR_COMMAND_COUNT];
     ta_ui_textbox_state *textbox_editing;
     ta_ui_textbox_state *textbox_dragging;
     const char          *selected_entity;
@@ -82,16 +86,6 @@ void ta_editor_init()
     ta_ui_init(font, &editor.textbox_editing, &editor.textbox_dragging);
 
     editor.widget = WIDGET_TRANSLATE;
-
-    ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing key binds\n");
-    // TODO: Read keybinds from file
-    //dlb_vec_reserve(tg_keybinds, 16);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CANCEL          ], TA_KEYBIND_PRESS, GLFW_KEY_ESCAPE);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_CLOSE           ], TA_KEYBIND_PRESS, GLFW_KEY_GRAVE_ACCENT);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_PAUSE_RESUME], TA_KEYBIND_PRESS, GLFW_KEY_F5);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT        ], TA_KEYBIND_PRESS, GLFW_KEY_F6);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_NEXT_10     ], TA_KEYBIND_PRESS, GLFW_KEY_F7);
-    ta_keybind_init1(&editor.keybinds[EDITOR_COMMAND_SIM_WHILE_HELD  ], TA_KEYBIND_HOLD,  GLFW_KEY_F8);
 }
 void ta_editor_select_entity(const char *entity)
 {
@@ -108,6 +102,626 @@ const char *ta_editor_selected_entity()
     }
 #endif
     return editor.selected_entity;
+}
+
+static editor_gizmo editor_gizmo_nearest(ta_ray *ray)
+{
+    editor_gizmo nearest_gizmo = GIZMO_NONE;
+
+    switch (editor.widget) {
+        case WIDGET_TRANSLATE: {
+            // TODO: Cleanup
+            DLB_ASSERT(editor.gizmos.transform.hitbox1d[0].center.x);
+
+            if (!ray) {
+                ta_ray fwd = ta_game_camera_ray();
+                ray = &fwd;
+            }
+
+            float t;
+            float t_min = FLT_MAX;
+            for (int i = 0; i < 3; ++i) {
+                if (ta_ray_v_aabb(ray, &editor.gizmos.transform.hitbox1d[i], &t) && t < t_min) {
+                    t_min = t;
+                    nearest_gizmo = GIZMO_TRANSLATE_X + i;
+                }
+            }
+
+            for (int i = 0; i < 3; ++i) {
+                if (ta_ray_v_quad(ray, &editor.gizmos.transform.hitbox2d[i], &t) && t < t_min) {
+                    t_min = t;
+                    nearest_gizmo = GIZMO_TRANSLATE_YZ + i;
+                }
+            }
+
+            // NOTE: This feels more responsive when it takes precedence above the invisible arrow bboxes
+            if (ta_ray_v_aabb(ray, &editor.gizmos.transform.hitbox3d, &t)) {  // && t < t_min) {
+                t_min = t;
+                nearest_gizmo = GIZMO_TRANSLATE_VIEW;
+            }
+            break;
+        } case WIDGET_ROTATE: {
+            break;
+        } case WIDGET_SCALE: {
+            break;
+        }
+    }
+
+    return nearest_gizmo;
+}
+static void editor_gizmo_end(bool keep_changes)
+{
+    DLB_ASSERT(editor.gizmo);
+
+    if (!keep_changes) {
+        const char *selected_entity = ta_editor_selected_entity();
+        if (selected_entity) {
+            switch (editor.widget) {
+                case WIDGET_TRANSLATE:
+                case WIDGET_ROTATE: {
+                    ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+                    e_transform->xform = editor.gizmo_start_xform;
+                    break;
+                }
+            }
+        }
+    }
+
+    editor.gizmo = GIZMO_NONE;
+#if _DEBUG
+    // NOTE: These should never be used with gizmo is NONE, but invalidate for easier debugging
+    //editor.gizmo_start_hit = VEC3_ZERO;
+    editor.gizmo_start_xform.position = VEC3_ZERO;
+    editor.gizmo_start_xform.orientation = QUAT_IDENT;
+#endif
+}
+static void editor_command_select()
+{
+    DLB_ASSERT(!editor.gizmo && "Wtf.. how did you select something *while* using a gizmo??");
+
+    if (!ta_mouse_captured()) {
+        return;
+    }
+
+    ta_ray ray = ta_game_camera_ray();
+
+    const char *selected_entity = ta_editor_selected_entity();
+    if (selected_entity) {
+        switch (editor.widget) {
+            case WIDGET_TRANSLATE: {
+                editor.gizmo = editor_gizmo_nearest(&ray);
+                if (editor.gizmo) {
+                    ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+                    //ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+                    //float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
+                    //float scale = MAX(0.5f, dist * 0.2f);
+                    //float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
+
+                    //editor.gizmo_start_hit = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                    editor.gizmo_start_xform = e_transform->xform;
+                }
+                break;
+            } case WIDGET_ROTATE: {
+                break;
+            } case WIDGET_SCALE: {
+                break;
+            }
+        }
+    }
+
+    if (!editor.gizmo) {
+        float t = 0.0f;
+        float t_min = FLT_MAX;
+        const char *closest_entity = 0;
+
+        ta_rigid_body *bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
+        dlb_vec_each(ta_rigid_body *, body, bodies) {
+            switch (body->collider.type) {
+                case TA_COLLIDER_PLANE: {
+                    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+                    ta_plane plane = body->collider.data.plane;
+                    plane.center = vec3_add(plane.center, transform->xform_world.position);
+                    if (ta_ray_v_plane(&ray, &plane, &t)) {
+                        DLB_ASSERT(t >= 0.0f);
+                        if (t < t_min) {
+                            t_min = t;
+                            closest_entity = body->entity;
+                        }
+                    }
+                    break;
+                } case TA_COLLIDER_SPHERE: {
+                    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+                    ta_sphere sphere = body->collider.data.sphere;
+                    sphere.center = vec3_add(sphere.center, transform->xform_world.position);
+                    if (ta_ray_v_sphere(&ray, &sphere, &t)) {
+                        DLB_ASSERT(t >= 0.0f);
+                        if (t < t_min) {
+                            t_min = t;
+                            closest_entity = body->entity;
+                        }
+                    }
+                    break;
+                } case TA_COLLIDER_OBB: {
+                    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+                    ta_obb obb = body->collider.data.obb;
+                    obb.center = vec3_rotate_quat(obb.center, transform->xform_world.orientation);
+                    obb.center = vec3_add(obb.center, transform->xform_world.position);
+                    obb.orientation = quat_mul(transform->xform_world.orientation, obb.orientation);
+                    if (ta_ray_v_obb(&ray, &obb, &t)) {
+                        DLB_ASSERT(t >= 0.0f);
+                        if (t < t_min) {
+                            t_min = t;
+                            closest_entity = body->entity;
+                        }
+                    }
+                    break;
+                } default: {
+                    // Ignore unsupported colliders when picking
+                    continue;
+                }
+            }
+        }
+
+        ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+        dlb_vec_each(ta_light *, light, lights) {
+            ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
+            ta_sphere sphere = { 0 };
+            sphere.center = transform->xform_world.position;
+            sphere.radius = 0.2f;
+            if (ta_ray_v_sphere(&ray, &sphere, &t)) {
+                DLB_ASSERT(t >= 0.0f);
+                if (t < t_min) {
+                    t_min = t;
+                    closest_entity = light->entity;
+                }
+            }
+        }
+
+        if (closest_entity) {
+            ta_vec3 t_pos = vec3_add(ray.origin, vec3_scalef(ray.direction, t_min));
+            ta_sphere t_sphere = { 0 };
+            t_sphere.center = t_pos;
+            t_sphere.radius = 0.1f;
+            ta_primitive_push_sphere(0, t_sphere, TA_COLOR_PINK);
+        } else {
+            ta_editor_select_entity(0);
+        }
+
+        if (closest_entity) {
+            ta_editor_select_entity(closest_entity);
+        }
+    }
+}
+static void editor_command_select_release()
+{
+    if (editor.gizmo) {
+        editor_gizmo_end(true);
+    }
+}
+static void editor_command_cancel()
+{
+    if (editor.gizmo) {
+        editor_gizmo_end(false);
+    } else if (editor.textbox_editing) {
+        ta_ui_textbox_cancel(editor.textbox_editing);
+    } else {
+        ta_game_state_set(ta_game_state_prev());
+    }
+}
+static void editor_command_close()
+{
+    // TODO: If outstanding changes, prompt before closing editor
+    if (editor.gizmo) {
+        editor_gizmo_end(false);
+    }
+    if (editor.textbox_editing) {
+        ta_ui_textbox_cancel(editor.textbox_editing);
+    }
+    ta_game_state_set(ta_game_state_prev());
+}
+static void editor_command_sim_pause_resume()
+{
+    if (ta_game_sim_running()) {
+        ta_game_sim_pause();
+    } else {
+        ta_game_sim_resume();
+    }
+}
+static void editor_command_sim_next()
+{
+    if (ta_game_sim_paused()) {
+        ta_game_sim_step_n_frames(1);
+    }
+}
+static void editor_command_sim_next_ten()
+{
+    if (ta_game_sim_paused()) {
+        ta_game_sim_step_n_frames(10);
+    }
+}
+static void editor_command_sim_while_held()
+{
+    if (ta_game_sim_paused()) {
+        ta_game_sim_step_n_frames(1);
+    }
+}
+
+static void ta_editor_textbox_event(ta_event *event)
+{
+    switch (event->type) {
+        case INPUT_EVENT_TEXT_INPUT: {
+            // TODO: How to actually handle codepoints?
+            u32 codepoint = event->data.text_input.codepoint;
+            if (codepoint >= 32 && codepoint < 127) {
+                char chr = (char)codepoint;
+                ta_ui_textbox_insert(editor.textbox_editing, chr);
+            }
+            event->handled = true;
+            break;
+        } case INPUT_EVENT_KEY_PRESS: {
+            // Consume all unhandled keystrokes when text editor is active
+            //if (event->data.key_press.key == GLFW_KEY_ENTER) {
+            //    ta_ui_textbox_insert(editor.active_textbox, '\n');
+            //}
+            event->handled = true;
+            break;
+        } case INPUT_EVENT_KEY_RELEASE: {
+            // Consume all unhandled keystrokes when text editor is active
+            event->handled = true;
+            break;
+        }
+    }
+}
+void ta_editor_event(ta_event *event)
+{
+    if (editor.textbox_editing) {
+        ta_editor_textbox_event(event);
+    }
+}
+
+void ta_editor_update_widgets()
+{
+    const char *selected_entity = ta_editor_selected_entity();
+    if (!selected_entity) {
+        return;
+    }
+
+    ta_camera *camera = ta_game_camera();
+    ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
+    float scale = MAX(0.5f, dist * 0.2f);
+    float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
+
+    switch (editor.widget) {
+        case WIDGET_TRANSLATE: {
+            // One-axis arrow handles
+            float midpoint1d = scale * 0.5f;
+            float extent1d = scale - midpoint1d;
+            editor.gizmos.transform.hitbox1d[0].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_X, midpoint1d));
+            editor.gizmos.transform.hitbox1d[0].extents.x = extent1d;
+            editor.gizmos.transform.hitbox1d[0].extents.y = radius;
+            editor.gizmos.transform.hitbox1d[0].extents.z = radius;
+
+            editor.gizmos.transform.hitbox1d[1].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_Y, midpoint1d));
+            editor.gizmos.transform.hitbox1d[1].extents.x = radius;
+            editor.gizmos.transform.hitbox1d[1].extents.y = extent1d;
+            editor.gizmos.transform.hitbox1d[1].extents.z = radius;
+
+            editor.gizmos.transform.hitbox1d[2].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_Z, midpoint1d));
+            editor.gizmos.transform.hitbox1d[2].extents.x = radius;
+            editor.gizmos.transform.hitbox1d[2].extents.y = radius;
+            editor.gizmos.transform.hitbox1d[2].extents.z = extent1d;
+
+            // Two-axis plane handles
+            float midpoint2d = scale * 0.5f;
+            float radius_quad = radius * 1.2f;
+            editor.gizmos.transform.hitbox2d[0].center = e_transform->xform_world.position;
+            editor.gizmos.transform.hitbox2d[0].center.y += midpoint2d;
+            editor.gizmos.transform.hitbox2d[0].center.z += midpoint2d;
+            editor.gizmos.transform.hitbox2d[0].extents.x = radius_quad;
+            editor.gizmos.transform.hitbox2d[0].extents.y = radius_quad;
+            editor.gizmos.transform.hitbox2d[0].orientation = quat_from_axis_angle(VEC3_Y, 90.0f);
+
+            editor.gizmos.transform.hitbox2d[1].center = e_transform->xform_world.position;
+            editor.gizmos.transform.hitbox2d[1].center.x += midpoint2d;
+            editor.gizmos.transform.hitbox2d[1].center.z += midpoint2d;
+            editor.gizmos.transform.hitbox2d[1].extents.x = radius_quad;
+            editor.gizmos.transform.hitbox2d[1].extents.y = radius_quad;
+            editor.gizmos.transform.hitbox2d[1].orientation = quat_from_axis_angle(VEC3_X, -90.0f);
+
+            editor.gizmos.transform.hitbox2d[2].center = e_transform->xform_world.position;
+            editor.gizmos.transform.hitbox2d[2].center.x += midpoint2d;
+            editor.gizmos.transform.hitbox2d[2].center.y += midpoint2d;
+            editor.gizmos.transform.hitbox2d[2].extents.x = radius_quad;
+            editor.gizmos.transform.hitbox2d[2].extents.y = radius_quad;
+            editor.gizmos.transform.hitbox2d[2].orientation = QUAT_IDENT;
+
+            // Three-axis view-plane handle
+            editor.gizmos.transform.hitbox3d.center = e_transform->xform_world.position;
+            editor.gizmos.transform.hitbox3d.extents.x = radius;
+            editor.gizmos.transform.hitbox3d.extents.y = radius;
+            editor.gizmos.transform.hitbox3d.extents.z = radius;
+
+            // TODO: Would ray_vs_line_closest() be a better way to check this?
+            ta_ray ray = ta_game_camera_ray();
+            ta_plane plane = { 0 };
+            plane.center = e_transform->xform_world.position;
+
+            switch (editor.gizmo) {
+                case GIZMO_TRANSLATE_X: {
+                    plane.normal.y = cam_trans->xform_world.position.y - e_transform->xform_world.position.y;
+                    plane.normal.z = cam_trans->xform_world.position.z - e_transform->xform_world.position.z;
+                    plane.normal = vec3_normalize(plane.normal);
+
+                    float t;
+                    if (ta_ray_v_plane(&ray, &plane, &t)) {
+                        ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                        e_transform->xform.position.x = contact.x - scale * 0.5f;
+                        if (editor.widget_snap_to_grid) {
+                            e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
+                        }
+                    }
+                    break;
+                } case GIZMO_TRANSLATE_Y: {
+                    plane.normal.x = cam_trans->xform_world.position.x - e_transform->xform_world.position.x;
+                    plane.normal.z = cam_trans->xform_world.position.z - e_transform->xform_world.position.z;
+                    plane.normal = vec3_normalize(plane.normal);
+
+                    float t;
+                    if (ta_ray_v_plane(&ray, &plane, &t)) {
+                        ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                        e_transform->xform.position.y = contact.y - scale * 0.5f;
+                        if (editor.widget_snap_to_grid) {
+                            e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
+                        }
+                    }
+                    break;
+                } case GIZMO_TRANSLATE_Z: {
+                    plane.normal.x = cam_trans->xform_world.position.x - e_transform->xform_world.position.x;
+                    plane.normal.y = cam_trans->xform_world.position.y - e_transform->xform_world.position.y;
+                    plane.normal = vec3_normalize(plane.normal);
+
+                    float t;
+                    if (ta_ray_v_plane(&ray, &plane, &t)) {
+                        ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                        e_transform->xform.position.z = contact.z - scale * 0.5f;
+                        if (editor.widget_snap_to_grid) {
+                            e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
+                        }
+                    }
+                    break;
+                } case GIZMO_TRANSLATE_YZ: {
+                    plane.normal.x = 1.0f;
+
+                    float t;
+                    if (ta_ray_v_plane(&ray, &plane, &t)) {
+                        ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                        e_transform->xform.position.y = contact.y - midpoint2d;
+                        e_transform->xform.position.z = contact.z - midpoint2d;
+                        if (editor.widget_snap_to_grid) {
+                            e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
+                            e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
+                        }
+                    }
+                    break;
+                } case GIZMO_TRANSLATE_XZ: {
+                    plane.normal.y = 1.0f;
+
+                    float t;
+                    if (ta_ray_v_plane(&ray, &plane, &t)) {
+                        ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                        e_transform->xform.position.x = contact.x - midpoint2d;
+                        e_transform->xform.position.z = contact.z - midpoint2d;
+                        if (editor.widget_snap_to_grid) {
+                            e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
+                            e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
+                        }
+                    }
+                    break;
+                } case GIZMO_TRANSLATE_XY: {
+                    plane.normal.z = 1.0f;
+
+                    float t;
+                    if (ta_ray_v_plane(&ray, &plane, &t)) {
+                        ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+                        e_transform->xform.position.x = contact.x - midpoint2d;
+                        e_transform->xform.position.y = contact.y - midpoint2d;
+                        if (editor.widget_snap_to_grid) {
+                            e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
+                            e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
+                        }
+                    }
+                    break;
+                } case GIZMO_TRANSLATE_VIEW: {
+                    plane.normal = vec3_neg(ray.direction);
+                    plane.normal = vec3_normalize(plane.normal);
+
+                    float t;
+                    if (ta_ray_v_plane(&ray, &plane, &t)) {
+                        ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
+
+                        // TODO: Handle view-plane translation (may not be possible while camera is rotating?)
+                        ta_sphere cs = { 0 };
+                        cs.center = contact;
+                        cs.radius = 0.1f;
+                        ta_primitive_push_sphere(0, cs, TA_COLOR_YELLOW);
+                        //e_transform->xform.position.x = contact.x - scale * 0.5f;
+                        //e_transform->xform.position.y = contact.y - scale * 0.5f;
+                        //e_transform->xform.position.z = contact.z - scale * 0.5f;
+                        //if (editor.widget_snap_to_grid) {
+                        //    e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
+                        //    e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
+                        //    e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
+                        //}
+                    }
+                    break;
+                }
+            }
+            break;
+        } case WIDGET_ROTATE: {
+            // TODO: Update this widget
+            break;
+        } case WIDGET_SCALE: {
+            // TODO: Update this widget
+            break;
+        }
+    }
+}
+void ta_editor_draw_world()
+{
+    // Grid and world axes
+    ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
+    ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.3f);
+    ta_primitive_render(true, false);
+
+    const char *selected_entity = ta_editor_selected_entity();
+    if (selected_entity) {
+        ta_camera *camera = ta_game_camera();
+
+        // Render selected entity as yellow wireframes
+        ta_model *e_model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
+        if (e_model) {
+            ta_shader *shader = ta_scene_find(&editor.scene, RES_SHADER, SYM(editor.shader_editor_select));
+            ta_rgba wire_color = TA_COLOR_YELLOW;
+            double seconds = ta_timer_elapsed_sec();
+            double sine = sin(seconds * 4.0) * 0.5 + 0.5;
+            wire_color.a = (float)(0.25 * (sine * sine) + 0.02);
+            if (camera->debug_no_mesh) {
+                wire_color.a = 0.05f;
+            }
+            ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
+
+            glClear(GL_DEPTH_BUFFER_BIT);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            ta_model_render_shader(e_model, camera, shader);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+
+        // Render active widget's gizmos
+        ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+        ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+        float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
+        float scale = MAX(0.5f, dist * 0.2f);
+
+        switch (editor.widget) {
+            case WIDGET_TRANSLATE: {
+                //--------------------------------------------------------
+                // Render passive gizmo details
+                //--------------------------------------------------------
+                static const ta_rgba gizmo_color[GIZMO_COUNT][2] = {
+                    // Passive gizmo colors
+                    [GIZMO_TRANSLATE_X]    [0] = { 0.7f, 0.0f, 0.0f, 1.0f },  // DARK_RED
+                    [GIZMO_TRANSLATE_Y]    [0] = { 0.0f, 0.7f, 0.0f, 1.0f },  // DARK_GREEN
+                    [GIZMO_TRANSLATE_Z]    [0] = { 0.0f, 0.0f, 0.7f, 1.0f },  // DARK_BLUE
+                    [GIZMO_TRANSLATE_YZ]   [0] = { 0.7f, 0.0f, 0.0f, 0.7f },  // DARK_RED_ALPHA
+                    [GIZMO_TRANSLATE_XZ]   [0] = { 0.0f, 0.7f, 0.0f, 0.7f },  // DARK_GREEN_ALPHA
+                    [GIZMO_TRANSLATE_XY]   [0] = { 0.0f, 0.0f, 0.7f, 0.7f },  // DARK_BLUE_ALPHA
+                    [GIZMO_TRANSLATE_VIEW] [0] = { 0.6f, 0.6f, 0.6f, 1.0f },  // TA_COLOR_GRAY6
+                    // Active gizmo colors (highlights)
+                    [GIZMO_TRANSLATE_X]    [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED,
+                    [GIZMO_TRANSLATE_Y]    [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN,
+                    [GIZMO_TRANSLATE_Z]    [1] = { 0.0f, 0.0f, 1.0f, 1.0f },  // TA_COLOR_BLUE,
+                    [GIZMO_TRANSLATE_YZ]   [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED,
+                    [GIZMO_TRANSLATE_XZ]   [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN,
+                    [GIZMO_TRANSLATE_XY]   [1] = { 0.0f, 0.0f, 1.0f, 1.0f },  // TA_COLOR_BLUE,
+                    [GIZMO_TRANSLATE_VIEW] [1] = { 1.0f, 1.0f, 1.0f, 1.0f },  // TA_COLOR_WHITE
+                };
+
+                // Highlight active gizmo, or nearest gizmo if none active
+#define GIZMO_COLOR(gzmo) (gizmo_color[gzmo][editor.gizmo == gzmo || (!editor.gizmo && nearest_gizmo == gzmo)])
+                {
+                    editor_gizmo nearest_gizmo = editor_gizmo_nearest(0);
+
+                    // 1D handles
+                    ta_primitive_push_axes_arrow_color(0, e_transform->xform_world.position, QUAT_IDENT, scale,
+                        GIZMO_COLOR(GIZMO_TRANSLATE_X), GIZMO_COLOR(GIZMO_TRANSLATE_Y), GIZMO_COLOR(GIZMO_TRANSLATE_Z));
+
+                    // 2D handles
+                    ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[0], GIZMO_COLOR(GIZMO_TRANSLATE_YZ));
+                    ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[1], GIZMO_COLOR(GIZMO_TRANSLATE_XZ));
+                    ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[2], GIZMO_COLOR(GIZMO_TRANSLATE_XY));
+
+                    // 3D handle
+                    ta_primitive_push_aabb(0, editor.gizmos.transform.hitbox3d, GIZMO_COLOR(GIZMO_TRANSLATE_VIEW));
+                }
+#undef GIZMO_COLOR
+
+                // Starting xform
+                ta_primitive_push_axes_arrow(0, editor.gizmo_start_xform.position, editor.gizmo_start_xform.orientation, 0.5f);
+
+                //--------------------------------------------------------
+                // Render active gizmo details
+                //--------------------------------------------------------
+                ta_line_3d x_axis = { 0 };
+                x_axis.p0 = e_transform->xform_world.position;
+                x_axis.p1 = e_transform->xform_world.position;
+                x_axis.p0.x = cam_trans->xform_world.position.x - 10000.0f;
+                x_axis.p1.x = cam_trans->xform_world.position.x + 10000.0f;
+
+                ta_line_3d y_axis = { 0 };
+                y_axis.p0 = e_transform->xform_world.position;
+                y_axis.p1 = e_transform->xform_world.position;
+                y_axis.p0.y = cam_trans->xform_world.position.y - 10000.0f;
+                y_axis.p1.y = cam_trans->xform_world.position.y + 10000.0f;
+
+                ta_line_3d z_axis = { 0 };
+                z_axis.p0 = e_transform->xform_world.position;
+                z_axis.p1 = e_transform->xform_world.position;
+                z_axis.p0.z = cam_trans->xform_world.position.z - 10000.0f;
+                z_axis.p1.z = cam_trans->xform_world.position.z + 10000.0f;
+
+                switch (editor.gizmo) {
+                    case GIZMO_TRANSLATE_X: {
+                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
+                        break;
+                    } case GIZMO_TRANSLATE_Y: {
+                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
+                        break;
+                    } case GIZMO_TRANSLATE_Z: {
+                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
+                        break;
+                    } case GIZMO_TRANSLATE_YZ: {
+                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                        ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[0], TA_COLOR_RED);
+                        break;
+                    } case GIZMO_TRANSLATE_XZ: {
+                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                        ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[1], TA_COLOR_GREEN);
+                        break;
+                    } case GIZMO_TRANSLATE_XY: {
+                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                        ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[2], TA_COLOR_BLUE);
+                        break;
+                    } case GIZMO_TRANSLATE_VIEW: {
+                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                        break;
+                    }
+                }
+                break;
+            } case WIDGET_ROTATE: {
+                ta_sphere sphere = { 0 };
+                sphere.center = e_transform->xform_world.position;
+                sphere.radius = scale;
+                ta_primitive_push_rgb_sphere(0, sphere);
+                break;
+            } case WIDGET_SCALE: {
+                ta_primitive_push_axes_cube(0, e_transform->xform_world.position, scale);
+                break;
+            }
+        }
+
+        glClear(GL_DEPTH_BUFFER_BIT);
+        ta_primitive_render(true, false);
+    }
 }
 
 static void ui_scene_panel()
@@ -1048,13 +1662,13 @@ static void ui_editor_sidebar()
         void (*panel_method)();
     } categories[] = {
         { CSTR("Scene"),     ui_scene_panel },
-        { CSTR("Node"),      ui_node_panel },
-        { CSTR("Audio"),     ui_audio_panel },
-        { CSTR("Cameras"),   ui_camera_panel },
-        { CSTR("Materials"), ui_material_panel },
-        { CSTR("Meshes"),    ui_mesh_panel },
-        { CSTR("Textures"),  ui_texture_panel },
-        { CSTR("Textbox"),   ui_textbox_panel },
+    { CSTR("Node"),      ui_node_panel },
+    { CSTR("Audio"),     ui_audio_panel },
+    { CSTR("Cameras"),   ui_camera_panel },
+    { CSTR("Materials"), ui_material_panel },
+    { CSTR("Meshes"),    ui_mesh_panel },
+    { CSTR("Textures"),  ui_texture_panel },
+    { CSTR("Textbox"),   ui_textbox_panel },
     };
     static int category_selected = 1;
 
@@ -1163,580 +1777,4 @@ void ta_editor_draw_screen()
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render begin\n");
     ta_ui_render();
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render end\n");
-}
-static void editor_gizmo_end(bool keep_changes)
-{
-    DLB_ASSERT(editor.gizmo);
-
-    if (!keep_changes) {
-        const char *selected_entity = ta_editor_selected_entity();
-        if (selected_entity) {
-            switch (editor.widget) {
-                case WIDGET_TRANSLATE:
-                case WIDGET_ROTATE: {
-                    ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
-                    e_transform->xform = editor.gizmo_start_xform;
-                    break;
-                }
-            }
-        }
-    }
-
-    editor.gizmo = GIZMO_NONE;
-#if _DEBUG
-    // NOTE: These should never be used with gizmo is NONE, but invalidate for easier debugging
-    editor.gizmo_start_hit = VEC3_ZERO;
-    editor.gizmo_start_xform.position = VEC3_ZERO;
-    editor.gizmo_start_xform.orientation = QUAT_IDENT;
-#endif
-}
-void ta_editor_draw_world()
-{
-    // Grid and world axes
-    ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
-    ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.3f);
-    ta_primitive_render(true, false);
-
-    ta_ray ray = ta_game_camera_ray();
-
-    const char *selected_entity = ta_editor_selected_entity();
-    if (selected_entity) {
-        ta_camera *camera = ta_game_camera();
-
-        // Render selected entity as yellow wireframes
-        ta_model *e_model = ta_game_component_try(selected_entity,
-            RES_COMP_MODEL);
-        if (e_model) {
-            glClear(GL_DEPTH_BUFFER_BIT);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-            ta_shader *shader = ta_scene_find(&editor.scene, RES_SHADER,
-                SYM(editor.shader_editor_select));
-            ta_rgba wire_color = TA_COLOR_YELLOW;
-            double seconds = ta_timer_elapsed_sec();
-            double sine = sin(seconds * 4.0) * 0.5 + 0.5;
-            wire_color.a = (float)(0.25 * (sine * sine) + 0.02);
-            if (camera->debug_no_mesh) {
-                wire_color.a = 0.05f;
-            }
-            ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
-            ta_model_render_shader(e_model, camera, shader);
-
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        }
-
-        glClear(GL_DEPTH_BUFFER_BIT);
-
-        ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
-        ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
-        float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
-        float scale = MAX(0.5f, dist * 0.2f);
-        float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
-
-        switch (editor.widget) {
-            case WIDGET_TRANSLATE: {
-                // One-axis arrow handles
-                ta_aabb hitbox1d[3] = { 0 };
-                float midpoint1d = scale * 0.5f;
-                float extent1d = scale - midpoint1d;
-                hitbox1d[0].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_X, midpoint1d));
-                hitbox1d[0].extents.x = extent1d;
-                hitbox1d[0].extents.y = radius;
-                hitbox1d[0].extents.z = radius;
-
-                hitbox1d[1].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_Y, midpoint1d));
-                hitbox1d[1].extents.x = radius;
-                hitbox1d[1].extents.y = extent1d;
-                hitbox1d[1].extents.z = radius;
-
-                hitbox1d[2].center = vec3_add(e_transform->xform_world.position, vec3_scalef(VEC3_Z, midpoint1d));
-                hitbox1d[2].extents.x = radius;
-                hitbox1d[2].extents.y = radius;
-                hitbox1d[2].extents.z = extent1d;
-
-                // Two-axis plane handles
-                ta_quad hitbox2d[3] = { 0 };
-                float midpoint2d = scale * 0.5f;
-                float radius_quad = radius * 1.2f;
-                hitbox2d[0].center = e_transform->xform_world.position;
-                hitbox2d[0].center.y += midpoint2d;
-                hitbox2d[0].center.z += midpoint2d;
-                hitbox2d[0].extents.x = radius_quad;
-                hitbox2d[0].extents.y = radius_quad;
-                hitbox2d[0].orientation = quat_from_axis_angle(VEC3_Y, 90.0f);
-
-                hitbox2d[1].center = e_transform->xform_world.position;
-                hitbox2d[1].center.x += midpoint2d;
-                hitbox2d[1].center.z += midpoint2d;
-                hitbox2d[1].extents.x = radius_quad;
-                hitbox2d[1].extents.y = radius_quad;
-                hitbox2d[1].orientation = quat_from_axis_angle(VEC3_X, -90.0f);
-
-                hitbox2d[2].center = e_transform->xform_world.position;
-                hitbox2d[2].center.x += midpoint2d;
-                hitbox2d[2].center.y += midpoint2d;
-                hitbox2d[2].extents.x = radius_quad;
-                hitbox2d[2].extents.y = radius_quad;
-                hitbox2d[2].orientation = QUAT_IDENT;
-
-                // Three-axis view-plane handle
-                ta_aabb hitbox3d = { 0 };
-                hitbox3d.center = e_transform->xform_world.position;
-                hitbox3d.extents.x = radius;
-                hitbox3d.extents.y = radius;
-                hitbox3d.extents.z = radius;
-
-                editor_gizmo nearest_gizmo = GIZMO_NONE;
-
-                {
-                    float t;
-                    float t_min = FLT_MAX;
-                    for (int i = 0; i < 3; ++i) {
-                        if (ta_ray_v_aabb(&ray, &hitbox1d[i], &t) && t < t_min) {
-                            t_min = t;
-                            nearest_gizmo = GIZMO_TRANSLATE_X + i;
-                        }
-                    }
-
-                    for (int i = 0; i < 3; ++i) {
-                        if (ta_ray_v_quad(&ray, &hitbox2d[i], &t) && t < t_min) {
-                            t_min = t;
-                            nearest_gizmo = GIZMO_TRANSLATE_YZ + i;
-                        }
-                    }
-
-                    // NOTE: This feels more responsive when it takes precedence above the invisible arrow bboxes
-                    if (ta_ray_v_aabb(&ray, &hitbox3d, &t)) {  // && t < t_min) {
-                        t_min = t;
-                        nearest_gizmo = GIZMO_TRANSLATE_VIEW;
-                    }
-
-                    // Set gizmo to nearest on mouse click, clear on release
-                    if (ta_mouse_captured() && ta_key_pressed(GLFW_KEY_MOUSE_LEFT)) {
-                        editor.gizmo = nearest_gizmo;
-                        editor.gizmo_start_hit = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                        editor.gizmo_start_xform = e_transform->xform;
-                    } else if (editor.gizmo && !ta_key_down(GLFW_KEY_MOUSE_LEFT)) {
-                        editor_gizmo_end(true);
-                    }
-                }
-
-                //--------------------------------------------------------
-                // Render passive gizmo details
-                //--------------------------------------------------------
-                ta_rgba gizmo_color[GIZMO_COUNT] = { 0 };
-                gizmo_color[GIZMO_TRANSLATE_X] = TA_COLOR_DARK_RED;
-                gizmo_color[GIZMO_TRANSLATE_Y] = TA_COLOR_DARK_GREEN;
-                gizmo_color[GIZMO_TRANSLATE_Z] = TA_COLOR_DARK_BLUE;
-                gizmo_color[GIZMO_TRANSLATE_YZ] = TA_COLOR_DARK_REDA;
-                gizmo_color[GIZMO_TRANSLATE_XZ] = TA_COLOR_DARK_GREENA;
-                gizmo_color[GIZMO_TRANSLATE_XY] = TA_COLOR_DARK_BLUEA;
-                gizmo_color[GIZMO_TRANSLATE_VIEW] = TA_COLOR_GRAY6;
-                ta_rgba gizmo_hover[GIZMO_COUNT] = { 0 };
-                gizmo_hover[GIZMO_TRANSLATE_X] = TA_COLOR_RED;
-                gizmo_hover[GIZMO_TRANSLATE_Y] = TA_COLOR_GREEN;
-                gizmo_hover[GIZMO_TRANSLATE_Z] = TA_COLOR_BLUE;
-                gizmo_hover[GIZMO_TRANSLATE_YZ] = TA_COLOR_RED;
-                gizmo_hover[GIZMO_TRANSLATE_XZ] = TA_COLOR_GREEN;
-                gizmo_hover[GIZMO_TRANSLATE_XY] = TA_COLOR_BLUE;
-                gizmo_hover[GIZMO_TRANSLATE_VIEW] = TA_COLOR_WHITE;
-
-                // Highlight active gizmo, or nearest gizmo if none active
-                for (int gizmo = GIZMO_NONE + 1; gizmo < GIZMO_COUNT; ++gizmo) {
-                    if (editor.gizmo == gizmo || (!editor.gizmo && nearest_gizmo == gizmo)) {
-                        gizmo_color[gizmo] = gizmo_hover[gizmo];
-                    }
-                }
-
-                // 1D handles
-                ta_primitive_push_axes_arrow_color(0, e_transform->xform_world.position, QUAT_IDENT, scale,
-                    gizmo_color[GIZMO_TRANSLATE_X], gizmo_color[GIZMO_TRANSLATE_Y], gizmo_color[GIZMO_TRANSLATE_Z]);
-
-                // 2D handles
-                ta_primitive_push_quad(0, hitbox2d[0], gizmo_color[GIZMO_TRANSLATE_YZ]);
-                ta_primitive_push_quad(0, hitbox2d[1], gizmo_color[GIZMO_TRANSLATE_XZ]);
-                ta_primitive_push_quad(0, hitbox2d[2], gizmo_color[GIZMO_TRANSLATE_XY]);
-
-                // 3D handle
-                ta_primitive_push_aabb(0, hitbox3d, gizmo_color[GIZMO_TRANSLATE_VIEW]);
-
-                //--------------------------------------------------------
-                // Render active gizmo details
-                //--------------------------------------------------------
-                ta_line_3d x_axis = { 0 };
-                x_axis.p0 = e_transform->xform_world.position;
-                x_axis.p1 = e_transform->xform_world.position;
-                x_axis.p0.x = cam_trans->xform_world.position.x - 10000.0f;
-                x_axis.p1.x = cam_trans->xform_world.position.x + 10000.0f;
-
-                ta_line_3d y_axis = { 0 };
-                y_axis.p0 = e_transform->xform_world.position;
-                y_axis.p1 = e_transform->xform_world.position;
-                y_axis.p0.y = cam_trans->xform_world.position.y - 10000.0f;
-                y_axis.p1.y = cam_trans->xform_world.position.y + 10000.0f;
-
-                ta_line_3d z_axis = { 0 };
-                z_axis.p0 = e_transform->xform_world.position;
-                z_axis.p1 = e_transform->xform_world.position;
-                z_axis.p0.z = cam_trans->xform_world.position.z - 10000.0f;
-                z_axis.p1.z = cam_trans->xform_world.position.z + 10000.0f;
-
-                // TODO: Would ray_vs_line_closest() be a better way to check this?
-                ta_plane plane = { 0 };
-                plane.center = e_transform->xform_world.position;
-
-                switch (editor.gizmo) {
-                    case GIZMO_TRANSLATE_X: {
-                        plane.normal.y = cam_trans->xform_world.position.y - e_transform->xform_world.position.y;
-                        plane.normal.z = cam_trans->xform_world.position.z - e_transform->xform_world.position.z;
-                        plane.normal = vec3_normalize(plane.normal);
-
-                        float t;
-                        if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                            e_transform->xform.position.x = contact.x - scale * 0.5f;
-                            if (editor.widget_snap_to_grid) {
-                                e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
-                            }
-                        }
-
-                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
-                        break;
-                    } case GIZMO_TRANSLATE_Y: {
-                        plane.normal.x = cam_trans->xform_world.position.x - e_transform->xform_world.position.x;
-                        plane.normal.z = cam_trans->xform_world.position.z - e_transform->xform_world.position.z;
-                        plane.normal = vec3_normalize(plane.normal);
-
-                        float t;
-                        if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                            e_transform->xform.position.y = contact.y - scale * 0.5f;
-                            if (editor.widget_snap_to_grid) {
-                                e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
-                            }
-                        }
-
-                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
-                        break;
-                    } case GIZMO_TRANSLATE_Z: {
-                        plane.normal.x = cam_trans->xform_world.position.x - e_transform->xform_world.position.x;
-                        plane.normal.y = cam_trans->xform_world.position.y - e_transform->xform_world.position.y;
-                        plane.normal = vec3_normalize(plane.normal);
-
-                        float t;
-                        if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                            e_transform->xform.position.z = contact.z - scale * 0.5f;
-                            if (editor.widget_snap_to_grid) {
-                                e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
-                            }
-                        }
-
-                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
-                        break;
-                    } case GIZMO_TRANSLATE_YZ: {
-                        plane.normal.x = 1.0f;
-
-                        float t;
-                        if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                            e_transform->xform.position.y = contact.y - midpoint2d;
-                            e_transform->xform.position.z = contact.z - midpoint2d;
-                            if (editor.widget_snap_to_grid) {
-                                e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
-                                e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
-                            }
-                        }
-
-                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                        ta_primitive_push_quad(0, hitbox2d[0], TA_COLOR_RED);
-                        break;
-                    } case GIZMO_TRANSLATE_XZ: {
-                        plane.normal.y = 1.0f;
-
-                        float t;
-                        if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                            e_transform->xform.position.x = contact.x - midpoint2d;
-                            e_transform->xform.position.z = contact.z - midpoint2d;
-                            if (editor.widget_snap_to_grid) {
-                                e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
-                                e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
-                            }
-                        }
-
-                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                        ta_primitive_push_quad(0, hitbox2d[1], TA_COLOR_GREEN);
-                        break;
-                    } case GIZMO_TRANSLATE_XY: {
-                        plane.normal.z = 1.0f;
-
-                        float t;
-                        if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                            e_transform->xform.position.x = contact.x - midpoint2d;
-                            e_transform->xform.position.y = contact.y - midpoint2d;
-                            if (editor.widget_snap_to_grid) {
-                                e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
-                                e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
-                            }
-                        }
-
-                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                        ta_primitive_push_quad(0, hitbox2d[2], TA_COLOR_BLUE);
-                        break;
-                    } case GIZMO_TRANSLATE_VIEW: {
-                        plane.normal = vec3_neg(ray.direction);
-                        plane.normal = vec3_normalize(plane.normal);
-
-                        float t;
-                        if (ta_ray_v_plane(&ray, &plane, &t)) {
-                            ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                            ta_sphere cs = { 0 };
-                            cs.center = contact;
-                            cs.radius = 0.1f;
-                            ta_primitive_push_sphere(0, cs, TA_COLOR_YELLOW);
-                            //e_transform->xform.position.x = contact.x - scale * 0.5f;
-                            //e_transform->xform.position.y = contact.y - scale * 0.5f;
-                            //e_transform->xform.position.z = contact.z - scale * 0.5f;
-                            //if (editor.widget_snap_to_grid) {
-                            //    e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
-                            //    e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
-                            //    e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
-                            //}
-                        }
-
-                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                        break;
-                    }
-                }
-
-                break;
-            } case WIDGET_ROTATE: {
-                ta_sphere sphere = { 0 };
-                sphere.center = e_transform->xform_world.position;
-                sphere.radius = scale;
-                ta_primitive_push_rgb_sphere(0, sphere);
-                break;
-            } case WIDGET_SCALE: {
-                ta_primitive_push_axes_cube(0, e_transform->xform_world.position, scale);
-                break;
-            }
-        }
-
-        ta_primitive_render(true, false);
-    }
-
-    if (!editor.gizmo && ta_mouse_captured() && ta_key_pressed(GLFW_KEY_MOUSE_LEFT))
-    {
-        float t = 0.0f;
-        float t_min = FLT_MAX;
-        const char *closest_entity = 0;
-
-        ta_rigid_body *bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
-        dlb_vec_each(ta_rigid_body *, body, bodies) {
-            switch (body->collider.type) {
-                case TA_COLLIDER_PLANE: {
-                    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
-                    ta_plane plane = body->collider.data.plane;
-                    plane.center = vec3_add(plane.center, transform->xform_world.position);
-                    if (ta_ray_v_plane(&ray, &plane, &t)) {
-                        DLB_ASSERT(t >= 0.0f);
-                        //if (t >= 0.0f && t < t_min) {
-                        if (t < t_min) {
-                            t_min = t;
-                            closest_entity = body->entity;
-                        }
-                    }
-                    break;
-                } case TA_COLLIDER_SPHERE: {
-                    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
-                    ta_sphere sphere = body->collider.data.sphere;
-                    sphere.center = vec3_add(sphere.center, transform->xform_world.position);
-                    if (ta_ray_v_sphere(&ray, &sphere, &t)) {
-                        DLB_ASSERT(t >= 0.0f);
-                        //if (t >= 0.0f && t < t_min) {
-                        if (t < t_min) {
-                            t_min = t;
-                            closest_entity = body->entity;
-                        }
-                    }
-                    break;
-                } case TA_COLLIDER_OBB: {
-                    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
-                    ta_obb obb = body->collider.data.obb;
-                    obb.center = vec3_rotate_quat(obb.center, transform->xform_world.orientation);
-                    obb.center = vec3_add(obb.center, transform->xform_world.position);
-                    obb.orientation = quat_mul(transform->xform_world.orientation, obb.orientation);
-                    if (ta_ray_v_obb(&ray, &obb, &t)) {
-                        DLB_ASSERT(t >= 0.0f);
-                        if (t < t_min) {
-                            t_min = t;
-                            closest_entity = body->entity;
-                        }
-                    }
-                    break;
-                } default: {
-                    // Ignore unsupported colliders when picking
-                    continue;
-                }
-            }
-        }
-
-        ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
-        dlb_vec_each(ta_light *, light, lights) {
-            ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
-            ta_sphere sphere = { 0 };
-            sphere.center = transform->xform_world.position;
-            sphere.radius = 0.2f;
-            if (ta_ray_v_sphere(&ray, &sphere, &t)) {
-                DLB_ASSERT(t >= 0.0f);
-                //if (t >= 0.0f && t < t_min) {
-                if (t < t_min) {
-                    t_min = t;
-                    closest_entity = light->entity;
-                }
-            }
-        }
-
-        if (closest_entity) {
-            ta_vec3 t_pos = vec3_add(ray.origin, vec3_scalef(ray.direction, t_min));
-            ta_sphere t_sphere = { 0 };
-            t_sphere.center = t_pos;
-            t_sphere.radius = 0.1f;
-            ta_primitive_push_sphere(0, t_sphere, TA_COLOR_PINK);
-        } else {
-            //static const char *chamber_0001 = 0;
-            //if (!chamber_0001) {
-            //    chamber_0001 = INTERN("chamber_0001");
-            //}
-            //closest_entity = chamber_0001;
-            ta_editor_select_entity(0);
-        }
-
-        if (closest_entity) {
-            ta_editor_select_entity(closest_entity);
-        }
-    }
-}
-static void editor_command_cancel()
-{
-    if (editor.gizmo) {
-        editor_gizmo_end(false);
-    } else if (editor.textbox_editing) {
-        ta_ui_textbox_cancel(editor.textbox_editing);
-    } else {
-        ta_game_state_set(ta_game_state_prev());
-    }
-}
-static void editor_command_close()
-{
-    // TODO: If outstanding changes, prompt before closing editor
-    if (editor.gizmo) {
-        editor_gizmo_end(false);
-    }
-    if (editor.textbox_editing) {
-        ta_ui_textbox_cancel(editor.textbox_editing);
-    }
-    ta_game_state_set(ta_game_state_prev());
-}
-static void editor_command_sim_pause_resume()
-{
-    if (ta_game_sim_running()) {
-        ta_game_sim_pause();
-    } else {
-        ta_game_sim_resume();
-    }
-}
-static void editor_command_sim_next()
-{
-    if (ta_game_sim_paused()) {
-        ta_game_sim_step_n_frames(1);
-    }
-}
-static void editor_command_sim_next_ten()
-{
-    if (ta_game_sim_paused()) {
-        ta_game_sim_step_n_frames(10);
-    }
-}
-static void editor_command_sim_while_held()
-{
-    if (ta_game_sim_paused()) {
-        ta_game_sim_step_n_frames(1);
-    }
-}
-void ta_editor_hotkeys()
-{
-    // Don't trigger any hotkeys while a textbox is focused
-    if (editor.textbox_editing || editor.textbox_dragging)
-        return;
-
-    static void (*commands[EDITOR_COMMAND_COUNT])() = {
-        [EDITOR_COMMAND_CANCEL]           = editor_command_cancel,
-        [EDITOR_COMMAND_CLOSE]            = editor_command_close,
-        [EDITOR_COMMAND_SIM_PAUSE_RESUME] = editor_command_sim_pause_resume,
-        [EDITOR_COMMAND_SIM_NEXT]         = editor_command_sim_next,
-        [EDITOR_COMMAND_SIM_NEXT_10]      = editor_command_sim_next_ten,
-        [EDITOR_COMMAND_SIM_WHILE_HELD]   = editor_command_sim_while_held,
-    };
-
-    for (editor_command cmd = 0; cmd < EDITOR_COMMAND_COUNT; ++cmd) {
-        ta_keybind_update(&editor.keybinds[cmd]);
-        if (ta_keybind_triggered(&editor.keybinds[cmd])) {
-            commands[cmd]();
-            ta_keybind_mark_handled(&editor.keybinds[cmd]);
-        }
-    }
-
-    // Allow game hotkeys to be triggered in editor mode as well
-    ta_game_hotkeys();
-}
-
-static bool ta_editor_textbox_event(ta_event *event)
-{
-    bool handled = false;
-
-    switch (event->type) {
-        case INPUT_EVENT_TEXT_INPUT: {
-            // TODO: How to actually handle codepoints?
-            u32 codepoint = event->data.text_input.codepoint;
-            if (codepoint >= 32 && codepoint < 127) {
-                char chr = (char)codepoint;
-                ta_ui_textbox_insert(editor.textbox_editing, chr);
-            }
-            handled = true;
-            break;
-        } case INPUT_EVENT_KEY_PRESS: {
-            // Consume all unhandled keystrokes when text editor is active
-            //if (event->data.key_press.key == GLFW_KEY_ENTER) {
-            //    ta_ui_textbox_insert(editor.active_textbox, '\n');
-            //}
-            handled = true;
-            break;
-        } case INPUT_EVENT_KEY_RELEASE: {
-            // Consume all unhandled keystrokes when text editor is active
-            handled = true;
-            break;
-        } default: {
-            handled = false;
-        }
-    }
-
-    return handled;
-}
-
-void ta_editor_event(ta_event *event)
-{
-    if (editor.textbox_editing) {
-        event->handled = ta_editor_textbox_event(event);
-    }
 }
