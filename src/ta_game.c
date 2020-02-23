@@ -1189,10 +1189,6 @@ void ta_game_loop()
             // TODO: Debug more long frames (turn on SRC_GAME logging)
             //__debugbreak();
         }
-
-        if (game.frame_num % 60 == 0) {
-            printf(".");
-        }
     }
 }
 void game_command_play()
@@ -1491,6 +1487,9 @@ void ta_game_update_keybinds()
     };
 
     dlb_vec_each(ta_keybind *, keybind, game.keybinds) {
+        if (keybind->command == COMMAND_EDITOR) {
+            DLB_ASSERT(1);
+        }
         ta_keybind_update(keybind, game.state);
         if (ta_keybind_triggered(keybind) && commands[keybind->command]) {
             commands[keybind->command]();

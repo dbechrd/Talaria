@@ -23,7 +23,6 @@ typedef struct ta_key_state {
 
 // Query key states
 bool ta_key_down          (ta_key key);
-bool ta_key_up            (ta_key key);
 bool ta_key_pressed       (ta_key key);
 bool ta_key_released      (ta_key key);
 

@@ -71,6 +71,7 @@ const char *ta_log_source_str(ta_log_source src) {
         case SRC_GAME:       return "GAME";
         case SRC_GLTF:       return "GLTF";
         case SRC_JSON:       return "JSON";
+        case SRC_KEYBIND:    return "KEYBIND";
         case SRC_LIGHT:      return "LIGHT";
         case SRC_MATH:       return "MATH";
         case SRC_OPENGL:     return "OPENGL";
