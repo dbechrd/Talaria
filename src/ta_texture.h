@@ -25,8 +25,14 @@ typedef struct ta_texture {
     bool    linear;         // True if linear color space. E.g. metallic, etc.
     bool    repeat;         // true = REPEAT, false = CLAMP_TO_EDGE
     bool    flip_y;         // vertical flip pixel data when loading
-    GLint   gl_filter_min;  // [GL] filter mode for minification
-    GLint   gl_filter_mag;  // [GL] filter mode for magnification
+    // GL_NEAREST                 0x2600 = 9728
+    // GL_LINEAR                  0x2601 = 9729
+    // GL_NEAREST_MIPMAP_NEAREST  0x2700 = 9984
+    // GL_LINEAR_MIPMAP_NEAREST   0x2701 = 9985
+    // GL_NEAREST_MIPMAP_LINEAR   0x2702 = 9986
+    // GL_LINEAR_MIPMAP_LINEAR    0x2703 = 9987
+    GLint   gl_filter_min;  // [GL] filter mode for minification  (default: GL_LINEAR_MIPMAP_LINEAR)
+    GLint   gl_filter_mag;  // [GL] filter mode for magnification (default: GL_NEAREST)
     GLuint  gl_id;          // [GL] texture id
 } ta_texture;
 //#pragma warning(pop)

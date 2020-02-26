@@ -362,15 +362,16 @@ void ta_schema_register()
     TYPE_START  (ta_material, TYP_MATERIAL, ta_material_init, 0);
     TYPE_FIELD  (ta_material, name,              ATOM_STRING);
     TYPE_FIELD  (ta_material, shader,            ATOM_STRING);
-    TYPE_FIELD  (ta_material, albedo_factor,     TYP_RGBA);
     TYPE_FIELD  (ta_material, albedo_texture,    ATOM_STRING);
-    TYPE_FIELD  (ta_material, emission_factor,   TYP_RGB);
+    TYPE_FIELD  (ta_material, albedo_factor,     TYP_RGBA);
     TYPE_FIELD  (ta_material, emission_texture,  ATOM_STRING);
-    TYPE_FIELD  (ta_material, metallic_factor,   ATOM_FLOAT);
+    TYPE_FIELD  (ta_material, emission_factor,   TYP_RGB);
     TYPE_FIELD  (ta_material, metallic_texture,  ATOM_STRING);
-    TYPE_FIELD  (ta_material, roughness_factor,  ATOM_FLOAT);
+    TYPE_FIELD  (ta_material, metallic_factor,   ATOM_FLOAT);
     TYPE_FIELD  (ta_material, roughness_texture, ATOM_STRING);
+    TYPE_FIELD  (ta_material, roughness_factor,  ATOM_FLOAT);
     TYPE_FIELD  (ta_material, height_texture,    ATOM_STRING);
+    TYPE_FIELD  (ta_material, height_factor,     ATOM_FLOAT);
     TYPE_FIELD  (ta_material, normal_texture,    ATOM_STRING);
     TYPE_FIELD  (ta_material, occlusion_texture, ATOM_STRING);
     TYPE_END    (ta_material);
@@ -389,7 +390,7 @@ void ta_schema_register()
     TYPE_VECTOR (ta_shader, uniforms,   TYP_SHADER_UNIFORM);
     TYPE_END    (ta_shader);
 
-    TYPE_START      (ta_texture, TYP_TEXTURE, ta_texture_load, ta_texture_free);
+    TYPE_START      (ta_texture, TYP_TEXTURE, ta_texture_init, ta_texture_free);
     TYPE_FIELD      (ta_texture, name,          ATOM_STRING);
     TYPE_UNION_TYPE (ta_texture, type,          ATOM_ENUM, ta_texture_type_str);
     TYPE_UNION_FIELD(ta_texture, path,          ATOM_STRING, data, TA_TEXTURE_2D);

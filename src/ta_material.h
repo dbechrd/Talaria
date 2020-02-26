@@ -19,18 +19,19 @@
 
 typedef struct ta_material {
     TA_RESOURCE_HEADER
-    const char *shader;             // shader name
+    const char *shader;
+    const char *albedo_texture;
     ta_rgba     albedo_factor;
-    const char *albedo_texture;     // relative path to texture file
+    const char *emission_texture;
     ta_rgb      emission_factor;
-    const char *emission_texture;   // relative path to texture file
+    const char *metallic_texture;
     float       metallic_factor;
-    const char *metallic_texture;   // relative path to texture file
+    const char *roughness_texture;
     float       roughness_factor;
-    const char *roughness_texture;  // relative path to texture file
-    const char *height_texture;     // relative path to texture file
-    const char *normal_texture;     // relative path to texture file
-    const char *occlusion_texture;  // relative path to texture file
+    const char *height_texture;
+    float       height_factor;
+    const char *normal_texture;
+    const char *occlusion_texture;
 } ta_material;
 
 void ta_material_init(ta_material *material);

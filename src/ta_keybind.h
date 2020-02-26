@@ -16,7 +16,7 @@ typedef struct ta_keybind {
     u32    game_states;       // [flags] only trigger this keybind while in one of these game states
     u32    triggers;          // trigger flag bitmap (PRESS, HOLD, RELEASE); when to trigger keybind
     ta_key keys[3];           // which keys need to be pressed simultaneously to trigger keybind
-    bool   keys_down;
+    bool   keys_down;         // remember whether all keys were down last frame to enabled release triggers
     bool   triggered;         // keybind is currently being triggered
     double last_change_ms;    // time of last state change in milliseconds
 } ta_keybind;

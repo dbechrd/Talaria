@@ -37,6 +37,15 @@ const char *tg_tex_orange;
 const char *tg_tex_red;
 const char *tg_tex_audio_icon;
 
+// Default textures
+const char *tg_tex_default_albedo;      // vec4(1.0)
+const char *tg_tex_default_emission;    // vec3(1.0)
+const char *tg_tex_default_metallic;    // 0.0
+const char *tg_tex_default_roughness;   // 0.5
+const char *tg_tex_default_normal;      // vec3(0.5, 0.5, 1.0)
+const char *tg_tex_default_occlusion;   // 1.0
+const char *tg_tex_default_height;      // 0.0
+
 const char *tg_e_background_music;
 const char *tg_e_freecam;
 const char *tg_e_player_camera;
@@ -265,6 +274,115 @@ void ta_game_init()
     tg_tex_orange      = INTERN("test_diff");
     tg_tex_red         = INTERN("test_mrao");
     tg_tex_audio_icon  = INTERN("audio_icon");
+
+    tg_tex_default_albedo    = INTERN("[default_albedo]");
+    tg_tex_default_emission  = INTERN("[default_emission]");
+    tg_tex_default_metallic  = INTERN("[default_metallic]");
+    tg_tex_default_roughness = INTERN("[default_roughness]");
+    tg_tex_default_normal    = INTERN("[default_normal]");
+    tg_tex_default_occlusion = INTERN("[default_occlusion]");
+    tg_tex_default_height    = INTERN("[default_height]");
+
+    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_albedo   ));
+    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_emission ));
+    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_metallic ));
+    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_roughness));
+    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_normal   ));
+    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_occlusion));
+    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_height   ));
+
+    ta_texture *tex_default_albedo    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo   );
+    ta_texture *tex_default_emission  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission );
+    ta_texture *tex_default_metallic  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic );
+    ta_texture *tex_default_roughness = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness);
+    ta_texture *tex_default_normal    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_normal   );
+    ta_texture *tex_default_occlusion = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion);
+    ta_texture *tex_default_height    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height   );
+
+    tex_default_albedo->type = TA_TEXTURE_2D;
+    dlb_vec_push(tex_default_albedo->pixels, 255);
+    dlb_vec_push(tex_default_albedo->pixels, 255);
+    dlb_vec_push(tex_default_albedo->pixels, 255);
+    dlb_vec_push(tex_default_albedo->pixels, 255);
+    tex_default_albedo->width = 1;
+    tex_default_albedo->height = 1;
+    tex_default_albedo->channels = 4;
+    tex_default_albedo->repeat = true;
+    tex_default_albedo->linear = false;
+    tex_default_albedo->gl_filter_min = GL_NEAREST;
+    tex_default_albedo->gl_filter_mag = GL_NEAREST;
+
+    tex_default_emission->type = TA_TEXTURE_2D;
+    dlb_vec_push(tex_default_emission->pixels, 255);
+    dlb_vec_push(tex_default_emission->pixels, 255);
+    dlb_vec_push(tex_default_emission->pixels, 255);
+    tex_default_emission->width = 1;
+    tex_default_emission->height = 1;
+    tex_default_emission->channels = 3;
+    tex_default_emission->repeat = true;
+    tex_default_emission->linear = false;
+    tex_default_emission->gl_filter_min = GL_NEAREST;
+    tex_default_emission->gl_filter_mag = GL_NEAREST;
+
+    tex_default_metallic->type = TA_TEXTURE_2D;
+    dlb_vec_push(tex_default_metallic->pixels, 0);
+    tex_default_metallic->width = 1;
+    tex_default_metallic->height = 1;
+    tex_default_metallic->channels = 1;
+    tex_default_metallic->repeat = true;
+    tex_default_metallic->linear = true;
+    tex_default_metallic->gl_filter_min = GL_NEAREST;
+    tex_default_metallic->gl_filter_mag = GL_NEAREST;
+
+    tex_default_roughness->type = TA_TEXTURE_2D;
+    dlb_vec_push(tex_default_roughness->pixels, 127);
+    tex_default_roughness->width = 1;
+    tex_default_roughness->height = 1;
+    tex_default_roughness->channels = 1;
+    tex_default_roughness->repeat = true;
+    tex_default_roughness->linear = true;
+    tex_default_roughness->gl_filter_min = GL_NEAREST;
+    tex_default_roughness->gl_filter_mag = GL_NEAREST;
+
+    tex_default_height->type = TA_TEXTURE_2D;
+    dlb_vec_push(tex_default_height->pixels, 0);
+    tex_default_height->width = 1;
+    tex_default_height->height = 1;
+    tex_default_height->channels = 1;
+    tex_default_height->repeat = true;
+    tex_default_height->linear = true;
+    tex_default_height->gl_filter_min = GL_NEAREST;
+    tex_default_height->gl_filter_mag = GL_NEAREST;
+
+    tex_default_normal->type = TA_TEXTURE_2D;
+    dlb_vec_push(tex_default_normal->pixels, 127);
+    dlb_vec_push(tex_default_normal->pixels, 127);
+    dlb_vec_push(tex_default_normal->pixels, 255);
+    tex_default_normal->width = 1;
+    tex_default_normal->height = 1;
+    tex_default_normal->channels = 3;
+    tex_default_normal->repeat = true;
+    tex_default_normal->linear = true;
+    tex_default_normal->gl_filter_min = GL_NEAREST;
+    tex_default_normal->gl_filter_mag = GL_NEAREST;
+
+    tex_default_occlusion->type = TA_TEXTURE_2D;
+    dlb_vec_push(tex_default_occlusion->pixels, 255);
+    tex_default_occlusion->width = 1;
+    tex_default_occlusion->height = 1;
+    tex_default_occlusion->channels = 1;
+    tex_default_occlusion->repeat = true;
+    tex_default_occlusion->linear = true;
+    tex_default_occlusion->gl_filter_min = GL_NEAREST;
+    tex_default_occlusion->gl_filter_mag = GL_NEAREST;
+
+    ta_texture_load(tex_default_albedo);
+    ta_texture_load(tex_default_emission);
+    ta_texture_load(tex_default_metallic);
+    ta_texture_load(tex_default_roughness);
+    ta_texture_load(tex_default_normal);
+    ta_texture_load(tex_default_occlusion);
+    ta_texture_load(tex_default_height);
 
     //--------------------------------------------------------------------------
     // Shaders

@@ -266,6 +266,7 @@ void *ta_scene_alloc(ta_scene *scene, ta_res_type type, const char *name, size_t
     size_t size = tg_schemas[schema_type].size;
 
     ta_resource *res = dlb_vec_alloc_size(scene->resource_data[type], size);
+    res->res_type = type;
     res->index = dlb_vec_len(scene->resource_data[type]) - 1;
     res->name = ta_symbol_intern(name, name_len);
 
@@ -323,7 +324,8 @@ void *ta_scene_find_at(ta_scene *scene, ta_res_type type, u32 index)
 void *ta_scene_find_try(ta_scene *scene, ta_res_type type, const char *name, size_t name_len)
 {
     DLB_ASSERT(scene);
-    DLB_ASSERT(name);
+    if (!name) return 0;
+    DLB_ASSERT(name_len);
 
     ta_schema_field_type schema_type = res_to_typ(type);
     size_t size = tg_schemas[schema_type].size;
@@ -334,6 +336,7 @@ void *ta_scene_find_try(ta_scene *scene, ta_res_type type, const char *name, siz
         ta_resource *res = dlb_vec_index_size(scene->resource_data[type], i, size);
         if (res->name == name) {
             DLB_ASSERT(res->index == i);
+            DLB_ASSERT(res->res_type == type);
             return res;
         }
     }

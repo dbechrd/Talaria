@@ -1458,26 +1458,20 @@ static void ui_camera_panel()
             [DBG_VTX_TBN_NORMAL] = { CSTR("TBN normal") },
             [DBG_NORMAL_MAP]     = { CSTR("Normal map") },
             [DBG_MTL_ALBEDO]     = { CSTR("Albedo") },
+            [DBG_MTL_EMISSION]   = { CSTR("Emission") },
             [DBG_MTL_METALLIC]   = { CSTR("Metallic") },
             [DBG_MTL_ROUGHNESS]  = { CSTR("Roughness") },
             [DBG_MTL_OCCLUSION]  = { CSTR("Occlusion") },
         };
 
         for (int mode = 0; mode < ARRAY_COUNT(dbg_modes); ++mode) {
-            if (mode % 2 == 1) ta_ui_row_begin();
-            if (mode == 0) {
-                ta_ui_next_size(246, 0);
-            } else {
-                ta_ui_next_size(120, 0);
-            }
+            if (mode && mode % 2 == 0) ta_ui_row_begin();
+            ta_ui_next_size(120, 0);
             ta_ui_toggle_button_begin(TA_UI_AUTOSIZE_H);
             ta_ui_label(dbg_modes[mode].text, dbg_modes[mode].len);
             bool checked = mode == camera->dbg_channel;
             if (ta_ui_toggle_button_end(&checked)) {
                 camera->dbg_channel = mode;
-            }
-            if (mode == 0) {
-                ta_ui_row_begin();
             }
         }
         ta_ui_panel_end();

@@ -99,16 +99,18 @@ void ta_audio_init()
     FMOD_SOUND **sound1 = dlb_vec_alloc(audio_state.fmod_sounds);
     FMOD_SOUND **sound2 = dlb_vec_alloc(audio_state.fmod_sounds);
     FMOD_SOUND **sound3 = dlb_vec_alloc(audio_state.fmod_sounds);
-    /* drumloop.wav has embedded loop points which automatically makes looping turn on, use FMOD_LOOP_OFF to disable */
+    // drumloop.wav has embedded loop points which automatically makes looping turn on, use FMOD_LOOP_OFF to disable
     FMOD_System_CreateSound(audio_state.fmod_system, "data/sfx/drumloop.wav", FMOD_DEFAULT, 0, sound1);
     FMOD_Sound_SetMode(*sound1, FMOD_LOOP_OFF);
     FMOD_System_CreateSound(audio_state.fmod_system, "data/sfx/jaguar.wav", FMOD_DEFAULT, 0, sound2);
     FMOD_System_CreateSound(audio_state.fmod_system, "data/sfx/swish.wav", FMOD_DEFAULT, 0, sound3);
 
+#if 0
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD playing sounds...\n");
     FMOD_System_PlaySound(audio_state.fmod_system, *sound1, 0, false, &audio_state.fmod_channel);
     FMOD_System_PlaySound(audio_state.fmod_system, *sound2, 0, false, &audio_state.fmod_channel);
     FMOD_System_PlaySound(audio_state.fmod_system, *sound3, 0, false, &audio_state.fmod_channel);
+#endif
 
     //ta_log_write(&tg_debug_log, SRC_AUDIO, "Enumerating devices...\n");
     const char *desired_device = 0;

@@ -72,6 +72,7 @@ extern ta_shader *tg_shader_quads;
 extern ta_shader *tg_shader_cubemap;
 
 struct ta_light;
+struct ta_material;
 
 const char *ta_glsl_type_str    (int type);     // NOTE: Has to be int because it's used by ta_schema with other types
 void ta_shader_init             (ta_shader *shader);
@@ -90,6 +91,7 @@ void ta_shader_set_vec4         (ta_shader *shader, const char *name, const ta_v
 void ta_shader_set_mat3         (ta_shader *shader, const char *name, const ta_mat3 *m);
 void ta_shader_set_mat4         (ta_shader *shader, const char *name, const ta_mat4 *m);
 void ta_shader_set_light        (ta_shader *shader, const char *name, int index, struct ta_light *light);
+void ta_shader_set_material     (ta_shader *shader, const char *name, struct ta_material *material);
 void ta_shader_state_save       (ta_shader *shader, ta_shader_uniform *store);
 void ta_shader_state_load       (ta_shader_uniform *uniforms);
 void ta_shader_bind             (ta_shader *shader);

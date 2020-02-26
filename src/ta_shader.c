@@ -1,6 +1,7 @@
 #include "ta_file.h"
 #include "ta_light.h"
 #include "ta_log.h"
+#include "ta_material.h"
 #include "ta_shader.h"
 #include "ta_symbol.h"
 #include "dlb/dlb_memory.h"
@@ -410,6 +411,83 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
     u_shadowmap3d->dirty = true;
     u_shadowmap_zfar->dirty = true;
     u_light_pv->dirty = true;
+}
+void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *material)
+{
+    ta_texture *albedo_texture    = ta_game_by_sym_try(RES_TEXTURE, material->albedo_texture);
+    ta_texture *emission_texture  = ta_game_by_sym_try(RES_TEXTURE, material->emission_texture);
+    ta_texture *metallic_texture  = ta_game_by_sym_try(RES_TEXTURE, material->metallic_texture);
+    ta_texture *roughness_texture = ta_game_by_sym_try(RES_TEXTURE, material->roughness_texture);
+    ta_texture *normal_texture    = ta_game_by_sym_try(RES_TEXTURE, material->normal_texture);
+    ta_texture *occlusion_texture = ta_game_by_sym_try(RES_TEXTURE, material->occlusion_texture);
+    ta_texture *height_texture    = ta_game_by_sym_try(RES_TEXTURE, material->height_texture);
+
+    // NOTE: Seems dumb to bind a texture only for the multiplication factor to be 0.0, right?
+    DLB_ASSERT(material->albedo_factor.a);
+    if (emission_texture)  { DLB_ASSERT(material->emission_factor.r || material->emission_factor.g || material->emission_factor.b); }
+    if (metallic_texture)  { DLB_ASSERT(material->metallic_factor); }
+    if (roughness_texture) { DLB_ASSERT(material->roughness_factor); }
+    if (height_texture)    { DLB_ASSERT(material->height_factor); }
+
+    if (!albedo_texture   ) { albedo_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo); }
+    if (!emission_texture ) { emission_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission); }
+    if (!metallic_texture ) { metallic_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic); }
+    if (!roughness_texture) { roughness_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness); }
+    if (!normal_texture   ) { normal_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_normal); }
+    if (!occlusion_texture) { occlusion_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion); }
+    if (!height_texture   ) { height_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height); }
+
+    DLB_ASSERT(albedo_texture   );
+    DLB_ASSERT(emission_texture );
+    DLB_ASSERT(metallic_texture );
+    DLB_ASSERT(roughness_texture);
+    DLB_ASSERT(normal_texture   );
+    DLB_ASSERT(occlusion_texture);
+    DLB_ASSERT(height_texture   );
+
+    // TODO: Use the other set calls above to eliminate duplicate sets once that's implemented for the basic types.
+    ta_shader_uniform *u_material                   = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
+    ta_shader_uniform *u_material_albedo_texture    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ALBEDO_TEXTURE,    TA_GLSL_SAMPLER2D);
+    ta_shader_uniform *u_material_albedo_factor     = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ALBEDO_FACTOR,     TA_GLSL_VEC4);
+    ta_shader_uniform *u_material_emission_texture  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_EMISSION_TEXTURE,  TA_GLSL_SAMPLER2D);
+    ta_shader_uniform *u_material_emission_factor   = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_EMISSION_FACTOR,   TA_GLSL_VEC3);
+    ta_shader_uniform *u_material_metallic_texture  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_METALLIC_TEXTURE,  TA_GLSL_SAMPLER2D);
+    ta_shader_uniform *u_material_metallic_factor   = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_METALLIC_FACTOR,   TA_GLSL_FLOAT);
+    ta_shader_uniform *u_material_roughness_texture = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_TEXTURE, TA_GLSL_SAMPLER2D);
+    ta_shader_uniform *u_material_roughness_factor  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_FACTOR,  TA_GLSL_FLOAT);
+    ta_shader_uniform *u_material_height_texture    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_HEIGHT_TEXTURE,    TA_GLSL_SAMPLER2D);
+    ta_shader_uniform *u_material_height_factor     = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_HEIGHT_FACTOR,     TA_GLSL_FLOAT);
+    ta_shader_uniform *u_material_normal_texture    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_NORMAL_TEXTURE,    TA_GLSL_SAMPLER2D);
+    ta_shader_uniform *u_material_occlusion_texture = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_OCCLUSION_TEXTURE, TA_GLSL_SAMPLER2D);
+
+    // Set default values (some are overridden for specific light types below)
+    u_material_albedo_texture   ->value.sampler2d = albedo_texture->gl_id;
+    u_material_albedo_factor    ->value.vec4      = *(ta_vec4 *)&material->albedo_factor;
+    u_material_emission_texture ->value.sampler2d = emission_texture->gl_id;
+    u_material_emission_factor  ->value.vec3      = *(ta_vec3 *)&material->emission_factor;
+    u_material_metallic_texture ->value.sampler2d = metallic_texture->gl_id;
+    u_material_metallic_factor  ->value.glfloat   = material->metallic_factor;
+    u_material_roughness_texture->value.sampler2d = roughness_texture->gl_id;
+    u_material_roughness_factor ->value.glfloat   = material->roughness_factor;
+    u_material_height_texture   ->value.sampler2d = height_texture->gl_id;
+    u_material_height_factor    ->value.glfloat   = material->height_factor;
+    u_material_normal_texture   ->value.sampler2d = normal_texture->gl_id;
+    u_material_occlusion_texture->value.sampler2d = occlusion_texture->gl_id;
+
+    // Mark all material uniforms as dirty
+    u_material                  ->dirty = true;
+    u_material_albedo_texture   ->dirty = true;
+    u_material_albedo_factor    ->dirty = true;
+    u_material_emission_texture ->dirty = true;
+    u_material_emission_factor  ->dirty = true;
+    u_material_metallic_texture ->dirty = true;
+    u_material_metallic_factor  ->dirty = true;
+    u_material_roughness_texture->dirty = true;
+    u_material_roughness_factor ->dirty = true;
+    u_material_height_texture   ->dirty = true;
+    u_material_height_factor    ->dirty = true;
+    u_material_normal_texture   ->dirty = true;
+    u_material_occlusion_texture->dirty = true;
 }
 
 static void shader_store_uniforms(ta_shader_uniform *store,

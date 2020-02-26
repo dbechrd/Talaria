@@ -161,6 +161,9 @@ typedef struct ta_ray {
 } ta_ray;
 
 // Colors
+extern const ta_rgb TA_COLOR3_BLACK;
+extern const ta_rgb TA_COLOR3_WHITE;
+
 extern const ta_rgba TA_COLOR_INVIS;
 extern const ta_rgba TA_COLOR_BLACK;
 extern const ta_rgba TA_COLOR_RED;

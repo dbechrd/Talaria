@@ -43,6 +43,10 @@ void ta_texture_init(ta_texture *tex)
     if (!tex->gl_filter_mag) {
         tex->gl_filter_mag = GL_NEAREST;
     }
+
+    if (tex->pixels || tex->data.path) {
+        ta_texture_load(tex);
+    }
 }
 
 static inline GLenum texture_target(ta_texture *tex)
@@ -65,6 +69,8 @@ void ta_texture_unbind(ta_texture *tex)
 
 void ta_texture_create_and_bind(ta_texture *tex)
 {
+    DLB_ASSERT(!tex->gl_id);
+
     ta_log_write(&tg_debug_log, SRC_TEXTURE,
         "Creating OpenGL texture w: %d, h: %d, channels: %d...\n",
         tex->width, tex->height, tex->channels);
@@ -194,7 +200,7 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
     switch (tex->channels)
     {
         case 1: // Grayscale
-                //DLB_ASSERT(tex->linear);  // OpenGL doesn't support sRGB for grayscale
+            //DLB_ASSERT(tex->linear);  // OpenGL doesn't support sRGB for grayscale
             format_internal = GL_R8;
             format = GL_RED;
             break;
@@ -214,8 +220,7 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
     if (target == GL_TEXTURE_CUBE_MAP) {
         target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
     }
-    glTexImage2D(target, 0, format_internal, tex->width, tex->height, 0, format,
-        GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(target, 0, format_internal, tex->width, tex->height, 0, format, GL_UNSIGNED_BYTE, pixels);
 }
 static void texture_generate_mipmap(ta_texture *tex)
 {
@@ -231,7 +236,20 @@ static void texture_generate_mipmap(ta_texture *tex)
 
 void ta_texture_load(ta_texture *tex)
 {
-    ta_texture_init(tex);
+    if (tex->type == TA_TEXTURE_2D) {
+        DLB_ASSERT(tex->pixels || tex->data.path);
+    } else if (tex->type == TA_TEXTURE_CUBEMAP) {
+        DLB_ASSERT(
+            tex->data.path_faces[0] &&
+            tex->data.path_faces[1] &&
+            tex->data.path_faces[2] &&
+            tex->data.path_faces[3] &&
+            tex->data.path_faces[4] &&
+            tex->data.path_faces[5]
+        );
+    } else {
+        DLB_ASSERT(!"invalid texture type");
+    }
     ta_texture_create_and_bind(tex);
 
     // Pixel textures contain inlined pixel data, path should be null
@@ -243,17 +261,14 @@ void ta_texture_load(ta_texture *tex)
         int face_count = tex->type == TA_TEXTURE_2D ? 1 : 6;
         for (int i = 0; i < face_count; ++i) {
             const char *path = tex->data.path_faces[i];
-            ta_log_write(&tg_debug_log, SRC_TEXTURE, "Loading texture from disk %s...\n",
-                path);
+            ta_log_write(&tg_debug_log, SRC_TEXTURE, "Loading texture from disk %s...\n", path);
 
             u32 width = 0;
             u32 height = 0;
             u8 channels = 0;
-            u8 *pixels = texture_read_tga(path, &width, &height, &channels,
-                tex->flip_y);
+            u8 *pixels = texture_read_tga(path, &width, &height, &channels, tex->flip_y);
             if (!pixels) {
-                ta_log_write(&tg_debug_log, SRC_TEXTURE, "Failed to load tex: %s\n",
-                    path);
+                ta_log_write(&tg_debug_log, SRC_TEXTURE, "Failed to load tex: %s\n", path);
                 DLB_ASSERT(!"ta_texture_init: Failed to load tex");
             }
 

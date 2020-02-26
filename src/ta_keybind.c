@@ -54,34 +54,19 @@ void ta_keybind_update(ta_keybind *keybind, enum ta_game_state game_state)
     // Keybind needs at least one valid key
     DLB_ASSERT(keybind->keys[0]);
 
-    bool keys_down = (
+    bool keys_down =
         (!keybind->keys[0] || ta_key_down(keybind->keys[0])) &&
         (!keybind->keys[1] || ta_key_down(keybind->keys[1])) &&
-        (!keybind->keys[2] || ta_key_down(keybind->keys[2]))
-    );
+        (!keybind->keys[2] || ta_key_down(keybind->keys[2]));
 
     bool state_match = keybind->game_states & game_state;
-    bool trigger_press = (
-        state_match &&
-        keys_down &&
-        (keybind->triggers & TA_KEYBIND_PRESS) &&
-        (
-            ta_key_pressed(keybind->keys[0]) ||
-            ta_key_pressed(keybind->keys[1]) ||
-            ta_key_pressed(keybind->keys[2])
-        )
+    bool trigger_press = state_match &&  keys_down && (keybind->triggers & TA_KEYBIND_PRESS) && (
+        ta_key_pressed(keybind->keys[0]) ||
+        ta_key_pressed(keybind->keys[1]) ||
+        ta_key_pressed(keybind->keys[2])
     );
-    bool trigger_hold = (
-        state_match &&
-        keys_down &&
-        (keybind->triggers & TA_KEYBIND_HOLD)
-    );
-    bool trigger_release = (
-        state_match &&
-        !keys_down &&
-        (keybind->triggers & TA_KEYBIND_RELEASE) &&
-        keybind->keys_down
-    );
+    bool trigger_hold = state_match &&  keys_down && (keybind->triggers & TA_KEYBIND_HOLD);
+    bool trigger_release = state_match && !keys_down && (keybind->triggers & TA_KEYBIND_RELEASE) && keybind->keys_down;
     bool can_trigger = trigger_press || trigger_hold || trigger_release;
 
     // Only trigger if all keys are available for use (i.e. not already locked by another keybind)
@@ -90,22 +75,22 @@ void ta_keybind_update(ta_keybind *keybind, enum ta_game_state game_state)
         ta_key_available(keybind, keybind->keys[1]) &&
         ta_key_available(keybind, keybind->keys[2])
     );
-    if (triggered) {
-        DLB_ASSERT(1);
-    }
 
     if (can_trigger && !triggered) {
-        ta_log_write(&tg_debug_log, SRC_KEYBIND, "[%p][%d][%llu]  Rejected: %s\n", keybind, keybind->keys[0], ta_game_frame_num(), ta_command_str(keybind->command));
+        ta_log_write(&tg_debug_log, SRC_KEYBIND, "[%p][%d][%llu]  Rejected: %s\n", keybind, keybind->keys[0],
+            ta_game_frame_num(), ta_command_str(keybind->command));
     }
 
     if (triggered != keybind->triggered) {
         if (triggered) {
-            ta_log_write(&tg_debug_log, SRC_KEYBIND, "[%p][%d][%llu]   Locking: %s\n", keybind, keybind->keys[0], ta_game_frame_num(), ta_command_str(keybind->command));
+            ta_log_write(&tg_debug_log, SRC_KEYBIND, "[%p][%d][%llu]   Locking: %s\n", keybind, keybind->keys[0],
+                ta_game_frame_num(), ta_command_str(keybind->command));
             ta_key_lock(keybind, keybind->keys[0]);
             ta_key_lock(keybind, keybind->keys[1]);
             ta_key_lock(keybind, keybind->keys[2]);
         } else {
-            ta_log_write(&tg_debug_log, SRC_KEYBIND, "[%p][%d][%llu] Unlocking: %s\n", keybind, keybind->keys[0], ta_game_frame_num(), ta_command_str(keybind->command));
+            ta_log_write(&tg_debug_log, SRC_KEYBIND, "[%p][%d][%llu] Unlocking: %s\n", keybind, keybind->keys[0],
+                ta_game_frame_num(), ta_command_str(keybind->command));
             ta_key_unlock(keybind, keybind->keys[0]);
             ta_key_unlock(keybind, keybind->keys[1]);
             ta_key_unlock(keybind, keybind->keys[2]);

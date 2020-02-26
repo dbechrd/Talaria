@@ -38,59 +38,29 @@ const float PI = 3.14159265359;
 // Non-metal = 0.0, metal = 1.0. There can be transitional gray values that
 // indicate something covering the raw metal such as dirt.
 
-//#define mtl_albedo      pow(tex_albedo.rgb, vec3(2.2))
-//#define mtl_albedo      tex_albedo.rgb
-//#define mtl_opacity     tex_albedo.a
-//#define mtl_metallic    tex_metallic.r
-//#define mtl_roughness   tex_metallic.g
-//#define mtl_ao          tex_metallic.b
-
-//#define mtl_albedo    texture(material.tex0, vertex.uv).rgb
-//#define mtl_opacity   texture(material.tex0, vertex.uv).a
-//#define mtl_metallic  texture(material.tex1, vertex.uv).r
-//#define mtl_roughness texture(material.tex1, vertex.uv).g
-//#define mtl_ao        texture(material.tex1, vertex.uv).b
-//#define mtl_emission  texture(material.tex2, vertex.uv).rgb
-//#define mtl_emit      step(0.01, texture(material.tex2, vertex.uv).a)
-
-// TODO: Premultiplied alpha
+// TODO: Premultiplied alpha?
+// TODO: Combine channels for performance
+// NOTE: All values default to 1.0 when not in use (for identity multiplication)
 struct Material {
-    // rgb: metallic ? specular.rgb : albedo.rgb
-    //   a: metallic ?            1 : albedo.a
-    sampler2D tex0;
-
-    // r: metallic
-    // g: roughness
-    // b: ao
-    // a: UNUSED
-    sampler2D tex1;
-
-    // rgb: emission color
-    //   a: UNUSED
-    sampler2D tex2;
+    sampler2D albedo_texture;
+    vec4      albedo_factor;
+    sampler2D emission_texture;
+    vec3      emission_factor;
+    sampler2D metallic_texture;
+    float     metallic_factor;
+    sampler2D roughness_texture;
+    float     roughness_factor;
+    sampler2D height_texture;
+    float     height_factor;   // 0.02
+    sampler2D normal_texture;
+    sampler2D occlusion_texture;
 };
 uniform Material u_material;
-
-// TODO: Combine these as above for performance; want ease-of-use for dev
-uniform sampler2D u_tex_albedo;
-uniform sampler2D u_tex_emission;
-uniform sampler2D u_tex_metallic;
-uniform sampler2D u_tex_roughness;
-uniform sampler2D u_tex_height;
-uniform sampler2D u_tex_normal;
-uniform sampler2D u_tex_occlusion;
 
 #define LIGHT_AMBIENT       0
 #define LIGHT_DIRECTIONAL   1
 #define LIGHT_POINT         2
 #define LIGHT_SPOT          3
-
-#define L_DIR_DIRECTION(light) light.direction
-#define L_DIR_COLOR(light) light.color
-
-#define L_POINT_POSITION(light) light.position
-#define L_POINT_COLOR(light) light.color
-
 struct Light {
     float intensity;
     vec3 position;
@@ -120,9 +90,10 @@ uniform bool u_selected;
 #define DBG_VTX_TBN_NORMAL  5
 #define DBG_NORMAL_MAP      6
 #define DBG_MTL_ALBEDO      7
-#define DBG_MTL_METALLIC    8
-#define DBG_MTL_ROUGHNESS   9
-#define DBG_MTL_OCCLUSION   10
+#define DBG_MTL_EMISSION    8
+#define DBG_MTL_METALLIC    9
+#define DBG_MTL_ROUGHNESS   10
+#define DBG_MTL_OCCLUSION   11
 uniform int u_debug_channel;
 
 vec2 ParallaxMapping(sampler2D heightmap, vec2 texCoords, vec3 viewDir);
@@ -133,28 +104,30 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0);
 void main()
 {
     vec3 V = normalize(vertex.tbn_camera_pos - vertex.tbn_position);
-    vec2 vertex_uv = vertex.uv;// * 8.0;
-    vertex_uv = ParallaxMapping(u_tex_height, vertex_uv, V);
+    vec2 scaled_uv = vertex.uv;// * 8.0;
+
+    // TODO: Don't pass height 0.0 into shader
+    // https://learnopengl.com/Advanced-Lighting/Parallax-Mapping
+    float mtl_height    = texture(u_material.height_texture, scaled_uv).r * u_material.height_factor;
+    vec2 displacement = V.xy / V.z * (u_material.height_factor - mtl_height);  // NOTE: Invert to get depth instead of height
+    vec2 displaced_uv = scaled_uv - displacement;
     // Edge artifacts can sometimes be cleaned up like so, but I don't like this idea since it disallows UVs > 1.0
     //if (vertex_uv.x > 1.0 || vertex_uv.y > 1.0 || vertex_uv.x < 0.0 || vertex_uv.y < 0.0)
     //    discard;
+    vec4  mtl_albedo    = texture(u_material.albedo_texture,    displaced_uv).rgba * u_material.albedo_factor;
+    vec3  mtl_emission  = texture(u_material.emission_texture,  displaced_uv).rgb  * u_material.emission_factor;
+    float mtl_metallic  = texture(u_material.metallic_texture,  displaced_uv).r    * u_material.metallic_factor;
+    float mtl_roughness = texture(u_material.roughness_texture, displaced_uv).r    * u_material.roughness_factor;
+    vec3  mtl_normal    = texture(u_material.normal_texture,    displaced_uv).rgb;
+    float mtl_occlusion = texture(u_material.occlusion_texture, displaced_uv).r;
 
-    // TODO: Use defaults if texture not present
-    // NOTE: Currently implemented in ta_model.c, maybe it should stay there?
-    vec4  tex_albedo    = texture(u_tex_albedo,    vertex_uv);
-    vec3  mtl_albedo    = tex_albedo.rgb;                           // default: none
-    float mtl_opacity   = tex_albedo.a;                             // default: 1.0
-    //float mtl_height    = texture(u_tex_height,    vertex_uv).r;    // default: 0.0
-    float mtl_metallic  = texture(u_tex_metallic,  vertex_uv).r;    // default: 0.0
-    vec3  mtl_normal    = texture(u_tex_normal,    vertex_uv).rgb;  // default: vec3(0.0, 0.0, 1.0)
-    float mtl_occlusion = texture(u_tex_occlusion, vertex_uv).r;    // default: 0.0
-    float mtl_roughness = texture(u_tex_roughness, vertex_uv).r;    // default: 0.5
+    // TODO: Why did I do this?
     mtl_roughness = max(mtl_roughness, 0.001);
 
     vec3 N = normalize(mtl_normal * 2.0 - 1.0);
 
     vec3 F0 = vec3(0.04);
-    F0 = mix(F0, mtl_albedo, mtl_metallic);
+    F0 = mix(F0, mtl_albedo.rgb, mtl_metallic);
 
     float shadows[8];
     float shadow_map_depths[8];
@@ -291,21 +264,22 @@ void main()
         float denom = 4.0 * max(dot(N, V), 0.0) * NdotL;
         vec3 specular = numer / max(denom, 0.001);
 
-        //L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL;
-        L0 += (kD * mtl_albedo / PI + specular) * radiance * NdotL * (1.0 - shadow);
-        //L0 += mtl_albedo * (1.0 - shadow);
+        //L0 += (kD * mtl_albedo.rgb / PI + specular) * radiance * NdotL;
+        L0 += (kD * mtl_albedo.rgb / PI + specular) * radiance * NdotL * (1.0 - shadow);
+        //L0 += mtl_albedo.rgb * (1.0 - shadow);
     }
 
-    mtl_albedo = mix(mtl_albedo, vec3(0.18, 0.28, 0.35), 0.5);
-    vec3 ambient = 0.01 * mtl_albedo * mtl_occlusion;
-    vec3 color = ambient + L0;
+    // TODO: What is this? Hard-coded ambient, or...?
+    //mtl_albedo.rgb = mix(mtl_albedo.rgb, vec3(0.18, 0.28, 0.35), 0.5);
+    vec3 ambient = 0.01 * mtl_albedo.rgb * mtl_occlusion;
+    vec3 color = ambient + L0 + mtl_emission.rgb;
 
     // Tone mapping (Reinhard operator)
     color /= color + vec3(1.0);
     // Gamma correction
     color = pow(color, vec3(1.0 / 2.2));
 
-    final_color = vec4(color, mtl_opacity);
+    final_color = vec4(color, mtl_albedo.a);
 
     //-------------------------------------------------------------------
     // debug channels
@@ -313,14 +287,15 @@ void main()
 
     // vertex properties
     vec4 dbg_vtx_color = vertex.color;
-    vec4 dbg_vtx_uv = vec4(vertex_uv.x, vertex_uv.y, 0.0, 1.0);
+    vec4 dbg_vtx_uv = vec4(vertex.uv.x, vertex.uv.y, 0.0, 1.0);
     vec4 dbg_vtx_normal = vec4((vertex.normal * 0.5) + 0.5, 1.0);
     vec4 dbg_vtx_tangent = vec4((vertex.tangent * 0.5) + 0.5, 1.0);
     vec4 dbg_vtx_tbn_normal = vec4((vertex.tbn_normal * 0.5) + 0.5, 1.0);
     vec4 dbg_normal_map = vec4((N * 0.5) + 0.5, 1.0);
 
     // material properties
-    vec4 dbg_mtl_albedo = vec4(mtl_albedo, 1.0);
+    vec4 dbg_mtl_albedo = vec4(mtl_albedo);
+    vec4 dbg_mtl_emission = vec4(vec3(mtl_emission), 1.0);
     vec4 dbg_mtl_metallic = vec4(vec3(mtl_metallic), 1.0);
     vec4 dbg_mtl_roughness = vec4(vec3(mtl_roughness), 1.0);
     vec4 dbg_mtl_occlusion = vec4(vec3(mtl_occlusion), 1.0);
@@ -356,6 +331,9 @@ void main()
         case DBG_MTL_ALBEDO:
             final_color = dbg_mtl_albedo;
             break;
+        case DBG_MTL_EMISSION:
+            final_color = dbg_mtl_emission;
+            break;
         case DBG_MTL_METALLIC:
             final_color = dbg_mtl_metallic;
             break;
@@ -366,20 +344,6 @@ void main()
             final_color = dbg_mtl_occlusion;
             break;
     };
-}
-
-vec2 ParallaxMapping(sampler2D heightmap, vec2 texCoords, vec3 viewDir)
-{
-    // TODO: Make this a uniform and material property
-    const float u_height_factor = 0.02;
-
-    //float height = texture(heightmap, texCoords).r;
-    // NOTE: Invert to get depth instead of height
-    // https://learnopengl.com/Advanced-Lighting/Parallax-Mapping
-    float height = 1.0 - texture(heightmap, texCoords).r;
-
-    vec2 p = viewDir.xy / viewDir.z * (height * u_height_factor);
-    return texCoords - p;
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)

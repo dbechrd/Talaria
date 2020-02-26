@@ -53,13 +53,13 @@ static void json_log_jsmn_error(int err_code)
     // TODO: Log more detailed error
     switch (err_code) {
         case JSMN_ERROR_NOMEM: {
-            /* Not enough tokens were provided */
+            // Not enough tokens were provided
             break;
         } case JSMN_ERROR_INVAL: {
-            /* Invalid character inside JSON string */
+            // Invalid character inside JSON string
             break;
         } case JSMN_ERROR_PART: {
-            /* The string is not a full JSON packet, more bytes expected */
+            // The string is not a full JSON packet, more bytes expected
             break;
         } default: {
             // Unknown JSMN error
