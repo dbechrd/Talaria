@@ -275,13 +275,13 @@ void ta_game_init()
     tg_tex_red         = INTERN("test_mrao");
     tg_tex_audio_icon  = INTERN("audio_icon");
 
-    tg_tex_default_albedo    = INTERN("[default_albedo]");
-    tg_tex_default_emission  = INTERN("[default_emission]");
-    tg_tex_default_metallic  = INTERN("[default_metallic]");
-    tg_tex_default_roughness = INTERN("[default_roughness]");
-    tg_tex_default_normal    = INTERN("[default_normal]");
-    tg_tex_default_occlusion = INTERN("[default_occlusion]");
-    tg_tex_default_height    = INTERN("[default_height]");
+    tg_tex_default_albedo    = INTERN("#default_albedo");
+    tg_tex_default_emission  = INTERN("#default_emission");
+    tg_tex_default_metallic  = INTERN("#default_metallic");
+    tg_tex_default_roughness = INTERN("#default_roughness");
+    tg_tex_default_normal    = INTERN("#default_normal");
+    tg_tex_default_occlusion = INTERN("#default_occlusion");
+    tg_tex_default_height    = INTERN("#default_height");
 
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_albedo   ));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_emission ));

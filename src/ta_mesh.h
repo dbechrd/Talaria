@@ -28,8 +28,8 @@ typedef struct ta_mesh {
             ta_vec2 *uvs;
             ta_vec3 *normals;
             ta_vec4 *tangents;
-            ta_vec3 *joints;
-            ta_vec3 *weights;
+            ta_vec4 *joints;
+            ta_vec4 *weights;
             GLuint *indexes;
         };
         void *buffers[TA_MESH_BUFFER_COUNT];

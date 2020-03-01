@@ -618,9 +618,17 @@ static inline void indent(FILE *f, int count)
     }
 }
 
-void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
-    int in_array)
+void ta_schema_print(FILE *f, ta_schema_field_type type, u8 *ptr, int level, int in_array)
 {
+    // Don't serialize system resources
+    ta_res_type res_type = typ_to_res(type);
+    if (res_type < RES_COUNT) {
+        ta_resource *res = (void *)ptr;
+        if (res->name[0] == '#') {
+            return;
+        }
+    }
+
     ta_schema *schema = &tg_schemas[type];
     if (!in_array) {
         if (level == 0) {
@@ -743,11 +751,19 @@ static void schema_atom_print_json(FILE *f, ta_schema_field *field, void *ptr)
         }
     }
 }
-void ta_schema_print_json(FILE *f, ta_schema_field_type type, u8 *ptr, int level,
-    int in_array)
+void ta_schema_print_json(FILE *f, ta_schema_field_type type, u8 *ptr, int level, int in_array)
 {
     static int last_char_comma = false;
     static fpos_t last_char_comma_pos;
+
+    // Don't serialize system resources
+    ta_res_type res_type = typ_to_res(type);
+    if (res_type < RES_COUNT) {
+        ta_resource *res = (void *)ptr;
+        if (res->name[0] == '#') {
+            return;
+        }
+    }
 
     ta_schema *schema = &tg_schemas[type];
 
