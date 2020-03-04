@@ -804,11 +804,11 @@ static void ui_scene_panel()
 
     ta_ui_row_begin();
     // TODO: Make this a drag float
-    char tex_buf[16] = { 0 };
-    int len = snprintf(tex_buf, sizeof(tex_buf), "%.2f",
-        ta_audio_listener_get_volume(&tg_audio_listener));
-    DLB_ASSERT(len < sizeof(tex_buf));
-    ta_ui_label(tex_buf, len);
+    static ta_ui_textbox_state volume_editor = { 0 };
+    float volume = ta_audio_listener_get_volume(&tg_audio_listener);
+    ta_ui_textbox_float(&volume, &volume_editor, 0);
+    volume = clampf(volume, 0.0f, 1.0f);
+    ta_audio_listener_set_volume(&tg_audio_listener, volume);
     ta_ui_panel_end();
 
     ta_ui_panel_end();

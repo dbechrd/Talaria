@@ -28,7 +28,9 @@ typedef struct ta_mesh {
             ta_vec2 *uvs;
             ta_vec3 *normals;
             ta_vec4 *tangents;
-            ta_vec4 *joints;
+            struct {
+                GLushort ids[4];  // NOTE: GLTF only supports 4 joints per vertex
+            } *joints;
             ta_vec4 *weights;
             GLuint *indexes;
         };

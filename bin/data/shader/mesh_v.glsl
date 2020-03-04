@@ -5,6 +5,8 @@ layout(location = 1) in vec4 attr_color;
 layout(location = 2) in vec2 attr_uv;
 layout(location = 3) in vec3 attr_normal;
 layout(location = 4) in vec4 attr_tangent;
+layout(location = 5) in vec4 attr_joints;
+layout(location = 6) in vec4 attr_weights;
 
 struct Light {
     float intensity;

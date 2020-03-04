@@ -8,11 +8,15 @@
         {
             "extras" : {
                 "glTF2ExportSettings" : {
+                    "export_animations" : 1,
                     "export_apply" : 0,
+                    "export_def_bones" : 0,
                     "export_extras" : 1,
                     "export_force_sampling" : 1,
                     "export_format" : "GLTF_EMBEDDED",
+                    "export_morph" : 1,
                     "export_morph_tangent" : 1,
+                    "export_skins" : 1,
                     "export_tangents" : 1
                 }
             },
@@ -25,7 +29,7 @@
     "nodes" : [
         {
             "mesh" : 0,
-            "name" : "button"
+            "name" : "button_0001"
         }
     ],
     "animations" : [
@@ -110,7 +114,7 @@
                     "Pressed"
                 ]
             },
-            "name" : "button_pad",
+            "name" : "button_0001",
             "primitives" : [
                 {
                     "attributes" : {

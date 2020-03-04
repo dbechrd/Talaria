@@ -201,17 +201,6 @@ ta_model:
   cast_shadows: true
   receive_shadows: true
 ta_model:
-  name: "button_0001"
-  entity: "button_0001"
-  pieces: [
-    {
-      mesh: "button",
-      material: "metal_plate_019",
-    },
-  ]
-  cast_shadows: true
-  receive_shadows: true
-ta_model:
   name: "player_one"
   entity: "player_one"
   pieces: [
@@ -860,11 +849,6 @@ ta_material:
     g: 0x3F800000 (1.000000)
     b: 0x3F800000 (1.000000)
     a: 0x3F800000 (1.000000)
-  emission_texture: "terrazzo_emission"
-  emission_factor:
-    r: 0x3F800000 (1.000000)
-    g: 0x3F800000 (1.000000)
-    b: 0x3F800000 (1.000000)
   metallic_factor: 0x3F800000 (1.000000)
   roughness_texture: "terrazzo_roughness"
   roughness_factor: 0x3F800000 (1.000000)
@@ -881,10 +865,6 @@ ta_material:
     g: 0x3F800000 (1.000000)
     b: 0x3F800000 (1.000000)
     a: 0x3F800000 (1.000000)
-  emission_factor:
-    r: 0x00000000 (0.000000)
-    g: 0x3E4CCCCD (0.200000)
-    b: 0x3F19999A (0.600000)
   metallic_texture: "metal_plate_019_metallic"
   metallic_factor: 0x3F800000 (1.000000)
   roughness_texture: "metal_plate_019_roughness"
@@ -1009,54 +989,6 @@ ta_mesh:
     z: 0x00000000 (0.000000)
 ta_mesh:
   name: "rock_mesh"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-ta_mesh:
-  name: "button_pad"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-ta_mesh:
-  name: "button_pad.001"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-ta_mesh:
-  name: "button_pad.001"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-ta_mesh:
-  name: "button_pad.001"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-ta_mesh:
-  name: "button_pad.001"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-ta_mesh:
-  name: "button_pad.001"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-ta_mesh:
-  name: "button_pad.001"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-ta_mesh:
-  name: "button_pad.001"
   offset:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)
@@ -1247,6 +1179,14 @@ ta_shader:
     },
     {
       name: "attr_tangent",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_joints",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_weights",
       type: 6,  # TA_GLSL_VEC4
     },
   ]

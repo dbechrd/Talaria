@@ -367,7 +367,7 @@ void *ta_scene_component_add(ta_scene *scene, const char *entity, ta_res_type ty
     DLB_ASSERT(type >= 0 && type < RES_COMP_COUNT);
 
     // Prevent duplicates
-    ta_component *component = ta_scene_component(scene, entity, type);
+    ta_component *component = ta_scene_component_try(scene, entity, type);
     DLB_ASSERT(!component);
 
     component = ta_scene_alloc(scene, type, name, name_len);

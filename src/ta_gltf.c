@@ -583,40 +583,47 @@ void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute
     // NOTE: We don't support interleaved vertex attributes for now
     DLB_ASSERT(accessor->buffer_view->stride == 0);
 
-    // TODO: Make a size lookup table for each TA_MESH_BUFFER type and use dlb_vec_reserve_size()
+    // TODO: Could make a size lookup table for each TA_MESH_BUFFER type and use dlb_vec_reserve_size()
     switch (attr_type) {
         case cgltf_attribute_type_position: {
             DLB_ASSERT(accessor->type == cgltf_type_vec3);
+            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->positions) * accessor->count);
             dlb_vec_reserve(mesh->positions, accessor->count);
             break;
         } case cgltf_attribute_type_normal: {
             DLB_ASSERT(accessor->type == cgltf_type_vec3);
+            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->normals) * accessor->count);
             dlb_vec_reserve(mesh->normals, accessor->count);
             break;
         } case cgltf_attribute_type_tangent: {
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
+            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->tangents) * accessor->count);
             dlb_vec_reserve(mesh->tangents, accessor->count);
             break;
         } case cgltf_attribute_type_texcoord: {
             DLB_ASSERT(accessor->type == cgltf_type_vec2);
+            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->uvs) * accessor->count);
             dlb_vec_reserve(mesh->uvs, accessor->count);
             break;
         } case cgltf_attribute_type_color: {
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
+            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->colors) * accessor->count);
             dlb_vec_reserve(mesh->colors, accessor->count);
             break;
         } case cgltf_attribute_type_joints: {
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
+            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_16u);
             DLB_ASSERT(data_size == sizeof(*mesh->joints) * accessor->count);
             dlb_vec_reserve(mesh->joints, accessor->count);
             break;
         } case cgltf_attribute_type_weights: {
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
+            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->weights) * accessor->count);
             dlb_vec_reserve(mesh->weights, accessor->count);
             break;
@@ -648,13 +655,28 @@ void ta_gltf_load(ta_gltf *gltf)
         UNUSED(gltf_material);
     }
 
+    char model_name[256] = { 0 };
+    char mesh_name[256] = { 0 };
     dlb_vec_each(cgltf_mesh *, gltf_mesh, gltf->data->meshes_v) {
-        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", gltf_mesh->name);
-        ta_mesh *mesh = ta_game_alloc(RES_MESH, gltf_mesh->name, strlen(gltf_mesh->name));
+        const char *entity_name = ta_symbol_intern(gltf_mesh->name, strlen(gltf_mesh->name));
 
+        const size_t model_name_size = ARRAY_COUNT(model_name);
+        int model_name_len = snprintf(model_name, model_name_size, "#%s", gltf_mesh->name);
+        DLB_ASSERT(model_name_len < model_name_size);
+
+        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MODEL %s\n", model_name);
+        ta_model *model = ta_game_component_add(entity_name, RES_COMP_MODEL, model_name, model_name_len);
+        model->cast_shadows = true;
+        model->receive_shadows = true;
+
+        int prim_idx = 0;
         dlb_vec_each(cgltf_primitive *, gltf_prim, gltf_mesh->primitives_v) {
-            if (gltf_prim != gltf_mesh->primitives_v)
-                break;  // TODO: Handle loading multiple primitives
+            const size_t mesh_name_size = ARRAY_COUNT(mesh_name);
+            int mesh_name_len = snprintf(mesh_name, mesh_name_size, "#%s.prim%03d", model->name, prim_idx);
+            DLB_ASSERT(mesh_name_len < mesh_name_size);
+
+            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", mesh_name);
+            ta_mesh *mesh = ta_game_alloc(RES_MESH, mesh_name, mesh_name_len);
 
             DLB_ASSERT(gltf_prim->type == cgltf_primitive_type_triangles);
             cgltf_material* material;
@@ -706,16 +728,22 @@ void ta_gltf_load(ta_gltf *gltf)
                         break;
                 }
             }
+
+            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_create\n");
+            ta_mesh_create(mesh);
+            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_init_normals\n");
+            ta_mesh_init_normals(mesh, 0.1f);
+
+            ta_piece piece = { 0 };
+            piece.mesh = mesh->name;
+            piece.material = INTERN("metal_plate_019"); // TODO: Add materials
+            dlb_vec_push(model->pieces, piece);
+            prim_idx++;
         }
         //dlb_vec_each(const char **, gltf_target, gltf_mesh->target_names_v) {
         //    const char *target = *gltf_target;
         //    UNUSED(target);
         //}
-
-        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_create\n");
-        ta_mesh_create(mesh);
-        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_init_normals\n");
-        ta_mesh_init_normals(mesh, 0.1f);
     }
     ta_log_write(&tg_debug_log, SRC_GLTF, "successfully loaded meshes for %s\n", gltf->filename);
 }

@@ -263,8 +263,8 @@ void ta_game_init()
         RES_COMP_AUDIO_SOURCE);
     DLB_ASSERT(bg_music_src);
 
-    ta_audio_listener_set_volume(&tg_audio_listener, 0.03f);
-    ta_audio_listener_mute(&tg_audio_listener);
+    //ta_audio_listener_set_volume(&tg_audio_listener, 0.03f);
+    //ta_audio_listener_mute(&tg_audio_listener);
     ta_audio_source_play_loop(bg_music_src);
 
     //--------------------------------------------------------------------------
@@ -1189,7 +1189,7 @@ void ta_game_loop()
         //       Use texture atlas; batch everything into one draw call; stop
         //       using stupid RGB placeholders.
         ta_log_write(&tg_debug_log, SRC_GAME, " HUD pass...\n");
-        game_draw_hud();
+        //game_draw_hud();
 
         // TODO: Add "show_fps" flag and bind to key; off by default in release
         ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;

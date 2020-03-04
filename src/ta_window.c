@@ -227,7 +227,7 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     glfwWindowHint(GLFW_STENCIL_BITS, 8);
     glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
     // TODO: Disable if doing multi-sampling in a post-processing shader
-    //glfwWindowHint(GLFW_SAMPLES, 16);
+    glfwWindowHint(GLFW_SAMPLES, 16);
     //glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, gl_major);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor);

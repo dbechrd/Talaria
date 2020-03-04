@@ -204,10 +204,20 @@ void ta_mesh_create(ta_mesh *mesh)
         glVertexAttribPointer(TA_SHADER_ATTR_TANGENT, 4, GL_FLOAT, false, 0, 0);
     }
     if (mesh->joints) {
-        DLB_ASSERT(!"This type of mesh init doesn't currently support joints");
+        size_t joints_count = dlb_vec_len(mesh->joints);
+        glGenBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_JOINTS]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_JOINTS]);
+        glBufferData(GL_ARRAY_BUFFER, joints_count * 4 * sizeof(GLushort), mesh->joints, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(TA_SHADER_ATTR_JOINTS);
+        glVertexAttribPointer(TA_SHADER_ATTR_JOINTS, 4, GL_UNSIGNED_SHORT, false, 0, 0);
     }
     if (mesh->weights) {
-        DLB_ASSERT(!"This type of mesh init doesn't currently support weights");
+        size_t weights_count = dlb_vec_len(mesh->weights);
+        glGenBuffers(1, &mesh->gl_buffers[TA_MESH_BUFFER_WEIGHTS]);
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_MESH_BUFFER_WEIGHTS]);
+        glBufferData(GL_ARRAY_BUFFER, weights_count * 4 * sizeof(GLfloat), mesh->weights, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(TA_SHADER_ATTR_WEIGHTS);
+        glVertexAttribPointer(TA_SHADER_ATTR_WEIGHTS, 4, GL_FLOAT, false, 0, 0);
     }
     if (mesh->indexes) {
         size_t indexes_count = dlb_vec_len(mesh->indexes);

@@ -1288,6 +1288,7 @@ void cgltf_free(cgltf_data* data)
 			{
 				data->memory_free(data->memory_user_data, attribute->name);
 			}
+			dlb_vec__hdr *hdr = dlb_vec_hdr(primitive->attributes_v);
 			data->memory_free(data->memory_user_data, primitive->attributes_v);
 
 			dlb_vec_each(cgltf_morph_target *, target, primitive->targets_v)
@@ -1880,7 +1881,7 @@ static int cgltf_parse_json_attribute_list(cgltf_options* options, jsmntok_t con
 		return CGLTF_ERROR_JSON;
 	}
 
-	*out_attributes = cgltf_calloc(options, sizeof(*out_attributes), tokens[i].size);
+	*out_attributes = cgltf_calloc(options, sizeof(**out_attributes), tokens[i].size);
 	++i;
 
 	if (!*out_attributes)
