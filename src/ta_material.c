@@ -2,6 +2,11 @@
 
 void ta_material_init(ta_material *material)
 {
+    if (!material->shader) {
+        const char *sym_mesh = 0;
+        if (!sym_mesh) sym_mesh = INTERN("mesh");
+        material->shader = sym_mesh;
+    }
     if (!material->albedo_factor.a) {
         material->albedo_factor.r = 1.0f;
         material->albedo_factor.g = 1.0f;

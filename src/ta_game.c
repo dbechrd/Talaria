@@ -259,11 +259,10 @@ void ta_game_init()
     tg_e_background_music = SYM_ENTITY_BACKGROUND_MUSIC;
     DLB_ASSERT(tg_e_background_music);
 
-    ta_audio_source *bg_music_src = ta_game_component(tg_e_background_music,
-        RES_COMP_AUDIO_SOURCE);
+    ta_audio_source *bg_music_src = ta_game_component(tg_e_background_music, RES_COMP_AUDIO_SOURCE);
     DLB_ASSERT(bg_music_src);
 
-    //ta_audio_listener_set_volume(&tg_audio_listener, 0.03f);
+    ta_audio_listener_set_volume(&tg_audio_listener, 0.03f);
     //ta_audio_listener_mute(&tg_audio_listener);
     ta_audio_source_play_loop(bg_music_src);
 

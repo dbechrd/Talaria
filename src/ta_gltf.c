@@ -9,6 +9,7 @@
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_vector.h"
 #include "misc/cgltf.h"
+#include "misc/stb_image.h"
 #include <stdio.h>
 #include <math.h>
 
@@ -558,7 +559,7 @@ cgltf_result ta_gltf_parse_file(ta_gltf *gltf)
     return err;
 }
 
-void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute_type attr_type)
+static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute_type attr_type)
 {
     static const ta_mesh_buffer_type mesh_buffer_idx[] = {
         [cgltf_attribute_type_position] = TA_MESH_BUFFER_POSITION,
@@ -639,6 +640,114 @@ void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute
     dlb_memcpy(buffer, data, data_size);
 }
 
+static void gltf_texture(const char **out_texture_name, cgltf_texture_view *view)
+{
+    if (!view->texture) {
+        return;
+    }
+
+    DLB_ASSERT(view->texcoord == 0);  // TODO: What is this?
+    DLB_ASSERT(view->scale == 1.0f);
+    DLB_ASSERT(!view->has_transform);
+
+    DLB_ASSERT(view->texture->image);
+    DLB_ASSERT(!view->texture->sampler);  // TODO: Handle sampler options
+
+    DLB_ASSERT(view->texture->image->name);
+    DLB_ASSERT(strcmp(view->texture->image->mime_type, "image/png") == 0);  // TODO: Handle other types?
+    DLB_ASSERT(!view->texture->image->uri);
+
+    DLB_ASSERT(view->texture->image->buffer_view);
+    DLB_ASSERT(view->texture->image->buffer_view->size);
+    DLB_ASSERT(!view->texture->image->buffer_view->stride);
+
+    DLB_ASSERT(view->texture->image->buffer_view->buffer->size);
+    DLB_ASSERT(view->texture->image->buffer_view->buffer->data);
+
+    char *texture_name = view->texture->image->name;
+    size_t texture_name_len = strlen(texture_name);
+
+    u8 *buffer = view->texture->image->buffer_view->buffer->data;
+    buffer += view->texture->image->buffer_view->offset;
+    size_t buffer_len = view->texture->image->buffer_view->buffer->size;
+
+    // NOTE: stbi_load takes len as int, make sure we're below the limit (a 16384 x 16384 x 4 texture can fit in an int,
+    // so if we're over this.. that's one BF texture).
+    DLB_ASSERT(buffer_len <= INT_MAX);
+
+    //stbi_set_flip_vertically_on_load(true);
+    int w = 0;
+    int h = 0;
+    int channels = 0;  // components/channels
+    u8 *pixels = stbi_load_from_memory(buffer, (int)buffer_len, &w, &h, &channels, 0);
+    if (!pixels) {
+        const char *reason = stbi_failure_reason();
+        ta_log_write(&tg_debug_log, SRC_GLTF, "Failed to load tex: %s\nSTBI Reason: %s\n", texture_name, reason);
+#if _DEBUG
+        // PNG should start with 137,80,78,71,13,10,26,10
+        printf("Buffer 0-8: ");
+        for (int i = 0; i < 8; ++i) {
+            printf("%u ", buffer[i]);
+        }
+        printf("\n");
+#endif
+        DLB_ASSERT(!"ta_texture_init: Failed to load tex");
+    }
+
+    DLB_ASSERT(w);
+    DLB_ASSERT(h);
+    DLB_ASSERT(channels);
+
+    ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc TEXTURE %s\n", texture_name);
+    ta_texture *texture = ta_game_alloc(RES_TEXTURE, texture_name, texture_name_len);
+
+    texture->width = w;
+    texture->height = h;
+    texture->channels = (u8)channels;
+    texture->pixels = pixels;
+    ta_texture_init(texture);
+    texture->pixels = 0; // HACK: Don't want ta_texture_free to try to call dlb_vec_free() on this buffer
+    stbi_image_free(pixels);
+
+    *out_texture_name = texture->name;
+}
+
+#if 0
+static void gltf_texture_2(const char **out_texture_0, const char **out_texture_1, cgltf_texture_view *view)
+{
+    if (!view->texture) {
+        return;
+    }
+
+    DLB_ASSERT(view->texture->image);
+    DLB_ASSERT(view->texture->image->name);
+
+    // TODO: Make this a for loop that works with any # of channels? Could be useful.. idk. [] = {'r', 'g', 'b', 'a'}
+    char texture0_name[256] = { 0 };
+    char texture1_name[256] = { 0 };
+    const size_t texture0_name_size = ARRAY_COUNT(texture0_name);
+    const size_t texture1_name_size = ARRAY_COUNT(texture1_name);
+    int texture0_name_len = snprintf(texture0_name, texture0_name_size, "#%s.r", view->texture->image->name);
+    int texture1_name_len = snprintf(texture1_name, texture1_name_size, "#%s.g", view->texture->image->name);
+    DLB_ASSERT(texture0_name_len < texture0_name_size);
+    DLB_ASSERT(texture1_name_len < texture1_name_size);
+
+    ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc TEXTURE %s\n", texture0_name);
+    ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc TEXTURE %s\n", texture1_name);
+    ta_texture *texture0 = ta_game_alloc(RES_TEXTURE, texture0_name, texture0_name_len);
+    ta_texture *texture1 = ta_game_alloc(RES_TEXTURE, texture1_name, texture1_name_len);
+
+    //cgltf_texture* texture;
+    //cgltf_int texcoord;
+    //cgltf_float scale; /* equivalent to strength for occlusion_texture */
+    //cgltf_bool has_transform;
+    //cgltf_texture_transform transform;
+
+    *out_texture_0 = texture0->name;
+    *out_texture_1 = texture1->name;
+}
+#endif
+
 void ta_gltf_load(ta_gltf *gltf)
 {
     ta_log_write(&tg_debug_log, SRC_GLTF, "ta_gltf_load %s\n", gltf->filename);
@@ -650,9 +759,46 @@ void ta_gltf_load(ta_gltf *gltf)
         UNUSED(gltf_node);
     }
 
-    // TODO: Load materials
+    // Load materials
     dlb_vec_each(cgltf_material *, gltf_material, gltf->data->materials_v) {
-        UNUSED(gltf_material);
+        size_t material_name_len = strlen(gltf_material->name);
+        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MATERIAL %s\n", gltf_material->name);
+        ta_material *material = ta_game_alloc(RES_MATERIAL, gltf_material->name, material_name_len);
+
+        DLB_ASSERT(gltf_material->has_pbr_metallic_roughness);
+        DLB_ASSERT(!gltf_material->has_pbr_specular_glossiness);
+
+        gltf_texture(&material->albedo_texture, &gltf_material->pbr_metallic_roughness.base_color_texture);
+
+        // TODO: Split 2-channel metallic/roughness into separate textures (this is kinda dumb since we're doing to
+        // re-pack them later, but meh. Probably still easier. Need to figure out a good channel packing abstraction.
+        //gltf_texture_2(&material->metallic_texture, &material->roughness_texture,
+        //    &gltf_material->pbr_metallic_roughness.metallic_roughness_texture);
+
+        material->albedo_factor.r = gltf_material->pbr_metallic_roughness.base_color_factor[0];
+        material->albedo_factor.g = gltf_material->pbr_metallic_roughness.base_color_factor[1];
+        material->albedo_factor.b = gltf_material->pbr_metallic_roughness.base_color_factor[2];
+        material->albedo_factor.a = gltf_material->pbr_metallic_roughness.base_color_factor[3];
+        material->metallic_factor = gltf_material->pbr_metallic_roughness.metallic_factor;
+        material->roughness_factor = gltf_material->pbr_metallic_roughness.roughness_factor;
+
+        gltf_texture(&material->normal_texture, &gltf_material->normal_texture);
+        gltf_texture(&material->occlusion_texture, &gltf_material->occlusion_texture);
+        gltf_texture(&material->emission_texture, &gltf_material->emissive_texture);
+
+        material->emission_factor.r = gltf_material->emissive_factor[0];
+        material->emission_factor.g = gltf_material->emissive_factor[1];
+        material->emission_factor.b = gltf_material->emissive_factor[2];
+
+#if 0
+        // TODO: Handle this stuff..
+        cgltf_alpha_mode alpha_mode;
+        cgltf_float alpha_cutoff;
+        cgltf_bool double_sided;
+        cgltf_bool unlit;
+#endif
+
+        ta_material_init(material);
     }
 
     char model_name[256] = { 0 };
@@ -679,12 +825,6 @@ void ta_gltf_load(ta_gltf *gltf)
             ta_mesh *mesh = ta_game_alloc(RES_MESH, mesh_name, mesh_name_len);
 
             DLB_ASSERT(gltf_prim->type == cgltf_primitive_type_triangles);
-            cgltf_material* material;
-            cgltf_morph_target* targets_v;
-
-            //ta_piece piece = { 0 };
-            //piece.mesh = "mesh0";
-            //piece.material = ta_symbol_intern(material->name, strlen(material->name));
 
             ta_log_write(&tg_debug_log, SRC_GLTF, "copying attributes\n");
             dlb_vec_each(cgltf_attribute *, attr, gltf_prim->attributes_v) {
@@ -736,10 +876,15 @@ void ta_gltf_load(ta_gltf *gltf)
 
             ta_piece piece = { 0 };
             piece.mesh = mesh->name;
-            piece.material = INTERN("metal_plate_019"); // TODO: Add materials
+            piece.material = ta_symbol_intern(gltf_prim->material->name, strlen(gltf_prim->material->name));
             dlb_vec_push(model->pieces, piece);
             prim_idx++;
+
+            // TODO: Load morph targets
+            UNUSED(gltf_prim->targets_v);
         }
+
+        // TODO: model->animation_targets or similar
         //dlb_vec_each(const char **, gltf_target, gltf_mesh->target_names_v) {
         //    const char *target = *gltf_target;
         //    UNUSED(target);

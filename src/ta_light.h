@@ -9,10 +9,10 @@ struct ta_model;
 struct ta_shader;
 
 typedef enum ta_light_type {
-    TA_LIGHT_AMBIENT,
-    TA_LIGHT_DIRECTIONAL,
-    TA_LIGHT_POINT,
-    TA_LIGHT_SPOT,
+    TA_LIGHT_AMBIENT,       // @Name("Ambient")
+    TA_LIGHT_DIRECTIONAL,   // @Name("Directional")
+    TA_LIGHT_POINT,         // @Name("Point")
+    TA_LIGHT_SPOT,          // @Name("Spot")
     TA_LIGHT_COUNT
 } ta_light_type;
 
