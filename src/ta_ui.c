@@ -33,8 +33,10 @@
 #define TA_UI_CONTAINER         0x40000000  // [internal] will always be set on containers
 #define TA_UI_CONTAINER_ENDED   0x80000000  // [internal] will be set when container ends
 
-static const double key_repeat_delay_ms = 200;
-static const double key_repeat_interval_ms = 25;
+#define UI_TEXTBOX_MIN_BUFFER_LEN 128  // minimum buffer to reserve for text editing (to avoid frequent resizes)
+
+static const double key_repeat_delay_ms = 300;
+static const double key_repeat_interval_ms = 40;
 static const double double_click_interval_ms = 500;
 
 typedef struct ui_style {
@@ -98,11 +100,6 @@ typedef struct ui_frame {
 static ta_font *ui_font;
 static ta_ui_textbox_state **ui_textbox_editing;
 static ta_ui_textbox_state **ui_textbox_dragging;
-static GLFWcursor *ui_cursor_arrow;    // normal mouse pointer
-static GLFWcursor *ui_cursor_hresize;  // left/right arrow "<->" cursor
-static GLFWcursor *ui_cursor_ibeam;    // text edit ibeam "I" cursor
-static GLFWcursor *ui_active_cursor;   // current cursor being used
-static bool ui_active_cursor_changed;  // (SetCursor is *expensive*)
 
 static ui_style ui_default_style[UI_COUNT] = { 0 };
 static ta_vec2i next_frame_pos_relative;
@@ -116,8 +113,7 @@ static void ui_row_end(ui_frame *container);
 
 // active_textbox is an external pointer that the ui code will keep updated
 // for you automatically when focus changes.
-void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
-    ta_ui_textbox_state **textbox_dragging)
+void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing, ta_ui_textbox_state **textbox_dragging)
 {
     DLB_ASSERT(font);
     DLB_ASSERT(textbox_editing);
@@ -126,9 +122,6 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing,
     ui_font = font;
     ui_textbox_editing = textbox_editing;
     ui_textbox_dragging = textbox_dragging;
-    ui_cursor_arrow   = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-    ui_cursor_hresize = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-    ui_cursor_ibeam   = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
 
     // Reserve element zero for UI_ROOT
     dlb_vec_alloc(ui_frames);
@@ -217,30 +210,9 @@ void ta_ui_set_font(ta_font *font)
     DLB_ASSERT(font);
     ui_font = font;
 }
-void ui_set_cursor(GLFWcursor *cursor)
+void ta_ui_set_cursor(ta_cursor_type cursor_type)
 {
-    if (ui_active_cursor == cursor) return;
-    ui_active_cursor = cursor;
-    ui_active_cursor_changed = true;
-}
-void ta_ui_set_cursor(ui_cursor_type cursor_type)
-{
-    GLFWcursor *cursor = ui_cursor_arrow;
-    switch (cursor_type) {
-        case UI_CURSOR_ARROW: {
-            cursor = ui_cursor_arrow;
-            break;
-        } case UI_CURSOR_HRESIZE: {
-            cursor = ui_cursor_hresize;
-            break;
-        } case UI_CURSOR_IBEAM: {
-            cursor = ui_cursor_ibeam;
-            break;
-        } default: {
-            DLB_ASSERT(!"Need to handle this cursor type");
-        }
-    };
-    ui_set_cursor(cursor);
+    ta_window_request_cursor(tg_window, cursor_type);
 }
 #if 1
 static ta_rgba ui_random_color(size_t frame_idx, ui_state_type state)
@@ -742,27 +714,37 @@ void ta_ui_label(const char *text, size_t text_len)
 }
 
 // TODO: Move this to the keybind and support it more generally
-static bool textbox_repeat_valid(double *last_time, bool *repeating, ta_command command)
+#if 0
+static bool textbox_repeat_valid(double *last_time, int *repeat, ta_command command)
 {
     DLB_ASSERT(last_time);
-    DLB_ASSERT(repeating);
+    DLB_ASSERT(repeat);
 
     UNUSED(command);
 
-    bool first = false; //keybind->triggered && keybind->changed;
     double timer_ms = ta_timer_elapsed_ms();
     double delta_ms = timer_ms - *last_time;
 
-    if (first ||
-        (!*repeating && delta_ms >= key_repeat_delay_ms) ||
-        (*repeating && delta_ms >= key_repeat_interval_ms))
+    // HACK: Figure this out properly..
+    //bool first = keybind->triggered && keybind->changed;
+    if (*repeat > 1 && delta_ms > key_repeat_interval_ms * 2) {
+        *repeat = 0;
+    }
+
+    if ((*repeat == 0) ||
+        (*repeat == 1 && delta_ms >= key_repeat_delay_ms) ||
+        (*repeat > 1 && delta_ms >= key_repeat_interval_ms))
     {
         *last_time = timer_ms;
-        *repeating = !first;
+        if (*repeat <= 1) {
+            (*repeat)++;
+        }
         return true;
     }
+
     return false;
 }
+#endif
 static bool textbox_filter_default(char c)
 {
     if ((c >= ui_font->first_char && c <= ui_font->last_char) || c == '\n') {
@@ -770,58 +752,72 @@ static bool textbox_filter_default(char c)
     }
     return false;
 }
-void textbox_command_cursor_right(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_right()
 {
-    static double last_repeat_ms = 0;
-    static bool repeating = false;
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_CURSOR_RIGHT)) {
-        size_t len = dlb_vec_len(textbox->buffer);
-        if (textbox->cursor < len) {
-            textbox->cursor++;
-        }
+    size_t len = dlb_vec_len(textbox->buffer);
+    if (textbox->cursor < len) {
+        textbox->cursor++;
     }
 }
-void textbox_command_cursor_left(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_left()
 {
-    static double last_repeat_ms = 0;
-    static bool repeating = false;
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_CURSOR_LEFT)) {
-        if (textbox->cursor) {
-            textbox->cursor--;
-        }
+    if (textbox->cursor) {
+        textbox->cursor--;
     }
 }
-void textbox_command_cursor_down(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_down()
 {
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
+
     //TODO: Move cursor up
     UNUSED(textbox);
 }
-void textbox_command_cursor_up(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_up()
 {
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
+
     //TODO: Move cursor down
     UNUSED(textbox);
 }
-void textbox_command_cursor_bol(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_bol()
 {
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
+
     while (textbox->cursor && textbox->buffer[textbox->cursor - 1] != '\n') {
         textbox->cursor--;
     }
 }
-void textbox_command_cursor_eol(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_eol()
 {
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
+
     size_t len = dlb_vec_len(textbox->buffer);
     while (textbox->cursor < len && textbox->buffer[textbox->cursor + 1] != '\n') {
         textbox->cursor++;
     }
 }
-void textbox_command_cursor_bof(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_bof()
 {
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
+
     textbox->cursor = 0;
 }
-void textbox_command_cursor_eof(ta_ui_textbox_state *textbox)
+void textbox_command_cursor_eof()
 {
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
+
     size_t len = dlb_vec_len(textbox->buffer);
     textbox->cursor = len;
 }
@@ -839,26 +835,21 @@ static void textbox_delete(ta_ui_textbox_state *textbox)
         dlb_vec_hdr(textbox->buffer)->len--;
     }
 }
-void textbox_command_delete(ta_ui_textbox_state *textbox)
+void textbox_command_delete()
 {
-    static double last_repeat_ms = 0;
-    static bool repeating = false;
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_DELETE))
-    {
-        textbox_delete(textbox);
-    }
+    textbox_delete(textbox);
 }
-void textbox_command_backspace(ta_ui_textbox_state *textbox)
+void textbox_command_backspace()
 {
-    static double last_repeat_ms = 0;
-    static bool repeating = false;
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_BACKSPACE)) {
-        if (textbox->cursor) {
-            textbox->cursor--;
-            textbox_delete(textbox);
-        }
+    if (textbox->cursor) {
+        textbox->cursor--;
+        textbox_delete(textbox);
     }
 }
 static void textbox_focus(ta_ui_textbox_state *textbox)
@@ -866,11 +857,13 @@ static void textbox_focus(ta_ui_textbox_state *textbox)
     *ui_textbox_editing = textbox;
     textbox->focus_changed = !textbox->focused;
     textbox->focused = true;
+    ta_game_state_set(TA_STATE_TEXTBOX);
 }
 static void textbox_unfocus(ta_ui_textbox_state *textbox)
 {
     if (*ui_textbox_editing == textbox) {
         *ui_textbox_editing = 0;
+        ta_game_state_set(TA_STATE_EDITOR);
     }
     textbox->focus_changed = textbox->focused;
     textbox->focused = false;  // User clicked elsewhere
@@ -894,29 +887,24 @@ static void textbox_submit(ta_ui_textbox_state *textbox)
     // NOTE: Don't want to unfocus console after entering a command!
     //textbox_unfocus(textbox);
 }
-void textbox_command_submit1(ta_ui_textbox_state *textbox)
+void textbox_command_submit()
 {
-    static double last_repeat_ms = 0;
-    static bool repeating = false;
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
 
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_SUBMIT1)) {
-        textbox_submit(textbox);
-    }
+    textbox_submit(textbox);
 }
-void textbox_command_submit2(ta_ui_textbox_state *textbox)
-{
-    static double last_repeat_ms = 0;
-    static bool repeating = false;
-
-    if (textbox_repeat_valid(&last_repeat_ms, &repeating, COMMAND_TEXTBOX_SUBMIT2)) {
-        textbox_submit(textbox);
-    }
-}
-void textbox_command_cancel(ta_ui_textbox_state *textbox)
+static void textbox_cancel(ta_ui_textbox_state *textbox)
 {
     textbox->submit = false;
     dlb_vec_free(textbox->buffer);
     textbox_unfocus(textbox);
+}
+void textbox_command_cancel()
+{
+    DLB_ASSERT(ui_textbox_editing && *ui_textbox_editing);
+    ta_ui_textbox_state *textbox = *ui_textbox_editing;
+    textbox_cancel(textbox);
 }
 
 ta_textbox_filter *ta_textbox_filter_default = &textbox_filter_default;
@@ -927,7 +915,7 @@ static void textbox_set_text(ta_ui_textbox_state *textbox, const char *text, siz
     if (textbox->buffer) {
         dlb_vec_zero(textbox->buffer);
     }
-    dlb_vec_reserve(textbox->buffer, text_len + 1);  // reserve 1 extra for nil
+    dlb_vec_reserve(textbox->buffer, MIN(UI_TEXTBOX_MIN_BUFFER_LEN, text_len + 1));  // reserve 1 extra for nil
     dlb_memcpy(textbox->buffer, text, text_len);
     dlb_vec_hdr(textbox->buffer)->len = text_len;
 
@@ -967,8 +955,7 @@ static void textbox_mouse_down(ui_frame *frame)
     }
 }
 
-bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textbox,
-    u32 flags)
+bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textbox, u32 flags)
 {
     //DLB_ASSERT(text);
     //DLB_ASSERT(text_len);
@@ -1002,16 +989,6 @@ bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textb
     ui_frame *frame = ui_frame_end(UI_TEXTBOX);
 
     if (textbox->focused) {
-#if 0
-        // TODO: cleanup
-        // Textbox is active, handle hotkeys
-        for (ui_textbox_command cmd = 0; cmd < TEXTBOX_COMMAND_COUNT; ++cmd) {
-            ta_keybind_update(&textbox_keybinds[cmd], "ta_ui_textbox");
-            if (ta_keybind_triggered(&textbox_keybinds[cmd])) {
-                textbox_commands[cmd](textbox);
-            }
-        }
-#endif
         frame->state_type = UI_STATE_ACTIVE;
         textbox->focus_changed = false;
     }
@@ -1134,16 +1111,6 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
     ui_frame *frame = ui_frame_end(UI_TEXTBOX);
 
     if (textbox->focused) {
-#if 0
-        // TODO: cleanup
-        // Textbox is active, handle hotkeys
-        for (ui_textbox_command cmd = 0; cmd < TEXTBOX_COMMAND_COUNT; ++cmd) {
-            ta_keybind_update(&textbox_keybinds[cmd], "ta_ui_textbox_float");
-            if (ta_keybind_triggered(&textbox_keybinds[cmd])) {
-                textbox_commands[cmd](textbox);
-            }
-        }
-#endif
         frame->state_type = UI_STATE_ACTIVE;
         textbox->focus_changed = false;
     }
@@ -1158,7 +1125,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
         } else if (ta_key_pressed(GLFW_KEY_MOUSE_LEFT)) {
             textbox_submit(textbox);
         } else if (ta_key_pressed(GLFW_KEY_MOUSE_RIGHT)) {
-            textbox_command_cancel(textbox);
+            textbox_cancel(textbox);
         }
     } else {
         // Do drag float things
@@ -1200,15 +1167,15 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
         ta_ui_textbox_clear(textbox);
         textbox_unfocus(textbox);
     } else if (ta_ui_last_state().hover && !textbox->focused) {
-        ui_set_cursor(ui_cursor_hresize);
+        ta_ui_set_cursor(TA_CURSOR_HRESIZE);
     }
 
     frame->text_rects = text_rects;
     frame->cursor = cursor;
     return frame->data.textbox->submit;
 }
-void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state,
-    bool normalize, bool multiple_rows, bool reset_button)
+void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state, bool normalize, bool multiple_rows,
+    bool reset_button)
 {
     DLB_ASSERT(vec);
     DLB_ASSERT(vec_state);
@@ -1243,8 +1210,8 @@ void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state,
 
     ta_ui_panel_end();
 }
-void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state,
-    bool normalize, bool multiple_rows, bool reset_button)
+void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state, bool normalize, bool multiple_rows,
+    bool reset_button)
 {
     DLB_ASSERT(vec);
     DLB_ASSERT(vec_state);
@@ -1331,6 +1298,19 @@ bool ta_ui_textbox_insert(ta_ui_textbox_state *textbox, char c)
 {
     DLB_ASSERT(textbox);
     //DLB_ASSERT(textbox->buffer);
+
+    // Cleanup: This doesn't work because we don't know if the codepoint event is a repeat event, and if I try to
+    // auto-detect it based on the interval it fails for e.g. press A, release A, press A within the interval.
+    //static double last_repeat_ms = 0;
+    //static int repeat = 0;
+    //static char c_prev;
+    //if (c != c_prev) {
+    //    repeat = 0;
+    //    c_prev = c;
+    //}
+    //if (!textbox_repeat_valid(&last_repeat_ms, &repeat, 0)) {
+    //    return false;
+    //}
 
     if (!textbox->filter) {
         textbox->filter = ta_textbox_filter_default;
@@ -1692,9 +1672,4 @@ void ta_ui_render()
     last_frame_state = 0;
     dlb_vec_zero(ui_frames);
     dlb_vec_alloc(ui_frames);  // reserve UI_ROOT
-
-    if (ui_active_cursor_changed) {
-        ui_set_cursor(ui_active_cursor);
-        ui_active_cursor_changed = false;
-    }
 }

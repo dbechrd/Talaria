@@ -54,7 +54,6 @@ const char *tg_e_active_camera;
 
 typedef struct ta_game {
     ta_game_state state;        // current game state
-    ta_game_state state_prev;   // previous game state
     u64 frame_num;              // current frame number
     int simulate;               // physics sim: -1 = on, 0 = off, 1+ = simulate N frames
     u64 sim_step;               // current simulation step
@@ -73,11 +72,12 @@ static ta_game game;
 const char *game_state_str(ta_game_state state)
 {
     switch (state) {
-        case TA_STATE_STARTUP:  return "TA_GAME_STATE_STARTUP";
-        case TA_STATE_PLAY:     return "TA_GAME_STATE_PLAY";
-        case TA_STATE_FREE_CAM: return "TA_GAME_STATE_FREE_CAM";
-        case TA_STATE_EDITOR:   return "TA_GAME_STATE_EDITOR";
-        case TA_STATE_SHUTDOWN: return "TA_GAME_STATE_SHUTDOWN";
+        case TA_STATE_STARTUP:  return "TA_STATE_STARTUP";
+        case TA_STATE_PLAY:     return "TA_STATE_PLAY";
+        case TA_STATE_FREE_CAM: return "TA_STATE_FREE_CAM";
+        case TA_STATE_EDITOR:   return "TA_STATE_EDITOR";
+        case TA_STATE_TEXTBOX:  return "TA_STATE_TEXTBOX";
+        case TA_STATE_SHUTDOWN: return "TA_STATE_SHUTDOWN";
         default:
             DLB_ASSERT(!"Unknown game state");
             return 0;
@@ -124,20 +124,6 @@ const char *ta_command_str(ta_command cmd)
         case COMMAND_EDITOR_SIM_NEXT         : return "COMMAND_EDITOR_SIM_NEXT";
         case COMMAND_EDITOR_SIM_NEXT_10      : return "COMMAND_EDITOR_SIM_NEXT_10";
         case COMMAND_EDITOR_SIM_WHILE_HELD   : return "COMMAND_EDITOR_SIM_WHILE_HELD";
-        // Textbox commands
-        case COMMAND_TEXTBOX_CURSOR_RIGHT    : return "COMMAND_TEXTBOX_CURSOR_RIGHT";
-        case COMMAND_TEXTBOX_CURSOR_LEFT     : return "COMMAND_TEXTBOX_CURSOR_LEFT";
-        case COMMAND_TEXTBOX_CURSOR_DOWN     : return "COMMAND_TEXTBOX_CURSOR_DOWN";
-        case COMMAND_TEXTBOX_CURSOR_UP       : return "COMMAND_TEXTBOX_CURSOR_UP";
-        case COMMAND_TEXTBOX_CURSOR_BOL      : return "COMMAND_TEXTBOX_CURSOR_BOL";
-        case COMMAND_TEXTBOX_CURSOR_EOL      : return "COMMAND_TEXTBOX_CURSOR_EOL";
-        case COMMAND_TEXTBOX_CURSOR_BOF      : return "COMMAND_TEXTBOX_CURSOR_BOF";
-        case COMMAND_TEXTBOX_CURSOR_EOF      : return "COMMAND_TEXTBOX_CURSOR_EOF";
-        case COMMAND_TEXTBOX_DELETE          : return "COMMAND_TEXTBOX_DELETE";
-        case COMMAND_TEXTBOX_BACKSPACE       : return "COMMAND_TEXTBOX_BACKSPACE";
-        case COMMAND_TEXTBOX_SUBMIT1         : return "COMMAND_TEXTBOX_SUBMIT1";
-        case COMMAND_TEXTBOX_SUBMIT2         : return "COMMAND_TEXTBOX_SUBMIT2";
-        case COMMAND_TEXTBOX_CANCEL          : return "COMMAND_TEXTBOX_CANCEL";
         default:
             DLB_ASSERT(!"Unknown game command");
             return 0;
@@ -197,19 +183,6 @@ void ta_game_init()
     ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_NEXT        ,                                     TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_F6);
     ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_NEXT_10     ,                                     TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_F7);
     ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_WHILE_HELD  ,                                     TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_F8);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_CURSOR_RIGHT   ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_HOLD,    GLFW_KEY_RIGHT);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_CURSOR_LEFT    ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_HOLD,    GLFW_KEY_LEFT);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_CURSOR_DOWN    ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_PRESS,   GLFW_KEY_DOWN);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_CURSOR_UP      ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_PRESS,   GLFW_KEY_UP);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_CURSOR_BOL     ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_PRESS,   GLFW_KEY_HOME);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_CURSOR_EOL     ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_PRESS,   GLFW_KEY_END);
-    ta_keybind_init2(&game.keybinds, COMMAND_TEXTBOX_CURSOR_BOF     ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_PRESS,   GLFW_KEY_LEFT_SHIFT, GLFW_KEY_HOME);
-    ta_keybind_init2(&game.keybinds, COMMAND_TEXTBOX_CURSOR_EOF     ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_PRESS,   GLFW_KEY_LEFT_SHIFT, GLFW_KEY_END);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_DELETE         ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_HOLD,    GLFW_KEY_DELETE);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_BACKSPACE      ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_HOLD,    GLFW_KEY_BACKSPACE);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_SUBMIT1        ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_HOLD,    GLFW_KEY_ENTER);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_SUBMIT2        ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_HOLD,    GLFW_KEY_KP_ENTER);
-    ta_keybind_init1(&game.keybinds, COMMAND_TEXTBOX_CANCEL         ,                                                       TA_STATE_TEXTBOX, TA_KEYBIND_PRESS,   GLFW_KEY_ESCAPE);
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------
@@ -405,17 +378,12 @@ ta_game_state ta_game_state_current()
 {
     return game.state;
 }
-ta_game_state ta_game_state_prev()
-{
-    return game.state_prev;
-}
 void ta_game_state_set(ta_game_state state)
 {
     if (state == game.state) {
         return;
     }
 
-    game.state_prev = game.state;
     game.state = state;
     ta_log_write(&tg_debug_log, SRC_GAME, "State = %s\n", game_state_str(state));
     switch (game.state) {
@@ -580,7 +548,6 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_
         "Game\n"
         "  step:  %08llu\n"
         "  state: %s\n"
-        "  prev:  %s\n"
         "Audio\n"
         "  volume: %.2f%s\n"
         "Camera\n"
@@ -593,7 +560,6 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_
         ta_window_vsync(tg_window) ? "On" : "Off",
         sim_step,
         game_state_str(ta_game_state_current()),
-        game_state_str(ta_game_state_prev()),
         ta_audio_listener_get_volume(&tg_audio_listener),
         ta_audio_listener_muted(&tg_audio_listener) ? " (muted)" : "",
         camera->fov,
@@ -1162,7 +1128,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Editor UI (world)
         //----------------------------------------------------------------------
-        if (game.state == TA_STATE_EDITOR) {
+        if (game.state == TA_STATE_EDITOR || game.state == TA_STATE_TEXTBOX) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor world UI pass...\n");
             ta_editor_update_widgets();
             ta_editor_draw_world();
@@ -1232,7 +1198,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Editor UI (screen)
         //----------------------------------------------------------------------
-        if (game.state == TA_STATE_EDITOR) {
+        if (game.state == TA_STATE_EDITOR || game.state == TA_STATE_TEXTBOX) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor screen UI pass...\n");
             ta_editor_draw_screen();
             ta_console_draw_screen();
@@ -1291,6 +1257,9 @@ void ta_game_loop()
         //ta_log_write(&tg_debug_log, SRC_GAME, " glFinish...\n");
         //glFinish();
 
+        ta_log_write(&tg_debug_log, SRC_GAME, " Update cursor...\n");
+        ta_window_update_cursor(tg_window);
+
         ta_log_write(&tg_debug_log, SRC_GAME, " Swap...\n");
         ta_window_swap(tg_window);
 
@@ -1317,6 +1286,7 @@ void game_command_free_cam()
 }
 void game_command_editor()
 {
+    editor.prev_state = ta_game_state_current();
     ta_game_state_set(TA_STATE_EDITOR);
 }
 void game_command_shutdown()
@@ -1547,9 +1517,9 @@ void game_command_debug_toggle_normals()
 
 void ta_game_update_keybinds()
 {
-    // TODO: Does this still work correctly now that we moved all of the hotkeys into one big table?
+    // TODO: Handle escape as a drag cancel keybind
     // Don't trigger any editor hotkeys while a textbox is focused
-    if (editor.textbox_editing || editor.textbox_dragging)
+    if (editor.textbox_dragging)
         return;
 
     static void (*commands[COMMAND_COUNT])() = {
@@ -1586,26 +1556,9 @@ void ta_game_update_keybinds()
         [COMMAND_EDITOR_SIM_NEXT]         = editor_command_sim_next,
         [COMMAND_EDITOR_SIM_NEXT_10]      = editor_command_sim_next_ten,
         [COMMAND_EDITOR_SIM_WHILE_HELD]   = editor_command_sim_while_held,
-
-        [COMMAND_TEXTBOX_CURSOR_RIGHT]    = textbox_command_cursor_right,
-        [COMMAND_TEXTBOX_CURSOR_LEFT]     = textbox_command_cursor_left,
-        [COMMAND_TEXTBOX_CURSOR_DOWN]     = textbox_command_cursor_down,
-        [COMMAND_TEXTBOX_CURSOR_UP]       = textbox_command_cursor_up,
-        [COMMAND_TEXTBOX_CURSOR_BOL]      = textbox_command_cursor_bol,
-        [COMMAND_TEXTBOX_CURSOR_EOL]      = textbox_command_cursor_eol,
-        [COMMAND_TEXTBOX_CURSOR_BOF]      = textbox_command_cursor_bof,
-        [COMMAND_TEXTBOX_CURSOR_EOF]      = textbox_command_cursor_eof,
-        [COMMAND_TEXTBOX_DELETE]          = textbox_command_delete,
-        [COMMAND_TEXTBOX_BACKSPACE]       = textbox_command_backspace,
-        [COMMAND_TEXTBOX_SUBMIT1]         = textbox_command_submit1,
-        [COMMAND_TEXTBOX_SUBMIT2]         = textbox_command_submit2,
-        [COMMAND_TEXTBOX_CANCEL]          = textbox_command_cancel,
     };
 
     dlb_vec_each(ta_keybind *, keybind, game.keybinds) {
-        if (keybind->command == COMMAND_EDITOR) {
-            DLB_ASSERT(1);
-        }
         ta_keybind_update(keybind, game.state);
         if (ta_keybind_triggered(keybind) && commands[keybind->command]) {
             commands[keybind->command]();

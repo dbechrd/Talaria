@@ -26,6 +26,7 @@ const char *event_type_str(ta_event_type type)
         case INPUT_EVENT_MOUSE_MOVE:          return "INPUT_EVENT_MOUSE_MOVE";
         case INPUT_EVENT_MOUSE_SCROLL:        return "INPUT_EVENT_MOUSE_SCROLL";
         case INPUT_EVENT_KEY_PRESS:           return "INPUT_EVENT_KEY_PRESS";
+        case INPUT_EVENT_KEY_REPEAT:          return "INPUT_EVENT_KEY_REPEAT";
         case INPUT_EVENT_KEY_RELEASE:         return "INPUT_EVENT_KEY_RELEASE";
         case INPUT_EVENT_TEXT_INPUT:          return "INPUT_EVENT_TEXT_INPUT";
         // Game events
@@ -90,6 +91,7 @@ void ta_event_events()
 {
     ta_mouse_reset_relative();
     ta_key_reset_changed();
+
     ta_log_write(&tg_debug_log, SRC_EVENT, "  glfwPollEvents...\n");
     glfwPollEvents();
 
@@ -100,9 +102,9 @@ void ta_event_events()
     ta_event event;
     while (ta_event_pop(&event)) {
         ta_log_write(&tg_debug_log, SRC_EVENT, "  event type = %s\n", event_type_str(event.type));
-        if (ta_game_state_current() == TA_STATE_EDITOR) {
+        if (ta_game_state_current() == TA_STATE_TEXTBOX) {
             ta_log_write(&tg_debug_log, SRC_EVENT, "   editor event...\n");
-            ta_editor_event(&event);
+            ta_editor_textbox_event(&event);
             if (event.handled) continue;
         }
 

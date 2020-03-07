@@ -45,6 +45,13 @@ struct ta_event;
 #define UI_LAYER_TIP_BG          -0.0008f
 #define UI_LAYER_TIP             -0.0009f
 
+typedef enum ta_cursor_type {
+    TA_CURSOR_ARROW,
+    TA_CURSOR_HRESIZE,
+    TA_CURSOR_IBEAM,
+    TA_CURSOR_COUNT
+} ta_cursor_type;
+
 struct ta_window *tg_window;
 
 void ta_window_init             (struct ta_window *window, int w, int h, bool fullscreen);
@@ -55,7 +62,9 @@ void ta_window_size             (struct ta_window *window, int *w, int *h);
 float ta_window_aspect          (struct ta_window *window);
 bool ta_window_vsync            (struct ta_window *window);
 void ta_window_set_vsync        (struct ta_window *window, bool vsync);
+void ta_window_request_cursor   (struct ta_window *window, ta_cursor_type cursor_type);
 void ta_window_set_cursor_pos   (struct ta_window *window, int x, int y);
 void ta_window_get_cursor_pos   (struct ta_window *window, int *x, int *y);
 void ta_window_set_cursor_mode  (struct ta_window *window, int glfw_cursor_mode);
+void ta_window_update_cursor    (struct ta_window *window);
 void ta_window_swap             (struct ta_window *window);

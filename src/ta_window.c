@@ -11,11 +11,17 @@
 typedef struct ta_window {
     int width;
     int height;
-    struct GLFWwindow *glfw_window;
     bool vsync;
+    GLFWwindow *glfw_window;
+    GLFWcursor *glfw_active_cursor;
+    GLFWcursor *glfw_requested_cursor;
 } ta_window;
 ta_window window__internal;
 ta_window *tg_window = &window__internal;
+
+static GLFWcursor *window_cursor_arrow;    // normal mouse pointer
+static GLFWcursor *window_cursor_hresize;  // left/right arrow "<->" cursor
+static GLFWcursor *window_cursor_ibeam;    // text edit ibeam "I" cursor
 
 //static void APIENTRY ta_window_gl_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
 //    const GLchar *message, const void *userParam)
@@ -127,9 +133,9 @@ static void window_glfw_key(GLFWwindow *glfw_window, int key, int scancode, int 
 {
     UNUSED(glfw_window);
     static int action_to_event[] = {
-        [GLFW_PRESS  ] = INPUT_EVENT_KEY_PRESS,
         [GLFW_RELEASE] = INPUT_EVENT_KEY_RELEASE,
-        [GLFW_REPEAT ] = 0
+        [GLFW_PRESS  ] = INPUT_EVENT_KEY_PRESS,
+        [GLFW_REPEAT ] = INPUT_EVENT_KEY_REPEAT,
     };
 
     ta_event event = { 0 };
@@ -138,6 +144,7 @@ static void window_glfw_key(GLFWwindow *glfw_window, int key, int scancode, int 
         event.data.key.key = key;
         event.data.key.scancode = scancode;
         event.data.key.mods = mods;
+        event.data.key.repeat = (action == GLFW_REPEAT);
         ta_key_event(&event);
         ta_event_push(&event);
     }
@@ -154,9 +161,9 @@ static void window_glfw_mouse_button(GLFWwindow *glfw_window, int button, int ac
 {
     UNUSED(glfw_window);
     static int action_to_event[] = {
-        [GLFW_PRESS  ] = INPUT_EVENT_KEY_PRESS,
         [GLFW_RELEASE] = INPUT_EVENT_KEY_RELEASE,
-        [GLFW_REPEAT ] = 0
+        [GLFW_PRESS  ] = INPUT_EVENT_KEY_PRESS,
+        [GLFW_REPEAT ] = INPUT_EVENT_KEY_REPEAT,
     };
     static int button_to_key[] = {
         [GLFW_MOUSE_BUTTON_LEFT  ] = GLFW_KEY_MOUSE_LEFT,
@@ -170,6 +177,7 @@ static void window_glfw_mouse_button(GLFWwindow *glfw_window, int button, int ac
         event.data.key.key = button_to_key[button];
         event.data.key.scancode = -1;
         event.data.key.mods = mods;
+        event.data.key.repeat = (action == GLFW_REPEAT);
         ta_key_event(&event);
         ta_event_push(&event);
     }
@@ -348,6 +356,13 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     if (glfwRawMouseMotionSupported()) {
         glfwSetInputMode(window->glfw_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
     }
+
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "Loading cursors\n");
+    window_cursor_arrow = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+    window_cursor_hresize = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+    window_cursor_ibeam = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+    window->glfw_active_cursor = window_cursor_arrow;
+    window->glfw_requested_cursor = window_cursor_arrow;
 }
 
 void ta_window_free(ta_window *window)
@@ -387,6 +402,25 @@ void ta_window_set_vsync(ta_window *window, bool vsync)
     }
 }
 
+void ta_window_request_cursor(ta_window *window, ta_cursor_type cursor_type)
+{
+    GLFWcursor *cursor = window_cursor_arrow;
+    switch (cursor_type) {
+        case TA_CURSOR_ARROW: {
+            cursor = window_cursor_arrow;
+            break;
+        } case TA_CURSOR_HRESIZE: {
+            cursor = window_cursor_hresize;
+            break;
+        } case TA_CURSOR_IBEAM: {
+            cursor = window_cursor_ibeam;
+            break;
+        } default: {
+            DLB_ASSERT(!"Need to handle this cursor type");
+        }
+    };
+    window->glfw_requested_cursor = cursor;
+}
 void ta_window_set_cursor_pos(ta_window *window, int x, int y)
 {
     glfwSetCursorPos(window->glfw_window, (double)x, (double)y);
@@ -403,6 +437,13 @@ void ta_window_set_cursor_mode(ta_window *window, int glfw_cursor_mode)
     glfwSetInputMode(window->glfw_window, GLFW_CURSOR, glfw_cursor_mode);
 }
 
+void ta_window_update_cursor(ta_window *window)
+{
+    if (window->glfw_requested_cursor != window->glfw_active_cursor) {
+        glfwSetCursor(window->glfw_window, window->glfw_requested_cursor);
+        window->glfw_active_cursor = window->glfw_requested_cursor;
+    }
+}
 void ta_window_swap(ta_window *window)
 {
     glfwSwapBuffers(window->glfw_window);

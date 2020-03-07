@@ -21,6 +21,7 @@ typedef enum ta_event_type {
     INPUT_EVENT_MOUSE_MOVE,
     INPUT_EVENT_MOUSE_SCROLL,
     INPUT_EVENT_KEY_PRESS,
+    INPUT_EVENT_KEY_REPEAT,
     INPUT_EVENT_KEY_RELEASE,
     INPUT_EVENT_TEXT_INPUT,
 
@@ -56,6 +57,7 @@ typedef struct ta_event_key_event {
     s32 key;
     s32 scancode;
     s32 mods;
+    bool repeat;
 } ta_event_key_event;
 
 typedef struct ta_event_key_text_input_event {

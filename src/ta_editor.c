@@ -73,6 +73,7 @@ static struct {
     ta_ui_textbox_state *textbox_dragging;
     const char          *selected_entity;
     const char          *status_msg;
+    ta_game_state       prev_state;
 } editor;
 
 void ta_editor_init()
@@ -305,7 +306,7 @@ static void editor_command_cancel()
     } else if (editor.textbox_editing) {
         ta_ui_textbox_cancel(editor.textbox_editing);
     } else {
-        ta_game_state_set(ta_game_state_prev());
+        ta_game_state_set(editor.prev_state);
     }
 }
 static void editor_command_close()
@@ -317,7 +318,7 @@ static void editor_command_close()
     if (editor.textbox_editing) {
         ta_ui_textbox_cancel(editor.textbox_editing);
     }
-    ta_game_state_set(ta_game_state_prev());
+    ta_game_state_set(editor.prev_state);
 }
 static void editor_command_sim_pause_resume()
 {
@@ -346,7 +347,7 @@ static void editor_command_sim_while_held()
     }
 }
 
-static void ta_editor_textbox_event(ta_event *event)
+void ta_editor_textbox_event(ta_event *event)
 {
     switch (event->type) {
         case INPUT_EVENT_TEXT_INPUT: {
@@ -358,7 +359,52 @@ static void ta_editor_textbox_event(ta_event *event)
             }
             event->handled = true;
             break;
-        } case INPUT_EVENT_KEY_PRESS: {
+        } case INPUT_EVENT_KEY_PRESS: case INPUT_EVENT_KEY_REPEAT: {
+            // TODO: Use this event, which has a repeat flag, to handle textbox keybinds like backspace/arrow keys to
+            // ensure we're respecting the user's OS key delay/repeat settings.
+            //event->data.key.repeat;
+            switch (event->data.key.key) {
+                case GLFW_KEY_RIGHT: {
+                    textbox_command_cursor_right();
+                    break;
+                } case GLFW_KEY_LEFT: {
+                    textbox_command_cursor_left();
+                    break;
+                } case GLFW_KEY_DOWN: {
+                    textbox_command_cursor_down();
+                    break;
+                } case GLFW_KEY_UP: {
+                    textbox_command_cursor_up();
+                    break;
+                } case GLFW_KEY_HOME: {
+                    if (event->data.key.mods & GLFW_MOD_SHIFT) {
+                        textbox_command_cursor_bof();
+                    } else {
+                        textbox_command_cursor_bol();
+                    }
+                    break;
+                } case GLFW_KEY_END: {
+                    if (event->data.key.mods & GLFW_MOD_SHIFT) {
+                        textbox_command_cursor_eof();
+                    } else {
+                        textbox_command_cursor_eol();
+                    }
+                    break;
+                } case GLFW_KEY_DELETE: {
+                    textbox_command_delete();
+                    break;
+                } case GLFW_KEY_BACKSPACE: {
+                    textbox_command_backspace();
+                    break;
+                } case GLFW_KEY_ENTER: case GLFW_KEY_KP_ENTER: {
+                    textbox_command_submit();
+                    break;
+                } case GLFW_KEY_ESCAPE: {
+                    textbox_command_cancel();
+                    break;
+                }
+            }
+
             // Consume all unhandled keystrokes when text editor is active
             //if (event->data.key_press.key == GLFW_KEY_ENTER) {
             //    ta_ui_textbox_insert(editor.active_textbox, '\n');
@@ -370,12 +416,6 @@ static void ta_editor_textbox_event(ta_event *event)
             event->handled = true;
             break;
         }
-    }
-}
-void ta_editor_event(ta_event *event)
-{
-    if (editor.textbox_editing) {
-        ta_editor_textbox_event(event);
     }
 }
 
@@ -1710,9 +1750,9 @@ static void ui_editor_sidebar()
 void ta_editor_draw_screen()
 {
     if (editor.textbox_editing) {
-        ta_ui_set_cursor(UI_CURSOR_IBEAM);
+        ta_ui_set_cursor(TA_CURSOR_IBEAM);
     } else {
-        ta_ui_set_cursor(UI_CURSOR_ARROW);
+        ta_ui_set_cursor(TA_CURSOR_ARROW);
     }
 
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI layout begin\n");

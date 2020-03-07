@@ -68,28 +68,12 @@ typedef enum ta_command {
     COMMAND_EDITOR_SIM_NEXT_10,
     COMMAND_EDITOR_SIM_WHILE_HELD,
 
-    // Textbox commands
-    COMMAND_TEXTBOX_CURSOR_RIGHT,
-    COMMAND_TEXTBOX_CURSOR_LEFT,
-    COMMAND_TEXTBOX_CURSOR_DOWN,
-    COMMAND_TEXTBOX_CURSOR_UP,
-    COMMAND_TEXTBOX_CURSOR_BOL,
-    COMMAND_TEXTBOX_CURSOR_EOL,
-    COMMAND_TEXTBOX_CURSOR_BOF,
-    COMMAND_TEXTBOX_CURSOR_EOF,
-    COMMAND_TEXTBOX_DELETE,
-    COMMAND_TEXTBOX_BACKSPACE,
-    COMMAND_TEXTBOX_SUBMIT1,
-    COMMAND_TEXTBOX_SUBMIT2,
-    COMMAND_TEXTBOX_CANCEL,
-
     COMMAND_COUNT
 } ta_command;
 const char *ta_command_str(ta_command cmd);
 
 void ta_game_init                   ();
 ta_game_state ta_game_state_current ();
-ta_game_state ta_game_state_prev    ();
 void ta_game_state_set              (ta_game_state state);
 void *ta_game_alloc                 (enum ta_res_type type, const char *name, size_t name_len);
 void ta_game_destroy                (enum ta_res_type type, const char *name, size_t name_len);

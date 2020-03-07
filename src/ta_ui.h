@@ -29,13 +29,6 @@ typedef enum ui_frame_type {
     UI_COUNT
 } ui_frame_type;
 
-typedef enum ui_cursor_type {
-    UI_CURSOR_ARROW,
-    UI_CURSOR_HRESIZE,
-    UI_CURSOR_IBEAM,
-    UI_CURSOR_COUNT
-} ui_cursor_type;
-
 // TODO: Make this a flags enum
 typedef struct ta_ui_state {
     bool hover;
@@ -108,7 +101,7 @@ typedef struct ta_ui_textbox_vec4_state {
 // Initialization
 void ta_ui_init                     (struct ta_font *font, ta_ui_textbox_state **textbox_editing, ta_ui_textbox_state **textbox_dragging);
 void ta_ui_set_font                 (struct ta_font *font);
-void ta_ui_set_cursor               (ui_cursor_type cursor_type);
+void ta_ui_set_cursor               (ta_cursor_type cursor_type);
 
 // Styles
 void ta_ui_next_margin              (int left, int top, int right, int bottom);
@@ -137,19 +130,18 @@ bool ta_ui_toggle_button            (const char *text, size_t text_len, bool *ch
 bool ta_ui_image                    (struct ta_texture *texture, int face);
 void ta_ui_label                    (const char *text, size_t text_len);
 
-void textbox_command_cursor_right   (ta_ui_textbox_state *textbox);
-void textbox_command_cursor_left    (ta_ui_textbox_state *textbox);
-void textbox_command_cursor_down    (ta_ui_textbox_state *textbox);
-void textbox_command_cursor_up      (ta_ui_textbox_state *textbox);
-void textbox_command_cursor_bol     (ta_ui_textbox_state *textbox);
-void textbox_command_cursor_eol     (ta_ui_textbox_state *textbox);
-void textbox_command_cursor_bof     (ta_ui_textbox_state *textbox);
-void textbox_command_cursor_eof     (ta_ui_textbox_state *textbox);
-void textbox_command_delete         (ta_ui_textbox_state *textbox);
-void textbox_command_backspace      (ta_ui_textbox_state *textbox);
-void textbox_command_submit1        (ta_ui_textbox_state *textbox);
-void textbox_command_submit2        (ta_ui_textbox_state *textbox);
-void textbox_command_cancel         (ta_ui_textbox_state *textbox);
+void textbox_command_cursor_right   ();
+void textbox_command_cursor_left    ();
+void textbox_command_cursor_down    ();
+void textbox_command_cursor_up      ();
+void textbox_command_cursor_bol     ();
+void textbox_command_cursor_eol     ();
+void textbox_command_cursor_bof     ();
+void textbox_command_cursor_eof     ();
+void textbox_command_delete         ();
+void textbox_command_backspace      ();
+void textbox_command_submit         ();
+void textbox_command_cancel         ();
 
 bool ta_ui_textbox                  (const char *text, size_t text_len, ta_ui_textbox_state *textbox, u32 flags);
 bool ta_ui_textbox_float            (float *value, ta_ui_textbox_state *textbox, u32 flags);
