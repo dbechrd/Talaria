@@ -280,6 +280,7 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     }
 
     glfwSwapInterval(1);
+    window->vsync = true;
     glfwGetFramebufferSize(window->glfw_window, &window->width, &window->height);
 
     // Draw something as soon as humanly possible (just a dark gray for now to get rid of the default white)

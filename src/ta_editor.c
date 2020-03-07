@@ -1424,7 +1424,7 @@ static void ui_camera_panel()
         }
         ta_ui_next_margin(8, 1, 0, 0);
         if (ta_ui_button(CSTR("Normal"))) {
-            camera->position_target_vel = 0.3f;
+            camera->position_target_vel = 0.2f;
         }
         ta_ui_next_margin(8, 1, 0, 0);
         if (ta_ui_button(CSTR("Fast"))) {
@@ -1561,8 +1561,8 @@ static void ui_mesh_panel()
         if (ta_ui_last_state().hover) {
             char tex_buf[1024] = { 0 };
             int len = snprintf(tex_buf, sizeof(tex_buf),
-                "name         : %s\n"
-                "vertex count : %zu",
+                "name        : %s\n"
+                "vertex count: %zu",
                 mesh->name,
                 dlb_vec_len(mesh->positions)
             );
@@ -1606,10 +1606,22 @@ static void ui_texture_panel()
         if (ta_ui_last_state().hover) {
             char tex_buf[256] = { 0 };
             int len = snprintf(tex_buf, sizeof(tex_buf),
-                "name: %s\n"
-                "path: %s\n"
-                "glid: %u",
+                "name    : %s\n"
+                "width   : %u\n"
+                "height  : %u\n"
+                "channels: %u\n"
+                "linear  : %s\n"
+                "repeat  : %s\n"
+                "type    : %s\n"
+                "path    : %s\n"
+                "glid    : %u",
                 texture->name,
+                texture->width,
+                texture->height,
+                (u32)texture->channels,
+                texture->linear ? "True" : "False",
+                texture->repeat ? "True" : "False",
+                ta_texture_type_str(texture->type),
                 texture->data.path,
                 texture->gl_id);
             DLB_ASSERT(len < sizeof(tex_buf));

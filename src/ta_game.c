@@ -55,7 +55,6 @@ const char *tg_e_active_camera;
 typedef struct ta_game {
     ta_game_state state;        // current game state
     ta_game_state state_prev;   // previous game state
-    bool vsync;                 // if true, v-sync is enabled
     u64 frame_num;              // current frame number
     int simulate;               // physics sim: -1 = on, 0 = off, 1+ = simulate N frames
     u64 sim_step;               // current simulation step
@@ -324,7 +323,7 @@ void ta_game_init()
     tex_default_emission->gl_filter_mag = GL_NEAREST;
 
     tex_default_metallic->type = TA_TEXTURE_2D;
-    dlb_vec_push(tex_default_metallic->pixels, 0);
+    dlb_vec_push(tex_default_metallic->pixels, 255);
     tex_default_metallic->width = 1;
     tex_default_metallic->height = 1;
     tex_default_metallic->channels = 1;

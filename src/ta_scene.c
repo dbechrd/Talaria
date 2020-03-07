@@ -262,6 +262,11 @@ void *ta_scene_alloc(ta_scene *scene, ta_res_type type, const char *name, size_t
     DLB_ASSERT(name);
     DLB_ASSERT(name_len);
 
+    ta_resource *exists = ta_scene_find_try(scene, type, name, name_len);
+    if (exists) {
+        DLB_ASSERT(!"You can't allocate two resources of the same type with the same name!");
+    }
+
     ta_schema_field_type schema_type = res_to_typ(type);
     size_t size = tg_schemas[schema_type].size;
 
@@ -334,7 +339,7 @@ void *ta_scene_find_try(ta_scene *scene, ta_res_type type, const char *name, siz
     dlb_index *store = &scene->index_by_name[type];
     for (size_t i = dlb_index_first(store, hash); i != DLB_INDEX_EMPTY; i = dlb_index_next(store, i)) {
         ta_resource *res = dlb_vec_index_size(scene->resource_data[type], i, size);
-        if (res->name == name) {
+        if (res->name == name || res->name == ta_symbol_intern(name, name_len)) {
             DLB_ASSERT(res->index == i);
             DLB_ASSERT(res->res_type == type);
             return res;

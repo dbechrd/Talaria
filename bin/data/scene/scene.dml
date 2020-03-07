@@ -39,20 +39,20 @@ ta_camera:
   name: "freecam"
   entity: "freecam"
   position_smooth: 0x3DCCCCCD (0.100000)
-  position_target_vel: 0x3E4CCCCF (0.200000)
+  position_target_vel: 0x3E4CCCCD (0.200000)
   target_xform:
     position:
-      x: 0x419EE35C (19.861015)
-      y: 0x410FA663 (8.978122)
-      z: 0xBFF7CB26 (-1.935887)
+      x: 0xBF82DCC1 (-1.022362)
+      y: 0x4102044D (8.126050)
+      z: 0xC190C4F0 (-18.096161)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x00000000 (0.000000)
-  yaw: 0x4310E9A7 (144.912704)
+  yaw: 0x43A68360 (333.026367)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1466A2A (-12.400919)
+  pitch: 0xC19734CD (-18.900782)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -63,9 +63,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBE33F17A (-0.175726)
-    y: 0x3F7A06F8 (0.976669)
-    z: 0xBDFCD034 (-0.123444)
+    x: 0x3E93CF68 (0.288692)
+    y: 0x3F72325C (0.946081)
+    z: 0x3E167461 (0.146928)
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -73,9 +73,9 @@ ta_camera:
   position_target_vel: 0x3E4CCCCD (0.200000)
   target_xform:
     position:
-      x: 0x413DB713 (11.857196)
+      x: 0x41282285 (10.508428)
       y: 0x40DFFF2F (6.999900)
-      z: 0xC05A4B80 (-3.410858)
+      z: 0xC0DFE044 (-6.996126)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -372,7 +372,7 @@ ta_transform:
     position:
       x: 0x411FFFFB (9.999995)
       y: 0x406B851F (3.680000)
-      z: 0xC08E666C (-4.450003)
+      z: 0x3EA882C4 (0.329123)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -435,35 +435,35 @@ ta_transform:
   entity: "freecam"
   xform:
     position:
-      x: 0x419EE358 (19.861008)
-      y: 0x410FA668 (8.978127)
-      z: 0xBFF7CB2A (-1.935888)
+      x: 0xBF82DCBC (-1.022361)
+      y: 0x41020448 (8.126045)
+      z: 0xC190C4F4 (-18.096169)
     orientation:
-      x: 0xBDF8E17A (-0.121524)
-      y: 0x3EE78CAF (0.452245)
-      z: 0x00000000 (0.000000)
-      w: 0x3F623207 (0.883576)
+      x: 0xBE9B3735 (-0.303156)
+      y: 0xBF4A019D (-0.789087)
+      z: 0x80000000 (-0.000000)
+      w: 0x3F08C58B (0.534264)
 ta_transform:
   name: "player_one"
   entity: "player_one"
   xform:
     position:
-      x: 0x413DB713 (11.857196)
+      x: 0x41282285 (10.508428)
       y: 0x409FFF2F (4.999900)
-      z: 0xC05A4B80 (-3.410858)
+      z: 0xC0DFE044 (-6.996126)
     orientation:
-      x: 0xBF4E77F1 (-0.806518)
-      y: 0xBEBC0EB0 (-0.367300)
-      z: 0x3EED3070 (0.463260)
-      w: 0x3B53F573 (0.003234)
+      x: 0xBE1BDD59 (-0.152212)
+      y: 0x3F49903D (0.787357)
+      z: 0xBEDE8D51 (-0.434672)
+      w: 0xBED1D539 (-0.409830)
 ta_transform:
   name: "player_camera"
   entity: "player_camera"
   xform:
     position:
-      x: 0x413DB712 (11.857195)
+      x: 0x41282284 (10.508427)
       y: 0x40DFFF2E (6.999900)
-      z: 0xC05A4B80 (-3.410858)
+      z: 0xC0DFE044 (-6.996126)
     orientation:
       x: 0xBD6431E4 (-0.055712)
       y: 0xBE28333A (-0.164258)
@@ -475,7 +475,7 @@ ta_transform:
   xform:
     position:
       x: 0x40AC286F (5.379936)
-      y: 0x4094BAE4 (4.647814)
+      y: 0xC6A17BDA (-20669.925781)
       z: 0xC210A972 (-36.165474)
     orientation:
       x: 0x00000000 (0.000000)
@@ -487,9 +487,9 @@ ta_transform:
   entity: "sphere2"
   xform:
     position:
-      x: 0x41482557 (12.509116)
-      y: 0x3F7EEFBE (0.995846)
-      z: 0xC1AF1B83 (-21.888433)
+      x: 0x412D335C (10.825039)
+      y: 0x3F7EEFBD (0.995846)
+      z: 0xC189516C (-17.164757)
     orientation:
       x: 0x3DFD7BD2 (0.123771)
       y: 0xBD5043A6 (-0.050846)
@@ -514,7 +514,7 @@ ta_transform:
   xform:
     position:
       x: 0xC134F153 (-11.308917)
-      y: 0xC7D55233 (-109220.398438)
+      y: 0xC806B411 (-137936.265625)
       z: 0x40C3AD3D (6.114897)
     orientation:
       x: 0x00000000 (0.000000)
@@ -526,34 +526,34 @@ ta_transform:
   entity: "column_0002"
   xform:
     position:
-      x: 0xC102E011 (-8.179704)
-      y: 0xC1000069 (-8.000100)
-      z: 0xBF97A4DB (-1.184718)
+      x: 0x413E617E (11.898802)
+      y: 0xBF42445B (-0.758856)
+      z: 0xC1494668 (-12.579689)
     orientation:
-      x: 0x00000000 (0.000000)
+      x: 0x3EE080C2 (0.438482)
       y: 0x00000000 (0.000000)
-      z: 0x3F1BB0BA (0.608165)
-      w: 0x3F4B3727 (0.793810)
+      z: 0x00000000 (0.000000)
+      w: 0x3F6613D0 (0.898740)
 ta_transform:
   name: "column_0003"
   entity: "column_0003"
   xform:
     position:
-      x: 0xC10358F7 (-8.209220)
-      y: 0xC1000069 (-8.000100)
-      z: 0xC0773246 (-3.862443)
+      x: 0x410C3014 (8.761738)
+      y: 0xBF401D9F (-0.750452)
+      z: 0xC148DFE2 (-12.554659)
     orientation:
-      x: 0x00000000 (0.000000)
+      x: 0x3EDF7A94 (0.436482)
       y: 0x00000000 (0.000000)
-      z: 0x3F1C1985 (0.609764)
-      w: 0x3F4AE6B5 (0.792583)
+      z: 0x00000000 (0.000000)
+      w: 0x3F665396 (0.899713)
 ta_transform:
   name: "star_0001"
   entity: "star_0001"
   xform:
     position:
       x: 0x40928201 (4.578370)
-      y: 0xC7D550F5 (-109217.914063)
+      y: 0xC806B372 (-137933.781250)
       z: 0x40968FEB (4.705068)
     orientation:
       x: 0x3E9202C9 (0.285177)
@@ -648,7 +648,7 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  mass: 0x3F800000 (1.000000)
+  mass: 0x40A00000 (5.000000)
 ta_rigid_body:
   name: "rock_0001"
   entity: "rock_0001"
@@ -669,7 +669,6 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
   mass: 0x3F800000 (1.000000)
-  no_gravity: true
 ta_rigid_body:
   name: "sphere2"
   entity: "sphere2"
@@ -821,6 +820,7 @@ ta_material:
     r: 0x00000000 (0.000000)
     g: 0x00000000 (0.000000)
     b: 0x00000000 (0.000000)
+  metallic_factor: 0x3F800000 (1.000000)
   roughness_factor: 0x3F000000 (0.500000)
 ta_material:
   name: "cobble"
@@ -849,7 +849,10 @@ ta_material:
     g: 0x3F800000 (1.000000)
     b: 0x3F800000 (1.000000)
     a: 0x3F800000 (1.000000)
-  metallic_factor: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
   roughness_texture: "terrazzo_roughness"
   roughness_factor: 0x3F800000 (1.000000)
   height_texture: "terrazzo_height"
@@ -865,6 +868,10 @@ ta_material:
     g: 0x3F800000 (1.000000)
     b: 0x3F800000 (1.000000)
     a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
   metallic_texture: "metal_plate_019_metallic"
   metallic_factor: 0x3F800000 (1.000000)
   roughness_texture: "metal_plate_019_roughness"

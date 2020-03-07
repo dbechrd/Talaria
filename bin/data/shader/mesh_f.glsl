@@ -1,4 +1,4 @@
-#version 330 core
+﻿#version 330 core
 
 in vs_out {
     vec3 position;
@@ -108,7 +108,7 @@ void main()
 
     // TODO: Don't pass height 0.0 into shader
     // https://learnopengl.com/Advanced-Lighting/Parallax-Mapping
-    float mtl_height    = texture(u_material.height_texture, scaled_uv).r * u_material.height_factor;
+    float mtl_height  = texture(u_material.height_texture, scaled_uv).r * u_material.height_factor;
     vec2 displacement = V.xy / V.z * (u_material.height_factor - mtl_height);  // NOTE: Invert to get depth instead of height
     vec2 displaced_uv = scaled_uv - displacement;
     // Edge artifacts can sometimes be cleaned up like so, but I don't like this idea since it disallows UVs > 1.0
@@ -122,12 +122,12 @@ void main()
     float mtl_occlusion = texture(u_material.occlusion_texture, displaced_uv).r;
 
     // TODO: Why did I do this?
-    mtl_roughness = max(mtl_roughness, 0.001);
+    //mtl_roughness = max(mtl_roughness, 0.001);
 
     vec3 N = normalize(mtl_normal * 2.0 - 1.0);
 
-    vec3 F0 = vec3(0.04);
-    F0 = mix(F0, mtl_albedo.rgb, mtl_metallic);
+    const vec3 dielectricSpecular = vec3(0.04);
+    vec3 F0 = mix(dielectricSpecular, mtl_albedo.rgb, mtl_metallic);
 
     float shadows[8];
     float shadow_map_depths[8];
@@ -256,17 +256,14 @@ void main()
         float G = GeometrySmith(N, V, L, mtl_roughness);
 
         vec3 kS = F;
-        vec3 kD = vec3(1.0) - kS;
-        kD *= 1.0 - mtl_metallic;
+        vec3 kD = (vec3(1.0) - kS) * (1.0 - mtl_metallic);
 
         vec3 numer = D * F * G;
         float NdotL = max(dot(N, L), 0.0);
         float denom = 4.0 * max(dot(N, V), 0.0) * NdotL;
         vec3 specular = numer / max(denom, 0.001);
 
-        //L0 += (kD * mtl_albedo.rgb / PI + specular) * radiance * NdotL;
         L0 += (kD * mtl_albedo.rgb / PI + specular) * radiance * NdotL * (1.0 - shadow);
-        //L0 += mtl_albedo.rgb * (1.0 - shadow);
     }
 
     // TODO: What is this? Hard-coded ambient, or...?
@@ -346,6 +343,11 @@ void main()
     };
 }
 
+// Microfacet Distribution (D):
+// Trowbridge-Reitz
+//
+// Implementation of microfacet distrubtion from "Average Irregularity Representation of a Roughened Surface for
+// Ray Reflection" by T. S. Trowbridge, and K. P. Reit
 float DistributionGGX(vec3 N, vec3 H, float roughness)
 {
     float a      = roughness*roughness;
@@ -360,6 +362,13 @@ float DistributionGGX(vec3 N, vec3 H, float roughness)
     return nom / denom;
 }
 
+// Geometric Occlusion (G):
+// This implementation is from learnopengl.com. I'm not sure where it originated.
+// "a combination of the GGX and Schlick-Beckmann approximation known as Schlick-GGX"
+//
+// NOTE: The glTF spec recommends "Smith Joint GGX" as described in "Understanding the Masking-Shadowing Function in
+// Microfacet-Based BRDFs" by Eric Heitz, but it has multiple sqrt operations. Going to stick with this version for now
+// without understanding the differences. Should revisit and do a proper evaluation.
 float GeometrySchlickGGX(float NdotV, float roughness)
 {
     float r = (roughness + 1.0);
@@ -380,6 +389,11 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
     return ggx1 * ggx2;
 }
 
+// Surface Reflection Ratio (F):
+// Fresnel Schlick
+//
+// Simplified implementation of Fresnel from "An Inexpensive BRDF Model for Physically based Rendering"
+// by Christophe Schlick.
 vec3 FresnelSchlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
