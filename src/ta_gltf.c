@@ -552,8 +552,10 @@ cgltf_result ta_gltf_parse_file(ta_gltf *gltf)
         return err;
     }
 
+#if 0
     ta_log_write(&tg_debug_log, SRC_GLTF, "dumping\n");
     gltf_dump(gltf->data);
+#endif
 
     ta_log_write(&tg_debug_log, SRC_GLTF, "successfully parsed %s\n", gltf->filename);
     return err;

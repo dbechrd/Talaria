@@ -51,7 +51,7 @@ typedef struct ta_editor {
     const char      *shader_editor_select;
     editor_widget   widget;
     editor_gizmo    gizmo;
-    //ta_vec3         gizmo_start_hit;  // if gizmo active, starting contact point of gizmo in world space
+    ta_vec3         gizmo_start_hit;    // if gizmo active, starting contact point of gizmo in world space
     ta_xform        gizmo_start_xform;  // if gizmo active, starting xform of entity being transformed
 
     union {
@@ -113,19 +113,14 @@ bool ta_editor_textbox_editing()
 static editor_gizmo editor_gizmo_nearest(ta_ray *ray)
 {
     editor_gizmo nearest_gizmo = GIZMO_NONE;
+    float t_min = FLT_MAX;
 
     switch (editor.widget) {
         case WIDGET_TRANSLATE: {
             // TODO: Cleanup
             DLB_ASSERT(editor.gizmos.transform.hitbox1d[0].center.x);
 
-            if (!ray) {
-                ta_ray fwd = ta_game_camera_ray();
-                ray = &fwd;
-            }
-
             float t;
-            float t_min = FLT_MAX;
             for (int i = 0; i < 3; ++i) {
                 if (ta_ray_v_aabb(ray, &editor.gizmos.transform.hitbox1d[i], &t) && t < t_min) {
                     t_min = t;
@@ -177,7 +172,7 @@ static void editor_gizmo_end(bool keep_changes)
     editor.gizmo = GIZMO_NONE;
 #if _DEBUG
     // NOTE: These should never be used with gizmo is NONE, but invalidate for easier debugging
-    //editor.gizmo_start_hit = VEC3_ZERO;
+    editor.gizmo_start_hit = VEC3_ZERO;
     editor.gizmo_start_xform.position = VEC3_ZERO;
     editor.gizmo_start_xform.orientation = QUAT_IDENT;
 #endif
@@ -200,12 +195,6 @@ static void editor_command_select()
                 editor.gizmo = editor_gizmo_nearest(&ray);
                 if (editor.gizmo) {
                     ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
-                    //ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
-                    //float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
-                    //float scale = MAX(0.5f, dist * 0.2f);
-                    //float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
-
-                    //editor.gizmo_start_hit = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
                     editor.gizmo_start_xform = e_transform->xform;
                 }
                 break;
@@ -509,7 +498,10 @@ void ta_editor_update_widgets()
                     float t;
                     if (ta_ray_v_plane(&ray, &plane, &t)) {
                         ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                        e_transform->xform.position.x = contact.x - scale * 0.5f;
+                        if (vec3_zero(editor.gizmo_start_hit)) {
+                            editor.gizmo_start_hit = vec3_sub(contact, e_transform->xform.position);
+                        }
+                        e_transform->xform.position.x = contact.x - editor.gizmo_start_hit.x;
                         if (editor.widget_snap_to_grid) {
                             e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
                         }
@@ -523,7 +515,10 @@ void ta_editor_update_widgets()
                     float t;
                     if (ta_ray_v_plane(&ray, &plane, &t)) {
                         ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                        e_transform->xform.position.y = contact.y - scale * 0.5f;
+                        if (vec3_zero(editor.gizmo_start_hit)) {
+                            editor.gizmo_start_hit = vec3_sub(contact, e_transform->xform.position);
+                        }
+                        e_transform->xform.position.y = contact.y - editor.gizmo_start_hit.y;
                         if (editor.widget_snap_to_grid) {
                             e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
                         }
@@ -537,7 +532,10 @@ void ta_editor_update_widgets()
                     float t;
                     if (ta_ray_v_plane(&ray, &plane, &t)) {
                         ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                        e_transform->xform.position.z = contact.z - scale * 0.5f;
+                        if (vec3_zero(editor.gizmo_start_hit)) {
+                            editor.gizmo_start_hit = vec3_sub(contact, e_transform->xform.position);
+                        }
+                        e_transform->xform.position.z = contact.z - editor.gizmo_start_hit.z;
                         if (editor.widget_snap_to_grid) {
                             e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
                         }
@@ -549,8 +547,11 @@ void ta_editor_update_widgets()
                     float t;
                     if (ta_ray_v_plane(&ray, &plane, &t)) {
                         ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                        e_transform->xform.position.y = contact.y - midpoint2d;
-                        e_transform->xform.position.z = contact.z - midpoint2d;
+                        if (vec3_zero(editor.gizmo_start_hit)) {
+                            editor.gizmo_start_hit = vec3_sub(contact, e_transform->xform.position);
+                        }
+                        e_transform->xform.position.y = contact.y - editor.gizmo_start_hit.y;
+                        e_transform->xform.position.z = contact.z - editor.gizmo_start_hit.z;
                         if (editor.widget_snap_to_grid) {
                             e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
                             e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
@@ -563,8 +564,11 @@ void ta_editor_update_widgets()
                     float t;
                     if (ta_ray_v_plane(&ray, &plane, &t)) {
                         ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                        e_transform->xform.position.x = contact.x - midpoint2d;
-                        e_transform->xform.position.z = contact.z - midpoint2d;
+                        if (vec3_zero(editor.gizmo_start_hit)) {
+                            editor.gizmo_start_hit = vec3_sub(contact, e_transform->xform.position);
+                        }
+                        e_transform->xform.position.x = contact.x - editor.gizmo_start_hit.x;
+                        e_transform->xform.position.z = contact.z - editor.gizmo_start_hit.z;
                         if (editor.widget_snap_to_grid) {
                             e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
                             e_transform->xform.position.z -= (float)fmod(e_transform->xform.position.z, editor.widget_snap_to_grid);
@@ -577,8 +581,11 @@ void ta_editor_update_widgets()
                     float t;
                     if (ta_ray_v_plane(&ray, &plane, &t)) {
                         ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-                        e_transform->xform.position.x = contact.x - midpoint2d;
-                        e_transform->xform.position.y = contact.y - midpoint2d;
+                        if (vec3_zero(editor.gizmo_start_hit)) {
+                            editor.gizmo_start_hit = vec3_sub(contact, e_transform->xform.position);
+                        }
+                        e_transform->xform.position.x = contact.x - editor.gizmo_start_hit.x;
+                        e_transform->xform.position.y = contact.y - editor.gizmo_start_hit.y;
                         if (editor.widget_snap_to_grid) {
                             e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
                             e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
@@ -592,15 +599,17 @@ void ta_editor_update_widgets()
                     float t;
                     if (ta_ray_v_plane(&ray, &plane, &t)) {
                         ta_vec3 contact = vec3_add(ray.origin, vec3_scalef(ray.direction, t));
-
+                        if (vec3_zero(editor.gizmo_start_hit)) {
+                            editor.gizmo_start_hit = vec3_sub(contact, e_transform->xform.position);
+                        }
                         // TODO: Handle view-plane translation (may not be possible while camera is rotating?)
                         ta_sphere cs = { 0 };
                         cs.center = contact;
                         cs.radius = 0.1f;
                         ta_primitive_push_sphere(0, cs, TA_COLOR_YELLOW);
-                        //e_transform->xform.position.x = contact.x - scale * 0.5f;
-                        //e_transform->xform.position.y = contact.y - scale * 0.5f;
-                        //e_transform->xform.position.z = contact.z - scale * 0.5f;
+                        //e_transform->xform.position.x = contact.x - editor.gizmo_start_hit.x;
+                        //e_transform->xform.position.y = contact.y - editor.gizmo_start_hit.y;
+                        //e_transform->xform.position.z = contact.z - editor.gizmo_start_hit.z;
                         //if (editor.widget_snap_to_grid) {
                         //    e_transform->xform.position.x -= (float)fmod(e_transform->xform.position.x, editor.widget_snap_to_grid);
                         //    e_transform->xform.position.y -= (float)fmod(e_transform->xform.position.y, editor.widget_snap_to_grid);
@@ -684,7 +693,8 @@ void ta_editor_draw_world()
                 // Highlight active gizmo, or nearest gizmo if none active
 #define GIZMO_COLOR(gzmo) (gizmo_color[gzmo][editor.gizmo == gzmo || (!editor.gizmo && nearest_gizmo == gzmo)])
                 {
-                    editor_gizmo nearest_gizmo = editor_gizmo_nearest(0);
+                    ta_ray fwd = ta_game_camera_ray();
+                    editor_gizmo nearest_gizmo = editor_gizmo_nearest(&fwd);
 
                     // 1D handles
                     ta_primitive_push_axes_arrow_color(0, e_transform->xform_world.position, QUAT_IDENT, scale,
