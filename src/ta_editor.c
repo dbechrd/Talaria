@@ -46,7 +46,7 @@ typedef enum editor_gizmo {
     GIZMO_COUNT
 } editor_gizmo;
 
-static struct {
+typedef struct ta_editor {
     ta_scene        scene;
     const char      *shader_editor_select;
     editor_widget   widget;
@@ -74,7 +74,8 @@ static struct {
     const char          *selected_entity;
     const char          *status_msg;
     ta_game_state       prev_state;
-} editor;
+} ta_editor;
+ta_editor editor;
 
 void ta_editor_init()
 {
@@ -92,7 +93,7 @@ void ta_editor_select_entity(const char *entity)
 {
     editor.selected_entity = entity;
 }
-const char *ta_editor_selected_entity()
+void ta_editor_selected_entity(const char **out_entity)
 {
 #if 0
     // Clear selection if entity has been deleted
@@ -102,7 +103,11 @@ const char *ta_editor_selected_entity()
         editor.selected_entity_name = 0;
     }
 #endif
-    return editor.selected_entity;
+    *out_entity = editor.selected_entity;
+}
+bool ta_editor_textbox_editing()
+{
+    return editor.textbox_editing != 0;
 }
 
 static editor_gizmo editor_gizmo_nearest(ta_ray *ray)
@@ -155,7 +160,8 @@ static void editor_gizmo_end(bool keep_changes)
     DLB_ASSERT(editor.gizmo);
 
     if (!keep_changes) {
-        const char *selected_entity = ta_editor_selected_entity();
+        const char *selected_entity = 0;
+        ta_editor_selected_entity(&selected_entity);
         if (selected_entity) {
             switch (editor.widget) {
                 case WIDGET_TRANSLATE:
@@ -186,7 +192,8 @@ static void editor_command_select()
 
     ta_ray ray = ta_game_camera_ray();
 
-    const char *selected_entity = ta_editor_selected_entity();
+    const char *selected_entity = 0;
+    ta_editor_selected_entity(&selected_entity);
     if (selected_entity) {
         switch (editor.widget) {
             case WIDGET_TRANSLATE: {
@@ -349,6 +356,10 @@ static void editor_command_sim_while_held()
 
 void ta_editor_textbox_event(ta_event *event)
 {
+    if (!ta_editor_textbox_editing()) {
+        return;
+    }
+
     switch (event->type) {
         case INPUT_EVENT_TEXT_INPUT: {
             // TODO: How to actually handle codepoints?
@@ -421,7 +432,8 @@ void ta_editor_textbox_event(ta_event *event)
 
 void ta_editor_update_widgets()
 {
-    const char *selected_entity = ta_editor_selected_entity();
+    const char *selected_entity = 0;
+    ta_editor_selected_entity(&selected_entity);
     if (!selected_entity) {
         return;
     }
@@ -615,7 +627,8 @@ void ta_editor_draw_world()
     ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.3f);
     ta_primitive_render(true, false);
 
-    const char *selected_entity = ta_editor_selected_entity();
+    const char *selected_entity = 0;
+    ta_editor_selected_entity(&selected_entity);
     if (selected_entity) {
         ta_camera *camera = ta_game_camera();
 
@@ -900,8 +913,9 @@ static void ui_node_panel()
 
     const int header_width = 300;
     const int label_width = 150;
-    const char *entity = ta_editor_selected_entity();
-    if (!entity) {
+    const char *selected_entity = 0;
+    ta_editor_selected_entity(&selected_entity);
+    if (!selected_entity) {
         //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
@@ -957,16 +971,16 @@ static void ui_node_panel()
         }
     } else {
         //ta_ui_next_pad(4, 1, 4, 1);
-        if (ta_ui_label(entity)) {
+        if (ta_ui_label(selected_entity)) {
             DLB_ASSERT(!uid_editor);
             uid_editor = ta_text_entry_init();
-            ta_text_entry_set_text(uid_editor, SYM(entity));
+            ta_text_entry_set_text(uid_editor, SYM(selected_entity));
             ta_text_entry_focus(uid_editor);
         }
     }
 #endif
 
-    ta_transform *transform = ta_game_component(entity, RES_COMP_TRANSFORM);
+    ta_transform *transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
     ta_ui_row_begin();
     ta_ui_next_size(label_width, 0);
     ta_ui_label(CSTR("Entity:"));
@@ -1027,7 +1041,7 @@ static void ui_node_panel()
     ta_ui_toggle_button(CSTR("Model"), &model_expanded);
 
     if (model_expanded) {
-        ta_model *model = ta_game_component_try(entity, RES_COMP_MODEL);
+        ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
         if (model) {
             // List all of the model pieces
             dlb_vec_each(ta_piece *, piece, model->pieces) {
@@ -1098,7 +1112,7 @@ static void ui_node_panel()
     ta_ui_toggle_button(CSTR("Rigid Body"), &rigid_body_expanded);
 
     if (rigid_body_expanded) {
-        ta_rigid_body *rigid_body = ta_game_component_try(entity, RES_COMP_RIGID_BODY);
+        ta_rigid_body *rigid_body = ta_game_component_try(selected_entity, RES_COMP_RIGID_BODY);
         if (rigid_body) {
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1256,7 +1270,7 @@ static void ui_node_panel()
     ta_ui_toggle_button(CSTR("Light"), &light_expanded);
 
     if (light_expanded) {
-        ta_light *light = ta_game_component_try(entity, RES_COMP_LIGHT);
+        ta_light *light = ta_game_component_try(selected_entity, RES_COMP_LIGHT);
         if (light) {
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1531,9 +1545,10 @@ static void ui_material_panel()
         ta_ui_next_margin(0, 2, 0, 0);
         ta_ui_next_pad(4, 4, 4, 4);
         if (ta_ui_button(SYM(material->name))) {
-            const char *entity = ta_editor_selected_entity();
-            if (entity) {
-                ta_model *model = ta_game_component_try(entity, RES_COMP_MODEL);
+            const char *selected_entity = 0;
+            ta_editor_selected_entity(&selected_entity);
+            if (selected_entity) {
+                ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
                 if (model && model->pieces) {
                     // TODO: Select material per piece, not per model. For now, arbitrarily set material of first piece
                     model->pieces[0].material = material->name;
@@ -1588,9 +1603,10 @@ static void ui_mesh_panel()
         ta_ui_next_pad(4, 4, 4, 4);
         //ta_ui_next_size(material->width, material->height);
         if (ta_ui_button(SYM(mesh->name))) {
-            const char *entity = ta_editor_selected_entity();
-            if (entity) {
-                ta_model *model = ta_game_component_try(entity, RES_COMP_MODEL);
+            const char *selected_entity = 0;
+            ta_editor_selected_entity(&selected_entity);
+            if (selected_entity) {
+                ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
                 if (model && model->pieces) {
                     // TODO: Select mesh per piece, not per model. For now, arbitrarily set mesh of first piece
                     model->pieces[0].mesh = mesh->name;
@@ -1633,9 +1649,10 @@ static void ui_texture_panel()
         if (ta_ui_button_end()) {
             // TODO: Set textures in the materials tab, this is way too ambiguous
 #if 0
-            const char *entity = ta_editor_selected_entity();
-            if (entity) {
-                ta_model *model = ta_game_component_try(entity, RES_COMP_MODEL);
+            const char *selected_entity = 0;
+            ta_editor_selected_entity(&selected_entity);
+            if (selected_entity) {
+                ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
                 if (model && model->material) {
                     ta_material *material = ta_game_by_sym(RES_MATERIAL, model->material);
                     material->albedo_texture = texture->name;
@@ -1764,59 +1781,77 @@ void ta_editor_draw_screen()
     static ta_ui_window_state window = { 0 };
     ta_ui_window_begin(&window, TA_UI_AUTOSIZE);
 
-    ta_ui_panel_state hotbar_panel = { 0 };
-    ta_ui_panel_begin(&hotbar_panel, TA_UI_AUTOSIZE);
+    ta_ui_panel_state collapse_panel = { 0 };
+    ta_ui_panel_begin(&collapse_panel, TA_UI_AUTOSIZE);
     ta_ui_row_begin();
-    if (ta_ui_button(CSTR("Trans."))) {
-        editor.widget = WIDGET_TRANSLATE;
-    }
-    if (ta_ui_button(CSTR("Rot."))) {
-        editor.widget = WIDGET_ROTATE;
-    }
-    if (ta_ui_button(CSTR("Scale"))) {
-        editor.widget = WIDGET_SCALE;
-    }
-    ta_ui_panel_end();
 
-    ui_editor_sidebar();
+    static bool collapsed = false;
+    if (collapsed) {
+        if (ta_ui_button(CSTR(">"))) {
+            collapsed = false;
+        }
+    } else {
+        ta_ui_panel_state hotbar_panel = { 0 };
+        ta_ui_panel_begin(&hotbar_panel, TA_UI_AUTOSIZE);
+        ta_ui_row_begin();
+        if (ta_ui_button(CSTR("<"))) {
+            if (editor.textbox_editing) {
+                ta_ui_textbox_cancel(editor.textbox_editing);
+            }
+            collapsed = true;
+        }
+        if (ta_ui_button(CSTR("Trans."))) {
+            editor.widget = WIDGET_TRANSLATE;
+        }
+        if (ta_ui_button(CSTR("Rot."))) {
+            editor.widget = WIDGET_ROTATE;
+        }
+        if (ta_ui_button(CSTR("Scale"))) {
+            editor.widget = WIDGET_SCALE;
+        }
+        ta_ui_panel_end();
+
+        ui_editor_sidebar();
 
 #if 0
-    // Font selector (for trying a lot of fonts quickly)
-    ta_ui_row_begin();
-    static int cur_font_idx = 0;
-    ta_font *fonts = ta_game_resource_pool(RES_FONT);
-    int fonts_count = dlb_vec_len(fonts);
-    cur_font_idx = MIN(cur_font_idx, fonts_count - 1);
+        // Font selector (for trying a lot of fonts quickly)
+        ta_ui_row_begin();
+        static int cur_font_idx = 0;
+        ta_font *fonts = ta_game_resource_pool(RES_FONT);
+        int fonts_count = dlb_vec_len(fonts);
+        cur_font_idx = MIN(cur_font_idx, fonts_count - 1);
 
-    ta_font *font_current = &fonts[cur_font_idx];
-    ta_ui_set_font(font_current);
-    ta_ui_row_begin();
-    ta_ui_label(CSTR("Font:"));
-    ta_ui_label(SYM(font_current->name));
+        ta_font *font_current = &fonts[cur_font_idx];
+        ta_ui_set_font(font_current);
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("Font:"));
+        ta_ui_label(SYM(font_current->name));
 
-    ta_ui_row_begin();
-    ta_ui_next_size(120, 28);
-    ta_ui_button_begin(0, 0);
-    ta_ui_label(CSTR("Prev Font"));
-    if (ta_ui_button_end()) {
-        if (cur_font_idx) {
-            cur_font_idx--;
-        } else {
-            cur_font_idx = fonts_count - 1;
+        ta_ui_row_begin();
+        ta_ui_next_size(120, 28);
+        ta_ui_button_begin(0, 0);
+        ta_ui_label(CSTR("Prev Font"));
+        if (ta_ui_button_end()) {
+            if (cur_font_idx) {
+                cur_font_idx--;
+            } else {
+                cur_font_idx = fonts_count - 1;
+            }
         }
-    }
-    ta_ui_next_size(120, 28);
-    ta_ui_button_begin(0, 0);
-    ta_ui_label(CSTR("Next Font"));
-    if (ta_ui_button_end()) {
-        if (cur_font_idx < fonts_count - 1) {
-            cur_font_idx++;
-        } else {
-            cur_font_idx = 0;
+        ta_ui_next_size(120, 28);
+        ta_ui_button_begin(0, 0);
+        ta_ui_label(CSTR("Next Font"));
+        if (ta_ui_button_end()) {
+            if (cur_font_idx < fonts_count - 1) {
+                cur_font_idx++;
+            } else {
+                cur_font_idx = 0;
+            }
         }
-    }
 #endif
+    }
 
+    ta_ui_panel_end();
     ta_ui_window_end();
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI layout end\n");
 

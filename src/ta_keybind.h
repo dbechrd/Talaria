@@ -25,4 +25,5 @@ void ta_keybind_init1       (ta_keybind **keybinds, ta_command command, u32 game
 void ta_keybind_init2       (ta_keybind **keybinds, ta_command command, u32 game_states, u32 triggers, ta_key key1, ta_key key2);
 void ta_keybind_init3       (ta_keybind **keybinds, ta_command command, u32 game_states, u32 triggers, ta_key key1, ta_key key2, ta_key key3);
 bool ta_keybind_triggered   (const ta_keybind *keybind);
+void ta_keybind_not_handled (const ta_keybind *keybind);
 void ta_keybind_update      (ta_keybind *keybind, enum ta_game_state game_state);

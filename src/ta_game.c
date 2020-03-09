@@ -60,6 +60,7 @@ typedef struct ta_game {
     ta_scene scene;             // active scene
     ta_camera minimap_camera;   // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
     ta_keybind *keybinds;
+    bool console_visible;
 
     // HACK: Temp data, need to persist between frames for debug rendering to work when sim is paused
     // TODO(cleanup): Holding pointers across frames is a _BAD IDEA_. At the very least, hold names instead.
@@ -76,7 +77,6 @@ const char *game_state_str(ta_game_state state)
         case TA_STATE_PLAY:     return "TA_STATE_PLAY";
         case TA_STATE_FREE_CAM: return "TA_STATE_FREE_CAM";
         case TA_STATE_EDITOR:   return "TA_STATE_EDITOR";
-        case TA_STATE_TEXTBOX:  return "TA_STATE_TEXTBOX";
         case TA_STATE_SHUTDOWN: return "TA_STATE_SHUTDOWN";
         default:
             DLB_ASSERT(!"Unknown game state");
@@ -90,6 +90,8 @@ const char *ta_command_str(ta_command cmd)
         // Game events
         case COMMAND_PLAY                    : return "COMMAND_PLAY";
         case COMMAND_FREE_CAM                : return "COMMAND_FREE_CAM";
+        case COMMAND_CONSOLE_TOGGLE          : return "COMMAND_CONSOLE_TOGGLE";
+        case COMMAND_CONSOLE_HIDE            : return "COMMAND_CONSOLE_HIDE";
         case COMMAND_EDITOR                  : return "COMMAND_EDITOR";
         case COMMAND_SHUTDOWN                : return "COMMAND_SHUTDOWN";
         // Player events
@@ -144,45 +146,50 @@ void ta_game_init()
     // TODO: Read keybinds from file
     //dlb_vec_reserve(tg_keybinds, 16);
 
+    // TODO: None of these are going to respect the user's OS key repeat settings. Maybe we should check if keybinds
+    // are active via switch in event handlers for _everything_. We can still have remappable keys and undoable command
+    // indirection and don't have to worry about handling repeat anymore.
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    //                               Command                          Game States                                                             Triggers            Keys
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAY                   ,                 TA_STATE_FREE_CAM                                     , TA_KEYBIND_PRESS,   GLFW_KEY_X);
-    ta_keybind_init1(&game.keybinds, COMMAND_FREE_CAM               , TA_STATE_PLAY                                                         , TA_KEYBIND_PRESS,   GLFW_KEY_X);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR                 , TA_STATE_PLAY | TA_STATE_FREE_CAM                                     , TA_KEYBIND_PRESS,   GLFW_KEY_GRAVE_ACCENT);
-    ta_keybind_init1(&game.keybinds, COMMAND_SHUTDOWN               , TA_STATE_PLAY | TA_STATE_FREE_CAM                                     , TA_KEYBIND_PRESS,   GLFW_KEY_ESCAPE);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_FORWARD    , TA_STATE_PLAY                                                         , TA_KEYBIND_HOLD,    GLFW_KEY_W);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_BACKWARD   , TA_STATE_PLAY                                                         , TA_KEYBIND_HOLD,    GLFW_KEY_S);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_RIGHT      , TA_STATE_PLAY                                                         , TA_KEYBIND_HOLD,    GLFW_KEY_D);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_LEFT       , TA_STATE_PLAY                                                         , TA_KEYBIND_HOLD,    GLFW_KEY_A);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_JUMP            , TA_STATE_PLAY                                                         , TA_KEYBIND_PRESS,   GLFW_KEY_SPACE);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_SHOOT           , TA_STATE_PLAY                                                         , TA_KEYBIND_PRESS,   GLFW_KEY_MOUSE_LEFT);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_FORWARD    ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_I);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_BACKWARD   ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_K);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_RIGHT      ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_L);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_LEFT       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_J);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_JUMP            ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_SEMICOLON);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_FORWARD    ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_W);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_BACKWARD   ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_S);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_RIGHT      ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_D);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_LEFT       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_A);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_UP         ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_E);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_DOWN       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_Q);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_MOUSE_LOCK       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_MOUSE_RIGHT);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_MOUSE_UNLOCK     ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_RELEASE, GLFW_KEY_MOUSE_RIGHT);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_MOUSE_LOCK_TOGGLE, TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_M);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_WIREFRAME , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_1);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_MESH      , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_2);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_COLLIDERS , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_3);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_NAMETAGS  , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_4);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_NORMALS   , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_5);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SELECT          ,                                     TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_MOUSE_LEFT);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SELECT_RELEASE  ,                                     TA_STATE_EDITOR                   , TA_KEYBIND_RELEASE, GLFW_KEY_MOUSE_LEFT);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_CANCEL          ,                                     TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_ESCAPE);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_CLOSE           ,                                     TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_GRAVE_ACCENT);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_PAUSE_RESUME,                                     TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_F5);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_NEXT        ,                                     TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_F6);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_NEXT_10     ,                                     TA_STATE_EDITOR                   , TA_KEYBIND_PRESS,   GLFW_KEY_F7);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_WHILE_HELD  ,                                     TA_STATE_EDITOR                   , TA_KEYBIND_HOLD,    GLFW_KEY_F8);
+    //                               Command                          Game States                                          Triggers            Keys
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAY                   ,                 TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   GLFW_KEY_X);
+    ta_keybind_init1(&game.keybinds, COMMAND_FREE_CAM               , TA_STATE_PLAY                                      , TA_KEYBIND_PRESS,   GLFW_KEY_X);
+    ta_keybind_init2(&game.keybinds, COMMAND_CONSOLE_TOGGLE         , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_GRAVE_ACCENT, GLFW_KEY_LEFT_SHIFT);
+    ta_keybind_init1(&game.keybinds, COMMAND_CONSOLE_HIDE           , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_ESCAPE);
+    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR                 , TA_STATE_PLAY | TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   GLFW_KEY_GRAVE_ACCENT);
+    ta_keybind_init1(&game.keybinds, COMMAND_SHUTDOWN               , TA_STATE_PLAY | TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   GLFW_KEY_ESCAPE);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_FORWARD    , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    GLFW_KEY_W);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_BACKWARD   , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    GLFW_KEY_S);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_RIGHT      , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    GLFW_KEY_D);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_LEFT       , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    GLFW_KEY_A);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_JUMP            , TA_STATE_PLAY                                      , TA_KEYBIND_PRESS,   GLFW_KEY_SPACE);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_SHOOT           , TA_STATE_PLAY                                      , TA_KEYBIND_PRESS,   GLFW_KEY_MOUSE_LEFT);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_FORWARD    ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_I);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_BACKWARD   ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_K);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_RIGHT      ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_L);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_LEFT       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_J);
+    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_JUMP            ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_SEMICOLON);
+    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_FORWARD    ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_W);
+    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_BACKWARD   ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_S);
+    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_RIGHT      ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_D);
+    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_LEFT       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_A);
+    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_UP         ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_E);
+    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_DOWN       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_Q);
+    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_MOUSE_LOCK       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_MOUSE_RIGHT);
+    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_MOUSE_UNLOCK     ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_RELEASE, GLFW_KEY_MOUSE_RIGHT);
+    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_MOUSE_LOCK_TOGGLE, TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_M);
+    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_WIREFRAME , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_1);
+    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_MESH      , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_2);
+    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_COLLIDERS , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_3);
+    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_NAMETAGS  , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_4);
+    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_NORMALS   , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_5);
+    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SELECT          ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_MOUSE_LEFT);
+    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SELECT_RELEASE  ,                                     TA_STATE_EDITOR, TA_KEYBIND_RELEASE, GLFW_KEY_MOUSE_LEFT);
+    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_CANCEL          ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_ESCAPE);
+    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_CLOSE           ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_GRAVE_ACCENT);
+    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_PAUSE_RESUME,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_F5);
+    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_NEXT        ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_F6);
+    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_NEXT_10     ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_F7);
+    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_WHILE_HELD  ,                                     TA_STATE_EDITOR, TA_KEYBIND_HOLD,    GLFW_KEY_F8);
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------
@@ -196,6 +203,7 @@ void ta_game_init()
     //ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
     ta_game_load_gltf("data/mesh/button.gltf");
+    ta_game_load_gltf("data/mesh/dude.gltf");
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
 
     //--------------------------------------------------------------------------
@@ -234,8 +242,8 @@ void ta_game_init()
     ta_audio_source *bg_music_src = ta_game_component(tg_e_background_music, RES_COMP_AUDIO_SOURCE);
     DLB_ASSERT(bg_music_src);
 
-    ta_audio_listener_set_volume(&tg_audio_listener, 0.03f);
-    //ta_audio_listener_mute(&tg_audio_listener);
+    //ta_audio_listener_set_volume(&tg_audio_listener, 0.03f);
+    ta_audio_listener_mute(&tg_audio_listener);
     ta_audio_source_play_loop(bg_music_src);
 
     //--------------------------------------------------------------------------
@@ -404,8 +412,6 @@ void ta_game_state_set(ta_game_state state)
             tg_e_active_camera = tg_e_freecam;
             break;
         } case TA_STATE_EDITOR: {
-            break;
-        } case TA_STATE_TEXTBOX: {
             break;
         }
     }
@@ -1041,49 +1047,51 @@ void ta_game_loop()
 
         ta_primitive_render(true, false);
 
-        // Debug render cameras as RGB spheres
-        dlb_vec_each(ta_camera *, camera, cameras) {
-            if (camera->name != tg_e_active_camera) {
-                ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
-                ta_obb obb = { 0 };
-                obb.center = cam_trans->xform_world.position;
-                obb.extents = (ta_vec3){ 0.2f, 0.2f, 0.2f };
-                obb.orientation = cam_trans->xform_world.orientation;
-                ta_primitive_push_obb(0, obb, TA_COLOR_WHITE);
-                ta_vec3 dir = vec3_rotate_quat(VEC3_NZ, obb.orientation);
-                ta_primitive_push_arrow(0, obb.center, dir, TA_COLOR_WHITE);
+        if (game.state == TA_STATE_EDITOR) {
+            // Debug render cameras as RGB spheres
+            dlb_vec_each(ta_camera *, camera, cameras) {
+                if (camera->name != tg_e_active_camera) {
+                    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+                    ta_obb obb = { 0 };
+                    obb.center = cam_trans->xform_world.position;
+                    obb.extents = (ta_vec3){ 0.2f, 0.2f, 0.2f };
+                    obb.orientation = cam_trans->xform_world.orientation;
+                    ta_primitive_push_obb(0, obb, TA_COLOR_WHITE);
+                    ta_vec3 dir = vec3_rotate_quat(VEC3_NZ, obb.orientation);
+                    ta_primitive_push_arrow(0, obb.center, dir, TA_COLOR_WHITE);
 
-                // TODO: Camera icon on billboarded quad in world space
-                //ta_primitive_push_billboard();
+                    // TODO: Camera icon on billboarded quad in world space
+                    //ta_primitive_push_billboard();
+                }
             }
+            // Debug render light as spheres of the light's color
+            dlb_vec_each(ta_light *, light, lights) {
+                ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
+
+                ta_sphere light_pos = { 0 };
+                light_pos.center = transform->xform_world.position;
+                light_pos.radius = 0.2f;
+                ta_rgba color = { 0 };
+                if (light->disabled) {
+                    color.r = 0.5f;
+                    color.g = 0.5f;
+                    color.b = 0.5f;
+                } else {
+                    color.r = light->color.r;
+                    color.g = light->color.g;
+                    color.b = light->color.b;
+                }
+                ta_primitive_push_sphere(0, light_pos, color);
+
+                if (active_camera->debug_colliders) {
+                    ta_sphere light_aoe = { 0 };
+                    light_aoe.center = transform->xform_world.position;
+                    light_aoe.radius = light->shadowmap.zfar;
+                    ta_primitive_push_sphere(0, light_aoe, color);
+                }
+            }
+            ta_primitive_render(true, false);
         }
-        // Debug render light as spheres of the light's color
-        dlb_vec_each(ta_light *, light, lights) {
-            ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
-
-            ta_sphere light_pos = { 0 };
-            light_pos.center = transform->xform_world.position;
-            light_pos.radius = 0.2f;
-            ta_rgba color = { 0 };
-            if (light->disabled) {
-                color.r = 0.5f;
-                color.g = 0.5f;
-                color.b = 0.5f;
-            } else {
-                color.r = light->color.r;
-                color.g = light->color.g;
-                color.b = light->color.b;
-            }
-            ta_primitive_push_sphere(0, light_pos, color);
-
-            if (active_camera->debug_colliders) {
-                ta_sphere light_aoe = { 0 };
-                light_aoe.center = transform->xform_world.position;
-                light_aoe.radius = light->shadowmap.zfar;
-                ta_primitive_push_sphere(0, light_aoe, color);
-            }
-        }
-        ta_primitive_render(true, false);
 
         if (active_camera->debug_colliders) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug colliders pass...\n");
@@ -1128,7 +1136,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Editor UI (world)
         //----------------------------------------------------------------------
-        if (game.state == TA_STATE_EDITOR || game.state == TA_STATE_TEXTBOX) {
+        if (game.state == TA_STATE_EDITOR) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor world UI pass...\n");
             ta_editor_update_widgets();
             ta_editor_draw_world();
@@ -1189,7 +1197,7 @@ void ta_game_loop()
         // Barchart
         //----------------------------------------------------------------------
         ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &MAT4_IDENT);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);d
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_ui_barchart_draw(&chart, 0, 0);
         ta_primitive_render(true, true);
@@ -1198,9 +1206,16 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Editor UI (screen)
         //----------------------------------------------------------------------
-        if (game.state == TA_STATE_EDITOR || game.state == TA_STATE_TEXTBOX) {
+        if (game.state == TA_STATE_EDITOR) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor screen UI pass...\n");
             ta_editor_draw_screen();
+        }
+
+        //----------------------------------------------------------------------
+        // Console UI (screen)
+        //----------------------------------------------------------------------
+        if (game.console_visible) {
+            ta_log_write(&tg_debug_log, SRC_GAME, " Console screen UI pass...\n");
             ta_console_draw_screen();
         }
 
@@ -1283,6 +1298,18 @@ void game_command_play()
 void game_command_free_cam()
 {
     ta_game_state_set(TA_STATE_FREE_CAM);
+}
+void game_command_console_toggle()
+{
+    game.console_visible = !game.console_visible;
+}
+void game_command_console_exit()
+{
+    if (game.console_visible) {
+        game.console_visible = false;
+    } else {
+        ta_keybind_not_handled(&game.keybinds[COMMAND_CONSOLE_HIDE]);
+    }
 }
 void game_command_editor()
 {
@@ -1411,7 +1438,6 @@ void game_command_player_shoot()
                 return;
             }
 
-
             ta_audio_source_play_name(src_gun, gun->sfx_reload);
             last_reload_ms = ta_timer_elapsed_ms();
 
@@ -1519,12 +1545,14 @@ void ta_game_update_keybinds()
 {
     // TODO: Handle escape as a drag cancel keybind
     // Don't trigger any editor hotkeys while a textbox is focused
-    if (editor.textbox_dragging)
+    if (editor.textbox_editing || editor.textbox_dragging)
         return;
 
     static void (*commands[COMMAND_COUNT])() = {
         [COMMAND_PLAY]                    = game_command_play,
         [COMMAND_FREE_CAM]                = game_command_free_cam,
+        [COMMAND_CONSOLE_TOGGLE]          = game_command_console_toggle,
+        [COMMAND_CONSOLE_HIDE]            = game_command_console_exit,
         [COMMAND_EDITOR]                  = game_command_editor,
         [COMMAND_SHUTDOWN]                = game_command_shutdown,
         [COMMAND_CAMERA_MOVE_FORWARD]     = game_command_camera_move_forward,

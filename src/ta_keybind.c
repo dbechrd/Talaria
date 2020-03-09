@@ -49,6 +49,13 @@ bool ta_keybind_triggered(const ta_keybind *keybind)
     return keybind->triggered;
 }
 
+void ta_keybind_not_handled(const ta_keybind *keybind)
+{
+    ta_key_unlock(keybind, keybind->keys[0]);
+    ta_key_unlock(keybind, keybind->keys[1]);
+    ta_key_unlock(keybind, keybind->keys[2]);
+}
+
 void ta_keybind_update(ta_keybind *keybind, enum ta_game_state game_state)
 {
     // Keybind needs at least one valid key

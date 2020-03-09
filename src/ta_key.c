@@ -52,8 +52,7 @@ void ta_key_lock(const ta_keybind *keybind, ta_key key)
 // NOTE: Empty key unlock is a no-op
 void ta_key_unlock(const ta_keybind *keybind, ta_key key)
 {
-    if (key) {
-        DLB_ASSERT(!keys[key].lock || keys[key].lock == keybind);
+    if (key && keys[key].lock == keybind) {
         keys[key].lock = 0;
     }
 }

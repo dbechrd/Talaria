@@ -412,12 +412,9 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         // TODO: Equation6 from the above the proper equation for 3D?
         // http://chrishecker.com/images/b/bb/Gdmphys4.pdf p. 24, Figure 4
         // TODO: Read all of https://chrishecker.com/Rigid_Body_Dynamics#Physics_Articles
-        ta_vec3 impulse_ang_a = vec3_cross(mat3_mul_vec3(&a->inv_tensor_local,
-            vec3_cross(ra, manifold->normal)), ra);
-        ta_vec3 impulse_ang_b = vec3_cross(mat3_mul_vec3(&b->inv_tensor_local,
-            vec3_cross(rb, manifold->normal)), rb);
-        float impulse_ang = vec3_dot(vec3_add(impulse_ang_a, impulse_ang_b),
-            manifold->normal);
+        ta_vec3 impulse_ang_a = vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra);
+        ta_vec3 impulse_ang_b = vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb);
+        float impulse_ang = vec3_dot(vec3_add(impulse_ang_a, impulse_ang_b), manifold->normal);
 #else
         float impulse_ang = 0.0f;
 #endif
@@ -477,6 +474,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
             ta_rigid_body_apply_impulse(a, a_friction, ra);
             ta_rigid_body_apply_impulse(b, b_friction, rb);
 
+#if 0
             //-----------------------------
             // Debug rendering (friction impulse)
             if (a->inv_mass) {
@@ -486,6 +484,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
                 ta_primitive_push_arrow(0, manifold->contacts[i], b_friction, TA_COLOR_GREEN);
             }
             //-----------------------------
+#endif
         }
     }
 

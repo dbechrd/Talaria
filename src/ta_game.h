@@ -20,8 +20,7 @@ typedef enum ta_game_state {
     TA_STATE_PLAY     = 1 << 1,
     TA_STATE_FREE_CAM = 1 << 2,
     TA_STATE_EDITOR   = 1 << 3,
-    TA_STATE_TEXTBOX  = 1 << 4,
-    TA_STATE_SHUTDOWN = 1 << 5,
+    TA_STATE_SHUTDOWN = 1 << 4,
 } ta_game_state;
 const char *game_state_str(ta_game_state state);
 
@@ -29,6 +28,8 @@ typedef enum ta_command {
     // Game events
     COMMAND_PLAY,
     COMMAND_FREE_CAM,
+    COMMAND_CONSOLE_TOGGLE,
+    COMMAND_CONSOLE_HIDE,
     COMMAND_EDITOR,
     COMMAND_SHUTDOWN,
 

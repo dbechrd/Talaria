@@ -857,13 +857,11 @@ static void textbox_focus(ta_ui_textbox_state *textbox)
     *ui_textbox_editing = textbox;
     textbox->focus_changed = !textbox->focused;
     textbox->focused = true;
-    ta_game_state_set(TA_STATE_TEXTBOX);
 }
 static void textbox_unfocus(ta_ui_textbox_state *textbox)
 {
     if (*ui_textbox_editing == textbox) {
         *ui_textbox_editing = 0;
-        ta_game_state_set(TA_STATE_EDITOR);
     }
     textbox->focus_changed = textbox->focused;
     textbox->focused = false;  // User clicked elsewhere

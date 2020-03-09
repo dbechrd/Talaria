@@ -102,11 +102,10 @@ void ta_event_events()
     ta_event event;
     while (ta_event_pop(&event)) {
         ta_log_write(&tg_debug_log, SRC_EVENT, "  event type = %s\n", event_type_str(event.type));
-        if (ta_game_state_current() == TA_STATE_TEXTBOX) {
-            ta_log_write(&tg_debug_log, SRC_EVENT, "   editor event...\n");
-            ta_editor_textbox_event(&event);
-            if (event.handled) continue;
-        }
+
+        ta_log_write(&tg_debug_log, SRC_EVENT, "   editor event...\n");
+        ta_editor_textbox_event(&event);
+        if (event.handled) continue;
 
         ta_log_write(&tg_debug_log, SRC_EVENT, "   game event...\n");
         ta_game_event(&event);
