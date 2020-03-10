@@ -563,14 +563,14 @@ cgltf_result ta_gltf_parse_file(ta_gltf *gltf)
 
 static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute_type attr_type)
 {
-    static const ta_mesh_buffer_type mesh_buffer_idx[] = {
-        [cgltf_attribute_type_position] = TA_MESH_BUFFER_POSITION,
-        [cgltf_attribute_type_normal  ] = TA_MESH_BUFFER_NORMAL,
-        [cgltf_attribute_type_tangent ] = TA_MESH_BUFFER_TANGENT,
-        [cgltf_attribute_type_texcoord] = TA_MESH_BUFFER_UV,
-        [cgltf_attribute_type_color   ] = TA_MESH_BUFFER_COLOR,
-        [cgltf_attribute_type_joints  ] = TA_MESH_BUFFER_JOINTS,
-        [cgltf_attribute_type_weights ] = TA_MESH_BUFFER_WEIGHTS,
+    static const ta_vertex_attrib_type mesh_buffer_idx[] = {
+        [cgltf_attribute_type_position] = TA_VERTEX_ATTRIB_POSITION,
+        [cgltf_attribute_type_normal  ] = TA_VERTEX_ATTRIB_NORMAL,
+        [cgltf_attribute_type_tangent ] = TA_VERTEX_ATTRIB_TANGENT,
+        [cgltf_attribute_type_texcoord] = TA_VERTEX_ATTRIB_UV,
+        [cgltf_attribute_type_color   ] = TA_VERTEX_ATTRIB_COLOR,
+        [cgltf_attribute_type_joints  ] = TA_VERTEX_ATTRIB_JOINTS,
+        [cgltf_attribute_type_weights ] = TA_VERTEX_ATTRIB_WEIGHTS,
     };
 
     cgltf_size data_size = accessor->buffer_view->size;
@@ -601,10 +601,33 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
             dlb_vec_reserve(mesh->normals, accessor->count);
             break;
         } case cgltf_attribute_type_tangent: {
-            DLB_ASSERT(accessor->type == cgltf_type_vec4);
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
-            DLB_ASSERT(data_size == sizeof(*mesh->tangents) * accessor->count);
-            dlb_vec_reserve(mesh->tangents, accessor->count);
+            if (accessor->type == cgltf_type_vec3) {
+                DLB_ASSERT(data_size == sizeof(*mesh->tangents) * accessor->count);
+                dlb_vec_reserve(mesh->tangents, accessor->count);
+            } else if (accessor->type == cgltf_type_vec4) {
+                // NOTE: gltf decided tangents should be vec4.. but only sometimes. Fix that dumb shit. -.-
+                DLB_ASSERT(sizeof(*mesh->tangents) == 12);
+                DLB_ASSERT(data_size / accessor->count == 16);
+                dlb_vec_reserve(mesh->tangents, accessor->count);
+                dlb_vec_hdr(mesh->tangents)->len = accessor->count;
+
+                // Calculate how many extra bytes to skip per element
+                size_t extra_bytes = (data_size / accessor->count) - sizeof(*mesh->tangents);
+
+                // Copy array of vec4 to array of vec3
+                const u8 *src = data;
+                u8 *dst = mesh->tangents;
+                for (size_t i = 0; i < accessor->count; ++i) {
+                    DLB_ASSERT(((ta_vec4 *)src)->w == 1.0f);
+                    memcpy(dst, src, sizeof(*mesh->tangents));
+                    src += sizeof(*mesh->tangents) + extra_bytes;
+                    dst += sizeof(*mesh->tangents);
+                }
+                return;
+            } else {
+                DLB_ASSERT(!"Unexpected accessor type for tangents");
+            }
             break;
         } case cgltf_attribute_type_texcoord: {
             DLB_ASSERT(accessor->type == cgltf_type_vec2);
@@ -636,7 +659,7 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
         }
     }
 
-    ta_mesh_buffer_type mesh_buffer_type = mesh_buffer_idx[attr_type];
+    ta_vertex_attrib_type mesh_buffer_type = mesh_buffer_idx[attr_type];
     void *buffer = mesh->buffers[mesh_buffer_type];
     dlb_vec_hdr(buffer)->len = accessor->count;
     dlb_memcpy(buffer, data, data_size);
@@ -903,6 +926,11 @@ void ta_gltf_load(ta_gltf *gltf)
         model->cast_shadows = true;
         model->receive_shadows = true;
 
+        dlb_vec_each(const char **, gltf_target, gltf_mesh->target_names_v) {
+            const char *target = ta_symbol_intern(*gltf_target, strlen(*gltf_target));
+            dlb_vec_push(model->anim_targets, target);
+        }
+
         int prim_idx = 0;
         dlb_vec_each(cgltf_primitive *, gltf_prim, gltf_mesh->primitives_v) {
             const size_t mesh_name_size = ARRAY_COUNT(mesh_name);
@@ -973,15 +1001,33 @@ void ta_gltf_load(ta_gltf *gltf)
             dlb_vec_push(model->pieces, piece);
             prim_idx++;
 
-            // TODO: Load morph targets
-            UNUSED(gltf_prim->targets_v);
-        }
+            // Load animation target meshes
+            char target_name[256] = { 0 };
+            const size_t target_name_size = ARRAY_COUNT(target_name);
+            int target_idx = 0;
+            dlb_vec_each(cgltf_morph_target *, target, gltf_prim->targets_v) {
+                int target_name_len = 0;
+                if (target_idx < dlb_vec_len(model->anim_targets)) {
+                    target_name_len = snprintf(target_name, target_name_size, "%s.%s", mesh->name, model->anim_targets[target_idx]);
+                } else {
+                    DLB_ASSERT(!"Target names missing from gltf_mesh, this will break finding targets later");
+                    target_name_len = snprintf(target_name, target_name_size, "%s.%03d", mesh->name, target_idx);
+                }
+                DLB_ASSERT(target_name_len < target_name_size);
 
-        // TODO: model->animation_targets or similar
-        //dlb_vec_each(const char **, gltf_target, gltf_mesh->target_names_v) {
-        //    const char *target = *gltf_target;
-        //    UNUSED(target);
-        //}
+                ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", target_name);
+                ta_mesh *target_mesh = ta_game_alloc(RES_MESH, target_name, target_name_len);
+
+                ta_log_write(&tg_debug_log, SRC_GLTF, "copying attributes\n");
+                dlb_vec_each(cgltf_attribute *, attr, target->attributes_v) {
+                    gltf_mesh_accessor(target_mesh, attr->data, attr->type);
+                }
+
+                ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_create (target)\n");
+                ta_mesh_create(target_mesh);
+                target_idx++;
+            }
+        }
     }
     ta_log_write(&tg_debug_log, SRC_GLTF, "successfully loaded meshes for %s\n", gltf->filename);
 }

@@ -222,7 +222,7 @@ void ta_shader_load(ta_shader *shader)
     ta_shader_attribute *attr_col  = find_attribute_by_name(shader, SYM_ATTR_COLOR,    TA_GLSL_VEC4);
     ta_shader_attribute *attr_uv   = find_attribute_by_name(shader, SYM_ATTR_UV,       TA_GLSL_VEC2);
     ta_shader_attribute *attr_norm = find_attribute_by_name(shader, SYM_ATTR_NORMAL,   TA_GLSL_VEC3);
-    ta_shader_attribute *attr_tang = find_attribute_by_name(shader, SYM_ATTR_TANGENT,  TA_GLSL_VEC4);
+    ta_shader_attribute *attr_tang = find_attribute_by_name(shader, SYM_ATTR_TANGENT,  TA_GLSL_VEC3);
 
     DLB_ASSERT(!attr_pos  || attr_pos->location  < 0 || attr_pos->location  == TA_SHADER_ATTR_POSITION);
     DLB_ASSERT(!attr_col  || attr_col->location  < 0 || attr_col->location  == TA_SHADER_ATTR_COLOR);

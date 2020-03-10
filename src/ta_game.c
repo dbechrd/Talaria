@@ -203,7 +203,7 @@ void ta_game_init()
     //ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
     ta_game_load_gltf("data/mesh/button.gltf");
-    ta_game_load_gltf("data/mesh/dude.gltf");
+    //ta_game_load_gltf("data/mesh/dude.gltf");
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
 
     //--------------------------------------------------------------------------
@@ -1511,7 +1511,7 @@ void game_command_debug_mouse_lock_toggle()
     ta_mouse_capture_toggle();
 
     // HACK: Too lazy to make a proper keybind for this
-    for (int i = 0; i < TA_MESH_BUFFER_COUNT; ++i) {
+    for (int i = 0; i < TA_VERTEX_ATTRIB_COUNT; ++i) {
         dlb_vec_clear(primitive_lines_perma.buffers[i]);
     }
 }

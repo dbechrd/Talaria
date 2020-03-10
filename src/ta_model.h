@@ -6,11 +6,13 @@
 typedef struct ta_piece {
     const char *mesh;
     const char *material;
+    const char *anim_targets;  // Array of animation target meshes
 } ta_piece;
 
 typedef struct ta_model {
     TA_COMPONENT_HEADER
     ta_piece *pieces;          // Array of mesh pieces in this model
+    const char **anim_targets; // Array of animation target names
     bool     invisible;        // If true, model is not rendered
     bool     cast_shadows;     // If true, allows model to cast real-time shadows
     bool     receive_shadows;  // If true, model will use shadow maps                      // TODO: Pass as flag to PBR shader, skip shadows if false

@@ -1199,7 +1199,7 @@ ta_shader:
     },
     {
       name: "attr_tangent",
-      type: 6,  # TA_GLSL_VEC4
+      type: 5,  # TA_GLSL_VEC3
     },
     {
       name: "attr_joints",

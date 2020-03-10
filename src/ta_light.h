@@ -45,18 +45,18 @@ typedef struct ta_light_shadowmap {
 
 typedef struct ta_light {
     TA_COMPONENT_HEADER
-    float           intensity;      // Light intensity
-    ta_rgb          color;          // Light color
-    bool            disabled;       // If true, light will not illuminate or cast shadows
-    bool            cast_shadows;   // If true, light will cast dynamic shadows
-    ta_light_type   type;           // Light type
+    float         intensity;      // Light intensity
+    ta_rgb        color;          // Light color
+    bool          disabled;       // If true, light will not illuminate or cast shadows
+    bool          cast_shadows;   // If true, light will cast dynamic shadows
+    ta_light_type type;           // Light type
     union {
-        //ta_light_ambient     ambient;   // Type-specific light properties
-        //ta_light_directional directional;
-        //ta_light_point       point;
+        ta_light_ambient     ambient;      // Type-specific light properties
+        ta_light_directional directional;
+        ta_light_point       point;
         ta_light_spot        spot;
     } data;
-    ta_light_shadowmap shadowmap;   // Shadow map properties
+    ta_light_shadowmap shadowmap;  // Shadow map properties
 } ta_light;
 
 const char *ta_light_type_str           (int type);

@@ -101,6 +101,6 @@ u64 ta_game_sim_step                ();
 u64 ta_game_frame_num               ();
 void ta_game_window_resize          ();
 void ta_game_loop                   ();
-void ta_game_update_keybinds                ();
+void ta_game_update_keybinds        ();
 void ta_game_event                  (struct ta_event *event);
 void ta_game_save                   ();

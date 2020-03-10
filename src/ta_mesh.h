@@ -2,17 +2,17 @@
 #include "ta_math.h"
 #include "misc/glad.h"
 
-typedef enum ta_mesh_buffer_type {
-    TA_MESH_BUFFER_POSITION,
-    TA_MESH_BUFFER_COLOR,
-    TA_MESH_BUFFER_UV,
-    TA_MESH_BUFFER_NORMAL,
-    TA_MESH_BUFFER_TANGENT,
-    TA_MESH_BUFFER_JOINTS,
-    TA_MESH_BUFFER_WEIGHTS,
-    TA_MESH_BUFFER_INDEX,
-    TA_MESH_BUFFER_COUNT
-} ta_mesh_buffer_type;
+typedef enum ta_vertex_attrib_type {
+    TA_VERTEX_ATTRIB_POSITION,
+    TA_VERTEX_ATTRIB_COLOR,
+    TA_VERTEX_ATTRIB_UV,
+    TA_VERTEX_ATTRIB_NORMAL,
+    TA_VERTEX_ATTRIB_TANGENT,
+    TA_VERTEX_ATTRIB_JOINTS,
+    TA_VERTEX_ATTRIB_WEIGHTS,
+    TA_VERTEX_ATTRIB_INDEX,
+    TA_VERTEX_ATTRIB_COUNT
+} ta_vertex_attrib_type;
 
 #pragma warning(push)
 #pragma warning(disable: 4201)
@@ -27,21 +27,21 @@ typedef struct ta_mesh {
             ta_rgba *colors;
             ta_vec2 *uvs;
             ta_vec3 *normals;
-            ta_vec4 *tangents;
+            ta_vec3 *tangents;
             struct {
                 GLushort ids[4];  // NOTE: GLTF only supports 4 joints per vertex
             } *joints;
             ta_vec4 *weights;
             GLuint *indexes;
         };
-        void *buffers[TA_MESH_BUFFER_COUNT];
+        void *buffers[TA_VERTEX_ATTRIB_COUNT];
     };
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;
     ta_line_3d *tangent_lines;
     ta_aabb aabb;
     GLuint gl_vao;
-    GLuint gl_buffers[TA_MESH_BUFFER_COUNT];
+    GLuint gl_buffers[TA_VERTEX_ATTRIB_COUNT];
 } ta_mesh;
 #pragma warning(pop)
 

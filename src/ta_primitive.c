@@ -744,7 +744,7 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
         if (cull_face) glDisable(GL_CULL_FACE);
 
         // Update buffers (resize if necessary)
-        for (int i = 0; i < TA_MESH_BUFFER_COUNT; ++i) {
+        for (int i = 0; i < TA_VERTEX_ATTRIB_COUNT; ++i) {
             size_t queue_bytes = dlb_vec_size(mesh->buffers[i]);
             if (!queue_bytes) {
                 continue;
@@ -777,7 +777,7 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
     // TODO: Move this out into its own explicit call, it's more confusing here
     // ta_mesh_clear_buffers();
     if (clear_buffers) {
-        for (int i = 0; i < TA_MESH_BUFFER_COUNT; ++i) {
+        for (int i = 0; i < TA_VERTEX_ATTRIB_COUNT; ++i) {
             dlb_vec_clear(mesh->buffers[i]);
         }
     }

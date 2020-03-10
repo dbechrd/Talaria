@@ -4,7 +4,7 @@ layout(location = 0) in vec3 attr_position;
 layout(location = 1) in vec4 attr_color;
 layout(location = 2) in vec2 attr_uv;
 layout(location = 3) in vec3 attr_normal;
-layout(location = 4) in vec4 attr_tangent;
+layout(location = 4) in vec3 attr_tangent;
 layout(location = 5) in vec4 attr_joints;
 layout(location = 6) in vec4 attr_weights;
 
@@ -53,14 +53,14 @@ void main()
 	vertex.color = attr_color;
 	vertex.uv = attr_uv;
     vertex.normal = attr_normal;
-    vertex.tangent = attr_tangent.xyz;
+    vertex.tangent = attr_tangent;
 
     // TODO: Calculate model inverse on CPU side
     mat3 normal_matrix = transpose(inverse(mat3(u_model)));
-    vec3 T = normalize(normal_matrix * attr_tangent.xyz);
+    vec3 T = normalize(normal_matrix * attr_tangent);
     vec3 N = normalize(normal_matrix * attr_normal);
     T = normalize(T - dot(T, N) * N);  // re-orthogonalize T with respect to N
-    vec3 B = cross(N, T) * attr_tangent.w;  // glTF requires tangents to specify direction via w-component
+    vec3 B = cross(N, T);
     mat3 TBN = transpose(mat3(T, B, N));
 
     vertex.tbn_normal = TBN * normalize(vec3(u_model * vec4(attr_normal, 0.0)));

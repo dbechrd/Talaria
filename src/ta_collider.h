@@ -14,11 +14,11 @@ typedef struct ta_collider {
     float            mass;      // mass of collider, in kg
     ta_mat3          tensor;    // inertia tensor of collider (3D)
     union {
-        ta_vec3     center;    // Offset relative to parent rigid body
+        ta_vec3      center;    // Offset relative to parent rigid body
         // NOTE: Must all start with ta_vec3 center
-        ta_sphere   sphere;
-        ta_obb      obb;
-        ta_plane    plane;      // NOTE: This is technically a half-space, not a true plane
+        ta_sphere    sphere;
+        ta_obb       obb;
+        ta_plane     plane;      // NOTE: This is technically a half-space, not a true plane
     } data;
 } ta_collider;
 
