@@ -23,6 +23,13 @@ const char *SYM_ATTR_COLOR;
 const char *SYM_ATTR_UV;
 const char *SYM_ATTR_NORMAL;
 const char *SYM_ATTR_TANGENT;
+const char *SYM_ATTR_MORPH0_POSITION;
+const char *SYM_ATTR_MORPH0_COLOR;
+const char *SYM_ATTR_MORPH0_UV;
+const char *SYM_ATTR_MORPH0_NORMAL;
+const char *SYM_ATTR_MORPH0_TANGENT;
+const char *SYM_ATTR_JOINTS;
+const char *SYM_ATTR_WEIGHTS;
 
 // Shader uniforms
 const char *SYM_U_PROJ;
@@ -87,11 +94,18 @@ void ta_symbol_init() {
     SYM_MAT4      = INTERN("mat4");
     SYM_STRUCT    = INTERN("struct");
 
-    SYM_ATTR_POSITION = INTERN("attr_position");
-    SYM_ATTR_COLOR    = INTERN("attr_color");
-    SYM_ATTR_UV       = INTERN("attr_uv");
-    SYM_ATTR_NORMAL   = INTERN("attr_normal");
-    SYM_ATTR_TANGENT  = INTERN("attr_tangent");
+    SYM_ATTR_POSITION        = INTERN("attr_position");
+    SYM_ATTR_COLOR           = INTERN("attr_color");
+    SYM_ATTR_UV              = INTERN("attr_uv");
+    SYM_ATTR_NORMAL          = INTERN("attr_normal");
+    SYM_ATTR_TANGENT         = INTERN("attr_tangent");
+    SYM_ATTR_MORPH0_POSITION = INTERN("attr_morph0_position");
+    SYM_ATTR_MORPH0_COLOR    = INTERN("attr_morph0_color");
+    SYM_ATTR_MORPH0_UV       = INTERN("attr_morph0_uv");
+    SYM_ATTR_MORPH0_NORMAL   = INTERN("attr_morph0_normal");
+    SYM_ATTR_MORPH0_TANGENT  = INTERN("attr_morph0_tangent");
+    SYM_ATTR_JOINTS          = INTERN("attr_joints");
+    SYM_ATTR_WEIGHTS         = INTERN("attr_weights");
 
     SYM_U_PROJ                       = INTERN("u_proj");
     SYM_U_VIEW                       = INTERN("u_view");

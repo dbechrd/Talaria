@@ -200,7 +200,7 @@ void ta_game_init()
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
     //ta_game_load_gltf("data/mesh/hier_test.gltf");
-    //ta_game_load_gltf("data/mesh/rock_0001.gltf");
+    ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
     ta_game_load_gltf("data/mesh/button.gltf");
     //ta_game_load_gltf("data/mesh/dude.gltf");

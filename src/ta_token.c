@@ -78,7 +78,7 @@ const char *SYM_FALSE;
 static const char *token_type_str(token_type type)
 {
     switch (type) {
-        case TOKEN_UNKNOWN:        return "????????";
+        case TOKEN_UNKNOWN:        return "UNKNOWN";
         case TOKEN_EOF:            return "EOF";
         case TOKEN_WHITESPACE:     return "WHITESPACE";
         case TOKEN_NEWLINE:        return "NEWLINE";
@@ -95,7 +95,7 @@ static const char *token_type_str(token_type type)
         case TOKEN_OBJECT_START:   return "OBJECT_START";
         case TOKEN_OBJECT_END:     return "OBJECT_END";
         case TOKEN_LIST_SEPARATOR: return "LIST_SEPARATOR";
-        default: DLB_ASSERT(!"Unknown token type");  return 0;
+        default: DLB_ASSERT(0);    return "???";
     }
 };
 static token *token_read(ta_file *f, token **tokens)

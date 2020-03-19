@@ -18,12 +18,10 @@
 
 const char *ta_texture_type_str(int type)
 {
-    switch(type) {
-        case TA_TEXTURE_2D:      return "TA_TEXTURE_2D";
+    switch (type) {
+        case TA_TEXTURE_2D:      return "TA_TEXTURE_2D     ";
         case TA_TEXTURE_CUBEMAP: return "TA_TEXTURE_CUBEMAP";
-        default:
-            DLB_ASSERT(!"<UNKNOWN_TA_TEXTURE_TYPE>");
-            return 0;
+        default: DLB_ASSERT(0);  return "TA_TEXTURE_???    ";
     }
 }
 

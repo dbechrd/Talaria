@@ -3,13 +3,18 @@
 #include "misc/glad.h"
 
 typedef enum ta_shader_attr {
-    TA_SHADER_ATTR_POSITION = 0,
-    TA_SHADER_ATTR_COLOR    = 1,
-    TA_SHADER_ATTR_UV       = 2,
-    TA_SHADER_ATTR_NORMAL   = 3,
-    TA_SHADER_ATTR_TANGENT  = 4,
-    TA_SHADER_ATTR_JOINTS   = 5,
-    TA_SHADER_ATTR_WEIGHTS  = 6,
+    TA_SHADER_ATTR_POSITION        = 0,
+    TA_SHADER_ATTR_COLOR           = 1,
+    TA_SHADER_ATTR_UV              = 2,
+    TA_SHADER_ATTR_NORMAL          = 3,
+    TA_SHADER_ATTR_TANGENT         = 4,
+    TA_SHADER_ATTR_MORPH0_POSITION = 5,
+    TA_SHADER_ATTR_MORPH0_COLOR    = 6,
+    TA_SHADER_ATTR_MORPH0_UV       = 7,
+    TA_SHADER_ATTR_MORPH0_NORMAL   = 8,
+    TA_SHADER_ATTR_MORPH0_TANGENT  = 9,
+    TA_SHADER_ATTR_JOINTS          = 10,
+    TA_SHADER_ATTR_WEIGHTS         = 11,
     TA_SHADER_ATTR_COUNT
 } ta_shader_attr;
 

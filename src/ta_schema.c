@@ -77,9 +77,7 @@ void ta_schema_field_type_str(ta_schema_field_type type, const char **str)
         case ATOM_FLOAT:            *str = "ATOM_FLOAT";             break;
         case ATOM_STRING:           *str = "ATOM_STRING";            break;
         case ATOM_ENUM:             *str = "ATOM_ENUM";              break;
-        default:
-            DLB_ASSERT(!"<UNKNOWN_TA_FIELD_TYPE>");
-            return;
+        default: DLB_ASSERT(0);     *str = "TYP_???";                break;
     }
 }
 
@@ -89,22 +87,22 @@ ta_schema_field_type res_to_typ(ta_res_type type)
     switch (type) {
         // Component types
         case RES_COMP_AUDIO_SOURCE: schema_type = TYP_AUDIO_SOURCE ; break;
-        case RES_COMP_BUTTON      : schema_type = TYP_BUTTON       ; break;
-        case RES_COMP_CAMERA      : schema_type = TYP_CAMERA       ; break;
-        case RES_COMP_GUN         : schema_type = TYP_GUN          ; break;
-        case RES_COMP_LIGHT       : schema_type = TYP_LIGHT        ; break;
-        case RES_COMP_MODEL       : schema_type = TYP_MODEL        ; break;
-        case RES_COMP_PLAYER      : schema_type = TYP_PLAYER       ; break;
-        case RES_COMP_TRANSFORM   : schema_type = TYP_TRANSFORM    ; break;
-        case RES_COMP_RIGID_BODY  : schema_type = TYP_RIGID_BODY   ; break;
+        case RES_COMP_BUTTON:       schema_type = TYP_BUTTON       ; break;
+        case RES_COMP_CAMERA:       schema_type = TYP_CAMERA       ; break;
+        case RES_COMP_GUN:          schema_type = TYP_GUN          ; break;
+        case RES_COMP_LIGHT:        schema_type = TYP_LIGHT        ; break;
+        case RES_COMP_MODEL:        schema_type = TYP_MODEL        ; break;
+        case RES_COMP_PLAYER:       schema_type = TYP_PLAYER       ; break;
+        case RES_COMP_TRANSFORM:    schema_type = TYP_TRANSFORM    ; break;
+        case RES_COMP_RIGID_BODY:   schema_type = TYP_RIGID_BODY   ; break;
         // Resource types
-        case RES_AUDIO_BUFFER     : schema_type = TYP_AUDIO_BUFFER ; break;
-        case RES_FONT             : schema_type = TYP_FONT         ; break;
-        case RES_MATERIAL         : schema_type = TYP_MATERIAL     ; break;
-        case RES_MESH             : schema_type = TYP_MESH         ; break;
-        case RES_SHADER           : schema_type = TYP_SHADER       ; break;
-        case RES_TEXTURE          : schema_type = TYP_TEXTURE      ; break;
-        default                   : schema_type = TYP_NULL         ; break;
+        case RES_AUDIO_BUFFER:      schema_type = TYP_AUDIO_BUFFER ; break;
+        case RES_FONT:              schema_type = TYP_FONT         ; break;
+        case RES_MATERIAL:          schema_type = TYP_MATERIAL     ; break;
+        case RES_MESH:              schema_type = TYP_MESH         ; break;
+        case RES_SHADER:            schema_type = TYP_SHADER       ; break;
+        case RES_TEXTURE:           schema_type = TYP_TEXTURE      ; break;
+        default:                    schema_type = TYP_NULL         ; break;
     }
     return schema_type;
 }
@@ -114,23 +112,23 @@ ta_res_type typ_to_res(ta_schema_field_type type)
     ta_res_type res_type;
     switch (type) {
         // Component types
-        case TYP_AUDIO_SOURCE : res_type = RES_COMP_AUDIO_SOURCE; break;
-        case TYP_BUTTON       : res_type = RES_COMP_BUTTON      ; break;
-        case TYP_CAMERA       : res_type = RES_COMP_CAMERA      ; break;
-        case TYP_GUN          : res_type = RES_COMP_GUN         ; break;
-        case TYP_LIGHT        : res_type = RES_COMP_LIGHT       ; break;
-        case TYP_MODEL        : res_type = RES_COMP_MODEL       ; break;
-        case TYP_PLAYER       : res_type = RES_COMP_PLAYER      ; break;
-        case TYP_TRANSFORM    : res_type = RES_COMP_TRANSFORM    ; break;
-        case TYP_RIGID_BODY   : res_type = RES_COMP_RIGID_BODY  ; break;
+        case TYP_AUDIO_SOURCE:  res_type = RES_COMP_AUDIO_SOURCE; break;
+        case TYP_BUTTON:        res_type = RES_COMP_BUTTON      ; break;
+        case TYP_CAMERA:        res_type = RES_COMP_CAMERA      ; break;
+        case TYP_GUN:           res_type = RES_COMP_GUN         ; break;
+        case TYP_LIGHT:         res_type = RES_COMP_LIGHT       ; break;
+        case TYP_MODEL:         res_type = RES_COMP_MODEL       ; break;
+        case TYP_PLAYER:        res_type = RES_COMP_PLAYER      ; break;
+        case TYP_TRANSFORM:     res_type = RES_COMP_TRANSFORM    ; break;
+        case TYP_RIGID_BODY:    res_type = RES_COMP_RIGID_BODY  ; break;
         // Resource types
-        case TYP_AUDIO_BUFFER : res_type = RES_AUDIO_BUFFER     ; break;
-        case TYP_FONT         : res_type = RES_FONT             ; break;
-        case TYP_MATERIAL     : res_type = RES_MATERIAL         ; break;
-        case TYP_MESH         : res_type = RES_MESH             ; break;
-        case TYP_SHADER       : res_type = RES_SHADER           ; break;
-        case TYP_TEXTURE      : res_type = RES_TEXTURE          ; break;
-        default               : res_type = RES_COUNT            ; break;
+        case TYP_AUDIO_BUFFER:  res_type = RES_AUDIO_BUFFER     ; break;
+        case TYP_FONT:          res_type = RES_FONT             ; break;
+        case TYP_MATERIAL:      res_type = RES_MATERIAL         ; break;
+        case TYP_MESH:          res_type = RES_MESH             ; break;
+        case TYP_SHADER:        res_type = RES_SHADER           ; break;
+        case TYP_TEXTURE:       res_type = RES_TEXTURE          ; break;
+        default:                res_type = RES_COUNT            ; break;
     }
     return res_type;
 }

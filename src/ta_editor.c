@@ -641,6 +641,7 @@ void ta_editor_draw_world()
     if (selected_entity) {
         ta_camera *camera = ta_game_camera();
 
+#if 0
         // Render selected entity as yellow wireframes
         ta_model *e_model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
         if (e_model) {
@@ -659,6 +660,7 @@ void ta_editor_draw_world()
             ta_model_render_shader(e_model, camera, shader);
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
+#endif
 
         // Render active widget's gizmos
         ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
@@ -1057,12 +1059,47 @@ static void ui_node_panel()
             dlb_vec_each(ta_piece *, piece, model->pieces) {
                 ta_ui_row_begin();
                 ta_ui_next_size(label_width, 0);
+                ta_ui_label(CSTR("piece:"));
+
+                ta_ui_row_begin();
+                ta_ui_next_margin_left(16);
+                ta_ui_next_size(label_width, 0);
                 ta_ui_label(CSTR("mesh:"));
                 ta_ui_label(SYM(piece->mesh));
+
                 ta_ui_row_begin();
+                ta_ui_next_margin_left(16);
                 ta_ui_next_size(label_width, 0);
                 ta_ui_label(CSTR("material:"));
                 ta_ui_label(SYM(piece->material));
+
+                ta_ui_row_begin();
+                ta_ui_next_margin_left(16);
+                ta_ui_next_size(label_width, 0);
+                ta_ui_label(CSTR("anim_targets:"));
+
+                // List all of the piece animation targets
+                if (piece->anim_targets) {
+                    dlb_vec_each(const char **, anim_target, piece->anim_targets) {
+                        ta_ui_row_begin();
+                        ta_ui_next_margin_left(32);
+                        ta_ui_next_size(label_width, 0);
+                        ta_ui_label(SYM(*anim_target));
+                    }
+                } else {
+                    ta_ui_row_begin();
+                    ta_ui_next_margin_left(32);
+                    ta_ui_next_size(label_width, 0);
+                    ta_ui_label(CSTR("none"));
+                }
+            }
+
+            // List all of the model animation targets
+            dlb_vec_each(const char **, anim_target, model->anim_targets) {
+                ta_ui_row_begin();
+                ta_ui_next_size(label_width, 0);
+                ta_ui_label(CSTR("anim_target:"));
+                ta_ui_label(SYM(*anim_target));
             }
 
             ta_ui_row_begin();
@@ -1626,13 +1663,18 @@ static void ui_mesh_panel()
         // TODO: Preview mesh in carousel while mouse hover
         if (ta_ui_last_state().hover) {
             char tex_buf[1024] = { 0 };
-            int len = snprintf(tex_buf, sizeof(tex_buf),
-                "name        : %s\n"
-                "vertex count: %zu",
-                mesh->name,
-                dlb_vec_len(mesh->positions)
-            );
+            int len = snprintf(tex_buf, sizeof(tex_buf), "%s\n", mesh->name);
             DLB_ASSERT(len < sizeof(tex_buf));
+
+            for (int i = 0; i < TA_VERTEX_ATTRIB_COUNT; i++) {
+                len += snprintf(tex_buf + len, sizeof(tex_buf) - len,
+                    "[%3u] %s %zu\n",
+                    mesh->gl_buffers[i],
+                    ta_vertex_attrib_type_str(i),
+                    dlb_vec_len(mesh->buffers[i])
+                );
+                DLB_ASSERT(len < sizeof(tex_buf));
+            }
             ta_ui_tooltip(tex_buf, len);
         }
     }
@@ -1735,13 +1777,13 @@ static void ui_editor_sidebar()
         void (*panel_method)();
     } categories[] = {
         { CSTR("Scene"),     ui_scene_panel },
-    { CSTR("Node"),      ui_node_panel },
-    { CSTR("Audio"),     ui_audio_panel },
-    { CSTR("Cameras"),   ui_camera_panel },
-    { CSTR("Materials"), ui_material_panel },
-    { CSTR("Meshes"),    ui_mesh_panel },
-    { CSTR("Textures"),  ui_texture_panel },
-    { CSTR("Textbox"),   ui_textbox_panel },
+        { CSTR("Node"),      ui_node_panel },
+        { CSTR("Audio"),     ui_audio_panel },
+        { CSTR("Cameras"),   ui_camera_panel },
+        { CSTR("Materials"), ui_material_panel },
+        { CSTR("Meshes"),    ui_mesh_panel },
+        { CSTR("Textures"),  ui_texture_panel },
+        { CSTR("Textbox"),   ui_textbox_panel },
     };
     static int category_selected = 1;
 

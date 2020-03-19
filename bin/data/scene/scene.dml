@@ -42,17 +42,17 @@ ta_camera:
   position_target_vel: 0x3E4CCCCD (0.200000)
   target_xform:
     position:
-      x: 0x402CB035 (2.698255)
-      y: 0x40E41A60 (7.128220)
-      z: 0xC0B4D349 (-5.650792)
+      x: 0x40B81125 (5.752093)
+      y: 0x40E491D7 (7.142803)
+      z: 0xC11D214B (-9.820628)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x00000000 (0.000000)
-  yaw: 0x4280417B (64.127892)
+  yaw: 0x4323537C (163.326111)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC18667A4 (-16.800606)
+  pitch: 0xC1EB33A1 (-29.400209)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -63,9 +63,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0x3E01278D (0.126127)
-    y: 0x3F7512B1 (0.957316)
-    z: 0xBE852813 (-0.260071)
+    x: 0xBEF0C6B6 (-0.470266)
+    y: 0x3F5F07C2 (0.871212)
+    z: 0xBE103BBF (-0.140853)
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -207,17 +207,6 @@ ta_model:
     {
       mesh: "prim_sphere",
       material: "metal_plate_019",
-    },
-  ]
-  cast_shadows: true
-  receive_shadows: true
-ta_model:
-  name: "rock_0001"
-  entity: "rock_0001"
-  pieces: [
-    {
-      mesh: "rock_mesh",
-      material: "cobble",
     },
   ]
   cast_shadows: true
@@ -448,14 +437,14 @@ ta_transform:
   entity: "freecam"
   xform:
     position:
-      x: 0x402CB030 (2.698254)
-      y: 0x40E41A5C (7.128218)
-      z: 0xC0B4D34E (-5.650794)
+      x: 0x40B8112A (5.752095)
+      y: 0x40E491D2 (7.142800)
+      z: 0xC11D2150 (-9.820633)
     orientation:
-      x: 0xBE1966D4 (-0.149806)
-      y: 0xBE5DB437 (-0.216508)
-      z: 0x80000000 (-0.000000)
-      w: 0x3F76F7D2 (0.964719)
+      x: 0xBE9EF748 (-0.310480)
+      y: 0x3F072098 (0.527841)
+      z: 0x00000000 (0.000000)
+      w: 0x3F4A6229 (0.790560)
 ta_transform:
   name: "player_one"
   entity: "player_one"
@@ -483,13 +472,13 @@ ta_transform:
       z: 0x80000000 (-0.000000)
       w: 0x3F7C1EAC (0.984843)
 ta_transform:
-  name: "rock_0001"
-  entity: "rock_0001"
+  name: "rock_mesh"
+  entity: "rock_mesh"
   xform:
     position:
-      x: 0x40AC286F (5.379936)
-      y: 0xC6B4CE3C (-23143.117188)
-      z: 0xC210A972 (-36.165474)
+      x: 0x408B46D7 (4.352397)
+      y: 0x4099AAA0 (4.802078)
+      z: 0xC20D8E54 (-35.388992)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -501,7 +490,7 @@ ta_transform:
   xform:
     position:
       x: 0x412D335C (10.825039)
-      y: 0x3F7EEFBE (0.995846)
+      y: 0x3F7EEFBD (0.995846)
       z: 0xC189516C (-17.164757)
     orientation:
       x: 0x3DFD7BD2 (0.123771)
@@ -527,7 +516,7 @@ ta_transform:
   xform:
     position:
       x: 0xC134F153 (-11.308917)
-      y: 0xC8091B9C (-140398.437500)
+      y: 0xC80C4699 (-143642.390625)
       z: 0x40C3AD3D (6.114897)
     orientation:
       x: 0x00000000 (0.000000)
@@ -566,7 +555,7 @@ ta_transform:
   xform:
     position:
       x: 0x40928201 (4.578370)
-      y: 0xC8091AFD (-140395.953125)
+      y: 0xC80C45FA (-143639.906250)
       z: 0x40968FEB (4.705068)
     orientation:
       x: 0x3E9202C9 (0.285177)
@@ -663,8 +652,8 @@ ta_rigid_body:
       radius: 0x3F800000 (1.000000)
   mass: 0x40A00000 (5.000000)
 ta_rigid_body:
-  name: "rock_0001"
-  entity: "rock_0001"
+  name: "rock_mesh"
+  entity: "rock_mesh"
   collider:
     type: 2  # TA_COLLIDER_OBB
     obb:
@@ -681,7 +670,7 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
-  mass: 0x3F800000 (1.000000)
+  no_gravity: true
 ta_rigid_body:
   name: "sphere2"
   entity: "sphere2"
@@ -869,7 +858,7 @@ ta_material:
   roughness_texture: "terrazzo_roughness"
   roughness_factor: 0x3F800000 (1.000000)
   height_texture: "terrazzo_height"
-  height_factor: 0.01
+  height_factor: 0x3C23D70A (0.010000)
   normal_texture: "terrazzo_normal"
   occlusion_texture: "terrazzo_occlusion"
 ta_material:
@@ -1003,12 +992,6 @@ ta_mesh:
 ta_mesh:
   name: "star_0001"
   path: "data/mesh/star.obj"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
-ta_mesh:
-  name: "rock_mesh"
   offset:
     x: 0x00000000 (0.000000)
     y: 0x00000000 (0.000000)
@@ -1202,6 +1185,26 @@ ta_shader:
       type: 5,  # TA_GLSL_VEC3
     },
     {
+      name: "attr_morph0_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_morph0_color",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_morph0_uv",
+      type: 4,  # TA_GLSL_VEC2
+    },
+    {
+      name: "attr_morph0_normal",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_morph0_tangent",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
       name: "attr_joints",
       type: 6,  # TA_GLSL_VEC4
     },
@@ -1211,6 +1214,10 @@ ta_shader:
     },
   ]
   uniforms: [
+    {
+      name: "u_morph_weights[0]",
+      type: 2,  # TA_GLSL_FLOAT
+    },
     {
       name: "u_proj",
       type: 8,  # TA_GLSL_MAT4
@@ -1226,60 +1233,6 @@ ta_shader:
     {
       name: "u_camera_pos",
       type: 5,  # TA_GLSL_VEC3
-    },
-    {
-      name: "u_material",
-      type: 9,  # TA_GLSL_STRUCT
-      properties: [
-        {
-          name: "u_material.albedo_texture",
-          type: 3,  # TA_GLSL_SAMPLER2D
-        },
-        {
-          name: "u_material.albedo_factor",
-          type: 6,  # TA_GLSL_VEC4
-        },
-        {
-          name: "u_material.emission_texture",
-          type: 3,  # TA_GLSL_SAMPLER2D
-        },
-        {
-          name: "u_material.emission_factor",
-          type: 5,  # TA_GLSL_VEC3
-        },
-        {
-          name: "u_material.metallic_texture",
-          type: 3,  # TA_GLSL_SAMPLER2D
-        },
-        {
-          name: "u_material.metallic_factor",
-          type: 2,  # TA_GLSL_FLOAT
-        },
-        {
-          name: "u_material.roughness_texture",
-          type: 3,  # TA_GLSL_SAMPLER2D
-        },
-        {
-          name: "u_material.roughness_factor",
-          type: 2,  # TA_GLSL_FLOAT
-        },
-        {
-          name: "u_material.height_texture",
-          type: 3,  # TA_GLSL_SAMPLER2D
-        },
-        {
-          name: "u_material.height_factor",
-          type: 2,  # TA_GLSL_FLOAT
-        },
-        {
-          name: "u_material.normal_texture",
-          type: 3,  # TA_GLSL_SAMPLER2D
-        },
-        {
-          name: "u_material.occlusion_texture",
-          type: 3,  # TA_GLSL_SAMPLER2D
-        },
-      ]
     },
     {
       name: "u_lights_count",
@@ -1612,6 +1565,60 @@ ta_shader:
       ]
     },
     {
+      name: "u_material",
+      type: 9,  # TA_GLSL_STRUCT
+      properties: [
+        {
+          name: "u_material.albedo_texture",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_material.albedo_factor",
+          type: 6,  # TA_GLSL_VEC4
+        },
+        {
+          name: "u_material.emission_texture",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_material.emission_factor",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_material.metallic_texture",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_material.metallic_factor",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_material.roughness_texture",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_material.roughness_factor",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_material.height_texture",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_material.height_factor",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_material.normal_texture",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+        {
+          name: "u_material.occlusion_texture",
+          type: 3,  # TA_GLSL_SAMPLER2D
+        },
+      ]
+    },
+    {
       name: "u_selected",
       type: 0,  # TA_GLSL_INT
     },
@@ -1629,8 +1636,16 @@ ta_shader:
       name: "attr_position",
       type: 5,  # TA_GLSL_VEC3
     },
+    {
+      name: "attr_morph0_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
   ]
   uniforms: [
+    {
+      name: "u_morph_weights[0]",
+      type: 2,  # TA_GLSL_FLOAT
+    },
     {
       name: "u_model",
       type: 8,  # TA_GLSL_MAT4
@@ -1649,8 +1664,16 @@ ta_shader:
       name: "attr_position",
       type: 5,  # TA_GLSL_VEC3
     },
+    {
+      name: "attr_morph0_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
   ]
   uniforms: [
+    {
+      name: "u_morph_weights[0]",
+      type: 2,  # TA_GLSL_FLOAT
+    },
     {
       name: "u_model",
       type: 8,  # TA_GLSL_MAT4

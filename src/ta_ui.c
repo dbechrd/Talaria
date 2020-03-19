@@ -51,8 +51,14 @@ typedef struct ui_style {
 static struct {
     bool pos_relative;
     bool size;
-    bool margin;
-    bool pad;
+    bool margin_x;
+    bool margin_y;
+    bool margin_w;
+    bool margin_h;
+    bool pad_x;
+    bool pad_y;
+    bool pad_w;
+    bool pad_h;
     bool bg_color[UI_STATE_COUNT];
     bool fg_color[UI_STATE_COUNT];
     bool invisible;
@@ -334,12 +340,14 @@ static void ui_frame_begin(ui_frame_type type, void *data, u32 flags)
     frame->data.ptr = data;
     frame->internal_flags = flags;
 
-    frame->margin = next_frame_dirty.margin
-        ? next_frame_style.margin
-        : ui_default_style[type].margin;
-    frame->pad = next_frame_dirty.pad
-        ? next_frame_style.pad
-        : ui_default_style[type].pad;
+    frame->margin.x = next_frame_dirty.margin_x ? next_frame_style.margin.x : ui_default_style[type].margin.x;
+    frame->margin.y = next_frame_dirty.margin_y ? next_frame_style.margin.y : ui_default_style[type].margin.y;
+    frame->margin.w = next_frame_dirty.margin_w ? next_frame_style.margin.w : ui_default_style[type].margin.w;
+    frame->margin.h = next_frame_dirty.margin_h ? next_frame_style.margin.h : ui_default_style[type].margin.h;
+    frame->pad.x = next_frame_dirty.pad_x ? next_frame_style.pad.x : ui_default_style[type].pad.x;
+    frame->pad.y = next_frame_dirty.pad_y ? next_frame_style.pad.y : ui_default_style[type].pad.y;
+    frame->pad.w = next_frame_dirty.pad_w ? next_frame_style.pad.w : ui_default_style[type].pad.w;
+    frame->pad.h = next_frame_dirty.pad_h ? next_frame_style.pad.h : ui_default_style[type].pad.h;
 
     for (ui_state_type state = 0; state < UI_STATE_COUNT; state++) {
         frame->bg_color[state] = next_frame_dirty.bg_color[state]
@@ -483,13 +491,56 @@ static ta_rect ui_frame_client_area(ui_frame *frame)
 }
 
 // TODO: Replace these with ta_ui_push_style that persists until pop
+void ta_ui_next_margin_left(int margin)
+{
+    next_frame_style.margin.x = margin;
+    next_frame_dirty.margin_x = true;
+}
+void ta_ui_next_margin_top(int margin)
+{
+    next_frame_style.margin.y = margin;
+    next_frame_dirty.margin_y = true;
+}
+void ta_ui_next_margin_right(int margin)
+{
+    next_frame_style.margin.w = margin;
+    next_frame_dirty.margin_w = true;
+}
+void ta_ui_next_margin_bottom(int margin)
+{
+    next_frame_style.margin.h = margin;
+    next_frame_dirty.margin_h = true;
+}
 void ta_ui_next_margin(int left, int top, int right, int bottom)
 {
     next_frame_style.margin.x = left;
     next_frame_style.margin.y = top;
     next_frame_style.margin.w = right;
     next_frame_style.margin.h = bottom;
-    next_frame_dirty.margin = true;
+    next_frame_dirty.margin_x = true;
+    next_frame_dirty.margin_y = true;
+    next_frame_dirty.margin_w = true;
+    next_frame_dirty.margin_h = true;
+}
+void ta_ui_next_pad_left(int pad)
+{
+    next_frame_style.pad.x = pad;
+    next_frame_dirty.pad_x = true;
+}
+void ta_ui_next_pad_top(int pad)
+{
+    next_frame_style.pad.y = pad;
+    next_frame_dirty.pad_y = true;
+}
+void ta_ui_next_pad_right(int pad)
+{
+    next_frame_style.pad.w = pad;
+    next_frame_dirty.pad_w = true;
+}
+void ta_ui_next_pad_bottom(int pad)
+{
+    next_frame_style.pad.h = pad;
+    next_frame_dirty.pad_h = true;
 }
 void ta_ui_next_pad(int left, int top, int right, int bottom)
 {
@@ -497,7 +548,10 @@ void ta_ui_next_pad(int left, int top, int right, int bottom)
     next_frame_style.pad.y = top;
     next_frame_style.pad.w = right;
     next_frame_style.pad.h = bottom;
-    next_frame_dirty.pad = true;
+    next_frame_dirty.pad_x = true;
+    next_frame_dirty.pad_y = true;
+    next_frame_dirty.pad_w = true;
+    next_frame_dirty.pad_h = true;
 }
 void ta_ui_next_offset(int x, int y)
 {

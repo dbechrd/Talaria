@@ -617,7 +617,8 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
 
                 // Copy array of vec4 to array of vec3
                 const u8 *src = data;
-                u8 *dst = mesh->tangents;
+                u8 *dst = (void *)mesh->tangents;
+                DLB_ASSERT(dst);
                 for (size_t i = 0; i < accessor->count; ++i) {
                     DLB_ASSERT(((ta_vec4 *)src)->w == 1.0f);
                     memcpy(dst, src, sizeof(*mesh->tangents));
@@ -998,8 +999,6 @@ void ta_gltf_load(ta_gltf *gltf)
             ta_piece piece = { 0 };
             piece.mesh = mesh->name;
             piece.material = ta_symbol_intern(material_name, material_name_len);
-            dlb_vec_push(model->pieces, piece);
-            prim_idx++;
 
             // Load animation target meshes
             char target_name[256] = { 0 };
@@ -1025,8 +1024,13 @@ void ta_gltf_load(ta_gltf *gltf)
 
                 ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_create (target)\n");
                 ta_mesh_create(target_mesh);
+
+                dlb_vec_push(piece.anim_targets, target_mesh->name);
                 target_idx++;
             }
+
+            dlb_vec_push(model->pieces, piece);
+            prim_idx++;
         }
     }
     ta_log_write(&tg_debug_log, SRC_GLTF, "successfully loaded meshes for %s\n", gltf->filename);

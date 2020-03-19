@@ -114,8 +114,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     }
 }
 
-void ta_model_render_shader(ta_model *model, ta_camera *camera,
-    ta_shader *shader)
+void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shader)
 {
     DLB_ASSERT(model);
     DLB_ASSERT(camera);

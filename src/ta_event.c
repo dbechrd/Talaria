@@ -35,9 +35,7 @@ const char *event_type_str(ta_event_type type)
         case GAME_EVENT_BUTTON_ACTIVATED:     return "GAME_EVENT_BUTTON_ACTIVATED";
         case GAME_EVENT_BUTTON_DEACTIVATED:   return "GAME_EVENT_BUTTON_DEACTIVATED";
         case GAME_EVENT_BUTTON_STATE_CHANGED: return "GAME_EVENT_BUTTON_STATE_CHANGED";
-        default:
-            DLB_ASSERT(!"Unknown event type");
-            return 0;
+        default: DLB_ASSERT(0);               return "EVENT_TYPE_???";
     }
 }
 

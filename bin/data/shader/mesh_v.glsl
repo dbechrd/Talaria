@@ -1,12 +1,23 @@
 #version 330 core
 
-layout(location = 0) in vec3 attr_position;
-layout(location = 1) in vec4 attr_color;
-layout(location = 2) in vec2 attr_uv;
-layout(location = 3) in vec3 attr_normal;
-layout(location = 4) in vec3 attr_tangent;
-layout(location = 5) in vec4 attr_joints;
-layout(location = 6) in vec4 attr_weights;
+layout(location =  0) in vec3 attr_position;
+layout(location =  1) in vec4 attr_color;
+layout(location =  2) in vec2 attr_uv;
+layout(location =  3) in vec3 attr_normal;
+layout(location =  4) in vec3 attr_tangent;
+layout(location =  5) in vec3 attr_morph0_position;
+layout(location =  6) in vec4 attr_morph0_color;
+layout(location =  7) in vec2 attr_morph0_uv;
+layout(location =  8) in vec3 attr_morph0_normal;
+layout(location =  9) in vec3 attr_morph0_tangent;
+layout(location = 10) in vec4 attr_joints;
+layout(location = 11) in vec4 attr_weights;
+
+uniform float u_morph_weights[1];
+uniform mat4 u_proj;
+uniform mat4 u_view;
+uniform mat4 u_model;
+uniform vec3 u_camera_pos;
 
 struct Light {
     float intensity;
@@ -25,8 +36,6 @@ struct Light {
 uniform int u_lights_count;
 uniform Light[8] u_lights;
 
-uniform vec3 u_camera_pos;
-
 out vs_out {
     vec3 position;
     vec4 color;
@@ -41,12 +50,11 @@ out vs_out {
     vec4 light_pvm[8];
 } vertex;
 
-uniform mat4 u_proj;
-uniform mat4 u_view;
-uniform mat4 u_model;
-
 void main()
 {
+    // TODO: Morph target blending
+    // http://antongerdelan.net/opengl/blend_shapes.html
+
     // TODO: Premultiply MVP matrix and pass as uniform
     vec4 position = u_model * vec4(attr_position, 1.0);
     vertex.position = vec3(position);

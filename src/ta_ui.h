@@ -104,7 +104,15 @@ void ta_ui_set_font                 (struct ta_font *font);
 void ta_ui_set_cursor               (ta_cursor_type cursor_type);
 
 // Styles
+void ta_ui_next_margin_left         (int margin);
+void ta_ui_next_margin_top          (int margin);
+void ta_ui_next_margin_right        (int margin);
+void ta_ui_next_margin_bottom       (int margin);
 void ta_ui_next_margin              (int left, int top, int right, int bottom);
+void ta_ui_next_pad_left            (int pad);
+void ta_ui_next_pad_top             (int pad);
+void ta_ui_next_pad_right           (int pad);
+void ta_ui_next_pad_bottom          (int pad);
 void ta_ui_next_pad                 (int left, int top, int right, int bottom);
 void ta_ui_next_offset              (int x, int y);
 void ta_ui_next_size                (int w, int h);

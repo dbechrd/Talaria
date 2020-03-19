@@ -75,6 +75,11 @@ static void window_glfw_error(int code, const char* description)
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "glfw3 error code %d: %s\n", code, description);
 }
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#define RAND_ELEMENTS 8
+
 int main(int argc, char *argv[])
 {
     UNUSED(argc);
