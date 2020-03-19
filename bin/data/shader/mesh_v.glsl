@@ -55,6 +55,7 @@ void main()
     // TODO: Morph target blending
     // http://antongerdelan.net/opengl/blend_shapes.html
 
+
     // TODO: Premultiply MVP matrix and pass as uniform
     vec4 position = u_model * vec4(attr_position, 1.0);
     vertex.position = vec3(position);

@@ -177,104 +177,32 @@ void ta_mesh_create(ta_mesh *mesh)
     glGenVertexArrays(1, &mesh->gl_vao);
     glBindVertexArray(mesh->gl_vao);
 
-    if (mesh->positions) {
-        size_t positions_count = dlb_vec_len(mesh->positions);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_POSITION]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_POSITION]);
-        glBufferData(GL_ARRAY_BUFFER, positions_count * sizeof(*mesh->positions), mesh->positions, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_POSITION);
-        glVertexAttribPointer(TA_SHADER_ATTR_POSITION, sizeof(*mesh->positions) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
-    }
-    if (mesh->colors) {
-        size_t colors_count = dlb_vec_len(mesh->colors);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_COLOR]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_COLOR]);
-        glBufferData(GL_ARRAY_BUFFER, colors_count * sizeof(*mesh->colors), mesh->colors, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
-        glVertexAttribPointer(TA_SHADER_ATTR_COLOR, sizeof(*mesh->colors) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
-    }
-    if (mesh->uvs) {
-        size_t uvs_count = dlb_vec_len(mesh->uvs);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_UV]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_UV]);
-        glBufferData(GL_ARRAY_BUFFER, uvs_count * sizeof(*mesh->uvs), mesh->uvs, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_UV);
-        glVertexAttribPointer(TA_SHADER_ATTR_UV, sizeof(*mesh->uvs) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
-    }
-    if (mesh->normals) {
-        size_t normals_count = dlb_vec_len(mesh->normals);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_NORMAL]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_NORMAL]);
-        glBufferData(GL_ARRAY_BUFFER, normals_count * sizeof(*mesh->normals), mesh->normals, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_NORMAL);
-        glVertexAttribPointer(TA_SHADER_ATTR_NORMAL, sizeof(*mesh->normals) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
-    }
-    if (mesh->tangents) {
-        size_t tangents_count = dlb_vec_len(mesh->tangents);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_TANGENT]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_TANGENT]);
-        glBufferData(GL_ARRAY_BUFFER, tangents_count * sizeof(*mesh->tangents), mesh->tangents, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_TANGENT);
-        glVertexAttribPointer(TA_SHADER_ATTR_TANGENT, sizeof(*mesh->tangents) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
+#define GEN_BUFFER(vtx_attr, c_type, data, shader_attr, gl_type) \
+    if (data) { \
+        glGenBuffers(1, &mesh->gl_buffers[vtx_attr]); \
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[vtx_attr]); \
+        glBufferData(GL_ARRAY_BUFFER, dlb_vec_len(data) * sizeof(*data), data, GL_STATIC_DRAW); \
+        glEnableVertexAttribArray(shader_attr); \
+        glVertexAttribPointer(shader_attr, sizeof(*data) / sizeof(c_type), gl_type, false, 0, 0); \
     }
 
-    if (mesh->morph0_positions) {
-        size_t positions_count = dlb_vec_len(mesh->morph0_positions);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_MORPH0_POSITION]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_MORPH0_POSITION]);
-        glBufferData(GL_ARRAY_BUFFER, positions_count * sizeof(*mesh->morph0_positions), mesh->morph0_positions, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_MORPH0_POSITION);
-        glVertexAttribPointer(TA_SHADER_ATTR_MORPH0_POSITION, sizeof(*mesh->morph0_positions) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
-    }
-    if (mesh->colors) {
-        size_t colors_count = dlb_vec_len(mesh->colors);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_COLOR]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_COLOR]);
-        glBufferData(GL_ARRAY_BUFFER, colors_count * sizeof(*mesh->colors), mesh->colors, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_COLOR);
-        glVertexAttribPointer(TA_SHADER_ATTR_COLOR, sizeof(*mesh->colors) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
-    }
-    if (mesh->uvs) {
-        size_t uvs_count = dlb_vec_len(mesh->uvs);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_UV]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_UV]);
-        glBufferData(GL_ARRAY_BUFFER, uvs_count * sizeof(*mesh->uvs), mesh->uvs, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_UV);
-        glVertexAttribPointer(TA_SHADER_ATTR_UV, sizeof(*mesh->uvs) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
-    }
-    if (mesh->normals) {
-        size_t normals_count = dlb_vec_len(mesh->normals);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_NORMAL]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_NORMAL]);
-        glBufferData(GL_ARRAY_BUFFER, normals_count * sizeof(*mesh->normals), mesh->normals, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_NORMAL);
-        glVertexAttribPointer(TA_SHADER_ATTR_NORMAL, sizeof(*mesh->normals) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
-    }
-    if (mesh->tangents) {
-        size_t tangents_count = dlb_vec_len(mesh->tangents);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_TANGENT]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_TANGENT]);
-        glBufferData(GL_ARRAY_BUFFER, tangents_count * sizeof(*mesh->tangents), mesh->tangents, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_TANGENT);
-        glVertexAttribPointer(TA_SHADER_ATTR_TANGENT, sizeof(*mesh->tangents) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
-    }
+    GEN_BUFFER(TA_VERTEX_ATTRIB_POSITION, GLfloat, mesh->positions,         TA_SHADER_ATTR_POSITION, GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_COLOR,    GLfloat, mesh->colors,            TA_SHADER_ATTR_COLOR,    GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_UV,       GLfloat, mesh->uvs,               TA_SHADER_ATTR_UV,       GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_NORMAL,   GLfloat, mesh->normals,           TA_SHADER_ATTR_NORMAL,   GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_TANGENT,  GLfloat, mesh->tangents,          TA_SHADER_ATTR_TANGENT,  GL_FLOAT);
 
-    if (mesh->joints) {
-        size_t joints_count = dlb_vec_len(mesh->joints);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_JOINTS]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_JOINTS]);
-        glBufferData(GL_ARRAY_BUFFER, joints_count * sizeof(*mesh->joints), mesh->joints, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_JOINTS);
-        glVertexAttribPointer(TA_SHADER_ATTR_JOINTS, sizeof(*mesh->joints) / sizeof(GLushort), GL_UNSIGNED_SHORT, false, 0, 0);
-    }
-    if (mesh->weights) {
-        size_t weights_count = dlb_vec_len(mesh->weights);
-        glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_WEIGHTS]);
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[TA_VERTEX_ATTRIB_WEIGHTS]);
-        glBufferData(GL_ARRAY_BUFFER, weights_count * sizeof(*mesh->weights), mesh->weights, GL_STATIC_DRAW);
-        glEnableVertexAttribArray(TA_SHADER_ATTR_WEIGHTS);
-        glVertexAttribPointer(TA_SHADER_ATTR_WEIGHTS, sizeof(*mesh->weights) / sizeof(GLfloat), GL_FLOAT, false, 0, 0);
-    }
+    GEN_BUFFER(TA_VERTEX_ATTRIB_POSITION, GLfloat, mesh->morph0_positions,  TA_SHADER_ATTR_POSITION, GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_COLOR,    GLfloat, mesh->morph0_colors,     TA_SHADER_ATTR_COLOR,    GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_UV,       GLfloat, mesh->morph0_uvs,        TA_SHADER_ATTR_UV,       GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_NORMAL,   GLfloat, mesh->morph0_normals,    TA_SHADER_ATTR_NORMAL,   GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_TANGENT,  GLfloat, mesh->morph0_tangents,   TA_SHADER_ATTR_TANGENT,  GL_FLOAT);
+
+    GEN_BUFFER(TA_VERTEX_ATTRIB_JOINTS,   GLushort, mesh->joints,           TA_SHADER_ATTR_JOINTS,   GL_UNSIGNED_SHORT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_WEIGHTS,  GLfloat, mesh->weights,           TA_SHADER_ATTR_WEIGHTS,  GL_FLOAT);
+
+#undef GEN_BUFFER
+
     if (mesh->indexes) {
         size_t indexes_count = dlb_vec_len(mesh->indexes);
         glGenBuffers(1, &mesh->gl_buffers[TA_VERTEX_ATTRIB_INDEX]);
