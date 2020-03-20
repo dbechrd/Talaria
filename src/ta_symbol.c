@@ -32,6 +32,7 @@ const char *SYM_ATTR_JOINTS;
 const char *SYM_ATTR_WEIGHTS;
 
 // Shader uniforms
+const char *SYM_U_MORPH_WEIGHTS[1];
 const char *SYM_U_PROJ;
 const char *SYM_U_VIEW;
 const char *SYM_U_MODEL;
@@ -107,6 +108,7 @@ void ta_symbol_init() {
     SYM_ATTR_JOINTS          = INTERN("attr_joints");
     SYM_ATTR_WEIGHTS         = INTERN("attr_weights");
 
+    SYM_U_MORPH_WEIGHTS[0]           = INTERN("u_morph_weights[0]");
     SYM_U_PROJ                       = INTERN("u_proj");
     SYM_U_VIEW                       = INTERN("u_view");
     SYM_U_MODEL                      = INTERN("u_model");

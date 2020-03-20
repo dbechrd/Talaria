@@ -44,6 +44,11 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
             offset = mat4_mul(&offset, &transform->world);
             ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
         }
+        if (piece->anim_targets) {
+            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], tg_hard_morph);
+        } else {
+            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], 0.0f);
+        }
         ta_shader_bind(shader);
         ta_mesh_render(mesh);
     }
@@ -97,6 +102,13 @@ void ta_model_render(ta_model *model, ta_camera *camera)
                 offset = mat4_mul(&transform->world, &offset);
                 ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
             }
+
+            if (piece->anim_targets) {
+                ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], tg_hard_morph);
+            } else {
+                ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], 0.0f);
+            }
+
             ta_shader_bind(shader);
             ta_mesh_render(mesh);
         }
@@ -132,6 +144,11 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
             ta_mat4 offset = mat4_translate(mesh->offset);
             offset = mat4_mul(&transform->world, &offset);
             ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
+        }
+        if (piece->anim_targets) {
+            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], tg_hard_morph);
+        } else {
+            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], 0.0f);
         }
         ta_shader_bind(shader);
         ta_mesh_render(mesh);

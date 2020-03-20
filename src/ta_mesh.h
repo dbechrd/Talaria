@@ -3,6 +3,7 @@
 #include "misc/glad.h"
 
 typedef enum ta_vertex_attrib_type {
+    // Note: Morphable attributes must be contiguous and in the same order as their respective morph target attributes
     TA_VERTEX_ATTRIB_POSITION,
     TA_VERTEX_ATTRIB_COLOR,
     TA_VERTEX_ATTRIB_UV,

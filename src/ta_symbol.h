@@ -56,6 +56,7 @@ extern const char *SYM_ATTR_JOINTS;
 extern const char *SYM_ATTR_WEIGHTS;
 
 // Shader uniforms
+extern const char *SYM_U_MORPH_WEIGHTS[1];
 extern const char *SYM_U_PROJ;
 extern const char *SYM_U_VIEW;
 extern const char *SYM_U_MODEL;

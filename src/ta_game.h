@@ -14,6 +14,7 @@ extern const char *tg_e_background_music;
 extern const char *tg_e_freecam;
 extern const char *tg_e_player_one;
 extern const char *tg_e_active_camera;
+extern float tg_hard_morph;
 
 typedef enum ta_game_state {
     TA_STATE_STARTUP  = 1 << 0,

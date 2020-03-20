@@ -561,14 +561,15 @@ cgltf_result ta_gltf_parse_file(ta_gltf *gltf)
     return err;
 }
 
-static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute_type attr_type)
+static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute_type cgltf_attr_type,
+    u32 target)
 {
-    static const ta_vertex_attrib_type mesh_buffer_idx[] = {
+    static const ta_vertex_attrib_type attr_type_lookup[] = {
         [cgltf_attribute_type_position] = TA_VERTEX_ATTRIB_POSITION,
+        [cgltf_attribute_type_color   ] = TA_VERTEX_ATTRIB_COLOR,
+        [cgltf_attribute_type_texcoord] = TA_VERTEX_ATTRIB_UV,
         [cgltf_attribute_type_normal  ] = TA_VERTEX_ATTRIB_NORMAL,
         [cgltf_attribute_type_tangent ] = TA_VERTEX_ATTRIB_TANGENT,
-        [cgltf_attribute_type_texcoord] = TA_VERTEX_ATTRIB_UV,
-        [cgltf_attribute_type_color   ] = TA_VERTEX_ATTRIB_COLOR,
         [cgltf_attribute_type_joints  ] = TA_VERTEX_ATTRIB_JOINTS,
         [cgltf_attribute_type_weights ] = TA_VERTEX_ATTRIB_WEIGHTS,
     };
@@ -586,30 +587,81 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
     // NOTE: We don't support interleaved vertex attributes for now
     DLB_ASSERT(accessor->buffer_view->stride == 0);
 
+    // Ensure attribute is a morphable attribute
+    ta_vertex_attrib_type attr_type = attr_type_lookup[cgltf_attr_type];
+    if (target) {
+        // NOTE: We don't support morph targets on top of joints/weight for now
+        DLB_ASSERT(
+            attr_type == TA_VERTEX_ATTRIB_POSITION ||
+            attr_type == TA_VERTEX_ATTRIB_COLOR    ||
+            attr_type == TA_VERTEX_ATTRIB_UV       ||
+            attr_type == TA_VERTEX_ATTRIB_NORMAL   ||
+            attr_type == TA_VERTEX_ATTRIB_TANGENT
+        );
+    }
+    attr_type += (TA_VERTEX_ATTRIB_MORPH0_POSITION - TA_VERTEX_ATTRIB_POSITION) * target;
+    if (target == 1) {
+        // NOTE: Make sure first morph mapped to the correct morph0 attr_type (assume that this means others will too)
+        DLB_ASSERT(
+            attr_type == TA_VERTEX_ATTRIB_MORPH0_POSITION ||
+            attr_type == TA_VERTEX_ATTRIB_MORPH0_COLOR    ||
+            attr_type == TA_VERTEX_ATTRIB_MORPH0_UV       ||
+            attr_type == TA_VERTEX_ATTRIB_MORPH0_NORMAL   ||
+            attr_type == TA_VERTEX_ATTRIB_MORPH0_TANGENT
+        );
+    }
+
     // TODO: Could make a size lookup table for each TA_MESH_BUFFER type and use dlb_vec_reserve_size()
     switch (attr_type) {
-        case cgltf_attribute_type_position: {
+        case TA_VERTEX_ATTRIB_POSITION:
+        case TA_VERTEX_ATTRIB_MORPH0_POSITION: {
             DLB_ASSERT(accessor->type == cgltf_type_vec3);
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->positions) * accessor->count);
-            dlb_vec_reserve(mesh->positions, accessor->count);
+            DLB_ASSERT(sizeof(*mesh->positions) == sizeof(*mesh->morph0_positions));
+            dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->positions));
             break;
-        } case cgltf_attribute_type_normal: {
+        }
+        case TA_VERTEX_ATTRIB_COLOR:
+        case TA_VERTEX_ATTRIB_MORPH0_COLOR: {
+            DLB_ASSERT(accessor->type == cgltf_type_vec4);
+            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
+            DLB_ASSERT(data_size == sizeof(*mesh->colors) * accessor->count);
+            DLB_ASSERT(sizeof(*mesh->colors) == sizeof(*mesh->morph0_colors));
+            dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->colors));
+            break;
+        }
+        case TA_VERTEX_ATTRIB_UV:
+        case TA_VERTEX_ATTRIB_MORPH0_UV: {
+            DLB_ASSERT(accessor->type == cgltf_type_vec2);
+            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
+            DLB_ASSERT(data_size == sizeof(*mesh->uvs) * accessor->count);
+            DLB_ASSERT(sizeof(*mesh->uvs) == sizeof(*mesh->morph0_uvs));
+            dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->uvs));
+            break;
+        }
+        case TA_VERTEX_ATTRIB_NORMAL:
+        case TA_VERTEX_ATTRIB_MORPH0_NORMAL: {
             DLB_ASSERT(accessor->type == cgltf_type_vec3);
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->normals) * accessor->count);
-            dlb_vec_reserve(mesh->normals, accessor->count);
+            DLB_ASSERT(sizeof(*mesh->normals) == sizeof(*mesh->morph0_normals));
+            dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->normals));
             break;
-        } case cgltf_attribute_type_tangent: {
+        }
+        case TA_VERTEX_ATTRIB_TANGENT:
+        case TA_VERTEX_ATTRIB_MORPH0_TANGENT: {
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             if (accessor->type == cgltf_type_vec3) {
                 DLB_ASSERT(data_size == sizeof(*mesh->tangents) * accessor->count);
-                dlb_vec_reserve(mesh->tangents, accessor->count);
+                DLB_ASSERT(sizeof(*mesh->tangents) == sizeof(*mesh->morph0_tangents));
+                dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->tangents));
             } else if (accessor->type == cgltf_type_vec4) {
                 // NOTE: gltf decided tangents should be vec4.. but only sometimes. Fix that dumb shit. -.-
                 DLB_ASSERT(sizeof(*mesh->tangents) == 12);
+                DLB_ASSERT(sizeof(*mesh->tangents) == sizeof(*mesh->morph0_tangents));
                 DLB_ASSERT(data_size / accessor->count == 16);
-                dlb_vec_reserve(mesh->tangents, accessor->count);
+                dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->tangents));
                 dlb_vec_hdr(mesh->tangents)->len = accessor->count;
 
                 // Calculate how many extra bytes to skip per element
@@ -630,28 +682,23 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
                 DLB_ASSERT(!"Unexpected accessor type for tangents");
             }
             break;
-        } case cgltf_attribute_type_texcoord: {
-            DLB_ASSERT(accessor->type == cgltf_type_vec2);
-            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
-            DLB_ASSERT(data_size == sizeof(*mesh->uvs) * accessor->count);
-            dlb_vec_reserve(mesh->uvs, accessor->count);
-            break;
-        } case cgltf_attribute_type_color: {
-            DLB_ASSERT(accessor->type == cgltf_type_vec4);
-            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
-            DLB_ASSERT(data_size == sizeof(*mesh->colors) * accessor->count);
-            dlb_vec_reserve(mesh->colors, accessor->count);
-            break;
-        } case cgltf_attribute_type_joints: {
+        } case TA_VERTEX_ATTRIB_JOINTS: {
+            DLB_ASSERT(!target);
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_16u);
             DLB_ASSERT(data_size == sizeof(*mesh->joints) * accessor->count);
+            //DLB_ASSERT(sizeof(*mesh->joints) == sizeof(*mesh->morph0_joints));
+            //dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->joints));
             dlb_vec_reserve(mesh->joints, accessor->count);
             break;
-        } case cgltf_attribute_type_weights: {
+        } case TA_VERTEX_ATTRIB_WEIGHTS: {
+            // NOTE: We don't support morph targets on top of joints/weight for now
+            DLB_ASSERT(!target);
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->weights) * accessor->count);
+            //DLB_ASSERT(sizeof(*mesh->weights) == sizeof(*mesh->morph0_weights));
+            //dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->weights));
             dlb_vec_reserve(mesh->weights, accessor->count);
             break;
         } default: {
@@ -660,8 +707,7 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
         }
     }
 
-    ta_vertex_attrib_type mesh_buffer_type = mesh_buffer_idx[attr_type];
-    void *buffer = mesh->buffers[mesh_buffer_type];
+    void *buffer = mesh->buffers[attr_type];
     dlb_vec_hdr(buffer)->len = accessor->count;
     dlb_memcpy(buffer, data, data_size);
 }
@@ -913,17 +959,17 @@ void ta_gltf_load(ta_gltf *gltf)
         ta_material_init(material);
     }
 
-    char model_name[256] = { 0 };
-    char mesh_name[256] = { 0 };
+    char model_name_buf[256] = { 0 };
+    char mesh_name_buf[256] = { 0 };
     dlb_vec_each(cgltf_mesh *, gltf_mesh, gltf->data->meshes_v) {
         const char *entity_name = ta_symbol_intern(gltf_mesh->name, strlen(gltf_mesh->name));
 
-        const size_t model_name_size = ARRAY_COUNT(model_name);
-        int model_name_len = snprintf(model_name, model_name_size, "#%s", gltf_mesh->name);
+        const size_t model_name_size = ARRAY_COUNT(model_name_buf);
+        int model_name_len = snprintf(model_name_buf, model_name_size, "#%s", gltf_mesh->name);
         DLB_ASSERT(model_name_len < model_name_size);
 
-        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MODEL %s\n", model_name);
-        ta_model *model = ta_game_component_add(entity_name, RES_COMP_MODEL, model_name, model_name_len);
+        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MODEL %s\n", model_name_buf);
+        ta_model *model = ta_game_component_add(entity_name, RES_COMP_MODEL, model_name_buf, model_name_len);
         model->cast_shadows = true;
         model->receive_shadows = true;
 
@@ -934,18 +980,18 @@ void ta_gltf_load(ta_gltf *gltf)
 
         int prim_idx = 0;
         dlb_vec_each(cgltf_primitive *, gltf_prim, gltf_mesh->primitives_v) {
-            const size_t mesh_name_size = ARRAY_COUNT(mesh_name);
-            int mesh_name_len = snprintf(mesh_name, mesh_name_size, "%s.prim%03d", model->name, prim_idx);
+            const size_t mesh_name_size = ARRAY_COUNT(mesh_name_buf);
+            int mesh_name_len = snprintf(mesh_name_buf, mesh_name_size, "%s.prim%03d", model->name, prim_idx);
             DLB_ASSERT(mesh_name_len < mesh_name_size);
 
-            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", mesh_name);
-            ta_mesh *mesh = ta_game_alloc(RES_MESH, mesh_name, mesh_name_len);
+            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", mesh_name_buf);
+            ta_mesh *mesh = ta_game_alloc(RES_MESH, mesh_name_buf, mesh_name_len);
 
             DLB_ASSERT(gltf_prim->type == cgltf_primitive_type_triangles);
 
             ta_log_write(&tg_debug_log, SRC_GLTF, "copying attributes\n");
             dlb_vec_each(cgltf_attribute *, attr, gltf_prim->attributes_v) {
-                gltf_mesh_accessor(mesh, attr->data, attr->type);
+                gltf_mesh_accessor(mesh, attr->data, attr->type, 0);
             }
             if (gltf_prim->indices->count) {
                 cgltf_accessor *accessor = gltf_prim->indices;
@@ -986,25 +1032,38 @@ void ta_gltf_load(ta_gltf *gltf)
                 }
             }
 
-            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_create\n");
-            ta_mesh_create(mesh);
-            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_init_normals\n");
-            ta_mesh_init_normals(mesh, 0.1f);
-
-            char material_name[256] = { 0 };
-            const size_t material_name_size = ARRAY_COUNT(material_name);
-            int material_name_len = snprintf(material_name, material_name_size, "#%s", gltf_prim->material->name);
+            char material_name_buf[256] = { 0 };
+            const size_t material_name_size = ARRAY_COUNT(material_name_buf);
+            int material_name_len = snprintf(material_name_buf, material_name_size, "#%s", gltf_prim->material->name);
             DLB_ASSERT(material_name_len < material_name_size);
 
             ta_piece piece = { 0 };
-            piece.mesh = mesh->name;
-            piece.material = ta_symbol_intern(material_name, material_name_len);
+            piece.mesh = ta_symbol_intern(mesh_name_buf, mesh_name_len);
+            piece.material = ta_symbol_intern(material_name_buf, material_name_len);
 
             // Load animation target meshes
-            char target_name[256] = { 0 };
-            const size_t target_name_size = ARRAY_COUNT(target_name);
+            char target_name_buf[256] = { 0 };
+            const size_t target_name_size = ARRAY_COUNT(target_name_buf);
             int target_idx = 0;
             dlb_vec_each(cgltf_morph_target *, target, gltf_prim->targets_v) {
+#if 1
+                int target_name_len = 0;
+                if (target_idx < dlb_vec_len(model->anim_targets)) {
+                    target_name_len = snprintf(target_name_buf, target_name_size, "%s", model->anim_targets[target_idx]);
+                } else {
+                    DLB_ASSERT(!"Target names missing from gltf_mesh, this will break finding targets later");
+                    target_name_len = snprintf(target_name_buf, target_name_size, "target_%03d", target_idx);
+                }
+                DLB_ASSERT(target_name_len < target_name_size);
+                const char *target_name = ta_symbol_intern(target_name_buf, target_name_len);
+
+                ta_log_write(&tg_debug_log, SRC_GLTF, "copying target attributes\n");
+                dlb_vec_each(cgltf_attribute *, attr, target->attributes_v) {
+                    gltf_mesh_accessor(mesh, attr->data, attr->type, target_idx + 1);
+                }
+                dlb_vec_push(piece.anim_targets, target_name);
+                target_idx++;
+#else
                 int target_name_len = 0;
                 if (target_idx < dlb_vec_len(model->anim_targets)) {
                     target_name_len = snprintf(target_name, target_name_size, "%s.%s", mesh->name, model->anim_targets[target_idx]);
@@ -1024,12 +1083,18 @@ void ta_gltf_load(ta_gltf *gltf)
 
                 ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_create (target)\n");
                 ta_mesh_create(target_mesh);
-
                 dlb_vec_push(piece.anim_targets, target_mesh->name);
                 target_idx++;
+#endif
             }
 
             dlb_vec_push(model->pieces, piece);
+
+            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_create\n");
+            ta_mesh_create(mesh);
+            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_init_normals\n");
+            ta_mesh_init_normals(mesh, 0.1f);
+
             prim_idx++;
         }
     }

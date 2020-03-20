@@ -52,6 +52,8 @@ const char *tg_e_player_camera;
 const char *tg_e_player_one;
 const char *tg_e_active_camera;
 
+float tg_hard_morph = 0.0f;
+
 typedef struct ta_game {
     ta_game_state state;        // current game state
     u64 frame_num;              // current frame number

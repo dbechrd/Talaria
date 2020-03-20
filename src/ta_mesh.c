@@ -177,29 +177,27 @@ void ta_mesh_create(ta_mesh *mesh)
     glGenVertexArrays(1, &mesh->gl_vao);
     glBindVertexArray(mesh->gl_vao);
 
-#define GEN_BUFFER(vtx_attr, c_type, data, shader_attr, gl_type) \
-    if (data) { \
-        glGenBuffers(1, &mesh->gl_buffers[vtx_attr]); \
-        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[vtx_attr]); \
-        glBufferData(GL_ARRAY_BUFFER, dlb_vec_len(data) * sizeof(*data), data, GL_STATIC_DRAW); \
-        glEnableVertexAttribArray(shader_attr); \
-        glVertexAttribPointer(shader_attr, sizeof(*data) / sizeof(c_type), gl_type, false, 0, 0); \
+#define GEN_BUFFER(vtx_attr, c_type, data, shader_attr, gl_type)                                   \
+    if (data) {                                                                                    \
+        glGenBuffers(1, &mesh->gl_buffers[vtx_attr]);                                              \
+        glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_buffers[vtx_attr]);                                 \
+        glBufferData(GL_ARRAY_BUFFER, dlb_vec_len(data) * sizeof(*data), data, GL_STATIC_DRAW);    \
+        glEnableVertexAttribArray(shader_attr);                                                    \
+        glVertexAttribPointer(shader_attr, sizeof(*data) / sizeof(c_type), gl_type, false, 0, 0);  \
     }
 
-    GEN_BUFFER(TA_VERTEX_ATTRIB_POSITION, GLfloat, mesh->positions,         TA_SHADER_ATTR_POSITION, GL_FLOAT);
-    GEN_BUFFER(TA_VERTEX_ATTRIB_COLOR,    GLfloat, mesh->colors,            TA_SHADER_ATTR_COLOR,    GL_FLOAT);
-    GEN_BUFFER(TA_VERTEX_ATTRIB_UV,       GLfloat, mesh->uvs,               TA_SHADER_ATTR_UV,       GL_FLOAT);
-    GEN_BUFFER(TA_VERTEX_ATTRIB_NORMAL,   GLfloat, mesh->normals,           TA_SHADER_ATTR_NORMAL,   GL_FLOAT);
-    GEN_BUFFER(TA_VERTEX_ATTRIB_TANGENT,  GLfloat, mesh->tangents,          TA_SHADER_ATTR_TANGENT,  GL_FLOAT);
-
-    GEN_BUFFER(TA_VERTEX_ATTRIB_POSITION, GLfloat, mesh->morph0_positions,  TA_SHADER_ATTR_POSITION, GL_FLOAT);
-    GEN_BUFFER(TA_VERTEX_ATTRIB_COLOR,    GLfloat, mesh->morph0_colors,     TA_SHADER_ATTR_COLOR,    GL_FLOAT);
-    GEN_BUFFER(TA_VERTEX_ATTRIB_UV,       GLfloat, mesh->morph0_uvs,        TA_SHADER_ATTR_UV,       GL_FLOAT);
-    GEN_BUFFER(TA_VERTEX_ATTRIB_NORMAL,   GLfloat, mesh->morph0_normals,    TA_SHADER_ATTR_NORMAL,   GL_FLOAT);
-    GEN_BUFFER(TA_VERTEX_ATTRIB_TANGENT,  GLfloat, mesh->morph0_tangents,   TA_SHADER_ATTR_TANGENT,  GL_FLOAT);
-
-    GEN_BUFFER(TA_VERTEX_ATTRIB_JOINTS,   GLushort, mesh->joints,           TA_SHADER_ATTR_JOINTS,   GL_UNSIGNED_SHORT);
-    GEN_BUFFER(TA_VERTEX_ATTRIB_WEIGHTS,  GLfloat, mesh->weights,           TA_SHADER_ATTR_WEIGHTS,  GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_POSITION,        GLfloat,  mesh->positions,        TA_SHADER_ATTR_POSITION,        GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_COLOR,           GLfloat,  mesh->colors,           TA_SHADER_ATTR_COLOR,           GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_UV,              GLfloat,  mesh->uvs,              TA_SHADER_ATTR_UV,              GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_NORMAL,          GLfloat,  mesh->normals,          TA_SHADER_ATTR_NORMAL,          GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_TANGENT,         GLfloat,  mesh->tangents,         TA_SHADER_ATTR_TANGENT,         GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_MORPH0_POSITION, GLfloat,  mesh->morph0_positions, TA_SHADER_ATTR_MORPH0_POSITION, GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_MORPH0_COLOR,    GLfloat,  mesh->morph0_colors,    TA_SHADER_ATTR_MORPH0_COLOR,    GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_MORPH0_UV,       GLfloat,  mesh->morph0_uvs,       TA_SHADER_ATTR_MORPH0_UV,       GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_MORPH0_NORMAL,   GLfloat,  mesh->morph0_normals,   TA_SHADER_ATTR_MORPH0_NORMAL,   GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_MORPH0_TANGENT,  GLfloat,  mesh->morph0_tangents,  TA_SHADER_ATTR_MORPH0_TANGENT,  GL_FLOAT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_JOINTS,          GLushort, mesh->joints,           TA_SHADER_ATTR_JOINTS,          GL_UNSIGNED_SHORT);
+    GEN_BUFFER(TA_VERTEX_ATTRIB_WEIGHTS,         GLfloat,  mesh->weights,          TA_SHADER_ATTR_WEIGHTS,         GL_FLOAT);
 
 #undef GEN_BUFFER
 

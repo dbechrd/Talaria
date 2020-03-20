@@ -1861,6 +1861,10 @@ void ta_editor_draw_screen()
         if (ta_ui_button(CSTR("Scale"))) {
             editor.widget = WIDGET_SCALE;
         }
+        ta_ui_row_begin();
+        static ta_ui_textbox_state hard_morph_state = { 0 };
+        ta_ui_textbox_float(&tg_hard_morph, &hard_morph_state, 0);
+        tg_hard_morph = clampf(tg_hard_morph, 0.0f, 1.0f);
         ta_ui_panel_end();
 
         ui_editor_sidebar();

@@ -52,12 +52,31 @@ out vs_out {
 
 void main()
 {
-    // TODO: Morph target blending
+    // Morph target blending
+#if 0
     // http://antongerdelan.net/opengl/blend_shapes.html
+    // if other weights add up to less than 1, use neutral target
+    float neutral_w = 1.0 - u_morph_weights[0];  // - u_morph_weights[1]
+    clamp(neutral_w, 0.0, 1.0);
 
+    // get a sum of weights and work out factors for each target
+    float sum_w = neutral_w + u_morph_weights[0];
+    float neutral_f = neutral_w / sum_w;
+    float morph0_f = u_morph_weights[0] / sum_w;
+
+    // interpolate targets to give us current pose
+    vec3 morphed_pos =
+        neutral_f * attr_position +
+        morph0_f * attr_morph0_position;
+#else
+    // add weighted morph targets to give us current pose
+    vec3 morphed_pos =
+        attr_position +
+        u_morph_weights[0] * attr_morph0_position;
+#endif
 
     // TODO: Premultiply MVP matrix and pass as uniform
-    vec4 position = u_model * vec4(attr_position, 1.0);
+    vec4 position = u_model * vec4(morphed_pos, 1.0);
     vertex.position = vec3(position);
 	vertex.color = attr_color;
 	vertex.uv = attr_uv;
