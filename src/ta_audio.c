@@ -378,21 +378,25 @@ void ta_audio_source_set_gain(ta_audio_source *source, float gain)
     source->gain = gain;
     alSourcef(source->al_source_id, AL_GAIN, source->gain);
 }
-void ta_audio_source_set_buffer(ta_audio_source *source, const char *audio_buffer)
+ta_result ta_audio_source_set_buffer(ta_audio_source *source, const char *audio_buffer)
 {
     ta_audio_source_state state = 0;
     ta_audio_source_get_state(source, &state);
     if (state != TA_AUDIO_STOPPED) {
         ta_audio_source_stop(source);
     }
-    if (source->audio_buffer != audio_buffer)
-    {
+    if (source->audio_buffer != audio_buffer) {
         source->audio_buffer = audio_buffer;
-        ta_audio_buffer *buffer = ta_game_by_sym(RES_AUDIO_BUFFER,
-            source->audio_buffer);
-        //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
-        alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
+        ta_audio_buffer *buffer = ta_game_by_sym_try(RES_AUDIO_BUFFER, source->audio_buffer);
+        if (buffer) {
+            //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
+            alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
+        } else {
+            ta_log_write(&tg_debug_log, SRC_AUDIO, "Audio buffer '%s' missing.\n", audio_buffer);
+            return TA_MISSING_RESOURCE;
+        }
     }
+    return TA_OK;
 }
 static ALenum al_source_state(ta_audio_source *source)
 {
@@ -412,7 +416,7 @@ void ta_audio_source_play(ta_audio_source *source)
     alGetSourcef(source->al_source_id, AL_GAIN, &gain);
     DLB_ASSERT(gain == source->gain);
     float pitch;
-    alGetSourcef(source->al_source_id, AL_GAIN, &pitch);
+    alGetSourcef(source->al_source_id, AL_PITCH, &pitch);
     DLB_ASSERT(pitch == source->pitch);
 
     alSourcei(source->al_source_id, AL_LOOPING, AL_FALSE);

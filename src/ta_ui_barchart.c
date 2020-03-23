@@ -3,6 +3,7 @@
 #include "ta_primitive.h"
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_memory.h"
+#include "dlb/dlb_rand.h"
 #include <time.h>
 #include <stdlib.h>
 
@@ -72,7 +73,7 @@ void ta_ui_barchart_draw(ta_ui_barchart *chart, int x, int y)
     }
 
     chart->next_index = (chart->next_index + 1) % chart->sample_count;
-    u32 next_val = (u32)rand() % chart->rect.h;
+    u32 next_val = dlb_rand_u32() % chart->rect.h;
     chart->smooth_val = (u32)(alpha * chart->smooth_val + (1.0f - alpha) * next_val);
     chart->samples[chart->next_index] = chart->smooth_val;
 }

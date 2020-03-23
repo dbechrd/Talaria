@@ -20,6 +20,46 @@ void ta_model_free(ta_model *model)
     dlb_vec_free(model->pieces);
 }
 
+float ta_model_get_morph_target_weight(ta_model *model, const char *morph_target_name)
+{
+    size_t idx = 0;
+    bool found = false;
+    dlb_vec_each(const char **, anim_target, model->anim_targets) {
+        if (*anim_target == morph_target_name) {
+            found = true;
+            break;
+        }
+        idx++;
+    }
+    if (found) {
+        if (dlb_vec_len(model->anim_target_weights) >= idx) {
+            return model->anim_target_weights[idx];
+        }
+    }
+    // TODO: Return some sort of error code (e.g. TA_ERR_NOT_FOUND)
+    DLB_ASSERT(!"Target not found");
+    return 0.0f;
+}
+void ta_model_set_morph_target_weight(ta_model *model, const char *morph_target_name, float weight)
+{
+    size_t idx = 0;
+    bool found = false;
+    dlb_vec_each(const char **, anim_target, model->anim_targets) {
+        if (*anim_target == morph_target_name) {
+            found = true;
+            break;
+        }
+        idx++;
+    }
+    if (found) {
+        size_t target_count = dlb_vec_len(model->anim_targets);
+        if (dlb_vec_len(model->anim_target_weights) < target_count) {
+            dlb_vec_alloc_count(model->anim_target_weights, target_count);
+        }
+        model->anim_target_weights[idx] = weight;
+    }
+}
+
 void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
 {
     DLB_ASSERT(model);
@@ -44,8 +84,10 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
             offset = mat4_mul(&offset, &transform->world);
             ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
         }
-        if (piece->anim_targets) {
-            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], tg_hard_morph);
+        if (piece->anim_targets && dlb_vec_len(model->anim_target_weights)) {
+            // TODO: Search model->anim_targets by name, then find the associated weight. Make a helper:
+            // float ta_model_morph_target_weight(const char *morph_target_name);
+            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], model->anim_target_weights[0]);
         } else {
             ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], 0.0f);
         }
@@ -103,8 +145,10 @@ void ta_model_render(ta_model *model, ta_camera *camera)
                 ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
             }
 
-            if (piece->anim_targets) {
-                ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], tg_hard_morph);
+            if (piece->anim_targets && dlb_vec_len(model->anim_target_weights)) {
+                // TODO: Search model->anim_targets by name, then find the associated weight. Make a helper:
+                // float ta_model_morph_target_weight(const char *morph_target_name);
+                ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], model->anim_target_weights[0]);
             } else {
                 ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], 0.0f);
             }
@@ -145,8 +189,10 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
             offset = mat4_mul(&transform->world, &offset);
             ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
         }
-        if (piece->anim_targets) {
-            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], tg_hard_morph);
+        if (piece->anim_targets && dlb_vec_len(model->anim_target_weights)) {
+            // TODO: Search model->anim_targets by name, then find the associated weight. Make a helper:
+            // float ta_model_morph_target_weight(const char *morph_target_name);
+            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], model->anim_target_weights[0]);
         } else {
             ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], 0.0f);
         }

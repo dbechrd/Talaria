@@ -28,6 +28,7 @@
 #include "ta_viewport.h"
 #include "ta_window.h"
 #include "dlb/dlb_vector.h"
+#include "dlb/dlb_rand.h"
 #include "GLFW/glfw3.h"
 #include "misc/glad.h"
 
@@ -51,8 +52,6 @@ const char *tg_e_freecam;
 const char *tg_e_player_camera;
 const char *tg_e_player_one;
 const char *tg_e_active_camera;
-
-float tg_hard_morph = 0.0f;
 
 typedef struct ta_game {
     ta_game_state state;        // current game state
@@ -202,7 +201,8 @@ void ta_game_init()
     //ta_game_load_gltf("data/mesh/hier_test.gltf");
     ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
-    ta_game_load_gltf("data/mesh/button_silly.gltf");
+    //ta_game_load_gltf("data/mesh/button_silly.gltf");
+    ta_game_load_gltf("data/mesh/button.gltf");
     //ta_game_load_gltf("data/mesh/dude.gltf");
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
 
@@ -242,9 +242,9 @@ void ta_game_init()
     ta_audio_source *bg_music_src = ta_game_component(tg_e_background_music, RES_COMP_AUDIO_SOURCE);
     DLB_ASSERT(bg_music_src);
 
-    //ta_audio_listener_set_volume(&tg_audio_listener, 0.03f);
-    ta_audio_listener_mute(&tg_audio_listener);
-    ta_audio_source_play_loop(bg_music_src);
+    ta_audio_listener_set_volume(&tg_audio_listener, 0.2f);
+    //ta_audio_listener_mute(&tg_audio_listener);
+    //ta_audio_source_play_loop(bg_music_src);
 
     //--------------------------------------------------------------------------
     // Textures
@@ -1651,27 +1651,51 @@ void ta_game_event(ta_event *event)
                 ta_camera_pitch(camera, event->data.camera_rotate.delta_pitch);
             }
             break;
-        } case GAME_EVENT_BUTTON_ACTIVATED: {
-            // TODO: Check which button was activated:
-            //event->data.button.button_name;
-            ta_player *player = ta_game_player();
-            ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
-            //if (gun->carrying_ammo == 0 && gun->loaded_ammo == 0) {
-                gun->carrying_ammo = gun->carrying_ammo_max;
-            //}
+        }
+        case GAME_EVENT_BUTTON_ACTIVATED:
+        case GAME_EVENT_BUTTON_DEACTIVATED:
+        {
+            ta_e_button *button = ta_game_by_sym(RES_COMP_BUTTON, event->data.button.button_name);
+            float pressed_weight = 0.0f;
+            const char *sfx_name = 0;
 
-#if 0
+            if (event->type == GAME_EVENT_BUTTON_ACTIVATED) {
+                ta_player *player = ta_game_player();
+                ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
+                //if (gun->carrying_ammo == 0 && gun->loaded_ammo == 0) {
+                gun->carrying_ammo = gun->carrying_ammo_max;
+                pressed_weight = 1.0f;
+                sfx_name = button->sfx_activated;
+            } else {
+                pressed_weight = 0.0f;
+                sfx_name = button->sfx_deactivated;
+            }
+
+            ta_model *model = ta_game_component_try(button->entity, RES_COMP_MODEL);
+            if (model) {
+                // TODO: Some sort of lookup table for important gameplay symbols (SYM_PRESSED?)
+                static const char *button_pressed_morph_target = 0;
+                if (!button_pressed_morph_target) {
+                    button_pressed_morph_target = ta_symbol_intern(CSTR("Pressed"));
+                }
+                ta_model_set_morph_target_weight(model, button_pressed_morph_target, pressed_weight);
+            }
+
             // TODO: Should audio source subscribe to this event somehow,
             //       or should the button queue the play request itself?
-            e_button *button =
-                ta_scene_find(game.scene, TYP_BUTTON, event->data.button.button_uid);
-            ta_audio_buffer *buffer = e_button_sfx_activated(button);
-            if (buffer) {
-                ta_audio_source *source = e_button_audio_source(button);
-                ta_audio_source_set_buffer(source, buffer);
-                ta_audio_source_play(source);
+            ta_audio_source *source = ta_game_by_sym_try(RES_COMP_AUDIO_SOURCE, button->entity);
+            if (source) {
+                float randf = (float)dlb_rand_u32() / UINT32_MAX;
+                float vary_by = 0.2f;
+                float rand_pitch = 1.0f + (randf * 2 * vary_by - vary_by);  // vary pitch by +/- vary_by
+                ta_audio_source_set_pitch(source, rand_pitch);
+                if (ta_audio_source_set_buffer(source, sfx_name) == TA_OK) {
+                    ta_audio_source_play(source);
+                }
+            } else {
+                ta_log_write(&tg_debug_log, SRC_GAME, "Entity '%s' has no audio source.\n", button->entity);
             }
-#endif
+            break;
         } default: {
             handled = false;
         }

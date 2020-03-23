@@ -14,6 +14,7 @@
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_hash.h"
 #include "dlb/dlb_index.h"
+#include "dlb/dlb_rand.h"
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
@@ -94,7 +95,9 @@ int main(int argc, char *argv[])
     ta_timer_init();
     // NOTE(hack): Filters are changed again below before the main loop starts
     ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_ALL, SRC_KEYBIND);
-    srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
+    // TODO(cleanup): Make sure we're not using rand() anywhere. Use dlb_rand_u32() instead.
+    //srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
+    dlb_rand_seed((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
 
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
     debug_tests();
@@ -200,6 +203,12 @@ int main(int argc, char *argv[])
 #include "dlb/dlb_index.h"
 #undef DLB_INDEX_TEST
 #undef DLB_INDEX_IMPLEMENTATION
+
+#define DLB_RAND_IMPLEMENTATION
+#define DLB_RAND_TEST
+#include "dlb/dlb_rand.h"
+#undef DLB_RAND_TEST
+#undef DLB_RAND_IMPLEMENTATION
 
 #define CGLTF_IMPLEMENTATION
 #include "misc/cgltf.h"

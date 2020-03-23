@@ -4,6 +4,12 @@
 #include "AL/al.h"
 #include "AL/alc.h"
 
+// TODO: Move to somewhere more general
+typedef enum ta_result {
+    TA_OK,
+    TA_MISSING_RESOURCE,
+} ta_result;
+
 typedef struct ta_audio_listener {
     ALfloat volume; // Net gain for this listener
     bool    mute;   // If true, mute this listener
@@ -58,7 +64,7 @@ void ta_audio_source_init           (ta_audio_source *source);
 void ta_audio_source_free           (ta_audio_source *source);
 void ta_audio_source_set_pitch      (ta_audio_source *source, float pitch);
 void ta_audio_source_set_gain       (ta_audio_source *source, float gain);
-void ta_audio_source_set_buffer     (ta_audio_source *source, const char *audio_buffer);
+ta_result ta_audio_source_set_buffer(ta_audio_source *source, const char *audio_buffer);
 void ta_audio_source_get_state      (ta_audio_source *source, ta_audio_source_state *state);
 void ta_audio_source_play           (ta_audio_source *source);
 void ta_audio_source_play_name      (ta_audio_source *source, const char *audio_buffer);
