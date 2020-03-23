@@ -24,9 +24,7 @@ const char *ta_collider_type_str(int type)
         case TA_COLLIDER_PLANE:  return "TA_COLLIDER_PLANE";
         case TA_COLLIDER_SPHERE: return "TA_COLLIDER_SPHERE";
         case TA_COLLIDER_OBB:    return "TA_COLLIDER_OBB";
-        default:
-            DLB_ASSERT(!"<UNKNOWN_TA_COLLIDER_TYPE>");
-            return 0;
+        default: DLB_ASSERT(0);  return "TA_COLLIDER_???";
     }
 }
 

@@ -28,9 +28,7 @@ const char *ta_light_type_str(int type)
         case TA_LIGHT_DIRECTIONAL: return "TA_LIGHT_DIRECTIONAL";
         case TA_LIGHT_POINT:       return "TA_LIGHT_POINT";
         case TA_LIGHT_SPOT:        return "TA_LIGHT_SPOT";
-        default:
-            DLB_ASSERT(!"<UNKNOWN_TA_LIGHT_TYPE>");
-            return 0;
+        default: DLB_ASSERT(0);    return "TA_LIGHT_???";
     }
 }
 

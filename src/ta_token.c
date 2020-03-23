@@ -95,7 +95,7 @@ static const char *token_type_str(token_type type)
         case TOKEN_OBJECT_START:   return "OBJECT_START";
         case TOKEN_OBJECT_END:     return "OBJECT_END";
         case TOKEN_LIST_SEPARATOR: return "LIST_SEPARATOR";
-        default: DLB_ASSERT(0);    return "???";
+        default: DLB_ASSERT(0);    return "TOKEN_TYPE_???";
     }
 };
 static token *token_read(ta_file *f, token **tokens)

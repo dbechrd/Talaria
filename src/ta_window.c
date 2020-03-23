@@ -11,7 +11,9 @@
 typedef struct ta_window {
     int width;
     int height;
+    ta_rect restore;
     bool vsync;
+    bool fullscreen;
     GLFWwindow *glfw_window;
     GLFWcursor *glfw_active_cursor;
     GLFWcursor *glfw_requested_cursor;
@@ -247,6 +249,8 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     // TODO: Disable GL errors in release mode for performance?
     //glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GLFW_TRUE);
 #endif
+
+    window->fullscreen = fullscreen;
     if (!fullscreen) {
         // Delay displaying window so we can center it first
         glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
@@ -370,19 +374,25 @@ void ta_window_free(ta_window *window)
     glfwDestroyWindow(window->glfw_window);
 }
 
-int ta_window_width(ta_window *window)
+int ta_window_get_width(ta_window *window)
 {
     return window->width;
 }
 
-int ta_window_height(ta_window *window)
+int ta_window_get_height(ta_window *window)
 {
     return window->height;
 }
 
-void ta_window_size(ta_window *window, int *w, int *h)
+void ta_window_get_size(ta_window *window, int *w, int *h)
 {
-    glfwGetFramebufferSize(window->glfw_window, w, h);
+    *w = window->width;
+    *h = window->height;
+    //glfwGetFramebufferSize(window->glfw_window, w, h);
+}
+void ta_window_get_restore_rect(ta_window *window, ta_rect *restore)
+{
+    *restore = window->restore;
 }
 
 float ta_window_aspect(ta_window *window)
@@ -390,15 +400,78 @@ float ta_window_aspect(ta_window *window)
     return (float)window->width / window->height;
 }
 
-bool ta_window_vsync(ta_window *window)
+void ta_window_get_vsync(ta_window *window, bool *vsync)
 {
-    return window->vsync;
+    *vsync = window->vsync;
 }
 void ta_window_set_vsync(ta_window *window, bool vsync)
 {
     if (window->vsync != vsync) {
         glfwSwapInterval(vsync ? 1 : 0);
         window->vsync = vsync;
+    }
+}
+
+// Shmo @ StackOverflow
+// https://stackoverflow.com/a/31526753/770230
+static GLFWmonitor* window_current_monitor(ta_window *window)
+{
+    int nmonitors, i;
+    int wx, wy, ww, wh;
+    int mx, my, mw, mh;
+    int overlap, bestoverlap;
+    GLFWmonitor *bestmonitor;
+    GLFWmonitor **monitors;
+    const GLFWvidmode *mode;
+
+    bestoverlap = 0;
+    bestmonitor = NULL;
+
+    glfwGetWindowPos(window->glfw_window, &wx, &wy);
+    glfwGetWindowSize(window->glfw_window, &ww, &wh);
+    monitors = glfwGetMonitors(&nmonitors);
+
+    for (i = 0; i < nmonitors; i++) {
+        mode = glfwGetVideoMode(monitors[i]);
+        glfwGetMonitorPos(monitors[i], &mx, &my);
+        mw = mode->width;
+        mh = mode->height;
+
+        overlap =
+            MAX(0, MIN(wx + ww, mx + mw) - MAX(wx, mx)) *
+            MAX(0, MIN(wy + wh, my + mh) - MAX(wy, my));
+
+        if (bestoverlap < overlap) {
+            bestoverlap = overlap;
+            bestmonitor = monitors[i];
+        }
+    }
+
+    return bestmonitor;
+}
+void ta_window_get_fullscreen(ta_window *window, bool *fullscreen)
+{
+    *fullscreen = window->fullscreen;
+}
+void ta_window_set_fullscreen(ta_window *window, bool fullscreen)
+{
+    if (fullscreen == window->fullscreen)
+        return;
+
+    if (fullscreen) {
+        glfwGetWindowPos(window->glfw_window, &window->restore.x, &window->restore.y);
+        glfwGetWindowSize(window->glfw_window, &window->restore.w, &window->restore.h);
+
+        GLFWmonitor *monitor = window_current_monitor(window); //glfwGetPrimaryMonitor();
+        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+        glfwSetWindowMonitor(window->glfw_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+        glfwSwapInterval(window->vsync);
+        window->fullscreen = true;
+    } else {
+        glfwSetWindowMonitor(window->glfw_window, 0, window->restore.x, window->restore.y, window->restore.w,
+            window->restore.h, 0);
+        glfwSwapInterval(window->vsync);
+        window->fullscreen = false;
     }
 }
 

@@ -33,6 +33,7 @@ typedef enum ta_command {
     COMMAND_CONSOLE_HIDE,
     COMMAND_EDITOR,
     COMMAND_SHUTDOWN,
+    COMMAND_TOGGLE_FULLSCREEN,
 
     // Player events
     COMMAND_PLAYER_MOVE_FORWARD,

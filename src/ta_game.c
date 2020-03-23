@@ -80,9 +80,7 @@ const char *game_state_str(ta_game_state state)
         case TA_STATE_FREE_CAM: return "TA_STATE_FREE_CAM";
         case TA_STATE_EDITOR:   return "TA_STATE_EDITOR";
         case TA_STATE_SHUTDOWN: return "TA_STATE_SHUTDOWN";
-        default:
-            DLB_ASSERT(!"Unknown game state");
-            return 0;
+        default: DLB_ASSERT(0); return "TA_STATE_???";
     }
 };
 
@@ -96,6 +94,7 @@ const char *ta_command_str(ta_command cmd)
         case COMMAND_CONSOLE_HIDE            : return "COMMAND_CONSOLE_HIDE";
         case COMMAND_EDITOR                  : return "COMMAND_EDITOR";
         case COMMAND_SHUTDOWN                : return "COMMAND_SHUTDOWN";
+        case COMMAND_TOGGLE_FULLSCREEN       : return "COMMAND_TOGGLE_FULLSCREEN";
         // Player events
         case COMMAND_PLAYER_MOVE_FORWARD     : return "COMMAND_PLAYER_MOVE_FORWARD";
         case COMMAND_PLAYER_MOVE_BACKWARD    : return "COMMAND_PLAYER_MOVE_BACKWARD";
@@ -128,9 +127,7 @@ const char *ta_command_str(ta_command cmd)
         case COMMAND_EDITOR_SIM_NEXT         : return "COMMAND_EDITOR_SIM_NEXT";
         case COMMAND_EDITOR_SIM_NEXT_10      : return "COMMAND_EDITOR_SIM_NEXT_10";
         case COMMAND_EDITOR_SIM_WHILE_HELD   : return "COMMAND_EDITOR_SIM_WHILE_HELD";
-        default:
-            DLB_ASSERT(!"Unknown game command");
-            return 0;
+        default: DLB_ASSERT(0);                return "COMMAND_???";
     }
 }
 
@@ -159,6 +156,7 @@ void ta_game_init()
     ta_keybind_init1(&game.keybinds, COMMAND_CONSOLE_HIDE           , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_ESCAPE);
     ta_keybind_init1(&game.keybinds, COMMAND_EDITOR                 , TA_STATE_PLAY | TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   GLFW_KEY_GRAVE_ACCENT);
     ta_keybind_init1(&game.keybinds, COMMAND_SHUTDOWN               , TA_STATE_PLAY | TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   GLFW_KEY_ESCAPE);
+    ta_keybind_init1(&game.keybinds, COMMAND_TOGGLE_FULLSCREEN      , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   GLFW_KEY_F11);
     ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_FORWARD    , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    GLFW_KEY_W);
     ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_BACKWARD   , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    GLFW_KEY_S);
     ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_RIGHT      , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    GLFW_KEY_D);
@@ -204,7 +202,7 @@ void ta_game_init()
     //ta_game_load_gltf("data/mesh/hier_test.gltf");
     ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
-    ta_game_load_gltf("data/mesh/button.gltf");
+    ta_game_load_gltf("data/mesh/button_silly.gltf");
     //ta_game_load_gltf("data/mesh/dude.gltf");
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
 
@@ -541,10 +539,19 @@ void ta_game_window_resize()
 }
 static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_frame_delta, u64 sim_step)
 {
-    ta_size window_size = { 0 };
-    ta_window_size(tg_window, &window_size.w, &window_size.h);
+    const char *game_state = game_state_str(ta_game_state_current());
+
+    float volume = ta_audio_listener_get_volume(&tg_audio_listener);
+    bool muted = ta_audio_listener_muted(&tg_audio_listener);
 
     ta_camera *camera = ta_game_camera();
+
+    ta_size window_size = { 0 };
+    ta_rect restore = { 0 };
+    bool vsync;
+    ta_window_get_size(tg_window, &window_size.w, &window_size.h);
+    ta_window_get_restore_rect(tg_window, &restore);
+    ta_window_get_vsync(tg_window, &vsync);
 
     // Print frame time on the screen
     char frame_info[512] = { 0 };
@@ -552,7 +559,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_
         "Frame\n"
         "  count: %08llu\n"
         "  time:  %5.2f ms\n"
-        "  delta: %5.2f ms (v-sync: %s)\n"
+        "  delta: %5.2f ms\n"
         "Game\n"
         "  step:  %08llu\n"
         "  state: %s\n"
@@ -561,18 +568,25 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_
         "Camera\n"
         "  fov: %.2f\n"
         "Window\n"
-        "  resolution: %d x %d",
+        "  size:     %d x %d\n"
+        "  win size: %d x %d\n"
+        "  win pos:  %d, %d\n"
+        "  v-sync:   %s",
         frame_num,
         ms_frame_time,
         ms_frame_delta,
-        ta_window_vsync(tg_window) ? "On" : "Off",
         sim_step,
-        game_state_str(ta_game_state_current()),
-        ta_audio_listener_get_volume(&tg_audio_listener),
-        ta_audio_listener_muted(&tg_audio_listener) ? " (muted)" : "",
+        game_state,
+        volume,
+        muted ? " (muted)" : "",
         camera->fov,
         window_size.w,
-        window_size.h
+        window_size.h,
+        restore.w,
+        restore.h,
+        restore.x,
+        restore.y,
+        vsync ? "On" : "Off"
     );
     DLB_ASSERT(len < sizeof(frame_info));
 
@@ -588,7 +602,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-    ta_font_render(font, SCREEN_WRAP_X(-320.0f), 0, UI_LAYER_HUD, true, false, &primitive_quads);
+    ta_font_render(font, SCREEN_WRAP_X(-220.0f), 12, UI_LAYER_HUD, true, false, &primitive_quads);
 }
 static void game_draw_hud()
 {
@@ -1322,6 +1336,12 @@ void game_command_shutdown()
 {
     ta_game_state_set(TA_STATE_SHUTDOWN);
 }
+void game_command_toggle_fullscreen()
+{
+    bool fullscreen;
+    ta_window_get_fullscreen(tg_window, &fullscreen);
+    ta_window_set_fullscreen(tg_window, !fullscreen);
+}
 void game_command_player_move_forward()
 {
     ta_camera *camera = ta_game_camera();
@@ -1557,6 +1577,7 @@ void ta_game_update_keybinds()
         [COMMAND_CONSOLE_HIDE]            = game_command_console_exit,
         [COMMAND_EDITOR]                  = game_command_editor,
         [COMMAND_SHUTDOWN]                = game_command_shutdown,
+        [COMMAND_TOGGLE_FULLSCREEN]       = game_command_toggle_fullscreen,
         [COMMAND_CAMERA_MOVE_FORWARD]     = game_command_camera_move_forward,
         [COMMAND_CAMERA_MOVE_BACKWARD]    = game_command_camera_move_backward,
         [COMMAND_CAMERA_MOVE_RIGHT]       = game_command_camera_move_right,

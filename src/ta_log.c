@@ -61,31 +61,29 @@ static double thread_get_last_write(ta_thread_id thread_id)
 
 const char *ta_log_source_str(ta_log_source src) {
     switch(src) {
-        case SRC_ASSERT:     return "ASSERT";
-        case SRC_AUDIO:      return "AUDIO";
-        case SRC_CONSOLE:    return "CONSOLE";
-        case SRC_EDITOR:     return "EDITOR";
-        case SRC_EVENT:      return "EVENT";
-        case SRC_FILE:       return "FILE";
-        case SRC_FONT:       return "FONT";
-        case SRC_GAME:       return "GAME";
-        case SRC_GLTF:       return "GLTF";
-        case SRC_JSON:       return "JSON";
-        case SRC_KEYBIND:    return "KEYBIND";
-        case SRC_LIGHT:      return "LIGHT";
-        case SRC_MATH:       return "MATH";
-        case SRC_OPENGL:     return "OPENGL";
-        case SRC_PRIMITIVE:  return "PRIMITIVE";
-        case SRC_RENDER:     return "RENDER";
-        case SRC_RIGID_BODY: return "RIGID_BODY";
-        case SRC_SCENE:      return "SCENE";
-        case SRC_SHADER:     return "SHADER";
-        case SRC_SYSTEM:     return "SYSTEM";
-        case SRC_TEXTURE:    return "TEXTURE";
-        case SRC_WINDOW:     return "WINDOW";
-        default:
-            assert(!"<UNKNOWN_SRC_TYPE>");
-            return 0;
+        case SRC_ASSERT:        return "ASSERT";
+        case SRC_AUDIO:         return "AUDIO";
+        case SRC_CONSOLE:       return "CONSOLE";
+        case SRC_EDITOR:        return "EDITOR";
+        case SRC_EVENT:         return "EVENT";
+        case SRC_FILE:          return "FILE";
+        case SRC_FONT:          return "FONT";
+        case SRC_GAME:          return "GAME";
+        case SRC_GLTF:          return "GLTF";
+        case SRC_JSON:          return "JSON";
+        case SRC_KEYBIND:       return "KEYBIND";
+        case SRC_LIGHT:         return "LIGHT";
+        case SRC_MATH:          return "MATH";
+        case SRC_OPENGL:        return "OPENGL";
+        case SRC_PRIMITIVE:     return "PRIMITIVE";
+        case SRC_RENDER:        return "RENDER";
+        case SRC_RIGID_BODY:    return "RIGID_BODY";
+        case SRC_SCENE:         return "SCENE";
+        case SRC_SHADER:        return "SHADER";
+        case SRC_SYSTEM:        return "SYSTEM";
+        case SRC_TEXTURE:       return "TEXTURE";
+        case SRC_WINDOW:        return "WINDOW";
+        default:                return "UNKNOWN";
     }
 }
 

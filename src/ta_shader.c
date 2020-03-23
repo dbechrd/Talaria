@@ -27,9 +27,7 @@ const char *ta_glsl_type_str(int type)
         case TA_GLSL_MAT4:         return "TA_GLSL_MAT4";
         case TA_GLSL_STRUCT:       return "TA_GLSL_STRUCT";
         case TA_GLSL_SAMPLER_CUBE: return "TA_GLSL_SAMPLER_CUBE";
-        default:
-            DLB_ASSERT(!"<UNKNOWN_TA_GLSL_TYPE>");
-            return 0;
+        default: DLB_ASSERT(0);    return "TA_GLSL_???";
     }
 }
 

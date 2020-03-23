@@ -3,8 +3,8 @@
 
 struct ta_event;
 
-#define WINDOW_W ta_window_width(tg_window)
-#define WINDOW_H ta_window_height(tg_window)
+#define WINDOW_W ta_window_get_width(tg_window)
+#define WINDOW_H ta_window_get_height(tg_window)
 #define WINDOW_ASPECT ta_window_aspect(tg_window)
 
 // Converts top-left screen x/y to normalized device coordinates:
@@ -56,12 +56,15 @@ struct ta_window *tg_window;
 
 void ta_window_init             (struct ta_window *window, int w, int h, bool fullscreen);
 void ta_window_free             (struct ta_window *window);
-int ta_window_width             (struct ta_window *window);
-int ta_window_height            (struct ta_window *window);
-void ta_window_size             (struct ta_window *window, int *w, int *h);
+int ta_window_get_width         (struct ta_window *window);
+int ta_window_get_height        (struct ta_window *window);
+void ta_window_get_size         (struct ta_window *window, int *w, int *h);
+void ta_window_get_restore_rect (struct ta_window *window, ta_rect *restore);
 float ta_window_aspect          (struct ta_window *window);
-bool ta_window_vsync            (struct ta_window *window);
+void ta_window_get_vsync        (struct ta_window *window, bool *vsync);
 void ta_window_set_vsync        (struct ta_window *window, bool vsync);
+void ta_window_get_fullscreen   (struct ta_window *window, bool *fullscreen);
+void ta_window_set_fullscreen   (struct ta_window *window, bool fullscreen);
 void ta_window_request_cursor   (struct ta_window *window, ta_cursor_type cursor_type);
 void ta_window_set_cursor_pos   (struct ta_window *window, int x, int y);
 void ta_window_get_cursor_pos   (struct ta_window *window, int *x, int *y);

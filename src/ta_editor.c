@@ -838,7 +838,9 @@ static void ui_scene_panel()
     }
 
     ta_ui_row_begin();
-    if (ta_window_vsync(tg_window)) {
+    bool vsync;
+    ta_window_get_vsync(tg_window, &vsync);
+    if (vsync) {
         ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
         ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
         if (ta_ui_button(CSTR("On"))) {
