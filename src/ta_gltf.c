@@ -671,9 +671,13 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
                 const u8 *src = data;
                 u8 *dst = (void *)mesh->tangents;
                 DLB_ASSERT(dst);
+                float w = 1.0f;
                 for (size_t i = 0; i < accessor->count; ++i) {
-                    DLB_ASSERT(((ta_vec4 *)src)->w == 1.0f);
+                    w = ((ta_vec4 *)src)->w;
                     memcpy(dst, src, sizeof(*mesh->tangents));
+                    ((ta_vec3 *)dst)->x *= w;
+                    ((ta_vec3 *)dst)->y *= w;
+                    ((ta_vec3 *)dst)->z *= w;
                     src += sizeof(*mesh->tangents) + extra_bytes;
                     dst += sizeof(*mesh->tangents);
                 }
@@ -818,17 +822,17 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
 
     char *texture_name = view->texture->image->name;
 
-    char metallic_name[256] = { 0 };
-    char roughness_name[256] = { 0 };
-    const size_t metallic_name_size = ARRAY_COUNT(metallic_name);
-    const size_t roughness_name_size = ARRAY_COUNT(roughness_name);
-    int metallic_name_len = snprintf(metallic_name, metallic_name_size, "#%s.r", view->texture->image->name);
-    int roughness_name_len = snprintf(roughness_name, roughness_name_size, "#%s.g", view->texture->image->name);
+    char metallic_name_buf[256] = { 0 };
+    char roughness_name_buf[256] = { 0 };
+    const size_t metallic_name_size = ARRAY_COUNT(metallic_name_buf);
+    const size_t roughness_name_size = ARRAY_COUNT(roughness_name_buf);
+    int metallic_name_len = snprintf(metallic_name_buf, metallic_name_size, "#%s.r", view->texture->image->name);
+    int roughness_name_len = snprintf(roughness_name_buf, roughness_name_size, "#%s.g", view->texture->image->name);
     DLB_ASSERT(metallic_name_len < metallic_name_size);
     DLB_ASSERT(roughness_name_len < roughness_name_size);
 
-    ta_resource *metallic_exists = ta_game_by_name_try(RES_TEXTURE, metallic_name, metallic_name_len);
-    ta_resource *roughness_exists = ta_game_by_name_try(RES_TEXTURE, roughness_name, roughness_name_len);
+    ta_resource *metallic_exists = ta_game_by_name_try(RES_TEXTURE, metallic_name_buf, metallic_name_len);
+    ta_resource *roughness_exists = ta_game_by_name_try(RES_TEXTURE, roughness_name_buf, roughness_name_len);
     if (metallic_exists || roughness_exists) {
         DLB_ASSERT(metallic_exists && roughness_exists);  // Wtf.. how did we create one but not the other last time?
         *out_metallic = metallic_exists->name;
@@ -867,14 +871,17 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
     DLB_ASSERT(h);
     DLB_ASSERT(channels >= 2);
 
+    const char *metallic_name = ta_symbol_intern(metallic_name_buf, metallic_name_len);
+    const char *roughness_name = ta_symbol_intern(roughness_name_buf, roughness_name_len);
+
     ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc TEXTURE %s\n", metallic_name);
-    ta_texture *metallic = ta_game_alloc(RES_TEXTURE, metallic_name, metallic_name_len);
+    ta_game_alloc(RES_TEXTURE, SYM(metallic_name));
     ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc TEXTURE %s\n", roughness_name);
-    ta_texture *roughness = ta_game_alloc(RES_TEXTURE, roughness_name, roughness_name_len);
+    ta_game_alloc(RES_TEXTURE, SYM(roughness_name));
 
     // NOTE: Re-lookup textures in case pool resized
-    metallic = ta_game_by_sym(RES_TEXTURE, metallic->name);
-    roughness = ta_game_by_sym(RES_TEXTURE, roughness->name);
+    ta_texture *metallic = ta_game_by_sym(RES_TEXTURE, metallic_name);
+    ta_texture *roughness = ta_game_by_sym(RES_TEXTURE, roughness_name);
 
     metallic->width = w;
     metallic->height = h;
@@ -915,6 +922,107 @@ void ta_gltf_load(ta_gltf *gltf)
     dlb_vec_each(cgltf_node *, gltf_node, gltf->data->nodes_v) {
         UNUSED(gltf_node);
     }
+
+    // Load animations
+    dlb_vec_each(cgltf_animation *, gltf_animation, gltf->data->animations_v) {
+        char animation_name[256] = { 0 };
+        const size_t animation_name_size = ARRAY_COUNT(animation_name);
+        int animation_name_len = snprintf(animation_name, animation_name_size, "#%s", gltf_animation->name);
+        DLB_ASSERT(animation_name_len < animation_name_size);
+
+        ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc ANIMATION %s\n", animation_name);
+        ta_animation *animation = ta_game_alloc(RES_ANIMATION, animation_name, animation_name_len);
+
+        dlb_vec_each(cgltf_animation_sampler *, gltf_sampler, gltf_animation->samplers_v) {
+            ta_animation_sampler sampler = { 0 };
+
+            cgltf_accessor *in = gltf_sampler->input;
+            cgltf_accessor *out = gltf_sampler->output;
+
+            cgltf_size in_size = in->buffer_view->size;
+            float *in_data = (float *)((char *)in->buffer_view->buffer->data + in->buffer_view->offset);
+            cgltf_size out_size = out->buffer_view->size;
+            float *out_data = (float *)((char *)out->buffer_view->buffer->data + out->buffer_view->offset);
+
+            // Ensure buffers have been loaded and are the expected type
+            DLB_ASSERT(in_size);
+            DLB_ASSERT(in_data);
+            DLB_ASSERT(in->component_type == cgltf_component_type_r_32f);
+            DLB_ASSERT(in->type != cgltf_type_invalid);
+            DLB_ASSERT(in->buffer_view->stride == 0);  // NOTE: We don't support interleaved vertex attributes for now
+
+            DLB_ASSERT(out_size);
+            DLB_ASSERT(out_data);
+            DLB_ASSERT(out->component_type == cgltf_component_type_r_32f);
+            DLB_ASSERT(out->type != cgltf_type_invalid);
+            DLB_ASSERT(out->buffer_view->stride == 0);  // NOTE: We don't support interleaved vertex attributes for now
+
+            static const ta_animation_interpolation_type interp_type_lookup[] = {
+                [cgltf_interpolation_type_linear]       = TA_ANIMATION_INTERP_LINEAR,
+                [cgltf_interpolation_type_step]         = TA_ANIMATION_INTERP_STEP,
+                [cgltf_interpolation_type_cubic_spline] = TA_ANIMATION_INTERP_CUBICSPLINE,
+            };
+
+            sampler.interpolation_mode = interp_type_lookup[gltf_sampler->interpolation];
+            dlb_vec_alloc_count(sampler.input, in_size / sizeof(float));
+            dlb_vec_alloc_count(sampler.output, out_size / sizeof(float));
+            dlb_memcpy(sampler.input, in_data, in_size);
+            dlb_memcpy(sampler.output, out_data, out_size);
+
+            dlb_vec_push(animation->samplers, sampler);
+        }
+
+        dlb_vec_each(cgltf_animation_channel *, gltf_channel, gltf_animation->channels_v) {
+            ta_animation_channel channel = { 0 };
+
+            size_t sampler_idx = gltf_channel->sampler - gltf_animation->samplers_v;
+            channel.sampler_idx = sampler_idx;
+            const char *name = gltf_channel->target_node->name;
+            channel.target_bone = ta_symbol_intern(name, strlen(name));
+
+            cgltf_accessor *in = gltf_channel->sampler->input;
+            cgltf_accessor *out = gltf_channel->sampler->output;
+
+            static const ta_animation_path_type animation_path_type_lookup[] = {
+                [cgltf_animation_path_type_translation] = TA_ANIMATION_PATH_TRANSLATION,
+                [cgltf_animation_path_type_rotation]    = TA_ANIMATION_PATH_ROTATION,
+                [cgltf_animation_path_type_scale]       = TA_ANIMATION_PATH_SCALE,
+                [cgltf_animation_path_type_weights]     = TA_ANIMATION_PATH_WEIGHTS,
+            };
+
+            channel.target_path = animation_path_type_lookup[gltf_channel->target_path];
+            switch (channel.target_path) {
+                case TA_ANIMATION_PATH_TRANSLATION:
+                    DLB_ASSERT(in->type == cgltf_type_scalar);
+                    DLB_ASSERT(out->type == cgltf_type_vec3);
+                    break;
+                case TA_ANIMATION_PATH_ROTATION:
+                    DLB_ASSERT(in->type == cgltf_type_scalar);
+                    DLB_ASSERT(out->type == cgltf_type_vec4);
+                    break;
+                case TA_ANIMATION_PATH_SCALE:
+                    DLB_ASSERT(in->type == cgltf_type_scalar);
+                    DLB_ASSERT(out->type == cgltf_type_vec3);
+                    break;
+                case TA_ANIMATION_PATH_WEIGHTS:
+                    DLB_ASSERT(in->type == cgltf_type_scalar);
+                    DLB_ASSERT(out->type == cgltf_type_scalar);
+                    break;
+                default:
+                    DLB_ASSERT(!"Invalid animation path type");
+            }
+
+            dlb_vec_push(animation->channels, channel);
+        }
+    }
+
+    // Load skins
+    dlb_vec_each(cgltf_skin *, gltf_skin, gltf->data->skins_v) {
+        DLB_ASSERT(1);
+    }
+
+    // TODO(cleanup): Load texture samplers (already sort of asserted in gltf_texture()
+    DLB_ASSERT(1 || gltf->data->samplers_v);
 
     // Load materials
     dlb_vec_each(cgltf_material *, gltf_material, gltf->data->materials_v) {
@@ -959,6 +1067,7 @@ void ta_gltf_load(ta_gltf *gltf)
         ta_material_init(material);
     }
 
+    // Load meshes (ta_model -> ta_piece) and primitives (ta_mesh)
     char model_name_buf[256] = { 0 };
     char mesh_name_buf[256] = { 0 };
     dlb_vec_each(cgltf_mesh *, gltf_mesh, gltf->data->meshes_v) {

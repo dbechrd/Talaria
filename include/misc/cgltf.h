@@ -456,8 +456,9 @@ typedef struct cgltf_scene {
 } cgltf_scene;
 
 typedef struct cgltf_animation_sampler {
-	cgltf_accessor* input;
-	cgltf_accessor* output;
+	// f(t) = x
+	cgltf_accessor* input;		// time
+	cgltf_accessor* output;		// value
 	cgltf_interpolation_type interpolation;
 	cgltf_extras extras;
 } cgltf_animation_sampler;

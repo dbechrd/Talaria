@@ -83,7 +83,7 @@ const char *SYM_SHADER_EDITOR_SELECT;
 static dlb_hash symbol_table;
 
 void ta_symbol_init() {
-    dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 512);
+    dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 1024);
 
     SYM_GLINT     = INTERN("glint");
     SYM_GLUINT    = INTERN("gluint");

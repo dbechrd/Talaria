@@ -199,11 +199,11 @@ void ta_game_init()
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
     //ta_game_load_gltf("data/mesh/hier_test.gltf");
-    ta_game_load_gltf("data/mesh/rock_0001.gltf");
+    //ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
     //ta_game_load_gltf("data/mesh/button_silly.gltf");
-    ta_game_load_gltf("data/mesh/button.gltf");
-    //ta_game_load_gltf("data/mesh/dude.gltf");
+    //ta_game_load_gltf("data/mesh/button.gltf");
+    ta_game_load_gltf("data/mesh/dude.gltf");
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
 
     //--------------------------------------------------------------------------
@@ -1686,7 +1686,7 @@ void ta_game_event(ta_event *event)
             ta_audio_source *source = ta_game_by_sym_try(RES_COMP_AUDIO_SOURCE, button->entity);
             if (source) {
                 float randf = (float)dlb_rand_u32() / UINT32_MAX;
-                float vary_by = 0.2f;
+                float vary_by = 0.1f;
                 float rand_pitch = 1.0f + (randf * 2 * vary_by - vary_by);  // vary pitch by +/- vary_by
                 ta_audio_source_set_pitch(source, rand_pitch);
                 if (ta_audio_source_set_buffer(source, sfx_name) == TA_OK) {

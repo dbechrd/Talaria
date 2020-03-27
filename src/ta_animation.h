@@ -16,6 +16,7 @@ typedef enum ta_animation_path_type {
 
 typedef struct ta_animation_sampler {
     float *input;  // time in seconds
+#if 0
     ta_animation_path_type target_path;
     union {
         ta_vec3 translation;
@@ -23,12 +24,16 @@ typedef struct ta_animation_sampler {
         ta_vec3 scale;
         float *weights;
     } output;
+#else
+    float *output;  // NOTE: Could be float, vector or matrix (depending on consuming channel's target_path)
+#endif
     ta_animation_interpolation_type interpolation_mode;
 } ta_animation_sampler;
 
 typedef struct ta_animation_channel {
     size_t sampler_idx;
-    const char *target_model;
+    const char *target_bone;
+    ta_animation_path_type target_path;
 } ta_animation_channel;
 
 typedef struct ta_animation {
@@ -36,3 +41,6 @@ typedef struct ta_animation {
     ta_animation_sampler *samplers;
     ta_animation_channel *channels;
 } ta_animation;
+
+const char *ta_animation_path_type_str(int type);
+void ta_animation_free(ta_animation *animation);

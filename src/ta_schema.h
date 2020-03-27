@@ -34,6 +34,8 @@ typedef enum ta_schema_field_type {
     TYP_OBB,
     TYP_COLLIDER,
     TYP_PIECE,
+    TYP_ANIMATION_SAMPLER,
+    TYP_ANIMATION_CHANNEL,
 
     // Component types
     TYP_AUDIO_SOURCE,
@@ -53,6 +55,7 @@ typedef enum ta_schema_field_type {
     TYP_MESH,
     TYP_SHADER,
     TYP_TEXTURE,
+    TYP_ANIMATION,
 
     TYP_COUNT,
 
@@ -85,6 +88,7 @@ typedef enum ta_res_type {
     RES_MESH,
     RES_SHADER,
     RES_TEXTURE,
+    RES_ANIMATION,
     RES_COUNT,
 } ta_res_type;
 

@@ -48,7 +48,6 @@ void ta_rigid_body_init(ta_rigid_body *body)
     }
     body->inv_tensor_local = ta_collider_inv_tensor(&body->collider, body->mass);
 }
-
 void ta_rigid_body_free(ta_rigid_body *body)
 {
     dlb_vec_free(body->colliding_with);
@@ -58,7 +57,6 @@ void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force)
 {
     body->force_accum = vec3_add(body->force_accum, force);
 }
-
 void ta_rigid_body_apply_force_at(ta_rigid_body *body, ta_vec3 force, ta_vec3 at)
 {
     // http://allenchou.net/2013/12/game-physics-motion-dynamics-implementations/
@@ -66,7 +64,6 @@ void ta_rigid_body_apply_force_at(ta_rigid_body *body, ta_vec3 force, ta_vec3 at
     body->torque_accum = vec3_add(body->torque_accum,
         vec3_cross(vec3_sub(at, body->centroid_global), force));
 }
-
 void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact)
 {
     if (body->inv_mass) {
@@ -173,8 +170,7 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     dlb_vec_zero((char **)body->colliding_with);
 }
 
-static bool intersector_plane_v_sphere(ta_manifold *manifold,
-    const ta_rigid_body *a, const ta_rigid_body *b)
+static bool intersector_plane_v_sphere(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
 {
     DLB_ASSERT(a->collider.type == TA_COLLIDER_PLANE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
@@ -191,9 +187,7 @@ static bool intersector_plane_v_sphere(ta_manifold *manifold,
     bool collided = ta_plane_v_sphere(manifold, &plane_a, &sphere_b);
     return collided;
 }
-
-static bool intersector_plane_v_obb(ta_manifold *manifold,
-    const ta_rigid_body *a, const ta_rigid_body *b)
+static bool intersector_plane_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
 {
     DLB_ASSERT(a->collider.type == TA_COLLIDER_PLANE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
@@ -211,9 +205,7 @@ static bool intersector_plane_v_obb(ta_manifold *manifold,
     bool collided = ta_plane_v_obb(manifold, &plane_a, &obb_b);
     return collided;
 }
-
-static bool intersector_sphere_v_sphere(ta_manifold *manifold,
-    const ta_rigid_body *a, const ta_rigid_body *b)
+static bool intersector_sphere_v_sphere(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
 {
     DLB_ASSERT(a->collider.type == TA_COLLIDER_SPHERE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
@@ -230,9 +222,7 @@ static bool intersector_sphere_v_sphere(ta_manifold *manifold,
     bool collided = ta_sphere_v_sphere(manifold, &sphere_a, &sphere_b);
     return collided;
 }
-
-static bool intersector_sphere_v_obb(ta_manifold *manifold,
-    const ta_rigid_body *a, const ta_rigid_body *b)
+static bool intersector_sphere_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
 {
     DLB_ASSERT(a->collider.type == TA_COLLIDER_SPHERE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
@@ -250,9 +240,7 @@ static bool intersector_sphere_v_obb(ta_manifold *manifold,
     bool collided = ta_sphere_v_obb(manifold, &sphere_a, &obb_b);
     return collided;
 }
-
-static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a,
-    const ta_rigid_body *b)
+static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
 {
     DLB_ASSERT(a->collider.type == TA_COLLIDER_OBB);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
@@ -265,7 +253,6 @@ static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a,
     UNUSED(btrans);
     return false;
 }
-
 bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b)
 {
     typedef bool (intersector)(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b);

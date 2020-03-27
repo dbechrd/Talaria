@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TargetConfig Name="C:\Users\user\Documents\Development\Talaria\obj\Win64\Debug\Talaria64_d.exe" LastUsed="2020-03-24T10:07:03.3391221Z">
+  <EngineConfig />
+  <EngineOptions>
+    <Property name="DebugChildProcesses" value="false" />
+    <Property name="StartDirectory" value="C:\Users\user\Documents\Development\Talaria\bin" />
+  </EngineOptions>
+  <TargetOptions>
+    <Option name="LaunchProcess">
+      <Property name="Executable" value="C:\Users\user\Documents\Development\Talaria\obj\Win64\Debug\Talaria64_d.exe" />
+      <Property name="Arguments" value="" />
+    </Option>
+  </TargetOptions>
+</TargetConfig>

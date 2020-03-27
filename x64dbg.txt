@@ -1,0 +1,1 @@
+InitDebug C:\Users\user\Documents\Development\Talaria\obj\Win64\Debug\Talaria64_d.exe,, C:\Users\user\Documents\Development\Talaria\bin

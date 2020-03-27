@@ -1,21 +1,22 @@
 #include "ta_schema.h"
-#include "ta_symbol.h"
-#include "ta_math.h"
-#include "ta_file.h"
-#include "ta_camera.h"
-#include "ta_mesh.h"
-#include "ta_texture.h"
-#include "ta_shader.h"
+#include "ta_animation.h"
 #include "ta_audio.h"
 #include "ta_button.h"
-#include "ta_rigid_body.h"
-#include "ta_light.h"
-#include "ta_material.h"
+#include "ta_camera.h"
+#include "ta_file.h"
 #include "ta_font.h"
-#include "ta_model.h"
-#include "ta_transform.h"
-#include "ta_player.h"
+#include "ta_light.h"
 #include "ta_log.h"
+#include "ta_material.h"
+#include "ta_math.h"
+#include "ta_mesh.h"
+#include "ta_model.h"
+#include "ta_player.h"
+#include "ta_rigid_body.h"
+#include "ta_shader.h"
+#include "ta_symbol.h"
+#include "ta_texture.h"
+#include "ta_transform.h"
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_hash.h"
@@ -69,6 +70,7 @@ void ta_schema_field_type_str(ta_schema_field_type type, const char **str)
         case TYP_MESH:              *str = "TYP_MESH";               break;
         case TYP_SHADER:            *str = "TYP_SHADER";             break;
         case TYP_TEXTURE:           *str = "TYP_TEXTURE";            break;
+        case TYP_ANIMATION:         *str = "TYP_ANIMATION";          break;
         /// Atomic types //////////////////////////////////////////////////
         case ATOM_BOOL:             *str = "ATOM_BOOL";              break;
         case ATOM_UINT8:            *str = "ATOM_UINT8";             break;
@@ -102,6 +104,7 @@ ta_schema_field_type res_to_typ(ta_res_type type)
         case RES_MESH:              schema_type = TYP_MESH         ; break;
         case RES_SHADER:            schema_type = TYP_SHADER       ; break;
         case RES_TEXTURE:           schema_type = TYP_TEXTURE      ; break;
+        case RES_ANIMATION:         schema_type = TYP_ANIMATION    ; break;
         default:                    schema_type = TYP_NULL         ; break;
     }
     return schema_type;
@@ -128,6 +131,7 @@ ta_res_type typ_to_res(ta_schema_field_type type)
         case TYP_MESH:          res_type = RES_MESH             ; break;
         case TYP_SHADER:        res_type = RES_SHADER           ; break;
         case TYP_TEXTURE:       res_type = RES_TEXTURE          ; break;
+        case TYP_ANIMATION:     res_type = RES_ANIMATION        ; break;
         default:                res_type = RES_COUNT            ; break;
     }
     return res_type;
@@ -342,6 +346,25 @@ void ta_schema_register()
     TYPE_FIELD  (ta_piece, material, ATOM_STRING);
     TYPE_END    (ta_piece);
 
+    TYPE_START        (ta_animation_sampler, TYP_ANIMATION_SAMPLER, 0, 0);
+    TYPE_VECTOR       (ta_animation_sampler, input,              ATOM_FLOAT);
+#if 0
+    TYPE_UNION_TYPE   (ta_animation_sampler, target_path,        ATOM_ENUM, ta_animation_path_type_str);
+    TYPE_UNION_FIELD  (ta_animation_sampler, translation,        TYP_VEC3,   output, TA_ANIMATION_PATH_TRANSLATION);
+    TYPE_UNION_FIELD  (ta_animation_sampler, rotation,           TYP_VEC4,   output, TA_ANIMATION_PATH_ROTATION);
+    TYPE_UNION_FIELD  (ta_animation_sampler, scale,              TYP_VEC3,   output, TA_ANIMATION_PATH_SCALE);
+    TYPE_UNION_VECTOR (ta_animation_sampler, weights,            ATOM_FLOAT, output, TA_ANIMATION_PATH_WEIGHTS);
+#else
+    TYPE_VECTOR       (ta_animation_sampler, output,              ATOM_FLOAT);
+#endif
+    TYPE_FIELD        (ta_animation_sampler, interpolation_mode, ATOM_ENUM);
+    TYPE_END          (ta_animation_sampler);
+
+    TYPE_START  (ta_animation_channel, TYP_ANIMATION_CHANNEL, 0, 0);
+    TYPE_FIELD  (ta_animation_channel, sampler_idx,  ATOM_UINT);
+    TYPE_FIELD  (ta_animation_channel, target_bone, ATOM_STRING);
+    TYPE_END    (ta_animation_channel);
+
     //--------------------------------------------------------------------------
     // Resource types
     //--------------------------------------------------------------------------
@@ -403,6 +426,12 @@ void ta_schema_register()
     TYPE_FIELD      (ta_texture, gl_filter_min, ATOM_INT);
     TYPE_FIELD      (ta_texture, gl_filter_mag, ATOM_INT);
     TYPE_END        (ta_texture);
+
+    TYPE_START  (ta_animation, TYP_ANIMATION, 0, ta_animation_free);
+    TYPE_FIELD  (ta_animation, name,     ATOM_STRING);
+    TYPE_VECTOR (ta_animation, samplers, TYP_ANIMATION_SAMPLER);
+    TYPE_VECTOR (ta_animation, channels, TYP_ANIMATION_CHANNEL);
+    TYPE_END    (ta_animation);
 
     //--------------------------------------------------------------------------
     // Component types
