@@ -3,7 +3,7 @@
 
 const char *ta_animation_path_type_str(int type)
 {
-    switch(type) {
+    switch (type) {
         case TA_ANIMATION_PATH_TRANSLATION: return "TA_ANIMATION_PATH_TRANSLATION";
         case TA_ANIMATION_PATH_ROTATION:    return "TA_ANIMATION_PATH_ROTATION";
         case TA_ANIMATION_PATH_SCALE:       return "TA_ANIMATION_PATH_SCALE";

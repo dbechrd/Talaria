@@ -1491,9 +1491,11 @@ static void ui_render_image(ui_frame *frame)
             ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, frame->texture_face);
             ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
             ta_primitive_push_rect(0, img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-            ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
+            ta_primitive_render_mesh(&primitive_quads, tg_shader_cubemap, TA_TRIANGLES, true, false);
             ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
         } else {
+            // TODO: Make a shader specifically for rendering 1-channel depth maps so that it doesn't appear red. Not
+            // possible with tg_shader_quads because it's used for other things as well.
             ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
             ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
             ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);

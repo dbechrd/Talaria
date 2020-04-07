@@ -1,6 +1,6 @@
 {
     "asset" : {
-        "generator" : "Khronos glTF Blender I/O v1.0.5",
+        "generator" : "Khronos glTF Blender I/O v1.2.18",
         "version" : "2.0"
     },
     "scene" : 0,
@@ -42,16 +42,21 @@
     "materials" : [
         {
             "doubleSided" : true,
-            "name" : "rock_material",
+            "emissiveFactor" : [
+                0,
+                0,
+                0
+            ],
+            "name" : "rock_0001",
             "pbrMetallicRoughness" : {
                 "baseColorFactor" : [
-                    0.800000011920929,
-                    0.800000011920929,
-                    0.800000011920929,
+                    0.02909952774643898,
+                    0.02909952774643898,
+                    0.02909952774643898,
                     1
                 ],
                 "metallicFactor" : 0,
-                "roughnessFactor" : 0.4000000059604645
+                "roughnessFactor" : 0.8999999761581421
             }
         }
     ],
@@ -60,7 +65,7 @@
             "extras" : {
                 "shader" : "mesh"
             },
-            "name" : "rock_mesh",
+            "name" : "rock_0001",
             "primitives" : [
                 {
                     "attributes" : {

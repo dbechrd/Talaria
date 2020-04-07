@@ -198,13 +198,18 @@ void ta_game_init()
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
+    //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb"); // stride != 0 (interleaved attributes)
+    //ta_game_load_gltf("data/mesh/bee.glb");               // diffuse fails to load
+    //ta_game_load_gltf("data/mesh/Dodecahedron.gltf");     // has external URIs
+
     //ta_game_load_gltf("data/mesh/hier_test.gltf");
-    //ta_game_load_gltf("data/mesh/rock_0001.gltf");
-    //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb");
+    ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/button_silly.gltf");
-    //ta_game_load_gltf("data/mesh/button.gltf");
+    ta_game_load_gltf("data/mesh/button.gltf");
     ta_game_load_gltf("data/mesh/dude.gltf");
+    ta_game_load_gltf("data/mesh/skeleton_test_1bone.gltf");
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
+    tg_material_default = ta_game_by_name_try(RES_MATERIAL, SYM(INTERN("material_unknown")));
 
     //--------------------------------------------------------------------------
     // Simulation
@@ -278,6 +283,7 @@ void ta_game_init()
     ta_texture *tex_default_occlusion = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion);
     ta_texture *tex_default_height    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height   );
 
+    // TODO: Just create 3 white textures, for 1, 2 and 4 channels. Then reuse.
     tex_default_albedo->type = TA_TEXTURE_2D;
     dlb_vec_push(tex_default_albedo->pixels, 255);
     dlb_vec_push(tex_default_albedo->pixels, 255);
@@ -314,7 +320,7 @@ void ta_game_init()
     tex_default_metallic->gl_filter_mag = GL_NEAREST;
 
     tex_default_roughness->type = TA_TEXTURE_2D;
-    dlb_vec_push(tex_default_roughness->pixels, 127);
+    dlb_vec_push(tex_default_roughness->pixels, 255);
     tex_default_roughness->width = 1;
     tex_default_roughness->height = 1;
     tex_default_roughness->channels = 1;
@@ -377,7 +383,7 @@ void ta_game_init()
 #if _DEBUG
     ta_game_state_set(TA_STATE_FREE_CAM);
 #else
-    ta_game_state_set(TA_GAME_STATE_PLAY);
+    ta_game_state_set(TA_STATE_PLAY);
 #endif
     ta_log_write(&tg_debug_log, SRC_GAME, "Active camera: %s\n", tg_e_active_camera);
     DLB_ASSERT(tg_e_active_camera);
@@ -472,7 +478,6 @@ void *ta_game_resource_pool(ta_res_type type)
 void ta_game_load_gltf(const char *filename)
 {
     ta_gltf gltf = { 0 };
-    //err = ta_gltf_parse(data, "F:/Users/User/Rez/Models/bee.glb");
     gltf.filename = filename;
     int err = ta_gltf_parse_file(&gltf);
     if (err) {
@@ -961,7 +966,6 @@ void ta_game_loop()
         ta_camera *active_camera = ta_game_camera();
         ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
         ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
-        ta_model *models = ta_game_resource_pool(RES_COMP_MODEL);
         ta_camera *cameras = ta_game_resource_pool(RES_COMP_CAMERA);
 
         //----------------------------------------------------------------------
@@ -1019,7 +1023,7 @@ void ta_game_loop()
         //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         dlb_vec_each(ta_light *, light, lights) {
-            ta_light_shadowpass_render(light, models);
+            ta_light_shadowpass_render(light, transforms);
         }
         ta_shader_unbind();
         //glCullFace(GL_BACK);
@@ -1051,8 +1055,11 @@ void ta_game_loop()
 
         // TODO: Group by shader / material to minimize redundant uniform calls
         // Render models
-        dlb_vec_each(ta_model *, model, models) {
-            ta_model_render(model, active_camera);
+        dlb_vec_each(ta_transform *, transform, transforms) {
+            ta_model *model = ta_game_component_try(transform->entity, RES_COMP_MODEL);
+            if (model) {
+                ta_model_render(model, active_camera);
+            }
         }
 
         if (active_camera->debug_wireframe) {

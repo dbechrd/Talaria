@@ -641,7 +641,7 @@ void ta_editor_draw_world()
     if (selected_entity) {
         ta_camera *camera = ta_game_camera();
 
-#if 0
+#if 1
         // Render selected entity as yellow wireframes
         ta_model *e_model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
         if (e_model) {
@@ -904,15 +904,67 @@ static void ui_node_panel()
         ta_ui_textbox_clear(&search_box);
     }
 
+    static const char *res_type_lookup[RES_COUNT] = {
+        [RES_COMP_AUDIO_SOURCE] = "audiosource",
+        [RES_COMP_BUTTON      ] = "button",
+        [RES_COMP_CAMERA      ] = "camera",
+        [RES_COMP_GUN         ] = "gun",
+        [RES_COMP_LIGHT       ] = "light",
+        [RES_COMP_MODEL       ] = "model",
+        [RES_COMP_PLAYER      ] = "player",
+        [RES_COMP_TRANSFORM   ] = "transform",
+        [RES_COMP_RIGID_BODY  ] = "rigidbody",
+        //[RES_AUDIO_BUFFER     ] = "RES_AUDIO_BUFFER",
+        //[RES_FONT             ] = "RES_FONT",
+        //[RES_MATERIAL         ] = "RES_MATERIAL",
+        //[RES_MESH             ] = "RES_MESH",
+        //[RES_SHADER           ] = "RES_SHADER",
+        //[RES_TEXTURE          ] = "RES_TEXTURE",
+        //[RES_ANIMATION        ] = "RES_ANIMATION"
+    };
+
     // TODO: Accelerate search (e.g. trie) if it gets slow
     size_t query_len = dlb_vec_len(search_box.buffer);
     if (query_len) {
+        ta_res_type res_filter_pos = RES_COMP_COUNT;
+        ta_res_type res_filter_neg = RES_COMP_COUNT;
+
+        bool match_all = false;
+        switch (search_box.buffer[0]) {
+            case '*':
+                match_all = query_len == 1;
+                break;
+            case '+': case '-':
+                for (ta_res_type res_type = 0; res_type < RES_COMP_COUNT; res_type++) {
+                    if (!strncmp(search_box.buffer + 1, res_type_lookup[res_type], query_len - 1) &&
+                        query_len - 1 == strlen(res_type_lookup[res_type]))
+                    {
+                        if (search_box.buffer[0] == '+') {
+                            res_filter_pos = res_type;
+                            break;
+                        } else if (search_box.buffer[0] == '-') {
+                            res_filter_neg = res_type;
+                            break;
+                        }
+                    }
+                }
+                break;
+        }
+
         static const char **search_results = 0;
         dlb_vec_clear(search_results);
         ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
         dlb_vec_each(ta_transform *, transform, transforms) {
             //if (!strncmp(transform->entity, search_box.buffer, query_len)) {
-            if (strstr(transform->entity, search_box.buffer)) {
+            bool match_res_pos = false;
+            bool match_res_neg = false;
+            if (res_filter_pos < RES_COMP_COUNT) {
+                match_res_pos = ta_game_component_try(transform->entity, res_filter_pos) != 0;
+            }
+            if (res_filter_neg < RES_COMP_COUNT) {
+                match_res_neg = ta_game_component_try(transform->entity, res_filter_neg) == 0;
+            }
+            if (match_all || match_res_pos || match_res_neg || strstr(transform->entity, search_box.buffer)) {
                 dlb_vec_push(search_results, transform->entity);
             }
         }
@@ -1057,6 +1109,11 @@ static void ui_node_panel()
     if (model_expanded) {
         ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
         if (model) {
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("name:"));
+            ta_ui_label(SYM(model->name));
+
             // List all of the model pieces
             dlb_vec_each(ta_piece *, piece, model->pieces) {
                 ta_ui_row_begin();
@@ -1149,7 +1206,7 @@ static void ui_node_panel()
             }
         } else {
             if (ta_ui_button(CSTR("Add model"))) {
-                // TODO: add model
+                ta_game_component_add(selected_entity, RES_COMP_MODEL, SYM(selected_entity));
             }
         }
     }
@@ -1353,6 +1410,15 @@ static void ui_node_panel()
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("cast shadows:"));
+            if (light->cast_shadows) {
+                if (ta_ui_button(CSTR("True"))) light->cast_shadows = false;
+            } else {
+                if (ta_ui_button(CSTR("False"))) light->cast_shadows = true;
+            }
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("shadow map:"));
             static bool show_shadow_map = true;
             if (show_shadow_map) {
@@ -1527,7 +1593,7 @@ static void ui_camera_panel()
         }
         ta_ui_next_margin(8, 1, 0, 0);
         if (ta_ui_button(CSTR("Normal"))) {
-            camera->position_target_vel = 0.2f;
+            camera->position_target_vel = 0.15f;
         }
         ta_ui_next_margin(8, 1, 0, 0);
         if (ta_ui_button(CSTR("Fast"))) {

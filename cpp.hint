@@ -3,3 +3,4 @@
 // For more information see https://go.microsoft.com/fwlink/?linkid=865984
 //#define STBIDEF
 //#define dlb_vec_each(t, i, b) for (t (i) = (b); (i) != dlb_vec_end((b)); (i)++)
+#define dlb_vec_zero(b) (dlb_vec_cap(b) > 0 ? (dlb_memset(b, 0, dlb_vec_reserved_bytes(b)), dlb_vec_hdr(b)->len = 0) : 0)

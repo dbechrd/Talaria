@@ -1,5 +1,7 @@
 #include "ta_material.h"
 
+ta_material *tg_material_default;
+
 void ta_material_init(ta_material *material)
 {
     if (!material->shader) {
@@ -18,10 +20,14 @@ void ta_material_init(ta_material *material)
         material->emission_factor.g = 1.0f;
         material->emission_factor.b = 1.0f;
     }
-    if (material->metallic_texture && !material->metallic_factor) {
+    if (!material->metallic_texture && !material->metallic_factor) {
+        material->metallic_factor = 0.0f;
+    } else if (material->metallic_texture && !material->metallic_factor) {
         material->metallic_factor = 1.0f;
     }
-    if (material->roughness_texture && !material->roughness_factor) {
+    if (!material->roughness_texture && !material->roughness_factor) {
+        material->roughness_factor = 0.5f;
+    } else if (material->roughness_texture && !material->roughness_factor) {
         material->roughness_factor = 1.0f;
     }
     if (material->height_texture && !material->height_factor) {

@@ -327,10 +327,10 @@ void ta_mesh_render(ta_mesh *mesh)
     }
     glBindVertexArray(mesh->gl_vao);
     size_t indexes_count = dlb_vec_len(mesh->indexes);
+    size_t positions_count = dlb_vec_len(mesh->positions);
     if (indexes_count) {
         glDrawElements(GL_TRIANGLES, (GLsizei)indexes_count, GL_UNSIGNED_INT, 0);
     } else {
-        size_t positions_count = dlb_vec_len(mesh->positions);
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)positions_count);
     }
     glBindVertexArray(0);

@@ -1,7 +1,6 @@
 #pragma once
 #include "ta_schema.h"
 #include "ta_math.h"
-#include "dlb/dlb_types.h"
 
 typedef struct ta_piece {
     const char *mesh;

@@ -40,20 +40,20 @@ ta_camera:
   name: "freecam"
   entity: "freecam"
   position_smooth: 0x3DCCCCCD (0.100000)
-  position_target_vel: 0x3E4CCCCD (0.200000)
+  position_target_vel: 0x3DCCCCCD (0.100000)
   target_xform:
     position:
-      x: 0x4127190F (10.443618)
-      y: 0x410712E0 (8.442108)
-      z: 0xBF83E9DD (-1.030574)
+      x: 0x4173A7DF (15.228484)
+      y: 0x410F7E2E (8.968306)
+      z: 0xC1EB116B (-29.383505)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x00000000 (0.000000)
-  yaw: 0x42BED9F0 (95.425659)
+  yaw: 0x4363EAA3 (227.916550)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1D666D0 (-26.800201)
+  pitch: 0xC1780220 (-15.500519)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -64,9 +64,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBD2E9F92 (-0.042633)
-    y: 0x3F648068 (0.892584)
-    z: 0xBEE5D112 (-0.448861)
+    x: 0xBE376936 (-0.179112)
+    y: 0x3F76B056 (0.963628)
+    z: 0x3E4B1A56 (0.198343)
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -165,9 +165,9 @@ ta_light:
   entity: "light_point_0004"
   intensity: 0x40400009 (3.000002)
   color:
-    r: 0x3E3851E8 (0.180000)
-    g: 0x3E8F5C33 (0.280000)
-    b: 0x3EB33332 (0.350000)
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
   type: 2  # TA_LIGHT_POINT
   shadowmap:
     shader: "shadow_point"
@@ -278,6 +278,54 @@ ta_model:
   ]
   cast_shadows: true
   receive_shadows: true
+ta_model:
+  name: "rock_0001"
+  entity: "rock_0001"
+  pieces: [
+    {
+      mesh: "#rock_0001.prim000",
+      material: "#rock_0001",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "button_0001"
+  entity: "button_0001"
+  pieces: [
+    {
+      mesh: "#button_0001.prim000",
+      material: "#mat_grid",
+    },
+    {
+      mesh: "#button_0001.prim001",
+      material: "#mat_rainbow",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "dude"
+  entity: "dude"
+  pieces: [
+    {
+      mesh: "#dude.prim000",
+      material: "#dude_material",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "skeleton_test_1bone"
+  entity: "skeleton_test_1bone"
+  pieces: [
+    {
+      mesh: "#skeleton_test_1bone.prim000",
+      material: "#Material",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
 #-------------------------------------------------------------------------------
 # TYP_PLAYER
 #-------------------------------------------------------------------------------
@@ -298,10 +346,10 @@ ta_transform:
       y: 0x418FF00E (17.992214)
       z: 0xC19B45DF (-19.409117)
     orientation:
-      x: 0xBE7E7FA0 (-0.248534)
-      y: 0x3ED529FD (0.416336)
-      z: 0x398ED555 (0.000272)
-      w: 0x3F5FE4AA (0.874583)
+      x: 0xBE7E7FA2 (-0.248534)
+      y: 0x3ED529FF (0.416336)
+      z: 0x398ED556 (0.000272)
+      w: 0x3F5FE4AC (0.874583)
 ta_transform:
   name: "light_point_0002"
   entity: "light_point_0002"
@@ -321,7 +369,7 @@ ta_transform:
   xform:
     position:
       x: 0xBF000000 (-0.500000)
-      y: 0x3F800000 (1.000000)
+      y: 0x4006900C (2.102542)
       z: 0xBF000000 (-0.500000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -334,9 +382,9 @@ ta_transform:
   entity: "light_point_0004"
   xform:
     position:
-      x: 0x41251779 (10.318231)
-      y: 0x4104B219 (8.293481)
-      z: 0xC194BAEC (-18.591270)
+      x: 0x40863ECE (4.195167)
+      y: 0x40FA7554 (7.826822)
+      z: 0xC1E18311 (-28.188997)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -434,18 +482,44 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
 ta_transform:
+  name: "skeleton_test_1bone"
+  entity: "skeleton_test_1bone"
+  xform:
+    position:
+      x: 0x409D85F2 (4.922601)
+      y: 0x40409276 (3.008939)
+      z: 0xC1965D06 (-18.795422)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "gltf_mesh_0001"
+  entity: "gltf_mesh_0001"
+  xform:
+    position:
+      x: 0x40EFD178 (7.494320)
+      y: 0x40409276 (3.008939)
+      z: 0xC1965D06 (-18.795422)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
   name: "freecam"
   entity: "freecam"
   xform:
     position:
-      x: 0x4127190A (10.443613)
-      y: 0x410712DC (8.442104)
-      z: 0xBF83E9D8 (-1.030574)
+      x: 0x4173A7DA (15.228479)
+      y: 0x410F7E2A (8.968302)
+      z: 0xC1EB1166 (-29.383495)
     orientation:
-      x: 0xBE6D9011 (-0.231995)
-      y: 0x3D31DF1D (0.043426)
+      x: 0xBEB54ACF (-0.354086)
+      y: 0x3F5B0EB3 (0.855693)
       z: 0x00000000 (0.000000)
-      w: 0x3F78C46D (0.971747)
+      w: 0x3EC1375D (0.377376)
 ta_transform:
   name: "player_one"
   entity: "player_one"
@@ -455,10 +529,10 @@ ta_transform:
       y: 0x409FFF2F (4.999900)
       z: 0xC0DFE044 (-6.996126)
     orientation:
-      x: 0xBE1BDD5A (-0.152212)
-      y: 0x3F49903F (0.787357)
-      z: 0xBEDE8D53 (-0.434672)
-      w: 0xBED1D53B (-0.409830)
+      x: 0xBE1BDD59 (-0.152212)
+      y: 0x3F49903D (0.787357)
+      z: 0xBEDE8D51 (-0.434672)
+      w: 0xBED1D539 (-0.409830)
 ta_transform:
   name: "player_camera"
   entity: "player_camera"
@@ -473,8 +547,8 @@ ta_transform:
       z: 0x80000000 (-0.000000)
       w: 0x3F7C1EAC (0.984843)
 ta_transform:
-  name: "rock_mesh"
-  entity: "rock_mesh"
+  name: "rock_0001"
+  entity: "rock_0001"
   xform:
     position:
       x: 0x408B46D7 (4.352397)
@@ -491,7 +565,7 @@ ta_transform:
   xform:
     position:
       x: 0x412D335C (10.825039)
-      y: 0x3F7EEFBD (0.995846)
+      y: 0x3F7EEFBE (0.995846)
       z: 0xC189516C (-17.164757)
     orientation:
       x: 0x3DFD7BD2 (0.123771)
@@ -517,7 +591,7 @@ ta_transform:
   xform:
     position:
       x: 0xC134F153 (-11.308917)
-      y: 0xC80D7D5F (-144885.484375)
+      y: 0xC8232EF4 (-167099.812500)
       z: 0x40C3AD3D (6.114897)
     orientation:
       x: 0x00000000 (0.000000)
@@ -546,17 +620,17 @@ ta_transform:
       y: 0xBF401D9F (-0.750452)
       z: 0xC148DFE2 (-12.554659)
     orientation:
-      x: 0x3EDF7A96 (0.436482)
+      x: 0x3EDF7A94 (0.436482)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F665398 (0.899713)
+      w: 0x3F665396 (0.899713)
 ta_transform:
   name: "star_0001"
   entity: "star_0001"
   xform:
     position:
       x: 0x40928201 (4.578370)
-      y: 0xC80D7CC0 (-144883.000000)
+      y: 0xC8232E55 (-167097.328125)
       z: 0x40968FEB (4.705068)
     orientation:
       x: 0x3E9202C9 (0.285177)
@@ -653,8 +727,8 @@ ta_rigid_body:
       radius: 0x3F800000 (1.000000)
   mass: 0x40000000 (2.000000)
 ta_rigid_body:
-  name: "rock_mesh"
-  entity: "rock_mesh"
+  name: "rock_0001"
+  entity: "rock_0001"
   collider:
     type: 2  # TA_COLLIDER_OBB
     obb:
@@ -796,6 +870,20 @@ ta_font:
 # TYP_MATERIAL
 #-------------------------------------------------------------------------------
 ta_material:
+  name: "material_unknown"
+  shader: "mesh"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x3F4CCCCD (0.800000)
+    g: 0x3E4CCCCD (0.200000)
+    b: 0x3F4CCCCD (0.800000)
+  metallic_factor: 0x3F000000 (0.500000)
+  roughness_factor: 0x3F800000 (1.000000)
+ta_material:
   name: "red"
   shader: "mesh"
   albedo_texture: "red_albedo"
@@ -931,6 +1019,7 @@ ta_material:
     r: 0x00000000 (0.000000)
     g: 0x00000000 (0.000000)
     b: 0x00000000 (0.000000)
+  roughness_factor: 0x3F000000 (0.500000)
 #-------------------------------------------------------------------------------
 # TYP_MESH
 #-------------------------------------------------------------------------------
@@ -1697,7 +1786,7 @@ ta_shader:
 #-------------------------------------------------------------------------------
 ta_texture:
   name: "white_albedo"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   pixels: [255, 255, 255, 255, ]
   width: 1
   height: 1
@@ -1707,7 +1796,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "red_albedo"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   pixels: [255, 0, 0, 255, ]
   width: 1
   height: 1
@@ -1717,7 +1806,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "test_diff"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/pbr_default_0.tga"
   width: 32
   height: 32
@@ -1727,7 +1816,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "test_mrao"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/pbr_default_1.tga"
   width: 32
   height: 32
@@ -1738,7 +1827,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "cobble_albedo"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_albedo.tga"
   width: 512
   height: 512
@@ -1748,7 +1837,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "cobble_normal"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_normal.tga"
   width: 512
   height: 512
@@ -1759,7 +1848,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "cobble_occlusion"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_occlusion.tga"
   width: 512
   height: 512
@@ -1770,7 +1859,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "cobble_roughness"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_roughness.tga"
   width: 512
   height: 512
@@ -1781,7 +1870,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "audio_icon"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/audio_icon.tga"
   width: 32
   height: 32
@@ -1791,7 +1880,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_albedo"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_albedo.tga"
   width: 1024
   height: 1024
@@ -1801,7 +1890,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_emission"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_emission.tga"
   width: 1024
   height: 1024
@@ -1811,7 +1900,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_height"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_height.tga"
   width: 1024
   height: 1024
@@ -1822,7 +1911,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_normal"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_normal.tga"
   width: 1024
   height: 1024
@@ -1833,7 +1922,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_occlusion"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
   width: 1024
   height: 1024
@@ -1844,7 +1933,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "terrazzo_roughness"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_roughness.tga"
   width: 1024
   height: 1024
@@ -1855,7 +1944,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_albedo"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_albedo.tga"
   width: 1024
   height: 1024
@@ -1865,7 +1954,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_height"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_height.tga"
   width: 1024
   height: 1024
@@ -1876,7 +1965,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_metallic"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_metallic.tga"
   width: 1024
   height: 1024
@@ -1887,7 +1976,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_normal"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_normal.tga"
   width: 1024
   height: 1024
@@ -1898,7 +1987,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_occlusion"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_occlusion.tga"
   width: 1024
   height: 1024
@@ -1909,7 +1998,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "metal_plate_019_roughness"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_roughness.tga"
   width: 1024
   height: 1024
@@ -1920,7 +2009,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "acoustic_foam_albedo"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_albedo.tga"
   width: 1024
   height: 1024
@@ -1930,7 +2019,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "acoustic_foam_height"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_height.tga"
   width: 1024
   height: 1024
@@ -1941,7 +2030,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "acoustic_foam_normal"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_normal.tga"
   width: 1024
   height: 1024
@@ -1952,7 +2041,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "acoustic_foam_occlusion"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_occlusion.tga"
   width: 1024
   height: 1024
@@ -1963,7 +2052,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "acoustic_foam_roughness"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_roughness.tga"
   width: 1024
   height: 1024
@@ -1974,7 +2063,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "star_albedo"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/star_albedo.tga"
   width: 1024
   height: 1024
@@ -1984,7 +2073,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "martin_luther"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/martin_luther.tga"
   width: 512
   height: 512
@@ -1994,7 +2083,7 @@ ta_texture:
   gl_filter_mag: 9728
 ta_texture:
   name: "sphere_albedo"
-  type: 0  # TA_TEXTURE_2D     
+  type: 0  # TA_TEXTURE_2D
   path: "data/texture/sphere_albedo.tga"
   width: 1024
   height: 1024
@@ -2013,3 +2102,6 @@ ta_texture:
   flip_y: true
   gl_filter_min: 9987
   gl_filter_mag: 9728
+#-------------------------------------------------------------------------------
+# TYP_ANIMATION
+#-------------------------------------------------------------------------------

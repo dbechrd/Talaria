@@ -1289,7 +1289,6 @@ void cgltf_free(cgltf_data* data)
 			{
 				data->memory_free(data->memory_user_data, attribute->name);
 			}
-			dlb_vec__hdr *hdr = dlb_vec_hdr(primitive->attributes_v);
 			data->memory_free(data->memory_user_data, primitive->attributes_v);
 
 			dlb_vec_each(cgltf_morph_target *, target, primitive->targets_v)

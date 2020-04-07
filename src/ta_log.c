@@ -102,7 +102,7 @@ void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
 
     TA_LOCK(log->mutex);
     fprintf(log->stream,
-        "[     Timestamp     ][Thread][  Elapsed  ][  Delta   ][ Source  ][       Message       ]\n"
+        "[ Timestamp         ][ TID ][ Elapsed   ][ Delta      ][ Source    ][ Message             ]\n"
         "----------------------------------------------------------------------------------------\n");
     TA_UNLOCK(log->mutex);
 }
@@ -141,10 +141,10 @@ static void ta_log_write_timestamp(ta_log *log, u32 src)
     double ms_since_last_write = elapsed_ms - thread_get_last_write(thread_id);
     thread_set_last_write(thread_id, elapsed_ms);
 
-    fprintf(log->stream, "[%s][%6u][%10.3fs][%7.3fms][ %10s] ", timestamp,
+    fprintf(log->stream, "[%s][%5u][%10.3fs][%10.3fms][ %10s] ", timestamp,
         thread_id, elapsed_sec, ms_since_last_write, ta_log_source_str(src));
     if (log->echo) {
-        fprintf(stdout, "[%s][%6u][%10.3fs][%9.3fms][ %10s] ", timestamp,
+        fprintf(stdout, "[%s][%5u][%10.3fs][%10.3fms][ %10s] ", timestamp,
             thread_id, elapsed_sec, ms_since_last_write, ta_log_source_str(src));
     }
 }

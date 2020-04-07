@@ -34,4 +34,6 @@ typedef struct ta_material {
     const char *occlusion_texture;
 } ta_material;
 
+ta_material *tg_material_default;
+
 void ta_material_init(ta_material *material);

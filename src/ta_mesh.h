@@ -2,6 +2,8 @@
 #include "ta_math.h"
 #include "misc/glad.h"
 
+#define MESH_MAX_JOINTS 4
+
 typedef enum ta_vertex_attrib_type {
     // Note: Morphable attributes must be contiguous and in the same order as their respective morph target attributes
     TA_VERTEX_ATTRIB_POSITION,
@@ -40,9 +42,10 @@ typedef struct ta_mesh {
             ta_vec3 *morph0_normals;
             ta_vec3 *morph0_tangents;
             struct {
-                GLushort ids[4];  // NOTE: GLTF only supports 4 joints per vertex
+                GLushort ids[MESH_MAX_JOINTS];  // NOTE: GLTF only supports 4 joints per vertex
             } *joints;
-            ta_vec4 *weights;  // 4 weights, one for each joint
+            // TODO: Can this be a static sized array?
+            ta_vec4 *weights;  // one weight for each joint [MESH_MAX_JOINTS]
             GLuint *indexes;
         };
         void *buffers[TA_VERTEX_ATTRIB_COUNT];

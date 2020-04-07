@@ -661,8 +661,7 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
                 DLB_ASSERT(sizeof(*mesh->tangents) == 12);
                 DLB_ASSERT(sizeof(*mesh->tangents) == sizeof(*mesh->morph0_tangents));
                 DLB_ASSERT(data_size / accessor->count == 16);
-                dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->tangents));
-                dlb_vec_hdr(mesh->tangents)->len = accessor->count;
+                dlb_vec_alloc_count_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->tangents));
 
                 // Calculate how many extra bytes to skip per element
                 size_t extra_bytes = (data_size / accessor->count) - sizeof(*mesh->tangents);
@@ -689,11 +688,32 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
         } case TA_VERTEX_ATTRIB_JOINTS: {
             DLB_ASSERT(!target);
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
-            DLB_ASSERT(accessor->component_type == cgltf_component_type_r_16u);
-            DLB_ASSERT(data_size == sizeof(*mesh->joints) * accessor->count);
-            //DLB_ASSERT(sizeof(*mesh->joints) == sizeof(*mesh->morph0_joints));
-            //dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->joints));
-            dlb_vec_reserve(mesh->joints, accessor->count);
+            if (accessor->component_type == cgltf_component_type_r_16u) {
+                DLB_ASSERT(data_size == sizeof(*mesh->joints) * accessor->count);
+                //DLB_ASSERT(sizeof(*mesh->joints) == sizeof(*mesh->morph0_joints));
+                dlb_vec_reserve(mesh->joints, accessor->count);
+                //dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->joints));
+            } else if (accessor->component_type == cgltf_component_type_r_8u) {
+                // NOTE: gltf decided joints should be 8u.. but only sometimes. Fix that dumb shit. -.-
+                DLB_ASSERT(sizeof(*mesh->joints) / MESH_MAX_JOINTS == sizeof(u16));
+                //DLB_ASSERT(sizeof(*mesh->joints) == sizeof(*mesh->morph0_joints));
+                DLB_ASSERT(data_size / accessor->count / MESH_MAX_JOINTS == sizeof(u8));
+                //dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->joints));
+                dlb_vec_alloc_count(mesh->joints, accessor->count);
+
+                // Copy array of vec4 to array of vec3
+                const u8 *src = data;
+                u16 *dst = (void *)mesh->joints;
+                DLB_ASSERT(dst);
+                for (size_t i = 0; i < accessor->count; ++i) {
+                    *dst = (u16)*src;
+                    src++;
+                    dst++;
+                }
+                return;
+            } else {
+                DLB_ASSERT(!"Unexpected component type for joints");
+            }
             break;
         } case TA_VERTEX_ATTRIB_WEIGHTS: {
             // NOTE: We don't support morph targets on top of joints/weight for now
@@ -727,11 +747,26 @@ static void gltf_texture(const char **out_texture_name, cgltf_texture_view *view
     DLB_ASSERT(!view->has_transform);
 
     DLB_ASSERT(view->texture->image);
-    DLB_ASSERT(!view->texture->sampler);  // TODO: Handle sampler options
+    //DLB_ASSERT(!view->texture->sampler);  // TODO: Handle sampler options
 
-    DLB_ASSERT(view->texture->image->name);
+    // TODO: Give it a placeholder name if it doesn't have one (e.g. "bee_occlusion")
+    const char *temp_name = 0;
+    if (!view->texture->image->name) {
+        static int placeholder_tex_id = 1;
+        // Load meshes (ta_model -> ta_piece) and primitives (ta_mesh)
+        char name_buf[256] = { 0 };
+
+        const size_t name_size = ARRAY_COUNT(name_buf);
+        int name_len = snprintf(name_buf, name_size, "gltf_texture_%04d", placeholder_tex_id++);
+        DLB_ASSERT(name_len < name_size);
+        temp_name = ta_symbol_intern(name_buf, name_len);
+    } else {
+        temp_name = view->texture->image->name;
+    }
+    DLB_ASSERT(temp_name);
+
     DLB_ASSERT(strcmp(view->texture->image->mime_type, "image/png") == 0);  // TODO: Handle other types?
-    DLB_ASSERT(!view->texture->image->uri);
+    DLB_ASSERT(!view->texture->image->uri);  // TODO: We could fix external URIs.. do I really care?
 
     DLB_ASSERT(view->texture->image->buffer_view);
     DLB_ASSERT(view->texture->image->buffer_view->size);
@@ -742,7 +777,7 @@ static void gltf_texture(const char **out_texture_name, cgltf_texture_view *view
 
     char texture_name[256] = { 0 };
     const size_t texture_name_size = ARRAY_COUNT(texture_name);
-    int texture_name_len = snprintf(texture_name, texture_name_size, "#%s", view->texture->image->name);
+    int texture_name_len = snprintf(texture_name, texture_name_size, "#%s", temp_name);
     DLB_ASSERT(texture_name_len < texture_name_size);
 
     ta_resource *exists = ta_game_by_name_try(RES_TEXTURE, texture_name, texture_name_len);
@@ -759,6 +794,7 @@ static void gltf_texture(const char **out_texture_name, cgltf_texture_view *view
     // so if we're over this.. that's one BF texture).
     DLB_ASSERT(buffer_len <= INT_MAX);
 
+    ta_log_write(&tg_debug_log, SRC_GLTF, "stbi_load_from_memory: %s\n", texture_name);
     //stbi_set_flip_vertically_on_load(true);
     int w = 0;
     int h = 0;
@@ -807,9 +843,24 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
     DLB_ASSERT(!view->has_transform);
 
     DLB_ASSERT(view->texture->image);
-    DLB_ASSERT(!view->texture->sampler);  // TODO: Handle sampler options
+    //DLB_ASSERT(!view->texture->sampler);  // TODO: Handle sampler options
 
-    DLB_ASSERT(view->texture->image->name);
+    /// TODO: Give it a placeholder name if it doesn't have one (e.g. "bee_occlusion")
+    const char *temp_name = 0;
+    if (!view->texture->image->name) {
+        static int placeholder_tex_id = 1;
+        // Load meshes (ta_model -> ta_piece) and primitives (ta_mesh)
+        char name_buf[256] = { 0 };
+
+        const size_t name_size = ARRAY_COUNT(name_buf);
+        int name_len = snprintf(name_buf, name_size, "gltf_texture_%04d", placeholder_tex_id++);
+        DLB_ASSERT(name_len < name_size);
+        temp_name = ta_symbol_intern(name_buf, name_len);
+    } else {
+        temp_name = view->texture->image->name;
+    }
+    DLB_ASSERT(temp_name);
+
     DLB_ASSERT(strcmp(view->texture->image->mime_type, "image/png") == 0);  // TODO: Handle other types?
     DLB_ASSERT(!view->texture->image->uri);
 
@@ -820,14 +871,12 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
     DLB_ASSERT(view->texture->image->buffer_view->buffer->size);
     DLB_ASSERT(view->texture->image->buffer_view->buffer->data);
 
-    char *texture_name = view->texture->image->name;
-
     char metallic_name_buf[256] = { 0 };
     char roughness_name_buf[256] = { 0 };
     const size_t metallic_name_size = ARRAY_COUNT(metallic_name_buf);
     const size_t roughness_name_size = ARRAY_COUNT(roughness_name_buf);
-    int metallic_name_len = snprintf(metallic_name_buf, metallic_name_size, "#%s.r", view->texture->image->name);
-    int roughness_name_len = snprintf(roughness_name_buf, roughness_name_size, "#%s.g", view->texture->image->name);
+    int metallic_name_len = snprintf(metallic_name_buf, metallic_name_size, "#%s.r", temp_name);
+    int roughness_name_len = snprintf(roughness_name_buf, roughness_name_size, "#%s.g", temp_name);
     DLB_ASSERT(metallic_name_len < metallic_name_size);
     DLB_ASSERT(roughness_name_len < roughness_name_size);
 
@@ -848,6 +897,7 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
     // so if we're over this.. that's one BF texture).
     DLB_ASSERT(buffer_len <= INT_MAX);
 
+    ta_log_write(&tg_debug_log, SRC_GLTF, "stbi_load_from_memory: %s\n", temp_name);
     //stbi_set_flip_vertically_on_load(true);
     int w = 0;
     int h = 0;
@@ -855,7 +905,7 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
     u8 *pixels = stbi_load_from_memory(buffer, (int)buffer_len, &w, &h, &channels, 0);
     if (!pixels) {
         const char *reason = stbi_failure_reason();
-        ta_log_write(&tg_debug_log, SRC_GLTF, "Failed to load tex: %s\nSTBI Reason: %s\n", texture_name, reason);
+        ta_log_write(&tg_debug_log, SRC_GLTF, "Failed to load tex: %s\nSTBI Reason: %s\n", temp_name, reason);
 #if _DEBUG
         // PNG should start with 137,80,78,71,13,10,26,10
         printf("Buffer 0-8: ");
@@ -1018,7 +1068,12 @@ void ta_gltf_load(ta_gltf *gltf)
 
     // Load skins
     dlb_vec_each(cgltf_skin *, gltf_skin, gltf->data->skins_v) {
-        DLB_ASSERT(1);
+        DLB_ASSERT(1 || gltf_skin);
+        //char* name;
+        //cgltf_node** joints_v;
+        //cgltf_node* skeleton;
+        //cgltf_accessor* inverse_bind_matrices;
+        //cgltf_extras extras;
     }
 
     // TODO(cleanup): Load texture samplers (already sort of asserted in gltf_texture()
@@ -1026,16 +1081,31 @@ void ta_gltf_load(ta_gltf *gltf)
 
     // Load materials
     dlb_vec_each(cgltf_material *, gltf_material, gltf->data->materials_v) {
+        const char *temp_material_name = 0;
+        if (!gltf_material->name) {
+            static int placeholder_material_id = 1;
+            // Load meshes (ta_model -> ta_piece) and primitives (ta_mesh)
+            char name_buf[256] = { 0 };
+
+            const size_t name_size = ARRAY_COUNT(name_buf);
+            int name_len = snprintf(name_buf, name_size, "gltf_material_%04d", placeholder_material_id++);
+            DLB_ASSERT(name_len < name_size);
+            temp_material_name = ta_symbol_intern(name_buf, name_len);
+        } else {
+            temp_material_name = gltf_material->name;
+        }
+        DLB_ASSERT(temp_material_name);
+
         char material_name[256] = { 0 };
         const size_t material_name_size = ARRAY_COUNT(material_name);
-        int material_name_len = snprintf(material_name, material_name_size, "#%s", gltf_material->name);
+        int material_name_len = snprintf(material_name, material_name_size, "#%s", temp_material_name);
         DLB_ASSERT(material_name_len < material_name_size);
 
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MATERIAL %s\n", material_name);
         ta_material *material = ta_game_alloc(RES_MATERIAL, material_name, material_name_len);
 
         DLB_ASSERT(gltf_material->has_pbr_metallic_roughness);
-        DLB_ASSERT(!gltf_material->has_pbr_specular_glossiness);
+        //DLB_ASSERT(!gltf_material->has_pbr_specular_glossiness);  // NOTE: Some files have both?? (e.g. bee.glb)
 
         gltf_texture(&material->albedo_texture, &gltf_material->pbr_metallic_roughness.base_color_texture);
         material->albedo_factor.r = gltf_material->pbr_metallic_roughness.base_color_factor[0];
@@ -1071,16 +1141,40 @@ void ta_gltf_load(ta_gltf *gltf)
     char model_name_buf[256] = { 0 };
     char mesh_name_buf[256] = { 0 };
     dlb_vec_each(cgltf_mesh *, gltf_mesh, gltf->data->meshes_v) {
-        const char *entity_name = ta_symbol_intern(gltf_mesh->name, strlen(gltf_mesh->name));
+        const char *entity_name = 0;
+        if (!gltf_mesh->name) {
+            static int placeholder_mesh_id = 1;
+            // Load meshes (ta_model -> ta_piece) and primitives (ta_mesh)
+            char name_buf[256] = { 0 };
+
+            const size_t name_size = ARRAY_COUNT(name_buf);
+            int name_len = snprintf(name_buf, name_size, "gltf_mesh_%04d", placeholder_mesh_id++);
+            DLB_ASSERT(name_len < name_size);
+            entity_name = ta_symbol_intern(name_buf, name_len);
+        } else {
+            entity_name = ta_symbol_intern(gltf_mesh->name, strlen(gltf_mesh->name));
+        }
+        DLB_ASSERT(entity_name);
 
         const size_t model_name_size = ARRAY_COUNT(model_name_buf);
-        int model_name_len = snprintf(model_name_buf, model_name_size, "#%s", gltf_mesh->name);
+        int model_name_len = snprintf(model_name_buf, model_name_size, "%s", gltf_mesh->name ? gltf_mesh->name : entity_name);
         DLB_ASSERT(model_name_len < model_name_size);
 
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MODEL %s\n", model_name_buf);
-        ta_model *model = ta_game_component_add(entity_name, RES_COMP_MODEL, model_name_buf, model_name_len);
+        ta_model *model = ta_game_component_try(entity_name, RES_COMP_MODEL);
+        if (!model) {
+            ta_log_write(&tg_debug_log, SRC_GLTF, "Couldn't find model '%.*s', letting GLTF loader create one\n",
+                model_name_len, model_name_buf);
+            model = ta_game_component_add(entity_name, RES_COMP_MODEL, model_name_buf, model_name_len);
+        }
+        DLB_ASSERT(model);
+
         model->cast_shadows = true;
         model->receive_shadows = true;
+
+        // HACK: Clear existing stuff that may have been serialized (e.g. #references)
+        dlb_vec_zero((char **)model->anim_targets);
+        dlb_vec_zero(model->pieces);
 
         dlb_vec_each(const char **, gltf_target, gltf_mesh->target_names_v) {
             const char *target = ta_symbol_intern(*gltf_target, strlen(*gltf_target));
@@ -1090,7 +1184,7 @@ void ta_gltf_load(ta_gltf *gltf)
         int prim_idx = 0;
         dlb_vec_each(cgltf_primitive *, gltf_prim, gltf_mesh->primitives_v) {
             const size_t mesh_name_size = ARRAY_COUNT(mesh_name_buf);
-            int mesh_name_len = snprintf(mesh_name_buf, mesh_name_size, "%s.prim%03d", model->name, prim_idx);
+            int mesh_name_len = snprintf(mesh_name_buf, mesh_name_size, "#%s.prim%03d", model->name, prim_idx);
             DLB_ASSERT(mesh_name_len < mesh_name_size);
 
             ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", mesh_name_buf);

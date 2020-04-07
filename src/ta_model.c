@@ -76,7 +76,12 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
     ta_mat4 light_pvm = mat4_mul(light_pv, &transform->world);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
     dlb_vec_each(ta_piece *, piece, model->pieces) {
-        ta_mesh *mesh = ta_game_by_sym(RES_MESH, piece->mesh);
+        ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, piece->mesh);
+        if (!mesh) {
+            // HACK: Decide if we really want to do this here..?
+            mesh = tg_mesh_default;
+        }
+
         if (vec3_zero(mesh->offset)) {
             ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
         } else {
@@ -115,9 +120,17 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     if (!camera->debug_no_mesh) {
         // TODO(perf): This probably does a lot of redundant work for models with multiple meshes
         dlb_vec_each(ta_piece *, piece, model->pieces) {
-            ta_mesh     *mesh     = ta_game_by_sym(RES_MESH,     piece->mesh);
-            ta_material *material = ta_game_by_sym(RES_MATERIAL, piece->material);
-            ta_shader   *shader   = ta_game_by_sym(RES_SHADER,   material->shader);
+            ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, piece->mesh);
+            if (!mesh) {
+                // HACK: Decide if we really want to do this here..?
+                mesh = tg_mesh_default;
+            }
+            ta_material *material = ta_game_by_sym_try(RES_MATERIAL, piece->material);
+            if (!material) {
+                // HACK: Decide if we really want to do this here..?
+                material = tg_material_default;
+            }
+            ta_shader *shader = ta_game_by_sym(RES_SHADER, material->shader);
 
             ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
             ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &cam_trans->xform_world.position);
@@ -189,6 +202,7 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
             offset = mat4_mul(&transform->world, &offset);
             ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
         }
+#if 0
         if (piece->anim_targets && dlb_vec_len(model->anim_target_weights)) {
             // TODO: Search model->anim_targets by name, then find the associated weight. Make a helper:
             // float ta_model_morph_target_weight(const char *morph_target_name);
@@ -196,6 +210,7 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
         } else {
             ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], 0.0f);
         }
+#endif
         ta_shader_bind(shader);
         ta_mesh_render(mesh);
     }
