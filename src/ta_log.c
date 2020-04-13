@@ -54,8 +54,8 @@ void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
 
     TA_LOCK(log->mutex);
     fprintf(log->stream,
-        "[ Timestamp         ][ TID ][ Elapsed   ][ Region     ][ Source    ][ Message             ]\n"
-        "-------------------------------------------------------------------------------------------\n");
+        "[Timestamp          ][TID  ][Source    ][Elapsed   ][Message                   ]\n"
+        "--------------------------------------------------------------------------------\n");
     TA_UNLOCK(log->mutex);
 }
 
@@ -108,19 +108,6 @@ static ta_log_thread_state *log_get_thread_state(ta_log *log, ta_thread_id threa
     return state;
 }
 
-static double thread_get_region_elapsed(ta_log *log, ta_thread_id thread_id, double elapsed_ms)
-{
-    double region_elapsed_ms = 0;
-    ta_log_thread_state *state = log_get_thread_state(log, thread_id);
-    if (state) {
-        ta_log_timed_region *region = dlb_vec_last(state->timed_regions);
-        if (region) {
-            region_elapsed_ms = elapsed_ms - region->start_ms;
-        }
-    }
-    return region_elapsed_ms;
-}
-
 void ta_log_indent(ta_log *log)
 {
     ta_thread_id thread_id = 0; //SDL_ThreadID();
@@ -152,17 +139,25 @@ static void ta_log_write_timestamp(ta_log *log, u32 src)
     double elapsed_ms = ta_timer_elapsed_ms();
 
     ta_thread_id thread_id = 0; //SDL_ThreadID();
-    double region_elapsed_ms = thread_get_region_elapsed(log, thread_id, elapsed_ms);
-
-    if (region_elapsed_ms > 200.0) {
-        region_elapsed_ms = 0.0;
-    }
-
-    fprintf(log->stream, "[%s][%5u][%10.3fs][%10.3fms][ %10s] ", timestamp,
-        thread_id, elapsed_sec, region_elapsed_ms, ta_log_source_str(src));
+#define LOG_PRINT(f) fprintf(f, "[%s][%5u][%10s][%8.3fms] ", timestamp, thread_id, ta_log_source_str(src), elapsed_sec)
+    LOG_PRINT(log->stream);
     if (log->echo) {
-        fprintf(stdout, "[%s][%5u][%10.3fs][%10.3fms][ %10s] ", timestamp,
-            thread_id, elapsed_sec, region_elapsed_ms, ta_log_source_str(src));
+        LOG_PRINT(stdout);
+    }
+#undef LOG_PRINT
+
+    ta_log_thread_state *state = log_get_thread_state(log, thread_id);
+    if (state) {
+        dlb_vec_each(ta_log_timed_region *, region, state->timed_regions) {
+            double region_elapsed_ms = elapsed_ms - region->start_ms;
+            // TODO: Store and print region names
+#define LOG_PRINT(f) fprintf(f, "[%s: %6.3fms] ", region->name, region_elapsed_ms)
+            LOG_PRINT(log->stream);
+            if (log->echo) {
+                LOG_PRINT(stdout);
+            }
+#undef LOG_PRINT
+        }
     }
 }
 
@@ -217,33 +212,29 @@ void ta_log_write(ta_log *log, u32 src, const char *fmt, ...)
 // NOTE: Lifetime of name must be at least as long as it takes to call ta_log_timed_region_end()
 void ta_log_timed_region_start(ta_log *log, u32 src, const char *name, size_t name_len)
 {
-    ta_log_write(log, src, "START %.*s\n", name_len, name);
-    ta_log_indent(log);
-
     ta_thread_id thread_id = 0; //SDL_ThreadID();
     ta_log_thread_state *state = log_get_or_create_thread_state(log, thread_id);
     ta_log_timed_region region = { 0 };
-    region.name_hash = dlb_murmur3(name, name_len);
+    region.name = ta_symbol_intern(name, name_len);
     region.src = src;
     region.start_ms = ta_timer_elapsed_ms();
+
     dlb_vec_push(state->timed_regions, region);
+    ta_log_write(log, src, "START\n");
 }
 
 void ta_log_timed_region_end(ta_log *log, const char *name, size_t name_len)
 {
     ta_thread_id thread_id = 0; //SDL_ThreadID();
     ta_log_thread_state *state = log_get_or_create_thread_state(log, thread_id);
-
-    double time_ms = ta_timer_elapsed_ms();
-    u32 name_hash = dlb_murmur3(name, name_len);
-
     ta_log_timed_region *region = dlb_vec_last(state->timed_regions);
+
+    const char *name_sym = ta_symbol_intern(name, name_len);
     while (region) {
-        ta_log_unindent(log);
-        ta_log_write(log, region->src, "END %.*s\n", name_len, name);
-        u32 region_name_hash = region->name_hash;
+        //ta_log_unindent(log);
+        ta_log_write(log, region->src, "END\n");
         dlb_vec_popz(state->timed_regions);
-        if (region_name_hash == name_hash) {
+        if (region->name == name_sym) {
             break;
         }
         region = dlb_vec_last(state->timed_regions);

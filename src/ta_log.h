@@ -58,7 +58,7 @@ typedef enum ta_log_level {
 typedef unsigned int ta_thread_id;
 
 typedef struct ta_log_timed_region {
-    u32 name_hash;
+    const char *name;  // note: interned
     u32 src;
     double start_ms;
 } ta_log_timed_region;
