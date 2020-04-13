@@ -259,8 +259,14 @@ char *ta_file_read_all(const char *filename)
     DLB_ASSERT(tell > 0);
 
     char *buffer = 0;
-    dlb_vec_reserve(buffer, tell + 1);  // extra byte for nil
-    dlb_vec_hdr(buffer)->len = fread(buffer, 1, tell, fs);
+    dlb_vec_alloc_count(buffer, (size_t)tell + 1);  // extra byte for nil
+    DLB_ASSERT(buffer);
+    size_t len = dlb_vec_len(buffer);
+    size_t read = fread(buffer, 1, tell, fs);
+    DLB_ASSERT(read == len - 1);
+    if (len) {
+        DLB_ASSERT(buffer[0] != 0xef);  // check for Unicode BOM (EF BB BF), breaks on AMD
+    }
 
     // Close file
     fclose(fs);

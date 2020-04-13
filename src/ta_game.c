@@ -202,12 +202,13 @@ void ta_game_init()
     //ta_game_load_gltf("data/mesh/bee.glb");               // diffuse fails to load
     //ta_game_load_gltf("data/mesh/Dodecahedron.gltf");     // has external URIs
 
+    // TODO: If file doesn't exist, just let it not load and fallback on default placeholder. Do same for textures.
     //ta_game_load_gltf("data/mesh/hier_test.gltf");
     ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/button_silly.gltf");
     ta_game_load_gltf("data/mesh/button.gltf");
     ta_game_load_gltf("data/mesh/dude.gltf");
-    ta_game_load_gltf("data/mesh/skeleton_test_1bone.gltf");
+    ta_game_load_gltf("data/mesh/skeleton_test.gltf");
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
     tg_material_default = ta_game_by_name_try(RES_MATERIAL, SYM(INTERN("material_unknown")));
 
@@ -285,77 +286,100 @@ void ta_game_init()
 
     // TODO: Just create 3 white textures, for 1, 2 and 4 channels. Then reuse.
     tex_default_albedo->type = TA_TEXTURE_2D;
-    dlb_vec_push(tex_default_albedo->pixels, 255);
-    dlb_vec_push(tex_default_albedo->pixels, 255);
-    dlb_vec_push(tex_default_albedo->pixels, 255);
-    dlb_vec_push(tex_default_albedo->pixels, 255);
+#if 0
     tex_default_albedo->width = 1;
     tex_default_albedo->height = 1;
     tex_default_albedo->channels = 4;
+    dlb_vec_push(tex_default_albedo->pixels, 255);
+    dlb_vec_push(tex_default_albedo->pixels, 255);
+    dlb_vec_push(tex_default_albedo->pixels, 255);
+    dlb_vec_push(tex_default_albedo->pixels, 255);
+#else
+    // Generate magenta/white grid pattern
+    tex_default_albedo->width = 64;
+    tex_default_albedo->height = 64;
+    tex_default_albedo->channels = 4;
+    u32 bytes = tex_default_albedo->width * tex_default_albedo->height * tex_default_albedo->channels;
+    dlb_vec_reserve(tex_default_albedo->pixels, bytes);
+    u8 toggle = 0;
+    u8 toggle_width = 4;
+    for (u32 y = 0; y < tex_default_albedo->height; y++) {
+        if (y % toggle_width == 0) toggle = !toggle;
+        for (u32 x = 0; x < tex_default_albedo->width; x++) {
+            if (x % toggle_width == 0) toggle = !toggle;
+            dlb_vec_push(tex_default_albedo->pixels, 255);
+            dlb_vec_push(tex_default_albedo->pixels, toggle * 255);
+            dlb_vec_push(tex_default_albedo->pixels, 255);
+            dlb_vec_push(tex_default_albedo->pixels, 255);
+        }
+    }
+    size_t pixels_len = dlb_vec_len(tex_default_albedo->pixels);
+    DLB_ASSERT(pixels_len == bytes);
+#endif
     tex_default_albedo->repeat = true;
     tex_default_albedo->linear = false;
     tex_default_albedo->gl_filter_min = GL_NEAREST;
     tex_default_albedo->gl_filter_mag = GL_NEAREST;
 
     tex_default_emission->type = TA_TEXTURE_2D;
-    dlb_vec_push(tex_default_emission->pixels, 255);
-    dlb_vec_push(tex_default_emission->pixels, 255);
-    dlb_vec_push(tex_default_emission->pixels, 255);
     tex_default_emission->width = 1;
     tex_default_emission->height = 1;
     tex_default_emission->channels = 3;
+    dlb_vec_push(tex_default_emission->pixels, 255);
+    dlb_vec_push(tex_default_emission->pixels, 255);
+    dlb_vec_push(tex_default_emission->pixels, 255);
     tex_default_emission->repeat = true;
     tex_default_emission->linear = false;
     tex_default_emission->gl_filter_min = GL_NEAREST;
     tex_default_emission->gl_filter_mag = GL_NEAREST;
 
     tex_default_metallic->type = TA_TEXTURE_2D;
-    dlb_vec_push(tex_default_metallic->pixels, 255);
     tex_default_metallic->width = 1;
     tex_default_metallic->height = 1;
     tex_default_metallic->channels = 1;
+    dlb_vec_push(tex_default_metallic->pixels, 255);
     tex_default_metallic->repeat = true;
     tex_default_metallic->linear = true;
     tex_default_metallic->gl_filter_min = GL_NEAREST;
     tex_default_metallic->gl_filter_mag = GL_NEAREST;
 
     tex_default_roughness->type = TA_TEXTURE_2D;
-    dlb_vec_push(tex_default_roughness->pixels, 255);
     tex_default_roughness->width = 1;
     tex_default_roughness->height = 1;
     tex_default_roughness->channels = 1;
+    dlb_vec_push(tex_default_roughness->pixels, 255);
     tex_default_roughness->repeat = true;
     tex_default_roughness->linear = true;
     tex_default_roughness->gl_filter_min = GL_NEAREST;
     tex_default_roughness->gl_filter_mag = GL_NEAREST;
 
     tex_default_height->type = TA_TEXTURE_2D;
-    dlb_vec_push(tex_default_height->pixels, 0);
     tex_default_height->width = 1;
     tex_default_height->height = 1;
     tex_default_height->channels = 1;
+    dlb_vec_push(tex_default_height->pixels, 0);
     tex_default_height->repeat = true;
     tex_default_height->linear = true;
     tex_default_height->gl_filter_min = GL_NEAREST;
     tex_default_height->gl_filter_mag = GL_NEAREST;
 
     tex_default_normal->type = TA_TEXTURE_2D;
-    dlb_vec_push(tex_default_normal->pixels, 127);
-    dlb_vec_push(tex_default_normal->pixels, 127);
-    dlb_vec_push(tex_default_normal->pixels, 255);
     tex_default_normal->width = 1;
     tex_default_normal->height = 1;
     tex_default_normal->channels = 3;
+    dlb_vec_push(tex_default_normal->pixels, 127);
+    dlb_vec_push(tex_default_normal->pixels, 127);
+    dlb_vec_push(tex_default_normal->pixels, 255);
     tex_default_normal->repeat = true;
     tex_default_normal->linear = true;
     tex_default_normal->gl_filter_min = GL_NEAREST;
     tex_default_normal->gl_filter_mag = GL_NEAREST;
 
     tex_default_occlusion->type = TA_TEXTURE_2D;
-    dlb_vec_push(tex_default_occlusion->pixels, 255);
     tex_default_occlusion->width = 1;
     tex_default_occlusion->height = 1;
     tex_default_occlusion->channels = 1;
+    dlb_vec_push(tex_default_occlusion->pixels, 255);
     tex_default_occlusion->repeat = true;
     tex_default_occlusion->linear = true;
     tex_default_occlusion->gl_filter_min = GL_NEAREST;

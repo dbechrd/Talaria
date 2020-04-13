@@ -32,11 +32,10 @@ float ta_model_get_morph_target_weight(ta_model *model, const char *morph_target
         idx++;
     }
     if (found) {
-        if (dlb_vec_len(model->anim_target_weights) >= idx) {
+        if (dlb_vec_len(model->anim_target_weights) > idx) {
             return model->anim_target_weights[idx];
         }
     }
-    // TODO: Return some sort of error code (e.g. TA_ERR_NOT_FOUND)
     DLB_ASSERT(!"Target not found");
     return 0.0f;
 }
@@ -47,16 +46,31 @@ void ta_model_set_morph_target_weight(ta_model *model, const char *morph_target_
     dlb_vec_each(const char **, anim_target, model->anim_targets) {
         if (*anim_target == morph_target_name) {
             found = true;
+            model->anim_target_weights[idx] = weight;
             break;
         }
         idx++;
     }
-    if (found) {
-        size_t target_count = dlb_vec_len(model->anim_targets);
-        if (dlb_vec_len(model->anim_target_weights) < target_count) {
-            dlb_vec_alloc_count(model->anim_target_weights, target_count);
+    DLB_ASSERT(found && "Target not found");
+}
+
+static void model_piece_set_shader_anim_targets(ta_model *model, ta_piece *piece, ta_shader *shader)
+{
+    const size_t max_morph_targets = ARRAY_COUNT(SYM_U_MORPH_WEIGHTS);
+    if (piece->anim_targets) {
+        size_t morph_idx = 0;
+        dlb_vec_each(const char **, anim_target_name, piece->anim_targets) {
+            float weight = ta_model_get_morph_target_weight(model, *anim_target_name);
+            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[morph_idx], weight);
+            morph_idx++;
+            if (morph_idx == max_morph_targets) {
+                break;
+            }
         }
-        model->anim_target_weights[idx] = weight;
+    } else {
+        for (size_t i = 0; i < max_morph_targets; ++i) {
+            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[i], 0.0f);
+        }
     }
 }
 
@@ -89,13 +103,8 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
             offset = mat4_mul(&offset, &transform->world);
             ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
         }
-        if (piece->anim_targets && dlb_vec_len(model->anim_target_weights)) {
-            // TODO: Search model->anim_targets by name, then find the associated weight. Make a helper:
-            // float ta_model_morph_target_weight(const char *morph_target_name);
-            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], model->anim_target_weights[0]);
-        } else {
-            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], 0.0f);
-        }
+
+        model_piece_set_shader_anim_targets(model, piece, shader);
         ta_shader_bind(shader);
         ta_mesh_render(mesh);
     }
@@ -158,14 +167,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
                 ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
             }
 
-            if (piece->anim_targets && dlb_vec_len(model->anim_target_weights)) {
-                // TODO: Search model->anim_targets by name, then find the associated weight. Make a helper:
-                // float ta_model_morph_target_weight(const char *morph_target_name);
-                ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], model->anim_target_weights[0]);
-            } else {
-                ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], 0.0f);
-            }
-
+            model_piece_set_shader_anim_targets(model, piece, shader);
             ta_shader_bind(shader);
             ta_mesh_render(mesh);
         }
@@ -202,15 +204,9 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
             offset = mat4_mul(&transform->world, &offset);
             ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
         }
-#if 0
-        if (piece->anim_targets && dlb_vec_len(model->anim_target_weights)) {
-            // TODO: Search model->anim_targets by name, then find the associated weight. Make a helper:
-            // float ta_model_morph_target_weight(const char *morph_target_name);
-            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], model->anim_target_weights[0]);
-        } else {
-            ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[0], 0.0f);
-        }
-#endif
+
+        // TODO: Fix this for editor_select (either make it a set_try or don't do it at all in this function)
+        //model_piece_set_shader_anim_targets(model, piece, shader);
         ta_shader_bind(shader);
         ta_mesh_render(mesh);
     }

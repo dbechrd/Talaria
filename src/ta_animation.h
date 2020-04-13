@@ -32,6 +32,8 @@ typedef struct ta_animation_sampler {
 
 typedef struct ta_animation_channel {
     size_t sampler_idx;
+    // if path is trans/rot/scale, target is RES_COMP_TRANSFORM
+    // if path is weights, target is RES_COMP_MODEL
     const char *target_bone;
     ta_animation_path_type target_path;
 } ta_animation_channel;

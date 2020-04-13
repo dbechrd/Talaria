@@ -46,6 +46,29 @@ typedef enum ta_log_level {
     LEVEL_FATAL = 0x00000010,
 } ta_log_level;
 
+// NOTE: I don't expect lock/unlock to ever error, but if it's a real thing that
+// happens I'll refactor this to handle it better.
+//#define TA_LOCK(mutex) assert(!SDL_LockMutex(mutex))
+//#define TA_UNLOCK(mutex) assert(!SDL_UnlockMutex(mutex))
+#define TA_LOCK(mutex)
+#define TA_UNLOCK(mutex)
+#define MAX_THREADS 8
+
+//typedef SDL_threadID ta_thread_id;
+typedef unsigned int ta_thread_id;
+
+typedef struct ta_log_timed_region {
+    u32 name_hash;
+    u32 src;
+    double start_ms;
+} ta_log_timed_region;
+
+typedef struct ta_log_thread_state {
+    ta_thread_id thread_id;
+    int indent;
+    ta_log_timed_region *timed_regions;
+} ta_log_thread_state;
+
 typedef struct ta_log {
     const char  *filename;      // relative path to log file
     FILE        *stream;        // file stream to write to
@@ -55,6 +78,7 @@ typedef struct ta_log {
     u32         src_exclude;    // log source bitmap, 1 = exclude this source (overrides include)
     u32         level_filter;   // TODO(unused): log level filter
     void        *mutex;         // TODO(unused): was SDL_mutex when I was testing threading
+    ta_log_thread_state thread_states[MAX_THREADS];
 } ta_log;
 
 extern ta_log tg_debug_log;
@@ -64,6 +88,8 @@ const char *ta_log_source_str(ta_log_source src);
 void ta_log_init        (ta_log *log, FILE *stream, bool flush, bool echo, u32 src_include, u32 src_exclude);
 void ta_log_init_file   (ta_log *log, const char *filename, bool flush, bool echo, u32 src_include, u32 src_exclude);
 void ta_log_flush       (ta_log *log);
+void ta_log_indent      (ta_log *log);
+void ta_log_unindent    (ta_log *log);
 void ta_log_write       (ta_log *log, u32 src, const char *fmt, ...);
 //void ta_log_append      (ta_log *log, const char* fmt, ...);
 void ta_log_free        (ta_log *log);

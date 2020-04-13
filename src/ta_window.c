@@ -308,8 +308,9 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
         ta_log_write(&tg_debug_log, SRC_WINDOW, "GL_MAX_VERTEX_ATTRIBS = %d\n", gl_max_vertex_attribs);
     }
 
+    // TODO: Use newer version of GL to get debug messages, or find an old way to do something similar
     //if (glDebugMessageCallback != NULL)
-    //{
+    //{th
     //    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     //    glDebugMessageCallback(ta_window_gl_callback, NULL);
     //    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, 0, true);

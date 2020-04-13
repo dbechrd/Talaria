@@ -40,20 +40,20 @@ ta_camera:
   name: "freecam"
   entity: "freecam"
   position_smooth: 0x3DCCCCCD (0.100000)
-  position_target_vel: 0x3DCCCCCD (0.100000)
+  position_target_vel: 0x3E19999A (0.150000)
   target_xform:
     position:
-      x: 0x4173A7DF (15.228484)
-      y: 0x410F7E2E (8.968306)
-      z: 0xC1EB116B (-29.383505)
+      x: 0x4187D744 (16.980110)
+      y: 0x4101BDE7 (8.108863)
+      z: 0xC1F4CF52 (-30.601231)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x00000000 (0.000000)
-  yaw: 0x4363EAA3 (227.916550)
+  yaw: 0x43653788 (229.216919)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1780220 (-15.500519)
+  pitch: 0xC1980165 (-19.000681)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -64,9 +64,9 @@ ta_camera:
     y: 0x00000000 (0.000000)
     z: 0x00000000 (0.000000)
   up:
-    x: 0xBE376936 (-0.179112)
-    y: 0x3F76B056 (0.963628)
-    z: 0x3E4B1A56 (0.198343)
+    x: 0xBE59C585 (-0.212668)
+    y: 0x3F720D40 (0.945515)
+    z: 0x3E7C70FF (0.246525)
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -346,10 +346,10 @@ ta_transform:
       y: 0x418FF00E (17.992214)
       z: 0xC19B45DF (-19.409117)
     orientation:
-      x: 0xBE7E7FA2 (-0.248534)
-      y: 0x3ED529FF (0.416336)
-      z: 0x398ED556 (0.000272)
-      w: 0x3F5FE4AC (0.874583)
+      x: 0xBE7E7FA0 (-0.248534)
+      y: 0x3ED529FD (0.416336)
+      z: 0x398ED555 (0.000272)
+      w: 0x3F5FE4AA (0.874583)
 ta_transform:
   name: "light_point_0002"
   entity: "light_point_0002"
@@ -512,14 +512,14 @@ ta_transform:
   entity: "freecam"
   xform:
     position:
-      x: 0x4173A7DA (15.228479)
-      y: 0x410F7E2A (8.968302)
-      z: 0xC1EB1166 (-29.383495)
+      x: 0x4187D748 (16.980118)
+      y: 0x4101BDE2 (8.108858)
+      z: 0xC1F4CF4E (-30.601223)
     orientation:
-      x: 0xBEB54ACF (-0.354086)
-      y: 0x3F5B0EB3 (0.855693)
+      x: 0xBEDD283B (-0.431948)
+      y: 0x3F51C30C (0.819382)
       z: 0x00000000 (0.000000)
-      w: 0x3EC1375D (0.377376)
+      w: 0x3EC0F599 (0.376874)
 ta_transform:
   name: "player_one"
   entity: "player_one"
@@ -529,10 +529,10 @@ ta_transform:
       y: 0x409FFF2F (4.999900)
       z: 0xC0DFE044 (-6.996126)
     orientation:
-      x: 0xBE1BDD59 (-0.152212)
-      y: 0x3F49903D (0.787357)
-      z: 0xBEDE8D51 (-0.434672)
-      w: 0xBED1D539 (-0.409830)
+      x: 0xBE1BDD5A (-0.152212)
+      y: 0x3F49903F (0.787357)
+      z: 0xBEDE8D53 (-0.434672)
+      w: 0xBED1D53B (-0.409830)
 ta_transform:
   name: "player_camera"
   entity: "player_camera"
@@ -565,7 +565,7 @@ ta_transform:
   xform:
     position:
       x: 0x412D335C (10.825039)
-      y: 0x3F7EEFBE (0.995846)
+      y: 0x3F7EEFBD (0.995846)
       z: 0xC189516C (-17.164757)
     orientation:
       x: 0x3DFD7BD2 (0.123771)
@@ -591,7 +591,7 @@ ta_transform:
   xform:
     position:
       x: 0xC134F153 (-11.308917)
-      y: 0xC8232EF4 (-167099.812500)
+      y: 0xC824EC93 (-168882.296875)
       z: 0x40C3AD3D (6.114897)
     orientation:
       x: 0x00000000 (0.000000)
@@ -620,17 +620,17 @@ ta_transform:
       y: 0xBF401D9F (-0.750452)
       z: 0xC148DFE2 (-12.554659)
     orientation:
-      x: 0x3EDF7A94 (0.436482)
+      x: 0x3EDF7A96 (0.436482)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F665396 (0.899713)
+      w: 0x3F665398 (0.899713)
 ta_transform:
   name: "star_0001"
   entity: "star_0001"
   xform:
     position:
       x: 0x40928201 (4.578370)
-      y: 0xC8232E55 (-167097.328125)
+      y: 0xC824EBF4 (-168879.812500)
       z: 0x40968FEB (4.705068)
     orientation:
       x: 0x3E9202C9 (0.285177)

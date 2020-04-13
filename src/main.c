@@ -86,6 +86,8 @@ int main(int argc, char *argv[])
     UNUSED(argc);
     UNUSED(argv);
 
+    printf("%d", BUFSIZ);
+
     glfwSetErrorCallback(window_glfw_error);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "glfwCreateWindow...\n");
     if (!glfwInit()) {
@@ -169,6 +171,7 @@ int main(int argc, char *argv[])
 #include "ta_scene.c"
 #include "ta_schema.c"
 #include "ta_shader.c"
+#include "ta_skin.c"
 #include "ta_symbol.c"
 #include "ta_texture.c"
 #include "ta_timer.c"

@@ -969,8 +969,15 @@ void ta_gltf_load(ta_gltf *gltf)
     size_t scene_count = dlb_vec_len(gltf->data->scenes_v);
     DLB_ASSERT(scene_count == 1);
 
+    static const char *dude = 0;
+    if (!dude) {
+        dude = ta_symbol_intern(CSTR("dude_armature"));
+    }
     dlb_vec_each(cgltf_node *, gltf_node, gltf->data->nodes_v) {
-        UNUSED(gltf_node);
+        const char *node_name = ta_symbol_intern(gltf_node->name, strlen(gltf_node->name));
+        if (node_name == dude) {
+            DLB_ASSERT(1);
+        }
     }
 
     // Load animations
@@ -1027,8 +1034,12 @@ void ta_gltf_load(ta_gltf *gltf)
 
             size_t sampler_idx = gltf_channel->sampler - gltf_animation->samplers_v;
             channel.sampler_idx = sampler_idx;
-            const char *name = gltf_channel->target_node->name;
-            channel.target_bone = ta_symbol_intern(name, strlen(name));
+            const char *target_name = gltf_channel->target_node->name;
+            target_name = ta_symbol_intern(target_name, strlen(target_name));
+
+            // TODO: Prepend `bone_` to all bones to easily identify them? Is there a better, deterministic way to know
+            // if a node is a bone vs. model? Hmm..
+            channel.target_bone = target_name;
 
             cgltf_accessor *in = gltf_channel->sampler->input;
             cgltf_accessor *out = gltf_channel->sampler->output;
@@ -1157,7 +1168,7 @@ void ta_gltf_load(ta_gltf *gltf)
         DLB_ASSERT(entity_name);
 
         const size_t model_name_size = ARRAY_COUNT(model_name_buf);
-        int model_name_len = snprintf(model_name_buf, model_name_size, "%s", gltf_mesh->name ? gltf_mesh->name : entity_name);
+        int model_name_len = snprintf(model_name_buf, model_name_size, "%s", entity_name);
         DLB_ASSERT(model_name_len < model_name_size);
 
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MODEL %s\n", model_name_buf);
@@ -1174,11 +1185,13 @@ void ta_gltf_load(ta_gltf *gltf)
 
         // HACK: Clear existing stuff that may have been serialized (e.g. #references)
         dlb_vec_zero((char **)model->anim_targets);
+        dlb_vec_zero((char **)model->anim_target_weights);
         dlb_vec_zero(model->pieces);
 
         dlb_vec_each(const char **, gltf_target, gltf_mesh->target_names_v) {
             const char *target = ta_symbol_intern(*gltf_target, strlen(*gltf_target));
             dlb_vec_push(model->anim_targets, target);
+            dlb_vec_push(model->anim_target_weights, 0.0f);
         }
 
         int prim_idx = 0;

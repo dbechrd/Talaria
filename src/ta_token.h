@@ -38,7 +38,8 @@ typedef struct token {
     ta_file_pos file_pos;  // DEBUG: Track file position for better error messages
 } token;
 
-token *tokenize(ta_file *f);
-void tokens_parse(struct ta_scene *scene, token *tokens);
-void tokens_print(FILE *f, token *tokens);
-void tokens_print_debug(FILE *f, token *tokens);
+void tokens_init        ();
+void tokens_tokenize    (ta_file *f, token **tokens);
+void tokens_parse       (struct ta_scene *scene, token *tokens);
+void tokens_print       (FILE *f, token *tokens);
+void tokens_print_debug (FILE *f, token *tokens);

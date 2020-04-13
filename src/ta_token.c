@@ -98,198 +98,7 @@ static const char *token_type_str(token_type type)
         default: DLB_ASSERT(0);    return "TOKEN_TYPE_???";
     }
 };
-static token *token_read(ta_file *f, token **tokens)
-{
-    token *tok = dlb_vec_alloc(*tokens);
-    tok->file_pos = f->pos;
-    char c = ta_file_peek(f);
-    switch(c) {
-        case EOF:
-        {
-            tok->type = TOKEN_EOF;
-            break;
-        }
-        case ' ':
-        {
-            ta_file_expect_char(f, C_WHITESPACE, 1);
-            token_type prev_token_type = TOKEN_UNKNOWN;
-            size_t tokens_len = dlb_vec_len(*tokens);
-            if (tokens_len > 1) {
-                prev_token_type = (tok - 1)->type;
-            }
-            if (prev_token_type == TOKEN_NEWLINE ||
-                prev_token_type == TOKEN_INDENT)
-            {
-                ta_file_expect_char(f, C_WHITESPACE, 1);
-                tok->type = TOKEN_INDENT;
-            } else {
-                tok->type = TOKEN_WHITESPACE;
-            }
-            break;
-        }
-        case '\n':
-        {
-            tok->type = TOKEN_NEWLINE;
-            ta_file_expect_char(f, C_NEWLINE, 1);
-            break;
-        }
-        case '#':
-        {
-            tok->type = TOKEN_COMMENT;
-            ta_file_expect_char(f, C_COMMENT_START, 1);
-            char buf[MAX_COMMENT_LEN + 1] = { 0 };
-            int len = 0;
-            ta_file_read(f, buf, MAX_COMMENT_LEN, C_COMMENT, C_COMMENT_END, &len);
-            tok->length = len;
-            // NOTE: Allow empty comments ('#' on a line by itself)
-            if (tok->length) {
-                tok->value.string = ta_symbol_intern(buf, len);
-            }
-            break;
-        }
-        case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
-        case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
-        case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
-        case 'v': case 'w': case 'x': case 'y': case 'z':
-        case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
-        case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N':
-        case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
-        case 'V': case 'W': case 'X': case 'Y': case 'Z':
-        {
-            char buf[MAX_IDENT_LEN + 1] = { 0 };
-            int len = 0;
-            ta_file_read(f, buf, MAX_IDENT_LEN, C_IDENT, 0, &len);
-            tok->length = len;
-            tok->value.string = ta_symbol_intern(buf, len);
-            if (ta_file_allow_char(f, C_IDENT_END, 1)) {
-                tok->type = TOKEN_IDENTIFIER;
-            } else if (tok->value.string == SYM_NULL) {
-                tok->type = TOKEN_NULL;
-            } else if (tok->value.string == SYM_TRUE) {
-                tok->type = TOKEN_BOOL;
-                tok->value.as_bool = true;
-            } else if (tok->value.string == SYM_FALSE) {
-                tok->type = TOKEN_BOOL;
-                tok->value.as_bool = false;
-            } else {
-                PANIC_FILE(f, "Expected ':' after identifier '%s'\n", tok->value.string);
-            }
-            break;
-        }
-        case '+': case '-': case '0': case '1': case '2':case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9':
-        {
-            char buf[MAX_NUMBER_LEN + 1] = { 0 };
-            int len = 0;
-            int read = 0;
-            char next = ta_file_peek(f);
-            if (next == '0') {
-                buf[len++] = ta_file_char(f);
-                next = ta_file_peek(f);
-                if (next == 'x') {
-                    tok->type = TOKEN_INT;
-                    buf[len++] = ta_file_char(f);
-                    next = ta_file_read(f, buf + len, 8, C_NUMBER_HEX, 0, &read);
-                    len += read;
-                    ta_file_allow_char(f, C_WHITESPACE, 0);
-                    if (ta_file_allow_char(f, "(", 1)) {
-                        ta_file_read(f, 0, 0, 0, ")", 0);
-                        ta_file_expect_char(f, ")", 1);
-                    }
-                } else if (next == 'b') {
-                    tok->type = TOKEN_INT;
-                    buf[len++] = ta_file_char(f);
-                    ta_file_read(f, buf + len, 32, C_NUMBER_BINARY, 0, &read);
-                    len += read;
-                }
-            }
-            if (tok->type == TOKEN_UNKNOWN) {
-                ta_file_read(f, buf, 1, C_NUMBER_SIGN, 0, &read);
-                len += read;
-                ta_file_read(f, buf + len, MAX_NUMBER_LEN - len, C_NUMBER_INT, 0, &read);
-                len += read;
-                next = ta_file_peek(f);
-                if (next == '.') {
-                    tok->type = TOKEN_FLOAT;
-                    ta_file_read(f, buf + len, MAX_NUMBER_LEN - len,
-                        C_NUMBER_FLOAT, 0, &read);
-                    len += read;
-                } else {
-                    tok->type = TOKEN_INT;
-                }
-            }
-            switch (tok->type) {
-                case TOKEN_INT: {
-                    tok->value.as_int = parse_int(buf);
-                    break;
-                } case TOKEN_FLOAT: {
-                    tok->value.as_float = parse_float(buf);
-                    break;
-                } default: {
-                    DLB_ASSERT(!"Token type could not be resolved");
-                }
-            }
-            break;
-        }
-        case '"':
-        {
-            tok->type = TOKEN_STRING;
-            ta_file_expect_char(f, "\"", 1);
-            char buf[MAX_STRING_LEN + 1] = { 0 };
-            int len = 0;
-            char delim = 0;
-            int read = 0;
-            do {
-                delim = ta_file_read(f, buf + len, MAX_STRING_LEN - len,
-                    C_STRING, "\\\"", &read);
-                len += read;
-                if (delim == '\\') {
-                    buf[len++] = ta_file_char_escaped(f);
-                }
-            } while (delim == '\\');
-            ta_file_expect_char(f, "\"", 1);
-            tok->length = len;
-            tok->value.string = len ? ta_symbol_intern(buf, len) : 0;
-            break;
-        }
-        case '[':
-        {
-            tok->type = TOKEN_ARRAY_START;
-            ta_file_expect_char(f, C_ARRAY_START, 1);
-            break;
-        }
-        case ']':
-        {
-            tok->type = TOKEN_ARRAY_END;
-            ta_file_expect_char(f, C_ARRAY_END, 1);
-            break;
-        }
-        case '{':
-        {
-            tok->type = TOKEN_OBJECT_START;
-            ta_file_expect_char(f, C_OBJECT_START, 1);
-            break;
-        }
-        case '}':
-        {
-            tok->type = TOKEN_OBJECT_END;
-            ta_file_expect_char(f, C_OBJECT_END, 1);
-            break;
-        }
-        case ',':
-        {
-            tok->type = TOKEN_LIST_SEPARATOR;
-            ta_file_expect_char(f, C_LIST_SEPARATOR, 1);
-            break;
-        }
-        default:
-        {
-            PANIC_FILE(f, "I don't know what's going on.. weird tokens bro.\n");
-        }
-    }
-    return tok;
-}
-static void token_init_symbols()
+void tokens_init()
 {
     if (SYM_NAME) return;
     SYM_NAME         = INTERN(IDENT_NAME);
@@ -298,12 +107,198 @@ static void token_init_symbols()
     SYM_TRUE         = INTERN(KEYWORD_TRUE);
     SYM_FALSE        = INTERN(KEYWORD_FALSE);
 }
-token *tokenize(ta_file *f)
+void tokens_tokenize(ta_file *f, token **tokens)
 {
-    token_init_symbols();
-    token *tokens = 0;
-    while (token_read(f, &tokens)->type != TOKEN_EOF) {}
-    return tokens;
+    DLB_ASSERT(tokens);
+    bool eof = false;
+    while (!eof) {
+        token *tok = dlb_vec_alloc(*tokens);
+        tok->file_pos = f->pos;
+        char c = ta_file_peek(f);
+        switch(c) {
+            case EOF:
+            {
+                tok->type = TOKEN_EOF;
+                eof = true;
+                break;
+            }
+            case ' ':
+            {
+                ta_file_expect_char(f, C_WHITESPACE, 1);
+                token_type prev_token_type = TOKEN_UNKNOWN;
+                size_t tokens_len = dlb_vec_len(*tokens);
+                if (tokens_len > 1) {
+                    prev_token_type = (tok - 1)->type;
+                }
+                if (prev_token_type == TOKEN_NEWLINE ||
+                    prev_token_type == TOKEN_INDENT)
+                {
+                    ta_file_expect_char(f, C_WHITESPACE, 1);
+                    tok->type = TOKEN_INDENT;
+                } else {
+                    tok->type = TOKEN_WHITESPACE;
+                }
+                break;
+            }
+            case '\n':
+            {
+                tok->type = TOKEN_NEWLINE;
+                ta_file_expect_char(f, C_NEWLINE, 1);
+                break;
+            }
+            case '#':
+            {
+                tok->type = TOKEN_COMMENT;
+                ta_file_expect_char(f, C_COMMENT_START, 1);
+                char buf[MAX_COMMENT_LEN + 1] = { 0 };
+                int len = 0;
+                ta_file_read(f, buf, MAX_COMMENT_LEN, C_COMMENT, C_COMMENT_END, &len);
+                tok->length = len;
+                // NOTE: Allow empty comments ('#' on a line by itself)
+                if (tok->length) {
+                    tok->value.string = ta_symbol_intern(buf, len);
+                }
+                break;
+            }
+            case 'a': case 'b': case 'c': case 'd': case 'e': case 'f': case 'g':
+            case 'h': case 'i': case 'j': case 'k': case 'l': case 'm': case 'n':
+            case 'o': case 'p': case 'q': case 'r': case 's': case 't': case 'u':
+            case 'v': case 'w': case 'x': case 'y': case 'z':
+            case 'A': case 'B': case 'C': case 'D': case 'E': case 'F': case 'G':
+            case 'H': case 'I': case 'J': case 'K': case 'L': case 'M': case 'N':
+            case 'O': case 'P': case 'Q': case 'R': case 'S': case 'T': case 'U':
+            case 'V': case 'W': case 'X': case 'Y': case 'Z':
+            {
+                char buf[MAX_IDENT_LEN + 1] = { 0 };
+                int len = 0;
+                ta_file_read(f, buf, MAX_IDENT_LEN, C_IDENT, 0, &len);
+                tok->length = len;
+                tok->value.string = ta_symbol_intern(buf, len);
+                if (ta_file_allow_char(f, C_IDENT_END, 1)) {
+                    tok->type = TOKEN_IDENTIFIER;
+                } else if (tok->value.string == SYM_NULL) {
+                    tok->type = TOKEN_NULL;
+                } else if (tok->value.string == SYM_TRUE) {
+                    tok->type = TOKEN_BOOL;
+                    tok->value.as_bool = true;
+                } else if (tok->value.string == SYM_FALSE) {
+                    tok->type = TOKEN_BOOL;
+                    tok->value.as_bool = false;
+                } else {
+                    PANIC_FILE(f, "Expected ':' after identifier '%s'\n", tok->value.string);
+                }
+                break;
+            }
+            case '+': case '-': case '0': case '1': case '2':case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+            {
+                char buf[MAX_NUMBER_LEN + 1] = { 0 };
+                size_t len = 0;
+                int read = 0;
+                char next = ta_file_peek(f);
+                if (next == '0') {
+                    buf[len++] = ta_file_char(f);
+                    next = ta_file_peek(f);
+                    if (next == 'x') {
+                        tok->type = TOKEN_INT;
+                        buf[len++] = ta_file_char(f);
+                        next = ta_file_read(f, buf + len, 8, C_NUMBER_HEX, 0, &read);
+                        len += read;
+                        ta_file_allow_char(f, C_WHITESPACE, 0);
+                        if (ta_file_allow_char(f, "(", 1)) {
+                            ta_file_read(f, 0, 0, 0, ")", 0);
+                            ta_file_expect_char(f, ")", 1);
+                        }
+                    } else if (next == 'b') {
+                        tok->type = TOKEN_INT;
+                        buf[len++] = ta_file_char(f);
+                        ta_file_read(f, buf + len, 32, C_NUMBER_BINARY, 0, &read);
+                        len += read;
+                    }
+                }
+                if (tok->type == TOKEN_UNKNOWN) {
+                    ta_file_read(f, buf, 1, C_NUMBER_SIGN, 0, &read);
+                    len += read;
+                    ta_file_read(f, buf + len, MAX_NUMBER_LEN - len, C_NUMBER_INT, 0, &read);
+                    len += read;
+                    next = ta_file_peek(f);
+                    if (next == '.') {
+                        tok->type = TOKEN_FLOAT;
+                        ta_file_read(f, buf + len, MAX_NUMBER_LEN - len, C_NUMBER_FLOAT, 0, &read);
+                        len += read;
+                    } else {
+                        tok->type = TOKEN_INT;
+                    }
+                }
+                switch (tok->type) {
+                    case TOKEN_INT: {
+                        tok->value.as_int = parse_int(buf);
+                        break;
+                    } case TOKEN_FLOAT: {
+                        tok->value.as_float = parse_float(buf);
+                        break;
+                    } default: {
+                        DLB_ASSERT(!"Token type could not be resolved");
+                    }
+                }
+                break;
+            }
+            case '"':
+            {
+                tok->type = TOKEN_STRING;
+                ta_file_expect_char(f, "\"", 1);
+                char buf[MAX_STRING_LEN + 1] = { 0 };
+                size_t len = 0;
+                char delim = 0;
+                int read = 0;
+                do {
+                    delim = ta_file_read(f, buf + len, MAX_STRING_LEN - len, C_STRING, "\\\"", &read);
+                    len += read;
+                    if (delim == '\\') {
+                        buf[len++] = ta_file_char_escaped(f);
+                    }
+                } while (delim == '\\');
+                ta_file_expect_char(f, "\"", 1);
+                tok->length = (int)len;
+                tok->value.string = len ? ta_symbol_intern(buf, len) : 0;
+                break;
+            }
+            case '[':
+            {
+                tok->type = TOKEN_ARRAY_START;
+                ta_file_expect_char(f, C_ARRAY_START, 1);
+                break;
+            }
+            case ']':
+            {
+                tok->type = TOKEN_ARRAY_END;
+                ta_file_expect_char(f, C_ARRAY_END, 1);
+                break;
+            }
+            case '{':
+            {
+                tok->type = TOKEN_OBJECT_START;
+                ta_file_expect_char(f, C_OBJECT_START, 1);
+                break;
+            }
+            case '}':
+            {
+                tok->type = TOKEN_OBJECT_END;
+                ta_file_expect_char(f, C_OBJECT_END, 1);
+                break;
+            }
+            case ',':
+            {
+                tok->type = TOKEN_LIST_SEPARATOR;
+                ta_file_expect_char(f, C_LIST_SEPARATOR, 1);
+                break;
+            }
+            default:
+            {
+                PANIC_FILE(f, "I don't know what's going on.. weird tokens bro.\n");
+            }
+        }
+    }
 }
 void tokens_print(FILE *f, token *tokens)
 {

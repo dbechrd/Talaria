@@ -25,74 +25,6 @@
 #include <stdlib.h>
 #include <float.h>
 
-static void scene_load_placeholders(ta_scene *scene)
-{
-    UNUSED(scene);
-    // TODO: Fix fallback resources
-#if 0
-    // Fallback resources
-    ta_texture *tex_albedo = ta_scene_alloc(scene, COMP_TEXTURE,
-        INTERN("DEFAULT_TEXTURE_ALBEDO"));
-    {
-#if 0
-        tex_albedo->path = INTERN("data/texture/default_1024_1024.png");
-#else
-        // Generate magenta/white grid pattern
-        tex_albedo->width = 64;
-        tex_albedo->height = 64;
-        tex_albedo->channels = 3;
-        tex_albedo->linear = true;
-        u8 *albedo_pixels = 0;
-        u32 bytes = tex_albedo->width * tex_albedo->height * tex_albedo->channels;
-        dlb_vec_reserve(albedo_pixels, bytes);
-        u8 toggle = 0;
-        u8 toggle_width = 4;
-        for (int y = 0; y < tex_albedo->height; y++) {
-            if (y % toggle_width == 0) toggle = !toggle;
-            for (int x = 0; x < tex_albedo->width; x++) {
-                if (x % toggle_width == 0) toggle = !toggle;
-                dlb_vec_push(albedo_pixels, 255);
-                dlb_vec_push(albedo_pixels, toggle * 255);
-                dlb_vec_push(albedo_pixels, 255);
-            }
-        }
-        DLB_ASSERT(dlb_vec_len(albedo_pixels) == bytes);
-        tex_albedo->pixels = albedo_pixels;
-#endif
-    }
-
-    ta_texture *tex_metallic = ta_scene_alloc(scene, COMP_TEXTURE,
-        INTERN("DEFAULT_TEXTURE_METALLIC"));
-    {
-#if 0
-        tex_metallic->path = INTERN("data/texture/default_1024_1024.png");
-#else
-        tex_metallic->width = 1;
-        tex_metallic->height = 1;
-        tex_metallic->channels = 1;
-        tex_metallic->linear = true;
-        u8 *metallic = 0;
-        dlb_vec_alloc(metallic);
-        tex_metallic->pixels = metallic;
-#endif
-    }
-
-    ta_material *material = ta_scene_alloc(scene, COMP_MATERIAL,
-        INTERN("DEFAULT_MATERIAL"));
-    // TODO: Hard-code default shader instead of hoping it's in the scene file
-    material->shader_uid = INTERN("shader_mesh");
-    material->texture_albedo_uid = tex_albedo->hnd.uid;
-    material->texture_metallic_uid = tex_metallic->hnd.uid;
-
-    ta_mesh_group *mesh_group = ta_scene_alloc(scene, COMP_MESH_GROUP,
-        INTERN("DEFAULT_MESH_GROUP"));
-    mesh_group->path = INTERN("data/mesh/default.obj");
-
-    scene->components[COMP_MATERIAL][0] = material->hnd.uid;
-    scene->components[COMP_MESH_GROUP][0] = mesh_group->hnd.uid;
-#endif
-}
-
 void ta_scene_init(ta_scene *scene)
 {
     DLB_ASSERT(scene->filename);
@@ -106,22 +38,26 @@ void ta_scene_init(ta_scene *scene)
         dlb_index_init(&scene->index_by_name[type], 128, 128);
         dlb_index_init(&scene->index_by_entity[type], 128, 128);
     }
-    scene_load_placeholders(scene);
 }
 // TODO: This should take a ta_buffer pointer. Load entire file into memory
 //       and refactor all of the e.g. read_char and expect_char logic out from
 //       ta_file into ta_buffer.
 void ta_scene_load(ta_scene *scene, ta_file *file)
 {
-    ta_log_write(&tg_debug_log, SRC_SCENE, "Loading %s\n", file->filename);
     scene->filename = file->filename;
     scene->name = file->filename;  // TODO: Load name from scene file
+
+    ta_log_write(&tg_debug_log, SRC_SCENE, "Initializing scene %s\n", file->filename);
     ta_scene_init(scene);
 
+    ta_log_write(&tg_debug_log, SRC_SCENE, "Tokenizing scene\n");
     // TODO: Reserve arrays based on scene header (which doesn't exist yet)
     //dlb_vec_reserve(scene->entities, 2);
-    token *tokens = tokenize(file);
+    tokens_init();
+    token *tokens = 0;
+    tokens_tokenize(file, &tokens);
 
+    ta_log_write(&tg_debug_log, SRC_SCENE, "Parsing scene\n");
     //tokens_print(tg_debug_log->stream, tokens);
     //tokens_print_debug(tg_debug_log.stream, tokens);
     tokens_parse(scene, tokens);

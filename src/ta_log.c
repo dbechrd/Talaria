@@ -9,55 +9,7 @@
 // to the log (will cause infinite recursion).
 #undef DLB_ASSERT
 
-// NOTE: I don't expect lock/unlock to ever error, but if it's a real thing that
-// happens I'll refactor this to handle it better.
-//#define TA_LOCK(mutex) assert(!SDL_LockMutex(mutex))
-//#define TA_UNLOCK(mutex) assert(!SDL_UnlockMutex(mutex))
-#define TA_LOCK(mutex)
-#define TA_UNLOCK(mutex)
-#define MAX_THREADS 8
-
 ta_log tg_debug_log;
-
-//typedef SDL_threadID ta_thread_id;
-typedef unsigned int ta_thread_id;
-static struct {
-    ta_thread_id thread_id;
-    double last_write_ms;
-} thread_times[MAX_THREADS];
-
-static void thread_set_last_write(ta_thread_id thread_id, double time_ms)
-{
-    //assert(thread_id);
-
-    for (int i = 0; i < MAX_THREADS; ++i) {
-        if (thread_times[i].thread_id == thread_id) {
-            // Update time
-            thread_times[i].last_write_ms = time_ms;
-            return;
-        } else if (!thread_times[i].thread_id) {
-            // Add new thread to list
-            thread_times[i].thread_id = thread_id;
-            thread_times[i].last_write_ms = time_ms;
-            return;
-        }
-    }
-
-    assert(!"Thread table is full. Do clean-up or increase MAX_THREADS");
-}
-
-static double thread_get_last_write(ta_thread_id thread_id)
-{
-    //assert(thread_id);
-    double time_ms = 0;
-    for (int i = 0; i < MAX_THREADS; ++i) {
-        if (thread_times[i].thread_id == thread_id) {
-            time_ms = thread_times[i].last_write_ms;
-            break;
-        }
-    }
-    return time_ms;
-}
 
 const char *ta_log_source_str(ta_log_source src) {
     switch(src) {
@@ -102,8 +54,8 @@ void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
 
     TA_LOCK(log->mutex);
     fprintf(log->stream,
-        "[ Timestamp         ][ TID ][ Elapsed   ][ Delta      ][ Source    ][ Message             ]\n"
-        "----------------------------------------------------------------------------------------\n");
+        "[ Timestamp         ][ TID ][ Elapsed   ][ Region     ][ Source    ][ Message             ]\n"
+        "-------------------------------------------------------------------------------------------\n");
     TA_UNLOCK(log->mutex);
 }
 
@@ -123,6 +75,68 @@ void ta_log_flush(ta_log *log)
     }
 }
 
+static ta_log_thread_state *log_get_or_create_thread_state(ta_log *log, ta_thread_id thread_id)
+{
+    //assert(thread_id);
+
+    ta_log_thread_state *state = 0;
+    for (int i = 0; i < MAX_THREADS; ++i) {
+        if (log->thread_states[i].thread_id == thread_id) {
+            state = &log->thread_states[i];
+            break;
+        } else if (!log->thread_states[i].thread_id) {
+            state = &log->thread_states[i];
+            state->thread_id = thread_id;
+            break;
+        }
+    }
+    if (!state) {
+        assert(!"Thread table is full. Do clean-up or increase MAX_THREADS");
+    }
+    return state;
+}
+
+static ta_log_thread_state *log_get_thread_state(ta_log *log, ta_thread_id thread_id)
+{
+    ta_log_thread_state *state = 0;
+    for (int i = 0; i < MAX_THREADS; ++i) {
+        if (log->thread_states[i].thread_id == thread_id) {
+            state = &log->thread_states[i];
+            break;
+        }
+    }
+    return state;
+}
+
+static double thread_get_region_elapsed(ta_log *log, ta_thread_id thread_id, double elapsed_ms)
+{
+    double region_elapsed_ms = 0;
+    ta_log_thread_state *state = log_get_thread_state(log, thread_id);
+    if (state) {
+        ta_log_timed_region *region = dlb_vec_last(state->timed_regions);
+        if (region) {
+            region_elapsed_ms = elapsed_ms - region->start_ms;
+        }
+    }
+    return region_elapsed_ms;
+}
+
+void ta_log_indent(ta_log *log)
+{
+    ta_thread_id thread_id = 0; //SDL_ThreadID();
+    ta_log_thread_state *state = log_get_or_create_thread_state(log, thread_id);
+    state->indent++;
+}
+
+void ta_log_unindent(ta_log *log)
+{
+    ta_thread_id thread_id = 0; //SDL_ThreadID();
+    ta_log_thread_state *state = log_get_thread_state(log, thread_id);
+    if (state && state->indent) {
+        state->indent--;
+    }
+}
+
 static void ta_log_timestamp(char *buf, int len)
 {
     time_t ts = time(0);
@@ -138,14 +152,17 @@ static void ta_log_write_timestamp(ta_log *log, u32 src)
     double elapsed_ms = ta_timer_elapsed_ms();
 
     ta_thread_id thread_id = 0; //SDL_ThreadID();
-    double ms_since_last_write = elapsed_ms - thread_get_last_write(thread_id);
-    thread_set_last_write(thread_id, elapsed_ms);
+    double region_elapsed_ms = thread_get_region_elapsed(log, thread_id, elapsed_ms);
+
+    if (region_elapsed_ms > 200.0) {
+        region_elapsed_ms = 0.0;
+    }
 
     fprintf(log->stream, "[%s][%5u][%10.3fs][%10.3fms][ %10s] ", timestamp,
-        thread_id, elapsed_sec, ms_since_last_write, ta_log_source_str(src));
+        thread_id, elapsed_sec, region_elapsed_ms, ta_log_source_str(src));
     if (log->echo) {
         fprintf(stdout, "[%s][%5u][%10.3fs][%10.3fms][ %10s] ", timestamp,
-            thread_id, elapsed_sec, ms_since_last_write, ta_log_source_str(src));
+            thread_id, elapsed_sec, region_elapsed_ms, ta_log_source_str(src));
     }
 }
 
@@ -172,17 +189,64 @@ void ta_log_write(ta_log *log, u32 src, const char *fmt, ...)
     if (log->src_include & src && !(log->src_exclude & src)) {
         TA_LOCK(log->mutex);
         ta_log_write_timestamp(log, src);
+
+        ta_thread_id thread_id = 0; //SDL_ThreadID();
+        ta_log_thread_state *state = log_get_thread_state(log, thread_id);
+        if (state) {
+            for (int i = 0; i < state->indent; ++i) {
+                fprintf(log->stream, "    ");
+            }
+        }
+
         va_list args;
         va_start(args, fmt);
         vfprintf(log->stream, fmt, args);
+
         if (log->echo) {
             vfprintf(stdout, fmt, args);
         }
         va_end(args);
+
         if (log->flush) {
             ta_log_flush(log);
         }
         TA_UNLOCK(log->mutex);
+    }
+}
+
+// NOTE: Lifetime of name must be at least as long as it takes to call ta_log_timed_region_end()
+void ta_log_timed_region_start(ta_log *log, u32 src, const char *name, size_t name_len)
+{
+    ta_log_write(log, src, "START %.*s\n", name_len, name);
+    ta_log_indent(log);
+
+    ta_thread_id thread_id = 0; //SDL_ThreadID();
+    ta_log_thread_state *state = log_get_or_create_thread_state(log, thread_id);
+    ta_log_timed_region region = { 0 };
+    region.name_hash = dlb_murmur3(name, name_len);
+    region.src = src;
+    region.start_ms = ta_timer_elapsed_ms();
+    dlb_vec_push(state->timed_regions, region);
+}
+
+void ta_log_timed_region_end(ta_log *log, const char *name, size_t name_len)
+{
+    ta_thread_id thread_id = 0; //SDL_ThreadID();
+    ta_log_thread_state *state = log_get_or_create_thread_state(log, thread_id);
+
+    double time_ms = ta_timer_elapsed_ms();
+    u32 name_hash = dlb_murmur3(name, name_len);
+
+    ta_log_timed_region *region = dlb_vec_last(state->timed_regions);
+    while (region) {
+        ta_log_unindent(log);
+        ta_log_write(log, region->src, "END %.*s\n", name_len, name);
+        u32 region_name_hash = region->name_hash;
+        dlb_vec_popz(state->timed_regions);
+        if (region_name_hash == name_hash) {
+            break;
+        }
+        region = dlb_vec_last(state->timed_regions);
     }
 }
 
@@ -194,5 +258,11 @@ void ta_log_free(ta_log *log)
     }
     if (log->mutex) {
         //SDL_DestroyMutex(log->mutex);
+    }
+    for (int i = 0; i < MAX_THREADS; ++i) {
+        dlb_vec_each(ta_log_timed_region *, region, log->thread_states[i].timed_regions) {
+            // TODO: Flush all timed regions on log close? For now, just assume app does that correctly
+        }
+        dlb_vec_free(log->thread_states[i].timed_regions);
     }
 }

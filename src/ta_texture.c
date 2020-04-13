@@ -70,8 +70,8 @@ void ta_texture_create_and_bind(ta_texture *tex)
     DLB_ASSERT(!tex->gl_id);
 
     ta_log_write(&tg_debug_log, SRC_TEXTURE,
-        "Creating OpenGL texture w: %d, h: %d, channels: %d...\n",
-        tex->width, tex->height, tex->channels);
+        "Generating GPU texture %s (w: %d, h: %d, channels: %d)\n",
+        tex->name, tex->width, tex->height, tex->channels);
 
     GLenum target = texture_target(tex);
     glGenTextures(1, &tex->gl_id);
@@ -89,6 +89,8 @@ void ta_texture_create_and_bind(ta_texture *tex)
 
     //GLuint *gl_id = dlb_vec_alloc(gl_ids[queue]);
     //*gl_id = texture->gl_id;
+
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Generation complete.\n");
 }
 
 // Read in little-endian short from char array
@@ -114,6 +116,9 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height,
         char  bits_per_pixel;
         char  image_descriptor;
     } header;
+
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Reading TGA from disk %s\n", path);
+
     size_t i, color_map_size, pixels_size;
     FILE *f;
     size_t read;
@@ -138,8 +143,7 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height,
         fclose(f);
         return NULL;
     }
-    DLB_ASSERT(header.bits_per_pixel == 8 || header.bits_per_pixel == 24 ||
-        header.bits_per_pixel == 32);
+    DLB_ASSERT(header.bits_per_pixel == 8 || header.bits_per_pixel == 24 || header.bits_per_pixel == 32);
 
     for (i = 0; i < header.id_length; ++i) {
         if (getc(f) == EOF) {
@@ -149,8 +153,7 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height,
         }
     }
 
-    color_map_size = (size_t)texture_le_short(header.color_map_length) *
-        (header.color_map_depth / 8);
+    color_map_size = (size_t)texture_le_short(header.color_map_length) * (header.color_map_depth / 8);
     for (i = 0; i < color_map_size; ++i) {
         if (getc(f) == EOF) {
             fprintf(stderr, "%s has incomplete color map\n", path);
@@ -167,11 +170,12 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height,
     DLB_ASSERT(pixels);
 
     if (flip_y) {
+        ta_log_write(&tg_debug_log, SRC_TEXTURE, "Perf Note: Performing vertical flip on %s\n", path);
         // Vertical flip (slower)
         read = 0;
         int row_width = *width * *channels;
         for (int row = *height - 1; row >= 0; --row) {
-            read += fread((char *)pixels + row * row_width, 1, row_width, f);
+            read += fread((char *)pixels + (size_t)row * row_width, 1, row_width, f);
         }
     } else {
         read = fread(pixels, 1, pixels_size, f);
@@ -184,6 +188,7 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height,
         return NULL;
     }
 
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "TGA read complete\n", path);
     return pixels;
 }
 static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
@@ -193,6 +198,7 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
     DLB_ASSERT(tex->channels);
     DLB_ASSERT(pixels);
 
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Uploading texture to GPU %s\n", tex->name);
     GLint format_internal = 0;
     GLint format = 0;
     switch (tex->channels)
@@ -219,9 +225,14 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
         target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
     }
     glTexImage2D(target, 0, format_internal, tex->width, tex->height, 0, format, GL_UNSIGNED_BYTE, pixels);
+
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Upload complete.\n", tex->name);
 }
 static void texture_generate_mipmap(ta_texture *tex)
 {
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Generating mipmap for %s\n", tex->name);
+    ta_log_timed_region_start(&tg_debug_log, SRC_TEXTURE, CSTR("texture_generate_mipmap"));
+
     // TODO: Are there any other reasons to generate mipmaps?
     // Only generate mipmap if requested filtering mode requires it
     if ((tex->gl_filter_min != GL_NEAREST && tex->gl_filter_min != GL_LINEAR) ||
@@ -230,10 +241,15 @@ static void texture_generate_mipmap(ta_texture *tex)
         GLenum target = texture_target(tex);
         glGenerateMipmap(target);
     }
+
+    ta_log_timed_region_end(&tg_debug_log, CSTR("texture_generate_mipmap"));
 }
 
 void ta_texture_load(ta_texture *tex)
 {
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Loading texture %s\n", tex->name);
+    ta_log_timed_region_start(&tg_debug_log, SRC_TEXTURE, CSTR("ta_texture_load"));
+
     if (tex->type == TA_TEXTURE_2D) {
         DLB_ASSERT(tex->pixels || tex->data.path);
     } else if (tex->type == TA_TEXTURE_CUBEMAP) {
@@ -259,7 +275,6 @@ void ta_texture_load(ta_texture *tex)
         int face_count = tex->type == TA_TEXTURE_2D ? 1 : 6;
         for (int i = 0; i < face_count; ++i) {
             const char *path = tex->data.path_faces[i];
-            ta_log_write(&tg_debug_log, SRC_TEXTURE, "Loading texture from disk %s...\n", path);
 
             u32 width = 0;
             u32 height = 0;
@@ -280,6 +295,7 @@ void ta_texture_load(ta_texture *tex)
                 tex->height = height;
                 tex->channels = channels;
             }
+
             texture_upload(tex, i, pixels, true);
             dlb_free(pixels);
 
@@ -302,6 +318,8 @@ void ta_texture_load(ta_texture *tex)
 
     texture_generate_mipmap(tex);
     ta_texture_unbind(tex);
+
+    ta_log_timed_region_end(&tg_debug_log, CSTR("ta_texture_load"));
 }
 
 void ta_texture_delete(ta_texture *tex)

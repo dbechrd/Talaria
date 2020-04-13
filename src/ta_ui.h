@@ -41,7 +41,6 @@ typedef struct ta_ui_scroll_state {
     ta_vec2 percent;  // scroll as percentage of scrollable area (0.0 - 1.0)
     ta_vec2i pixels;  // amount of overflow in pixels last frame
 } ta_ui_scroll_state;
-
 typedef struct ta_ui_window_state {
     // TODO: Allow window move. (If you can nest windows inside other controls,
     // this needs to be a relative offset, rather than absolute location.
@@ -53,14 +52,12 @@ typedef struct ta_ui_window_state {
 
     ta_ui_scroll_state scroll;
 } ta_ui_window_state;
-
-typedef bool ta_textbox_filter(char c);
-ta_textbox_filter *ta_textbox_filter_default;
-
 typedef struct ta_ui_panel_state {
     ta_ui_scroll_state scroll;
 } ta_ui_panel_state;
 
+typedef bool ta_textbox_filter(char c);
+ta_textbox_filter *ta_textbox_filter_default;
 typedef struct ta_ui_textbox_state {
     char *buffer;  // vector
     size_t cursor;    // index of next character, 0 = before first char, len = after last char
@@ -77,17 +74,14 @@ typedef struct ta_ui_textbox_state {
     ta_textbox_filter *filter;
     ta_ui_scroll_state scroll;
 } ta_ui_textbox_state;
-
 typedef struct ta_ui_textbox_vec2_state {
     ta_ui_panel_state panel_state;
     ta_ui_textbox_state textbox_states[2];
 } ta_ui_textbox_vec2_state;
-
 typedef struct ta_ui_textbox_vec3_state {
     ta_ui_panel_state panel_state;
     ta_ui_textbox_state textbox_states[3];
 } ta_ui_textbox_vec3_state;
-
 typedef struct ta_ui_textbox_vec4_state {
     ta_ui_panel_state panel_state;
     ta_ui_textbox_state textbox_states[4];
