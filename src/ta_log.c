@@ -54,8 +54,8 @@ void ta_log_init(ta_log *log, FILE *stream, bool flush, bool echo,
 
     TA_LOCK(log->mutex);
     fprintf(log->stream,
-        "[Timestamp          ][TID  ][Source    ][Elapsed   ][Message                   ]\n"
-        "--------------------------------------------------------------------------------\n");
+        "[Timestamp          ][TID  ][Source    ][Elapsed  ][Message                   ]\n"
+        "-------------------------------------------------------------------------------\n");
     TA_UNLOCK(log->mutex);
 }
 
@@ -135,11 +135,12 @@ static void ta_log_write_timestamp(ta_log *log, u32 src)
 {
     char timestamp[32] = "1970-01-01 00:00:00";
     ta_log_timestamp(CSTR(timestamp));
-    double elapsed_sec = ta_timer_elapsed_sec();
+
     double elapsed_ms = ta_timer_elapsed_ms();
+    double elapsed_sec = elapsed_ms / 1000;
 
     ta_thread_id thread_id = 0; //SDL_ThreadID();
-#define LOG_PRINT(f) fprintf(f, "[%s][%5u][%10s][%8.3fms] ", timestamp, thread_id, ta_log_source_str(src), elapsed_sec)
+#define LOG_PRINT(f) fprintf(f, "[%s][%5u][%10s][%8.3fs] ", timestamp, thread_id, ta_log_source_str(src), elapsed_sec)
     LOG_PRINT(log->stream);
     if (log->echo) {
         LOG_PRINT(stdout);
@@ -151,7 +152,7 @@ static void ta_log_write_timestamp(ta_log *log, u32 src)
         dlb_vec_each(ta_log_timed_region *, region, state->timed_regions) {
             double region_elapsed_ms = elapsed_ms - region->start_ms;
             // TODO: Store and print region names
-#define LOG_PRINT(f) fprintf(f, "[%s: %6.3fms] ", region->name, region_elapsed_ms)
+#define LOG_PRINT(f) fprintf(f, "[%s: %7.3fms] ", region->name, region_elapsed_ms)
             LOG_PRINT(log->stream);
             if (log->echo) {
                 LOG_PRINT(stdout);

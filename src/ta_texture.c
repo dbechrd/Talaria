@@ -230,19 +230,20 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
 }
 static void texture_generate_mipmap(ta_texture *tex)
 {
-    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Generating mipmap for %s\n", tex->name);
-    ta_log_timed_region_start(&tg_debug_log, SRC_TEXTURE, CSTR("texture_generate_mipmap"));
-
     // TODO: Are there any other reasons to generate mipmaps?
     // Only generate mipmap if requested filtering mode requires it
-    if ((tex->gl_filter_min != GL_NEAREST && tex->gl_filter_min != GL_LINEAR) ||
+    if (tex->width > 1 && tex->height > 1 &&
+        (tex->gl_filter_min != GL_NEAREST && tex->gl_filter_min != GL_LINEAR) ||
         (tex->gl_filter_mag != GL_NEAREST && tex->gl_filter_mag != GL_LINEAR))
     {
+        ta_log_write(&tg_debug_log, SRC_TEXTURE, "Generating mipmap for %s\n", tex->name);
+        ta_log_timed_region_start(&tg_debug_log, SRC_TEXTURE, CSTR("texture_generate_mipmap"));
+
         GLenum target = texture_target(tex);
         glGenerateMipmap(target);
-    }
 
-    ta_log_timed_region_end(&tg_debug_log, CSTR("texture_generate_mipmap"));
+        ta_log_timed_region_end(&tg_debug_log, CSTR("texture_generate_mipmap"));
+    }
 }
 
 void ta_texture_load(ta_texture *tex)
