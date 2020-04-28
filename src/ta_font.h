@@ -33,7 +33,7 @@ void ta_font_init           (ta_font *font);
 void ta_font_load_path      (ta_font *font, const char *path);
 void ta_font_delete         (ta_font *font);
 void ta_font_free           (ta_font *font);
-ta_rectf ta_font_push_text  (ta_font *font, const char *text, size_t text_len, bool screen, size_t *cursor_idx,
-                             ta_vec2 *cursor_offset, const ta_vec2i *mouse_coords, ta_rect_uv **rects);
+ta_rect ta_font_push_text   (ta_font *font, const char *text, size_t text_len, bool screen, size_t *cursor_idx,
+                             ta_vec2i *cursor_offset, const ta_vec2i *mouse_coords, ta_rect_uv **rects);
 void ta_font_render         (ta_font *font, float x, float y, float z, bool clear_buffers, bool reset_uniforms,
                              struct ta_mesh *mesh);

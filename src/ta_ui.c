@@ -85,7 +85,7 @@ typedef struct ui_frame {
     ta_rect_uv *text_rects; // vector, must be freed!
     ta_texture *texture;
     int texture_face;       // for cubemaps
-    ta_vec2 cursor;         // cursor location for textboxes
+    ta_vec2i cursor;        // cursor location for textboxes
 
     // Consolidate this and all bools into a single flags bitmap
     ta_ui_state state;
@@ -293,13 +293,25 @@ static ta_rect rect_shrink(ta_rect orig, ta_rect shrink)
     result.h = orig.h - (shrink.w + shrink.h);
     return result;
 }
-static ta_rect rect_intersect(ta_rect a, ta_rect b)
+static ta_rect rect_intersection(ta_rect a, ta_rect b)
 {
     ta_rect result = { 0 };
     result.x = MAX(a.x, b.x);
     result.y = MAX(a.y, b.y);
     result.w = MAX(0, MIN(a.x + a.w, b.x + b.w) - result.x);
     result.h = MAX(0, MIN(a.y + a.h, b.y + b.h) - result.y);
+    return result;
+}
+static bool rect_intersects(ta_rect a, ta_rect b)
+{
+    bool result = false;
+    if (a.x + a.w > b.x &&
+        a.y + a.h > b.y &&
+        b.x + b.w > a.x &&
+        b.y + b.h > a.y)
+    {
+        result = true;
+    }
     return result;
 }
 static bool rect_contains_mouse(ta_rect rect)
@@ -755,7 +767,7 @@ void ta_ui_label(const char *text, size_t text_len)
     DLB_ASSERT(text_len);
 
     ta_rect_uv *text_rects = 0;
-    ta_rectf text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects);
+    ta_rect text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects);
 
     // Auto-expand frame based on contents
     ta_ui_next_size(MAX(next_frame_size.w, (int)text_rect.w),
@@ -1014,8 +1026,8 @@ bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textb
     DLB_ASSERT(textbox);
 
     ta_rect_uv *text_rects = 0;
-    ta_vec2 cursor = { 0 };
-    ta_rectf text_rect = { 0 };
+    ta_vec2i cursor = { 0 };
+    ta_rect text_rect = { 0 };
 
     if (textbox->buffer) {
         ta_vec2i *mouse_coords = 0;
@@ -1133,8 +1145,8 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
     //}
 
     ta_rect_uv *text_rects = 0;
-    ta_vec2 cursor = { 0 };
-    ta_rectf text_rect = { 0 };
+    ta_vec2i cursor = { 0 };
+    ta_rect text_rect = { 0 };
 
     if (textbox->buffer) {
         ta_vec2i *mouse_coords = 0;
@@ -1419,18 +1431,18 @@ void ta_ui_tooltip_end(const char *name)
 void ta_ui_tooltip(const char *text, size_t text_len)
 {
     ta_rect_uv *text_rects = 0;
-    ta_rectf text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects);
+    ta_rect text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects);
 
     int x = ta_mouse_x();
     int y = ta_mouse_y();
-    float offset_x = x + 10.0f;
-    float offset_y = y + 20.0f;
+    int offset_x = x + 10;
+    int offset_y = y + 20;
 
     ta_rect_uv tooltip_bg = { 0 };
-    tooltip_bg.rect.x = offset_x - 4.0f;
-    tooltip_bg.rect.y = offset_y - 2.0f;
-    tooltip_bg.rect.w = text_rect.w + 8.0f;
-    tooltip_bg.rect.h = text_rect.h + 3.0f;
+    tooltip_bg.rect.x = offset_x - 4;
+    tooltip_bg.rect.y = offset_y - 2;
+    tooltip_bg.rect.w = text_rect.w + 8;
+    tooltip_bg.rect.h = text_rect.h + 3;
     ta_primitive_push_rect_uv(&primitive_quads_tooltip_bg, tooltip_bg, TA_COLOR_GRAY3A, UI_LAYER_TIP_BG, true, false);
 
     dlb_vec_each(ta_rect_uv *, rect, text_rects) {
@@ -1507,14 +1519,44 @@ static void ui_render_image(ui_frame *frame)
         }
     }
 }
-static void ui_render_text(float x, float y, ta_rect_uv *text_rects)
+static void ui_render_text(int x, int y, ta_rect_uv *text_rects, ta_rect clip_rect)
 {
-    if (dlb_vec_len(text_rects)) {
-        dlb_vec_each(ta_rect_uv *, rect, text_rects) {
-            ta_primitive_push_rect_uv(&primitive_quads, *rect, TA_COLOR_WHITE, 0, true, false);
+    size_t rect_count = dlb_vec_len(text_rects);
+    if (rect_count) {
+        // Binary search to find overlapping y values (ignore everything before and after)
+        size_t first_in_bounds;
+        size_t left = 0;
+        size_t right = rect_count - 1;
+        size_t mid = left;  // NOTE: Start at beginning for O(1) when scrollbar is at top
+        while (left < right) {
+            if (y + text_rects[mid].rect.y + text_rects[mid].rect.h < clip_rect.y) {
+                left = MIN(SIZE_MAX - 1, mid) + 1;
+            } else {
+                right = MAX(1, mid) - 1;
+            }
+            mid = (left + right) / 2;
+        }
+        first_in_bounds = left;
+
+        size_t last_in_bounds;
+        left = 0;
+        right = rect_count - 1;
+        mid = right;  // NOTE: Start at end for O(1) when scrollbar is at bottom
+        while (left < right) {
+            if (y + text_rects[mid].rect.y > clip_rect.y + clip_rect.h) {
+                right = MAX(1, mid) - 1;
+            } else {
+                left = MIN(SIZE_MAX - 1, mid) + 1;
+            }
+            mid = (left + right) / 2;
+        }
+        last_in_bounds = left;
+
+        for (size_t i = first_in_bounds; i <= last_in_bounds; ++i) {
+            ta_primitive_push_rect_uv(&primitive_quads, text_rects[i], TA_COLOR_WHITE, 0, true, false);
         }
 
-        ta_font_render(ui_font, x, y, UI_LAYER_EDIT_1, true, false, &primitive_quads);
+        ta_font_render(ui_font, (float)x, (float)y, UI_LAYER_EDIT_1, true, false, &primitive_quads);
     }
 }
 static void ui_render_label(ui_frame *frame)
@@ -1527,9 +1569,9 @@ static void ui_render_label(ui_frame *frame)
     ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
 
     // Render text
-    float x = (float)frame->rect.x + frame->pad.x;
-    float y = (float)frame->rect.y + frame->pad.y;
-    ui_render_text(x, y, frame->text_rects);
+    int x = frame->rect.x + frame->pad.x;
+    int y = frame->rect.y + frame->pad.y;
+    ui_render_text(x, y, frame->text_rects, frame->clip_rect);
 }
 static void ui_render_textbox(ui_frame *frame)
 {
@@ -1541,7 +1583,7 @@ static void ui_render_textbox(ui_frame *frame)
     // Render text
     int x = frame->rect.x + frame->pad.x;
     int y = frame->rect.y + frame->pad.y;
-    ui_render_text((float)x, (float)y, frame->text_rects);
+    ui_render_text(x, y, frame->text_rects, frame->clip_rect);
 
     // If active, render cursor
     if (frame->data.textbox->focused && !frame->data.textbox->focus_changed) {
@@ -1695,7 +1737,7 @@ void ta_ui_render()
             while(container_idx) {
                 DLB_ASSERT(container_idx < dlb_vec_len(ui_frames));
                 ui_frame *container = &ui_frames[container_idx];
-                frame->clip_rect = rect_intersect(frame->clip_rect, container->rect);
+                frame->clip_rect = rect_intersection(frame->clip_rect, container->rect);
                 if (!frame->clip_rect.w || !frame->clip_rect.h) {
                     break;
                 }

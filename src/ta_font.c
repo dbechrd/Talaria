@@ -156,46 +156,46 @@ ta_shader *ta_font_shader(ta_font *font)
 }
 
 static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
-    int char_index, float *xpos, float *ypos, ta_rect_uv *rect)
+    int char_index, int *xpos, int *ypos, ta_rect_uv *rect)
 {
     float ipw = 1.0f / pw, iph = 1.0f / ph;
     const stbtt_bakedchar *b = chardata + char_index;
     int round_x = STBTT_ifloor((*xpos + b->xoff) + 0.5f);
     int round_y = STBTT_ifloor((*ypos + b->yoff) + 0.5f);
 
-    rect->rect.x = (float)round_x;
-    rect->rect.y = (float)round_y;
-    rect->rect.w = (float)(b->x1 - b->x0);
-    rect->rect.h = (float)(b->y1 - b->y0);
+    rect->rect.x = round_x;
+    rect->rect.y = round_y;
+    rect->rect.w = (b->x1 - b->x0);
+    rect->rect.h = (b->y1 - b->y0);
     rect->uv0.u = b->x0 * ipw;
     rect->uv0.v = b->y0 * iph;
     rect->uv1.u = b->x1 * ipw;
     rect->uv1.v = b->y1 * iph;
 
-    *xpos += b->xadvance;
+    *xpos += (int)b->xadvance;
 
     // TODO(cleanup): returns descent; don't need for now
     //return rect->rect.h + b->yoff;
 }
 
-ta_rectf ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool screen, size_t *cursor_idx,
-    ta_vec2 *cursor_offset, const ta_vec2i *mouse_coords, ta_rect_uv **rects)
+ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool screen, size_t *cursor_idx,
+    ta_vec2i *cursor_offset, const ta_vec2i *mouse_coords, ta_rect_uv **rects)
 {
     DLB_ASSERT(rects);
     if (text_len) {
         dlb_vec_reserve(*rects, text_len);
     }
 
-    ta_rectf bounds = { 0 };
+    ta_rect bounds = { 0 };
     if (!text) {
         DLB_ASSERT(0);
         return bounds;
     }
 
-    ta_vec2 position = { 0 };
-    position.x = 0.0f;
-    position.y = (float)font->ascent;
-    ta_vec2 cursor = position;
+    ta_vec2i position = { 0 };
+    position.x = 0;
+    position.y = font->ascent;
+    ta_vec2i cursor = position;
     bool cursor_set = false;
 
     // Loop until i == text_len or, if text_len is 0, we hit a nil character
@@ -212,11 +212,11 @@ ta_rectf ta_font_push_text(ta_font *font, const char *text, size_t text_len, boo
             position.y += font->line_height;
             bounds.h += font->line_height;
         } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
-            ta_vec2 baked_pos = position;
+            ta_vec2i baked_pos = position;
             ta_rect_uv *rect_uv = dlb_vec_alloc(*rects);
             ta_baked_quad(font->chars, font->tex_w, font->tex_h,
                 text[i] - 32, &baked_pos.x, &baked_pos.y, rect_uv);
-            bounds.w = MAX(bounds.w, baked_pos.x - bounds.x);
+            bounds.w = MAX(bounds.w, (int)baked_pos.x - bounds.x);
 
             // HACK: Flip world text upside down.. this is super gross,
             //       surely there's a better way?
@@ -228,8 +228,8 @@ ta_rectf ta_font_push_text(ta_font *font, const char *text, size_t text_len, boo
             }
 
             if (!cursor_set && mouse_coords && screen) {
-                float x_advance = baked_pos.x - position.x;
-                float y_top = position.y - font->ascent;
+                int x_advance = baked_pos.x - position.x;
+                int y_top = position.y - font->ascent;
 
                 // Check if user clicked on this character
                 if (mouse_coords->x >= position.x &&
@@ -244,7 +244,8 @@ ta_rectf ta_font_push_text(ta_font *font, const char *text, size_t text_len, boo
                             *cursor_idx = i;
                         }
                     } else {
-                        cursor = baked_pos;
+                        cursor.x = baked_pos.x;
+                        cursor.y = baked_pos.y;
                         if (cursor_idx) {
                             *cursor_idx = i + 1;
                         }

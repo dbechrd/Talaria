@@ -117,7 +117,7 @@ typedef struct ta_rectf {
 } ta_rectf;
 
 typedef struct ta_rect_uv {
-    ta_rectf rect;
+    ta_rect rect;
     ta_uv uv0;  // bottom left
     ta_uv uv1;  // top right
 } ta_rect_uv;

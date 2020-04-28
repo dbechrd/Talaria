@@ -243,10 +243,10 @@ void ta_primitive_push_rect_uv(ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color,
         }
     } else {
         // NOTE: This is only used for nametags atm.
-        x0 = rect_uv.rect.x;
-        x1 = rect_uv.rect.x + rect_uv.rect.w;
-        y0 = rect_uv.rect.y;
-        y1 = rect_uv.rect.y + rect_uv.rect.h;
+        x0 = (float)(rect_uv.rect.x);
+        x1 = (float)(rect_uv.rect.x + rect_uv.rect.w);
+        y0 = (float)(rect_uv.rect.y);
+        y1 = (float)(rect_uv.rect.y + rect_uv.rect.h);
     }
 
     ta_vec3 p[6];

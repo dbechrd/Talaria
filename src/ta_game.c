@@ -898,7 +898,7 @@ static void game_render_nametags_debug(ta_camera *camera)
 
     ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
     dlb_vec_each(ta_transform *, transform, transforms) {
-        ta_rectf tag_rect = ta_font_push_text(font, SYM(transform->name), true, 0, 0, 0, &tag_rects);
+        ta_rect tag_rect = ta_font_push_text(font, SYM(transform->name), true, 0, 0, 0, &tag_rects);
 
         ta_vec3 tag_pos = transform->xform_world.position;
         ta_vec3 tag_to_cam = vec3_sub(cam_trans->xform_world.position, tag_pos);
@@ -930,9 +930,9 @@ static void game_render_nametags_debug(ta_camera *camera)
         ta_texture *tex_orange = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
         ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex_orange->gl_id);
         ta_rect_uv tag_background = { 0 };
-        tag_background.rect.x -= NDC_W(5.0f);
-        tag_background.rect.w = NDC_W(tag_rect.w) + NDC_W(10.0f);
-        tag_background.rect.h = NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
+        tag_background.rect.x -= (int)NDC_W(5.0f);
+        tag_background.rect.w = (int)(NDC_W(tag_rect.w) + NDC_W(10.0f));
+        tag_background.rect.h = (int)NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
         ta_primitive_push_rect_uv(0, tag_background, TA_COLOR_DARK_RED, UI_LAYER_HUD_BG, false, false);
         ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
         ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);

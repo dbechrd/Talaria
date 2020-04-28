@@ -77,7 +77,7 @@ static void console_cmd_cat(char **history)
 static void console_cmd_log(char **history)
 {
     UNUSED(history);
-    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Testing log writes '%s'.", "foo");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Log command says: '%s'.\n", "It Works!");
 }
 static void console_cmd_unknown(char **history)
 {
@@ -140,6 +140,10 @@ void ta_console_draw_screen()
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);
     static ta_ui_window_state console_window = { 0 };
     ta_ui_window_begin(&console_window, 0);
+
+    char buflen[10] = { 0 };
+    size_t buflen_len = snprintf(buflen, sizeof(buflen), "%zu", dlb_vec_len(console.buffer));
+    ta_ui_label(buflen, buflen_len);
 
 #if 1
     static bool auto_scroll_init = false;
