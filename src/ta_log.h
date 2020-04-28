@@ -31,7 +31,7 @@ typedef enum ta_log_source {
     //...
     //SRC_LAST              = 0x8fffffff
 
-    SRC_ALL = SRC_ASSERT | SRC_AUDIO | SRC_CONSOLE| SRC_EDITOR | SRC_EVENT | SRC_FILE | SRC_FONT | SRC_GAME | SRC_GLTF
+    SRC_ALL = SRC_ASSERT | SRC_AUDIO | SRC_CONSOLE | SRC_EDITOR | SRC_EVENT | SRC_FILE | SRC_FONT | SRC_GAME | SRC_GLTF
             | SRC_JSON | SRC_KEYBIND | SRC_LIGHT| SRC_MATH | SRC_OPENGL | SRC_PRIMITIVE | SRC_RENDER | SRC_RIGID_BODY
             | SRC_SCENE | SRC_SHADER | SRC_SYSTEM | SRC_TEXTURE | SRC_WINDOW
 } ta_log_source;
@@ -70,14 +70,16 @@ typedef struct ta_log_thread_state {
 } ta_log_thread_state;
 
 typedef struct ta_log {
-    const char  *filename;      // relative path to log file
-    FILE        *stream;        // file stream to write to
-    bool        flush;          // if true, flush log after every write (also flushed stdout when echo = true)
-    bool        echo;           // if true, echo all log writes to stdout
-    u32         src_include;    // log source bitmap, 1 = log this source
-    u32         src_exclude;    // log source bitmap, 1 = exclude this source (overrides include)
-    u32         level_filter;   // TODO(unused): log level filter
-    void        *mutex;         // TODO(unused): was SDL_mutex when I was testing threading
+    const char  *filename;        // relative path to log file
+    FILE        *stream;          // file stream to write to
+    bool        flush;            // if true, flush log after every write (also flushed stdout when echo = true)
+    bool        echo_stdout;      // if true, echo all log writes to stdout
+    bool        echo_console;     // if true, echo all log writes to in-game console
+    u32         src_include;      // log source bitmap, 1 = log this source
+    u32         src_exclude;      // log source bitmap, 1 = exclude this source (overrides include)
+    u32         level_filter;     // TODO(unused): log level filter
+    void        *mutex;           // TODO(unused): was SDL_mutex when I was testing threading
+    bool        show_timestamps;  // if true, write timestamps before each line
     ta_log_thread_state thread_states[MAX_THREADS];
 } ta_log;
 
@@ -85,8 +87,8 @@ extern ta_log tg_debug_log;
 
 const char *ta_log_source_str(ta_log_source src);
 
-void ta_log_init        (ta_log *log, FILE *stream, bool flush, bool echo, u32 src_include, u32 src_exclude);
-void ta_log_init_file   (ta_log *log, const char *filename, bool flush, bool echo, u32 src_include, u32 src_exclude);
+void ta_log_init        (ta_log *log, FILE *stream, bool flush, bool echo_stdout, bool echo_console, u32 src_include, u32 src_exclude);
+void ta_log_init_file   (ta_log *log, const char *filename, bool flush, bool echo_stdout, bool echo_console, u32 src_include, u32 src_exclude);
 void ta_log_flush       (ta_log *log);
 void ta_log_indent      (ta_log *log);
 void ta_log_unindent    (ta_log *log);

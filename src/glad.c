@@ -38,7 +38,7 @@ void _post_call_callback_default(const char *name, void *funcptr, int len_args, 
     error_code = glad_glGetError();
 
     if (error_code != GL_NO_ERROR) {
-        fprintf(stderr, "ERROR %d in %s\n", error_code, name);
+        fprintf(stderr, "ERROR %u in %s\n", error_code, name);
     }
 }
 

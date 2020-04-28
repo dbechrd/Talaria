@@ -128,8 +128,8 @@ int vec2_tiny(ta_vec2 v)
 }
 int vec2_equal(ta_vec2 a, ta_vec2 b)
 {
-    return fabs(a.x - b.x) < TA_EPSILON &&
-           fabs(a.y - b.y) < TA_EPSILON;
+    return fabs((double)a.x - b.x) < TA_EPSILON &&
+           fabs((double)a.y - b.y) < TA_EPSILON;
 }
 ta_vec2 vec2_neg(ta_vec2 v)
 {
@@ -203,9 +203,9 @@ int vec3_tiny(ta_vec3 v)
 }
 int vec3_equal(ta_vec3 a, ta_vec3 b)
 {
-    return fabs(a.x - b.x) < TA_EPSILON &&
-           fabs(a.y - b.y) < TA_EPSILON &&
-           fabs(a.z - b.z) < TA_EPSILON;
+    return fabs((double)a.x - b.x) < TA_EPSILON &&
+           fabs((double)a.y - b.y) < TA_EPSILON &&
+           fabs((double)a.z - b.z) < TA_EPSILON;
 }
 ta_vec3 vec3_neg(ta_vec3 v)
 {
@@ -340,10 +340,10 @@ int vec4_tiny(ta_vec4 v)
 }
 int vec4_equal(ta_vec4 a, ta_vec4 b)
 {
-    return fabs(a.x - b.x) < TA_EPSILON &&
-           fabs(a.y - b.y) < TA_EPSILON &&
-           fabs(a.z - b.z) < TA_EPSILON &&
-           fabs(a.w - b.w) < TA_EPSILON;
+    return fabs((double)a.x - b.x) < TA_EPSILON &&
+           fabs((double)a.y - b.y) < TA_EPSILON &&
+           fabs((double)a.z - b.z) < TA_EPSILON &&
+           fabs((double)a.w - b.w) < TA_EPSILON;
 }
 
 void quat_print(FILE *file, ta_vec4 q)
@@ -361,10 +361,10 @@ int quat_ident(ta_vec4 q)
 int quat_equal(ta_vec4 a, ta_vec4 b)
 {
     return
-        fabs(a.x - b.x) < TA_EPSILON &&
-        fabs(a.y - b.y) < TA_EPSILON &&
-        fabs(a.z - b.z) < TA_EPSILON &&
-        fabs(a.w - b.w) < TA_EPSILON;
+        fabs((double)a.x - b.x) < TA_EPSILON &&
+        fabs((double)a.y - b.y) < TA_EPSILON &&
+        fabs((double)a.z - b.z) < TA_EPSILON &&
+        fabs((double)a.w - b.w) < TA_EPSILON;
 }
 ta_vec4 quat_from_axis_angle(ta_vec3 axis, float deg)
 {
@@ -754,7 +754,7 @@ ta_mat4 mat4_init(
 int mat4_equal(const ta_mat4 *a, const ta_mat4 *b)
 {
     for (int i = 0; i < 16; ++i) {
-        if (fabs(a->data.arr[i] - b->data.arr[i]) > TA_EPSILON) {
+        if (fabs((double)a->data.arr[i] - b->data.arr[i]) > TA_EPSILON) {
             return 0;
         }
     }

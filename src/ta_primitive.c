@@ -643,8 +643,7 @@ void ta_primitive_push_cube(ta_mesh *mesh, ta_vec3 center, float radius,
 // NOTE: "scale" is extent of grid from origin to edge (radius), "frequency" is
 // how often to draw a line (spacing). center, normal and color should be pretty
 // self-explanatory.
-void ta_primitive_push_grid(ta_mesh *mesh, ta_vec3 center, ta_vec3 normal,
-    float radius, float frequency, ta_rgba color)
+void ta_primitive_push_grid(ta_mesh *mesh, ta_vec3 center, ta_vec3 normal, float radius, float frequency, ta_rgba color)
 {
     DLB_ASSERT(frequency < radius);
     ta_vec3 u = vec3_normalize(vec3_perp(normal));

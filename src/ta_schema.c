@@ -239,13 +239,15 @@ void ta_schema_register()
     TYPE_END    (ta_vec4);
 
     TYPE_START      (ta_mat3, TYP_MAT3, 0, 0);
-    TYPE_UNION_TYPE (ta_mat3,  data, ATOM_ENUM, 0);
-    TYPE_UNION_ARRAY(ta_mat3, arr,  ATOM_FLOAT, 9, data, 0);
+    //TYPE_UNION_TYPE (ta_mat3, data, ATOM_ENUM, 0);
+    //TYPE_UNION_ARRAY(ta_mat3, arr, ATOM_FLOAT, 9, data, 0);
+    TYPE_ARRAY      (ta_mat3, data.arr, ATOM_FLOAT, 9);
     TYPE_END        (ta_mat3);
 
     TYPE_START      (ta_mat4, TYP_MAT4, 0, 0);
-    TYPE_UNION_TYPE (ta_mat4,  data, ATOM_ENUM, 0);
-    TYPE_UNION_ARRAY(ta_mat4, arr,  ATOM_FLOAT, 16, data, 0);
+    //TYPE_UNION_TYPE (ta_mat4, data, ATOM_ENUM, 0);
+    //TYPE_UNION_ARRAY(ta_mat4, arr, ATOM_FLOAT, 16, data, 0);
+    TYPE_ARRAY      (ta_mat3, data.arr, ATOM_FLOAT, 16);
     TYPE_END        (ta_mat4);
 
     TYPE_START  (ta_xform, TYP_XFORM, 0, 0);

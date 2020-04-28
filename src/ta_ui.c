@@ -1402,7 +1402,7 @@ void ta_ui_textbox_submit(ta_ui_textbox_state *textbox)
 void ta_ui_textbox_cancel(ta_ui_textbox_state *textbox)
 {
     DLB_ASSERT(textbox);
-    textbox_command_cancel(textbox);
+    textbox_cancel(textbox);
 }
 void ta_ui_tooltip_begin(const char *name)
 {

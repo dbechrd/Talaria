@@ -30,6 +30,8 @@ void ta_camera_init(ta_camera *camera)
 
     if (vec3_zero(camera->up))        camera->up = VEC3_Y;
     camera->dirty = true;
+
+    camera->focal_point = VEC3_MIN;
 }
 
 void ta_camera_set_ortho(ta_camera *camera, bool ortho)
@@ -41,8 +43,7 @@ void ta_camera_set_ortho(ta_camera *camera, bool ortho)
 
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z)
 {
-    ta_transform *transform = ta_game_component(camera->entity,
-        RES_COMP_TRANSFORM);
+    ta_transform *transform = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
     transform->xform.position.x = x;
     transform->xform.position.y = y;
     transform->xform.position.z = z;
@@ -58,8 +59,7 @@ void ta_camera_set_rotation(ta_camera *camera, float yaw, float pitch)
 }
 
 #if 0
-void ta_camera_set_rotate_accel(ta_camera *camera, float yaw_accel,
-    float pitch_accel)
+void ta_camera_set_rotate_accel(ta_camera *camera, float yaw_accel, float pitch_accel)
 {
     camera->yaw_accel = yaw_accel;
     camera->pitch_accel = pitch_accel;
@@ -82,7 +82,7 @@ void ta_camera_set_target_pos_relative(ta_camera *camera, ta_vec3 delta)
 
 void ta_camera_yaw(ta_camera *camera, float delta)
 {
-    camera->yaw_target += delta * 0.1f;
+    camera->yaw_target += delta;
     while (camera->yaw_target < 0.0f)    { camera->yaw_target += 360.0f; }
     while (camera->yaw_target >= 360.0f) { camera->yaw_target -= 360.0f; }
     camera->dirty = true;
@@ -90,9 +90,8 @@ void ta_camera_yaw(ta_camera *camera, float delta)
 
 void ta_camera_pitch(ta_camera *camera, float delta)
 {
-    camera->pitch_target += delta * 0.1f;
-    camera->pitch_target = clampf(camera->pitch_target, camera->pitch_min,
-        camera->pitch_max);
+    camera->pitch_target += delta;
+    camera->pitch_target = clampf(camera->pitch_target, camera->pitch_min, camera->pitch_max);
     camera->dirty = true;
 }
 
@@ -107,8 +106,7 @@ void ta_camera_recalc_projection(ta_camera *camera)
     if (camera->ortho) {
         camera->projection = mat4_ortho(-1.0f, 1.0f, -1.0f, 1.0f, 0.1f, 10.0f);
     } else {
-        camera->projection =
-            mat4_perspective_inf(camera->fov, WINDOW_ASPECT, camera->znear);
+        camera->projection = mat4_perspective_inf(camera->fov, WINDOW_ASPECT, camera->znear);
     }
     camera->dirty = true;
 }
@@ -143,19 +141,28 @@ void ta_camera_update(ta_camera *camera, float dt)
         camera->move_buffer = VEC3_ZERO;
     }
 
-    ta_transform *transform = ta_game_component(camera->entity,
-        RES_COMP_TRANSFORM);
+    ta_transform *transform = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
 
     // Update position
-    ta_vec3 pos_delta = vec3_sub(camera->target_xform.position,
-        transform->xform.position);
+    ta_vec3 pos_delta = vec3_sub(camera->target_xform.position, transform->xform.position);
     if (vec3_len(pos_delta) > camera->follow_distance) {
-        transform->xform.position = vec3_add(transform->xform.position,
-            vec3_scalef(pos_delta, camera->position_smooth));
+        transform->xform.position = vec3_add(transform->xform.position, vec3_scalef(pos_delta, camera->position_smooth));
         camera->dirty = true;
     }
 
-    if (vec3_zero(camera->focal_point)) {
+#if 0
+    // NOTE: This works, but I need a way to unfocus selected objects and/or unlock the camera
+    const char *selected_entity = 0;
+    ta_editor_selected_entity(&selected_entity);
+    if (selected_entity) {
+        ta_transform *target_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+        camera->focal_point = target_transform->xform.position;
+    } else {
+        camera->focal_point = VEC3_MIN;
+    }
+#endif
+
+    if (vec3_equal(camera->focal_point, VEC3_MIN)) {
         // Update yaw
         float yaw_delta = camera->yaw_target - camera->yaw;
         float yaw_delta_abs = (float)fabs(yaw_delta);
@@ -176,29 +183,24 @@ void ta_camera_update(ta_camera *camera, float dt)
         float pitch_delta = camera->pitch_target - camera->pitch;
         if (fabs(pitch_delta) > TA_EPSILON) {
             camera->pitch += pitch_delta * camera->pitch_smooth;
-            camera->pitch = clampf(camera->pitch, camera->pitch_min,
-                camera->pitch_max);
+            camera->pitch = clampf(camera->pitch, camera->pitch_min, camera->pitch_max);
             camera->dirty = true;
         }
 
         if (camera->dirty) {
             camera->front = camera_fps_target(camera);
-            camera->right = vec3_normalize(vec3_cross(camera->front, VEC3_Y));
-            camera->up = vec3_cross(camera->right, camera->front);
         }
     } else {
         if (camera->dirty) {
-            camera->front = vec3_normalize(vec3_sub(camera->focal_point,
-                transform->xform.position));
-            camera->right = vec3_normalize(vec3_cross(camera->front, camera->up));
+            camera->front = vec3_normalize(vec3_sub(camera->focal_point, transform->xform.position));
         }
     }
 
-    // Recalculate look_at
     if (camera->dirty) {
+        camera->right = vec3_normalize(vec3_cross(camera->front, VEC3_Y));
+        camera->up = vec3_cross(camera->right, camera->front);
         camera->frustum = mat4_frustum(camera->front, camera->right, camera->up);
-        camera->look_at = mat4_lookat_fru(transform->xform.position,
-            camera->front, camera->right, camera->up);
+        camera->look_at = mat4_lookat_fru(transform->xform.position, camera->front, camera->right, camera->up);
         transform->xform.orientation = quat_from_vec_vec(VEC3_NZ, camera->front);
         camera->dirty = false;
     }

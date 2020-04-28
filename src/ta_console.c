@@ -11,13 +11,24 @@ typedef enum console_cmd_type {
     CONSOLE_CMD_LIFE,
     CONSOLE_CMD_PING,
     CONSOLE_CMD_CAT,
+    CONSOLE_CMD_LOG,
 
     // NOTE: Unknown must be the last command
     CONSOLE_CMD_UNKNOWN,
     CONSOLE_CMD_COUNT
 } console_cmd_type;
 
-static const char console_prompt[] = "root@talaria.dev:~# ";
+static struct {
+    const char *prompt;
+    size_t prompt_len;
+    char *buffer;
+} console;
+
+void ta_console_init()
+{
+    console.prompt = "root@talaria.dev:~# ";
+    console.prompt_len = strlen(console.prompt);
+}
 
 // len is without nil
 static void console_history_push(char **history, const char *str, size_t len)
@@ -27,9 +38,14 @@ static void console_history_push(char **history, const char *str, size_t len)
     dlb_memcpy(*history + old_len, str, len);
     dlb_vec_hdr(*history)->len += len;
 }
+void ta_console_print(const char *str, size_t len)
+{
+    console_history_push(&console.buffer, str, len);
+}
+
 static void console_prompt_push(char **history)
 {
-    console_history_push(history, CSTR(console_prompt));
+    console_history_push(history, console.prompt, console.prompt_len);
 }
 
 static void console_cmd_clear(char **history)
@@ -58,6 +74,11 @@ static void console_cmd_cat(char **history)
 {
     console_history_push(history, CSTR("=^_^=  *meow*"));
 }
+static void console_cmd_log(char **history)
+{
+    UNUSED(history);
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Testing log writes '%s'.", "foo");
+}
 static void console_cmd_unknown(char **history)
 {
     console_history_push(history, CSTR("Unknown command"));
@@ -77,6 +98,7 @@ static console_cmd_type console_exec(char **history, char *command)
         [CONSOLE_CMD_LIFE]    = { CSTR0("42"),    console_cmd_42,      true },
         [CONSOLE_CMD_PING]    = { CSTR0("ping"),  console_cmd_ping,    true },
         [CONSOLE_CMD_CAT]     = { CSTR0("cat"),   console_cmd_cat,     true },
+        [CONSOLE_CMD_LOG]     = { CSTR0("log"),   console_cmd_log,     true },
         [CONSOLE_CMD_UNKNOWN] = { 0, 0,           console_cmd_unknown, true }
     };
 
@@ -111,26 +133,56 @@ void ta_console_draw_screen()
 {
     ta_log_write(&tg_debug_log, SRC_CONSOLE, "UI layout end\n");
 
-    int offset = 480;
-    int window_w = 640;
-    ta_ui_next_offset(offset, 0);
-    ta_ui_next_size(window_w, 0);
+    int offset = 20;
+    int window_w = 1300;
+    ta_ui_next_offset(offset, 20);
+    ta_ui_next_size(window_w, WINDOW_H - 60);
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);
     static ta_ui_window_state console_window = { 0 };
-    ta_ui_window_begin(&console_window, TA_UI_AUTOSIZE_H);
+    ta_ui_window_begin(&console_window, 0);
 
-    static char *console_history = 0;
-    if (!console_history) {
-        console_cmd_motd(&console_history);
+#if 1
+    static bool auto_scroll_init = false;
+#else
+    static bool auto_scroll = true;
+    bool auto_scroll_clicked = ta_ui_toggle_button(CSTR("Auto scroll"), &auto_scroll);
+#endif
+
+    static ta_ui_panel_state scroll_panel = { 0 };
+    ta_ui_next_size(window_w - 18, WINDOW_H - 102);
+    ta_ui_panel_begin(&scroll_panel, 0);
+
+#if 1
+    if (!auto_scroll_init) {
+        scroll_panel.scroll.percent.y = 1.0f;
+        auto_scroll_init = true;
+    }
+#else
+    // TODO: We're currently auto-scrolling everything by saving scroll state as percentage. Need to save as pixel
+    // offset in order to allow auto-scrolling to be disabled.
+    if (auto_scroll) {
+        if (!auto_scroll_init) {
+            scroll_panel.scroll.percent.y = 1.0f;
+            auto_scroll_init = true;
+        } else if (scroll_panel.scroll.percent.y < 1.0f) {
+            auto_scroll = false;
+        } else {
+            scroll_panel.scroll.percent.y = 1.0f;
+        }
+    }
+#endif
+
+    if (!console.buffer) {
+        console_cmd_motd(&console.buffer);
     }
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_label(console_history, dlb_vec_len(console_history));
+    ta_ui_label(console.buffer, dlb_vec_len(console.buffer));
 
     ta_ui_row_begin();
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_label(CSTR(console_prompt));
+    ta_ui_label(console.prompt, console.prompt_len);
 
     ta_ui_next_size(window_w - 40, 15);
     ta_ui_next_margin(0, 0, 0, 0);
@@ -138,7 +190,7 @@ void ta_console_draw_screen()
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);
     static ta_ui_textbox_state console_textbox = { 0 };
     if (ta_ui_textbox(0, 0, &console_textbox, TA_UI_AUTOSIZE)) {
-        console_cmd_type cmd_type = console_exec(&console_history, console_textbox.buffer);
+        console_cmd_type cmd_type = console_exec(&console.buffer, console_textbox.buffer);
         if (cmd_type == CONSOLE_CMD_EXIT) {
             ta_ui_textbox_cancel(&console_textbox);
             // TODO: Hide console window
@@ -148,6 +200,7 @@ void ta_console_draw_screen()
         console_window.scroll.percent.y = 1.0f;
     }
 
+    ta_ui_panel_end();
     ta_ui_window_end();
     ta_log_write(&tg_debug_log, SRC_CONSOLE, "UI layout end\n");
 

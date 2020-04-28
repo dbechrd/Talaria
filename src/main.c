@@ -1,6 +1,7 @@
 #include "glad.c"
 #include "GLFW/glfw3.h"
 #include "ta_audio.h"
+#include "ta_console.h"
 #include "ta_editor.h"
 #include "ta_game.h"
 #include "ta_log.h"
@@ -95,8 +96,9 @@ int main(int argc, char *argv[])
     }
 
     ta_timer_init();
+    ta_console_init();
     // NOTE(hack): Filters are changed again below before the main loop starts
-    ta_log_init_file(&tg_debug_log, "log.txt", false, false, SRC_ALL, SRC_KEYBIND);
+    ta_log_init_file(&tg_debug_log, "log.txt", false, false, true, SRC_ALL, SRC_KEYBIND);
     // TODO(cleanup): Make sure we're not using rand() anywhere. Use dlb_rand_u32() instead.
     //srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
     dlb_rand_seed((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
@@ -107,6 +109,7 @@ int main(int argc, char *argv[])
     ta_symbol_init();
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Registering schema...\n");
     ta_schema_register();
+
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing window...\n");
     ta_window_init(tg_window, 1600, 900, false);
     //ta_window_init(tg_window, 1920, 1080, true);
@@ -217,6 +220,7 @@ int main(int argc, char *argv[])
 #include "misc/cgltf.h"
 #undef CGLTF_IMPLEMENTATION
 
+#if 0
 #undef KB
 #undef MB
 #undef GB
@@ -228,3 +232,4 @@ int main(int argc, char *argv[])
 #pragma warning(disable: 6326)
 #include "lz4.c"
 #pragma warning(pop)
+#endif

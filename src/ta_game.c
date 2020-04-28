@@ -1210,12 +1210,6 @@ void ta_game_loop()
         ta_log_write(&tg_debug_log, SRC_GAME, " HUD pass...\n");
         //game_draw_hud();
 
-        // TODO: Add "show_fps" flag and bind to key; off by default in release
-        ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
-        game.frame_num++;
-        ta_log_write(&tg_debug_log, SRC_GAME, " FPS pass...\n");
-        game_draw_frame_info(game.frame_num, ms_frame_time, ms_frame_delta, game.sim_step);
-
 #if 0
         //----------------------------------------------------------------------
         // Minimap
@@ -1321,6 +1315,12 @@ void ta_game_loop()
 
         ta_log_write(&tg_debug_log, SRC_GAME, " Update cursor...\n");
         ta_window_update_cursor(tg_window);
+
+        // TODO: Add "show_fps" flag and bind to key; off by default in release
+        ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
+        game.frame_num++;
+        ta_log_write(&tg_debug_log, SRC_GAME, " FPS pass...\n");
+        game_draw_frame_info(game.frame_num, ms_frame_time, ms_frame_delta, game.sim_step);
 
         ta_log_write(&tg_debug_log, SRC_GAME, " Swap...\n");
         ta_window_swap(tg_window);
@@ -1675,11 +1675,12 @@ void ta_game_event(ta_event *event)
             break;
         } case GAME_EVENT_CAMERA_ROTATE: {
             ta_camera *camera = ta_game_camera();
+            static float sensitity = 0.1f;
             if (event->data.camera_rotate.delta_yaw) {
-                ta_camera_yaw(camera, event->data.camera_rotate.delta_yaw);
+                ta_camera_yaw(camera, event->data.camera_rotate.delta_yaw * sensitity);
             }
             if (event->data.camera_rotate.delta_pitch) {
-                ta_camera_pitch(camera, event->data.camera_rotate.delta_pitch);
+                ta_camera_pitch(camera, event->data.camera_rotate.delta_pitch * sensitity);
             }
             break;
         }
