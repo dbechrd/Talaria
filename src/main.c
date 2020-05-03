@@ -130,7 +130,6 @@ int main(int argc, char *argv[])
     // TODO: Change log_level instead once that's implemented
     // HACK: This is dumb. I just don't want debug/info.
     tg_debug_log.src_exclude |= SRC_AUDIO | SRC_CONSOLE | SRC_EVENT | SRC_GAME | SRC_EDITOR;
-    tg_debug_log.src_exclude &= ~SRC_EDITOR;
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Starting game loop...\n");
     ta_game_loop();
 

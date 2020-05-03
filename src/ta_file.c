@@ -14,20 +14,29 @@ static const char *file_mode_str(ta_file_mode mode) {
 }
 
 void ta_file_open(ta_file *file, const char *filename, ta_file_mode mode) {
-    FILE *hnd = fopen(filename, file_mode_str(mode));
-    if (!hnd) {
-        perror("fopen error");
-        PANIC("Failed to open file: %s\n", filename);
+    if (mode == FILE_WRITE) {
+        FILE *hnd = fopen(filename, file_mode_str(mode));
+        if (!hnd) {
+            perror("fopen error");
+            PANIC("Failed to open file: %s\n", filename);
+        }
+        file->hnd = hnd;
+    } else if (mode == FILE_READ) {
+        file->contents = ta_file_read_all(filename);
     }
     file->filename = filename;
     file->mode = mode;
-    file->hnd = hnd;
     file->pos.line = 1;
     file->pos.column = 1;
 }
 
 void ta_file_close(ta_file *f) {
-    fclose(f->hnd);
+    if (f->hnd) {
+        fclose(f->hnd);
+    }
+    if (f->contents) {
+        dlb_vec_free(f->contents);
+    }
 }
 
 void ta_file_debug_context(ta_file *f)
@@ -76,6 +85,7 @@ char ta_file_char(ta_file *f) {
         f->pos.column = 0;
     }
     f->pos.column++;
+#if 0
     int c = fgetc(f->hnd);
     if (c == '\r') {
         c = fgetc(f->hnd);
@@ -83,6 +93,17 @@ char ta_file_char(ta_file *f) {
     if (c == EOF) {
         f->eof = true;
     }
+#else
+    char c = f->contents[f->contents_cursor];
+    f->contents_cursor++;
+    if (c == '\r' && f->contents_cursor < dlb_vec_len(f->contents)) {
+        c = f->contents[f->contents_cursor];
+        f->contents_cursor++;
+    }
+    if (f->contents_cursor == dlb_vec_len(f->contents)) {
+        f->eof = true;
+    }
+#endif
     if (f->context_len < sizeof(f->context_buf)) {
         f->context_buf[f->context_len] = (char)c;
     }
@@ -265,7 +286,7 @@ char *ta_file_read_all(const char *filename)
     size_t read = fread(buffer, 1, tell, fs);
     DLB_ASSERT(read == len - 1);
     if (len) {
-        DLB_ASSERT(buffer[0] != 0xef);  // check for Unicode BOM (EF BB BF), breaks on AMD
+        DLB_ASSERT(buffer[0] != 0xef);  // check for Unicode BOM (EF BB BF), breaks GLSL shaders on AMD
     }
 
     // Close file

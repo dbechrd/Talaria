@@ -155,13 +155,23 @@ ta_shader *ta_font_shader(ta_font *font)
     return shader;
 }
 
+static inline int ta_ifloor(double x)
+{
+    return (int)x - (x < (int)x);
+}
+
+static inline int ta_iceil(double x)
+{
+    return (int)x + (x > (int)x);
+}
+
 static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
     int char_index, int *xpos, int *ypos, ta_rect_uv *rect)
 {
     float ipw = 1.0f / pw, iph = 1.0f / ph;
     const stbtt_bakedchar *b = chardata + char_index;
-    int round_x = STBTT_ifloor((*xpos + b->xoff) + 0.5f);
-    int round_y = STBTT_ifloor((*ypos + b->yoff) + 0.5f);
+    int round_x = ta_ifloor((*xpos + b->xoff) + 0.5f);
+    int round_y = ta_ifloor((*ypos + b->yoff) + 0.5f);
 
     rect->rect.x = round_x;
     rect->rect.y = round_y;
@@ -199,6 +209,7 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
     bool cursor_set = false;
 
     // Loop until i == text_len or, if text_len is 0, we hit a nil character
+    size_t newlines = 0;
     size_t i = 0;
     for (; ((text_len) ? i < text_len : text[i]); i++) {
         if (!cursor_set && !mouse_coords && cursor_idx && *cursor_idx == i) {
@@ -211,6 +222,7 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
             position.x = bounds.x;
             position.y += font->line_height;
             bounds.h += font->line_height;
+            newlines++;
         } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
             ta_vec2i baked_pos = position;
             ta_rect_uv *rect_uv = dlb_vec_alloc(*rects);
@@ -258,6 +270,9 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
         }
     }
     bounds.h += font->line_height;
+
+    size_t rects_len = dlb_vec_len(*rects);
+    DLB_ASSERT(rects_len + newlines == text_len);
 
     if (cursor_offset) {
         if (!cursor_set) {

@@ -291,8 +291,12 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
         DLB_ASSERT(!"ta_window_init: failed to init GLAD");
     }
 
+#if 0
     glfwSwapInterval(1);
     window->vsync = true;
+#else
+    glfwSwapInterval(0);
+#endif
     glfwGetFramebufferSize(window->glfw_window, &window->width, &window->height);
 
     // Draw something as soon as humanly possible (just a dark gray for now to get rid of the default white)

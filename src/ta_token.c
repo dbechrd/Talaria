@@ -110,18 +110,15 @@ void tokens_init()
 void tokens_tokenize(ta_file *f, token **tokens)
 {
     DLB_ASSERT(tokens);
-    bool eof = false;
-    while (!eof) {
+    while (true) {
         token *tok = dlb_vec_alloc(*tokens);
         tok->file_pos = f->pos;
         char c = ta_file_peek(f);
+        if (f->eof) {
+            tok->type = TOKEN_EOF;
+            break;
+        }
         switch(c) {
-            case EOF:
-            {
-                tok->type = TOKEN_EOF;
-                eof = true;
-                break;
-            }
             case ' ':
             {
                 ta_file_expect_char(f, C_WHITESPACE, 1);

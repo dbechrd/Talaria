@@ -1085,7 +1085,7 @@ static void ui_node_panel()
             transform->xform_world.position.y,
             transform->xform_world.position.z);
         DLB_ASSERT(text_len < sizeof(text));
-        ta_ui_label(CSTR(text), 0);
+        ta_ui_label(text, text_len, 0);
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
@@ -1097,7 +1097,7 @@ static void ui_node_panel()
             transform->xform_world.orientation.z,
             transform->xform_world.orientation.w);
         DLB_ASSERT(text_len < sizeof(text));
-        ta_ui_label(CSTR(text), 0);
+        ta_ui_label(text, text_len, 0);
     }
 
     ta_ui_row_end();
@@ -1244,7 +1244,7 @@ static void ui_node_panel()
                 rigid_body->velocity.y,
                 rigid_body->velocity.z);
             DLB_ASSERT(text_len < sizeof(text));
-            ta_ui_label(CSTR(text), 0);
+            ta_ui_label(text, text_len, 0);
             ta_ui_next_margin(6, 1, 0, 1);
             ta_rgba velc = TA_COLOR_DARK_RED;
             ta_ui_next_bg_color(UI_STATE_NONE, velc.r, velc.g, velc.b, velc.a);
@@ -1262,7 +1262,7 @@ static void ui_node_panel()
                 rigid_body->ang_velocity.y,
                 rigid_body->ang_velocity.z);
             DLB_ASSERT(text_len < sizeof(text));
-            ta_ui_label(CSTR(text), 0);
+            ta_ui_label(text, text_len, 0);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1828,12 +1828,14 @@ static void ui_textbox_panel()
     ta_ui_row_end();
 
     char tb_buffer[20] = { 0 };
-    snprintf(CSTR(tb_buffer), "Length: %zu", dlb_vec_len(textbox.buffer));
-    ta_ui_label(CSTR(tb_buffer), 0);
+    int tb_buffer_len = snprintf(CSTR(tb_buffer), "Length: %zu", dlb_vec_len(textbox.buffer));
+    DLB_ASSERT(tb_buffer_len < sizeof(tb_buffer));
+    ta_ui_label(tb_buffer, tb_buffer_len, 0);
 
     char tb_cursor[20] = { 0 };
-    snprintf(CSTR(tb_cursor), "Cursor: %zu", textbox.cursor);
-    ta_ui_label(CSTR(tb_cursor), 0);
+    int tb_cursor_len = snprintf(CSTR(tb_cursor), "Cursor: %zu", textbox.cursor);
+    DLB_ASSERT(tb_cursor_len < sizeof(tb_cursor));
+    ta_ui_label(tb_cursor, tb_cursor_len, 0);
 
     ta_ui_panel_end();
 }

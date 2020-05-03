@@ -24,6 +24,8 @@ https://glad.dav1d.de/#profile=core&language=c-debug&specification=gl&loader=on&
 #include <string.h>
 #include "misc/glad.h"
 
+// TODO(perf): Disable debug callbacks in release mode (remove the || 1)
+#if 0 //_DEBUG || 1
 void _pre_call_callback_default(const char *name, void *funcptr, int len_args, ...) {
     (void) name;
     (void) funcptr;
@@ -35,6 +37,7 @@ void _post_call_callback_default(const char *name, void *funcptr, int len_args, 
     (void) funcptr;
     (void) len_args;
 
+    // TODO(perf): This is *really* slow??
     error_code = glad_glGetError();
 
     if (error_code != GL_NO_ERROR) {
@@ -51,6 +54,10 @@ static GLADcallback _post_call_callback = _post_call_callback_default;
 void glad_set_post_callback(GLADcallback cb) {
     _post_call_callback = cb;
 }
+#else
+#define _pre_call_callback
+#define _post_call_callback
+#endif
 
 static void* get_proc(const char *namez);
 

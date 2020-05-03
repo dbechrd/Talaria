@@ -1560,13 +1560,21 @@ static void ui_render_text(int x, int y, ta_rect_uv *text_rects, ta_rect clip_re
             }
             mid = (left + right) / 2;
         }
-        last_in_bounds = left;
+        last_in_bounds = right;
 
 #if 0
         // CLEANUP(dlb): Chop off the first and last letters for easy verification that the correct bounds were found
         //first_in_bounds = MIN(rect_count - 1, first_in_bounds + 1);
         //last_in_bounds = (last_in_bounds >= 1) ? last_in_bounds - 1 : 0;
 #endif
+
+        DLB_ASSERT(first_in_bounds < rect_count);
+        DLB_ASSERT(last_in_bounds < rect_count);
+
+        size_t push_count = (last_in_bounds - first_in_bounds) + 1;
+        dlb_vec_reserve(primitive_quads.positions, push_count);
+        dlb_vec_reserve(primitive_quads.uvs, push_count);
+        dlb_vec_reserve(primitive_quads.colors, push_count);
 
         for (size_t i = first_in_bounds; i <= last_in_bounds; ++i) {
             ta_primitive_push_rect_uv(&primitive_quads, text_rects[i], TA_COLOR_WHITE, 0, true, false);

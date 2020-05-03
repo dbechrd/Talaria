@@ -24,6 +24,9 @@ typedef struct ta_file {
     ta_file_pos  pos;               // line/column where current token started
     char         context_buf[80];   // line buffer
     int          context_len;       // number of bytes in `context_buf` in use
+
+    char         *contents;         // entire file contents (vector)
+    size_t       contents_cursor;   // index of next character to read
 } ta_file;
 
 #define PANIC(format, ...) {                                            \
