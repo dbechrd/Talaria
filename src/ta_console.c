@@ -143,7 +143,7 @@ void ta_console_draw_screen()
 
     char buflen[10] = { 0 };
     size_t buflen_len = snprintf(buflen, sizeof(buflen), "%zu", dlb_vec_len(console.buffer));
-    ta_ui_label(buflen, buflen_len);
+    ta_ui_label(buflen, buflen_len, 0);
 
 #if 1
     static bool auto_scroll_init = false;
@@ -181,12 +181,13 @@ void ta_console_draw_screen()
     }
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_label(console.buffer, dlb_vec_len(console.buffer));
+    static ta_rect_uv *buffer_rects = 0;
+    ta_ui_label(console.buffer, dlb_vec_len(console.buffer), &buffer_rects);
 
     ta_ui_row_begin();
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_label(console.prompt, console.prompt_len);
+    ta_ui_label(console.prompt, console.prompt_len, 0);
 
     ta_ui_next_size(window_w - 40, 15);
     ta_ui_next_margin(0, 0, 0, 0);

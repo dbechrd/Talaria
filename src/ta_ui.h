@@ -130,7 +130,7 @@ void ta_ui_toggle_button_begin      (u32 flags);
 bool ta_ui_toggle_button_end        (bool *checked);
 bool ta_ui_toggle_button            (const char *text, size_t text_len, bool *checked);
 bool ta_ui_image                    (struct ta_texture *texture, int face);
-void ta_ui_label                    (const char *text, size_t text_len);
+void ta_ui_label                    (const char *text, size_t text_len, ta_rect_uv **text_rects);
 
 void textbox_command_cursor_right   ();
 void textbox_command_cursor_left    ();

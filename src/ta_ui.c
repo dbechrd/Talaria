@@ -73,19 +73,20 @@ typedef struct ui_frame {
     ta_rect pad;
     ta_rgba bg_color[UI_STATE_COUNT];
     ta_rgba fg_color[UI_STATE_COUNT];
-    ta_rect rect;           // position & size (-margin, +pad)
-    ta_vec2i offset;        // dynamic offset for layout
-    bool skip_flow;         // if true, doesn't affect flow of parent container
+    ta_rect rect;              // position & size (-margin, +pad)
+    ta_vec2i offset;           // dynamic offset for layout
+    bool skip_flow;            // if true, doesn't affect flow of parent container
 
-    int row_height;         // height of current layout row
-    bool row_continue;      // if true, next element will layout on same row
-    ta_size content_size;   // dynamic content size (-margin, +pad)
+    int row_height;            // height of current layout row
+    bool row_continue;         // if true, next element will layout on same row
+    ta_size content_size;      // dynamic content size (-margin, +pad)
     ta_rect clip_rect;
 
-    ta_rect_uv *text_rects; // vector, must be freed!
+    ta_rect_uv *text_rects;    // vector
+    bool text_rects_internal;  // if true, text_rects wasn't passed in and must be freed
     ta_texture *texture;
-    int texture_face;       // for cubemaps
-    ta_vec2i cursor;        // cursor location for textboxes
+    int texture_face;          // for cubemaps
+    ta_vec2i cursor;           // cursor location for textboxes
 
     // Consolidate this and all bools into a single flags bitmap
     ta_ui_state state;
@@ -714,7 +715,7 @@ bool ta_ui_button(const char *text, size_t text_len)
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 0);
     if (text) {
-        ta_ui_label(text, text_len);
+        ta_ui_label(text, text_len, 0);
     }
     return ta_ui_button_end();
 }
@@ -740,7 +741,7 @@ bool ta_ui_toggle_button(const char *text, size_t text_len, bool *checked)
     ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 0);
-    ta_ui_label(text, text_len);
+    ta_ui_label(text, text_len, 0);
     return ta_ui_toggle_button_end(checked);
 }
 bool ta_ui_image(ta_texture *texture, int face)
@@ -761,13 +762,17 @@ bool ta_ui_image(ta_texture *texture, int face)
     frame->texture_face = face;
     return frame->state.pressed;
 }
-void ta_ui_label(const char *text, size_t text_len)
+void ta_ui_label(const char *text, size_t text_len, ta_rect_uv **text_rects)
 {
     DLB_ASSERT(text);
     DLB_ASSERT(text_len);
 
-    ta_rect_uv *text_rects = 0;
-    ta_rect text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects);
+    ta_rect_uv *text_rects_internal = 0;
+    if (text_rects) {
+        text_rects_internal = *text_rects;
+    }
+
+    ta_rect text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects_internal);
 
     // Auto-expand frame based on contents
     ta_ui_next_size(MAX(next_frame_size.w, (int)text_rect.w),
@@ -775,8 +780,12 @@ void ta_ui_label(const char *text, size_t text_len)
 
     ui_frame_begin(UI_LABEL, 0, false);
     ui_frame *frame = ui_frame_end(UI_LABEL);
-    frame->text_rects = text_rects;
-    //return frame->state.pressed;
+    frame->text_rects = text_rects_internal;
+    frame->text_rects_internal = !text_rects;
+
+    if (text_rects) {
+        *text_rects = text_rects_internal;
+    }
 }
 
 // TODO: Move this to the keybind and support it more generally
@@ -1253,7 +1262,7 @@ void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state, bool 
     for (int i = 0; i < 2; ++i) {
         if (multiple_rows) ta_ui_row_begin();
 
-        ta_ui_label(CSTR(labels[i]));
+        ta_ui_label(CSTR(labels[i]), 0);
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
 
@@ -1291,7 +1300,7 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state, bool 
         if (multiple_rows) ta_ui_row_begin();
 
         ta_ui_next_margin(0, 1, 0, 1);
-        ta_ui_label(labels[i], 1);
+        ta_ui_label(labels[i], 1, 0);
         //ta_ui_next_bg_color(UI_STATE_NONE,
         //    0.3f * (i == 0),
         //    0.3f * (i == 1),
@@ -1331,7 +1340,7 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
     for (int i = 0; i < 4; ++i) {
         if (multiple_rows) ta_ui_row_begin();
 
-        ta_ui_label(labels[i], 1);
+        ta_ui_label(labels[i], 1, 0);
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
 
@@ -1521,6 +1530,7 @@ static void ui_render_image(ui_frame *frame)
 }
 static void ui_render_text(int x, int y, ta_rect_uv *text_rects, ta_rect clip_rect)
 {
+#if 1
     size_t rect_count = dlb_vec_len(text_rects);
     if (rect_count) {
         // Binary search to find overlapping y values (ignore everything before and after)
@@ -1552,12 +1562,27 @@ static void ui_render_text(int x, int y, ta_rect_uv *text_rects, ta_rect clip_re
         }
         last_in_bounds = left;
 
+#if 0
+        // CLEANUP(dlb): Chop off the first and last letters for easy verification that the correct bounds were found
+        //first_in_bounds = MIN(rect_count - 1, first_in_bounds + 1);
+        //last_in_bounds = (last_in_bounds >= 1) ? last_in_bounds - 1 : 0;
+#endif
+
         for (size_t i = first_in_bounds; i <= last_in_bounds; ++i) {
             ta_primitive_push_rect_uv(&primitive_quads, text_rects[i], TA_COLOR_WHITE, 0, true, false);
         }
 
         ta_font_render(ui_font, (float)x, (float)y, UI_LAYER_EDIT_1, true, false, &primitive_quads);
     }
+#else
+    // Slow code (no culling), for reference
+    dlb_vec_each(ta_rect_uv *, text_rect, text_rects)
+    {
+        ta_primitive_push_rect_uv(&primitive_quads, *text_rect, TA_COLOR_WHITE, 0, true, false);
+    }
+
+    ta_font_render(ui_font, (float)x, (float)y, UI_LAYER_EDIT_1, true, false, &primitive_quads);
+#endif
 }
 static void ui_render_label(ui_frame *frame)
 {
@@ -1758,7 +1783,11 @@ void ta_ui_render()
         }
 
         // Clear any per-frame memory
-        dlb_vec_zero(frame->text_rects);
+        if (frame->text_rects_internal) {
+            dlb_vec_free(frame->text_rects);
+        } else {
+            dlb_vec_zero(frame->text_rects);
+        }
     }
 
     glDisable(GL_SCISSOR_TEST);
