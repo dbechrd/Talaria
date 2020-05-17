@@ -291,7 +291,7 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
         DLB_ASSERT(!"ta_window_init: failed to init GLAD");
     }
 
-#if 0
+#if 1
     glfwSwapInterval(1);
     window->vsync = true;
 #else

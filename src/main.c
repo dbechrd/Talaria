@@ -87,8 +87,6 @@ int main(int argc, char *argv[])
     UNUSED(argc);
     UNUSED(argv);
 
-    printf("%d", BUFSIZ);
-
     glfwSetErrorCallback(window_glfw_error);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "glfwCreateWindow...\n");
     if (!glfwInit()) {
@@ -144,12 +142,17 @@ int main(int argc, char *argv[])
 }
 
 // Include all other .c files (i.e. "unity build"). Compilation go vroom, vroom!
+#include "dml.c"
+#include "dml_parser.c"
+#include "dml_scanner.c"
+#include "dml_token.c"
 #include "ta_animation.c"
 #include "ta_audio.c"
 #include "ta_button.c"
 #include "ta_camera.c"
 #include "ta_collider.c"
 #include "ta_console.c"
+#include "ta_dml.c"
 #include "ta_editor.c"
 #include "ta_event.c"
 #include "ta_file.c"

@@ -3,6 +3,7 @@
 #include "ta_camera.h"
 #include "ta_collider.h"
 #include "ta_console.h"
+#include "ta_dml.h"
 #include "ta_editor.h"
 #include "ta_event.h"
 #include "ta_font.h"
@@ -194,6 +195,12 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // Scene
     //--------------------------------------------------------------------------
+    ta_log_write(&tg_debug_log, SRC_GAME, "Loading ogex test file...\n");
+    dml_load("data/mesh/basic_test.ogex");
+    dml_load("data/mesh/skeleton_test.ogex");
+    dml_load("data/mesh/button.ogex");
+    dml_load("data/mesh/dude.ogex");
+
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading first scene...\n");
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");

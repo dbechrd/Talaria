@@ -19,6 +19,7 @@ const char *ta_log_source_str(ta_log_source src) {
         case SRC_ASSERT:        return "ASSERT";
         case SRC_AUDIO:         return "AUDIO";
         case SRC_CONSOLE:       return "CONSOLE";
+        case SRC_DML:           return "DML";
         case SRC_EDITOR:        return "EDITOR";
         case SRC_EVENT:         return "EVENT";
         case SRC_FILE:          return "FILE";
@@ -182,24 +183,6 @@ static void ta_log_write_timestamp(ta_log *log, u32 src)
         }
     }
 }
-
-#if 0
-// Not a good idea when multi-threaded logging is enabled, would need to buffer
-// the whole line before sending it.
-void ta_log_append(ta_log *log, const char* fmt, ...)
-{
-    va_list args;
-    va_start(args, fmt);
-    vfprintf(log->stream, fmt, args);
-    if (log->echo_stdout) {
-        vfprintf(stdout, fmt, args);
-    }
-    va_end(args);
-    if (log->flush) {
-        ta_log_flush(log);
-    }
-}
-#endif
 
 void ta_log_write(ta_log *log, u32 src, const char *fmt, ...)
 {

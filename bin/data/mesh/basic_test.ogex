@@ -1,0 +1,14 @@
+#Metric (key = "up") {string {"z"}}
+ta_light_node: {
+	name: "light_main_node"
+	light: "light_main"
+	transform: {  # node.matrix_local (ExportNodeTransform)
+		type: "mat4"
+		data: [
+			0xbe94ec36, 0x3f748619, 0xbd620dec, 0x00000000,
+			0xbf4566dd, 0xbe4cae39, 0x3f1ac222, 0x00000000,
+			0x3f10ff25, 0x3e5fa1f1, 0x3f4b6fa4, 0x00000000,
+			0x4082709a, 0x3f80b2b7, 0x40bcec70, 0x3f800000
+		]
+	}
+}
