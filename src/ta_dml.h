@@ -12,6 +12,7 @@ typedef struct ogx_transform {
 
 typedef enum ogx_node_type {
     OGX_BASIC_NODE,
+    OGX_BONE_NODE,
     OGX_LIGHT_NODE,
     OGX_CAMERA_NODE,
     OGX_GEOMETRY_NODE,
@@ -22,7 +23,7 @@ typedef enum ogx_node_type {
     const char *name;           \
     ogx_transform transform;    \
     union ogx_node *parent;     \
-    union ogx_node **children;
+    union ogx_node *children;
 
 typedef struct ogx_basic_node {
     OGX_NODE_HEADER

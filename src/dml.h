@@ -2,14 +2,27 @@
 
 #define DML_ERROR_CONTEXT_TAB_WIDTH 2
 
+#if _DEBUG
+    typedef struct DMLDebugSymbol {
+        const char *filename;
+        size_t line;
+        size_t column;
+    } DMLDebugSymbol;
+    #define DML_DEBUG_SYMBOL DMLDebugSymbol dbg_symbol
+#else
+    #define DML_DEBUG_SYMBOL
+#endif
+
 // TODO: DMLField pool
 typedef struct DMLObject {
     struct DMLField *fields;
+    DML_DEBUG_SYMBOL;
 } DMLObject;
 
 // TODO: DMLValue pool
 typedef struct DMLArray {
     struct DMLValue *values;
+    DML_DEBUG_SYMBOL;
 } DMLArray;
 
 typedef enum DMLLiteralType {
@@ -29,6 +42,7 @@ typedef struct DMLLiteral {
         const char *as_string;
         int as_bool;
     } data;
+    DML_DEBUG_SYMBOL;
 } DMLLiteral;
 
 typedef enum DMLValueType {
@@ -47,11 +61,13 @@ typedef struct DMLValue {
         DMLArray as_array;
         DMLLiteral as_literal;
     } data;
+    DML_DEBUG_SYMBOL;
 } DMLValue;
 
 typedef struct DMLField {
     const char *name;  // symbol
     DMLValue value;
+    DML_DEBUG_SYMBOL;
 } DMLField;
 
 void DMLPrintObject(DMLObject *object, int indent);

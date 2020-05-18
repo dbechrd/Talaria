@@ -24,7 +24,7 @@ typedef enum token_type {
     TOKEN_LIST_SEPARATOR,
 } token_type;
 
-typedef struct token {
+typedef struct ta_token {
     token_type type;  // Token type
     u32 length;       // Token length (for arrays and strings)
     union {
@@ -36,10 +36,10 @@ typedef struct token {
         const char  *string;
     } value;
     ta_file_pos file_pos;  // DEBUG: Track file position for better error messages
-} token;
+} ta_token;
 
 void tokens_init        ();
-void tokens_tokenize    (ta_file *f, token **tokens);
-void tokens_parse       (struct ta_scene *scene, token *tokens);
-void tokens_print       (FILE *f, token *tokens);
-void tokens_print_debug (FILE *f, token *tokens);
+void tokens_tokenize    (ta_file *f, ta_token **tokens);
+void tokens_parse       (struct ta_scene *scene, ta_token *tokens);
+void tokens_print       (FILE *f, ta_token *tokens);
+void tokens_print_debug (FILE *f, ta_token *tokens);

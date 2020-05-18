@@ -9,7 +9,7 @@ typedef struct ta_transform {
     ta_xform    xform_world;// xform in world space (all parents included)
     ta_mat4     local;      // cached model matrix (local space, relative to parent)
     ta_mat4     world;      // cached model matrix (world space, all parents included)
-    const char  *parent;    // parent nodes
+    const char  *parent;    // parent node
     const char  **children; // array of children nodes
     bool dirty_flag;        // double-buffered dirty flag (flip-flops between true and false meaning dirty)
 } ta_transform;

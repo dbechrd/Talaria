@@ -75,6 +75,7 @@ static const char *dml_result_str[OGX_RESULT_COUNT] = {
 
 DML_SYMBOLS(SYMBOL_DECLARE);
 
+static dml_result dml_load_node(ogx_node *node, DMLValue *value);
 static dml_result dml_load_document(ogx_scene *scene, DMLObject *document);
 
 dml_result dml_load(const char *filename)
@@ -91,12 +92,12 @@ dml_result dml_load(const char *filename)
     char *source = ta_file_read_all(filename);
     size_t source_len = dlb_vec_len(source) - 1;
     if (!source) {
-        ta_log_write(&tg_debug_log, SRC_DML, "[FATAL] Unable to open file [%s].\n", filename);
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s] failed to open file\n", filename);
         result = OGX_FILE_INVALID;
         goto cleanup;
     }
     if (!source_len) {
-        ta_log_write(&tg_debug_log, SRC_DML, "[FATAL] File was empty [%s].\n", filename);
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s] empty file\n", filename);
         result = OGX_FILE_INVALID;
         goto cleanup;
     }
@@ -127,7 +128,7 @@ dml_result dml_load(const char *filename)
     ta_log_write(&tg_debug_log, SRC_DML, "Parsing...\n");
 
     DMLParser parser = { 0 };
-    DMLParserInit(&parser, tokens, source, source_len);
+    DMLParserInit(&parser, tokens, filename, source, source_len);
 
     DMLObject document = { 0 };
     DMLParserParse(&parser, &document);
@@ -163,8 +164,16 @@ static dml_result dml_load_string(const char **string, DMLValue *value)
 
     dml_result result = OGX_SUCCESS;
     if (value->type != DML_VALUE_LITERAL) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
+            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+#endif
         result = OGX_EXPECTED_LITERAL;
     } else if (value->data.as_literal.type != DML_LITERAL_STRING) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected string literal, found %s\n", value->dbg_symbol.filename,
+            value->dbg_symbol.line, value->dbg_symbol.column, DMLLiteralTypeStr[value->data.as_literal.type]);
+#endif
         result = OGX_EXPECTED_STRING;
     } else {
         *string = value->data.as_literal.data.as_string;
@@ -179,16 +188,32 @@ static dml_result dml_load_mat4(ogx_mat4 *matrix, DMLValue *value)
 
     dml_result result = OGX_SUCCESS;
     if (value->type != DML_VALUE_ARRAY) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected array, found %s\n", value->dbg_symbol.filename,
+            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+#endif
         result = OGX_EXPECTED_ARRAY;
     } else if (dlb_vec_len(value->data.as_array.values) != 16) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected array length 16 for mat4, array length is %zu\n", value->dbg_symbol.filename,
+            value->dbg_symbol.line, value->dbg_symbol.column, dlb_vec_len(value->data.as_array.values));
+#endif
         result = OGX_INVALID_ARRAY_LENGTH;
     } else {
         for (size_t i = 0; i < 16; i++) {
             DMLValue *arr_value = value->data.as_array.values + i;
             if (arr_value->type != DML_VALUE_LITERAL) {
+#if _DEBUG
+                ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
+                    value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+#endif
                 result = OGX_EXPECTED_LITERAL;
                 break;
             } else if (arr_value->data.as_literal.type != DML_LITERAL_FLOAT) {
+#if _DEBUG
+                ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected float literal, found %s\n", value->dbg_symbol.filename,
+                    value->dbg_symbol.line, value->dbg_symbol.column, DMLLiteralTypeStr[value->data.as_literal.type]);
+#endif
                 result = OGX_EXPECTED_FLOAT;
                 break;
             } else {
@@ -214,6 +239,10 @@ static dml_result dml_load_transform(ogx_transform *transform, DMLValue *value)
             } else if (field->name == dmls_data) {
                 result = dml_load_mat4(&transform->data, &field->value);
             } else {
+#if _DEBUG
+                ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
+                    value->dbg_symbol.line, value->dbg_symbol.column, field->name);
+#endif
                 result = OGX_UNEXPECTED_FIELD;
             }
 
@@ -235,10 +264,31 @@ static dml_result dml_load_basic_node_field(ogx_basic_node *node, DMLField *fiel
         result = dml_load_string(&node->name, &field->value);
     } else if (field->name == dmls_transform) {
         result = dml_load_transform(&node->transform, &field->value);
-    } else if (field->name == dmls_parent) {
-        result = OGX_NOT_IMPLEMENTED;
-    } else if (field->name == dmls_children) {
-        result = OGX_NOT_IMPLEMENTED;
+    } else if (field->name == dmls_bone_node) {
+        ogx_node *child = dlb_vec_alloc(node->children);
+        child->basic_node.parent = (ogx_node *)node;
+        child->basic_node.type = OGX_BONE_NODE;
+        result = dml_load_node(child, &field->value);
+    } else if (field->name == dmls_camera_node) {
+        ogx_node *child = dlb_vec_alloc(node->children);
+        child->basic_node.parent = (ogx_node *)node;
+        child->basic_node.type = OGX_CAMERA_NODE;
+        result = dml_load_node(child, &field->value);
+    } else if (field->name == dmls_geometry) {
+        ogx_node *child = dlb_vec_alloc(node->children);
+        child->basic_node.parent = (ogx_node *)node;
+        child->basic_node.type = OGX_GEOMETRY_NODE;
+        result = dml_load_node(child, &field->value);
+    } else if (field->name == dmls_light_node) {
+        ogx_node *child = dlb_vec_alloc(node->children);
+        child->basic_node.parent = (ogx_node *)node;
+        child->basic_node.type = OGX_LIGHT_NODE;
+        result = dml_load_node(child, &field->value);
+    } else if (field->name == dmls_node) {
+        ogx_node *child = dlb_vec_alloc(node->children);
+        child->basic_node.parent = (ogx_node *)node;
+        child->basic_node.type = OGX_BASIC_NODE;
+        result = dml_load_node(child, &field->value);
     } else {
         result = OGX_UNEXPECTED_FIELD;
     }
@@ -298,12 +348,19 @@ static dml_result dml_load_node(ogx_node *node, DMLValue *value)
 
     dml_result result = OGX_SUCCESS;
     if (value->type != DML_VALUE_OBJECT) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
+            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+#endif
         result = OGX_EXPECTED_OBJECT;
     } else {
         dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
             result = dml_load_basic_node_field(&node->basic_node, field);
             if (result == OGX_UNEXPECTED_FIELD) {
                 switch (node->basic_node.type) {
+                    case OGX_BONE_NODE:
+                        result = OGX_NOT_IMPLEMENTED;
+                        break;
                     case OGX_CAMERA_NODE:
                         result = dml_load_camera_node_field(&node->camera_node, field);
                         break;
@@ -317,6 +374,10 @@ static dml_result dml_load_node(ogx_node *node, DMLValue *value)
             }
 
             if (result != OGX_SUCCESS) {
+#if _DEBUG
+                ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] %s '%s'\n", field->dbg_symbol.filename,
+                    field->dbg_symbol.line, field->dbg_symbol.column, dml_result_str[result], field->name);
+#endif
                 break;
             }
         }
@@ -331,11 +392,15 @@ static dml_result dml_load_document(ogx_scene *scene, DMLObject *document)
         printf("name: %s ", field->name);
         printf("value: %s\n", DMLValueTypeStr[field->value.type]);
 
-        if (field->name == dmls_camera_node) {
+        if (field->name == dmls_bone_node) {
+            ogx_node *node = dlb_vec_alloc(scene->nodes);
+            node->basic_node.type = OGX_BONE_NODE;
+            result = dml_load_node(node, &field->value);
+        } else if (field->name == dmls_camera_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
             node->basic_node.type = OGX_CAMERA_NODE;
             result = dml_load_node(node, &field->value);
-        } else if (field->name == dmls_geometry) {
+        } else if (field->name == dmls_geometry_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
             node->basic_node.type = OGX_GEOMETRY_NODE;
             result = dml_load_node(node, &field->value);
@@ -354,6 +419,10 @@ static dml_result dml_load_document(ogx_scene *scene, DMLObject *document)
         } else if (field->name == dmls_material) {
             result = OGX_NOT_IMPLEMENTED;
         } else {
+#if _DEBUG
+            ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", field->dbg_symbol.filename,
+                field->dbg_symbol.line, field->dbg_symbol.column, field->name);
+#endif
             result = OGX_UNEXPECTED_FIELD;
         }
 

@@ -107,11 +107,11 @@ void tokens_init()
     SYM_TRUE         = INTERN(KEYWORD_TRUE);
     SYM_FALSE        = INTERN(KEYWORD_FALSE);
 }
-void tokens_tokenize(ta_file *f, token **tokens)
+void tokens_tokenize(ta_file *f, ta_token **tokens)
 {
     DLB_ASSERT(tokens);
     while (true) {
-        token *tok = dlb_vec_alloc(*tokens);
+        ta_token *tok = dlb_vec_alloc(*tokens);
         tok->file_pos = f->pos;
         char c = ta_file_peek(f);
         if (f->eof) {
@@ -297,9 +297,9 @@ void tokens_tokenize(ta_file *f, token **tokens)
         }
     }
 }
-void tokens_print(FILE *f, token *tokens)
+void tokens_print(FILE *f, ta_token *tokens)
 {
-    dlb_vec_each(token *, tok, tokens) {
+    dlb_vec_each(ta_token *, tok, tokens) {
         switch (tok->type) {
             case TOKEN_EOF: {
                 break;
@@ -364,9 +364,9 @@ void tokens_print(FILE *f, token *tokens)
     fprintf(f, "\n");
     fflush(f);
 }
-void tokens_print_debug(FILE *f, token *tokens)
+void tokens_print_debug(FILE *f, ta_token *tokens)
 {
-    dlb_vec_each(token *, tok, tokens) {
+    dlb_vec_each(ta_token *, tok, tokens) {
         fprintf(f, "%-16s", token_type_str(tok->type));
         switch (tok->type) {
             case TOKEN_EOF:
@@ -429,7 +429,7 @@ static void debug_open_in_vs_code(const char *filename, u64 line, u64 column)
     snprintf(buf, sizeof(buf) - 1, "start /b code -g %s:%llu:%llu", filename, line, column+1);
     system(buf);
 }
-static void bad_token(ta_scene *scene, token *tok, ta_schema_field_type type, const char *arr, const char *uni) {
+static void bad_token(ta_scene *scene, ta_token *tok, ta_schema_field_type type, const char *arr, const char *uni) {
     OPEN_VS_CODE();
     const char *type_str = 0;
     ta_schema_field_type_str(type, &type_str);
@@ -437,7 +437,7 @@ static void bad_token(ta_scene *scene, token *tok, ta_schema_field_type type, co
         token_type_str(tok->type)
     )
 }
-void tokens_parse(ta_scene *scene, token *tokens)
+void tokens_parse(ta_scene *scene, ta_token *tokens)
 {
     struct {
         int indent;
@@ -461,7 +461,7 @@ void tokens_parse(ta_scene *scene, token *tokens)
     int array = 0;   // Current level of square brackets
     bool expect_array_start = false;
 
-    dlb_vec_each(token *, tok, tokens) {
+    dlb_vec_each(ta_token *, tok, tokens) {
         switch (tok->type) {
             case TOKEN_EOF: {
                 break;

@@ -2,10 +2,21 @@
 #include "dml_token.h"
 #include "dml.h"
 
-void DMLParserInit(DMLParser *parser, struct DMLToken *tokens, const char *source, size_t source_len)
+#if _DEBUG
+    #define FILL_DEBUG_SYMBOL(dbg_symbol, token) \
+        dbg_symbol.filename = parser->filename;  \
+        dbg_symbol.line = token->line;           \
+        dbg_symbol.column = token->column;
+#else
+    #define FILL_DEBUG_SYMBOL
+#endif
+
+void DMLParserInit(DMLParser *parser, struct DMLToken *tokens, const char *filename, const char *source,
+    size_t source_len)
 {
     parser->tokens = tokens;
     parser->current = 0;
+    parser->filename = filename;
     parser->source = source;
     parser->source_len = source_len;
 }
@@ -164,7 +175,8 @@ static bool DMLParserObject(DMLParser *parser, DMLObject *object)
         return false;
     }
 
-    // TODO: Handle indentation here, can's look for closing brace
+    FILL_DEBUG_SYMBOL(object->dbg_symbol, DMLParserPrevious(parser));
+
     DMLField *fields = 0;
     while (!DMLParserCheck(parser, TOK_RIGHT_CURLY_BRACE) && !DMLParserIsAtEnd(parser)) {
         DMLField *field = dlb_vec_alloc(fields);
@@ -190,15 +202,18 @@ static bool DMLParserField(DMLParser *parser, DMLField *field)
         DMLParserErrorContext(parser, "expected field identifier", DMLParserPeek(parser));
         return false;
     }
+
+    FILL_DEBUG_SYMBOL(field->dbg_symbol, DMLParserPrevious(parser));
+
     if (!DMLParserConsume(parser, TOK_COLON)) {
         DMLParserErrorContext(parser, "expected ':' after field identifier", DMLParserPeek(parser));
         return false;
     }
 
     field->name = ta_symbol_intern(name->lexeme, strlen(name->lexeme));
-
     if (!DMLParserValue(parser, &field->value)) {
-        // TODO: Free field->name (interned string)
+        // TODO: Implement a ta_symbol_free() method that deletes from hash table then calls dlb_symbol_free()
+        //ta_symbol_free(field->name);
         return false;
     }
 
@@ -211,12 +226,14 @@ static bool DMLParserValue(DMLParser *parser, DMLValue *value)
     switch (token->type) {
         case TOK_LEFT_CURLY_BRACE:
             value->type = DML_VALUE_OBJECT;
+            FILL_DEBUG_SYMBOL(value->dbg_symbol, token);
             if (!DMLParserObject(parser, &value->data.as_object)) {
                 return false;
             }
             break;
         case TOK_LEFT_SQUARE_BRACKET:
             value->type = DML_VALUE_ARRAY;
+            FILL_DEBUG_SYMBOL(value->dbg_symbol, token);
             if (!DMLParserArray(parser, &value->data.as_array)) {
                 return false;
             }
@@ -227,6 +244,7 @@ static bool DMLParserValue(DMLParser *parser, DMLValue *value)
         case TOK_NUMBER:
         case TOK_STRING:
             value->type = DML_VALUE_LITERAL;
+            FILL_DEBUG_SYMBOL(value->dbg_symbol, token);
             if (!DMLParserLiteral(parser, &value->data.as_literal)) {
                 return false;
             }
@@ -256,6 +274,8 @@ static bool DMLParserArray(DMLParser *parser, DMLArray *array)
         DMLParserErrorContext(parser, "expected '[' to begin array", DMLParserPeek(parser));
         return false;
     }
+
+    FILL_DEBUG_SYMBOL(array->dbg_symbol, DMLParserPrevious(parser));
 
     // NOTE: Allow array elements to be any type, the consumer of the DML scene should validate this??
     DMLValue *values = 0;
@@ -287,30 +307,36 @@ static bool DMLParserArray(DMLParser *parser, DMLArray *array)
 
 static bool DMLParserLiteral(DMLParser *parser, DMLLiteral *literal)
 {
+    bool result = false;
     if (DMLParserMatch(parser, TOK_NULL)) {
         literal->type = DML_LITERAL_NULL;
-        return true;
+        FILL_DEBUG_SYMBOL(literal->dbg_symbol, DMLParserPrevious(parser));
+        result = true;
     } else if (DMLParserMatch(parser, TOK_TRUE)) {
         literal->type = DML_LITERAL_BOOL;
         literal->data.as_bool = true;
-        return true;
+        FILL_DEBUG_SYMBOL(literal->dbg_symbol, DMLParserPrevious(parser));
+        result = true;
     } else if (DMLParserMatch(parser, TOK_FALSE)) {
         literal->type = DML_LITERAL_BOOL;
         literal->data.as_bool = false;
-        return true;
+        FILL_DEBUG_SYMBOL(literal->dbg_symbol, DMLParserPrevious(parser));
+        result = true;
     } else if (DMLParserMatch(parser, TOK_NUMBER)) {
         // TODO: int vs float vs double (signed vs. unsigned)?
         DMLToken *prev = DMLParserPrevious(parser);
         literal->type = DML_LITERAL_FLOAT;
         literal->data.as_float = prev->literal.as_float;
-        return true;
+        FILL_DEBUG_SYMBOL(literal->dbg_symbol, prev);
+        result = true;
     } else if (DMLParserMatch(parser, TOK_STRING)) {
         DMLToken *prev = DMLParserPrevious(parser);
         literal->type = DML_LITERAL_STRING;
         literal->data.as_string = prev->literal.as_string;
-        return true;
+        FILL_DEBUG_SYMBOL(literal->dbg_symbol, prev);
+        result = true;
     }
-    return false;
+    return result;
 }
 
 void DMLParserParse(DMLParser *parser, DMLObject *document)

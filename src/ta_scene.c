@@ -54,7 +54,7 @@ void ta_scene_load(ta_scene *scene, ta_file *file)
     // TODO: Reserve arrays based on scene header (which doesn't exist yet)
     //dlb_vec_reserve(scene->entities, 2);
     tokens_init();
-    token *tokens = 0;
+    ta_token *tokens = 0;
     tokens_tokenize(file, &tokens);
 
     ta_log_write(&tg_debug_log, SRC_SCENE, "Parsing scene\n");
