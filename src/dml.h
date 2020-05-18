@@ -2,10 +2,12 @@
 
 #define DML_ERROR_CONTEXT_TAB_WIDTH 2
 
+// TODO: DMLField pool
 typedef struct DMLObject {
     struct DMLField *fields;
 } DMLObject;
 
+// TODO: DMLValue pool
 typedef struct DMLArray {
     struct DMLValue *values;
 } DMLArray;
@@ -13,9 +15,12 @@ typedef struct DMLArray {
 typedef enum DMLLiteralType {
     DML_LITERAL_NULL,
     DML_LITERAL_BOOL,
-    DML_LITERAL_DOUBLE,
+    DML_LITERAL_FLOAT,
     DML_LITERAL_STRING,
+    DML_LITERAL_COUNT
 } DMLLiteralType;
+
+extern const char *DMLLiteralTypeStr[DML_LITERAL_COUNT];
 
 typedef struct DMLLiteral {
     DMLLiteralType type;
@@ -30,7 +35,10 @@ typedef enum DMLValueType {
     DML_VALUE_OBJECT,
     DML_VALUE_ARRAY,
     DML_VALUE_LITERAL,
+    DML_VALUE_COUNT
 } DMLValueType;
+
+extern const char *DMLValueTypeStr[DML_VALUE_COUNT];
 
 typedef struct DMLValue {
     DMLValueType type;
@@ -42,7 +50,7 @@ typedef struct DMLValue {
 } DMLValue;
 
 typedef struct DMLField {
-    const char *name;
+    const char *name;  // symbol
     DMLValue value;
 } DMLField;
 

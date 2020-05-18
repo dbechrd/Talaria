@@ -195,8 +195,7 @@ static bool DMLParserField(DMLParser *parser, DMLField *field)
         return false;
     }
 
-    // TODO: Intern string
-    field->name = name->lexeme;
+    field->name = ta_symbol_intern(name->lexeme, strlen(name->lexeme));
 
     if (!DMLParserValue(parser, &field->value)) {
         // TODO: Free field->name (interned string)
@@ -302,7 +301,7 @@ static bool DMLParserLiteral(DMLParser *parser, DMLLiteral *literal)
     } else if (DMLParserMatch(parser, TOK_NUMBER)) {
         // TODO: int vs float vs double (signed vs. unsigned)?
         DMLToken *prev = DMLParserPrevious(parser);
-        literal->type = DML_LITERAL_DOUBLE;
+        literal->type = DML_LITERAL_FLOAT;
         literal->data.as_float = prev->literal.as_float;
         return true;
     } else if (DMLParserMatch(parser, TOK_STRING)) {

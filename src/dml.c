@@ -1,6 +1,18 @@
 #include "dml.h"
 #include "dlb/dlb_vector.h"
 
+const char *DMLLiteralTypeStr[DML_LITERAL_COUNT] = {
+    [DML_LITERAL_NULL  ] = "DML_LITERAL_NULL  ",
+    [DML_LITERAL_BOOL  ] = "DML_LITERAL_BOOL  ",
+    [DML_LITERAL_FLOAT] = "DML_LITERAL_DOUBLE",
+    [DML_LITERAL_STRING] = "DML_LITERAL_STRING",
+};
+const char *DMLValueTypeStr[DML_VALUE_COUNT] = {
+    [DML_VALUE_OBJECT ] = "DML_VALUE_OBJECT ",
+    [DML_VALUE_ARRAY  ] = "DML_VALUE_ARRAY  ",
+    [DML_VALUE_LITERAL] = "DML_VALUE_LITERAL",
+};
+
 static void PrintIndent(int indent)
 {
     for (int i = 0; i < indent; ++i) {
@@ -59,7 +71,7 @@ void DMLPrintLiteral(DMLLiteral *literal)
                 fputs("false", stdout);
             }
             break;
-        case DML_LITERAL_DOUBLE:
+        case DML_LITERAL_FLOAT:
             fprintf(stdout, "0x%08x", (int)literal->data.as_float);
             break;
         case DML_LITERAL_STRING:

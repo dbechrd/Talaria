@@ -1,5 +1,5 @@
 #Metric (key = "up") {string {"z"}}
-ta_light_node: {
+light_node: {
 	name: "light_main_node"
 	light: "light_main"
 	transform: {  # node.matrix_local (ExportNodeTransform)

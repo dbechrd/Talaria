@@ -11,9 +11,10 @@ typedef struct ogx_transform {
 } ogx_transform;
 
 typedef enum ogx_node_type {
-    OGX_NODE_LIGHT,
-    OGX_NODE_CAMERA,
-    OGX_NODE_GEOMETRY,
+    OGX_BASIC_NODE,
+    OGX_LIGHT_NODE,
+    OGX_CAMERA_NODE,
+    OGX_GEOMETRY_NODE,
 } ogx_node_type;
 
 #define OGX_NODE_HEADER         \
@@ -23,33 +24,33 @@ typedef enum ogx_node_type {
     union ogx_node *parent;     \
     union ogx_node **children;
 
-typedef struct ogx_node_header {
+typedef struct ogx_basic_node {
     OGX_NODE_HEADER
-} ogx_node_header;
+} ogx_basic_node;
 
-typedef struct ogx_node_light {
-    OGX_NODE_HEADER
+typedef struct ogx_light_node {
+    ogx_basic_node base;
     const char *light;
-} ogx_node_light;
+} ogx_light_node;
 
-typedef struct ogx_node_camera {
-    OGX_NODE_HEADER
+typedef struct ogx_camera_node {
+    ogx_basic_node base;
     const char *camera;
-} ogx_node_camera;
+} ogx_camera_node;
 
-typedef struct ogx_node_geometry {
-    OGX_NODE_HEADER
+typedef struct ogx_geometry_node {
+    ogx_basic_node base;
     const char *mesh;
     const char **materials;
-} ogx_node_geometry;
+} ogx_geometry_node;
 
 #undef OGX_NODE_HEADER
 
 typedef union ogx_node {
-    ogx_node_header header;
-    ogx_node_light as_light;
-    ogx_node_camera as_camera;
-    ogx_node_geometry as_geometry;
+    ogx_basic_node basic_node;
+    ogx_light_node light_node;
+    ogx_camera_node camera_node;
+    ogx_geometry_node geometry_node;
 } ogx_node;
 
 typedef enum ogx_key_type {
@@ -168,6 +169,18 @@ typedef struct ogx_scene {
 typedef enum dml_result {
     OGX_SUCCESS,
     OGX_FILE_INVALID,
+    OGX_SYNTAX_ERROR,
+    OGX_EMPTY_DOCUMENT,
+    OGX_UNEXPECTED_FIELD,
+    OGX_EXPECTED_LITERAL,
+    OGX_EXPECTED_STRING,
+    OGX_EXPECTED_FLOAT,
+    OGX_EXPECTED_ARRAY,
+    OGX_EXPECTED_OBJECT,
+    OGX_INVALID_ARRAY_LENGTH,
+    OGX_NOT_IMPLEMENTED,
+
+    OGX_RESULT_COUNT
 } dml_result;
 
 dml_result dml_load(const char *filename);
