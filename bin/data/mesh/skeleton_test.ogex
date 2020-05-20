@@ -160,7 +160,9 @@ node: {
 				name: "head_node"
 				mesh: "head_mesh"
 				materials: [
-					"head_material"
+					"head_material",
+					"head_material2",
+					"head_material3"
 				]
 				transform: {  # poseBone.matrix.inverted() (ExportNode)
 					type: "mat4"
