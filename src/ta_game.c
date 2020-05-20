@@ -196,10 +196,9 @@ void ta_game_init()
     // Scene
     //--------------------------------------------------------------------------
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading ogex test file...\n");
-    dml_load("data/mesh/basic_test.ogex");
     dml_load("data/mesh/skeleton_test.ogex");
-    dml_load("data/mesh/button.ogex");
-    dml_load("data/mesh/dude.ogex");
+    //dml_load("data/mesh/button.ogex");
+    //dml_load("data/mesh/dude.ogex");
 
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading first scene...\n");
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
