@@ -209,6 +209,30 @@ static ogx_result dml_load_string(const char **string, DMLValue *value)
     return result;
 }
 
+static ogx_result dml_load_float(float *f, DMLValue *value)
+{
+    assert(f);
+    assert(value);
+
+    ogx_result result = OGX_SUCCESS;
+    if (value->type != DML_VALUE_LITERAL) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
+            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+#endif
+        result = OGX_EXPECTED_LITERAL;
+    } else if (value->data.as_literal.type != DML_LITERAL_FLOAT) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected float literal, found %s\n", value->dbg_symbol.filename,
+            value->dbg_symbol.line, value->dbg_symbol.column, DMLLiteralTypeStr[value->data.as_literal.type]);
+#endif
+        result = OGX_EXPECTED_FLOAT;
+    } else {
+        *f = value->data.as_literal.data.as_float;
+    }
+    return result;
+}
+
 static ogx_result dml_load_mat4(ogx_mat4 *matrix, DMLValue *value)
 {
     assert(matrix);
@@ -282,6 +306,52 @@ static ogx_result dml_load_transform(ogx_transform *transform, DMLValue *value)
     return result;
 }
 
+static ogx_result dml_load_float_array(float **array, DMLValue *value)
+{
+    assert(array);
+    assert(value);
+
+    ogx_result result = OGX_SUCCESS;
+    if (value->type != DML_VALUE_ARRAY) {
+        result = OGX_EXPECTED_ARRAY;
+    } else {
+        size_t len = dlb_vec_len(value->data.as_array.values);
+        dlb_vec_reserve(*array, len);
+        dlb_vec_each(DMLValue *, arr_value, value->data.as_array.values) {
+            float *f = dlb_vec_alloc(*array);
+            result = dml_load_float(f, arr_value);
+            if (result != OGX_SUCCESS) {
+                dlb_vec_free(*array);
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+static ogx_result dml_load_mat4_array(ogx_mat4 **array, DMLValue *value)
+{
+    assert(array);
+    assert(value);
+
+    ogx_result result = OGX_SUCCESS;
+    if (value->type != DML_VALUE_ARRAY) {
+        result = OGX_EXPECTED_ARRAY;
+    } else {
+        size_t len = dlb_vec_len(value->data.as_array.values);
+        dlb_vec_reserve(*array, len);
+        dlb_vec_each(DMLValue *, arr_value, value->data.as_array.values) {
+            ogx_mat4 *mat4 = dlb_vec_alloc(*array);
+            result = dml_load_mat4(mat4, arr_value);
+            if (result != OGX_SUCCESS) {
+                dlb_vec_free(*array);
+                break;
+            }
+        }
+    }
+    return result;
+}
+
 static ogx_result dml_load_key(ogx_key *key, DMLValue *value)
 {
     assert(key);
@@ -330,11 +400,9 @@ static ogx_result dml_load_key(ogx_key *key, DMLValue *value)
                 }
             } else if (field->name == dmls_data) {
                 if (key->type == OGX_KEY_TYPE_FLOAT) {
-                    result = OGX_NOT_IMPLEMENTED;
-                    //result = dml_load_float_array(&key->data.as_float, &field->value);
+                    result = dml_load_float_array(&key->data.as_float, &field->value);
                 } else if (key->type == OGX_KEY_TYPE_MAT4) {
-                    result = OGX_NOT_IMPLEMENTED;
-                    //result = dml_load_mat4_array(&key->data.as_mat4, &field->value);
+                    result = dml_load_mat4_array(&key->data.as_mat4, &field->value);
                 } else {
 #if _DEBUG
                     ta_log_write(&tg_debug_log, SRC_DML,

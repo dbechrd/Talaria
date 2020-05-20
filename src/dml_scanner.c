@@ -206,16 +206,7 @@ static void DMLScannerScanNumber(DMLScanner *scanner)
 
     //const char *text = DMLScannerSubstring(scanner->source, scanner->start, scanner->current - scanner->start);
 
-    char *endptr = 0;
-    float value = strtof(text, &endptr);
-    if (*endptr != '\0') {
-        // TODO(dlb): Catch exception and print more specific error message?
-        //Lox.Error(scanner->line, scanner->column, $"Failed to parse number '{text}'.");
-        printf("[%04zu:%04zu] error: failed to parse number '%s'\n", scanner->line, scanner->column, text);
-        DMLScannerErrorContext(scanner, 0);
-        return;
-    }
-
+    float value = parse_float(text);
     DMLToken *token = DMLScannerAddToken(scanner, TOK_NUMBER);
     token->literal.as_float = value;
 }
