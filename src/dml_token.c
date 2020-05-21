@@ -1,6 +1,6 @@
 #include "dml_token.h"
 
-const char *DMLTokenTypeToString(DMLTokenType type)
+const char *dml_token_type_str(dml_token_type type)
 {
     switch (type) {
         case TOK_UNKNOWN:               return "TOK_UNKNOWN";
@@ -26,7 +26,7 @@ const char *DMLTokenTypeToString(DMLTokenType type)
     }
 }
 
-void DMLTokenInit(DMLToken *token, DMLTokenType type, const char *lexeme, size_t line, size_t column, size_t start,
+void dml_token_init(dml_token *token, dml_token_type type, const char *lexeme, size_t line, size_t column, size_t start,
     size_t length)
 {
     token->type = type;
@@ -35,11 +35,4 @@ void DMLTokenInit(DMLToken *token, DMLTokenType type, const char *lexeme, size_t
     token->column = column;
     token->start = start;
     token->length = length;
-}
-
-const char *TokenToString(DMLToken *token)
-{
-    UNUSED(token);
-    return "TODO";
-    //return $"{type} {lexeme} {literal}";
 }

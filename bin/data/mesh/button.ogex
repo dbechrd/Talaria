@@ -1,4 +1,5 @@
 #Metric (key = "up") {string {"z"}}
+{
 geometry_node: {
 	name: "button_0001"
 	mesh: "button_0001"
@@ -17,12 +18,19 @@ geometry_node: {
 			target: "morph_weight"
 			target_index: 1
 			time: {
-				key: [
-					0, 0x3d2aaaab, 0x3daaaaab, 0x3e000000, 0x3e2aaaab, 0x3e555555, 0x3e800000, 0x3e955555, 0x3eaaaaab, 0x3ec00000, 0x3ed55555, 0x3eeaaaab, 0x3f000000, 0x3f0aaaab, 0x3f155555, 0x3f200000, 0x3f2aaaab
-				]
+				curve: "linear"
+				key: {
+					kind: "value"
+					type: "float"
+					data: [
+						0, 0x3d2aaaab, 0x3daaaaab, 0x3e000000, 0x3e2aaaab, 0x3e555555, 0x3e800000, 0x3e955555, 0x3eaaaaab, 0x3ec00000, 0x3ed55555, 0x3eeaaaab, 0x3f000000, 0x3f0aaaab, 0x3f155555, 0x3f200000, 0x3f2aaaab
+					]
+				}
 			}
 			value: {
+				curve: "linear"
 				key: {
+					kind: "value"
 					type: "float"
 					data: [
 						0x3f800000, 0x3f800000, 0x3f776543, 0x3f5d950c, 0x3f328f5c, 0x3eeca862, 0x3e238e34, 0x3db851e8, 0x3e4fedcc, 0x3e7edcbc, 0x3e68f5c4, 0x3e0e38e4, 0x3c03fb80, 0x3d75c290, 0x3d372ea0, 0x3c483fc0, 0
@@ -373,4 +381,5 @@ material: {
 	metallic_texture: "button.ogex_Metal_Plate_019_metallic.png"
 	normal_factor: [0, 0, 0]
 	roughness_texture: "button.ogex_Metal_Plate_019_roughness.png"
+}
 }

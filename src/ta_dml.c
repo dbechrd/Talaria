@@ -52,11 +52,17 @@ static const char *ogx_value_curve_str[OGX_VALUE_CURVE_COUNT] = {
 
 #define SYMBOL_DECLARE(e) static const char *dmls_##e = 0;
 #define SYMBOL_DEFINE(e) dmls_##e = ta_symbol_intern(CSTR(#e));
+
 #define DML_SYMBOLS(f)  \
     f(albedo_factor)    \
+    f(albedo_texture)   \
+    f(alpha_factor)     \
+    f(alpha_texture)    \
     f(animation)        \
     f(atten)            \
     f(attrib)           \
+    f(base)             \
+    f(begin)            \
     f(bind_poses)       \
     f(bones)            \
     f(bone_count_array) \
@@ -69,10 +75,14 @@ static const char *ogx_value_curve_str[OGX_VALUE_CURVE_COUNT] = {
     f(color)            \
     f(curve)            \
     f(data)             \
+    f(end)              \
+    f(emissive_factor)  \
+    f(emissive_texture) \
     f(far)              \
     f(fov)              \
     f(geometry)         \
     f(geometry_node)    \
+    f(index)            \
     f(index_array)      \
     f(intensity)        \
     f(key)              \
@@ -82,17 +92,27 @@ static const char *ogx_value_curve_str[OGX_VALUE_CURVE_COUNT] = {
     f(material)         \
     f(materials)        \
     f(mesh)             \
+    f(metallic_factor)  \
+    f(metallic_texture) \
+    f(morph)            \
+    f(morph_weights)    \
+    f(morphs)           \
     f(name)             \
     f(near)             \
     f(node)             \
     f(normal_factor)    \
+    f(normal_texture)   \
     f(parent)           \
+    f(path)             \
     f(roughness_factor) \
+    f(roughness_texture)\
     f(scale)            \
     f(shadow)           \
     f(skeleton)         \
     f(skin)             \
     f(target)           \
+    f(target_index)     \
+    f(texture)          \
     f(time)             \
     f(track)            \
     f(transform)        \
@@ -102,10 +122,10 @@ static const char *ogx_value_curve_str[OGX_VALUE_CURVE_COUNT] = {
 
 DML_SYMBOLS(SYMBOL_DECLARE);
 
-static ogx_result dml_load_node(ogx_node *node, DMLValue *value);
-static ogx_result dml_load_document(ogx_scene *scene, DMLObject *document);
+static ogx_result dml_load_node(dml_document *doc, ogx_node *node, dml_value *value);
+static ogx_result dml_load_document(dml_document *doc, ogx_scene *scene);
 
-ogx_result dml_load(const char *filename)
+ogx_result dml_document_load(const char *filename)
 {
     ogx_result result = OGX_SUCCESS;
     bool echo = tg_debug_log.echo_stdout;
@@ -132,15 +152,15 @@ ogx_result dml_load(const char *filename)
     }
 
     DMLScanner scanner = { 0 };
-    DMLToken *tokens = 0;
+    dml_token *tokens = 0;
 
     ta_log_write(&tg_debug_log, SRC_DML, "Scanning...\n");
-    DMLScannerInit(&scanner, source, source_len);
-    if (!DMLScannerScanTokens(&scanner, &tokens)) {
+    dml_scanner_init(&scanner, source, source_len);
+    if (!dml_scanner_scan_tokens(&scanner, &tokens)) {
         ta_log_write(&tg_debug_log, SRC_DML, "Scanner produced errors, skipping parse stage.\n");
 #if 0
         ta_log_write(&tg_debug_log, SRC_DML, "Token stream:\n");
-        dlb_vec_each(DMLToken *, token, tokens) {
+        dlb_vec_each(dml_token *, token, tokens) {
             ta_log_write(&tg_debug_log, SRC_DML, "[%04d:%04d] %18s %s", token->line, token->column,
                 DMLTokenTypeToString(token->type), token->lexeme);
             if (token->type == TOK_NUMBER) {
@@ -156,11 +176,11 @@ ogx_result dml_load(const char *filename)
 
     ta_log_write(&tg_debug_log, SRC_DML, "Parsing...\n");
 
-    DMLParser parser = { 0 };
-    DMLParserInit(&parser, tokens, filename, source, source_len);
+    dml_parser parser = { 0 };
+    dml_parser_init(&parser, tokens, filename, source, source_len);
 
-    DMLObject document = { 0 };
-    DMLParserParse(&parser, &document);
+    dml_document document = { 0 };
+    dml_parser_parse(&parser, &document);
 
 #if 0
     fputs("Document:\n", stdout);
@@ -170,7 +190,7 @@ ogx_result dml_load(const char *filename)
 
     ta_log_write(&tg_debug_log, SRC_DML, "Loading...\n");
     ogx_scene scene = { 0 };
-    result = dml_load_document(&scene, &document);
+    result = dml_load_document(&document, &scene);
     if (result != OGX_SUCCESS) {
         ta_log_write(&tg_debug_log, SRC_DML, "Load failed: %s.\n", ogx_result_str[result]);
         goto cleanup;
@@ -180,14 +200,14 @@ ogx_result dml_load(const char *filename)
 
 cleanup:
     dlb_vec_free(source);
-    // TODO: DMLObjectFree(document);
+    dml_document_free(&document);
 
     ta_log_timed_region_end(&tg_debug_log, CSTR("dml_load"));
     tg_debug_log.echo_stdout = echo;
     return result;
 }
 
-static ogx_result dml_load_bool(bool *boool, DMLValue *value)
+static ogx_result dml_load_bool(bool *boool, dml_value *value)
 {
     assert(boool);
     assert(value);
@@ -196,13 +216,13 @@ static ogx_result dml_load_bool(bool *boool, DMLValue *value)
     if (value->type != DML_VALUE_LITERAL) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_LITERAL;
     } else if (value->data.as_literal.type != DML_LITERAL_BOOL) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected bool literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLLiteralTypeStr[value->data.as_literal.type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
 #endif
         result = OGX_EXPECTED_BOOL;
     } else {
@@ -211,7 +231,7 @@ static ogx_result dml_load_bool(bool *boool, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_string(const char **string, DMLValue *value)
+static ogx_result dml_load_string(const char **string, dml_value *value)
 {
     assert(string);
     assert(value);
@@ -220,13 +240,13 @@ static ogx_result dml_load_string(const char **string, DMLValue *value)
     if (value->type != DML_VALUE_LITERAL) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_LITERAL;
     } else if (value->data.as_literal.type != DML_LITERAL_STRING) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected string literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLLiteralTypeStr[value->data.as_literal.type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
 #endif
         result = OGX_EXPECTED_STRING;
     } else {
@@ -235,7 +255,7 @@ static ogx_result dml_load_string(const char **string, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_float(float *f, DMLValue *value)
+static ogx_result dml_load_float(float *f, dml_value *value)
 {
     assert(f);
     assert(value);
@@ -244,13 +264,13 @@ static ogx_result dml_load_float(float *f, DMLValue *value)
     if (value->type != DML_VALUE_LITERAL) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_LITERAL;
     } else if (value->data.as_literal.type != DML_LITERAL_FLOAT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected float literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLLiteralTypeStr[value->data.as_literal.type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
 #endif
         result = OGX_EXPECTED_FLOAT;
     } else {
@@ -259,7 +279,7 @@ static ogx_result dml_load_float(float *f, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_vec3(ogx_vec3 *vec, DMLValue *value)
+static ogx_result dml_load_vec3(dml_document *doc, ogx_vec3 *vec, dml_value *value)
 {
     assert(vec);
     assert(value);
@@ -268,7 +288,7 @@ static ogx_result dml_load_vec3(ogx_vec3 *vec, DMLValue *value)
     if (value->type != DML_VALUE_ARRAY) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected array, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_ARRAY;
     } else if (dlb_vec_len(value->data.as_array.values) != 3) {
@@ -279,18 +299,18 @@ static ogx_result dml_load_vec3(ogx_vec3 *vec, DMLValue *value)
         result = OGX_INVALID_ARRAY_LENGTH;
     } else {
         for (size_t i = 0; i < 3; i++) {
-            DMLValue *arr_value = value->data.as_array.values + i;
+            dml_value *arr_value = &doc->value_pool[value->data.as_array.values[i]];
             if (arr_value->type != DML_VALUE_LITERAL) {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
-                    value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+                    value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
                 result = OGX_EXPECTED_LITERAL;
                 break;
             } else if (arr_value->data.as_literal.type != DML_LITERAL_FLOAT) {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected float literal, found %s\n", value->dbg_symbol.filename,
-                    value->dbg_symbol.line, value->dbg_symbol.column, DMLLiteralTypeStr[value->data.as_literal.type]);
+                    value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
 #endif
                 result = OGX_EXPECTED_FLOAT;
                 break;
@@ -302,7 +322,7 @@ static ogx_result dml_load_vec3(ogx_vec3 *vec, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_mat4(ogx_mat4 *matrix, DMLValue *value)
+static ogx_result dml_load_mat4(dml_document *doc, ogx_mat4 *matrix, dml_value *value)
 {
     assert(matrix);
     assert(value);
@@ -311,7 +331,7 @@ static ogx_result dml_load_mat4(ogx_mat4 *matrix, DMLValue *value)
     if (value->type != DML_VALUE_ARRAY) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected array, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_ARRAY;
     } else if (dlb_vec_len(value->data.as_array.values) != 16) {
@@ -322,18 +342,18 @@ static ogx_result dml_load_mat4(ogx_mat4 *matrix, DMLValue *value)
         result = OGX_INVALID_ARRAY_LENGTH;
     } else {
         for (size_t i = 0; i < 16; i++) {
-            DMLValue *arr_value = value->data.as_array.values + i;
+            dml_value *arr_value = &doc->value_pool[value->data.as_array.values[i]];
             if (arr_value->type != DML_VALUE_LITERAL) {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
-                    value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+                    value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
                 result = OGX_EXPECTED_LITERAL;
                 break;
             } else if (arr_value->data.as_literal.type != DML_LITERAL_FLOAT) {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected float literal, found %s\n", value->dbg_symbol.filename,
-                    value->dbg_symbol.line, value->dbg_symbol.column, DMLLiteralTypeStr[value->data.as_literal.type]);
+                    value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
 #endif
                 result = OGX_EXPECTED_FLOAT;
                 break;
@@ -345,7 +365,7 @@ static ogx_result dml_load_mat4(ogx_mat4 *matrix, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_string_array(const char ***array, DMLValue *value)
+static ogx_result dml_load_string_array(dml_document *doc, const char ***array, dml_value *value)
 {
     assert(array);
     assert(value);
@@ -356,7 +376,8 @@ static ogx_result dml_load_string_array(const char ***array, DMLValue *value)
     } else {
         size_t len = dlb_vec_len(value->data.as_array.values);
         dlb_vec_reserve(*array, len);
-        dlb_vec_each(DMLValue *, arr_value, value->data.as_array.values) {
+        dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
+            dml_value *arr_value = &doc->value_pool[*value_idx];
             const char **string = dlb_vec_alloc(*array);
             result = dml_load_string(string, arr_value);
             if (result != OGX_SUCCESS) {
@@ -368,7 +389,7 @@ static ogx_result dml_load_string_array(const char ***array, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_float_array(float **array, size_t array_len, DMLValue *value)
+static ogx_result dml_load_float_array(dml_document *doc, float **array, size_t array_len, dml_value *value)
 {
     assert(array);
     assert(value);
@@ -381,7 +402,7 @@ static ogx_result dml_load_float_array(float **array, size_t array_len, DMLValue
         if (array_len) {
             if (len == array_len) {
                 for (size_t i = 0; i < array_len; i++) {
-                    result = dml_load_float(*array + i, &value->data.as_array.values[i]);
+                    result = dml_load_float(*array + i, &doc->value_pool[value->data.as_array.values[i]]);
                     if (result != OGX_SUCCESS) {
                         break;
                     }
@@ -395,7 +416,8 @@ static ogx_result dml_load_float_array(float **array, size_t array_len, DMLValue
             }
         } else {
             dlb_vec_reserve(*array, len);
-            dlb_vec_each(DMLValue *, arr_value, value->data.as_array.values) {
+            dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
+                dml_value *arr_value = &doc->value_pool[*value_idx];
                 float *f = dlb_vec_alloc(*array);
                 result = dml_load_float(f, arr_value);
                 if (result != OGX_SUCCESS) {
@@ -408,7 +430,7 @@ static ogx_result dml_load_float_array(float **array, size_t array_len, DMLValue
     return result;
 }
 
-static ogx_result dml_load_vec2_array(ogx_vec2 **array, DMLValue *value)
+static ogx_result dml_load_vec2_array(dml_document *doc, ogx_vec2 **array, dml_value *value)
 {
     assert(array);
     assert(value);
@@ -419,9 +441,10 @@ static ogx_result dml_load_vec2_array(ogx_vec2 **array, DMLValue *value)
     } else {
         size_t len = dlb_vec_len(value->data.as_array.values);
         dlb_vec_reserve(*array, len);
-        dlb_vec_each(DMLValue *, arr_value, value->data.as_array.values) {
+        dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
+            dml_value *arr_value = &doc->value_pool[*value_idx];
             ogx_vec2 *vec = dlb_vec_alloc(*array);
-            result = dml_load_float_array(&(float *)vec, 2, arr_value);
+            result = dml_load_float_array(doc, &(float *)vec, 2, arr_value);
             if (result != OGX_SUCCESS) {
                 dlb_vec_free(*array);
                 break;
@@ -431,7 +454,7 @@ static ogx_result dml_load_vec2_array(ogx_vec2 **array, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_vec3_array(ogx_vec3 **array, DMLValue *value)
+static ogx_result dml_load_vec3_array(dml_document *doc, ogx_vec3 **array, dml_value *value)
 {
     assert(array);
     assert(value);
@@ -442,9 +465,10 @@ static ogx_result dml_load_vec3_array(ogx_vec3 **array, DMLValue *value)
     } else {
         size_t len = dlb_vec_len(value->data.as_array.values);
         dlb_vec_reserve(*array, len);
-        dlb_vec_each(DMLValue *, arr_value, value->data.as_array.values) {
+        dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
+            dml_value *arr_value = &doc->value_pool[*value_idx];
             ogx_vec3 *vec = dlb_vec_alloc(*array);
-            result = dml_load_float_array(&(float *)vec, 3, arr_value);
+            result = dml_load_float_array(doc, &(float *)vec, 3, arr_value);
             if (result != OGX_SUCCESS) {
                 dlb_vec_free(*array);
                 break;
@@ -454,7 +478,7 @@ static ogx_result dml_load_vec3_array(ogx_vec3 **array, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_mat4_array(ogx_mat4 **array, DMLValue *value)
+static ogx_result dml_load_mat4_array(dml_document *doc, ogx_mat4 **array, dml_value *value)
 {
     assert(array);
     assert(value);
@@ -465,9 +489,10 @@ static ogx_result dml_load_mat4_array(ogx_mat4 **array, DMLValue *value)
     } else {
         size_t len = dlb_vec_len(value->data.as_array.values);
         dlb_vec_reserve(*array, len);
-        dlb_vec_each(DMLValue *, arr_value, value->data.as_array.values) {
+        dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
+            dml_value *arr_value = &doc->value_pool[*value_idx];
             ogx_mat4 *mat = dlb_vec_alloc(*array);
-            result = dml_load_float_array(&(float *)mat, 16, arr_value);
+            result = dml_load_float_array(doc, &(float *)mat, 16, arr_value);
             if (result != OGX_SUCCESS) {
                 dlb_vec_free(*array);
                 break;
@@ -477,7 +502,7 @@ static ogx_result dml_load_mat4_array(ogx_mat4 **array, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_transform(ogx_transform *transform, DMLValue *value)
+static ogx_result dml_load_transform(dml_document *doc, ogx_transform *transform, dml_value *value)
 {
     assert(transform);
     assert(value);
@@ -486,11 +511,12 @@ static ogx_result dml_load_transform(ogx_transform *transform, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_type) {
-                result = dml_load_string(&transform->type, &field->value);
+                result = dml_load_string(&transform->type, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_data) {
-                result = dml_load_mat4(&transform->data, &field->value);
+                result = dml_load_mat4(doc, &transform->data, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -507,7 +533,7 @@ static ogx_result dml_load_transform(ogx_transform *transform, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_key(ogx_key *key, DMLValue *value)
+static ogx_result dml_load_key(dml_document *doc, ogx_key *key, dml_value *value)
 {
     assert(key);
     assert(value);
@@ -516,10 +542,11 @@ static ogx_result dml_load_key(ogx_key *key, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_kind) {
                 const char *key_kind = 0;
-                result = dml_load_string(&key_kind, &field->value);
+                result = dml_load_string(&key_kind, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(key_kind, "value")) {
                         key->kind = OGX_KEY_KIND_VALUE;
@@ -538,7 +565,7 @@ static ogx_result dml_load_key(ogx_key *key, DMLValue *value)
                 }
             } else if (field->name == dmls_type) {
                 const char *type = 0;
-                result = dml_load_string(&type, &field->value);
+                result = dml_load_string(&type, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(type, "float")) {
                         key->type = OGX_TYPE_FLOAT;
@@ -555,9 +582,9 @@ static ogx_result dml_load_key(ogx_key *key, DMLValue *value)
                 }
             } else if (field->name == dmls_data) {
                 if (key->type == OGX_TYPE_FLOAT) {
-                    result = dml_load_float_array(&key->values.as_float, 0, &field->value);
+                    result = dml_load_float_array(doc, &key->values.as_float, 0, &doc->value_pool[field->value_idx]);
                 } else if (key->type == OGX_TYPE_MAT4) {
-                    result = dml_load_mat4_array(&key->values.as_mat4, &field->value);
+                    result = dml_load_mat4_array(doc, &key->values.as_mat4, &doc->value_pool[field->value_idx]);
                 } else {
 #if _DEBUG
                     ta_log_write(&tg_debug_log, SRC_DML,
@@ -582,7 +609,7 @@ static ogx_result dml_load_key(ogx_key *key, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_time(ogx_time *time, DMLValue *value)
+static ogx_result dml_load_time(dml_document *doc, ogx_time *time, dml_value *value)
 {
     assert(time);
     assert(value);
@@ -591,10 +618,11 @@ static ogx_result dml_load_time(ogx_time *time, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_curve) {
                 const char *curve = 0;
-                result = dml_load_string(&curve, &field->value);
+                result = dml_load_string(&curve, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(curve, "linear")) {
                         time->curve = OGX_TIME_CURVE_LINEAR;
@@ -611,7 +639,7 @@ static ogx_result dml_load_time(ogx_time *time, DMLValue *value)
                 }
             } else if (field->name == dmls_key) {
                 if (time->curve != OGX_TIME_CURVE_UNKNOWN) {
-                    result = dml_load_key(&time->key, &field->value);
+                    result = dml_load_key(doc, &time->key, &doc->value_pool[field->value_idx]);
                     if (result == OGX_SUCCESS) {
                         if (time->curve != OGX_TIME_CURVE_BEZIER) {
                             if (time->key.kind == OGX_KEY_KIND_POS_CONTROL ||
@@ -651,7 +679,7 @@ static ogx_result dml_load_time(ogx_time *time, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_value(ogx_value *val, DMLValue *value)
+static ogx_result dml_load_value(dml_document *doc, ogx_value *val, dml_value *value)
 {
     assert(val);
     assert(value);
@@ -660,10 +688,11 @@ static ogx_result dml_load_value(ogx_value *val, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_curve) {
                 const char *curve = 0;
-                result = dml_load_string(&curve, &field->value);
+                result = dml_load_string(&curve, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(curve, "linear")) {
                         val->curve = OGX_VALUE_CURVE_LINEAR;
@@ -680,7 +709,7 @@ static ogx_result dml_load_value(ogx_value *val, DMLValue *value)
                 }
             } else if (field->name == dmls_key) {
                 if (val->curve != OGX_VALUE_CURVE_UNKNOWN) {
-                    result = dml_load_key(&val->key, &field->value);
+                    result = dml_load_key(doc, &val->key, &doc->value_pool[field->value_idx]);
                     if (result == OGX_SUCCESS) {
                         if (val->curve != OGX_VALUE_CURVE_BEZIER) {
                             if (val->key.kind == OGX_KEY_KIND_POS_CONTROL ||
@@ -720,7 +749,7 @@ static ogx_result dml_load_value(ogx_value *val, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_track(ogx_track *track, DMLValue *value)
+static ogx_result dml_load_track(dml_document *doc, ogx_track *track, dml_value *value)
 {
     assert(track);
     assert(value);
@@ -729,13 +758,16 @@ static ogx_result dml_load_track(ogx_track *track, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_target) {
-                result = dml_load_string(&track->target, &field->value);
+                result = dml_load_string(&track->target, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_target_index) {
+                result = dml_load_float(&track->morph_weight_idx, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_time) {
-                result = dml_load_time(&track->time, &field->value);
+                result = dml_load_time(doc, &track->time, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_value) {
-                result = dml_load_value(&track->value, &field->value);
+                result = dml_load_value(doc, &track->value, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -752,7 +784,7 @@ static ogx_result dml_load_track(ogx_track *track, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_animation(ogx_animation *animation, DMLValue *value)
+static ogx_result dml_load_animation(dml_document *doc, ogx_animation *animation, dml_value *value)
 {
     assert(animation);
     assert(value);
@@ -761,9 +793,14 @@ static ogx_result dml_load_animation(ogx_animation *animation, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
-            if (field->name == dmls_track) {
-                result = dml_load_track(&animation->track, &field->value);
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
+            if (field->name == dmls_begin) {
+                result = dml_load_float(&animation->begin, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_end) {
+                result = dml_load_float(&animation->end, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_track) {
+                result = dml_load_track(doc, &animation->track, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -780,106 +817,112 @@ static ogx_result dml_load_animation(ogx_animation *animation, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_basic_node_field(ogx_basic_node *node, DMLField *field)
+static ogx_result dml_load_basic_node_field(dml_document *doc, ogx_basic_node *node, dml_field *field)
 {
     assert(node);
     assert(field);
 
     ogx_result result;
     if (field->name == dmls_name) {
-        result = dml_load_string(&node->name, &field->value);
+        result = dml_load_string(&node->name, &doc->value_pool[field->value_idx]);
     } else if (field->name == dmls_transform) {
-        result = dml_load_transform(&node->transform, &field->value);
+        result = dml_load_transform(doc, &node->transform, &doc->value_pool[field->value_idx]);
+    } else if (field->name == dmls_animation) {
+        ogx_animation *animation = dlb_vec_alloc(node->animations);
+        result = dml_load_animation(doc, animation, &doc->value_pool[field->value_idx]);
     } else if (field->name == dmls_bone_node) {
         ogx_node *child = dlb_vec_alloc(node->children);
         child->basic_node.parent = (ogx_node *)node;
         child->basic_node.type = OGX_BONE_NODE;
-        result = dml_load_node(child, &field->value);
+        result = dml_load_node(doc, child, &doc->value_pool[field->value_idx]);
     } else if (field->name == dmls_camera_node) {
         ogx_node *child = dlb_vec_alloc(node->children);
         child->basic_node.parent = (ogx_node *)node;
         child->basic_node.type = OGX_CAMERA_NODE;
-        result = dml_load_node(child, &field->value);
+        result = dml_load_node(doc, child, &doc->value_pool[field->value_idx]);
     } else if (field->name == dmls_geometry_node) {
         ogx_node *child = dlb_vec_alloc(node->children);
         child->basic_node.parent = (ogx_node *)node;
         child->basic_node.type = OGX_GEOMETRY_NODE;
-        result = dml_load_node(child, &field->value);
+        result = dml_load_node(doc, child, &doc->value_pool[field->value_idx]);
     } else if (field->name == dmls_light_node) {
         ogx_node *child = dlb_vec_alloc(node->children);
         child->basic_node.parent = (ogx_node *)node;
         child->basic_node.type = OGX_LIGHT_NODE;
-        result = dml_load_node(child, &field->value);
+        result = dml_load_node(doc, child, &doc->value_pool[field->value_idx]);
     } else if (field->name == dmls_node) {
         ogx_node *child = dlb_vec_alloc(node->children);
         child->basic_node.parent = (ogx_node *)node;
         child->basic_node.type = OGX_BASIC_NODE;
-        result = dml_load_node(child, &field->value);
+        result = dml_load_node(doc, child, &doc->value_pool[field->value_idx]);
     } else {
         result = OGX_UNEXPECTED_FIELD;
     }
     return result;
 }
 
-static ogx_result dml_load_bone_node_field(ogx_bone_node *node, DMLField *field)
+static ogx_result dml_load_bone_node_field(dml_document *doc, ogx_bone_node *node, dml_field *field)
 {
+    UNUSED(doc);
     assert(node);
     assert(field);
 
     ogx_result result;
-    if (field->name == dmls_animation) {
-        result = dml_load_animation(&node->animation, &field->value);
-    } else {
+    if (false) {
         result = OGX_UNEXPECTED_FIELD;
     }
     return result;
 }
 
-static ogx_result dml_load_camera_node_field(ogx_camera_node *node, DMLField *field)
+static ogx_result dml_load_camera_node_field(dml_document *doc, ogx_camera_node *node, dml_field *field)
 {
+    UNUSED(doc);
     assert(node);
     assert(field);
 
     ogx_result result;
     if (field->name == dmls_camera) {
-        result = dml_load_string(&node->camera, &field->value);
+        result = dml_load_string(&node->camera, &doc->value_pool[field->value_idx]);
     } else {
         result = OGX_UNEXPECTED_FIELD;
     }
     return result;
 }
 
-static ogx_result dml_load_geometry_node_field(ogx_geometry_node *node, DMLField *field)
+static ogx_result dml_load_geometry_node_field(dml_document *doc, ogx_geometry_node *node, dml_field *field)
 {
     assert(node);
     assert(field);
 
     ogx_result result;
     if (field->name == dmls_mesh) {
-        result = dml_load_string(&node->mesh, &field->value);
+        result = dml_load_string(&node->mesh, &doc->value_pool[field->value_idx]);
     } else if (field->name == dmls_materials) {
-        result = dml_load_string_array(&node->materials, &field->value);
+        result = dml_load_string_array(doc, &node->materials, &doc->value_pool[field->value_idx]);
+    } else if (field->name == dmls_morph_weights) {
+        result = dml_load_float_array(doc, &node->morph_weights, 0, &doc->value_pool[field->value_idx]);
     } else {
         result = OGX_UNEXPECTED_FIELD;
     }
     return result;
 }
 
-static ogx_result dml_load_light_node_field(ogx_light_node *node, DMLField *field)
+static ogx_result dml_load_light_node_field(dml_document *doc, ogx_light_node *node, dml_field *field)
 {
+    UNUSED(doc);
     assert(node);
     assert(field);
 
     ogx_result result;
     if (field->name == dmls_light) {
-        result = dml_load_string(&node->light, &field->value);
+        result = dml_load_string(&node->light, &doc->value_pool[field->value_idx]);
     } else {
         result = OGX_UNEXPECTED_FIELD;
     }
     return result;
 }
 
-static ogx_result dml_load_node(ogx_node *node, DMLValue *value)
+static ogx_result dml_load_node(dml_document *doc, ogx_node *node, dml_value *value)
 {
     assert(node);
     assert(value);
@@ -888,25 +931,26 @@ static ogx_result dml_load_node(ogx_node *node, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
-            result = dml_load_basic_node_field(&node->basic_node, field);
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
+            result = dml_load_basic_node_field(doc, &node->basic_node, field);
             if (result == OGX_UNEXPECTED_FIELD) {
                 switch (node->basic_node.type) {
                     case OGX_BONE_NODE:
-                        result = dml_load_bone_node_field(&node->bone_node, field);
+                        result = dml_load_bone_node_field(doc, &node->bone_node, field);
                         break;
                     case OGX_CAMERA_NODE:
-                        result = dml_load_camera_node_field(&node->camera_node, field);
+                        result = dml_load_camera_node_field(doc, &node->camera_node, field);
                         break;
                     case OGX_GEOMETRY_NODE:
-                        result = dml_load_geometry_node_field(&node->geometry_node, field);
+                        result = dml_load_geometry_node_field(doc, &node->geometry_node, field);
                         break;
                     case OGX_LIGHT_NODE:
-                        result = dml_load_light_node_field(&node->light_node, field);
+                        result = dml_load_light_node_field(doc, &node->light_node, field);
                         break;
                 }
             }
@@ -923,7 +967,7 @@ static ogx_result dml_load_node(ogx_node *node, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_camera(ogx_camera *camera, DMLValue *value)
+static ogx_result dml_load_camera(dml_document *doc, ogx_camera *camera, dml_value *value)
 {
     assert(camera);
     assert(value);
@@ -932,19 +976,20 @@ static ogx_result dml_load_camera(ogx_camera *camera, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_name) {
-                result = dml_load_string(&camera->name, &field->value);
+                result = dml_load_string(&camera->name, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_fov) {
-                result = dml_load_float(&camera->fov, &field->value);
+                result = dml_load_float(&camera->fov, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_near) {
-                result = dml_load_float(&camera->nearz, &field->value);
+                result = dml_load_float(&camera->nearz, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_far) {
-                result = dml_load_float(&camera->farz, &field->value);
+                result = dml_load_float(&camera->farz, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -961,7 +1006,7 @@ static ogx_result dml_load_camera(ogx_camera *camera, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_vertex_array(ogx_vertex_array *vertex_array, DMLValue *value)
+static ogx_result dml_load_vertex_array(dml_document *doc, ogx_vertex_array *vertex_array, dml_value *value)
 {
     assert(vertex_array);
     assert(value);
@@ -970,14 +1015,15 @@ static ogx_result dml_load_vertex_array(ogx_vertex_array *vertex_array, DMLValue
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_attrib) {
                 const char *attrib = 0;
-                result = dml_load_string(&attrib, &field->value);
+                result = dml_load_string(&attrib, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(attrib, "position")) {
                         vertex_array->attrib = OGX_VERTEX_ATTRIB_POSIITON;
@@ -1002,11 +1048,11 @@ static ogx_result dml_load_vertex_array(ogx_vertex_array *vertex_array, DMLValue
                 };
                 size_t comp = components_by_attrib[vertex_array->attrib];
                 if (comp == 1) {
-                    result = dml_load_float_array(&vertex_array->values.as_float, 0, &field->value);
+                    result = dml_load_float_array(doc, &vertex_array->values.as_float, 0, &doc->value_pool[field->value_idx]);
                 } else if (comp == 2) {
-                    result = dml_load_vec2_array(&vertex_array->values.as_vec2, &field->value);
+                    result = dml_load_vec2_array(doc, &vertex_array->values.as_vec2, &doc->value_pool[field->value_idx]);
                 } else if (comp == 3) {
-                    result = dml_load_vec3_array(&vertex_array->values.as_vec3, &field->value);
+                    result = dml_load_vec3_array(doc, &vertex_array->values.as_vec3, &doc->value_pool[field->value_idx]);
                 } else {
 #if _DEBUG
                     ta_log_write(&tg_debug_log, SRC_DML,
@@ -1015,6 +1061,8 @@ static ogx_result dml_load_vertex_array(ogx_vertex_array *vertex_array, DMLValue
 #endif
                     result = OGX_UNKNOWN_TYPE;
                 }
+            } else if (field->name == dmls_morph) {
+                result = dml_load_float(&vertex_array->morph, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1032,7 +1080,7 @@ static ogx_result dml_load_vertex_array(ogx_vertex_array *vertex_array, DMLValue
     return result;
 }
 
-static ogx_result dml_load_index_array(ogx_index_array *index_array, DMLValue *value)
+static ogx_result dml_load_index_array(dml_document *doc, ogx_index_array *index_array, dml_value *value)
 {
     assert(index_array);
     assert(value);
@@ -1041,15 +1089,16 @@ static ogx_result dml_load_index_array(ogx_index_array *index_array, DMLValue *v
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_material) {
-                result = dml_load_string(&index_array->material, &field->value);
+                result = dml_load_string(&index_array->material, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_data) {
-                result = dml_load_float_array(&index_array->values.as_float, 0, &field->value);
+                result = dml_load_float_array(doc, &index_array->values.as_float, 0, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1067,7 +1116,7 @@ static ogx_result dml_load_index_array(ogx_index_array *index_array, DMLValue *v
     return result;
 }
 
-static ogx_result dml_load_skeleton(ogx_skeleton *skeleton, DMLValue *value)
+static ogx_result dml_load_skeleton(dml_document *doc, ogx_skeleton *skeleton, dml_value *value)
 {
     assert(skeleton);
     assert(value);
@@ -1076,16 +1125,17 @@ static ogx_result dml_load_skeleton(ogx_skeleton *skeleton, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_bones) {
-                result = dml_load_string_array(&skeleton->bones, &field->value);
+                result = dml_load_string_array(doc, &skeleton->bones, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_bind_poses) {
                 // TODO: Is this a safe cast? Do we even need ogx_mat4 type?
-                result = dml_load_mat4_array(&skeleton->bind_poses, &field->value);
+                result = dml_load_mat4_array(doc, &skeleton->bind_poses, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1104,7 +1154,7 @@ static ogx_result dml_load_skeleton(ogx_skeleton *skeleton, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_skin(ogx_skin *skin, DMLValue *value)
+static ogx_result dml_load_skin(dml_document *doc, ogx_skin *skin, dml_value *value)
 {
     assert(skin);
     assert(value);
@@ -1113,21 +1163,22 @@ static ogx_result dml_load_skin(ogx_skin *skin, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_transform) {
-                result = dml_load_transform(&skin->transform, &field->value);
+                result = dml_load_transform(doc, &skin->transform, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_skeleton) {
-                result = dml_load_skeleton(&skin->skeleton, &field->value);
+                result = dml_load_skeleton(doc, &skin->skeleton, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_bone_count_array) {
-                result = dml_load_float_array(&skin->bone_count_array, 0, &field->value);
+                result = dml_load_float_array(doc, &skin->bone_count_array, 0, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_bone_index_array) {
-                result = dml_load_float_array(&skin->bone_index_array, 0, &field->value);
+                result = dml_load_float_array(doc, &skin->bone_index_array, 0, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_bone_weight_array) {
-                result = dml_load_float_array(&skin->bone_weight_array, 0, &field->value);
+                result = dml_load_float_array(doc, &skin->bone_weight_array, 0, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1147,7 +1198,66 @@ static ogx_result dml_load_skin(ogx_skin *skin, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_mesh(ogx_mesh *mesh, DMLValue *value)
+static ogx_result dml_load_morph(dml_document *doc, ogx_morph *morph, dml_value *value)
+{
+    assert(morph);
+    assert(value);
+
+    ogx_result result = OGX_SUCCESS;
+    if (value->type != DML_VALUE_OBJECT) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+#endif
+        result = OGX_EXPECTED_OBJECT;
+    } else {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
+            if (field->name == dmls_name) {
+                result = dml_load_string(&morph->name, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_base) {
+                result = dml_load_float(&morph->base, &doc->value_pool[field->value_idx]);
+            } else {
+#if _DEBUG
+                ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
+                    value->dbg_symbol.line, value->dbg_symbol.column, field->name);
+#endif
+                result = OGX_UNEXPECTED_FIELD;
+            }
+
+            if (result != OGX_SUCCESS) {
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+static ogx_result dml_load_morph_array(dml_document *doc, ogx_morph **array, dml_value *value)
+{
+    assert(array);
+    assert(value);
+
+    ogx_result result = OGX_SUCCESS;
+    if (value->type != DML_VALUE_ARRAY) {
+        result = OGX_EXPECTED_ARRAY;
+    } else {
+        size_t len = dlb_vec_len(value->data.as_array.values);
+        dlb_vec_reserve(*array, len);
+        dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
+            dml_value *arr_value = &doc->value_pool[*value_idx];
+            ogx_morph *morph = dlb_vec_alloc(*array);
+            result = dml_load_morph(doc, morph, arr_value);
+            if (result != OGX_SUCCESS) {
+                dlb_vec_free(*array);
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+static ogx_result dml_load_mesh(dml_document *doc, ogx_mesh *mesh, dml_value *value)
 {
     assert(mesh);
     assert(value);
@@ -1156,19 +1266,20 @@ static ogx_result dml_load_mesh(ogx_mesh *mesh, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_vertex_array) {
                 ogx_vertex_array *vertex_array = dlb_vec_alloc(mesh->vertex_arrays);
-                result = dml_load_vertex_array(vertex_array, &field->value);
+                result = dml_load_vertex_array(doc, vertex_array, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_index_array) {
                 ogx_index_array *index_array = dlb_vec_alloc(mesh->index_arrays);
-                result = dml_load_index_array(index_array, &field->value);
+                result = dml_load_index_array(doc, index_array, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_skin) {
-                result = dml_load_skin(&mesh->skin, &field->value);
+                result = dml_load_skin(doc, &mesh->skin, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1186,7 +1297,7 @@ static ogx_result dml_load_mesh(ogx_mesh *mesh, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_geometry(ogx_geometry *geometry, DMLValue *value)
+static ogx_result dml_load_geometry(dml_document *doc, ogx_geometry *geometry, dml_value *value)
 {
     assert(geometry);
     assert(value);
@@ -1195,15 +1306,19 @@ static ogx_result dml_load_geometry(ogx_geometry *geometry, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_name) {
-                result = dml_load_string(&geometry->name, &field->value);
+                result = dml_load_string(&geometry->name, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_morphs) {
+                result = dml_load_morph_array(doc, &geometry->morphs, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_mesh) {
-                result = dml_load_mesh(&geometry->mesh, &field->value);
+                ogx_mesh *mesh = dlb_vec_alloc(geometry->meshes);
+                result = dml_load_mesh(doc, mesh, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1220,7 +1335,7 @@ static ogx_result dml_load_geometry(ogx_geometry *geometry, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_light_atten(ogx_light_atten *atten, DMLValue *value)
+static ogx_result dml_load_light_atten(dml_document *doc, ogx_light_atten *atten, dml_value *value)
 {
     assert(atten);
     assert(value);
@@ -1229,14 +1344,15 @@ static ogx_result dml_load_light_atten(ogx_light_atten *atten, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_kind) {
                 const char *atten_kind = 0;
-                result = dml_load_string(&atten_kind, &field->value);
+                result = dml_load_string(&atten_kind, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(atten_kind, "distance")) {
                         atten->kind = OGX_LIGHT_ATTEN_KIND_DISTANCE;
@@ -1251,7 +1367,7 @@ static ogx_result dml_load_light_atten(ogx_light_atten *atten, DMLValue *value)
                 }
             } else if (field->name == dmls_curve) {
                 const char *atten_curve = 0;
-                result = dml_load_string(&atten_curve, &field->value);
+                result = dml_load_string(&atten_curve, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(atten_curve, "inverse_square")) {
                         atten->curve = OGX_LIGHT_ATTEN_CURVE_INVERSE_SQUARE;
@@ -1265,7 +1381,7 @@ static ogx_result dml_load_light_atten(ogx_light_atten *atten, DMLValue *value)
                     }
                 }
             } else if (field->name == dmls_scale) {
-                result = dml_load_float(&atten->scale, &field->value);
+                result = dml_load_float(&atten->scale, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1282,7 +1398,7 @@ static ogx_result dml_load_light_atten(ogx_light_atten *atten, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_light(ogx_light *light, DMLValue *value)
+static ogx_result dml_load_light(dml_document *doc, ogx_light *light, dml_value *value)
 {
     assert(light);
     assert(value);
@@ -1291,16 +1407,17 @@ static ogx_result dml_load_light(ogx_light *light, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_name) {
-                result = dml_load_string(&light->name, &field->value);
+                result = dml_load_string(&light->name, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_type) {
                 const char *light_type = 0;
-                result = dml_load_string(&light_type, &field->value);
+                result = dml_load_string(&light_type, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(light_type, "point")) {
                         light->type = OGX_LIGHT_TYPE_POINT;
@@ -1314,15 +1431,15 @@ static ogx_result dml_load_light(ogx_light *light, DMLValue *value)
                     }
                 }
             } else if (field->name == dmls_shadow) {
-                result = dml_load_bool(&light->shadow, &field->value);
+                result = dml_load_bool(&light->shadow, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_color) {
-                result = dml_load_vec3(&light->color, &field->value);
+                result = dml_load_vec3(doc, &light->color, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_intensity) {
-                result = dml_load_float(&light->intensity, &field->value);
+                result = dml_load_float(&light->intensity, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_atten) {
                 //result = dml_load_float(&light->atten, &field->value);
                 ogx_light_atten *atten = dlb_vec_alloc(light->attens);
-                result = dml_load_light_atten(atten, &field->value);
+                result = dml_load_light_atten(doc, atten, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1339,7 +1456,42 @@ static ogx_result dml_load_light(ogx_light *light, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_material(ogx_material *material, DMLValue *value)
+static ogx_result dml_load_texture(dml_document *doc, ogx_texture *texture, dml_value *value)
+{
+    assert(texture);
+    assert(value);
+
+    ogx_result result = OGX_SUCCESS;
+    if (value->type != DML_VALUE_OBJECT) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+#endif
+        result = OGX_EXPECTED_OBJECT;
+    } else {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
+            if (field->name == dmls_name) {
+                result = dml_load_string(&texture->name, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_path) {
+                result = dml_load_string(&texture->path, &doc->value_pool[field->value_idx]);
+            } else {
+#if _DEBUG
+                ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
+                    value->dbg_symbol.line, value->dbg_symbol.column, field->name);
+#endif
+                result = OGX_UNEXPECTED_FIELD;
+            }
+
+            if (result != OGX_SUCCESS) {
+                break;
+            }
+        }
+    }
+    return result;
+}
+
+static ogx_result dml_load_material(dml_document *doc, ogx_material *material, dml_value *value)
 {
     assert(material);
     assert(value);
@@ -1348,19 +1500,38 @@ static ogx_result dml_load_material(ogx_material *material, DMLValue *value)
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, DMLValueTypeStr[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
-        dlb_vec_each(DMLField *, field, value->data.as_object.fields) {
+        dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == dmls_name) {
-                result = dml_load_string(&material->name, &field->value);
+                result = dml_load_string(&material->name, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_alpha_factor) {
+                result = dml_load_float(&material->alpha_factor, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_alpha_texture) {
+                result = dml_load_string(&material->alpha_texture, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_albedo_factor) {
-                result = dml_load_vec3(&material->albedo_factor, &field->value);
+                result = dml_load_vec3(doc, &material->albedo_factor, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_albedo_texture) {
+                result = dml_load_string(&material->albedo_texture, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_emissive_factor) {
+                result = dml_load_vec3(doc, &material->emissive_factor, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_emissive_texture) {
+                result = dml_load_string(&material->emissive_texture, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_metallic_factor) {
+                result = dml_load_float(&material->metallic_factor, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_metallic_texture) {
+                result = dml_load_string(&material->metallic_texture, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_normal_factor) {
-                result = dml_load_vec3(&material->normal_factor, &field->value);
+                result = dml_load_vec3(doc, &material->normal_factor, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_normal_texture) {
+                result = dml_load_string(&material->normal_texture, &doc->value_pool[field->value_idx]);
             } else if (field->name == dmls_roughness_factor) {
-                result = dml_load_float(&material->roughness_factor, &field->value);
+                result = dml_load_float(&material->roughness_factor, &doc->value_pool[field->value_idx]);
+            } else if (field->name == dmls_roughness_texture) {
+                result = dml_load_string(&material->roughness_texture, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1377,42 +1548,57 @@ static ogx_result dml_load_material(ogx_material *material, DMLValue *value)
     return result;
 }
 
-static ogx_result dml_load_document(ogx_scene *scene, DMLObject *document)
+static ogx_result dml_load_document(dml_document *doc, ogx_scene *scene)
 {
+    dml_value *root_value = &doc->value_pool[doc->root_value_idx];
+    if (root_value->type != DML_VALUE_OBJECT) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected root value type '%s', expected object\n",
+            root_value->dbg_symbol.filename, root_value->dbg_symbol.line, root_value->dbg_symbol.column,
+            dml_value_type_str[root_value->type]);
+#endif
+        return OGX_UNEXPECTED_VALUE;
+    }
+
     ogx_result result = OGX_EMPTY_DOCUMENT;
-    dlb_vec_each(DMLField *, field, document->fields) {
+    dml_object *root_object = &root_value->data.as_object;
+    dlb_vec_each(size_t *, field_idx, root_object->fields) {
+        dml_field *field = &doc->field_pool[*field_idx];
         if (field->name == dmls_bone_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
             node->basic_node.type = OGX_BONE_NODE;
-            result = dml_load_node(node, &field->value);
+            result = dml_load_node(doc, node, &doc->value_pool[field->value_idx]);
         } else if (field->name == dmls_camera_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
             node->basic_node.type = OGX_CAMERA_NODE;
-            result = dml_load_node(node, &field->value);
+            result = dml_load_node(doc, node, &doc->value_pool[field->value_idx]);
         } else if (field->name == dmls_geometry_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
             node->basic_node.type = OGX_GEOMETRY_NODE;
-            result = dml_load_node(node, &field->value);
+            result = dml_load_node(doc, node, &doc->value_pool[field->value_idx]);
         } else if (field->name == dmls_light_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
             node->basic_node.type = OGX_LIGHT_NODE;
-            result = dml_load_node(node, &field->value);
+            result = dml_load_node(doc, node, &doc->value_pool[field->value_idx]);
         } else if (field->name == dmls_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
             node->basic_node.type = OGX_BASIC_NODE;
-            result = dml_load_node(node, &field->value);
+            result = dml_load_node(doc, node, &doc->value_pool[field->value_idx]);
         } else if (field->name == dmls_camera) {
             ogx_camera *camera = dlb_vec_alloc(scene->cameras);
-            result = dml_load_camera(camera, &field->value);
+            result = dml_load_camera(doc, camera, &doc->value_pool[field->value_idx]);
         } else if (field->name == dmls_geometry) {
             ogx_geometry *geometry = dlb_vec_alloc(scene->geometry);
-            result = dml_load_geometry(geometry, &field->value);
+            result = dml_load_geometry(doc, geometry, &doc->value_pool[field->value_idx]);
         } else if (field->name == dmls_light) {
             ogx_light *light = dlb_vec_alloc(scene->lights);
-            result = dml_load_light(light, &field->value);
+            result = dml_load_light(doc, light, &doc->value_pool[field->value_idx]);
+        } else if (field->name == dmls_texture) {
+            ogx_texture *texture = dlb_vec_alloc(scene->textures);
+            result = dml_load_texture(doc, texture, &doc->value_pool[field->value_idx]);
         } else if (field->name == dmls_material) {
             ogx_material *material = dlb_vec_alloc(scene->materials);
-            result = dml_load_material(material, &field->value);
+            result = dml_load_material(doc, material, &doc->value_pool[field->value_idx]);
         } else {
 #if _DEBUG
             ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", field->dbg_symbol.filename,
@@ -1426,6 +1612,12 @@ static ogx_result dml_load_document(ogx_scene *scene, DMLObject *document)
         }
     }
     return result;
+}
+
+void dml_document_free(dml_document *document)
+{
+    dlb_vec_free(document->field_pool);
+    dlb_vec_free(document->value_pool);
 }
 
 #if 0

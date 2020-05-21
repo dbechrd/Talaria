@@ -196,9 +196,9 @@ void ta_game_init()
     // Scene
     //--------------------------------------------------------------------------
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading ogex test file...\n");
-    //dml_load("data/mesh/skeleton_test.ogex");
-    dml_load("data/mesh/button.ogex");
-    //dml_load("data/mesh/dude.ogex");
+    //dml_document_load("data/mesh/skeleton_test.ogex");
+    dml_document_load("data/mesh/button.ogex");
+    //dml_document_load("data/mesh/dude.ogex");
 
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading first scene...\n");
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
@@ -1449,7 +1449,7 @@ static void spawn_bullet(ta_vec3 position)
         "bullet_09",
     };
     static int next_idx = 0;
-    DLB_ASSERT(next_idx < ARRAY_COUNT(bullet_names));
+    DLB_ASSERT(next_idx < ARRAY_SIZE(bullet_names));
     //const char *name = ta_symbol_intern(bullet_names[next_idx], strlen(bullet_names[next_idx]));
     next_idx++;
 

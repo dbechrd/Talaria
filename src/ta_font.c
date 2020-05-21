@@ -55,7 +55,7 @@ void ta_font_load_path(ta_font *font, const char *path)
     DLB_ASSERT(font->chars);
 
     //float scales[32] = { 0 };
-    //for (int i = 0; i < ARRAY_COUNT(scales); i++) {
+    //for (int i = 0; i < ARRAY_SIZE(scales); i++) {
     //    scales[i] = stbtt_ScaleForPixelHeight(&font->font_info, (float)i);
     //}
 

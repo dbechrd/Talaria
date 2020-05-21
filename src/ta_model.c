@@ -56,7 +56,7 @@ void ta_model_set_morph_target_weight(ta_model *model, const char *morph_target_
 
 static void model_piece_set_shader_anim_targets(ta_model *model, ta_piece *piece, ta_shader *shader)
 {
-    const size_t max_morph_targets = ARRAY_COUNT(SYM_U_MORPH_WEIGHTS);
+    const size_t max_morph_targets = ARRAY_SIZE(SYM_U_MORPH_WEIGHTS);
     if (piece->anim_targets) {
         size_t morph_idx = 0;
         dlb_vec_each(const char **, anim_target_name, piece->anim_targets) {

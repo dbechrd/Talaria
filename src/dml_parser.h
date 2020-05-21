@@ -1,16 +1,16 @@
 #pragma once
 
-typedef struct DMLParser {
-    struct DMLToken *tokens;
+typedef struct dml_parser {
+    struct dml_token *tokens;
     int current;
     int expected_value_context_shown;  // used to only print verbose messages for first error of this type
 
-    // Only for debugging?
+    // TODO: Move this to dml_document perhaps?
     const char *filename;
     const char *source;
     size_t source_len;
-} DMLParser;
+} dml_parser;
 
-void DMLParserInit(DMLParser *parser, struct DMLToken *tokens, const char *filename, const char *source,
+void dml_parser_init(dml_parser *parser, struct dml_token *tokens, const char *filename, const char *source,
     size_t source_len);
-void DMLParserParse(DMLParser *parser, struct DMLObject *document);
+void dml_parser_parse(dml_parser *parser, struct dml_document *document);

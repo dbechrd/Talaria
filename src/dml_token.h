@@ -1,6 +1,6 @@
 #pragma once
 
-typedef enum DMLTokenType {
+typedef enum dml_token_type {
     TOK_UNKNOWN,
 
     // 1 character tokens
@@ -25,12 +25,12 @@ typedef enum DMLTokenType {
     TOK_TRUE,
 
     TOK_EOF
-} DMLTokenType;
+} dml_token_type;
 
-const char *DMLTokenTypeToString(DMLTokenType type);
+const char *dml_token_type_str(dml_token_type type);
 
-typedef struct DMLToken {
-    DMLTokenType type;
+typedef struct dml_token {
+    dml_token_type type;
     const char *lexeme;     // Can be null (e.g. EOF)
     union {
         float as_float;
@@ -40,8 +40,8 @@ typedef struct DMLToken {
     size_t column;
     size_t start;
     size_t length;
-} DMLToken;
+} dml_token;
 
-void DMLTokenInit(DMLToken *token, DMLTokenType type, const char *lexeme, size_t line, size_t column, size_t start,
+void dml_token_init(dml_token *token, dml_token_type type, const char *lexeme, size_t line, size_t column, size_t start,
     size_t length);
-const char *TokenToString(DMLToken *token);
+const char *TokenToString(dml_token *token);

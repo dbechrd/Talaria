@@ -10,43 +10,6 @@ typedef struct ogx_transform {
     ogx_mat4 data;
 } ogx_transform;
 
-typedef enum ogx_node_type {
-    OGX_BASIC_NODE,
-    OGX_BONE_NODE,
-    OGX_LIGHT_NODE,
-    OGX_CAMERA_NODE,
-    OGX_GEOMETRY_NODE,
-} ogx_node_type;
-
-#define OGX_NODE_HEADER         \
-    ogx_node_type type;         \
-    const char *name;           \
-    ogx_transform transform;    \
-    union ogx_node *parent;     \
-    union ogx_node *children;
-
-typedef struct ogx_basic_node {
-    OGX_NODE_HEADER
-} ogx_basic_node;
-
-typedef struct ogx_light_node {
-    ogx_basic_node base;
-    const char *light;
-} ogx_light_node;
-
-typedef struct ogx_camera_node {
-    ogx_basic_node base;
-    const char *camera;
-} ogx_camera_node;
-
-typedef struct ogx_geometry_node {
-    ogx_basic_node base;
-    const char *mesh;
-    const char **materials;
-} ogx_geometry_node;
-
-#undef OGX_NODE_HEADER
-
 typedef enum ogx_key_kind {
     OGX_KEY_KIND_UNKNOWN,
     OGX_KEY_KIND_VALUE,
@@ -102,17 +65,59 @@ typedef struct ogx_value {
 
 typedef struct ogx_track {
     const char *target;
+    float morph_weight_idx;  // TODO: uint32 (morph weight target index, only applicable when target = "morph_weight")
     ogx_time time;
     ogx_value value;
 } ogx_track;
 
 typedef struct ogx_animation {
+    float begin;
+    float end;
     ogx_track track;
 } ogx_animation;
 
+typedef enum ogx_node_type {
+    OGX_BASIC_NODE,
+    OGX_BONE_NODE,
+    OGX_LIGHT_NODE,
+    OGX_CAMERA_NODE,
+    OGX_GEOMETRY_NODE,
+} ogx_node_type;
+
+#define OGX_NODE_HEADER         \
+    ogx_node_type type;         \
+    const char *name;           \
+    ogx_transform transform;    \
+    ogx_animation *animations;  \
+    union ogx_node *parent;     \
+    union ogx_node *children;
+
+typedef struct ogx_basic_node {
+    OGX_NODE_HEADER
+} ogx_basic_node;
+
+typedef struct ogx_light_node {
+    ogx_basic_node base;
+    const char *light;
+} ogx_light_node;
+
+typedef struct ogx_camera_node {
+    ogx_basic_node base;
+    const char *camera;
+} ogx_camera_node;
+
+typedef struct ogx_geometry_node {
+    ogx_basic_node base;
+    const char *mesh;
+    const char **materials;
+    float *morph_weights;
+    ogx_animation *animations;
+} ogx_geometry_node;
+
+#undef OGX_NODE_HEADER
+
 typedef struct ogx_bone_node {
     ogx_basic_node base;
-    ogx_animation animation;
 } ogx_bone_node;
 
 typedef union ogx_node {
@@ -140,6 +145,7 @@ typedef enum ogx_vertex_attrib {
 
 typedef struct ogx_vertex_array {
     ogx_vertex_attrib attrib;
+    float morph;  // TODO: uint32
     union {
         float *as_float;
         ogx_vec2 *as_vec2;
@@ -175,6 +181,12 @@ typedef struct ogx_skin {
     float *bone_weight_array;
 } ogx_skin;
 
+typedef struct ogx_morph {
+    const char *name;
+    //float index;  // TODO: What's this for?
+    float base;   // TODO: u32
+} ogx_morph;
+
 typedef struct ogx_mesh {
     ogx_vertex_array *vertex_arrays;
     ogx_index_array *index_arrays;
@@ -183,7 +195,8 @@ typedef struct ogx_mesh {
 
 typedef struct ogx_geometry {
     const char *name;
-    ogx_mesh mesh;
+    ogx_morph *morphs;  // 0+
+    ogx_mesh *meshes;  // 1+
 } ogx_geometry;
 
 typedef enum ogx_light_type {
@@ -213,11 +226,25 @@ typedef struct ogx_light {
     ogx_light_atten *attens;
 } ogx_light;
 
+typedef struct ogx_texture {
+    const char *name;
+    const char *path;
+} ogx_texture;
+
 typedef struct ogx_material {
     const char *name;
+    float alpha_factor;
+    const char *alpha_texture;
     ogx_vec3 albedo_factor;
+    const char *albedo_texture;
+    ogx_vec3 emissive_factor;
+    const char *emissive_texture;
+    float metallic_factor;
+    const char *metallic_texture;
     ogx_vec3 normal_factor;
+    const char *normal_texture;
     float roughness_factor;
+    const char *roughness_texture;
 } ogx_material;
 
 typedef struct ogx_scene {
@@ -226,6 +253,7 @@ typedef struct ogx_scene {
     ogx_geometry *geometry;
     ogx_light *lights;
     ogx_material *materials;
+    ogx_texture *textures;
 } ogx_scene;
 
 typedef enum ogx_result {
@@ -249,4 +277,5 @@ typedef enum ogx_result {
     OGX_RESULT_COUNT
 } ogx_result;
 
-ogx_result dml_load(const char *filename);
+ogx_result dml_document_load(const char *filename);
+void dml_document_free(dml_document *document);

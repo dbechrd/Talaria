@@ -3,7 +3,7 @@
 typedef struct DMLScanner {
     const char *source;
     size_t source_len;
-    struct DMLToken *tokens;
+    struct dml_token *tokens;
     size_t start;
     size_t current;
     size_t line;
@@ -13,5 +13,5 @@ typedef struct DMLScanner {
     bool error_flag;
 } DMLScanner;
 
-void DMLScannerInit(DMLScanner *scanner, const char *source, size_t source_len);
-bool DMLScannerScanTokens(DMLScanner *scanner, struct DMLToken **tokens);
+void dml_scanner_init(DMLScanner *scanner, const char *source, size_t source_len);
+bool dml_scanner_scan_tokens(DMLScanner *scanner, struct dml_token **tokens);

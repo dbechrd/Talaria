@@ -18,7 +18,7 @@ static int next = 0;
 //       viewports.
 void ta_viewport_bind(ta_rect rect, ta_rgba background, bool relative)
 {
-    DLB_ASSERT(next < ARRAY_COUNT(viewports));
+    DLB_ASSERT(next < ARRAY_SIZE(viewports));
 
     // Save previous state
     glGetIntegerv(GL_VIEWPORT, (int *)&viewports[next].viewport_rect);

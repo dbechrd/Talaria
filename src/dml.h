@@ -3,77 +3,81 @@
 #define DML_ERROR_CONTEXT_TAB_WIDTH 2
 
 #if _DEBUG
-    typedef struct DMLDebugSymbol {
+    typedef struct dml_debug_symbol {
         const char *filename;
         size_t line;
         size_t column;
-    } DMLDebugSymbol;
-    #define DML_DEBUG_SYMBOL DMLDebugSymbol dbg_symbol;
+    } dml_debug_symbol;
+    #define DML_DEBUG_SYMBOL dml_debug_symbol dbg_symbol;
 #else
     #define DML_DEBUG_SYMBOL
 #endif
 
-// TODO: DMLField pool
-typedef struct DMLObject {
-    struct DMLField *fields;
+typedef struct dml_object {
+    size_t *fields;  // index into field_pool
     DML_DEBUG_SYMBOL
-} DMLObject;
+} dml_object;
 
-// TODO: DMLValue pool
-typedef struct DMLArray {
-    struct DMLValue *values;
+typedef struct dml_array {
+    size_t *values;  // index into value_pool
     DML_DEBUG_SYMBOL
-} DMLArray;
+} dml_array;
 
-typedef enum DMLLiteralType {
+typedef enum dml_literal_type {
     DML_LITERAL_NULL,
     DML_LITERAL_BOOL,
     DML_LITERAL_FLOAT,
     DML_LITERAL_STRING,
     DML_LITERAL_COUNT
-} DMLLiteralType;
+} dml_literal_type;
 
-extern const char *DMLLiteralTypeStr[DML_LITERAL_COUNT];
+extern const char *dml_literal_type_str[DML_LITERAL_COUNT];
 
-typedef struct DMLLiteral {
-    DMLLiteralType type;
+typedef struct dml_literal {
+    dml_literal_type type;
     union {
         float as_float;
         const char *as_string;
         int as_bool;
     } data;
     DML_DEBUG_SYMBOL
-} DMLLiteral;
+} dml_literal;
 
-typedef enum DMLValueType {
+typedef enum dml_value_type {
     DML_VALUE_OBJECT,
     DML_VALUE_ARRAY,
     DML_VALUE_LITERAL,
     DML_VALUE_COUNT
-} DMLValueType;
+} dml_value_type;
 
-extern const char *DMLValueTypeStr[DML_VALUE_COUNT];
+extern const char *dml_value_type_str[DML_VALUE_COUNT];
 
-typedef struct DMLValue {
-    DMLValueType type;
+typedef struct dml_value {
+    dml_value_type type;
     union {
-        DMLObject as_object;
-        DMLArray as_array;
-        DMLLiteral as_literal;
+        dml_object as_object;
+        dml_array as_array;
+        dml_literal as_literal;
     } data;
     DML_DEBUG_SYMBOL
-} DMLValue;
+} dml_value;
 
-typedef struct DMLField {
+typedef struct dml_field {
     const char *name;  // symbol
-    DMLValue value;
+    size_t value_idx;
     DML_DEBUG_SYMBOL
-} DMLField;
+} dml_field;
 
 #undef DML_DEBUG_SYMBOL
 
-void DMLPrintObject(DMLObject *object, int indent);
-void DMLPrintArray(DMLArray *array, int indent);
-void DMLPrintLiteral(DMLLiteral *literal);
-void DMLPrintValue(DMLValue *value, int indent);
-void DMLPrintField(DMLField *field, int indent);
+typedef struct dml_document {
+    dml_field *field_pool;  // vector
+    dml_value *value_pool;  // vector
+    size_t root_value_idx;
+} dml_document;
+
+//void DMLPrintObject(dml_object *object, int indent);
+//void DMLPrintArray(dml_array *array, int indent);
+//void DMLPrintLiteral(dml_literal *literal);
+//void DMLPrintValue(dml_value *value, int indent);
+//void DMLPrintField(dml_field *field, int indent);

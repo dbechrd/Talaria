@@ -305,7 +305,7 @@ void ta_audio_buffer_load(ta_audio_buffer *buffer)
     double x1 = 0;
     double x2 = 0;
 
-    for (unsigned i = 0; i < ARRAY_COUNT(buf); ++i)
+    for (unsigned i = 0; i < ARRAY_SIZE(buf); ++i)
     {
         buf[i] = (s16)(AMPLITUDE / 2 * (sin(x1 * 6.28) + sin(x2 * 6.28)));
         x1 += ring1;

@@ -795,7 +795,7 @@ static int tinyobj_parse_and_index_mtl_file(tinyobj_material_t * *materials_out,
 			/* set new mtl name */
 			token += 7;
 #ifdef _MSC_VER
-			sscanf_s(token, "%s", namebuf, (unsigned)ARRAY_COUNT(namebuf));
+			sscanf_s(token, "%s", namebuf, (unsigned)ARRAY_SIZE(namebuf));
 #else
 			sscanf(token, "%s", namebuf);
 #endif

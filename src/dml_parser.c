@@ -2,6 +2,8 @@
 #include "dml_token.h"
 #include "dml.h"
 
+static size_t **dbg_array_pointers = 0;
+
 #if _DEBUG
     #define FILL_DEBUG_SYMBOL(dbg_symbol, token) \
         dbg_symbol.filename = parser->filename;  \
@@ -11,7 +13,7 @@
     #define FILL_DEBUG_SYMBOL(dbg_symbol, token)
 #endif
 
-void DMLParserInit(DMLParser *parser, struct DMLToken *tokens, const char *filename, const char *source,
+void dml_parser_init(dml_parser *parser, struct dml_token *tokens, const char *filename, const char *source,
     size_t source_len)
 {
     parser->tokens = tokens;
@@ -21,78 +23,67 @@ void DMLParserInit(DMLParser *parser, struct DMLToken *tokens, const char *filen
     parser->source_len = source_len;
 }
 
-static DMLToken *DMLParserPeek(DMLParser *parser)
+static inline dml_token *dml_parser_peek(dml_parser *parser)
 {
     return &parser->tokens[parser->current];
 }
 
-static DMLToken *DMLParserPrevious(DMLParser *parser)
+static inline dml_token *dml_parser_previous(dml_parser *parser)
 {
     return &parser->tokens[parser->current - 1];
 }
 
-static bool DMLParserIsAtEnd(DMLParser *parser)
+static inline bool dml_parser_eof(dml_parser *parser)
 {
-    DMLToken *peek = DMLParserPeek(parser);
+    dml_token *peek = dml_parser_peek(parser);
     return peek->type == TOK_EOF;
 }
 
-static bool DMLParserCheck(DMLParser *parser, DMLTokenType type)
+static inline bool dml_parser_check(dml_parser *parser, dml_token_type type)
 {
-    if (DMLParserIsAtEnd(parser)) return false;
-
-    DMLToken *peek = DMLParserPeek(parser);
+    dml_token *peek = dml_parser_peek(parser);
     return peek->type == type;
 }
 
-static DMLToken *DMLParserAdvance(DMLParser *parser)
+static inline void dml_parser_advance(dml_parser *parser)
 {
-    if (!DMLParserIsAtEnd(parser)) {
+    dml_token *token = dml_parser_peek(parser);
+    if (token->type != TOK_EOF) {
         parser->current++;
     }
-
-    return DMLParserPrevious(parser);
 }
 
-static DMLToken *DMLParserConsume(DMLParser *parser, DMLTokenType type)
+static bool dml_parser_consume(dml_parser *parser, dml_token_type type)
 {
-    DMLToken *token;
-    if (!DMLParserCheck(parser, type)) {
-        return NULL;
-    }
-
-    token = DMLParserAdvance(parser);
-    return token;
-}
-
-static bool DMLParserMatch(DMLParser *parser, DMLTokenType type)
-{
-    if (DMLParserCheck(parser, type)) {
-        DMLParserAdvance(parser);
-        return true;
+    if (type != TOK_EOF) {
+        dml_token *peek = dml_parser_peek(parser);
+        if (peek->type == type) {
+            parser->current++;
+            return true;
+        }
     }
     return false;
 }
 
-static void DMLParserSynchronize(DMLParser *parser)
+static void dml_parser_sync(dml_parser *parser)
 {
-    DMLParserAdvance(parser);
+    dml_parser_advance(parser);
 
-    while (!DMLParserIsAtEnd(parser)) {
+    while (!dml_parser_eof(parser)) {
         // Skip all tokens until next identifier
-        DMLToken *peek = DMLParserPeek(parser);
+        dml_token *peek = dml_parser_peek(parser);
         if (peek->type == TOK_IDENTIFIER) {
             return;
         }
-        DMLParserAdvance(parser);
+        dml_parser_advance(parser);
     }
 }
 
-static void DMLParserErrorContext(DMLParser *parser, const char *message, DMLToken *token)
+static void dml_parser_error_context(dml_parser *parser, const char *message, dml_token *token)
 {
-    //DMLToken *token = DMLParserPeek(parser);
+    //dml_token *token = dml_parser_peek(parser);
     printf("[%04zu:%04zu] error: %s, found %s '%s'\n", token->line, token->column, message,
-        DMLTokenTypeToString(token->type), token->lexeme);
+        dml_token_type_str(token->type), token->lexeme);
 
     if (!parser->source_len) {
         return;
@@ -161,56 +152,74 @@ literal   → "true" | "false" | "null"
           | IDENTIFIER ;
 */
 
-static bool DMLParserObject(DMLParser *parser, DMLObject *object);
-static bool DMLParserField(DMLParser *parser, DMLField *field);
-static bool DMLParserValue(DMLParser *parser, DMLValue *value);
-static bool DMLParserArray(DMLParser *parser, DMLArray *array);
-static bool DMLParserLiteral(DMLParser *parser, DMLLiteral *literal);
+static bool dml_parser_object(dml_parser *parser, dml_document *document, size_t object_value_idx);
+static bool dml_parser_field(dml_parser *parser, dml_document *document, size_t field_idx);
+static bool dml_parser_value(dml_parser *parser, dml_document *document, size_t value_idx);
+static bool dml_parser_array(dml_parser *parser, dml_document *document, size_t array_value_idx);
+static bool dml_parser_literal(dml_parser *parser, dml_literal *literal);
 
-static bool DMLParserObject(DMLParser *parser, DMLObject *object)
+// Before recursion removed
+//[2020-05-21 07:13:29][    0][       DML][   0.913s] [dml_document_load:   0.006ms] START
+//[2020-05-21 07:13:29][    0][       DML][   0.913s] [dml_document_load:   0.523ms] Loading data/mesh/button.ogex
+//[2020-05-21 07:13:29][    0][       DML][   0.914s] [dml_document_load:   1.207ms] Scanning...
+//[2020-05-21 07:13:29][    0][       DML][   0.928s] [dml_document_load:  15.860ms] Parsing...
+//[2020-05-21 07:13:29][    0][       DML][   0.937s] [dml_document_load:  24.069ms] Loading...
+
+static bool dml_parser_object(dml_parser *parser, dml_document *document, size_t object_value_idx)
 {
-    if (!DMLParserConsume(parser, TOK_LEFT_CURLY_BRACE)) {
-        DMLParserErrorContext(parser, "expected '{' to begin object", DMLParserPeek(parser));
+    if (!dml_parser_consume(parser, TOK_LEFT_CURLY_BRACE)) {
+        dml_parser_error_context(parser, "expected '{' to begin object", dml_parser_peek(parser));
         return false;
     }
 
-    FILL_DEBUG_SYMBOL(object->dbg_symbol, DMLParserPrevious(parser));
+    dml_value *value = &document->value_pool[object_value_idx];
+    DLB_ASSERT(value->type == DML_VALUE_OBJECT);
+    dml_object *object = &value->data.as_object;
+    FILL_DEBUG_SYMBOL(object->dbg_symbol, dml_parser_previous(parser));
 
-    DMLField *fields = 0;
-    while (!DMLParserCheck(parser, TOK_RIGHT_CURLY_BRACE) && !DMLParserIsAtEnd(parser)) {
-        DMLField *field = dlb_vec_alloc(fields);
-        if (!DMLParserField(parser, field)) {
+    size_t *fields = 0;
+    while (!dml_parser_check(parser, TOK_RIGHT_CURLY_BRACE) && !dml_parser_eof(parser)) {
+        size_t field_idx = dlb_vec_len(document->field_pool);
+        dlb_vec_push(fields, field_idx);
+        dlb_vec_alloc(document->field_pool);
+        if (!dml_parser_field(parser, document, field_idx)) {
             dlb_vec_free(fields);
+            dml_parser_sync(parser);
             return false;
         }
     }
 
-    if (!DMLParserConsume(parser, TOK_RIGHT_CURLY_BRACE)) {
-        DMLParserErrorContext(parser, "expected '}' to end object", DMLParserPeek(parser));
+    if (!dml_parser_consume(parser, TOK_RIGHT_CURLY_BRACE)) {
+        dml_parser_error_context(parser, "expected '}' to end object", dml_parser_peek(parser));
         return false;
     }
 
+    value = &document->value_pool[object_value_idx];
+    DLB_ASSERT(value->type == DML_VALUE_OBJECT);
+    object = &value->data.as_object;
     object->fields = fields;
     return true;
 }
 
-static bool DMLParserField(DMLParser *parser, DMLField *field)
+static bool dml_parser_field(dml_parser *parser, dml_document *document, size_t field_idx)
 {
-    DMLToken *name = DMLParserConsume(parser, TOK_IDENTIFIER);
-    if (!name) {
-        DMLParserErrorContext(parser, "expected field identifier", DMLParserPeek(parser));
+    if (!dml_parser_consume(parser, TOK_IDENTIFIER)) {
+        dml_parser_error_context(parser, "expected field identifier", dml_parser_peek(parser));
         return false;
     }
+    dml_token *name = dml_parser_previous(parser);
+    dml_field *field = &document->field_pool[field_idx];
+    FILL_DEBUG_SYMBOL(field->dbg_symbol, dml_parser_previous(parser));
 
-    FILL_DEBUG_SYMBOL(field->dbg_symbol, DMLParserPrevious(parser));
-
-    if (!DMLParserConsume(parser, TOK_COLON)) {
-        DMLParserErrorContext(parser, "expected ':' after field identifier", DMLParserPeek(parser));
+    if (!dml_parser_consume(parser, TOK_COLON)) {
+        dml_parser_error_context(parser, "expected ':' after field identifier", dml_parser_peek(parser));
         return false;
     }
 
     field->name = ta_symbol_intern(name->lexeme, strlen(name->lexeme));
-    if (!DMLParserValue(parser, &field->value)) {
+    field->value_idx = dlb_vec_len(document->value_pool);
+    dlb_vec_alloc(document->value_pool);
+    if (!dml_parser_value(parser, document, field->value_idx)) {
         // TODO: Implement a ta_symbol_free() method that deletes from hash table then calls dlb_symbol_free()
         //ta_symbol_free(field->name);
         return false;
@@ -219,21 +228,22 @@ static bool DMLParserField(DMLParser *parser, DMLField *field)
     return true;
 }
 
-static bool DMLParserValue(DMLParser *parser, DMLValue *value)
+static bool dml_parser_value(dml_parser *parser, dml_document *document, size_t value_idx)
 {
-    DMLToken *token = DMLParserPeek(parser);
+    dml_value *value = &document->value_pool[value_idx];
+    dml_token *token = dml_parser_peek(parser);
     switch (token->type) {
         case TOK_LEFT_CURLY_BRACE:
             value->type = DML_VALUE_OBJECT;
             FILL_DEBUG_SYMBOL(value->dbg_symbol, token);
-            if (!DMLParserObject(parser, &value->data.as_object)) {
+            if (!dml_parser_object(parser, document, value_idx)) {
                 return false;
             }
             break;
         case TOK_LEFT_SQUARE_BRACKET:
             value->type = DML_VALUE_ARRAY;
             FILL_DEBUG_SYMBOL(value->dbg_symbol, token);
-            if (!DMLParserArray(parser, &value->data.as_array)) {
+            if (!dml_parser_array(parser, document, value_idx)) {
                 return false;
             }
             break;
@@ -244,12 +254,12 @@ static bool DMLParserValue(DMLParser *parser, DMLValue *value)
         case TOK_STRING:
             value->type = DML_VALUE_LITERAL;
             FILL_DEBUG_SYMBOL(value->dbg_symbol, token);
-            if (!DMLParserLiteral(parser, &value->data.as_literal)) {
+            if (!dml_parser_literal(parser, &value->data.as_literal)) {
                 return false;
             }
             break;
         default: {
-            DMLParserErrorContext(parser, "expected value", token);
+            dml_parser_error_context(parser, "expected value", token);
             if (!parser->expected_value_context_shown) {
                 fputs("  Expected one of the following value tokens:\n\n"
                     "    type    | starts with\n"
@@ -267,69 +277,78 @@ static bool DMLParserValue(DMLParser *parser, DMLValue *value)
     return true;
 }
 
-static bool DMLParserArray(DMLParser *parser, DMLArray *array)
+// NOTE: Allows array elements to be any type, the consumer of the DML scene should validate this
+static bool dml_parser_array(dml_parser *parser, dml_document *document, size_t array_value_idx)
 {
-    if (!DMLParserConsume(parser, TOK_LEFT_SQUARE_BRACKET)) {
-        DMLParserErrorContext(parser, "expected '[' to begin array", DMLParserPeek(parser));
+    if (!dml_parser_consume(parser, TOK_LEFT_SQUARE_BRACKET)) {
+        dml_parser_error_context(parser, "expected '[' to begin array", dml_parser_peek(parser));
         return false;
     }
 
-    FILL_DEBUG_SYMBOL(array->dbg_symbol, DMLParserPrevious(parser));
+    dml_value *value = &document->value_pool[array_value_idx];
+    DLB_ASSERT(value->type == DML_VALUE_ARRAY);
+    dml_array *array = &value->data.as_array;
+    FILL_DEBUG_SYMBOL(array->dbg_symbol, dml_parser_previous(parser));
 
-    // NOTE: Allow array elements to be any type, the consumer of the DML scene should validate this??
-    DMLValue *values = 0;
     bool first_element = true;
-    while (!DMLParserCheck(parser, TOK_RIGHT_SQUARE_BRACKET) && !DMLParserIsAtEnd(parser)) {
-        if (!first_element && !DMLParserConsume(parser, TOK_COMMA)) {
+    size_t *values = 0;
+    while (!dml_parser_check(parser, TOK_RIGHT_SQUARE_BRACKET) && !dml_parser_eof(parser)) {
+        if (!first_element && !dml_parser_consume(parser, TOK_COMMA)) {
             dlb_vec_free(values);
-            DMLParserErrorContext(parser, "expected ',' between array values", DMLParserPeek(parser));
+            dml_parser_error_context(parser, "expected ',' between array values", dml_parser_peek(parser));
             return false;
         }
 
-        DMLValue *value = dlb_vec_alloc(values);
-        if (!DMLParserValue(parser, value)) {
+        size_t value_idx = dlb_vec_len(document->value_pool);
+        dlb_vec_push(values, value_idx);
+        dlb_vec_alloc(document->value_pool);
+        if (!dml_parser_value(parser, document, value_idx)) {
             dlb_vec_free(values);
             return false;
         }
         first_element = false;
     }
 
-    if (!DMLParserConsume(parser, TOK_RIGHT_SQUARE_BRACKET)) {
-        dlb_vec_free(values);
-        DMLParserErrorContext(parser, "expected ']' to end array", DMLParserPeek(parser));
+    if (!dml_parser_consume(parser, TOK_RIGHT_SQUARE_BRACKET)) {
+        dml_parser_error_context(parser, "expected ']' to end array", dml_parser_peek(parser));
         return false;
     }
 
+    dlb_vec_push(dbg_array_pointers, values);
+
+    value = &document->value_pool[array_value_idx];
+    DLB_ASSERT(value->type == DML_VALUE_ARRAY);
+    array = &value->data.as_array;
     array->values = values;
     return true;
 }
 
-static bool DMLParserLiteral(DMLParser *parser, DMLLiteral *literal)
+static bool dml_parser_literal(dml_parser *parser, dml_literal *literal)
 {
     bool result = false;
-    if (DMLParserMatch(parser, TOK_NULL)) {
+    if (dml_parser_consume(parser, TOK_NULL)) {
         literal->type = DML_LITERAL_NULL;
-        FILL_DEBUG_SYMBOL(literal->dbg_symbol, DMLParserPrevious(parser));
+        FILL_DEBUG_SYMBOL(literal->dbg_symbol, dml_parser_previous(parser));
         result = true;
-    } else if (DMLParserMatch(parser, TOK_TRUE)) {
+    } else if (dml_parser_consume(parser, TOK_TRUE)) {
         literal->type = DML_LITERAL_BOOL;
         literal->data.as_bool = true;
-        FILL_DEBUG_SYMBOL(literal->dbg_symbol, DMLParserPrevious(parser));
+        FILL_DEBUG_SYMBOL(literal->dbg_symbol, dml_parser_previous(parser));
         result = true;
-    } else if (DMLParserMatch(parser, TOK_FALSE)) {
+    } else if (dml_parser_consume(parser, TOK_FALSE)) {
         literal->type = DML_LITERAL_BOOL;
         literal->data.as_bool = false;
-        FILL_DEBUG_SYMBOL(literal->dbg_symbol, DMLParserPrevious(parser));
+        FILL_DEBUG_SYMBOL(literal->dbg_symbol, dml_parser_previous(parser));
         result = true;
-    } else if (DMLParserMatch(parser, TOK_NUMBER)) {
+    } else if (dml_parser_consume(parser, TOK_NUMBER)) {
         // TODO: int vs float vs double (signed vs. unsigned)?
-        DMLToken *prev = DMLParserPrevious(parser);
+        dml_token *prev = dml_parser_previous(parser);
         literal->type = DML_LITERAL_FLOAT;
         literal->data.as_float = prev->literal.as_float;
         FILL_DEBUG_SYMBOL(literal->dbg_symbol, prev);
         result = true;
-    } else if (DMLParserMatch(parser, TOK_STRING)) {
-        DMLToken *prev = DMLParserPrevious(parser);
+    } else if (dml_parser_consume(parser, TOK_STRING)) {
+        dml_token *prev = dml_parser_previous(parser);
         literal->type = DML_LITERAL_STRING;
         literal->data.as_string = prev->literal.as_string;
         FILL_DEBUG_SYMBOL(literal->dbg_symbol, prev);
@@ -338,13 +357,20 @@ static bool DMLParserLiteral(DMLParser *parser, DMLLiteral *literal)
     return result;
 }
 
-void DMLParserParse(DMLParser *parser, DMLObject *document)
+void dml_parser_parse(dml_parser *parser, dml_document *document)
 {
-    while (!DMLParserIsAtEnd(parser)) {
-        DMLField *field = dlb_vec_alloc(document->fields);
-        if (!DMLParserField(parser, field)) {
-            dlb_vec_popz(document->fields);
-            DMLParserSynchronize(parser);
+    dlb_vec_reserve(document->field_pool, 256);
+    dlb_vec_reserve(document->value_pool, 256);
+
+    // NOTE: First value is document root
+    dlb_vec_alloc(document->value_pool);
+    dml_parser_value(parser, document, 0);
+
+    // TODO(cleanup): temp validate
+    for (size_t i = 0; i < dlb_vec_len(document->value_pool); i++) {
+        if (document->value_pool[i].type == DML_VALUE_ARRAY &&
+            document->value_pool[i].data.as_array.values == 0) {
+            DLB_ASSERT(!"fuck");
         }
     }
 }

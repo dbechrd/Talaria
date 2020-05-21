@@ -1633,7 +1633,7 @@ static void ui_camera_panel()
             [DBG_MTL_OCCLUSION]  = { CSTR("Occlusion") },
         };
 
-        for (int mode = 0; mode < ARRAY_COUNT(dbg_modes); ++mode) {
+        for (int mode = 0; mode < ARRAY_SIZE(dbg_modes); ++mode) {
             if (mode && mode % 2 == 0) ta_ui_row_begin();
             ta_ui_next_size(120, 0);
             ta_ui_toggle_button_begin(TA_UI_AUTOSIZE_H);
@@ -1861,7 +1861,7 @@ static void ui_editor_sidebar()
     ta_ui_next_pad(4, 4, 4, 4);
     static ta_ui_panel_state category_panel = { 0 };
     ta_ui_panel_begin(&category_panel, TA_UI_AUTOSIZE);
-    for (int i = 0; i < ARRAY_COUNT(categories); i++) {
+    for (int i = 0; i < ARRAY_SIZE(categories); i++) {
         if (i % 4 == 0) {
             ta_ui_row_begin();
             ta_ui_next_margin(0, 0, 0, 2);

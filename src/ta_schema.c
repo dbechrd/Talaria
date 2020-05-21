@@ -165,47 +165,47 @@ static void type_field_add(ta_schema *schema, ta_schema_field_type type,
 
 #define TYPE_FIELD(type, field, field_type) \
     type_field_add(schema, field_type, INTERN(#field), \
-    OFFSETOF(type, field), SIZEOF_MEMBER(type, field), \
+    OFFSETOF(type, field), FIELD_SIZEOF(type, field), \
     0, false, 0, false, false, 0)
 
 #define TYPE_FIELD_NAME(type, field, field_type, alias) \
     type_field_add(schema, field_type, INTERN(#alias), \
-    OFFSETOF(type, field), SIZEOF_MEMBER(type, field), \
+    OFFSETOF(type, field), FIELD_SIZEOF(type, field), \
     0, false, 0, false, false, 0)
 
 #define TYPE_ENUM(type, field, field_type, converter) \
     type_field_add(schema, field_type, INTERN(#field), \
-    OFFSETOF(type, field), SIZEOF_MEMBER(type, field), \
+    OFFSETOF(type, field), FIELD_SIZEOF(type, field), \
     0, false, converter, false, false, 0)
 
 #define TYPE_ARRAY(type, field, field_type, size) \
     type_field_add(schema, field_type, INTERN(#field), \
-    OFFSETOF(type, field), SIZEOF_MEMBER_ARRAY(type, field), \
+    OFFSETOF(type, field), FIELD_SIZEOF_ARRAY(type, field), \
     size, false, 0, false, false, 0)
 
 #define TYPE_VECTOR(type, field, field_type) \
     type_field_add(schema, field_type, INTERN(#field), \
-    OFFSETOF(type, field), SIZEOF_MEMBER_ARRAY(type, field), \
+    OFFSETOF(type, field), FIELD_SIZEOF_ARRAY(type, field), \
     1, false, 0, false, false, 0)
 
 #define TYPE_UNION_TYPE(type, field, field_type, converter) \
     type_field_add(schema, field_type, INTERN(#field), \
-    OFFSETOF(type, field), SIZEOF_MEMBER(type, field), \
+    OFFSETOF(type, field), FIELD_SIZEOF(type, field), \
     0, false, converter, true, false, 0)
 
 #define TYPE_UNION_FIELD(type, field, field_type, union_name, union_type) \
     type_field_add(schema, field_type, INTERN(#field), \
-    OFFSETOF(type, union_name.field), SIZEOF_MEMBER(type, union_name.field), \
+    OFFSETOF(type, union_name.field), FIELD_SIZEOF(type, union_name.field), \
     0, false, 0, false, true, union_type)
 
 #define TYPE_UNION_ARRAY(type, field, field_type, size, union_name, union_type) \
     type_field_add(schema, field_type, INTERN(#field), \
-    OFFSETOF(type, union_name.field), SIZEOF_MEMBER_ARRAY(type, union_name.field), \
+    OFFSETOF(type, union_name.field), FIELD_SIZEOF_ARRAY(type, union_name.field), \
     size, false, 0, false, true, union_type)
 
 #define TYPE_UNION_VECTOR(type, field, field_type, union_name, union_type) \
     type_field_add(schema, field_type, INTERN(#field), \
-    OFFSETOF(type, union_name.field), SIZEOF_MEMBER_ARRAY(type, union_name.field), \
+    OFFSETOF(type, union_name.field), FIELD_SIZEOF_ARRAY(type, union_name.field), \
     1, false, 0, false, true, union_type)
 
 #define TYPE_END(type) \
