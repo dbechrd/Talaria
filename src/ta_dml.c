@@ -1322,7 +1322,7 @@ static ogx_result dml_load_light(ogx_light *light, DMLValue *value)
             } else if (field->name == dmls_atten) {
                 //result = dml_load_float(&light->atten, &field->value);
                 ogx_light_atten *atten = dlb_vec_alloc(light->attens);
-                result = dml_load_light_atten(&atten, &field->value);
+                result = dml_load_light_atten(atten, &field->value);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_DML, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,

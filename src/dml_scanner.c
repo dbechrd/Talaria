@@ -15,8 +15,7 @@ static bool DMLScannerMatch(DMLScanner *scanner, char expected);
 static char DMLScannerPeek(DMLScanner *scanner);
 static char DMLScannerPeekNext(DMLScanner *scanner);
 static char DMLScannerAdvance(DMLScanner *scanner);
-static DMLToken *DMLScannerAddToken(DMLScanner *scanner, DMLTokenType type);
-static const char *DMLScannerSubstring(const char *str, size_t startIndex, size_t length);
+static DMLToken *DMLScannerAddToken(DMLScanner *scanner, const char *text, DMLTokenType type);
 
 void DMLScannerErrorContext(DMLScanner *scanner, size_t offset)
 {
@@ -54,9 +53,48 @@ void DMLScannerInit(DMLScanner *scanner, const char *source, size_t source_len)
 bool DMLScannerScanTokens(DMLScanner *scanner, DMLToken **tokens)
 {
     scanner->error_flag = false;
+    //dlb_vec_reserve(scanner->tokens, 65536);
+
     while (!DMLScannerIsAtEnd(scanner)) {
         scanner->start = scanner->current;
-        DMLScannerScanToken(scanner);
+        char c = DMLScannerAdvance(scanner);
+        scanner->start_line = scanner->line;
+        scanner->start_column = scanner->column;
+        switch (c) {
+            case '{': DMLScannerAddToken(scanner, "{", TOK_LEFT_CURLY_BRACE); break;
+            case '}': DMLScannerAddToken(scanner, "}", TOK_RIGHT_CURLY_BRACE); break;
+            case '[': DMLScannerAddToken(scanner, "[", TOK_LEFT_SQUARE_BRACKET); break;
+            case ']': DMLScannerAddToken(scanner, "]", TOK_RIGHT_SQUARE_BRACKET); break;
+            case ',': DMLScannerAddToken(scanner, ",", TOK_COMMA); break;
+            case ':': DMLScannerAddToken(scanner, ":", TOK_COLON); break;
+            case '\t':
+                scanner->column += DML_ERROR_CONTEXT_TAB_WIDTH - 1;
+            case ' ':
+            case '\r':
+                // ignore whitespace
+                break;
+            case '\n':
+                scanner->line++;
+                scanner->column = 0;
+                break;
+            case '"':
+                DMLScannerScanString(scanner);
+                break;
+            case '#':
+                DMLScannerScanComment(scanner);
+                break;
+            default:
+                if (DMLScannerIsDigit(c)) {
+                    DMLScannerScanNumber(scanner);
+                } else if (DMLScannerIsAlpha(c)) {
+                    DMLScannerScanIdentifier(scanner);
+                } else {
+                    //Lox.Error(scanner->line, scanner->column, $"Unexpected character '{c}'.");
+                    printf("[%04zu:%04zu] error: unexpected character '%c'\n", scanner->line, scanner->column, c);
+                    DMLScannerErrorContext(scanner, 0);
+                }
+                break;
+        }
     }
 
     DMLToken *token = dlb_vec_alloc(scanner->tokens);
@@ -71,74 +109,6 @@ bool DMLScannerScanTokens(DMLScanner *scanner, DMLToken **tokens)
 static bool DMLScannerIsAtEnd(DMLScanner *scanner)
 {
     return scanner->current >= scanner->source_len;
-}
-
-static void DMLScannerScanToken(DMLScanner *scanner)
-{
-    char c = DMLScannerAdvance(scanner);
-    scanner->start_line = scanner->line;
-    scanner->start_column = scanner->column;
-    switch (c) {
-        //case '\t': DMLScannerAddToken(scanner, TOK_TAB); break;
-        //case '(': DMLScannerAddToken(scanner, TOK_LEFT_PAREN); break;
-        //case ')': DMLScannerAddToken(scanner, TOK_RIGHT_PAREN); break;
-        case '{': DMLScannerAddToken(scanner, TOK_LEFT_CURLY_BRACE); break;
-        case '}': DMLScannerAddToken(scanner, TOK_RIGHT_CURLY_BRACE); break;
-        case '[': DMLScannerAddToken(scanner, TOK_LEFT_SQUARE_BRACKET); break;
-        case ']': DMLScannerAddToken(scanner, TOK_RIGHT_SQUARE_BRACKET); break;
-        case ',': DMLScannerAddToken(scanner, TOK_COMMA); break;
-        //case '.': DMLScannerAddToken(scanner, TOK_DOT); break;
-        //case '-': DMLScannerAddToken(scanner, TOK_MINUS); break;
-        //case '+': DMLScannerAddToken(scanner, TOK_PLUS); break;
-        //case ';': DMLScannerAddToken(scanner, TOK_SEMICOLON); break;
-        //case '*': DMLScannerAddToken(scanner, TOK_STAR); break;
-        case ':': DMLScannerAddToken(scanner, TOK_COLON); break;
-        //case '!': DMLScannerAddToken(scanner, DMLScannerMatch(scanner, '=') ? TOK_BANG_EQUAL : TOK_BANG); break;
-        //case '=': DMLScannerAddToken(scanner, DMLScannerMatch(scanner, '=') ? TOK_EQUAL_EQUAL : TOK_EQUAL); break;
-        //case '<': DMLScannerAddToken(scanner, DMLScannerMatch(scanner, '=') ? TOK_LESS_EQUAL : TOK_LESS); break;
-        //case '>': DMLScannerAddToken(scanner, DMLScannerMatch(scanner, '=') ? TOK_GREATER_EQUAL : TOK_GREATER); break;
-        //case '/':
-        //    if (DMLScannerMatch(scanner, '/'))
-        //    {
-        //        // Eat comment
-        //        while (DMLScannerPeek(scanner) != '\n' && !DMLScannerIsAtEnd(scanner))
-        //        {
-        //            DMLScannerAdvance(scanner);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        DMLScannerAddToken(scanner, TOK_SLASH);
-        //    }
-        //    break;
-        case '\t':
-            scanner->column += DML_ERROR_CONTEXT_TAB_WIDTH - 1;
-        case ' ':
-        case '\r':
-            // ignore whitespace
-            break;
-        case '\n':
-            scanner->line++;
-            scanner->column = 0;
-            break;
-        case '"':
-            DMLScannerScanString(scanner);
-            break;
-        case '#':
-            DMLScannerScanComment(scanner);
-            break;
-        default:
-            if (DMLScannerIsDigit(c)) {
-                DMLScannerScanNumber(scanner);
-            } else if (DMLScannerIsAlpha(c)) {
-                DMLScannerScanIdentifier(scanner);
-            } else {
-                //Lox.Error(scanner->line, scanner->column, $"Unexpected character '{c}'.");
-                printf("[%04zu:%04zu] error: unexpected character '%c'\n", scanner->line, scanner->column, c);
-                DMLScannerErrorContext(scanner, 0);
-            }
-            break;
-    }
 }
 
 static void DMLScannerScanString(DMLScanner *scanner)
@@ -156,13 +126,12 @@ static void DMLScannerScanString(DMLScanner *scanner)
 
     // TODO(dlb): If we wanted to support escapes sequences in strings (e.g. '\n', etc.), we would need to
     // unescape them here.
-    // TODO: Intern string
-    const char *value = DMLScannerSubstring(scanner->source, scanner->start + 1, scanner->current - scanner->start - 1);
+    const char *value = ta_symbol_intern(scanner->source + scanner->start + 1, scanner->current - scanner->start - 1);
 
     // eat closing '"'
     DMLScannerAdvance(scanner);
 
-    DMLToken *token = DMLScannerAddToken(scanner, TOK_STRING);
+    DMLToken *token = DMLScannerAddToken(scanner, value, TOK_STRING);
     token->literal.as_string = value;
 }
 
@@ -199,15 +168,8 @@ static void DMLScannerScanNumber(DMLScanner *scanner)
         }
     }
 
-    char text[32] = { 0 };
-    size_t text_len = scanner->current - scanner->start;
-    assert(text_len < sizeof(text) - 1);
-    memcpy(text, scanner->source + scanner->start, text_len);
-
-    //const char *text = DMLScannerSubstring(scanner->source, scanner->start, scanner->current - scanner->start);
-
-    float value = parse_float(text);
-    DMLToken *token = DMLScannerAddToken(scanner, TOK_NUMBER);
+    float value = parse_float(scanner->source + scanner->start);
+    DMLToken *token = DMLScannerAddToken(scanner, "<number>", TOK_NUMBER);
     token->literal.as_float = value;
 }
 
@@ -220,22 +182,28 @@ static void DMLScannerScanIdentifier(DMLScanner *scanner)
     static struct {
         const char *name;
         DMLTokenType tokenType;
-    } keywords[] = {
-        { "null",   TOK_NULL },
-        { "false",  TOK_FALSE },
-        { "true",   TOK_TRUE },
+    } keywords[3] = {
+        { 0, TOK_NULL },
+        { 0, TOK_FALSE },
+        { 0, TOK_TRUE },
     };
 
-    const char *text = DMLScannerSubstring(scanner->source, scanner->start, scanner->current - scanner->start);
+    if (!keywords[0].name) {
+        keywords[0].name = INTERN("null");
+        keywords[1].name = INTERN("false");
+        keywords[2].name = INTERN("true");
+    }
+
+    const char *text = ta_symbol_intern(scanner->source + scanner->start, scanner->current - scanner->start);
     DMLTokenType type = TOK_IDENTIFIER;
-    for (size_t i = 0; i < sizeof(keywords)/sizeof(*keywords); i++) {
-        if (!strcmp(text, keywords[i].name)) {
+    for (size_t i = 0; i < ARRAY_COUNT(keywords); i++) {
+        if (text == keywords[i].name) {
             type = keywords[i].tokenType;
             break;
         }
     }
 
-    DMLToken *token = DMLScannerAddToken(scanner, type);
+    DMLScannerAddToken(scanner, text, type);
 }
 
 static bool DMLScannerIsDigit(char c)
@@ -297,19 +265,10 @@ static char DMLScannerAdvance(DMLScanner *scanner)
     return scanner->source[scanner->current - 1];
 }
 
-static DMLToken *DMLScannerAddToken(DMLScanner *scanner, DMLTokenType type)
+static DMLToken *DMLScannerAddToken(DMLScanner *scanner, const char *text, DMLTokenType type)
 {
-    size_t length = scanner->current - scanner->start;
-    const char *text = DMLScannerSubstring(scanner->source, scanner->start, length);
     DMLToken *token = dlb_vec_alloc(scanner->tokens);
+    size_t length = scanner->current - scanner->start;
     DMLTokenInit(token, type, text, scanner->start_line, scanner->start_column, scanner->start, length);
     return token;
-}
-
-static const char *DMLScannerSubstring(const char *str, size_t startIndex, size_t length)
-{
-    assert(length);
-    char *text = calloc(1, length + 1);
-    memcpy(text, str + startIndex, length);
-    return text;
 }

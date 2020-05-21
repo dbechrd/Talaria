@@ -196,14 +196,15 @@ void ta_game_init()
     // Scene
     //--------------------------------------------------------------------------
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading ogex test file...\n");
-    dml_load("data/mesh/skeleton_test.ogex");
-    //dml_load("data/mesh/button.ogex");
+    //dml_load("data/mesh/skeleton_test.ogex");
+    dml_load("data/mesh/button.ogex");
     //dml_load("data/mesh/dude.ogex");
 
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading first scene...\n");
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
+#if 0
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb"); // stride != 0 (interleaved attributes)
     //ta_game_load_gltf("data/mesh/bee.glb");               // diffuse fails to load
     //ta_game_load_gltf("data/mesh/Dodecahedron.gltf");     // has external URIs
@@ -215,6 +216,7 @@ void ta_game_init()
     ta_game_load_gltf("data/mesh/button.gltf");
     ta_game_load_gltf("data/mesh/dude.gltf");
     ta_game_load_gltf("data/mesh/skeleton_test.gltf");
+#endif
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
     tg_material_default = ta_game_by_name_try(RES_MATERIAL, SYM(INTERN("material_unknown")));
 
@@ -251,12 +253,13 @@ void ta_game_init()
     tg_e_background_music = SYM_ENTITY_BACKGROUND_MUSIC;
     DLB_ASSERT(tg_e_background_music);
 
-    ta_audio_source *bg_music_src = ta_game_component(tg_e_background_music, RES_COMP_AUDIO_SOURCE);
-    DLB_ASSERT(bg_music_src);
+    ta_audio_source *bg_music_src = ta_game_component_try(tg_e_background_music, RES_COMP_AUDIO_SOURCE);
+    if (bg_music_src) {
+        //ta_audio_source_play_loop(bg_music_src);
+    }
 
     ta_audio_listener_set_volume(&tg_audio_listener, 0.2f);
     //ta_audio_listener_mute(&tg_audio_listener);
-    //ta_audio_source_play_loop(bg_music_src);
 
     //--------------------------------------------------------------------------
     // Textures
@@ -406,9 +409,6 @@ void ta_game_init()
     tg_shader_lines   = ta_game_by_sym(RES_SHADER, INTERN("lines"));
     tg_shader_quads   = ta_game_by_sym(RES_SHADER, INTERN("quads"));
     tg_shader_cubemap = ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
-    DLB_ASSERT(tg_shader_lines);
-    DLB_ASSERT(tg_shader_quads);
-    DLB_ASSERT(tg_shader_cubemap);
 
 #if _DEBUG
     ta_game_state_set(TA_STATE_FREE_CAM);

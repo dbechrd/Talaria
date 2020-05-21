@@ -73,9 +73,28 @@ void ta_texture_create_and_bind(ta_texture *tex)
         "Generating GPU texture %s (w: %d, h: %d, channels: %d)\n",
         tex->name, tex->width, tex->height, tex->channels);
 
-    GLenum target = texture_target(tex);
+// TODO: Too much variance in engine load times.. not obvious if this is better or not.
+#if 0
+    static GLuint *tex_id_pool = 0;
+    static size_t next_id = 0;
+    size_t pool_len = dlb_vec_len(tex_id_pool);
+    if (next_id >= pool_len) {
+        size_t new_pool_len = MAX(pool_len * 2, 32);
+        dlb_vec_alloc_count(tex_id_pool, new_pool_len - pool_len);
+        glGenTextures((GLsizei)(new_pool_len - pool_len), tex_id_pool + pool_len);
+        ta_log_write(&tg_debug_log, SRC_TEXTURE, "tex_id_pool resized\n", tex->gl_id);
+    }
+    tex->gl_id = tex_id_pool[next_id];
+    next_id++;
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID %u claimed\n", tex->gl_id);
+#else
     glGenTextures(1, &tex->gl_id);
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID %u generated\n", tex->gl_id);
+#endif
+
+    GLenum target = texture_target(tex);
     glBindTexture(target, tex->gl_id);
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID bound\n");
 
     GLint param = tex->repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
     glTexParameteri(target, GL_TEXTURE_WRAP_S, param);
@@ -86,6 +105,7 @@ void ta_texture_create_and_bind(ta_texture *tex)
 
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture parameters set\n");
 
     //GLuint *gl_id = dlb_vec_alloc(gl_ids[queue]);
     //*gl_id = texture->gl_id;

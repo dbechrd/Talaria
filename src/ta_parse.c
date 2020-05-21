@@ -2,28 +2,28 @@
 #include "dlb/dlb_types.h"
 #include <stdlib.h>
 
-unsigned int parse_uint(char *buf)
+unsigned int parse_uint(const char *buf)
 {
     DLB_ASSERT(buf);
     unsigned long value = strtoul(buf, 0, 10);
     return (unsigned int)value;
 }
 
-int parse_int_hex(char *buf)
+int parse_int_hex(const char *buf)
 {
     DLB_ASSERT(buf);
     int value = (int)strtoul(buf, 0, 16);
     return value;
 }
 
-int parse_int_binary(char *buf)
+int parse_int_binary(const char *buf)
 {
     UNUSED(buf);
     DLB_ASSERT(!"[PARSE_ERROR] Binary integers not yet supported.");
     return 0;
 }
 
-int parse_int(char *buf)
+int parse_int(const char *buf)
 {
     DLB_ASSERT(buf && buf[0]);
     int value;
@@ -37,12 +37,12 @@ int parse_int(char *buf)
     return value;
 }
 
-float parse_float(char *buf)
+float parse_float(const char *buf)
 {
     DLB_ASSERT(buf && buf[0]);
     float value;
     if (buf[0] == '0' && buf[1] == 'x') {
-        int as_int = parse_int_hex(buf);;
+        int as_int = parse_int_hex(buf);
         value = *(float *)&as_int;
     } else {
         value = strtof(buf, 0);

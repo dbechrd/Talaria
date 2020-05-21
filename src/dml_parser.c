@@ -8,7 +8,7 @@
         dbg_symbol.line = token->line;           \
         dbg_symbol.column = token->column;
 #else
-    #define FILL_DEBUG_SYMBOL
+    #define FILL_DEBUG_SYMBOL(dbg_symbol, token)
 #endif
 
 void DMLParserInit(DMLParser *parser, struct DMLToken *tokens, const char *filename, const char *source,
@@ -117,7 +117,6 @@ static void DMLParserErrorContext(DMLParser *parser, const char *message, DMLTok
 
     const char *context = parser->source + context_start;
     size_t context_len = (context_end - context_start);
-    size_t tab_count = 0;
 
     char context_buf[80] = { 0 };
     char caret_buf[80] = { 0 };

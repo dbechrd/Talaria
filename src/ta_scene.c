@@ -1,25 +1,8 @@
-#include "ta_audio.h"
-#include "ta_button.h"
-#include "ta_camera.h"
-#include "ta_editor.h"
-#include "ta_file.h"
-#include "ta_font.h"
-#include "ta_game.h"
-#include "ta_intersect.h"
-#include "ta_light.h"
-#include "ta_log.h"
-#include "ta_material.h"
-#include "ta_model.h"
-#include "ta_parse.h"
-#include "ta_transform.h"
-#include "ta_primitive.h"
-#include "ta_rigid_body.h"
 #include "ta_scene.h"
-#include "ta_shader.h"
+#include "ta_file.h"
+#include "ta_schema.h"
 #include "ta_symbol.h"
-#include "ta_texture.h"
 #include "ta_token.h"
-#include "ta_window.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_index.h"
 #include <stdlib.h>
@@ -50,6 +33,8 @@ void ta_scene_load(ta_scene *scene, ta_file *file)
     ta_log_write(&tg_debug_log, SRC_SCENE, "Initializing scene %s\n", file->filename);
     ta_scene_init(scene);
 
+    ta_log_timed_region_start(&tg_debug_log, SRC_SCENE, CSTR("scene_parse"));
+
     ta_log_write(&tg_debug_log, SRC_SCENE, "Tokenizing scene\n");
     // TODO: Reserve arrays based on scene header (which doesn't exist yet)
     //dlb_vec_reserve(scene->entities, 2);
@@ -63,6 +48,9 @@ void ta_scene_load(ta_scene *scene, ta_file *file)
     tokens_parse(scene, tokens);
     dlb_vec_free(tokens);
 
+    ta_log_timed_region_end(&tg_debug_log, CSTR("scene_parse"));
+
+    ta_log_write(&tg_debug_log, SRC_SCENE, "Initializing scene\n");
     // Initialize resources
     // NOTE: Iterate backward to ensure resources are initialized before
     // components, which might depend on them.

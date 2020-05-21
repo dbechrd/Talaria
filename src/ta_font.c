@@ -128,8 +128,7 @@ void ta_font_load_path(ta_font *font, const char *path)
 
     glGenTextures(1, &font->gl_id);
     glBindTexture(GL_TEXTURE_2D, font->gl_id);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, font->tex_w, font->tex_h, 0, GL_RED,
-        GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, font->tex_w, font->tex_h, 0, GL_RED, GL_UNSIGNED_BYTE, pixels);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     dlb_vec_free(buf);
