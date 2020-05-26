@@ -1,9 +1,9 @@
+#include "ta_asset_watcher.h"
 #include "ta_audio.h"
 #include "ta_button.h"
 #include "ta_camera.h"
 #include "ta_collider.h"
 #include "ta_console.h"
-#include "ta_dml.h"
 #include "ta_editor.h"
 #include "ta_event.h"
 #include "ta_font.h"
@@ -16,6 +16,8 @@
 #include "ta_mesh.h"
 #include "ta_model.h"
 #include "ta_mouse.h"
+#include "ta_ogx.h"
+#include "ta_ogx_parser.h"
 #include "ta_player.h"
 #include "ta_primitive.h"
 #include "ta_rigid_body.h"
@@ -30,6 +32,7 @@
 #include "ta_window.h"
 #include "dlb/dlb_vector.h"
 #include "dlb/dlb_rand.h"
+#include "misc/stb_image.h"
 #include "GLFW/glfw3.h"
 #include "misc/glad.h"
 
@@ -197,8 +200,13 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading ogex test file...\n");
     //dml_document_load("data/mesh/skeleton_test.ogex");
-    dml_document_load("data/mesh/button.ogex");
+    //dml_document_load("data/mesh/button.ogex");
     //dml_document_load("data/mesh/dude.ogex");
+
+    ogx_scene scene = { 0 };
+    if (ogx_scene_from_file(&scene, "data/mesh/chamber_0002.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(&scene);
+    }
 
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading first scene...\n");
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
@@ -409,6 +417,8 @@ void ta_game_init()
     tg_shader_lines   = ta_game_by_sym(RES_SHADER, INTERN("lines"));
     tg_shader_quads   = ta_game_by_sym(RES_SHADER, INTERN("quads"));
     tg_shader_cubemap = ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
+
+    ta_asset_watcher_init("C:/Users/user/Documents/Development/Talaria/bin/data/texture");
 
 #if _DEBUG
     ta_game_state_set(TA_STATE_FREE_CAM);

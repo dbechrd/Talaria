@@ -1,3 +1,6 @@
 [submodule "include/dlb"]
 	path = include/dlb
 	url = git@github.com:dbechrd/dlb.git
+[submodule "include/tinycthread"]
+	path = include/tinycthread
+	url = git@github.com:tinycthread/tinycthread.git

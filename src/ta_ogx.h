@@ -1,5 +1,5 @@
 #pragma once
-#include <stdint.h>
+#include "dlb/dlb_types.h"
 
 typedef float ogx_vec2[2];
 typedef float ogx_vec3[3];
@@ -256,26 +256,9 @@ typedef struct ogx_scene {
     ogx_texture *textures;
 } ogx_scene;
 
-typedef enum ogx_result {
-    OGX_SUCCESS,
-    OGX_FILE_INVALID,
-    OGX_SYNTAX_ERROR,
-    OGX_EMPTY_DOCUMENT,
-    OGX_UNEXPECTED_VALUE,
-    OGX_UNEXPECTED_TYPE,
-    OGX_UNEXPECTED_FIELD,
-    OGX_EXPECTED_LITERAL,
-    OGX_EXPECTED_BOOL,
-    OGX_EXPECTED_STRING,
-    OGX_EXPECTED_FLOAT,
-    OGX_EXPECTED_ARRAY,
-    OGX_EXPECTED_OBJECT,
-    OGX_INVALID_ARRAY_LENGTH,
-    OGX_UNKNOWN_TYPE,
-    OGX_NOT_IMPLEMENTED,
+const char *ogx_key_kind_str[OGX_KEY_KIND_COUNT];
+const char *ogx_type_str[OGX_TYPE_COUNT];
+const char *ogx_time_curve_str[OGX_TIME_CURVE_COUNT];
+const char *ogx_value_curve_str[OGX_VALUE_CURVE_COUNT];
 
-    OGX_RESULT_COUNT
-} ogx_result;
-
-ogx_result dml_document_load(const char *filename);
-void dml_document_free(dml_document *document);
+void ta_ogx_load(ogx_scene *scene);

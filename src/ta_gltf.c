@@ -381,7 +381,7 @@ void gltf_dump(cgltf_data *data)
                 size_t extras_len = mesh->extras.end_offset - mesh->extras.start_offset;
 
                 printf("    extras: (%zu bytes)\n", extras_len);
-                printf("      json: %*.s\n", (int)extras_len, extras);
+                printf("      json: %.*s\n", (int)extras_len, extras);
                 printf("      dump:\n");
 
                 jsmntok_t *tokens = 0;

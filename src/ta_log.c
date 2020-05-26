@@ -30,6 +30,7 @@ const char *ta_log_source_str(ta_log_source src) {
         case SRC_KEYBIND:       return "KEYBIND";
         case SRC_LIGHT:         return "LIGHT";
         case SRC_MATH:          return "MATH";
+        case SRC_OGX:           return "OGX";
         case SRC_OPENGL:        return "OPENGL";
         case SRC_PRIMITIVE:     return "PRIMITIVE";
         case SRC_RENDER:        return "RENDER";
@@ -250,8 +251,9 @@ void ta_log_timed_region_end(ta_log *log, const char *name, size_t name_len)
     while (region) {
         //ta_log_unindent(log);
         ta_log_write(log, region->src, "END\n");
+        bool found = region->name == name_sym;
         dlb_vec_popz(state->timed_regions);
-        if (region->name == name_sym) {
+        if (found) {
             break;
         }
         region = dlb_vec_last(state->timed_regions);

@@ -147,12 +147,12 @@ int main(int argc, char *argv[])
 #include "dml_scanner.c"
 #include "dml_token.c"
 #include "ta_animation.c"
+#include "ta_asset_watcher.c"
 #include "ta_audio.c"
 #include "ta_button.c"
 #include "ta_camera.c"
 #include "ta_collider.c"
 #include "ta_console.c"
-#include "ta_dml.c"
 #include "ta_editor.c"
 #include "ta_event.c"
 #include "ta_file.c"
@@ -170,6 +170,8 @@ int main(int argc, char *argv[])
 #include "ta_mesh.c"
 #include "ta_model.c"
 #include "ta_mouse.c"
+#include "ta_ogx.c"
+#include "ta_ogx_parser.c"
 #include "ta_parse.c"
 #include "ta_player.c"
 #include "ta_primitive.c"
@@ -222,6 +224,8 @@ int main(int argc, char *argv[])
 #define CGLTF_IMPLEMENTATION
 #include "misc/cgltf.h"
 #undef CGLTF_IMPLEMENTATION
+
+#include "tinycthread/source/tinycthread.c"
 
 #if 0
 #undef KB

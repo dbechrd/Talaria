@@ -1,7 +1,7 @@
 #include "dml_scanner.h"
 #include "dml_token.h"
 
-void dml_scanner_init(DMLScanner *scanner, const char *source, size_t source_len)
+void dml_scanner_init(dml_scanner *scanner, const char *source, size_t source_len)
 {
     scanner->source = source;
     scanner->source_len = source_len;
@@ -13,16 +13,16 @@ void dml_scanner_init(DMLScanner *scanner, const char *source, size_t source_len
     scanner->error_flag = false;
 }
 
-static inline bool dml_scanner_eof(DMLScanner *scanner)
+static inline bool dml_scanner_eof(dml_scanner *scanner)
 {
     return scanner->current >= scanner->source_len;
 }
-static inline void dml_scanner_advance(DMLScanner *scanner)
+static inline void dml_scanner_advance(dml_scanner *scanner)
 {
     scanner->current++;
     scanner->column++;
 }
-static char dml_scanner_peek(DMLScanner *scanner)
+static char dml_scanner_peek(dml_scanner *scanner)
 {
     if (dml_scanner_eof(scanner)) {
         return '\0';
@@ -30,7 +30,7 @@ static char dml_scanner_peek(DMLScanner *scanner)
 
     return scanner->source[scanner->current];
 }
-static char dml_scanner_peek_next(DMLScanner *scanner)
+static char dml_scanner_peek_next(dml_scanner *scanner)
 {
     if (scanner->current + 1 >= scanner->source_len) {
         return '\0';
@@ -38,7 +38,7 @@ static char dml_scanner_peek_next(DMLScanner *scanner)
 
     return scanner->source[scanner->current + 1];
 }
-static bool dml_scanner_match(DMLScanner *scanner, char expected)
+static bool dml_scanner_match(dml_scanner *scanner, char expected)
 {
     if (!dml_scanner_eof(scanner) && scanner->source[scanner->current] == expected) {
         scanner->current++;
@@ -65,7 +65,7 @@ static bool dml_scanner_is_hex(char c)
     return dml_scanner_is_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
-static dml_token *dml_scanner_add_token(DMLScanner *scanner, const char *text, dml_token_type type)
+static dml_token *dml_scanner_add_token(dml_scanner *scanner, const char *text, dml_token_type type)
 {
     dml_token *token = dlb_vec_alloc(scanner->tokens);
     size_t length = scanner->current - scanner->start;
@@ -73,7 +73,7 @@ static dml_token *dml_scanner_add_token(DMLScanner *scanner, const char *text, d
     return token;
 }
 
-static void dml_scanner_error_context(DMLScanner *scanner, size_t offset)
+static void dml_scanner_error_context(dml_scanner *scanner, size_t offset)
 {
     scanner->error_flag = true;
 
@@ -94,7 +94,7 @@ static void dml_scanner_error_context(DMLScanner *scanner, size_t offset)
     fputs("^\n\n", stdout);
 }
 
-static void dml_scanner_scan_string(DMLScanner *scanner)
+static void dml_scanner_scan_string(dml_scanner *scanner)
 {
     while (dml_scanner_peek(scanner) != '"' && dml_scanner_peek(scanner) != '\n' && !dml_scanner_eof(scanner)) {
         dml_scanner_advance(scanner);
@@ -117,7 +117,7 @@ static void dml_scanner_scan_string(DMLScanner *scanner)
     dml_token *token = dml_scanner_add_token(scanner, value, TOK_STRING);
     token->literal.as_string = value;
 }
-static void dml_scanner_scan_comment(DMLScanner *scanner)
+static void dml_scanner_scan_comment(dml_scanner *scanner)
 {
     while (dml_scanner_peek(scanner) != '\n' && !dml_scanner_eof(scanner)) {
         if (dml_scanner_peek(scanner) == '\n') {
@@ -126,7 +126,7 @@ static void dml_scanner_scan_comment(DMLScanner *scanner)
         dml_scanner_advance(scanner);
     }
 }
-static void dml_scanner_scan_number(DMLScanner *scanner)
+static void dml_scanner_scan_number(dml_scanner *scanner)
 {
     if (scanner->source[scanner->start] == '0' && dml_scanner_peek(scanner) == 'x') {
         dml_scanner_advance(scanner);
@@ -153,7 +153,7 @@ static void dml_scanner_scan_number(DMLScanner *scanner)
     dml_token *token = dml_scanner_add_token(scanner, "<number>", TOK_NUMBER);
     token->literal.as_float = value;
 }
-static void dml_scanner_scan_identifier(DMLScanner *scanner)
+static void dml_scanner_scan_identifier(dml_scanner *scanner)
 {
     while (dml_scanner_is_alpha_num(dml_scanner_peek(scanner))) {
         dml_scanner_advance(scanner);
@@ -185,7 +185,7 @@ static void dml_scanner_scan_identifier(DMLScanner *scanner)
 
     dml_scanner_add_token(scanner, text, type);
 }
-bool dml_scanner_scan_tokens(DMLScanner *scanner, dml_token **tokens)
+bool dml_scanner_scan_tokens(dml_scanner *scanner, dml_token **tokens)
 {
     scanner->error_flag = false;
     //dlb_vec_reserve(scanner->tokens, 65536);

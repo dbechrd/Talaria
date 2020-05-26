@@ -1,0 +1,1 @@
+void ta_asset_watcher_init(const char *data_path);

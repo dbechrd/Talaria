@@ -1,5 +1,13 @@
 #pragma once
 
+typedef enum dml_result {
+    DML_SUCCESS,
+    DML_FILE_INVALID,
+    DML_SYNTAX_ERROR,
+
+    DML_RESULT_COUNT
+} dml_result;
+
 #define DML_ERROR_CONTEXT_TAB_WIDTH 2
 
 #if _DEBUG
@@ -75,6 +83,9 @@ typedef struct dml_document {
     dml_value *value_pool;  // vector
     size_t root_value_idx;
 } dml_document;
+
+dml_result dml_document_from_file(dml_document *document, const char *filename);
+void dml_document_free(dml_document *document);
 
 //void DMLPrintObject(dml_object *object, int indent);
 //void DMLPrintArray(dml_array *array, int indent);

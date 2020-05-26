@@ -1,6 +1,6 @@
 #pragma once
 
-typedef struct DMLScanner {
+typedef struct dml_scanner {
     const char *source;
     size_t source_len;
     struct dml_token *tokens;
@@ -11,7 +11,7 @@ typedef struct DMLScanner {
     size_t start_line;
     size_t start_column;
     bool error_flag;
-} DMLScanner;
+} dml_scanner;
 
-void dml_scanner_init(DMLScanner *scanner, const char *source, size_t source_len);
-bool dml_scanner_scan_tokens(DMLScanner *scanner, struct dml_token **tokens);
+void dml_scanner_init(dml_scanner *scanner, const char *source, size_t source_len);
+bool dml_scanner_scan_tokens(dml_scanner *scanner, struct dml_token **tokens);
