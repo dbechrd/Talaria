@@ -19,54 +19,56 @@ void ta_asset_watcher_init(const char *data_path)
     int result = thrd_create(&asset_watcher_thread, ta_asset_watcher_watch, args);
 }
 
-static void ta_asset_watcher_hotload_shader(const char *path)
-{
-    UNUSED(path);
-}
-
-static void ta_asset_watcher_hotload_texture(const char *path)
-{
-    UNUSED(path);
-}
-
 static int ta_asset_watch_handle_change(HANDLE hDirectory)
 {
     DWORD bytesReturned = 0;
-    WCHAR buffer[256] = { 0 };
+    char *buffer[1024] = { 0 };
     DWORD success = ReadDirectoryChangesW(
         hDirectory,
         buffer,
         sizeof(buffer),
         TRUE,
-        FILE_NOTIFY_CHANGE_LAST_WRITE,
+        FILE_NOTIFY_CHANGE_FILE_NAME
+        //| FILE_NOTIFY_CHANGE_DIR_NAME
+        //| FILE_NOTIFY_CHANGE_ATTRIBUTES
+        //| FILE_NOTIFY_CHANGE_SIZE
+        | FILE_NOTIFY_CHANGE_LAST_WRITE
+        //| FILE_NOTIFY_CHANGE_LAST_ACCESS
+        //| FILE_NOTIFY_CHANGE_CREATION
+        //| FILE_NOTIFY_CHANGE_SECURITY
+        ,
         &bytesReturned,
         NULL,
-        NULL);
+        NULL
+    );
 
     if (success) {
         if (bytesReturned) {
-            FILE_NOTIFY_INFORMATION *info = (FILE_NOTIFY_INFORMATION *)buffer;
-            //printf("[ASSET_WATCHER] bytes_returned = %u\n", bytesReturned);
+            FILE_NOTIFY_INFORMATION *info = (void *)buffer;
+            printf("[ASSET_WATCHER] bytes_returned = %u\n", bytesReturned);
             for (;;) {
                 const char *action_str = 0;
                 switch (info->Action) {
-                    case FILE_ACTION_ADDED           : action_str = "FILE_ACTION_ADDED"; break;
-                    case FILE_ACTION_REMOVED         : action_str = "FILE_ACTION_REMOVED"; break;
-                    case FILE_ACTION_MODIFIED        : action_str = "FILE_ACTION_MODIFIED"; break;
-                    case FILE_ACTION_RENAMED_OLD_NAME: action_str = "FILE_ACTION_RENAMED_OLD_NAME"; break;
-                    case FILE_ACTION_RENAMED_NEW_NAME: action_str = "FILE_ACTION_RENAMED_NEW_NAME"; break;
+                    case FILE_ACTION_ADDED           : action_str = "File created"; break;
+                    case FILE_ACTION_REMOVED         : action_str = "File removed"; break;
+                    case FILE_ACTION_MODIFIED        : action_str = "File modified"; break;
+                    case FILE_ACTION_RENAMED_OLD_NAME: action_str = "File renamed from"; break;
+                    case FILE_ACTION_RENAMED_NEW_NAME: action_str = "File renamed to"; break;
                 }
                 if (action_str) {
                     printf("[ASSET_WATCHER] %s %.*ls\n", action_str, info->FileNameLength, info->FileName);
+                } else {
+                    printf("[ASSET_WATCHER] UNKOWN (%u) %.*ls\n", info->Action, info->FileNameLength, info->FileName);
                 }
                 if (!info->NextEntryOffset) {
                     break;
                 }
-                info += info->NextEntryOffset;
+                info = (FILE_NOTIFY_INFORMATION *)((char *)info + info->NextEntryOffset);
             }
+            printf("---------\n");
         } else {
             // Nothing we can do about this.. always happens on the first call, annoyingly
-            printf("[ASSET_WATCHER] WARNING: ReadDirectoryChangesW failed, buffer was not big enough.\n");
+            printf("[ASSET_WATCHER] WARNING: ReadDirectoryChangesW failed, buffer too small or too big.\n");
         }
     } else {
         DWORD err = GetLastError();
@@ -80,24 +82,18 @@ int ta_asset_watcher_watch(ta_asset_watcher_thread_args *args)
 {
     int err = 0;
 
-    DWORD dwWaitStatus;
-    HANDLE hDirectory;
-    TCHAR lpDrive[4];
-    TCHAR lpFile[_MAX_FNAME];
-    TCHAR lpExt[_MAX_EXT];
-
-    _tsplitpath_s(args->lpDir, lpDrive, 4, NULL, 0, lpFile, _MAX_FNAME, lpExt, _MAX_EXT);
-
-    lpDrive[2] = (TCHAR)'\\';
-    lpDrive[3] = (TCHAR)'\0';
-
-    // Watch the directory for file changes
-    hDirectory = FindFirstChangeNotification(
-        args->lpDir,                    // directory to watch
-        TRUE,                           // watch the subtree
-        FILE_NOTIFY_CHANGE_LAST_WRITE   // watch file writes
+    // Open directory handle
+    HANDLE hDirectory = CreateFile(
+        args->lpDir,
+        FILE_LIST_DIRECTORY,
+        FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS,
+        NULL
     );
 
+    // Watch the directory for file changes
     if (hDirectory != INVALID_HANDLE_VALUE) {
         for (;;) {
             DWORD handle_error = ta_asset_watch_handle_change(hDirectory);
@@ -111,7 +107,6 @@ int ta_asset_watcher_watch(ta_asset_watcher_thread_args *args)
         err = -2;
     }
 
-    FindCloseChangeNotification(hDirectory);
-    //thrd_exit(-1);
+    dlb_free(args);
     return err;
 }
