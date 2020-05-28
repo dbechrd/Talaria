@@ -916,7 +916,7 @@ ta_material:
 ta_material:
   name: "cobble"
   shader: "mesh"
-  albedo_texture: "cobble_albedo"
+  albedo_texture: "data/texture/cobble_albedo.tga"
   albedo_factor:
     r: 0x3F800000 (1.000000)
     g: 0x3F800000 (1.000000)
@@ -927,14 +927,14 @@ ta_material:
     g: 0x00000000 (0.000000)
     b: 0x00000000 (0.000000)
   metallic_factor: 0x3F800000 (1.000000)
-  roughness_texture: "cobble_roughness"
+  roughness_texture: "data/texture/cobble_roughness.tga"
   roughness_factor: 0x3F800000 (1.000000)
-  normal_texture: "cobble_normal"
-  occlusion_texture: "cobble_occlusion"
+  normal_texture: "data/texture/cobble_normal.tga"
+  occlusion_texture: "data/texture/cobble_occlusion.tga"
 ta_material:
   name: "terrazzo"
   shader: "mesh"
-  albedo_texture: "terrazzo_albedo"
+  albedo_texture: "data/texture/Terrazzo_Tiles_001_albedo.tga"
   albedo_factor:
     r: 0x3F800000 (1.000000)
     g: 0x3F800000 (1.000000)
@@ -944,12 +944,12 @@ ta_material:
     r: 0x00000000 (0.000000)
     g: 0x00000000 (0.000000)
     b: 0x00000000 (0.000000)
-  roughness_texture: "terrazzo_roughness"
+  roughness_texture: "data/texture/Terrazzo_Tiles_001_roughness.tga"
   roughness_factor: 0x3F800000 (1.000000)
-  height_texture: "terrazzo_height"
+  height_texture: "data/texture/Terrazzo_Tiles_001_height.tga"
   height_factor: 0x3C23D70A (0.010000)
-  normal_texture: "terrazzo_normal"
-  occlusion_texture: "terrazzo_occlusion"
+  normal_texture: "data/texture/Terrazzo_Tiles_001_normal.tga"
+  occlusion_texture: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
 ta_material:
   name: "metal_plate_019"
   shader: "mesh"
@@ -963,18 +963,18 @@ ta_material:
     r: 0x00000000 (0.000000)
     g: 0x00000000 (0.000000)
     b: 0x00000000 (0.000000)
-  metallic_texture: "metal_plate_019_metallic"
+  metallic_texture: "data/texture/Metal_Plate_019_metallic.tga"
   metallic_factor: 0x3F800000 (1.000000)
-  roughness_texture: "metal_plate_019_roughness"
+  roughness_texture: "data/texture/Metal_Plate_019_roughness.tga"
   roughness_factor: 0x3F800000 (1.000000)
-  height_texture: "metal_plate_019_height"
+  height_texture: "data/texture/Metal_Plate_019_height.tga"
   height_factor: 0x3CA3D70A (0.020000)
-  normal_texture: "metal_plate_019_normal"
-  occlusion_texture: "metal_plate_019_occlusion"
+  normal_texture: "data/texture/Metal_Plate_019_normal.tga"
+  occlusion_texture: "data/texture/Metal_Plate_019_occlusion.tga"
 ta_material:
   name: "acoustic_foam"
   shader: "mesh"
-  albedo_texture: "acoustic_foam_albedo"
+  albedo_texture: "data/texture/Acoustic_Foam_001_albedo.tga"
   albedo_factor:
     r: 0x3F800000 (1.000000)
     g: 0x3F800000 (1.000000)
@@ -985,12 +985,12 @@ ta_material:
     g: 0x00000000 (0.000000)
     b: 0x00000000 (0.000000)
   metallic_factor: 0x3F800000 (1.000000)
-  roughness_texture: "acoustic_foam_roughness"
+  roughness_texture: "data/texture/Acoustic_Foam_001_roughness.tga"
   roughness_factor: 0x3F800000 (1.000000)
-  height_texture: "acoustic_foam_height"
+  height_texture: "data/texture/Acoustic_Foam_001_height.tga"
   height_factor: 0x3CA3D70A (0.020000)
-  normal_texture: "acoustic_foam_normal"
-  occlusion_texture: "acoustic_foam_occlusion"
+  normal_texture: "data/texture/Acoustic_Foam_001_normal.tga"
+  occlusion_texture: "data/texture/Acoustic_Foam_001_occlusion.tga"
 ta_material:
   name: "column_0001"
   shader: "mesh"
@@ -1009,7 +1009,7 @@ ta_material:
 ta_material:
   name: "star_0001"
   shader: "mesh"
-  albedo_texture: "star_albedo"
+  albedo_texture: "data/texture/star_albedo.tga"
   albedo_factor:
     r: 0x3F800000 (1.000000)
     g: 0x3F800000 (1.000000)
@@ -1805,7 +1805,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "test_diff"
+  name: "data/texture/pbr_default_0.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/pbr_default_0.tga"
   width: 32
@@ -1826,7 +1826,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "cobble_albedo"
+  name: "data/texture/cobble_albedo.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_albedo.tga"
   width: 512
@@ -1836,7 +1836,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "cobble_normal"
+  name: "data/texture/cobble_normal.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_normal.tga"
   width: 512
@@ -1847,7 +1847,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "cobble_occlusion"
+  name: "data/texture/cobble_occlusion.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_occlusion.tga"
   width: 512
@@ -1858,7 +1858,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "cobble_roughness"
+  name: "data/texture/cobble_roughness.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_roughness.tga"
   width: 512
@@ -1869,7 +1869,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "audio_icon"
+  name: "data/texture/audio_icon.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/audio_icon.tga"
   width: 32
@@ -1879,7 +1879,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "terrazzo_albedo"
+  name: "data/texture/Terrazzo_Tiles_001_albedo.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_albedo.tga"
   width: 1024
@@ -1889,7 +1889,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "terrazzo_emission"
+  name: "data/texture/Terrazzo_Tiles_001_emission.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_emission.tga"
   width: 1024
@@ -1899,7 +1899,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "terrazzo_height"
+  name: "data/texture/Terrazzo_Tiles_001_height.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_height.tga"
   width: 1024
@@ -1910,7 +1910,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "terrazzo_normal"
+  name: "data/texture/Terrazzo_Tiles_001_normal.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_normal.tga"
   width: 1024
@@ -1921,7 +1921,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "terrazzo_occlusion"
+  name: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
   width: 1024
@@ -1932,7 +1932,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "terrazzo_roughness"
+  name: "data/texture/Terrazzo_Tiles_001_roughness.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Terrazzo_Tiles_001_roughness.tga"
   width: 1024
@@ -1953,7 +1953,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "metal_plate_019_height"
+  name: "data/texture/Metal_Plate_019_height.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_height.tga"
   width: 1024
@@ -1964,7 +1964,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "metal_plate_019_metallic"
+  name: "data/texture/Metal_Plate_019_metallic.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_metallic.tga"
   width: 1024
@@ -1975,7 +1975,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "metal_plate_019_normal"
+  name: "data/texture/Metal_Plate_019_normal.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_normal.tga"
   width: 1024
@@ -1986,7 +1986,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "metal_plate_019_occlusion"
+  name: "data/texture/Metal_Plate_019_occlusion.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_occlusion.tga"
   width: 1024
@@ -1997,7 +1997,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "metal_plate_019_roughness"
+  name: "data/texture/Metal_Plate_019_roughness.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_roughness.tga"
   width: 1024
@@ -2008,7 +2008,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "acoustic_foam_albedo"
+  name: "data/texture/Acoustic_Foam_001_albedo.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_albedo.tga"
   width: 1024
@@ -2018,7 +2018,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "acoustic_foam_height"
+  name: "data/texture/Acoustic_Foam_001_height.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_height.tga"
   width: 1024
@@ -2029,7 +2029,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "acoustic_foam_normal"
+  name: "data/texture/Acoustic_Foam_001_normal.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_normal.tga"
   width: 1024
@@ -2040,7 +2040,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "acoustic_foam_occlusion"
+  name: "data/texture/Acoustic_Foam_001_occlusion.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_occlusion.tga"
   width: 1024
@@ -2051,7 +2051,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "acoustic_foam_roughness"
+  name: "data/texture/Acoustic_Foam_001_roughness.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Acoustic_Foam_001_roughness.tga"
   width: 1024
@@ -2062,7 +2062,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "star_albedo"
+  name: "data/texture/star_albedo.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/star_albedo.tga"
   width: 1024
@@ -2072,7 +2072,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "martin_luther"
+  name: "data/texture/martin_luther.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/martin_luther.tga"
   width: 512
@@ -2082,7 +2082,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "sphere_albedo"
+  name: "data/texture/sphere_albedo.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/sphere_albedo.tga"
   width: 1024

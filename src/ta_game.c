@@ -66,6 +66,7 @@ typedef struct ta_game {
     ta_camera minimap_camera;   // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
     ta_keybind *keybinds;
     bool console_visible;
+    ta_asset_watcher texture_watcher;
 
     // HACK: Temp data, need to persist between frames for debug rendering to work when sim is paused
     // TODO(cleanup): Holding pointers across frames is a _BAD IDEA_. At the very least, hold names instead.
@@ -418,7 +419,8 @@ void ta_game_init()
     tg_shader_quads   = ta_game_by_sym(RES_SHADER, INTERN("quads"));
     tg_shader_cubemap = ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
 
-    ta_asset_watcher_init("C:/Users/user/Documents/Development/Talaria/bin/data/texture");
+    game.texture_watcher.dir_path = "C:/Users/user/Documents/Development/Talaria/bin/";
+    ta_asset_watcher_init(&game.texture_watcher);
 
 #if _DEBUG
     ta_game_state_set(TA_STATE_FREE_CAM);
@@ -579,6 +581,22 @@ void ta_game_window_resize()
     dlb_vec_each(ta_camera *, camera, ta_game_resource_pool(RES_COMP_CAMERA)) {
         if (!camera->ortho) {
             ta_camera_recalc_projection(camera);
+        }
+    }
+}
+static void game_hotload_textures()
+{
+    for (size_t i = 0; i < ARRAY_SIZE(game.texture_watcher.changed_files); ++i) {
+        char *filename = game.texture_watcher.changed_files[i];
+        if (filename) {
+            ta_texture *tex = ta_game_by_name_try(RES_TEXTURE, filename, strlen(filename));
+            if (tex) {
+                printf("[GAME] hot-loading: %s\n", filename);
+            } else {
+                //printf("[GAME] not found: %s\n", filename);
+            }
+            dlb_free(filename);
+            game.texture_watcher.changed_files[i] = 0;
         }
     }
 }
@@ -1002,6 +1020,8 @@ void ta_game_loop()
         ms_frame_start = ta_timer_elapsed_ms();
         ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
+
+        game_hotload_textures(&game);
 
         ta_camera *active_camera = ta_game_camera();
         ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
