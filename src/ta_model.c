@@ -9,7 +9,6 @@
 #include "ta_camera.h"
 #include "ta_mesh.h"
 #include "ta_material.h"
-#include "ta_texture.h"
 #include "ta_light.h"
 #include "ta_primitive.h"
 #include "ta_editor.h"
@@ -51,7 +50,7 @@ void ta_model_set_morph_target_weight(ta_model *model, const char *morph_target_
         }
         idx++;
     }
-    DLB_ASSERT(found && "Target not found");
+    //DLB_ASSERT(found && "Target not found");
 }
 
 static void model_piece_set_shader_anim_targets(ta_model *model, ta_piece *piece, ta_shader *shader)

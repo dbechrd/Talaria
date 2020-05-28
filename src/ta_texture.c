@@ -55,6 +55,7 @@ static inline GLenum texture_target(ta_texture *tex)
 
 void ta_texture_bind(ta_texture *tex)
 {
+    DLB_ASSERT(tex->gl_id);
     GLenum target = texture_target(tex);
     glBindTexture(target, tex->gl_id);
 }
@@ -65,10 +66,8 @@ void ta_texture_unbind(ta_texture *tex)
     glBindTexture(target, 0);
 }
 
-void ta_texture_create_and_bind(ta_texture *tex)
+void ta_texture_create_and_bind(ta_texture *tex, GLuint *gl_id)
 {
-    DLB_ASSERT(!tex->gl_id);
-
     ta_log_write(&tg_debug_log, SRC_TEXTURE,
         "Generating GPU texture %s (w: %d, h: %d, channels: %d)\n",
         tex->name, tex->width, tex->height, tex->channels);
@@ -84,16 +83,16 @@ void ta_texture_create_and_bind(ta_texture *tex)
         glGenTextures((GLsizei)(new_pool_len - pool_len), tex_id_pool + pool_len);
         ta_log_write(&tg_debug_log, SRC_TEXTURE, "tex_id_pool resized\n", tex->gl_id);
     }
-    tex->gl_id = tex_id_pool[next_id];
+    *gl_id = tex_id_pool[next_id];
     next_id++;
-    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID %u claimed\n", tex->gl_id);
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID %u claimed\n", *gl_id);
 #else
-    glGenTextures(1, &tex->gl_id);
-    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID %u generated\n", tex->gl_id);
+    glGenTextures(1, gl_id);
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID %u generated\n", *gl_id);
 #endif
 
     GLenum target = texture_target(tex);
-    glBindTexture(target, tex->gl_id);
+    glBindTexture(target, *gl_id);
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID bound\n");
 
     GLint param = tex->repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
@@ -248,6 +247,7 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
 
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Upload complete.\n", tex->name);
 }
+// NOTE: Assumes texture is already bound, should probably assert this
 static void texture_generate_mipmap(ta_texture *tex)
 {
     // TODO: Are there any other reasons to generate mipmaps?
@@ -285,7 +285,9 @@ void ta_texture_load(ta_texture *tex)
     } else {
         DLB_ASSERT(!"invalid texture type");
     }
-    ta_texture_create_and_bind(tex);
+
+    GLuint gl_id = 0;
+    ta_texture_create_and_bind(tex, &gl_id);
 
     // Pixel textures contain inlined pixel data, path should be null
     if (tex->pixels) {
@@ -340,15 +342,24 @@ void ta_texture_load(ta_texture *tex)
     texture_generate_mipmap(tex);
     ta_texture_unbind(tex);
 
+    tex->gl_id = gl_id;
     ta_log_timed_region_end(&tg_debug_log, CSTR("ta_texture_load"));
 }
 
 void ta_texture_delete(ta_texture *tex)
 {
-    if (tex->gl_id) {
-        glDeleteTextures(1, &tex->gl_id);
-    }
+    DLB_ASSERT(tex->gl_id);
+    GLuint id = tex->gl_id;
     tex->gl_id = 0;
+    if (id) {
+        glDeleteTextures(1, &id);
+    }
+}
+
+void ta_texture_reload(ta_texture *tex)
+{
+    ta_texture_delete(tex);
+    ta_texture_load(tex);
 }
 
 void ta_texture_free(ta_texture *tex)

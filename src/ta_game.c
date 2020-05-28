@@ -592,6 +592,7 @@ static void game_hotload_textures()
             ta_texture *tex = ta_game_by_name_try(RES_TEXTURE, filename, strlen(filename));
             if (tex) {
                 printf("[GAME] hot-loading: %s\n", filename);
+                ta_texture_reload(tex);
             } else {
                 //printf("[GAME] not found: %s\n", filename);
             }

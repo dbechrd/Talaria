@@ -89,7 +89,9 @@ static void shadowmap_directional_create(ta_light *light)
     light->shadowmap.texture.height = light->shadowmap.resolution;
     light->shadowmap.texture.gl_filter_min = GL_LINEAR; // GL_NEAREST;
     light->shadowmap.texture.gl_filter_mag = GL_LINEAR; // GL_NEAREST;
-    ta_texture_create_and_bind(&light->shadowmap.texture);
+
+    GLuint gl_id = 0;
+    ta_texture_create_and_bind(&light->shadowmap.texture, &gl_id);
 
     // TODO: Specify wrap mode as part of texture params, not sure if border
     // mode/color is worth refactoring out though.
@@ -105,6 +107,8 @@ static void shadowmap_directional_create(ta_light *light)
     // TODO: Should internalformat be GL_DEPTH_COMPONENT16 instead?
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, light->shadowmap.resolution, light->shadowmap.resolution, 0,
         GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+
+    light->shadowmap.texture.gl_id = gl_id;
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
     glGenFramebuffers(1, &light->shadowmap.framebuffer);
@@ -140,13 +144,17 @@ static void shadowmap_point_create(ta_light *light)
     light->shadowmap.texture.height = light->shadowmap.resolution;
     light->shadowmap.texture.gl_filter_min = GL_LINEAR; // GL_NEAREST;
     light->shadowmap.texture.gl_filter_mag = GL_LINEAR; // GL_NEAREST;
-    ta_texture_create_and_bind(&light->shadowmap.texture);
+
+    GLuint gl_id = 0;
+    ta_texture_create_and_bind(&light->shadowmap.texture, &gl_id);
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
     for (int i = 0; i < 6; ++i) {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT16, light->shadowmap.resolution,
             light->shadowmap.resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     }
+
+    light->shadowmap.texture.gl_id = gl_id;
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
     glGenFramebuffers(1, &light->shadowmap.framebuffer);

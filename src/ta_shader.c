@@ -446,13 +446,13 @@ void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *ma
     if (roughness_texture) { DLB_ASSERT(material->roughness_factor); }
     if (height_texture)    { DLB_ASSERT(material->height_factor); }
 
-    if (!albedo_texture   ) { albedo_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo); }
-    if (!emission_texture ) { emission_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission); }
-    if (!metallic_texture ) { metallic_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic); }
-    if (!roughness_texture) { roughness_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness); }
-    if (!normal_texture   ) { normal_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_normal); }
-    if (!occlusion_texture) { occlusion_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion); }
-    if (!height_texture   ) { height_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height); }
+    if (!albedo_texture    || !albedo_texture   ->gl_id ) { albedo_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo); }
+    if (!emission_texture  || !emission_texture ->gl_id ) { emission_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission); }
+    if (!metallic_texture  || !metallic_texture ->gl_id ) { metallic_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic); }
+    if (!roughness_texture || !roughness_texture->gl_id ) { roughness_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness); }
+    if (!normal_texture    || !normal_texture   ->gl_id ) { normal_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_normal); }
+    if (!occlusion_texture || !occlusion_texture->gl_id ) { occlusion_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion); }
+    if (!height_texture    || !height_texture   ->gl_id ) { height_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height); }
 
     DLB_ASSERT(albedo_texture   );
     DLB_ASSERT(emission_texture );

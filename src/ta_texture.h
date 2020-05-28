@@ -41,7 +41,10 @@ const char *ta_texture_type_str(int type);
 void ta_texture_init            (ta_texture *tex);
 void ta_texture_bind            (ta_texture *tex);
 void ta_texture_unbind          (ta_texture *tex);
-void ta_texture_create_and_bind (ta_texture *tex);  // Load data from memory into VRAM
-void ta_texture_load            (ta_texture *tex);  // Load data from disk (if `path` instead of `pixels`) then create VRAM textures
+// Load data from memory into VRAM
+void ta_texture_create_and_bind (ta_texture *tex, GLuint *gl_id);
+// Load data from disk (if `path` instead of `pixels`) then create VRAM textures
+void ta_texture_load            (ta_texture *tex);
 void ta_texture_delete          (ta_texture *tex);
+void ta_texture_reload          (ta_texture *tex);
 void ta_texture_free            (ta_texture *tex);
