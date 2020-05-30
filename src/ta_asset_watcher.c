@@ -173,4 +173,5 @@ void ta_asset_watcher_init(ta_asset_watcher *watcher)
 
     thrd_t asset_watcher_thread = { 0 };
     int result = thrd_create(&asset_watcher_thread, ta_asset_watcher_watch, watcher);
+    UNUSED(result);
 }

@@ -1,6 +1,7 @@
 ﻿#include "dml_parser.h"
 #include "dml_token.h"
 #include "dml.h"
+#include <string.h>
 
 static size_t **dbg_array_pointers = 0;
 

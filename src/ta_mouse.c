@@ -4,7 +4,6 @@
 #include "ta_timer.h"
 #include "ta_game.h"
 #include "ta_window.h"
-#include "GLFW/glfw3.h"
 
 typedef struct ta_mouse {
     int x;
@@ -36,12 +35,12 @@ void ta_mouse_capture_set(bool capture)
     if (mouse.captured == capture) return;
 
     if (capture) {
-        ta_window_set_cursor_mode(tg_window, GLFW_CURSOR_DISABLED);
+        ta_window_set_mouse_captured(tg_window, true);
         mouse.captured = true;
         mouse.capture_x = mouse.x;
         mouse.capture_y = mouse.y;
     } else {
-        ta_window_set_cursor_mode(tg_window, GLFW_CURSOR_NORMAL);
+        ta_window_set_mouse_captured(tg_window, false);
         ta_mouse_move(mouse.capture_x, mouse.capture_y);
         mouse.captured = false;
         mouse.capture_x = 0;
@@ -65,13 +64,13 @@ void ta_mouse_drag_begin()
     mouse.dragging = true;
     mouse.drag_x = mouse.x;
     mouse.drag_y = mouse.y;
-    ta_window_set_cursor_mode(tg_window, GLFW_CURSOR_DISABLED);
+    ta_window_set_mouse_captured(tg_window, true);
 }
 
 void ta_mouse_drag_end()
 {
     DLB_ASSERT(mouse.dragging);
-    ta_window_set_cursor_mode(tg_window, mouse.captured ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
+    ta_window_set_mouse_captured(tg_window, mouse.captured);
     ta_mouse_move(mouse.drag_x, mouse.drag_y);
     mouse.dragging = false;
     mouse.drag_x = 0;

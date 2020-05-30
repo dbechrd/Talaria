@@ -476,12 +476,12 @@ static ui_frame *ui_frame_end(ui_frame_type type)
     {
         frame->state_type = UI_STATE_HOVER;
         frame->state.hover = true;
-        if (ta_key_down(GLFW_KEY_MOUSE_LEFT)) {
+        if (ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
             frame->state_type = UI_STATE_DOWN;
             frame->state.down = true;
-            frame->state.pressed = ta_key_pressed(GLFW_KEY_MOUSE_LEFT);
+            frame->state.pressed = ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT);
         } else {
-            frame->state.released = ta_key_released(GLFW_KEY_MOUSE_LEFT);
+            frame->state.released = ta_key_released(SDL_SCANCODE_MOUSE_LEFT);
         }
     }
     last_frame_state = &frame->state;
@@ -1076,13 +1076,13 @@ bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textb
     if (textbox->buffer) {
         if (frame->state.down) {
             textbox_mouse_down(frame);
-        } else if (ta_key_pressed(GLFW_KEY_MOUSE_LEFT)) {
+        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
             // NOTE: But for console window, I want focus lost with any button to
             // mean cancel.. the correct behavior is based on the use-case. This
             // code can't be globally shared.
             //textbox_submit(textbox);
             textbox_unfocus(textbox);
-        } else if (ta_key_pressed(GLFW_KEY_MOUSE_RIGHT)) {
+        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
             // TODO(cleanup): Right click usually means cancel, but in the case
             // of search box I want to right click to rotate camera without
             // losing my search results, sooo...
@@ -1195,9 +1195,9 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
                 textbox_focus(textbox);
             }
             textbox_mouse_down(frame);
-        } else if (ta_key_pressed(GLFW_KEY_MOUSE_LEFT)) {
+        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
             textbox_submit(textbox);
-        } else if (ta_key_pressed(GLFW_KEY_MOUSE_RIGHT)) {
+        } else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
             textbox_cancel(textbox);
         }
     } else {
@@ -1206,7 +1206,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
             drag_float_begin(textbox, value);
         } else if (drag_float.value == value) {
             drag_float_update(0.01f);
-            if (ta_key_released(GLFW_KEY_MOUSE_LEFT)) {
+            if (ta_key_released(SDL_SCANCODE_MOUSE_LEFT)) {
                 // If drag ended and value didn't change, start edit mode
                 if (!drag_float_end()) {
                     char text[16] = { 0 };
@@ -1219,7 +1219,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
             // TODO: I want right-click to cancel drag, but it's also bound to
             // rotate camera right now and cancel drag works but it rotates the
             // camera a huge amount which is annoying and gross.
-            //} else if (ta_key_pressed(GLFW_KEY_MOUSE_RIGHT)) {
+            //} else if (ta_key_pressed(SDL_SCANCODE_MOUSE_RIGHT)) {
             //    drag_float_cancel();
             } else {
 #if 0
@@ -1683,7 +1683,7 @@ static void ui_render_scrollbars(ui_frame *frame)
         if (!ta_mouse_captured()) {
             int delta_y = 0;
 
-            if (widget_hover && ta_key_pressed(GLFW_KEY_MOUSE_LEFT))
+            if (widget_hover && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT))
             {
                 // Mouse drag
                 //scrollbar_y_frame_idx = frame->index;
@@ -1692,7 +1692,7 @@ static void ui_render_scrollbars(ui_frame *frame)
             } else if (!dragging_v && rect_contains_mouse(frame->rect)) {
                 // Scroll wheel
                 delta_y = ta_mouse_scroll_dy() * SCROLL_WHEEL_SPEED;
-            } else if (!ta_key_down(GLFW_KEY_MOUSE_LEFT)) {
+            } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
                 // Not dragging
                 if (dragging_v) {
                     dragging_v = false;

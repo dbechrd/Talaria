@@ -4,7 +4,6 @@
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_memory.h"
 #include "dlb/dlb_vector.h"
-#include "GLFW/glfw3.h"
 #include "misc/glad.h"
 #include <math.h>
 
@@ -14,16 +13,17 @@ typedef struct ta_window {
     ta_rect restore;
     bool vsync;
     bool fullscreen;
-    GLFWwindow *glfw_window;
-    GLFWcursor *glfw_active_cursor;
-    GLFWcursor *glfw_requested_cursor;
+    SDL_Window *sdl_window;
+    SDL_GLContext *sdl_gl_context;
+    SDL_Cursor *sdl_cursor_active;
+    SDL_Cursor *sdl_cursor_requested;
 } ta_window;
 ta_window window__internal;
 ta_window *tg_window = &window__internal;
 
-static GLFWcursor *window_cursor_arrow;    // normal mouse pointer
-static GLFWcursor *window_cursor_hresize;  // left/right arrow "<->" cursor
-static GLFWcursor *window_cursor_ibeam;    // text edit ibeam "I" cursor
+static SDL_Cursor *window_cursor_arrow;    // normal mouse pointer
+static SDL_Cursor *window_cursor_hresize;  // left/right arrow "<->" cursor
+static SDL_Cursor *window_cursor_ibeam;    // text edit ibeam "I" cursor
 
 //static void APIENTRY ta_window_gl_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length,
 //    const GLchar *message, const void *userParam)
@@ -108,9 +108,10 @@ static GLFWcursor *window_cursor_ibeam;    // text edit ibeam "I" cursor
 //    }
 //}
 
-static void window_glfw_close(GLFWwindow *glfw_window)
+#if 0
+static void window_glfw_close(SDL_Window *sdl_window)
 {
-    UNUSED(glfw_window);
+    UNUSED(sdl_window);
 
     //if (unsaved_changes)
     //    glfwSetWindowShouldClose(glfw_window, GLFW_FALSE);
@@ -119,9 +120,9 @@ static void window_glfw_close(GLFWwindow *glfw_window)
     event.type = GAME_EVENT_SHUTDOWN;
     ta_event_push(&event);
 }
-static void window_glfw_framebuffer_resize(GLFWwindow *glfw_window, int w, int h)
+static void window_glfw_framebuffer_resize(SDL_Window *sdl_window, int w, int h)
 {
-    ta_window *window = glfwGetWindowUserPointer(glfw_window);
+    ta_window *window = glfwGetWindowUserPointer(sdl_window);
     window->width = w;
     window->height = h;
 
@@ -131,9 +132,9 @@ static void window_glfw_framebuffer_resize(GLFWwindow *glfw_window, int w, int h
     event.data.window_resize.height = window->height;
     ta_event_push(&event);
 }
-static void window_glfw_key(GLFWwindow *glfw_window, int key, int scancode, int action, int mods)
+static void window_glfw_key(SDL_Window *sdl_window, int key, int scancode, int action, int mods)
 {
-    UNUSED(glfw_window);
+    UNUSED(sdl_window);
     static int action_to_event[] = {
         [GLFW_RELEASE] = INPUT_EVENT_KEY_RELEASE,
         [GLFW_PRESS  ] = INPUT_EVENT_KEY_PRESS,
@@ -151,17 +152,17 @@ static void window_glfw_key(GLFWwindow *glfw_window, int key, int scancode, int 
         ta_event_push(&event);
     }
 }
-static void window_glfw_codepoint(GLFWwindow *glfw_window, unsigned int codepoint)
+static void window_glfw_codepoint(SDL_Window *sdl_window, unsigned int codepoint)
 {
-    UNUSED(glfw_window);
+    UNUSED(sdl_window);
     ta_event event = { 0 };
     event.type = INPUT_EVENT_TEXT_INPUT;
     event.data.text_input.codepoint = codepoint;
     ta_event_push(&event);
 }
-static void window_glfw_mouse_button(GLFWwindow *glfw_window, int button, int action, int mods)
+static void window_glfw_mouse_button(SDL_Window *sdl_window, int button, int action, int mods)
 {
-    UNUSED(glfw_window);
+    UNUSED(sdl_window);
     static int action_to_event[] = {
         [GLFW_RELEASE] = INPUT_EVENT_KEY_RELEASE,
         [GLFW_PRESS  ] = INPUT_EVENT_KEY_PRESS,
@@ -185,9 +186,9 @@ static void window_glfw_mouse_button(GLFWwindow *glfw_window, int button, int ac
     }
 }
 
-static void window_glfw_mouse_move(GLFWwindow *glfw_window, double xpos, double ypos)
+static void window_glfw_mouse_move(SDL_Window *sdl_window, double xpos, double ypos)
 {
-    UNUSED(glfw_window);
+    UNUSED(sdl_window);
     ta_event event = { 0 };
     event.type = INPUT_EVENT_MOUSE_MOVE;
     event.data.mouse_move.x = (int)floor(xpos);
@@ -197,9 +198,9 @@ static void window_glfw_mouse_move(GLFWwindow *glfw_window, double xpos, double 
     ta_mouse_event(&event);
     ta_event_push(&event);
 }
-static void window_glfw_scroll(GLFWwindow *glfw_window, double xoffset, double yoffset)
+static void window_glfw_scroll(SDL_Window *sdl_window, double xoffset, double yoffset)
 {
-    UNUSED(glfw_window);
+    UNUSED(sdl_window);
     ta_event event = { 0 };
     event.type = INPUT_EVENT_MOUSE_SCROLL;
     event.data.mouse_scroll.x = (int)floor(xoffset);
@@ -207,14 +208,25 @@ static void window_glfw_scroll(GLFWwindow *glfw_window, double xoffset, double y
     ta_mouse_event(&event);
     ta_event_push(&event);
 }
-static void window_glfw_dragndrop(GLFWwindow *glfw_window, int count, const char **paths)
+static void window_glfw_dragndrop(SDL_Window *sdl_window, int count, const char **paths)
 {
-    UNUSED(glfw_window);
+    UNUSED(sdl_window);
     UNUSED(count);
     UNUSED(paths);
     //int i;
     //for (i = 0;  i < count;  i++)
     //    handle_dropped_file(paths[i]);
+}
+#endif
+
+static void sdl_gl_attrib(SDL_GLattr attr, int value)
+{
+    int sdl_err = SDL_GL_SetAttribute(attr, value);
+    if (sdl_err < 0)
+    {
+        ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_GL_SetAttribute %d error: %s\n", attr, SDL_GetError());
+        DLB_ASSERT(!"sdl_gl_attrib: error");
+    }
 }
 
 void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
@@ -225,40 +237,44 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     static const int gl_major = 3;
     static const int gl_minor = 2;
 
+#if 0
     // Create window
-    GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-    const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-    glfwWindowHint(GLFW_RED_BITS, mode->redBits); // 8;
-    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits); // 8;
-    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits); // 8;
-    glfwWindowHint(GLFW_ALPHA_BITS, 8);
-    glfwWindowHint(GLFW_DEPTH_BITS, 24);
-    glfwWindowHint(GLFW_STENCIL_BITS, 8);
-    glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+    // TODO: Find best monitor to create window on:
+    // https://gist.github.com/blast007/57f6d95522932035ed57db27b6db7070
+    //int display = SDL_GetWindowDisplayIndex(window->sdl_window);
+    //GLFWmonitor *monitor = glfwGetPrimaryMonitor();
+    //const GLFWvidmode *mode = glfwGetVideoMode(monitor);
+    SDL_WindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+    SDL_WindowHint(GLFW_RED_BITS, mode->redBits); // 8;
+    SDL_WindowHint(GLFW_GREEN_BITS, mode->greenBits); // 8;
+    SDL_WindowHint(GLFW_BLUE_BITS, mode->blueBits); // 8;
+    SDL_WindowHint(GLFW_ALPHA_BITS, 8);
+    SDL_WindowHint(GLFW_DEPTH_BITS, 24);
+    SDL_WindowHint(GLFW_STENCIL_BITS, 8);
+    SDL_WindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
     // TODO: Disable if doing multi-sampling in a post-processing shader
-    glfwWindowHint(GLFW_SAMPLES, 16);
-    //glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, gl_major);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    SDL_WindowHint(GLFW_SAMPLES, 16);
+    //SDL_WindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+    SDL_WindowHint(GLFW_CONTEXT_VERSION_MAJOR, gl_major);
+    SDL_WindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor);
+    SDL_WindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    SDL_WindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #if _DEBUG
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
+    SDL_WindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
 #else
     // TODO: Disable GL errors in release mode for performance?
-    //glfwWindowHint(GLFW_CONTEXT_NO_ERROR, GLFW_TRUE);
+    //SDL_WindowHint(GLFW_CONTEXT_NO_ERROR, GLFW_TRUE);
 #endif
 
     window->fullscreen = fullscreen;
     if (!fullscreen) {
         // Delay displaying window so we can center it first
-        glfwWindowHint(GLFW_VISIBLE, GL_FALSE);
+        SDL_WindowHint(GLFW_VISIBLE, GL_FALSE);
     }
 
     ta_log_write(&tg_debug_log, SRC_WINDOW, "glfwCreateWindow...\n");
-    window->glfw_window = glfwCreateWindow(w, h, "Talaria", fullscreen ? monitor : 0, 0);
-    if (!window->glfw_window) {
+    window->sdl_window = glfwCreateWindow(w, h, "Talaria", fullscreen ? monitor : 0, 0);
+    if (!window->sdl_window) {
         ta_log_write(&tg_debug_log, SRC_WINDOW, "glfwCreateWindow error\n");
         DLB_ASSERT(!"ta_window_init: glfwCreateWindow failed");
     }
@@ -267,23 +283,23 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
         // Center window
         int cx = (mode->width - w) / 2;
         int cy = (mode->height - h) / 2;
-        glfwSetWindowPos(window->glfw_window, cx, cy);
-        glfwShowWindow(window->glfw_window);
+        glfwSetWindowPos(window->sdl_window, cx, cy);
+        glfwShowWindow(window->sdl_window);
     }
 
     // Register event callbacks
-    glfwSetWindowUserPointer        (window->glfw_window, window);
-    glfwSetWindowCloseCallback      (window->glfw_window, window_glfw_close);
-    glfwSetFramebufferSizeCallback  (window->glfw_window, window_glfw_framebuffer_resize);
-    glfwSetKeyCallback              (window->glfw_window, window_glfw_key);
-    glfwSetCharCallback             (window->glfw_window, window_glfw_codepoint);
-    glfwSetMouseButtonCallback      (window->glfw_window, window_glfw_mouse_button);
-    glfwSetCursorPosCallback        (window->glfw_window, window_glfw_mouse_move);
-    glfwSetScrollCallback           (window->glfw_window, window_glfw_scroll);
-    glfwSetDropCallback             (window->glfw_window, window_glfw_dragndrop);
+    glfwSetWindowUserPointer        (window->sdl_window, window);
+    glfwSetWindowCloseCallback      (window->sdl_window, window_glfw_close);
+    glfwSetFramebufferSizeCallback  (window->sdl_window, window_glfw_framebuffer_resize);
+    glfwSetKeyCallback              (window->sdl_window, window_glfw_key);
+    glfwSetCharCallback             (window->sdl_window, window_glfw_codepoint);
+    glfwSetMouseButtonCallback      (window->sdl_window, window_glfw_mouse_button);
+    glfwSetCursorPosCallback        (window->sdl_window, window_glfw_mouse_move);
+    glfwSetScrollCallback           (window->sdl_window, window_glfw_scroll);
+    glfwSetDropCallback             (window->sdl_window, window_glfw_dragndrop);
 
     ta_log_write(&tg_debug_log, SRC_WINDOW, "glfwMakeContextCurrent...\n");
-    glfwMakeContextCurrent(window->glfw_window);
+    glfwMakeContextCurrent(window->sdl_window);
 
     ta_log_write(&tg_debug_log, SRC_WINDOW, "gladLoadGL...\n");
     if (!gladLoadGL()) {
@@ -291,13 +307,91 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
         DLB_ASSERT(!"ta_window_init: failed to init GLAD");
     }
 
-#if 1
     glfwSwapInterval(1);
     window->vsync = true;
+    glfwGetFramebufferSize(window->sdl_window, &window->width, &window->height);
 #else
-    glfwSwapInterval(0);
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "Setting SDL GL attributes\n");
+    sdl_gl_attrib(SDL_GL_RED_SIZE, 8);
+    sdl_gl_attrib(SDL_GL_GREEN_SIZE, 8);
+    sdl_gl_attrib(SDL_GL_BLUE_SIZE, 8);
+    sdl_gl_attrib(SDL_GL_ALPHA_SIZE, 8);
+    sdl_gl_attrib(SDL_GL_DOUBLEBUFFER, 1);
+    sdl_gl_attrib(SDL_GL_DEPTH_SIZE, 24);
+    sdl_gl_attrib(SDL_GL_STENCIL_SIZE, 8);
+
+    // Anti-aliasing
+    sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 16);
+    sdl_gl_attrib(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    //sdl_gl_attrib(SDL_GL_ACCELERATED_VISUAL, 1);  // NOTE: Set to 1 to force hardware acceleration
+
+    sdl_gl_attrib(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    sdl_gl_attrib(SDL_GL_CONTEXT_MAJOR_VERSION, gl_major);
+    sdl_gl_attrib(SDL_GL_CONTEXT_MINOR_VERSION, gl_minor);
+    int context_flags = SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG;
+#if _DEBUG
+    context_flags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 #endif
-    glfwGetFramebufferSize(window->glfw_window, &window->width, &window->height);
+    sdl_gl_attrib(SDL_GL_CONTEXT_FLAGS, context_flags);
+
+
+    // TODO: Make fullscreen a borderless window because people say vsync
+    //       doesn't work in fullscreen (can we confirm this?)
+    // Create window
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_CreateWindow...\n");
+    u32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
+    if (fullscreen) {
+        SDL_Rect rect = { 0 };
+        SDL_GetDisplayBounds(0, &rect);
+        window->width = rect.w;
+        window->height = rect.h;
+#if 0
+        flags |= SDL_WINDOW_BORDERLESS;
+#else
+        flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+#endif
+    } else {
+        window->width = w;
+        window->height = h;
+        // Allowing resizable doesn't set the resolution properly
+        flags |= SDL_WINDOW_RESIZABLE;
+    }
+    window->sdl_window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->width,
+        window->height, flags);
+    if (window->sdl_window == NULL) {
+        ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_CreateWindow error: %s\n", SDL_GetError());
+        DLB_ASSERT(!"ta_init_sdl: SDL_CreateWindow failed");
+        // TODO: Return error code, handle in caller
+        return;
+    }
+
+    // Create GL context
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_GL_CreateContext...\n");
+    window->sdl_gl_context = SDL_GL_CreateContext(window->sdl_window);
+    if (window->sdl_gl_context == NULL) {
+        ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_GL_CreateContext error: %s\n", SDL_GetError());
+        DLB_ASSERT(!"ta_init_sdl: SDL_GL_CreateContext failed");
+        // TODO: Return error code, handle in caller
+        return;
+    }
+
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "gladLoadGL...\n");
+    if (!gladLoadGL()) {
+        ta_log_write(&tg_debug_log, SRC_WINDOW, "gladLoadGL failed\n");
+        DLB_ASSERT(!"ta_window_init: failed to init GLAD");
+    }
+
+    // Get actual window size
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "Get window size / swap interval\n");
+    if (fullscreen) {
+        SDL_GetWindowSize(window->sdl_window, &window->width, &window->height);
+    }
+
+    // Log default VSync state
+    window->vsync = SDL_GL_GetSwapInterval();
+    ta_log_write(&tg_debug_log, SRC_WINDOW, "w: %d, h: %d, vsync: %s\n", window->width, window->height,
+        window->vsync ? "on" : "off");
+#endif
 
     // Draw something as soon as humanly possible (just a dark gray for now to get rid of the default white)
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -337,8 +431,8 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     //glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 
     GLint stencilSize = 0;
-    glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER,
-        GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE, &stencilSize);
+    glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_STENCIL, GL_FRAMEBUFFER_ATTACHMENT_STENCIL_SIZE,
+        &stencilSize);
     DLB_ASSERT(stencilSize == 8);
 
     // Depth buffer
@@ -361,22 +455,32 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     // Seamless filtering across cubemap seams
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-    // Use raw input when cursor disabled (for camera rotation)
-    if (glfwRawMouseMotionSupported()) {
-        glfwSetInputMode(window->glfw_window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
-    }
-
     ta_log_write(&tg_debug_log, SRC_WINDOW, "Loading cursors\n");
-    window_cursor_arrow = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-    window_cursor_hresize = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-    window_cursor_ibeam = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
-    window->glfw_active_cursor = window_cursor_arrow;
-    window->glfw_requested_cursor = window_cursor_arrow;
+    window_cursor_arrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    window_cursor_hresize = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
+    window_cursor_ibeam = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+    window->sdl_cursor_active = window_cursor_arrow;
+    window->sdl_cursor_requested = window_cursor_arrow;
 }
 
+//======================================================================================================================
+// Proper OOP programming comment header (see below)
+//======================================================================================================================
+// Summary         : This function frees the window
+// Author          : Dan Bechard (a.k.a. dandymcgee@twitch.tv)
+// Date            : 2020-05-30 02:23:07 AM PST
+// Purpose         : Frees the window
+// Argument 1      : ta_window *window (this is the window to free)
+// Return value    : void, this function does not return anything
+// Errors          : I was too lazy, so I didn't do error handling
+// Exceptions      : I don't use exceptions, this is not C++
+// See also        : ta_window_init, ta_window_etc...
+// Special thanks  : <professor name>, RatcheT2497, JohnnyGinard, electrondefuser, java_is_best
+//======================================================================================================================
 void ta_window_free(ta_window *window)
 {
-    glfwDestroyWindow(window->glfw_window);
+    SDL_GL_DeleteContext(window->sdl_gl_context);
+    SDL_DestroyWindow(window->sdl_window);
 }
 
 int ta_window_get_width(ta_window *window)
@@ -395,6 +499,12 @@ void ta_window_get_size(ta_window *window, int *w, int *h)
     *h = window->height;
     //glfwGetFramebufferSize(window->glfw_window, w, h);
 }
+void ta_window_set_size(ta_window *window, int w, int h)
+{
+    // HACK: Use ta_window_event
+    window->width = w;
+    window->height = h;
+}
 void ta_window_get_restore_rect(ta_window *window, ta_rect *restore)
 {
     *restore = window->restore;
@@ -412,11 +522,12 @@ void ta_window_get_vsync(ta_window *window, bool *vsync)
 void ta_window_set_vsync(ta_window *window, bool vsync)
 {
     if (window->vsync != vsync) {
-        glfwSwapInterval(vsync ? 1 : 0);
+        SDL_GL_SetSwapInterval(vsync ? 1 : 0);
         window->vsync = vsync;
     }
 }
 
+#if 0
 // Shmo @ StackOverflow
 // https://stackoverflow.com/a/31526753/770230
 static GLFWmonitor* window_current_monitor(ta_window *window)
@@ -432,8 +543,8 @@ static GLFWmonitor* window_current_monitor(ta_window *window)
     bestoverlap = 0;
     bestmonitor = NULL;
 
-    glfwGetWindowPos(window->glfw_window, &wx, &wy);
-    glfwGetWindowSize(window->glfw_window, &ww, &wh);
+    glfwGetWindowPos(window->sdl_window, &wx, &wy);
+    glfwGetWindowSize(window->sdl_window, &ww, &wh);
     monitors = glfwGetMonitors(&nmonitors);
 
     for (i = 0; i < nmonitors; i++) {
@@ -454,6 +565,7 @@ static GLFWmonitor* window_current_monitor(ta_window *window)
 
     return bestmonitor;
 }
+#endif
 void ta_window_get_fullscreen(ta_window *window, bool *fullscreen)
 {
     *fullscreen = window->fullscreen;
@@ -464,25 +576,21 @@ void ta_window_set_fullscreen(ta_window *window, bool fullscreen)
         return;
 
     if (fullscreen) {
-        glfwGetWindowPos(window->glfw_window, &window->restore.x, &window->restore.y);
-        glfwGetWindowSize(window->glfw_window, &window->restore.w, &window->restore.h);
-
-        GLFWmonitor *monitor = window_current_monitor(window); //glfwGetPrimaryMonitor();
-        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-        glfwSetWindowMonitor(window->glfw_window, monitor, 0, 0, mode->width, mode->height, mode->refreshRate);
-        glfwSwapInterval(window->vsync);
+        // TODO: I don't know which one of these is better..
+        SDL_SetWindowFullscreen(window->sdl_window, SDL_WINDOW_FULLSCREEN);
+        //SDL_SetWindowFullscreen(window->sdl_window, SDL_WINDOW_FULLSCREEN_DESKTOP);
         window->fullscreen = true;
     } else {
-        glfwSetWindowMonitor(window->glfw_window, 0, window->restore.x, window->restore.y, window->restore.w,
-            window->restore.h, 0);
-        glfwSwapInterval(window->vsync);
+        SDL_SetWindowFullscreen(window->sdl_window, 0);
+        // TODO: I don't know if setting vsync after changing fullscreen mode is necessary in SDL like it is with GLFW
+        SDL_GL_SetSwapInterval(window->vsync);
         window->fullscreen = false;
     }
 }
 
 void ta_window_request_cursor(ta_window *window, ta_cursor_type cursor_type)
 {
-    GLFWcursor *cursor = window_cursor_arrow;
+    SDL_Cursor *cursor = window_cursor_arrow;
     switch (cursor_type) {
         case TA_CURSOR_ARROW: {
             cursor = window_cursor_arrow;
@@ -497,32 +605,35 @@ void ta_window_request_cursor(ta_window *window, ta_cursor_type cursor_type)
             DLB_ASSERT(!"Need to handle this cursor type");
         }
     };
-    window->glfw_requested_cursor = cursor;
+    window->sdl_cursor_requested = cursor;
 }
 void ta_window_set_cursor_pos(ta_window *window, int x, int y)
 {
-    glfwSetCursorPos(window->glfw_window, (double)x, (double)y);
+    SDL_WarpMouseInWindow(window->sdl_window, x, y);
 }
 void ta_window_get_cursor_pos(ta_window *window, int *x, int *y)
 {
-    double x_screen, y_screen;
-    glfwGetCursorPos(window->glfw_window, &x_screen, &y_screen);
-    if (x) *x = (int)floor(x_screen);
-    if (y) *y = (int)floor(y_screen);
+    UNUSED(window);
+    SDL_GetMouseState(x, y);
 }
-void ta_window_set_cursor_mode(ta_window *window, int glfw_cursor_mode)
+void ta_window_set_mouse_captured(ta_window *window, bool captured)
 {
-    glfwSetInputMode(window->glfw_window, GLFW_CURSOR, glfw_cursor_mode);
+    UNUSED(window);
+    SDL_SetRelativeMouseMode(captured);
 }
 
 void ta_window_update_cursor(ta_window *window)
 {
-    if (window->glfw_requested_cursor != window->glfw_active_cursor) {
-        glfwSetCursor(window->glfw_window, window->glfw_requested_cursor);
-        window->glfw_active_cursor = window->glfw_requested_cursor;
+    if (window->sdl_cursor_requested != window->sdl_cursor_active) {
+        SDL_SetCursor(window->sdl_cursor_requested);
+        window->sdl_cursor_active = window->sdl_cursor_requested;
     }
 }
 void ta_window_swap(ta_window *window)
 {
-    glfwSwapBuffers(window->glfw_window);
+    SDL_GL_SwapWindow(window->sdl_window);
+}
+int ta_window_msgbox(ta_window *window, u32 flags, const char *title, const char *message)
+{
+    return SDL_ShowSimpleMessageBox(flags, title, message, window ? window->sdl_window : 0);
 }

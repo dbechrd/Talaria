@@ -1,5 +1,3 @@
-#include "glad.c"
-#include "GLFW/glfw3.h"
 #include "ta_audio.h"
 #include "ta_console.h"
 #include "ta_editor.h"
@@ -11,11 +9,12 @@
 #include "ta_symbol.h"
 #include "ta_timer.h"
 #include "ta_window.h"
-#include "misc/glad.h"
 #include "dlb/dlb_types.h"
 #include "dlb/dlb_hash.h"
 #include "dlb/dlb_index.h"
 #include "dlb/dlb_rand.h"
+#include "misc/glad.h"
+#include "SDL/SDL.h"
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
@@ -87,10 +86,12 @@ int main(int argc, char *argv[])
     UNUSED(argc);
     UNUSED(argv);
 
-    glfwSetErrorCallback(window_glfw_error);
-    ta_log_write(&tg_debug_log, SRC_SYSTEM, "glfwCreateWindow...\n");
-    if (!glfwInit()) {
-        DLB_ASSERT(!"glfwInit failed.\n");
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "SDL_Init...\n");
+    // TODO: SDL_INIT_AUDIO?
+    if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
+        ta_log_write(&tg_debug_log, SRC_SYSTEM, "SDL_Init failed: %s\n", SDL_GetError());
+        DLB_ASSERT(!"SDL_Init failed.\n");
+        return 1;
     }
 
     ta_timer_init();
@@ -137,7 +138,7 @@ int main(int argc, char *argv[])
     ta_window_free(tg_window);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Goodbye.\n\n");
     ta_log_free(&tg_debug_log);
-    glfwTerminate();
+    SDL_Quit();
     return 0;
 }
 
@@ -146,6 +147,7 @@ int main(int argc, char *argv[])
 #include "dml_parser.c"
 #include "dml_scanner.c"
 #include "dml_token.c"
+#include "glad.c"  // TODO: This might need to go back to the top of the file?? Idk why it was there.
 #include "ta_animation.c"
 #include "ta_asset_watcher.c"
 #include "ta_audio.c"

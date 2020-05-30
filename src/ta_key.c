@@ -70,9 +70,9 @@ void ta_key_event(ta_event *event)
         case INPUT_EVENT_KEY_PRESS:
         case INPUT_EVENT_KEY_RELEASE: {
             u8 down = (event->type == INPUT_EVENT_KEY_PRESS);
-            keys[event->data.key.key].down = down;
-            keys[event->data.key.key].changed = true;
-            keys[event->data.key.key].last_change_ms = ta_timer_elapsed_ms();
+            keys[event->data.key.scancode].down = down;
+            keys[event->data.key.scancode].changed = true;
+            keys[event->data.key.scancode].last_change_ms = ta_timer_elapsed_ms();
             break;
         }
     }

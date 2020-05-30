@@ -1,14 +1,16 @@
 #pragma once
 #include "dlb/dlb_types.h"
-#include "GLFW/glfw3.h"
+#include "SDL/SDL_keyboard.h"
 
 struct ta_event;
 struct ta_keybind;
 
 enum {
-    GLFW_KEY_MOUSE_LEFT = GLFW_KEY_LAST + 1,
-    GLFW_KEY_MOUSE_RIGHT,
-    GLFW_KEY_MOUSE_MIDDLE,
+    SDL_SCANCODE_MOUSE_LEFT = SDL_NUM_SCANCODES + 1,
+    SDL_SCANCODE_MOUSE_RIGHT,
+    SDL_SCANCODE_MOUSE_MIDDLE,
+    SDL_SCANCODE_MOUSE_X1,
+    SDL_SCANCODE_MOUSE_X2,
     TA_KEY_COUNT
 };
 

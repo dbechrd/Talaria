@@ -363,50 +363,50 @@ void ta_editor_textbox_event(ta_event *event)
             // TODO: Use this event, which has a repeat flag, to handle textbox keybinds like backspace/arrow keys to
             // ensure we're respecting the user's OS key delay/repeat settings.
             //event->data.key.repeat;
-            switch (event->data.key.key) {
-                case GLFW_KEY_RIGHT: {
+            switch (event->data.key.scancode) {
+                case SDL_SCANCODE_RIGHT: {
                     textbox_command_cursor_right();
                     break;
-                } case GLFW_KEY_LEFT: {
+                } case SDL_SCANCODE_LEFT: {
                     textbox_command_cursor_left();
                     break;
-                } case GLFW_KEY_DOWN: {
+                } case SDL_SCANCODE_DOWN: {
                     textbox_command_cursor_down();
                     break;
-                } case GLFW_KEY_UP: {
+                } case SDL_SCANCODE_UP: {
                     textbox_command_cursor_up();
                     break;
-                } case GLFW_KEY_HOME: {
-                    if (event->data.key.mods & GLFW_MOD_SHIFT) {
+                } case SDL_SCANCODE_HOME: {
+                    if (event->data.key.mods & KMOD_SHIFT) {
                         textbox_command_cursor_bof();
                     } else {
                         textbox_command_cursor_bol();
                     }
                     break;
-                } case GLFW_KEY_END: {
-                    if (event->data.key.mods & GLFW_MOD_SHIFT) {
+                } case SDL_SCANCODE_END: {
+                    if (event->data.key.mods & KMOD_SHIFT) {
                         textbox_command_cursor_eof();
                     } else {
                         textbox_command_cursor_eol();
                     }
                     break;
-                } case GLFW_KEY_DELETE: {
+                } case SDL_SCANCODE_DELETE: {
                     textbox_command_delete();
                     break;
-                } case GLFW_KEY_BACKSPACE: {
+                } case SDL_SCANCODE_BACKSPACE: {
                     textbox_command_backspace();
                     break;
-                } case GLFW_KEY_ENTER: case GLFW_KEY_KP_ENTER: {
+                } case SDL_SCANCODE_RETURN: case SDL_SCANCODE_KP_ENTER: {
                     textbox_command_submit();
                     break;
-                } case GLFW_KEY_ESCAPE: {
+                } case SDL_SCANCODE_ESCAPE: {
                     textbox_command_cancel();
                     break;
                 }
             }
 
             // Consume all unhandled keystrokes when text editor is active
-            //if (event->data.key_press.key == GLFW_KEY_ENTER) {
+            //if (event->data.key_press.key == SDL_SCANCODE_ENTER) {
             //    ta_ui_textbox_insert(editor.active_textbox, '\n');
             //}
             event->handled = true;
