@@ -48,14 +48,50 @@ static void ta_ogx_load_texture(ogx_texture *tex)
 
     ta_log_write(&tg_debug_log, SRC_OGX, "ta_game_alloc TEXTURE %s\n", tex->name);
     ta_texture *texture = ta_game_alloc(RES_TEXTURE, SYM(tex->name));
-
     texture->width = w;
     texture->height = h;
     texture->channels = (u8)channels;
     texture->pixels = pixels;
+
     ta_texture_init(texture);
+
     texture->pixels = 0; // HACK: Don't want ta_texture_free to try to call dlb_vec_free() on this buffer
     stbi_image_free(pixels);
+}
+
+static void ta_ogx_load_material(ogx_material *mat)
+{
+    ta_log_write(&tg_debug_log, SRC_OGX, "ta_game_alloc MATERIAL %s\n", mat->name);
+    ta_material *material = ta_game_alloc(RES_MATERIAL, SYM(mat->name));
+    material->albedo_texture     = mat->albedo_texture;
+    material->albedo_factor.r    = mat->albedo_factor[0];
+    material->albedo_factor.g    = mat->albedo_factor[1];
+    material->albedo_factor.b    = mat->albedo_factor[2];
+    material->albedo_factor.a    = mat->alpha_factor;
+    // NOTE: ta_material doesn't support alpha_texture, so ensure we're not discarding anything
+    DLB_ASSERT(!mat->alpha_texture);
+    material->emission_texture   = mat->emissive_texture;
+    material->emission_factor.r  = mat->emissive_factor[0];
+    material->emission_factor.g  = mat->emissive_factor[1];
+    material->emission_factor.g  = mat->emissive_factor[2];
+    material->metallic_texture   = mat->metallic_texture;
+    material->metallic_factor    = mat->metallic_factor;
+    material->normal_texture     = mat->normal_texture;
+    // NOTE: ta_material doesn't support normal_factor for now, so ensure we're not discarding anything
+    if (mat->normal_texture) {
+        DLB_ASSERT(mat->normal_factor[0] == 1.0f);
+        DLB_ASSERT(mat->normal_factor[1] == 1.0f);
+        DLB_ASSERT(mat->normal_factor[2] == 1.0f);
+    } else {
+        DLB_ASSERT(mat->normal_factor[0] == 0.0f);
+        DLB_ASSERT(mat->normal_factor[1] == 0.0f);
+        DLB_ASSERT(mat->normal_factor[2] == 0.0f);
+    }
+    material->normal_texture     = mat->normal_texture;
+    material->roughness_texture  = mat->roughness_texture;
+    material->roughness_factor   = mat->roughness_factor;
+
+    ta_material_init(material);
 }
 
 void ta_ogx_load(ogx_scene *scene)
@@ -64,8 +100,11 @@ void ta_ogx_load(ogx_scene *scene)
         ta_ogx_load_texture(tex);
     }
 
+    dlb_vec_each(ogx_material *, mat, scene->materials) {
+        ta_ogx_load_material(mat);
+    }
+
     //ogx_camera *cameras;
     //ogx_geometry *geometry;
     //ogx_light *lights;
-    //ogx_material *materials;
 }

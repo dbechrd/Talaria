@@ -233,17 +233,17 @@ typedef struct ogx_texture {
 
 typedef struct ogx_material {
     const char *name;
-    float alpha_factor;
+    float       alpha_factor;
     const char *alpha_texture;
-    ogx_vec3 albedo_factor;
+    ogx_vec3    albedo_factor;
     const char *albedo_texture;
-    ogx_vec3 emissive_factor;
+    ogx_vec3    emissive_factor;
     const char *emissive_texture;
-    float metallic_factor;
+    float       metallic_factor;
     const char *metallic_texture;
-    ogx_vec3 normal_factor;
+    ogx_vec3    normal_factor;
     const char *normal_texture;
-    float roughness_factor;
+    float       roughness_factor;
     const char *roughness_texture;
 } ogx_material;
 

@@ -20,18 +20,18 @@
 typedef struct ta_material {
     TA_RESOURCE_HEADER
     const char *shader;
-    const char *albedo_texture;
     ta_rgba     albedo_factor;
-    const char *emission_texture;
+    const char *albedo_texture;
     ta_rgb      emission_factor;
-    const char *metallic_texture;
-    float       metallic_factor;
-    const char *roughness_texture;
-    float       roughness_factor;
-    const char *height_texture;
+    const char *emission_texture;
     float       height_factor;
+    const char *height_texture;
+    float       metallic_factor;
+    const char *metallic_texture;
     const char *normal_texture;
     const char *occlusion_texture;
+    float       roughness_factor;
+    const char *roughness_texture;
 } ta_material;
 
 ta_material *tg_material_default;
