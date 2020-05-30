@@ -108,117 +108,6 @@ static SDL_Cursor *window_cursor_ibeam;    // text edit ibeam "I" cursor
 //    }
 //}
 
-#if 0
-static void window_glfw_close(SDL_Window *sdl_window)
-{
-    UNUSED(sdl_window);
-
-    //if (unsaved_changes)
-    //    glfwSetWindowShouldClose(glfw_window, GLFW_FALSE);
-
-    ta_event event = { 0 };
-    event.type = GAME_EVENT_SHUTDOWN;
-    ta_event_push(&event);
-}
-static void window_glfw_framebuffer_resize(SDL_Window *sdl_window, int w, int h)
-{
-    ta_window *window = glfwGetWindowUserPointer(sdl_window);
-    window->width = w;
-    window->height = h;
-
-    ta_event event = { 0 };
-    event.type = WINDOW_EVENT_RESIZE;
-    event.data.window_resize.width = window->width;
-    event.data.window_resize.height = window->height;
-    ta_event_push(&event);
-}
-static void window_glfw_key(SDL_Window *sdl_window, int key, int scancode, int action, int mods)
-{
-    UNUSED(sdl_window);
-    static int action_to_event[] = {
-        [GLFW_RELEASE] = INPUT_EVENT_KEY_RELEASE,
-        [GLFW_PRESS  ] = INPUT_EVENT_KEY_PRESS,
-        [GLFW_REPEAT ] = INPUT_EVENT_KEY_REPEAT,
-    };
-
-    ta_event event = { 0 };
-    event.type = action_to_event[action];
-    if (event.type) {
-        event.data.key.key = key;
-        event.data.key.scancode = scancode;
-        event.data.key.mods = mods;
-        event.data.key.repeat = (action == GLFW_REPEAT);
-        ta_key_event(&event);
-        ta_event_push(&event);
-    }
-}
-static void window_glfw_codepoint(SDL_Window *sdl_window, unsigned int codepoint)
-{
-    UNUSED(sdl_window);
-    ta_event event = { 0 };
-    event.type = INPUT_EVENT_TEXT_INPUT;
-    event.data.text_input.codepoint = codepoint;
-    ta_event_push(&event);
-}
-static void window_glfw_mouse_button(SDL_Window *sdl_window, int button, int action, int mods)
-{
-    UNUSED(sdl_window);
-    static int action_to_event[] = {
-        [GLFW_RELEASE] = INPUT_EVENT_KEY_RELEASE,
-        [GLFW_PRESS  ] = INPUT_EVENT_KEY_PRESS,
-        [GLFW_REPEAT ] = INPUT_EVENT_KEY_REPEAT,
-    };
-    static int button_to_key[] = {
-        [GLFW_MOUSE_BUTTON_LEFT  ] = GLFW_KEY_MOUSE_LEFT,
-        [GLFW_MOUSE_BUTTON_RIGHT ] = GLFW_KEY_MOUSE_RIGHT,
-        [GLFW_MOUSE_BUTTON_MIDDLE] = GLFW_KEY_MOUSE_MIDDLE,
-    };
-
-    ta_event event = { 0 };
-    event.type = action_to_event[action];
-    if (event.type) {
-        event.data.key.key = button_to_key[button];
-        event.data.key.scancode = -1;
-        event.data.key.mods = mods;
-        event.data.key.repeat = (action == GLFW_REPEAT);
-        ta_key_event(&event);
-        ta_event_push(&event);
-    }
-}
-
-static void window_glfw_mouse_move(SDL_Window *sdl_window, double xpos, double ypos)
-{
-    UNUSED(sdl_window);
-    ta_event event = { 0 };
-    event.type = INPUT_EVENT_MOUSE_MOVE;
-    event.data.mouse_move.x = (int)floor(xpos);
-    event.data.mouse_move.y = (int)floor(ypos);
-    event.data.mouse_move.dx = event.data.mouse_move.x - ta_mouse_x();
-    event.data.mouse_move.dy = event.data.mouse_move.y - ta_mouse_y();
-    ta_mouse_event(&event);
-    ta_event_push(&event);
-}
-static void window_glfw_scroll(SDL_Window *sdl_window, double xoffset, double yoffset)
-{
-    UNUSED(sdl_window);
-    ta_event event = { 0 };
-    event.type = INPUT_EVENT_MOUSE_SCROLL;
-    event.data.mouse_scroll.x = (int)floor(xoffset);
-    event.data.mouse_scroll.y = (int)floor(yoffset);
-    ta_mouse_event(&event);
-    ta_event_push(&event);
-}
-static void window_glfw_dragndrop(SDL_Window *sdl_window, int count, const char **paths)
-{
-    UNUSED(sdl_window);
-    UNUSED(count);
-    UNUSED(paths);
-    //int i;
-    //for (i = 0;  i < count;  i++)
-    //    handle_dropped_file(paths[i]);
-}
-#endif
-
 static void sdl_gl_attrib(SDL_GLattr attr, int value)
 {
     int sdl_err = SDL_GL_SetAttribute(attr, value);
@@ -237,80 +126,6 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     static const int gl_major = 3;
     static const int gl_minor = 2;
 
-#if 0
-    // Create window
-    // TODO: Find best monitor to create window on:
-    // https://gist.github.com/blast007/57f6d95522932035ed57db27b6db7070
-    //int display = SDL_GetWindowDisplayIndex(window->sdl_window);
-    //GLFWmonitor *monitor = glfwGetPrimaryMonitor();
-    //const GLFWvidmode *mode = glfwGetVideoMode(monitor);
-    SDL_WindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-    SDL_WindowHint(GLFW_RED_BITS, mode->redBits); // 8;
-    SDL_WindowHint(GLFW_GREEN_BITS, mode->greenBits); // 8;
-    SDL_WindowHint(GLFW_BLUE_BITS, mode->blueBits); // 8;
-    SDL_WindowHint(GLFW_ALPHA_BITS, 8);
-    SDL_WindowHint(GLFW_DEPTH_BITS, 24);
-    SDL_WindowHint(GLFW_STENCIL_BITS, 8);
-    SDL_WindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
-    // TODO: Disable if doing multi-sampling in a post-processing shader
-    SDL_WindowHint(GLFW_SAMPLES, 16);
-    //SDL_WindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-    SDL_WindowHint(GLFW_CONTEXT_VERSION_MAJOR, gl_major);
-    SDL_WindowHint(GLFW_CONTEXT_VERSION_MINOR, gl_minor);
-    SDL_WindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    SDL_WindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#if _DEBUG
-    SDL_WindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-#else
-    // TODO: Disable GL errors in release mode for performance?
-    //SDL_WindowHint(GLFW_CONTEXT_NO_ERROR, GLFW_TRUE);
-#endif
-
-    window->fullscreen = fullscreen;
-    if (!fullscreen) {
-        // Delay displaying window so we can center it first
-        SDL_WindowHint(GLFW_VISIBLE, GL_FALSE);
-    }
-
-    ta_log_write(&tg_debug_log, SRC_WINDOW, "glfwCreateWindow...\n");
-    window->sdl_window = glfwCreateWindow(w, h, "Talaria", fullscreen ? monitor : 0, 0);
-    if (!window->sdl_window) {
-        ta_log_write(&tg_debug_log, SRC_WINDOW, "glfwCreateWindow error\n");
-        DLB_ASSERT(!"ta_window_init: glfwCreateWindow failed");
-    }
-
-    if (!fullscreen) {
-        // Center window
-        int cx = (mode->width - w) / 2;
-        int cy = (mode->height - h) / 2;
-        glfwSetWindowPos(window->sdl_window, cx, cy);
-        glfwShowWindow(window->sdl_window);
-    }
-
-    // Register event callbacks
-    glfwSetWindowUserPointer        (window->sdl_window, window);
-    glfwSetWindowCloseCallback      (window->sdl_window, window_glfw_close);
-    glfwSetFramebufferSizeCallback  (window->sdl_window, window_glfw_framebuffer_resize);
-    glfwSetKeyCallback              (window->sdl_window, window_glfw_key);
-    glfwSetCharCallback             (window->sdl_window, window_glfw_codepoint);
-    glfwSetMouseButtonCallback      (window->sdl_window, window_glfw_mouse_button);
-    glfwSetCursorPosCallback        (window->sdl_window, window_glfw_mouse_move);
-    glfwSetScrollCallback           (window->sdl_window, window_glfw_scroll);
-    glfwSetDropCallback             (window->sdl_window, window_glfw_dragndrop);
-
-    ta_log_write(&tg_debug_log, SRC_WINDOW, "glfwMakeContextCurrent...\n");
-    glfwMakeContextCurrent(window->sdl_window);
-
-    ta_log_write(&tg_debug_log, SRC_WINDOW, "gladLoadGL...\n");
-    if (!gladLoadGL()) {
-        ta_log_write(&tg_debug_log, SRC_WINDOW, "gladLoadGL failed\n");
-        DLB_ASSERT(!"ta_window_init: failed to init GLAD");
-    }
-
-    glfwSwapInterval(1);
-    window->vsync = true;
-    glfwGetFramebufferSize(window->sdl_window, &window->width, &window->height);
-#else
     ta_log_write(&tg_debug_log, SRC_WINDOW, "Setting SDL GL attributes\n");
     sdl_gl_attrib(SDL_GL_RED_SIZE, 8);
     sdl_gl_attrib(SDL_GL_GREEN_SIZE, 8);
@@ -391,7 +206,6 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     window->vsync = SDL_GL_GetSwapInterval();
     ta_log_write(&tg_debug_log, SRC_WINDOW, "w: %d, h: %d, vsync: %s\n", window->width, window->height,
         window->vsync ? "on" : "off");
-#endif
 
     // Draw something as soon as humanly possible (just a dark gray for now to get rid of the default white)
     glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
@@ -497,7 +311,6 @@ void ta_window_get_size(ta_window *window, int *w, int *h)
 {
     *w = window->width;
     *h = window->height;
-    //glfwGetFramebufferSize(window->glfw_window, w, h);
 }
 void ta_window_set_size(ta_window *window, int w, int h)
 {
