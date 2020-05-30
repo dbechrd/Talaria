@@ -273,10 +273,10 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // Textures
     //--------------------------------------------------------------------------
-    tg_font            = INTERN("ubuntumono");
+    tg_font            = INTERN("data/font/UbuntuMono-Regular.ttf");
     tg_tex_orange      = INTERN("test_diff");
     tg_tex_red         = INTERN("test_mrao");
-    tg_tex_audio_icon  = INTERN("audio_icon");
+    tg_tex_audio_icon  = INTERN("data/texture/audio_icon.tga");
 
     tg_tex_default_albedo    = INTERN("#default_albedo");
     tg_tex_default_emission  = INTERN("#default_emission");
