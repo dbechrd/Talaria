@@ -286,7 +286,7 @@ char *ta_file_read_all(const char *filename)
     size_t read = fread(buffer, 1, tell, fs);
     DLB_ASSERT(read == len - 1);
     if (len) {
-        DLB_ASSERT(buffer[0] != 0xef);  // check for Unicode BOM (EF BB BF), breaks GLSL shaders on AMD
+        DLB_ASSERT((u8)buffer[0] != 0xef);  // check for Unicode BOM (EF BB BF), breaks GLSL shaders on AMD/Intel
     }
 
     // Close file

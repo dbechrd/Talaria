@@ -1,4 +1,4 @@
-﻿#version 330 core
+#version 330 core
 
 in vs_out {
     vec3 position;

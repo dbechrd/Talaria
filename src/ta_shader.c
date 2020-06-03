@@ -36,27 +36,6 @@ void ta_shader_init(ta_shader *shader)
     ta_shader_load(shader);
 }
 
-static void show_info_log(GLuint shader)
-{
-    ta_log_write(&tg_debug_log, SRC_SHADER, "Trying to show_info_log\n");
-
-    GLint length = 0;
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
-    if (length) {
-        char *buf = 0;
-        dlb_vec_reserve(buf, length);
-        dlb_vec_hdr(buf)->len = length;
-        glGetShaderInfoLog(shader, (GLsizei)dlb_vec_len(buf), NULL, buf);
-        ta_log_write(&tg_debug_log, SRC_SHADER,
-            "\n---[OpenGL Info Log]------------------------------------------------------------\n"
-            "%s\n", buf);
-    } else {
-        ta_log_write(&tg_debug_log, SRC_SHADER,
-            "\n---[OpenGL Info Log]------------------------------------------------------------\n"
-            "No error text: GL_INFO_LOG_LENGTH = 0\n");
-    }
-    DLB_ASSERT(!"show_info_log: GL error occurred");
-};
 static GLuint ta_shader_compile(GLenum type, char *buf)
 {
     GLuint shader = glCreateShader(type);
@@ -71,7 +50,27 @@ static GLuint ta_shader_compile(GLenum type, char *buf)
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (!status) {
-        show_info_log(shader);
+        ta_log_write(&tg_debug_log, SRC_SHADER, "Trying to show_info_log\n");
+
+        GLint length = 0;
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &length);
+        // TODO: Turn this into a string
+        GLenum gl_err = glGetError();
+        if (length) {
+            char *log = 0;
+            dlb_vec_reserve(log, length);
+            dlb_vec_hdr(log)->len = length;
+            glGetShaderInfoLog(shader, (GLsizei)dlb_vec_len(log), NULL, log);
+            ta_log_write(&tg_debug_log, SRC_SHADER,
+                "\n---[OpenGL Shader Info Log - %d]------------------------------------------------------------\n"
+                "%s\n", gl_err, log);
+        } else {
+            ta_log_write(&tg_debug_log, SRC_SHADER,
+                "\n---[OpenGL Shader Info Log - %d]------------------------------------------------------------\n"
+                "No error text: GL_INFO_LOG_LENGTH = 0\n", gl_err);
+        }
+        DLB_ASSERT(!"show_info_log: GL error occurred");
+
         glDeleteShader(shader);
         return 0;
     }
@@ -97,7 +96,27 @@ static void ta_shader_program_link(GLuint program)
     glGetProgramiv(program, GL_LINK_STATUS, &status);
     if (status == GL_FALSE)
     {
-        show_info_log(program);
+        ta_log_write(&tg_debug_log, SRC_SHADER, "Trying to show_info_log\n");
+
+        GLint length = 0;
+        glGetProgramiv(program, GL_INFO_LOG_LENGTH, &length);
+        // TODO: Turn this into a string
+        GLenum gl_err = glGetError();
+        if (length) {
+            char *log = 0;
+            dlb_vec_reserve(log, length);
+            dlb_vec_hdr(log)->len = length;
+            glGetProgramInfoLog(program, (GLsizei)dlb_vec_len(log), NULL, log);
+            ta_log_write(&tg_debug_log, SRC_SHADER,
+                "\n---[OpenGL Program Info Log - %d]------------------------------------------------------------\n"
+                "%s\n", gl_err, log);
+        } else {
+            ta_log_write(&tg_debug_log, SRC_SHADER,
+                "\n---[OpenGL Program Info Log - %d]------------------------------------------------------------\n"
+                "No error text: GL_INFO_LOG_LENGTH = 0\n", gl_err);
+        }
+        DLB_ASSERT(!"show_info_log: GL error occurred");
+
         glDeleteProgram(program);
         DLB_ASSERT(!"ta_shader_program_link: failed to link shader program");
     }

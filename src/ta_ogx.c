@@ -94,6 +94,27 @@ static void ta_ogx_load_material(ogx_material *mat)
     ta_material_init(material);
 }
 
+static void ta_ogx_load_mesh(ogx_mesh *msh)
+{
+    UNUSED(msh);
+    //mesh->
+    //ta_log_write(&tg_debug_log, SRC_OGX, "ta_game_alloc MESH %s\n", msh->name);
+    //ta_model *model = ta_game_alloc(RES_COMP_MODEL, SYM(msh->name));
+    //dlb_vec_each(ogx_mesh *, mesh, geo->meshes) {
+    //
+    //}
+}
+
+static void ta_ogx_load_geometry(ogx_geometry *geo)
+{
+    UNUSED(geo);
+    //ta_log_write(&tg_debug_log, SRC_OGX, "ta_game_alloc MODEL %s\n", geo->name);
+    //ta_model *model = ta_game_alloc(RES_COMP_MODEL, SYM(geo->name));
+    //dlb_vec_each(ogx_mesh *, mesh, geo->meshes) {
+    //
+    //}
+}
+
 void ta_ogx_load(ogx_scene *scene)
 {
     dlb_vec_each(ogx_texture *, tex, scene->textures) {
@@ -102,6 +123,10 @@ void ta_ogx_load(ogx_scene *scene)
 
     dlb_vec_each(ogx_material *, mat, scene->materials) {
         ta_ogx_load_material(mat);
+    }
+
+    dlb_vec_each(ogx_geometry *, geo, scene->geometry) {
+        ta_ogx_load_geometry(geo);
     }
 
     //ogx_camera *cameras;
