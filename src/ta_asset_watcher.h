@@ -12,4 +12,4 @@ typedef struct ta_asset_watcher {
     char *changed_files[16];  // relative name of files with detected changes
 } ta_asset_watcher;
 
-void ta_asset_watcher_init(ta_asset_watcher *watcher);
+void ta_asset_watcher_init(ta_asset_watcher *watcher, const char *directory, size_t directory_len);

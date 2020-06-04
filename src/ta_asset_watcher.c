@@ -164,12 +164,12 @@ static int ta_asset_watcher_watch(ta_asset_watcher *watcher)
     return (int)err;
 }
 
-void ta_asset_watcher_init(ta_asset_watcher *watcher)
+void ta_asset_watcher_init(ta_asset_watcher *watcher, const char *directory, size_t directory_len)
 {
-    DLB_ASSERT(watcher->dir_path);
-    size_t len = strlen(watcher->dir_path);
-    DLB_ASSERT(len);
-    DLB_ASSERT(watcher->dir_path[len-1] == '/');  // Directory must end with slash
+    DLB_ASSERT(directory);
+    DLB_ASSERT(directory_len);
+    watcher->dir_path = directory;
+    DLB_ASSERT(watcher->dir_path[directory_len - 1] == '/');  // Directory must end with slash
 
     thrd_t asset_watcher_thread = { 0 };
     int result = thrd_create(&asset_watcher_thread, ta_asset_watcher_watch, watcher);

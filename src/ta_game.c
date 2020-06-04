@@ -66,6 +66,7 @@ typedef struct ta_game {
     ta_camera minimap_camera;   // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
     ta_keybind *keybinds;
     bool console_visible;
+    const char *base_path;      // symbol (working dir in debug mode, otherwise the .exe directory)
     ta_asset_watcher texture_watcher;
 
     // HACK: Temp data, need to persist between frames for debug rendering to work when sim is paused
@@ -143,6 +144,28 @@ void ta_game_init()
     //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
     ta_game_state_set(TA_STATE_STARTUP);
+
+
+    ta_log_write(&tg_debug_log, SRC_GAME, "Determining base path...\n");
+#if _DEBUG
+    char buf[512] = { 0 };
+    DWORD len = GetCurrentDirectoryA(sizeof(buf), buf);
+    DLB_ASSERT(len < sizeof(buf) - 2);
+    for (int i = 0; i < len; ++i) {
+        if (buf[i] == '\\') buf[i] = '/';
+    }
+    buf[len] = '/';
+    game.base_path = ta_symbol_intern(buf, len + 1);
+#else
+    char *buf = SDL_GetBasePath();
+    size_t len = strlen(buf);
+    for (int i = 0; i < len; ++i) {
+        if (buf[i] == '\\') buf[i] = '/';
+    }
+    game.base_path = ta_symbol_intern(buf, len);
+    SDL_free(buf);
+#endif
+    ta_log_write(&tg_debug_log, SRC_GAME, "Base path: %s\n", game.base_path);
 
     ta_log_write(&tg_debug_log, SRC_GAME, "Initializing key binds\n");
 
@@ -419,8 +442,7 @@ void ta_game_init()
     tg_shader_quads   = ta_game_by_sym(RES_SHADER, INTERN("quads"));
     tg_shader_cubemap = ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
 
-    game.texture_watcher.dir_path = "C:/Users/user/Documents/Development/Talaria/bin/";
-    ta_asset_watcher_init(&game.texture_watcher);
+    ta_asset_watcher_init(&game.texture_watcher, SYM(game.base_path));
 
 #if _DEBUG
     ta_game_state_set(TA_STATE_FREE_CAM);
