@@ -43,6 +43,7 @@ const char *tg_tex_red;
 const char *tg_tex_audio_icon;
 
 // Default textures
+const char *tg_tex_invalid_albedo;      // magenta/white checkerboard
 const char *tg_tex_default_albedo;      // vec4(1.0)
 const char *tg_tex_default_emission;    // vec3(1.0)
 const char *tg_tex_default_metallic;    // 0.0
@@ -151,7 +152,7 @@ void ta_game_init()
     char buf[512] = { 0 };
     DWORD len = GetCurrentDirectoryA(sizeof(buf), buf);
     DLB_ASSERT(len < sizeof(buf) - 2);
-    for (int i = 0; i < len; ++i) {
+    for (DWORD i = 0; i < len; ++i) {
         if (buf[i] == '\\') buf[i] = '/';
     }
     buf[len] = '/';
@@ -236,19 +237,18 @@ void ta_game_init()
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
-#if 0
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb"); // stride != 0 (interleaved attributes)
     //ta_game_load_gltf("data/mesh/bee.glb");               // diffuse fails to load
     //ta_game_load_gltf("data/mesh/Dodecahedron.gltf");     // has external URIs
 
     // TODO: If file doesn't exist, just let it not load and fallback on default placeholder. Do same for textures.
     //ta_game_load_gltf("data/mesh/hier_test.gltf");
-    ta_game_load_gltf("data/mesh/rock_0001.gltf");
+    //ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/button_silly.gltf");
     ta_game_load_gltf("data/mesh/button.gltf");
-    ta_game_load_gltf("data/mesh/dude.gltf");
-    ta_game_load_gltf("data/mesh/skeleton_test.gltf");
-#endif
+    //ta_game_load_gltf("data/mesh/dude.gltf");
+    //ta_game_load_gltf("data/mesh/skeleton_test.gltf");
+
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
     tg_material_default = ta_game_by_name_try(RES_MATERIAL, SYM(INTERN("material_unknown")));
 
@@ -301,6 +301,7 @@ void ta_game_init()
     tg_tex_red         = INTERN("test_mrao");
     tg_tex_audio_icon  = INTERN("data/texture/audio_icon.tga");
 
+    tg_tex_invalid_albedo    = INTERN("#invalid_albedo");
     tg_tex_default_albedo    = INTERN("#default_albedo");
     tg_tex_default_emission  = INTERN("#default_emission");
     tg_tex_default_metallic  = INTERN("#default_metallic");
@@ -309,6 +310,7 @@ void ta_game_init()
     tg_tex_default_occlusion = INTERN("#default_occlusion");
     tg_tex_default_height    = INTERN("#default_height");
 
+    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_invalid_albedo   ));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_albedo   ));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_emission ));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_metallic ));
@@ -317,6 +319,7 @@ void ta_game_init()
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_occlusion));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_height   ));
 
+    ta_texture *tex_invalid_albedo    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_invalid_albedo   );
     ta_texture *tex_default_albedo    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo   );
     ta_texture *tex_default_emission  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission );
     ta_texture *tex_default_metallic  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic );
@@ -325,9 +328,35 @@ void ta_game_init()
     ta_texture *tex_default_occlusion = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion);
     ta_texture *tex_default_height    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height   );
 
+    // TODO(cleanup): This isn't used anywhere. Not sure if we need it.
+    // Generate magenta/white grid pattern
+    tex_invalid_albedo->type = TA_TEXTURE_2D;
+    tex_invalid_albedo->width = 64;
+    tex_invalid_albedo->height = 64;
+    tex_invalid_albedo->channels = 4;
+    u32 bytes = tex_invalid_albedo->width * tex_invalid_albedo->height * tex_invalid_albedo->channels;
+    dlb_vec_reserve(tex_invalid_albedo->pixels, bytes);
+    u8 toggle = 0;
+    u8 toggle_width = 4;
+    for (u32 y = 0; y < tex_invalid_albedo->height; y++) {
+        if (y % toggle_width == 0) toggle = !toggle;
+        for (u32 x = 0; x < tex_invalid_albedo->width; x++) {
+            if (x % toggle_width == 0) toggle = !toggle;
+            dlb_vec_push(tex_invalid_albedo->pixels, 255);
+            dlb_vec_push(tex_invalid_albedo->pixels, toggle * 255);
+            dlb_vec_push(tex_invalid_albedo->pixels, 255);
+            dlb_vec_push(tex_invalid_albedo->pixels, 255);
+        }
+    }
+    size_t pixels_len = dlb_vec_len(tex_invalid_albedo->pixels);
+    DLB_ASSERT(pixels_len == bytes);
+    tex_invalid_albedo->repeat = true;
+    tex_invalid_albedo->linear = false;
+    tex_invalid_albedo->gl_filter_min = GL_NEAREST;
+    tex_invalid_albedo->gl_filter_mag = GL_NEAREST;
+
     // TODO: Just create 3 white textures, for 1, 2 and 4 channels. Then reuse.
     tex_default_albedo->type = TA_TEXTURE_2D;
-#if 0
     tex_default_albedo->width = 1;
     tex_default_albedo->height = 1;
     tex_default_albedo->channels = 4;
@@ -335,28 +364,6 @@ void ta_game_init()
     dlb_vec_push(tex_default_albedo->pixels, 255);
     dlb_vec_push(tex_default_albedo->pixels, 255);
     dlb_vec_push(tex_default_albedo->pixels, 255);
-#else
-    // Generate magenta/white grid pattern
-    tex_default_albedo->width = 64;
-    tex_default_albedo->height = 64;
-    tex_default_albedo->channels = 4;
-    u32 bytes = tex_default_albedo->width * tex_default_albedo->height * tex_default_albedo->channels;
-    dlb_vec_reserve(tex_default_albedo->pixels, bytes);
-    u8 toggle = 0;
-    u8 toggle_width = 4;
-    for (u32 y = 0; y < tex_default_albedo->height; y++) {
-        if (y % toggle_width == 0) toggle = !toggle;
-        for (u32 x = 0; x < tex_default_albedo->width; x++) {
-            if (x % toggle_width == 0) toggle = !toggle;
-            dlb_vec_push(tex_default_albedo->pixels, 255);
-            dlb_vec_push(tex_default_albedo->pixels, toggle * 255);
-            dlb_vec_push(tex_default_albedo->pixels, 255);
-            dlb_vec_push(tex_default_albedo->pixels, 255);
-        }
-    }
-    size_t pixels_len = dlb_vec_len(tex_default_albedo->pixels);
-    DLB_ASSERT(pixels_len == bytes);
-#endif
     tex_default_albedo->repeat = true;
     tex_default_albedo->linear = false;
     tex_default_albedo->gl_filter_min = GL_NEAREST;
@@ -426,6 +433,7 @@ void ta_game_init()
     tex_default_occlusion->gl_filter_min = GL_NEAREST;
     tex_default_occlusion->gl_filter_mag = GL_NEAREST;
 
+    ta_texture_load(tex_invalid_albedo);
     ta_texture_load(tex_default_albedo);
     ta_texture_load(tex_default_emission);
     ta_texture_load(tex_default_metallic);
@@ -644,8 +652,8 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_
     int len = snprintf(CSTR(frame_info),
         "Frame\n"
         "  count: %08llu\n"
-        "  time:  %5.2f ms\n"
-        "  delta: %5.2f ms\n"
+        "  logic: %5.2f ms\n"
+        "   swap: %5.2f ms\n"
         "Game\n"
         "  step:  %08llu\n"
         "  state: %s\n"

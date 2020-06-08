@@ -1737,9 +1737,18 @@ static void ui_mesh_panel()
             for (int i = 0; i < TA_VERTEX_ATTRIB_COUNT; i++) {
                 len += snprintf(tex_buf + len, sizeof(tex_buf) - len,
                     "[%3u] %s %zu\n",
-                    mesh->gl_buffers[i],
+                    mesh->gl_vertex_buffer,
                     ta_vertex_attrib_type_str(i),
                     dlb_vec_len(mesh->buffers[i])
+                );
+                DLB_ASSERT(len < sizeof(tex_buf));
+            }
+            dlb_vec_each(ta_mesh_index_array *, index_array, mesh->indexes) {
+                len += snprintf(tex_buf + len, sizeof(tex_buf) - len,
+                    "[%3u] %s %zu\n",
+                    mesh->gl_index_buffer,
+                    "TA_INDEX_BUFFER",
+                    dlb_vec_len(index_array)
                 );
                 DLB_ASSERT(len < sizeof(tex_buf));
             }

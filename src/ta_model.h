@@ -11,6 +11,8 @@ typedef struct ta_piece {
 typedef struct ta_model {
     TA_COMPONENT_HEADER
     ta_piece   *pieces;               // Array of mesh pieces in this model
+
+    const char **materials;           // Array of material names
     const char **anim_targets;        // Array of animation target names
     float      *anim_target_weights;  // Array of animation target weights
     bool       invisible;             // If true, model is not rendered

@@ -2,6 +2,7 @@
 #include "ta_math.h"
 #include "misc/glad.h"
 
+// Note: Morphable attributes must be contiguous and in the same order as their respective morph target attributes
 typedef enum ta_shader_attr {
     TA_SHADER_ATTR_POSITION        = 0,
     TA_SHADER_ATTR_COLOR           = 1,

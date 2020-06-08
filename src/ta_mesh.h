@@ -2,10 +2,10 @@
 #include "ta_math.h"
 #include "misc/glad.h"
 
-#define MESH_MAX_JOINTS 4
+#define VERTEX_MAX_JOINTS 4
 
+// TODO: This is an exact copy of ta_shader_attr.. do we really need both?
 typedef enum ta_vertex_attrib_type {
-    // Note: Morphable attributes must be contiguous and in the same order as their respective morph target attributes
     TA_VERTEX_ATTRIB_POSITION,
     TA_VERTEX_ATTRIB_COLOR,
     TA_VERTEX_ATTRIB_UV,
@@ -18,9 +18,18 @@ typedef enum ta_vertex_attrib_type {
     TA_VERTEX_ATTRIB_MORPH0_TANGENT,
     TA_VERTEX_ATTRIB_JOINTS,
     TA_VERTEX_ATTRIB_WEIGHTS,
-    TA_VERTEX_ATTRIB_INDEX,
     TA_VERTEX_ATTRIB_COUNT
 } ta_vertex_attrib_type;
+
+typedef struct ta_mesh_joint_array {
+    GLushort ids[VERTEX_MAX_JOINTS];  // NOTE: GLTF only supports 4 joints per vertex
+} ta_mesh_joint_array;
+
+typedef struct ta_mesh_index_array {
+    const char *material;  // material ID
+    GLuint *values;        // vector of index values
+    GLint base_vertex;
+} ta_mesh_index_array;
 
 #pragma warning(push)
 #pragma warning(disable: 4201)
@@ -41,21 +50,20 @@ typedef struct ta_mesh {
             ta_vec2 *morph0_uvs;
             ta_vec3 *morph0_normals;
             ta_vec3 *morph0_tangents;
-            struct {
-                GLushort ids[MESH_MAX_JOINTS];  // NOTE: GLTF only supports 4 joints per vertex
-            } *joints;
-            // TODO: Can this be a static sized array?
-            ta_vec4 *weights;  // one weight for each joint [MESH_MAX_JOINTS]
-            GLuint *indexes;
+            ta_mesh_joint_array *joints;
+            ta_vec4 *weights;  // one weight for each joint
         };
         void *buffers[TA_VERTEX_ATTRIB_COUNT];
     };
+    ta_mesh_index_array *indexes;
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;
     ta_line_3d *tangent_lines;
     ta_aabb aabb;
     GLuint gl_vao;
-    GLuint gl_buffers[TA_VERTEX_ATTRIB_COUNT];
+    //GLuint gl_buffers[TA_VERTEX_ATTRIB_COUNT];
+    GLuint gl_vertex_buffer;
+    GLuint gl_index_buffer;
 } ta_mesh;
 #pragma warning(pop)
 

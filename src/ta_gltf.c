@@ -695,9 +695,9 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
                 //dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->joints));
             } else if (accessor->component_type == cgltf_component_type_r_8u) {
                 // NOTE: gltf decided joints should be 8u.. but only sometimes. Fix that dumb shit. -.-
-                DLB_ASSERT(sizeof(*mesh->joints) / MESH_MAX_JOINTS == sizeof(u16));
+                DLB_ASSERT(sizeof(*mesh->joints) / VERTEX_MAX_JOINTS == sizeof(u16));
                 //DLB_ASSERT(sizeof(*mesh->joints) == sizeof(*mesh->morph0_joints));
-                DLB_ASSERT(data_size / accessor->count / MESH_MAX_JOINTS == sizeof(u8));
+                DLB_ASSERT(data_size / accessor->count / VERTEX_MAX_JOINTS == sizeof(u8));
                 //dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->joints));
                 dlb_vec_alloc_count(mesh->joints, accessor->count);
 
@@ -1200,6 +1200,12 @@ void ta_gltf_load(ta_gltf *gltf)
             int mesh_name_len = snprintf(mesh_name_buf, mesh_name_size, "#%s.prim%03d", model->name, prim_idx);
             DLB_ASSERT(mesh_name_len < mesh_name_size);
 
+            char material_name_buf[256] = { 0 };
+            const size_t material_name_size = ARRAY_SIZE(material_name_buf);
+            int material_name_len = snprintf(material_name_buf, material_name_size, "#%s", gltf_prim->material->name);
+            DLB_ASSERT(material_name_len < material_name_size);
+            const char *material_name = ta_symbol_intern(material_name_buf, material_name_len);
+
             ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", mesh_name_buf);
             ta_mesh *mesh = ta_game_alloc(RES_MESH, mesh_name_buf, mesh_name_len);
 
@@ -1216,8 +1222,8 @@ void ta_gltf_load(ta_gltf *gltf)
                 DLB_ASSERT(data);
 
                 DLB_ASSERT(accessor->type == cgltf_type_scalar);
-                dlb_vec_reserve(mesh->indexes, accessor->count);
-                dlb_vec_hdr(mesh->indexes)->len = accessor->count;
+                ta_mesh_index_array *index_array = dlb_vec_alloc(mesh->indexes);
+                dlb_vec_alloc_count(index_array->values, accessor->count);
 
                 // TODO(perf): Make sure all input data is already the correct size
                 // Convert indices to u32
@@ -1226,18 +1232,18 @@ void ta_gltf_load(ta_gltf *gltf)
                     case cgltf_component_type_r_8:
                     case cgltf_component_type_r_8u:
                         for (cgltf_size i = 0; i < accessor->count; ++i) {
-                            mesh->indexes[i] = ((u8 *)data)[i];
+                            index_array->values[i] = ((u8 *)data)[i];
                         }
                         break;
                     case cgltf_component_type_r_16:
                     case cgltf_component_type_r_16u:
                         for (cgltf_size i = 0; i < accessor->count; ++i) {
-                            mesh->indexes[i] = ((u16 *)data)[i];
+                            index_array->values[i] = ((u16 *)data)[i];
                         }
                         break;
                     case cgltf_component_type_r_32u:
                         for (cgltf_size i = 0; i < accessor->count; ++i) {
-                            mesh->indexes[i] = ((u32 *)data)[i];
+                            index_array->values[i] = ((u32 *)data)[i];
                         }
                         break;
                     case cgltf_component_type_r_32f:
@@ -1246,12 +1252,11 @@ void ta_gltf_load(ta_gltf *gltf)
                         DLB_ASSERT(!"invalid index component type");
                         break;
                 }
+
+                index_array->material = material_name;
             }
 
-            char material_name_buf[256] = { 0 };
-            const size_t material_name_size = ARRAY_SIZE(material_name_buf);
-            int material_name_len = snprintf(material_name_buf, material_name_size, "#%s", gltf_prim->material->name);
-            DLB_ASSERT(material_name_len < material_name_size);
+            dlb_vec_push(model->materials, material_name);
 
             ta_piece piece = { 0 };
             piece.mesh = ta_symbol_intern(mesh_name_buf, mesh_name_len);

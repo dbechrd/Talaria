@@ -106,6 +106,7 @@ typedef struct ogx_camera_node {
     const char *camera;
 } ogx_camera_node;
 
+// TODO: This will become a ta_model
 typedef struct ogx_geometry_node {
     ogx_basic_node base;
     const char *mesh;
@@ -137,15 +138,17 @@ typedef struct ogx_camera {
 
 typedef enum ogx_vertex_attrib {
     OGX_VERTEX_ATTRIB_UNKNOWN,
-    OGX_VERTEX_ATTRIB_POSIITON,
-    OGX_VERTEX_ATTRIB_NORMAL,
-    OGX_VERTEX_ATTRIB_TEXCOORD0,
+    OGX_VERTEX_ATTRIB_POSIITON,   // vec3
+    OGX_VERTEX_ATTRIB_NORMAL,     // vec3
+    OGX_VERTEX_ATTRIB_TEXCOORD0,  // vec2
     OGX_VERTEX_ATTRIB_COUNT,
 } ogx_vertex_attrib;
 
+// NOTE: The perfectly representable integer range of a float is [0 - 16,777,216]
+// (2^24 because a float has 24 bits of mantissa)
 typedef struct ogx_vertex_array {
     ogx_vertex_attrib attrib;
-    float morph;  // TODO: uint32
+    float morph;  // TODO: uint32 (why 32.. there should only be a few morphs?)
     union {
         float *as_float;
         ogx_vec2 *as_vec2;
@@ -181,22 +184,22 @@ typedef struct ogx_skin {
     float *bone_weight_array;
 } ogx_skin;
 
+typedef struct ogx_mesh {
+    ogx_vertex_array *vertex_arrays;  // +
+    ogx_index_array *index_arrays;    // *  NOTE: If mesh has no index arrays, use first material
+    ogx_skin skin;                    // ?
+} ogx_mesh;
+
 typedef struct ogx_morph {
     const char *name;
     //float index;  // TODO: What's this for?
     float base;   // TODO: u32
 } ogx_morph;
 
-typedef struct ogx_mesh {
-    ogx_vertex_array *vertex_arrays;
-    ogx_index_array *index_arrays;
-    ogx_skin skin;
-} ogx_mesh;
-
 typedef struct ogx_geometry {
     const char *name;
-    ogx_morph *morphs;  // 0+
-    ogx_mesh *meshes;  // 1+
+    ogx_morph *morphs;  // *
+    ogx_mesh *meshes;   // +
 } ogx_geometry;
 
 typedef enum ogx_light_type {
