@@ -108,12 +108,17 @@ void main()
 
     // TODO: Don't pass height 0.0 into shader
     // https://learnopengl.com/Advanced-Lighting/Parallax-Mapping
-    float mtl_height  = texture(u_material.height_texture, scaled_uv).r * u_material.height_factor;
-    vec2 displacement = V.xy / V.z * (u_material.height_factor - mtl_height);  // NOTE: Invert to get depth instead of height
+#if 0
+    float height_factor = u_material.height_factor;
+    float mtl_height  = texture(u_material.height_texture, scaled_uv).r * height_factor;
+    vec2 displacement = V.xy / V.z * (height_factor - mtl_height);  // NOTE: Invert to get depth instead of height
     vec2 displaced_uv = scaled_uv - displacement;
     // Edge artifacts can sometimes be cleaned up like so, but I don't like this idea since it disallows UVs > 1.0
     //if (displaced_uv.x > 1.0 || displaced_uv.y > 1.0 || displaced_uv.x < 0.0 || displaced_uv.y < 0.0)
     //    discard;
+#else
+    vec2 displaced_uv = scaled_uv;
+#endif
     vec4  mtl_albedo    = texture(u_material.albedo_texture,    displaced_uv).rgba * u_material.albedo_factor;
     vec3  mtl_emission  = texture(u_material.emission_texture,  displaced_uv).rgb  * u_material.emission_factor;
     float mtl_metallic  = texture(u_material.metallic_texture,  displaced_uv).r    * u_material.metallic_factor;

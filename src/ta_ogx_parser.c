@@ -923,6 +923,8 @@ static ogx_result ogx_load_vertex_array(dml_document *doc, ogx_vertex_array *ver
                         vertex_array->attrib = OGX_VERTEX_ATTRIB_POSIITON;
                     } else if (!strcmp(attrib, "normal")) {
                         vertex_array->attrib = OGX_VERTEX_ATTRIB_NORMAL;
+                    } else if (!strcmp(attrib, "tangent")) {
+                        vertex_array->attrib = OGX_VERTEX_ATTRIB_TANGENT;
                     } else if (!strcmp(attrib, "texcoord0")) {
                         vertex_array->attrib = OGX_VERTEX_ATTRIB_TEXCOORD0;
                     } else {
@@ -938,6 +940,7 @@ static ogx_result ogx_load_vertex_array(dml_document *doc, ogx_vertex_array *ver
                 static size_t components_by_attrib[OGX_VERTEX_ATTRIB_COUNT] = {
                     [OGX_VERTEX_ATTRIB_POSIITON ] = 3,
                     [OGX_VERTEX_ATTRIB_NORMAL   ] = 3,
+                    [OGX_VERTEX_ATTRIB_TANGENT  ] = 3,
                     [OGX_VERTEX_ATTRIB_TEXCOORD0] = 2,
                 };
                 size_t comp = components_by_attrib[vertex_array->attrib];

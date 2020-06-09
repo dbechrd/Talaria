@@ -223,16 +223,6 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // Scene
     //--------------------------------------------------------------------------
-    ta_log_write(&tg_debug_log, SRC_GAME, "Loading ogex test file...\n");
-    //dml_document_load("data/mesh/skeleton_test.ogex");
-    //dml_document_load("data/mesh/button.ogex");
-    //dml_document_load("data/mesh/dude.ogex");
-
-    ogx_scene scene = { 0 };
-    if (ogx_scene_from_file(&scene, "data/mesh/chamber_0002.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&scene);
-    }
-
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading first scene...\n");
     ta_scene_load_file(&game.scene, "data/scene/scene.dml");
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
@@ -251,6 +241,19 @@ void ta_game_init()
 
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
     tg_material_default = ta_game_by_name_try(RES_MATERIAL, SYM(INTERN("material_unknown")));
+
+    //--------------------------------------------------------------------------
+    // Scene (OGX) ** MUST COME AFTER game.scene.index_by_name[*] INITIALIZED
+    //--------------------------------------------------------------------------
+    ta_log_write(&tg_debug_log, SRC_GAME, "Loading ogex test file...\n");
+    //dml_document_load("data/mesh/skeleton_test.ogex");
+    //dml_document_load("data/mesh/button.ogex");
+    //dml_document_load("data/mesh/dude.ogex");
+
+    ogx_scene scene = { 0 };
+    if (ogx_scene_from_file(&scene, "data/mesh/chamber_0002.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(&scene);
+    }
 
     //--------------------------------------------------------------------------
     // Simulation
@@ -496,6 +499,9 @@ void ta_game_state_set(ta_game_state state)
 }
 void *ta_game_alloc(ta_res_type type, const char *name, size_t name_len)
 {
+    const char *type_str = 0;
+    ta_res_type_str(type, &type_str);
+    ta_log_write(&tg_debug_log, SRC_GAME, "ta_game_alloc %s %.*s\n", type_str, name_len, name);
     return ta_scene_alloc(&game.scene, type, name, name_len);
 }
 void ta_game_destroy(ta_res_type type, const char *name, size_t name_len)

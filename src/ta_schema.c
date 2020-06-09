@@ -83,6 +83,29 @@ void ta_schema_field_type_str(ta_schema_field_type type, const char **str)
     }
 }
 
+void ta_res_type_str(ta_res_type type, const char **str)
+{
+    switch (type) {
+        case RES_COMP_AUDIO_SOURCE : *str = "RES_COMP_AUDIO_SOURCE"; break;
+        case RES_COMP_BUTTON       : *str = "RES_COMP_BUTTON";       break;
+        case RES_COMP_CAMERA       : *str = "RES_COMP_CAMERA";       break;
+        case RES_COMP_GUN          : *str = "RES_COMP_GUN";          break;
+        case RES_COMP_LIGHT        : *str = "RES_COMP_LIGHT";        break;
+        case RES_COMP_MODEL        : *str = "RES_COMP_MODEL";        break;
+        case RES_COMP_PLAYER       : *str = "RES_COMP_PLAYER";       break;
+        case RES_COMP_TRANSFORM    : *str = "RES_COMP_TRANSFORM";    break;
+        case RES_COMP_RIGID_BODY   : *str = "RES_COMP_RIGID_BODY";   break;
+        case RES_AUDIO_BUFFER      : *str = "RES_AUDIO_BUFFER";      break;
+        case RES_FONT              : *str = "RES_FONT";              break;
+        case RES_MATERIAL          : *str = "RES_MATERIAL";          break;
+        case RES_MESH              : *str = "RES_MESH";              break;
+        case RES_SHADER            : *str = "RES_SHADER";            break;
+        case RES_TEXTURE           : *str = "RES_TEXTURE";           break;
+        case RES_ANIMATION         : *str = "RES_ANIMATION";         break;
+        default: DLB_ASSERT(0);      *str = "RES_???";
+    }
+}
+
 ta_schema_field_type res_to_typ(ta_res_type type)
 {
     ta_schema_field_type schema_type;

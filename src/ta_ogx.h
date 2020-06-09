@@ -140,6 +140,7 @@ typedef enum ogx_vertex_attrib {
     OGX_VERTEX_ATTRIB_UNKNOWN,
     OGX_VERTEX_ATTRIB_POSIITON,   // vec3
     OGX_VERTEX_ATTRIB_NORMAL,     // vec3
+    OGX_VERTEX_ATTRIB_TANGENT,    // vec3
     OGX_VERTEX_ATTRIB_TEXCOORD0,  // vec2
     OGX_VERTEX_ATTRIB_COUNT,
 } ogx_vertex_attrib;

@@ -1747,8 +1747,8 @@ static void ui_mesh_panel()
                 len += snprintf(tex_buf + len, sizeof(tex_buf) - len,
                     "[%3u] %s %zu\n",
                     mesh->gl_index_buffer,
-                    "TA_INDEX_BUFFER",
-                    dlb_vec_len(index_array)
+                    "TA_INDEX_BUFFER                 ",
+                    dlb_vec_len(index_array->values)
                 );
                 DLB_ASSERT(len < sizeof(tex_buf));
             }
