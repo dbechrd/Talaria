@@ -79,27 +79,24 @@ typedef struct ogx_animation {
 typedef enum ogx_node_type {
     OGX_BASIC_NODE,
     OGX_BONE_NODE,
-    OGX_LIGHT_NODE,
     OGX_CAMERA_NODE,
     OGX_GEOMETRY_NODE,
+    OGX_LIGHT_NODE,
 } ogx_node_type;
 
-#define OGX_NODE_HEADER         \
-    ogx_node_type type;         \
-    const char *name;           \
-    ogx_transform transform;    \
-    ogx_animation *animations;  \
-    union ogx_node *parent;     \
-    union ogx_node *children;
-
+#if 0
 typedef struct ogx_basic_node {
-    OGX_NODE_HEADER
+    ogx_node_type type;
+    const char *name;
+    ogx_transform transform;
+    ogx_animation *animations;
+    union ogx_node *parent;
+    union ogx_node *children;
 } ogx_basic_node;
 
-typedef struct ogx_light_node {
+typedef struct ogx_bone_node {
     ogx_basic_node base;
-    const char *light;
-} ogx_light_node;
+} ogx_bone_node;
 
 typedef struct ogx_camera_node {
     ogx_basic_node base;
@@ -115,19 +112,53 @@ typedef struct ogx_geometry_node {
     ogx_animation *animations;
 } ogx_geometry_node;
 
-#undef OGX_NODE_HEADER
-
-typedef struct ogx_bone_node {
+typedef struct ogx_light_node {
     ogx_basic_node base;
-} ogx_bone_node;
+    const char *light;
+} ogx_light_node;
 
 typedef union ogx_node {
     ogx_basic_node basic_node;
     ogx_bone_node bone_node;
-    ogx_light_node light_node;
     ogx_camera_node camera_node;
     ogx_geometry_node geometry_node;
+    ogx_light_node light_node;
 } ogx_node;
+#else
+typedef struct ogx_bone_node {
+    int unused;
+} ogx_bone_node;
+
+typedef struct ogx_camera_node {
+    const char *camera;
+} ogx_camera_node;
+
+// TODO: This will become a ta_model
+typedef struct ogx_geometry_node {
+    const char *mesh;
+    const char **materials;
+    float *morph_weights;
+} ogx_geometry_node;
+
+typedef struct ogx_light_node {
+    const char *light;
+} ogx_light_node;
+
+typedef struct ogx_node {
+    ogx_node_type type;
+    const char *name;
+    ogx_transform transform;
+    ogx_animation *animations;
+    struct ogx_node *parent;    // TODO: Use index (or name), not pointer
+    struct ogx_node *children;  // TODO: Use index (or name), not pointer
+    union {
+        ogx_bone_node bone;
+        ogx_camera_node camera;
+        ogx_geometry_node geometry;
+        ogx_light_node light;
+    } properties;
+} ogx_node;
+#endif
 
 typedef struct ogx_camera {
     const char *name;

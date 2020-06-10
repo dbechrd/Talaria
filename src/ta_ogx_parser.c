@@ -709,7 +709,7 @@ static ogx_result ogx_load_animation(dml_document *doc, ogx_animation *animation
 }
 
 static ogx_result ogx_load_node(dml_document *doc, ogx_node *node, dml_value *value);
-static ogx_result ogx_load_basic_node_field(dml_document *doc, ogx_basic_node *node, dml_field *field)
+static ogx_result ogx_load_node_field(dml_document *doc, ogx_node *node, dml_field *field)
 {
     assert(node);
     assert(field);
@@ -723,29 +723,30 @@ static ogx_result ogx_load_basic_node_field(dml_document *doc, ogx_basic_node *n
         ogx_animation *animation = dlb_vec_alloc(node->animations);
         result = ogx_load_animation(doc, animation, &doc->value_pool[field->value_idx]);
     } else if (field->name == ogxs_bone_node) {
+        // TODO: Allocate these nodes from a single pool, makes no sense to have children be separate vectors
         ogx_node *child = dlb_vec_alloc(node->children);
-        child->basic_node.parent = (ogx_node *)node;
-        child->basic_node.type = OGX_BONE_NODE;
+        child->parent = (ogx_node *)node;
+        child->type = OGX_BONE_NODE;
         result = ogx_load_node(doc, child, &doc->value_pool[field->value_idx]);
     } else if (field->name == ogxs_camera_node) {
         ogx_node *child = dlb_vec_alloc(node->children);
-        child->basic_node.parent = (ogx_node *)node;
-        child->basic_node.type = OGX_CAMERA_NODE;
+        child->parent = (ogx_node *)node;
+        child->type = OGX_CAMERA_NODE;
         result = ogx_load_node(doc, child, &doc->value_pool[field->value_idx]);
     } else if (field->name == ogxs_geometry_node) {
         ogx_node *child = dlb_vec_alloc(node->children);
-        child->basic_node.parent = (ogx_node *)node;
-        child->basic_node.type = OGX_GEOMETRY_NODE;
+        child->parent = (ogx_node *)node;
+        child->type = OGX_GEOMETRY_NODE;
         result = ogx_load_node(doc, child, &doc->value_pool[field->value_idx]);
     } else if (field->name == ogxs_light_node) {
         ogx_node *child = dlb_vec_alloc(node->children);
-        child->basic_node.parent = (ogx_node *)node;
-        child->basic_node.type = OGX_LIGHT_NODE;
+        child->parent = (ogx_node *)node;
+        child->type = OGX_LIGHT_NODE;
         result = ogx_load_node(doc, child, &doc->value_pool[field->value_idx]);
     } else if (field->name == ogxs_node) {
         ogx_node *child = dlb_vec_alloc(node->children);
-        child->basic_node.parent = (ogx_node *)node;
-        child->basic_node.type = OGX_BASIC_NODE;
+        child->parent = (ogx_node *)node;
+        child->type = OGX_BASIC_NODE;
         result = ogx_load_node(doc, child, &doc->value_pool[field->value_idx]);
     } else {
         result = OGX_UNEXPECTED_FIELD;
@@ -831,20 +832,20 @@ static ogx_result ogx_load_node(dml_document *doc, ogx_node *node, dml_value *va
     } else {
         dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
             dml_field *field = &doc->field_pool[*field_idx];
-            result = ogx_load_basic_node_field(doc, &node->basic_node, field);
+            result = ogx_load_node_field(doc, node, field);
             if (result == OGX_UNEXPECTED_FIELD) {
-                switch (node->basic_node.type) {
+                switch (node->type) {
                     case OGX_BONE_NODE:
-                        //result = ogx_load_bone_node_field(doc, &node->bone_node, field);
+                        //result = ogx_load_bone_node_field(doc, &node->properties.bone, field);
                         break;
                     case OGX_CAMERA_NODE:
-                        result = ogx_load_camera_node_field(doc, &node->camera_node, field);
+                        result = ogx_load_camera_node_field(doc, &node->properties.camera, field);
                         break;
                     case OGX_GEOMETRY_NODE:
-                        result = ogx_load_geometry_node_field(doc, &node->geometry_node, field);
+                        result = ogx_load_geometry_node_field(doc, &node->properties.geometry, field);
                         break;
                     case OGX_LIGHT_NODE:
-                        result = ogx_load_light_node_field(doc, &node->light_node, field);
+                        result = ogx_load_light_node_field(doc, &node->properties.light, field);
                         break;
                 }
             }
@@ -1463,23 +1464,23 @@ static ogx_result ogx_load_scene(dml_document *doc, ogx_scene *scene)
         dml_field *field = &doc->field_pool[*field_idx];
         if (field->name == ogxs_bone_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
-            node->basic_node.type = OGX_BONE_NODE;
+            node->type = OGX_BONE_NODE;
             result = ogx_load_node(doc, node, &doc->value_pool[field->value_idx]);
         } else if (field->name == ogxs_camera_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
-            node->basic_node.type = OGX_CAMERA_NODE;
+            node->type = OGX_CAMERA_NODE;
             result = ogx_load_node(doc, node, &doc->value_pool[field->value_idx]);
         } else if (field->name == ogxs_geometry_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
-            node->basic_node.type = OGX_GEOMETRY_NODE;
+            node->type = OGX_GEOMETRY_NODE;
             result = ogx_load_node(doc, node, &doc->value_pool[field->value_idx]);
         } else if (field->name == ogxs_light_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
-            node->basic_node.type = OGX_LIGHT_NODE;
+            node->type = OGX_LIGHT_NODE;
             result = ogx_load_node(doc, node, &doc->value_pool[field->value_idx]);
         } else if (field->name == ogxs_node) {
             ogx_node *node = dlb_vec_alloc(scene->nodes);
-            node->basic_node.type = OGX_BASIC_NODE;
+            node->type = OGX_BASIC_NODE;
             result = ogx_load_node(doc, node, &doc->value_pool[field->value_idx]);
         } else if (field->name == ogxs_camera) {
             ogx_camera *camera = dlb_vec_alloc(scene->cameras);

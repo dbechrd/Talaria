@@ -180,7 +180,7 @@ static void ta_ogx_load_texture(ogx_texture *o_tex)
 static void ta_ogx_load_node(ogx_node *o_node)
 {
     // TODO: Load node
-    UNUSED(o_node);
+    UNUSED(o_node->type);
 }
 
 void ta_ogx_load(ogx_scene *scene)
