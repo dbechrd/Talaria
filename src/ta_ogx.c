@@ -177,10 +177,55 @@ static void ta_ogx_load_texture(ogx_texture *o_tex)
     stbi_image_free(pixels);
 }
 
+static void ta_ogx_load_bone_node(ogx_node *o_node)
+{
+    UNUSED(o_node);
+}
+
+static void ta_ogx_load_camera_node(ogx_node *o_node)
+{
+    UNUSED(o_node);
+}
+
+static void ta_ogx_load_geometry_node(ogx_node *o_node)
+{
+    UNUSED(o_node);
+}
+
+static void ta_ogx_load_light_node(ogx_node *o_node)
+{
+    UNUSED(o_node);
+}
+
 static void ta_ogx_load_node(ogx_node *o_node)
 {
     // TODO: Load node
     UNUSED(o_node->type);
+    //o_node->
+
+    ta_transform *transform = ta_game_alloc(RES_COMP_TRANSFORM, SYM(o_node->name));
+
+    //transform->xform.position
+
+    //ogx_transform transform;
+    //ogx_animation *animations;
+    //struct ogx_node *parent;    // TODO: Use index (or name), not pointer
+    //struct ogx_node *children;  // TODO: Use index (or name), not pointer
+
+    switch (o_node->type) {
+        case OGX_BONE_NODE:
+            ta_ogx_load_bone_node(o_node);
+            break;
+        case OGX_CAMERA_NODE:
+            ta_ogx_load_camera_node(o_node);
+            break;
+        case OGX_GEOMETRY_NODE:
+            ta_ogx_load_geometry_node(o_node);
+            break;
+        case OGX_LIGHT_NODE:
+            ta_ogx_load_light_node(o_node);
+            break;
+    }
 }
 
 void ta_ogx_load(ogx_scene *scene)

@@ -2,27 +2,16 @@
 {
 node: {
 	name: "dude_armature"
-	transform: {  # node.matrix_local (ExportNodeTransform)
-		type: "mat4"
-		data: [
-			0x3f800000, 0, 0, 0, 
-			0, 0x3f800000, 0, 0, 
-			0, 0, 0x3f800000, 0, 
-			0, 0x3e4ccccd, 0, 0x3f800000
-		]
+	transform: {  # ExportNodeTransform
+		position: [0, 0x3e4ccccd, 0]
+		orientation: [0, 0, 0, 0x3f800000]
 	}
 	bone_node: {
 		name: "lumbar"
-		transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-			type: "mat4"
-			data: [
-				0xbf800000, 0x318cc126, 0xb5b443f7, 0, 
-				0x35b4442f, 0x3b47e0df, 0xbf7fffb3, 0, 
-				0x26000000, 0xbf7fffb7, 0xbb47e373, 0, 
-				0, 0x3f38a399, 0xbc5f0f84, 0x3f800000
-			]
+		transform: {  # ExportBoneTransform
+			position: [0, 0x3f38a399, 0xbc5f0f84]
+			orientation: [0x34ff52d7, 0x3f354b91, 0xbf34be3b, 0x34fe8bc7]
 		}
-
 		animation: {  # BoneSampledAnimation
 			track: {
 				target: "transform"
@@ -90,129 +79,74 @@ node: {
 		}
 		bone_node: {
 			name: "thoratic"
-			transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-				type: "mat4"
-				data: [
-					0x3f800000, 0xb6143be2, 0x32f86313, 0, 
-					0x36143751, 0x3f7fdb7a, 0xbd08ba30, 0, 
-					0x33408ea9, 0x3d08ba2f, 0x3f7fdb7a, 0, 
-					0x26d173c2, 0x2f800000, 0xbe8b9e12, 0x3f800000
-				]
+			transform: {  # ExportBoneTransform
+				position: [0x26d173c2, 0x2f800000, 0xbe8b9e12]
+				orientation: [0xbc88bf10, 0x3188bf23, 0xb5943ee3, 0x3f7ff6df]
 			}
 			bone_node: {
 				name: "cervical"
-				transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-					type: "mat4"
-					data: [
-						0x3f800000, 0x354011bb, 0x3217b4b9, 0, 
-						0xb53f9a16, 0x3f7f8fd6, 0xbd6f8a19, 0, 
-						0xb35994bd, 0x3d6f8a1a, 0x3f7f8fd5, 0, 
-						0xa72eda59, 0x31a80000, 0xbe9f2877, 0x3f800000
-					]
+				transform: {  # ExportBoneTransform
+					position: [0xa72eda59, 0x31a80000, 0xbe9f2877]
+					orientation: [0xbcefa45b, 0xb27f9dee, 0x34bfeaee, 0x3f7fe3f4]
 				}
 				bone_node: {
 					name: "head"
-					transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-						type: "mat4"
-						data: [
-							0xbf800000, 0xb70db74a, 0xb571b134, 0, 
-							0x370e84bd, 0xbf7e8166, 0xbddcf9c7, 0, 
-							0x328bf300, 0xbddcf9ca, 0x3f7e8169, 0, 
-							0x25dde13a, 0xb1200000, 0xbd6967f4, 0x3f800000
-						]
+					transform: {  # ExportBoneTransform
+						position: [0x25dde13a, 0xb1200000, 0xbd6967f4]
+						orientation: [0x346daa7c, 0x3d5d4c88, 0xbf7fa049, 0x368e533d]
 					}
 					bone_node: {
 						name: "hat"
-						transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-							type: "mat4"
-							data: [
-								0x3f800000, 0xb70bfffb, 0x2963490c, 0, 
-								0x370bfce1, 0x3f7ffa53, 0x3c578f55, 0, 
-								0xb3ebc4c2, 0xbc578f54, 0x3f7ffa52, 0, 
-								0x28b39818, 0x30f00000, 0xbed23e78, 0x3f800000
-							]
+						transform: {  # ExportBoneTransform
+							position: [0x28b39818, 0x30f00000, 0xbed23e78]
+							orientation: [0x3bd79088, 0xb2ebc619, 0xb68bff35, 0x3f7ffe95]
 						}
 					}
 				}
 			}
 			bone_node: {
 				name: "upper_arm.l"
-				transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-					type: "mat4"
-					data: [
-						0xbdf05ceb, 0xbf7df24a, 0xbd405332, 0, 
-						0xbf47655e, 0x3df86133, 0xbf1d85bb, 0, 
-						0x3f1db773, 0xbd12002c, 0xbf4970ba, 0, 
-						0xbe4424a5, 0x3cbcb684, 0xbe68699f, 0x3f800000
-					]
+				transform: {  # ExportBoneTransform
+					position: [0xbe4424a5, 0x3cbcb684, 0xbe68699f]
+					orientation: [0xbf1f4492, 0x3f362bab, 0xbe6a2f85, 0x3e6e86f7]
 				}
 				bone_node: {
 					name: "forearm.l"
-					transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-						type: "mat4"
-						data: [
-							0x3f61dfe7, 0xbec02a61, 0x3e91648b, 0, 
-							0x3ec37475, 0x3f6c723b, 0x3d0dcbe6, 0, 
-							0xbe8cf096, 0x3d9f7560, 0x3f754d1c, 0, 
-							0x32300000, 0xb3c10000, 0xbea2ffa0, 0x3f800000
-						]
+					transform: {  # ExportBoneTransform
+						position: [0x32300000, 0xb3c10000, 0xbea2ffa0]
+						orientation: [0xbc3695cf, 0xbe139555, 0xbe47ca2f, 0x3f78568e]
 					}
 					bone_node: {
 						name: "hand.l"
-						transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-							type: "mat4"
-							data: [
-								0x3f7adc8d, 0xbe22cc82, 0x3df651de, 0, 
-								0x3e2d15e6, 0x3f7b83f9, 0xbda0b514, 0, 
-								0xbdd87480, 0x3dc71dd9, 0x3f7d58b1, 0, 
-								0xb028d200, 0xb0400000, 0xbe869fc7, 0x3f800000
-							]
+						transform: {  # ExportBoneTransform
+							position: [0xb028d200, 0xb0400000, 0xbe869fc7]
+							orientation: [0xbd35000f, 0xbd68c97e, 0xbda8f543, 0x3f7e75f8]
 						}
 						bone_node: {
 							name: "fingers_proximal.l"
-							transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-								type: "mat4"
-								data: [
-									0x3efd470a, 0xbf3ca422, 0x3eebe870, 0, 
-									0x3f54204a, 0x3f0f4e2b, 0x3bb85dfc, 0, 
-									0xbe862e4c, 0x3ec20d70, 0x3f6333b8, 0, 
-									0xb268a068, 0x32200000, 0xbdc17069, 0x3f800000
-								]
+							transform: {  # ExportBoneTransform
+								position: [0xb268a068, 0x32200000, 0xbdc17069]
+								orientation: [0xbddee991, 0xbe57c486, 0xbee9a759, 0x3f5b8c4e]
 							}
 							bone_node: {
 								name: "fingers_distal.l"
-								transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-									type: "mat4"
-									data: [
-										0x3f7e7660, 0xbdd5b12b, 0x3d072cc1, 0, 
-										0x3dd80537, 0x3f7e6a73, 0xbd0e9d2b, 0, 
-										0xbceeea5c, 0x3d1c03f2, 0x3f7fb48b, 0, 
-										0xb2ac4cd0, 0xb2f00000, 0xbd0a7e27, 0x3f800000
-									]
+								transform: {  # ExportBoneTransform
+									position: [0xb2ac4cd0, 0xb2f00000, 0xbd0a7e27]
+									orientation: [0xbc95907d, 0xbc7f0ef5, 0xbd57372f, 0x3f7f9295]
 								}
 							}
 						}
 						bone_node: {
 							name: "thumb_proximal.l"
-							transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-								type: "mat4"
-								data: [
-									0xbdc1a6f4, 0xbf58164e, 0x3f071dc9, 0, 
-									0xbe126699, 0x3f0943dd, 0x3f54f76d, 0, 
-									0xbf7c3612, 0x3b51e360, 0xbe2f7e26, 0, 
-									0x3d0a074c, 0x3b145ae0, 0xbd3f8419, 0x3f800000
-								]
+							transform: {  # ExportBoneTransform
+								position: [0x3d0a074c, 0x3b145ae0, 0xbd3f8419]
+								orientation: [0x3ebc3b13, 0xbf2bd4df, 0xbe9f40bb, 0x3f10435f]
 							}
 							bone_node: {
 								name: "thumb_distal.l"
-								transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-									type: "mat4"
-									data: [
-										0x3f7faccf, 0xbbed10c4, 0xbd4c3126, 0, 
-										0x3b80347b, 0x3f7f6ec7, 0xbd8806d5, 0, 
-										0x3d4db530, 0x3d87745c, 0x3f7f1d9d, 0, 
-										0xb2bafc80, 0xb3400000, 0xbc96faa6, 0x3f800000
-									]
+								transform: {  # ExportBoneTransform
+									position: [0xb2bafc80, 0xb3400000, 0xbc96faa6]
+									orientation: [0xbd07dbc9, 0x3ccd20be, 0xbb36cb3b, 0x3f7fc720]
 								}
 							}
 						}
@@ -221,82 +155,47 @@ node: {
 			}
 			bone_node: {
 				name: "upper_arm.r"
-				transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-					type: "mat4"
-					data: [
-						0xbe00ee88, 0x3f7dcb4f, 0x3d14062f, 0, 
-						0x3f41acb5, 0x3df4c741, 0xbf24971a, 0, 
-						0xbf24471b, 0xbd5b9702, 0xbf43dbb9, 0, 
-						0x3e2252b1, 0x3c79b01f, 0xbe7faa1e, 0x3f800000
-					]
+				transform: {  # ExportBoneTransform
+					position: [0x3e2252b1, 0x3c79b01f, 0xbe7faa1e]
+					orientation: [0xbf1dca56, 0xbf357e75, 0x3e7b83f4, 0x3e74c3fb]
 				}
 				bone_node: {
 					name: "forearm.r"
-					transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-						type: "mat4"
-						data: [
-							0x3f60d7e8, 0x3ebaaf65, 0xbe9e5969, 0, 
-							0xbec339c3, 0x3f6ca71b, 0x3be5db3c, 0, 
-							0x3e93b105, 0x3de4e595, 0x3f737138, 0, 
-							0x313306c0, 0xb2980000, 0xbeb6d70c, 0x3f800000
-						]
+					transform: {  # ExportBoneTransform
+						position: [0x313306c0, 0xb2980000, 0xbeb6d70c]
+						orientation: [0xbcdd7552, 0x3e1df62b, 0x3e451f1d, 0x3f77fdf7]
 					}
 					bone_node: {
 						name: "hand.r"
-						transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-							type: "mat4"
-							data: [
-								0x3f7adc8d, 0x3e22cc86, 0xbdf651e3, 0, 
-								0xbe2d15f4, 0x3f7b83f6, 0xbda0b526, 0, 
-								0x3dd87485, 0x3dc71dfc, 0x3f7d58b2, 0, 
-								0x31ad9da8, 0xb2340000, 0xbe869fc3, 0x3f800000
-							]
+						transform: {  # ExportBoneTransform
+							position: [0x31ad9da8, 0xb2340000, 0xbe869fc3]
+							orientation: [0xbd35002a, 0x3d68c983, 0x3da8f54d, 0x3f7e75f8]
 						}
 						bone_node: {
 							name: "fingers_proximal.r"
-							transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-								type: "mat4"
-								data: [
-									0x3efd4714, 0x3f3ca422, 0xbeebe871, 0, 
-									0xbf542049, 0x3f0f4e32, 0x3bb85d68, 0, 
-									0x3e862e4e, 0x3ec20d70, 0x3f6333bb, 0, 
-									0x332f47f6, 0, 0xbdc17062, 0x3f800000
-								]
+							transform: {  # ExportBoneTransform
+								position: [0x332f47f6, 0, 0xbdc17062]
+								orientation: [0xbddee98f, 0x3e57c482, 0x3ee9a753, 0x3f5b8c50]
 							}
 							bone_node: {
 								name: "fingers_distal.r"
-								transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-									type: "mat4"
-									data: [
-										0x3f7e7660, 0x3dd5b125, 0xbd072cbd, 0, 
-										0xbdd80535, 0x3f7e6a72, 0xbd0e9d24, 0, 
-										0x3ceeea57, 0x3d1c03f3, 0x3f7fb48a, 0, 
-										0xb31cf308, 0xb2800000, 0xbd0a7e38, 0x3f800000
-									]
+								transform: {  # ExportBoneTransform
+									position: [0xb31cf308, 0xb2800000, 0xbd0a7e38]
+									orientation: [0xbc959079, 0x3c7f0eee, 0x3d57372b, 0x3f7f9295]
 								}
 							}
 						}
 						bone_node: {
 							name: "thumb_proximal.r"
-							transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-								type: "mat4"
-								data: [
-									0xbdc1a6d4, 0x3f581651, 0xbf071dc4, 0, 
-									0x3e1266aa, 0x3f0943da, 0x3f54f76e, 0, 
-									0x3f7c360f, 0x3b51de80, 0xbe2f7e2a, 0, 
-									0xbd0a0743, 0x3b145b48, 0xbd3f840c, 0x3f800000
-								]
+							transform: {  # ExportBoneTransform
+								position: [0xbd0a0743, 0x3b145b48, 0xbd3f840c]
+								orientation: [0x3ebc3b19, 0x3f2bd4db, 0x3e9f40ba, 0x3f104360]
 							}
 							bone_node: {
 								name: "thumb_distal.r"
-								transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-									type: "mat4"
-									data: [
-										0x3f7facce, 0x3bed0d8f, 0x3d4c3110, 0, 
-										0xbb80313c, 0x3f7f6ec9, 0xbd8806da, 0, 
-										0xbd4db4f9, 0x3d877464, 0x3f7f1d9d, 0, 
-										0xb109ba00, 0xb2200000, 0xbc96faa6, 0x3f800000
-									]
+								transform: {  # ExportBoneTransform
+									position: [0xb109ba00, 0xb2200000, 0xbc96faa6]
+									orientation: [0xbd07dbcf, 0xbccd2096, 0x3b36c800, 0x3f7fc720]
 								}
 							}
 						}
@@ -306,218 +205,128 @@ node: {
 		}
 		bone_node: {
 			name: "thigh.l"
-			transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-				type: "mat4"
-				data: [
-					0x3f7ffffd, 0xb99426da, 0xb9b8af33, 0, 
-					0xb99bfaeb, 0xbf7fcc12, 0xbd303705, 0, 
-					0xb9b223ca, 0x3d303b13, 0xbf7fc34f, 0, 
-					0xbddda37c, 0xb9b7b2fe, 0x3bef596c, 0x3f800000
-				]
+			transform: {  # ExportBoneTransform
+				position: [0xbddda37c, 0xb9b7b2fe, 0x3bef596c]
+				orientation: [0xbf7ff0d5, 0x391817a4, 0x39357186, 0x3cb04255]
 			}
 			bone_node: {
 				name: "leg.l"
-				transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-					type: "mat4"
-					data: [
-						0xbf7fffff, 0x3568a530, 0x31bc5000, 0, 
-						0xb56671c0, 0xbf7dd3a6, 0x3e0523ff, 0, 
-						0x33fdc700, 0x3e0529f6, 0x3f7dd388, 0, 
-						0xb11e2400, 0xb0a78000, 0xbe920dc4, 0x3f800000
-					]
+				transform: {  # ExportBoneTransform
+					position: [0xb11e2400, 0xb0a78000, 0xbe920dc4]
+					orientation: [0xb3050e5b, 0xbd856f8f, 0xbf7f74c0, 0xb4e809b5]
 				}
 			}
 		}
 		bone_node: {
 			name: "thigh.r"
-			transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-				type: "mat4"
-				data: [
-					0x3f7ffffd, 0x3992c8d5, 0x39b8a5a3, 0, 
-					0x399a9ce7, 0xbf7fcc13, 0xbd303705, 0, 
-					0x39b2294f, 0x3d303b13, 0xbf7fc34f, 0, 
-					0x3ddda37c, 0xb9b7da02, 0x3bef596c, 0x3f800000
-				]
+			transform: {  # ExportBoneTransform
+				position: [0x3ddda37c, 0xb9b7da02, 0x3bef596c]
+				orientation: [0xbf7ff0d5, 0xb916b925, 0xb93572b4, 0x3cb040e1]
 			}
 			bone_node: {
 				name: "leg.r"
-				transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-					type: "mat4"
-					data: [
-						0xbf7fffff, 0xb5662320, 0x3413fb80, 0, 
-						0x3568f480, 0xbf7dd3a6, 0x3e0523ff, 0, 
-						0x32d74400, 0x3e0529f6, 0x3f7dd388, 0, 
-						0x31605c00, 0x2fdc0000, 0xbe920dc2, 0x3f800000
-					]
+				transform: {  # ExportBoneTransform
+					position: [0x31605c00, 0x2fdc0000, 0xbe920dc2]
+					orientation: [0xb32f4355, 0xbd856f8f, 0xbf7f74c0, 0x34e80a0d]
 				}
 			}
 		}
 	}
 	bone_node: {
 		name: "leg_pole_target.l"
-		transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-			type: "mat4"
-			data: [
-				0xbf800000, 0, 0, 0, 
-				0, 0x3f800000, 0, 0, 
-				0, 0, 0xbf800000, 0, 
-				0x3ddda37c, 0x3edb99be, 0x3eaeccf6, 0x3f800000
-			]
+		transform: {  # ExportBoneTransform
+			position: [0x3ddda37c, 0x3edb99be, 0x3eaeccf6]
+			orientation: [0, 0x3f800000, 0, 0]
 		}
 	}
 	bone_node: {
 		name: "leg_control.l"
-		transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-			type: "mat4"
-			data: [
-				0xbf800000, 0xb4222168, 0x2e8a753e, 0, 
-				0xb422216a, 0x3f800000, 0xb9da9f29, 0, 
-				0, 0xb9da9f23, 0xbf7ffffc, 0, 
-				0x3ddb5138, 0xb8c0a000, 0xbdae6c32, 0x3f800000
-			]
+		transform: {  # ExportBoneTransform
+			position: [0x3ddb5138, 0xb8c0a000, 0xbdae6c32]
+			orientation: [0xb3a22169, 0x3f800000, 0xb95a9f28, 0xad8a753e]
 		}
 		bone_node: {
 			name: "foot.l"
-			transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-				type: "mat4"
-				data: [
-					0xbf800000, 0xb5153f3d, 0x3493be42, 0, 
-					0x351b5f0d, 0xbf2d31e2, 0x3f3c84fb, 0, 
-					0xb46fb727, 0x3f3c850a, 0x3f2d31e4, 0, 
-					0xba70aa29, 0x3deab73a, 0xbd608e44, 0x3f800000
-				]
+			transform: {  # ExportBoneTransform
+				position: [0xba70aa29, 0x3deab73a, 0xbd608e44]
+				orientation: [0xb273a80b, 0xbecde752, 0xbf6a62e3, 0x34a65aac]
 			}
 			bone_node: {
 				name: "toes.l"
-				transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-					type: "mat4"
-					data: [
-						0x3f800000, 0x3481f31e, 0xb50a327a, 0, 
-						0xb50bd0fc, 0x3f40e56e, 0xbf284e71, 0, 
-						0x3475a848, 0x3f284e7b, 0x3f40e564, 0, 
-						0xb199a002, 0x312e3f60, 0xbdcd0a0c, 0x3f800000
-					]
+				transform: {  # ExportBoneTransform
+					position: [0xb199a002, 0x312e3f60, 0xbdcd0a0c]
+					orientation: [0xbeb3bf5d, 0x34552e3a, 0x345ab65c, 0x3f6fb499]
 				}
 			}
 		}
 		bone_node: {
 			name: "foot_roll.l"
-			transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-				type: "mat4"
-				data: [
-					0x3f800000, 0x346184c9, 0xb38a783c, 0, 
-					0x344b8e4b, 0xbf2d3124, 0x3f3c85a9, 0, 
-					0x33ee78ae, 0xbf3c85a9, 0xbf2d311e, 0, 
-					0xba70a96a, 0x3d277139, 0xbdfaff90, 0x3f800000
-				]
+			transform: {  # ExportBoneTransform
+				position: [0xba70a96a, 0x3d277139, 0xbdfaff90]
+				orientation: [0x3f6a62b0, 0x33ea5247, 0x325a72b7, 0x3ecde839]
 			}
 			bone_node: {
 				name: "leg_ik.l"
-				transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-					type: "mat4"
-					data: [
-						0x3f800000, 0x32f2ae27, 0xb38a8517, 0, 
-						0x32f39ed6, 0x3f2d453e, 0x3f3c7328, 0, 
-						0x338a6aac, 0xbf3c7329, 0x3f2d453f, 0, 
-						0x3252912b, 0x31bb912e, 0xbdcd0a0d, 0x3f800000
-					]
+				transform: {  # ExportBoneTransform
+					position: [0x3252912b, 0x31bb912e, 0xbdcd0a0d]
+					orientation: [0x3ecdcf35, 0x33173943, 0xae036d6b, 0x3f6a682f]
 				}
 			}
 		}
 		bone_node: {
 			name: "toes_control.l"
-			transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-				type: "mat4"
-				data: [
-					0xbf800000, 0xb5937cb8, 0x33e1c8d8, 0, 
-					0x359424ed, 0xbf7e71a6, 0x3de17704, 0, 
-					0xb28d8377, 0x3de1770b, 0x3f7e71b0, 0, 
-					0xba70a96a, 0x3d277129, 0xbdfaff90, 0x3f800000
-				]
+			transform: {  # ExportBoneTransform
+				position: [0xba70a96a, 0x3d277129, 0xbdfaff90]
+				orientation: [0xb2beb239, 0xbd61ceeb, 0xbf7f9c57, 0x35140a74]
 			}
 		}
 	}
 	bone_node: {
 		name: "leg_pole_target.r"
-		transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-			type: "mat4"
-			data: [
-				0xbf800000, 0, 0, 0, 
-				0, 0x3f800000, 0, 0, 
-				0, 0, 0xbf800000, 0, 
-				0xbddda37c, 0x3edb99be, 0x3eaeccf6, 0x3f800000
-			]
+		transform: {  # ExportBoneTransform
+			position: [0xbddda37c, 0x3edb99be, 0x3eaeccf6]
+			orientation: [0, 0x3f800000, 0, 0]
 		}
 	}
 	bone_node: {
 		name: "leg_control.r"
-		transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-			type: "mat4"
-			data: [
-				0xbf800000, 0x34222168, 0xae8a753e, 0, 
-				0x3422216a, 0x3f800000, 0xb9da9f29, 0, 
-				0, 0xb9da9f23, 0xbf7ffffc, 0, 
-				0xbddb5138, 0xb8c0a000, 0xbdae6c32, 0x3f800000
-			]
+		transform: {  # ExportBoneTransform
+			position: [0xbddb5138, 0xb8c0a000, 0xbdae6c32]
+			orientation: [0x33a22169, 0x3f800000, 0xb95a9f28, 0x2d8a753e]
 		}
 		bone_node: {
 			name: "foot.r"
-			transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-				type: "mat4"
-				data: [
-					0xbf800000, 0x3506894b, 0xb4aec5c7, 0, 
-					0xb51b5f02, 0xbf2d31e1, 0x3f3c84fb, 0, 
-					0x341fcf70, 0x3f3c850b, 0x3f2d31e3, 0, 
-					0x3a70a9a9, 0x3deab73a, 0xbd608e45, 0x3f800000
-				]
+			transform: {  # ExportBoneTransform
+				position: [0x3a70a9a9, 0x3deab73a, 0xbd608e45]
+				orientation: [0x334f3b33, 0xbecde753, 0xbf6a62e3, 0xb49e520b]
 			}
 			bone_node: {
 				name: "toes.r"
-				transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-					type: "mat4"
-					data: [
-						0x3f800000, 0xb481f332, 0x351e2c68, 0, 
-						0x3518f328, 0x3f40e56d, 0xbf284e71, 0, 
-						0xb498eec9, 0x3f284e7c, 0x3f40e563, 0, 
-						0x318d6eb2, 0x30390200, 0xbdcd0a0e, 0x3f800000
-					]
+				transform: {  # ExportBoneTransform
+					position: [0x318d6eb2, 0x30390200, 0xbdcd0a0e]
+					orientation: [0xbeb3bf5f, 0xb47a970d, 0xb468bd21, 0x3f6fb499]
 				}
 			}
 		}
 		bone_node: {
 			name: "foot_roll.r"
-			transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-				type: "mat4"
-				data: [
-					0x3f800000, 0xb46184c9, 0x338a783c, 0, 
-					0xb44b8e4b, 0xbf2d3124, 0x3f3c85a9, 0, 
-					0xb3ee78ae, 0xbf3c85a9, 0xbf2d311e, 0, 
-					0x3a70a96a, 0x3d277139, 0xbdfaff90, 0x3f800000
-				]
+			transform: {  # ExportBoneTransform
+				position: [0x3a70a96a, 0x3d277139, 0xbdfaff90]
+				orientation: [0x3f6a62b0, 0xb3ea5247, 0xb25a72b7, 0x3ecde839]
 			}
 			bone_node: {
 				name: "leg_ik.r"
-				transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-					type: "mat4"
-					data: [
-						0x3f800000, 0xb2f2ae27, 0x338a8517, 0, 
-						0xb2f39ed6, 0x3f2d453e, 0x3f3c7328, 0, 
-						0xb38a6aac, 0xbf3c7329, 0x3f2d453f, 0, 
-						0xb252912b, 0x31bb912e, 0xbdcd0a0d, 0x3f800000
-					]
+				transform: {  # ExportBoneTransform
+					position: [0xb252912b, 0x31bb912e, 0xbdcd0a0d]
+					orientation: [0x3ecdcf35, 0xb3173943, 0x2e036d6b, 0x3f6a682f]
 				}
 			}
 		}
 		bone_node: {
 			name: "toes_control.r"
-			transform: {  # bone.matrix_local without parentBone/parentPoseBone (ExportBoneTransform)
-				type: "mat4"
-				data: [
-					0xbf800000, 0x35937cb8, 0xb3e1c8d8, 0, 
-					0xb59424ed, 0xbf7e71a6, 0x3de17704, 0, 
-					0x328d8377, 0x3de1770b, 0x3f7e71b0, 0, 
-					0x3a70a96a, 0x3d277129, 0xbdfaff90, 0x3f800000
-				]
+			transform: {  # ExportBoneTransform
+				position: [0x3a70a96a, 0x3d277129, 0xbdfaff90]
+				orientation: [0x32beb239, 0xbd61ceeb, 0xbf7f9c57, 0xb5140a74]
 			}
 		}
 	}
@@ -527,41 +336,26 @@ node: {
 		materials: [
 			"dude_material"
 		]
-		transform: {  # node.matrix_local (ExportNodeTransform)
-			type: "mat4"
-			data: [
-				0x3f800000, 0, 0, 0, 
-				0, 0x3f800000, 0, 0, 
-				0, 0, 0x3f800000, 0, 
-				0, 0, 0, 0x3f800000
-			]
+		transform: {  # ExportNodeTransform
+			position: [0, 0, 0]
+			orientation: [0, 0, 0, 0x3f800000]
 		}
 	}
 }
 light_node: {
 	name: "light"
 	light: "light"
-	transform: {  # node.matrix_local (ExportNodeTransform)
-		type: "mat4"
-		data: [
-			0xbdea0b89, 0xbcb1a1d3, 0xbec02532, 0, 
-			0x3e63dffc, 0x3e9fdbdc, 0xbdafbaa6, 0, 
-			0x3e9b1dfd, 0xbe733760, 0xbda0d634, 0, 
-			0x404d9ac4, 0x404449fc, 0x40188677, 0x3f800000
-		]
+	transform: {  # ExportNodeTransform
+		position: [0x404d9ac4, 0x404449fc, 0x40188677]
+		orientation: [0, 0, 0, 0x3f800000]
 	}
 }
 camera_node: {
 	name: "camera"
 	camera: "camera"
-	transform: {  # node.matrix_local (ExportNodeTransform)
-		type: "mat4"
-		data: [
-			0xb293862d, 0, 0xbec929c8, 0, 
-			0x3ec929c8, 0xb293862d, 0xb293862d, 0, 
-			0xb293862d, 0xbec929c8, 0x26586011, 0, 
-			0x40a3f3b4, 0x3f99aa44, 0x3fa95890, 0x3f800000
-		]
+	transform: {  # ExportNodeTransform
+		position: [0x40a3f3b4, 0x3f99aa44, 0x3fa95890]
+		orientation: [0, 0, 0, 0x3f800000]
 	}
 }
 geometry_node: {
@@ -570,14 +364,9 @@ geometry_node: {
 	materials: [
 		"glass_material"
 	]
-	transform: {  # node.matrix_local (ExportNodeTransform)
-		type: "mat4"
-		data: [
-			0x3f800000, 0, 0, 0, 
-			0, 0x3f800000, 0, 0, 
-			0, 0, 0x3f800000, 0, 
-			0, 0x3e4ccccd, 0, 0x3f800000
-		]
+	transform: {  # ExportNodeTransform
+		position: [0, 0x3e4ccccd, 0]
+		orientation: [0, 0, 0, 0x3f800000]
 	}
 }
 geometry_node: {
@@ -586,38 +375,23 @@ geometry_node: {
 	materials: [
 		"wood_material"
 	]
-	transform: {  # node.matrix_local (ExportNodeTransform)
-		type: "mat4"
-		data: [
-			0x3ecc7b04, 0, 0, 0, 
-			0, 0x3ecc7b04, 0, 0, 
-			0, 0, 0x3ecc7b04, 0, 
-			0x25f3c59c, 0x3d9f4c40, 0xbb735058, 0x3f800000
-		]
+	transform: {  # ExportNodeTransform
+		position: [0x25f3c59c, 0x3d9f4c40, 0xbb735058]
+		orientation: [0, 0, 0, 0x3f800000]
 	}
 }
 node: {
 	name: "front"
-	transform: {  # node.matrix_local (ExportNodeTransform)
-		type: "mat4"
-		data: [
-			0x3f800000, 0, 0, 0, 
-			0, 0xb33bbd2e, 0x3f800000, 0, 
-			0, 0xbf800000, 0xb33bbd2e, 0, 
-			0, 0x401db698, 0, 0x3f800000
-		]
+	transform: {  # ExportNodeTransform
+		position: [0, 0x401db698, 0]
+		orientation: [0, 0, 0, 0x3f800000]
 	}
 }
 node: {
 	name: "side"
-	transform: {  # node.matrix_local (ExportNodeTransform)
-		type: "mat4"
-		data: [
-			0xb33bbd2e, 0, 0xbf800000, 0, 
-			0x3f800000, 0xb33bbd2e, 0xb33bbd2e, 0, 
-			0xb33bbd2e, 0xbf800000, 0x2709adee, 0, 
-			0, 0x401db698, 0, 0x3f800000
-		]
+	transform: {  # ExportNodeTransform
+		position: [0, 0x401db698, 0]
+		orientation: [0, 0, 0, 0x3f800000]
 	}
 }
 geometry: {  # Node Table: dude
@@ -804,13 +578,8 @@ geometry: {  # Node Table: dude
 		}
 		skin: {
 			transform: {  # node.matrix_world (ExportSkin)
-				type: "mat4"
-				data: [
-					0x3f800000, 0, 0, 0, 
-					0, 0x3f800000, 0, 0, 
-					0, 0, 0x3f800000, 0, 
-					0, 0x3e4ccccd, 0, 0x3f800000
-				]
+				position: [0, 0x3e4ccccd, 0]
+				orientation: [0, 0, 0, 0x3f800000]
 			}
 			skeleton: {
 				bones: [  # string[37]
@@ -852,44 +621,85 @@ geometry: {  # Node Table: dude
 					"leg_ik.r",
 					"toes_control.r"
 				]
-				bind_poses: [  # mat4[37]
-					[0xbf800000, 0x318cc126, 0xb5b443f7, 0, 0x35b4442f, 0x3b47e0df, 0xbf7fffb3, 0, 0x26000000, 0xbf7fffb7, 0xbb47e373, 0, 0, 0x3f6bd6cc, 0xbc5f0f84, 0x3f800000],
-					[0xbf800000, 0xb3078872, 0x356860d6, 0, 0xb5688856, 0x3d15364e, 0xbf7fd481, 0, 0xa7800000, 0xbf7fd485, 0xbd153675, 0, 0xa50b9e10, 0x3f98d2e0, 0xbc516f07, 0x3f800000],
-					[0xbf800000, 0xb275f07c, 0x34216688, 0, 0xb4222178, 0x3dc22b2c, 0xbf7ed8cc, 0, 0x27800000, 0xbf7ed8cf, 0xbdc22b3e, 0, 0x268db4b2, 0x3fc0963c, 0xbabf31c8, 0x3f800000],
-					[0x3f800000, 0x33ebc560, 0x370bfce8, 0, 0xb70c0000, 0x3c578ff8, 0x3f7ffa56, 0, 0xa8800000, 0xbf7ffa5b, 0x3c578f58, 0, 0x26610f63, 0x3fc7d913, 0x3b813bcd, 0x3f800000],
-					[0x3f800000, 0xaa280000, 0x2cc00000, 0, 0xaca00000, 0x341d0000, 0x3f800001, 0, 0, 0xbf800003, 0x30800000, 0, 0x27ee6061, 0x3ffc6788, 0xbabf3180, 0x3f800000],
-					[0x3df05d5e, 0x3c30ba94, 0x3f7e373c, 0, 0x3f47655c, 0x3f1e8c85, 0xbdca4f2e, 0, 0xbf1db772, 0x3f48f96a, 0x3d83a8b2, 0, 0x3e4424a4, 0x3fb5f6a5, 0xbce192da, 0x3f800000],
-					[0xbeba3ace, 0x34200000, 0x3f6e7715, 0, 0x3f3e2cf7, 0x3f1a733e, 0x3e94849a, 0, 0xbf0fdef5, 0x3f4c28e3, 0xbe60b66d, 0, 0x3ec67de4, 0x3f95f904, 0xbd449da4, 0x3f800000],
-					[0xbf0ac8cf, 0x33c00000, 0x3f571db1, 0, 0x3f36650d, 0x3f07b95e, 0x3eeb5911, 0, 0xbee418cb, 0x3f590f57, 0xbe9328c4, 0, 0x3f091331, 0x3f7643a0, 0x3c1ee744, 0x3f800000],
-					[0xbf7f9b19, 0xb5800000, 0xbd633240, 0, 0xbd589ef0, 0x3e9a6546, 0x3f73b50b, 0, 0x3c8904b0, 0x3f741540, 0xbe9a2866, 0, 0x3f13d8de, 0x3f61c325, 0x3d16ec25, 0x3f800000],
-					[0xbf7c8444, 0xb46c0000, 0xbe285928, 0, 0xbe2242a4, 0x3e887177, 0x3f736291, 0, 0x3d3373fb, 0x3f76be0f, 0xbe86962a, 0, 0x3f13b3ce, 0x3f598269, 0x3d409f05, 0x3f800000],
-					[0xbf490778, 0x35e80000, 0xbf1e80d9, 0, 0x3db61bbc, 0x3f7d58ac, 0xbde6f60e, 0, 0x3f1cdc31, 0xbe130f5b, 0xbf46f202, 0, 0x3f0a24c2, 0x3f6c6c21, 0x3d5704b4, 0x3f800000],
-					[0xbf50c225, 0x35bab000, 0xbf142ced, 0, 0x3d3820eb, 0x3f7f3a17, 0xbd81b338, 0, 0x3f13ba54, 0xbd9f0da8, 0xbf5020bc, 0, 0x3f0740ad, 0x3f6d1997, 0x3d88d783, 0x3f800000],
-					[0x3e00ee4e, 0x34080000, 0xbf7df679, 0, 0xbf41acb7, 0x3f25987d, 0xbdc4a5d8, 0, 0x3f24471c, 0x3f433a78, 0x3da6ccd5, 0, 0xbe2252b2, 0x3fb8d4e8, 0xbc9af7de, 0x3f800000],
-					[0xbeba3ad1, 0xb3a00000, 0xbf6e7718, 0, 0xbf3e2cf8, 0x3f1a733f, 0x3e94849e, 0, 0x3f0fdef6, 0x3f4c28e2, 0xbe60b66f, 0, 0xbec67de5, 0x3f95f904, 0xbd449dab, 0x3f800000],
-					[0xbf0ac8d2, 0x33900000, 0xbf571db2, 0, 0xbf36650d, 0x3f07b95c, 0x3eeb591c, 0, 0x3ee418ca, 0x3f590f58, 0xbe9328c5, 0, 0xbf091331, 0x3f7643a0, 0x3c1ee720, 0x3f800000],
-					[0xbf7f9b1c, 0x35680000, 0x3d633238, 0, 0x3d589eb8, 0x3e9a6543, 0x3f73b511, 0, 0xbc8904b0, 0x3f741543, 0xbe9a2867, 0, 0xbf13d8de, 0x3f61c325, 0x3d16ec1c, 0x3f800000],
-					[0xbf7c8447, 0x34000000, 0x3e285926, 0, 0x3e224296, 0x3e887175, 0x3f736297, 0, 0xbd3373fd, 0x3f76be12, 0xbe86962b, 0, 0xbf13b3ce, 0x3f598269, 0x3d409efc, 0x3f800000],
-					[0xbf490779, 0xb5d80000, 0x3f1e80d9, 0, 0xbdb61bc0, 0x3f7d58aa, 0xbde6f624, 0, 0xbf1cdc2f, 0xbe130f5f, 0xbf46f203, 0, 0xbf0a24c2, 0x3f6c6c21, 0x3d5704ac, 0x3f800000],
-					[0xbf50c224, 0xb5dd6000, 0x3f142cef, 0, 0xbd382140, 0x3f7f3a15, 0xbd81b329, 0, 0xbf13ba54, 0xbd9f0da9, 0xbf5020bb, 0, 0xbf0740ad, 0x3f6d1997, 0x3d88d77e, 0x3f800000],
-					[0xbf800000, 0x332c7e01, 0x356850fe, 0, 0x35688b02, 0x3d23b7ae, 0x3f7fce8c, 0, 0x31be5538, 0x3f7fcba6, 0xbd23b7a6, 0, 0x3ddda37c, 0x3f69f806, 0xbc59aec2, 0x3f800000],
-					[0x3f800000, 0xae03bc00, 0x2f9fe800, 0, 0x2fb1a000, 0x3db8edec, 0xbf7ef72b, 0, 0x28000000, 0x3f7ef44c, 0x3db8f0f4, 0, 0x3ddda37c, 0x3f210014, 0xbaf6fd80, 0x3f800000],
-					[0xbf800000, 0x3246d090, 0x3421e128, 0, 0x34222348, 0x3d23b7ae, 0x3f7fce8c, 0, 0x31be5538, 0x3f7fcba6, 0xbd23b7a6, 0, 0xbddda37c, 0x3f69f806, 0xbc59aec2, 0x3f800000],
-					[0x3f800000, 0x33c52f17, 0xb587f239, 0, 0xb5887c29, 0x3db8edec, 0xbf7ef72b, 0, 0xa7000000, 0x3f7ef44c, 0x3db8f0f4, 0, 0xbddda37c, 0x3f210014, 0xbaf6fd80, 0x3f800000],
-					[0xbf800000, 0, 0, 0, 0, 0x3f800000, 0, 0, 0, 0, 0xbf800000, 0, 0x3ddda37c, 0x3f210012, 0x3eaeccf6, 0x3f800000],
-					[0xbf800000, 0xb4222168, 0x2e8a753e, 0, 0xb422216a, 0x3f800000, 0xb9da9f29, 0, 0, 0xb9da9f23, 0xbf7ffffc, 0, 0x3ddb5138, 0x3e4cb4b9, 0xbdae6c32, 0x3f800000],
-					[0x3f800000, 0xb4ad5f58, 0xb4bc37a9, 0, 0xb4ffe5e0, 0xbf2d453e, 0xbf3c7329, 0, 0x2fedee00, 0x3f3c732f, 0xbf2d453e, 0, 0x3dddf175, 0x3ea10b1c, 0xbcf8f350, 0x3f800000],
-					[0x3f800000, 0xb5278391, 0xb393de8e, 0, 0xb52887d4, 0xbf7e74aa, 0xbde09d9c, 0, 0, 0x3de09dbc, 0xbf7e74a6, 0, 0x3dddf175, 0x3e769e68, 0x3d1914d8, 0x3f800000],
-					[0xbf800000, 0x337dab14, 0x338a6ab1, 0, 0xb3bbbd2e, 0xbf2d4544, 0xbf3c7329, 0, 0x2f236400, 0xbf3c732c, 0x3f2d453b, 0, 0x3ddd328a, 0x3e769e6d, 0x3d1914d4, 0x3f800000],
-					[0xbf800000, 0x33bbbd41, 0x29680000, 0, 0xb3bbbd32, 0xbf800003, 0xb4400000, 0, 0, 0x33800000, 0x3f7ffffe, 0, 0x3ddd328a, 0x3ea10b1e, 0xbcf8f350, 0x3f800000],
-					[0x3f800000, 0xb57e7419, 0xb3e0ef89, 0, 0xb5800049, 0xbf7e74a8, 0xbde09db4, 0, 0xaf23a580, 0x3de09dc0, 0xbf7e74ad, 0, 0x3ddd328a, 0x3e769e69, 0x3d1914d4, 0x3f800000],
-					[0xbf800000, 0, 0, 0, 0, 0x3f800000, 0, 0, 0, 0, 0xbf800000, 0, 0xbddda37c, 0x3f210012, 0x3eaeccf6, 0x3f800000],
-					[0xbf800000, 0x34222168, 0xae8a753e, 0, 0x3422216a, 0x3f800000, 0xb9da9f29, 0, 0, 0xb9da9f23, 0xbf7ffffc, 0, 0xbddb5138, 0x3e4cb4b9, 0xbdae6c32, 0x3f800000],
-					[0x3f800000, 0x34ad5f58, 0x34bc37a9, 0, 0x34ffe5e0, 0xbf2d453e, 0xbf3c7329, 0, 0xafedee00, 0x3f3c732f, 0xbf2d453e, 0, 0xbdddf175, 0x3ea10b1c, 0xbcf8f350, 0x3f800000],
-					[0x3f800000, 0x35278391, 0x3393de8e, 0, 0x352887d4, 0xbf7e74aa, 0xbde09d9c, 0, 0, 0x3de09dbc, 0xbf7e74a6, 0, 0xbdddf175, 0x3e769e68, 0x3d1914d8, 0x3f800000],
-					[0xbf800000, 0xb37dab14, 0xb38a6ab1, 0, 0x33bbbd2e, 0xbf2d4544, 0xbf3c7329, 0, 0xaf236400, 0xbf3c732c, 0x3f2d453b, 0, 0xbddd328a, 0x3e769e6d, 0x3d1914d4, 0x3f800000],
-					[0xbf800000, 0xb3bbbd41, 0xa9680000, 0, 0x33bbbd32, 0xbf800003, 0xb4400000, 0, 0, 0x33800000, 0x3f7ffffe, 0, 0xbddd328a, 0x3ea10b1e, 0xbcf8f350, 0x3f800000],
-					[0x3f800000, 0x357e7419, 0x33e0ef89, 0, 0x35800049, 0xbf7e74a8, 0xbde09db4, 0, 0x2f23a580, 0x3de09dc0, 0xbf7e74ad, 0, 0xbddd328a, 0x3e769e69, 0x3d1914d4, 0x3f800000]
+				bind_poses: [
+					positions: [  # vec3[37]
+						[0, 0x3f6bd6cc, 0xbc5f0f84],
+						[0, 0x3f98d2e0, 0xbc516f07],
+						[0x248fd6b6, 0x3fc0963b, 0xbabf31d0],
+						[0x24ace211, 0x3fc7d912, 0x3b813bcc],
+						[0x253f8df1, 0x3ffc6786, 0xbabf31d0],
+						[0x3e4424a3, 0x3fb5f6a5, 0xbce192da],
+						[0x3ec67de4, 0x3f95f904, 0xbd449da5],
+						[0x3f091331, 0x3f7643a0, 0x3c1ee740],
+						[0x3f13d8de, 0x3f61c325, 0x3d16ec24],
+						[0x3f13b3ce, 0x3f598269, 0x3d409f04],
+						[0x3f0a24c2, 0x3f6c6c21, 0x3d5704b3],
+						[0x3f0740ad, 0x3f6d1997, 0x3d88d782],
+						[0xbe2252b2, 0x3fb8d4e8, 0xbc9af7de],
+						[0xbec67de4, 0x3f95f904, 0xbd449da5],
+						[0xbf091331, 0x3f7643a0, 0x3c1ee740],
+						[0xbf13d8de, 0x3f61c325, 0x3d16ec24],
+						[0xbf13b3ce, 0x3f598269, 0x3d409f04],
+						[0xbf0a24c2, 0x3f6c6c21, 0x3d5704b3],
+						[0xbf0740ad, 0x3f6d1997, 0x3d88d782],
+						[0x3ddda37c, 0x3f69f805, 0xbc59aec2],
+						[0x3ddda37c, 0x3f210012, 0xbaf6fd88],
+						[0xbddda37c, 0x3f69f805, 0xbc59aec2],
+						[0xbddda37c, 0x3f210012, 0xbaf6fd88],
+						[0x3ddda37c, 0x3f210012, 0x3eaeccf6],
+						[0x3ddb5138, 0x3e4cb4b9, 0xbdae6c32],
+						[0x3dddf175, 0x3ea10b1c, 0xbcf8f341],
+						[0x3dddf175, 0x3e769e69, 0x3d1914dc],
+						[0x3ddd328a, 0x3e769e6d, 0x3d1914dc],
+						[0x3ddd328a, 0x3ea10b1e, 0xbcf8f33e],
+						[0x3ddd328a, 0x3e769e69, 0x3d1914dc],
+						[0xbddda37c, 0x3f210012, 0x3eaeccf6],
+						[0xbddb5138, 0x3e4cb4b9, 0xbdae6c32],
+						[0xbdddf175, 0x3ea10b1c, 0xbcf8f341],
+						[0xbdddf175, 0x3e769e69, 0x3d1914dc],
+						[0xbddd328a, 0x3e769e6d, 0x3d1914dc],
+						[0xbddd328a, 0x3ea10b1e, 0xbcf8f33e],
+						[0xbddd328a, 0x3e769e69, 0x3d1914dc]
+					]
+					orientations: [  # quat[37]
+						[0x34ff52d7, 0x3f354b91, 0xbf34be3b, 0x34fe8bc7],
+						[0xb4a764b7, 0x3f384979, 0xbf31b10d, 0xb4a16717],
+						[0xb36fe90b, 0x3f3d67fc, 0xbf2c397d, 0xb35a25d2],
+						[0x3f33d318, 0xb644aee5, 0x364749c1, 0x3f3634cd],
+						[0x3f3504f2, 0xac07c3b6, 0x2bdad97a, 0x3f3504f4],
+						[0xbea899b0, 0xbf1979e6, 0xbe9285d1, 0x3f2bc6e7],
+						[0xbe809c9b, 0xbf3d4568, 0xbebc49db, 0x3f01486a],
+						[0xbe6d78ce, 0xbf44a028, 0xbed9e7f6, 0x3ed647d8],
+						[0xbc865401, 0x3f4e7020, 0x3f173985, 0x3cb75f01],
+						[0xbd4c9a44, 0x3f4b05b9, 0x3f1a817e, 0x3d866d05],
+						[0x3cc14160, 0x3f713d55, 0xbd8b4d68, 0x3ea75461],
+						[0x3c4169f7, 0x3f73b836, 0xbd17a6eb, 0x3e9b6813],
+						[0xbea16c62, 0x3f1992d2, 0x3e8e3b0a, 0x3f2e4c04],
+						[0xbe809c98, 0x3f3d4567, 0x3ebc49dc, 0x3f01486b],
+						[0xbe6d78c7, 0x3f44a029, 0x3ed9e7fa, 0x3ed647d4],
+						[0xbc864fdd, 0xbf4e702a, 0xbf173979, 0x3cb75ae1],
+						[0xbd4c9a0e, 0xbf4b05bd, 0xbf1a817b, 0x3d866caf],
+						[0x3cc14137, 0xbf713d54, 0x3d8b4d79, 0x3ea7545c],
+						[0x3c416a60, 0xbf73b836, 0x3d17a6f8, 0x3e9b6813],
+						[0x34a8b5c2, 0x3f3899fc, 0x3f315d66, 0xb4a00dc3],
+						[0xbf2ca733, 0xaed891c6, 0xaf036ea9, 0x3f3d03ff],
+						[0x337211e7, 0x3f3899fc, 0x3f315d66, 0xb3583dce],
+						[0xbf2ca733, 0x34b81fa1, 0x34c98960, 0x3f3d03ff],
+						[0, 0x3f800000, 0, 0],
+						[0xb3a22169, 0x3f800000, 0xb95a9f28, 0xad8a753e],
+						[0xbf6a682f, 0x346a6827, 0x33cd4d48, 0x3ecdcf37],
+						[0xbf7f9d17, 0x34a8469d, 0x3294152b, 0x3d60f4aa],
+						[0xb2978414, 0x3ecdcf37, 0xbf6a682e, 0xb32bc682],
+						[0xa8680000, 0x32fffff7, 0xbf800000, 0xb33bbd38],
+						[0xbf7f9d17, 0x34ff9d17, 0x32e196c8, 0x3d60f40c],
+						[0, 0x3f800000, 0, 0],
+						[0x33a22169, 0x3f800000, 0xb95a9f28, 0x2d8a753e],
+						[0xbf6a682f, 0xb46a6827, 0xb3cd4d48, 0x3ecdcf37],
+						[0xbf7f9d17, 0xb4a8469d, 0xb294152b, 0x3d60f4aa],
+						[0x32978414, 0x3ecdcf37, 0xbf6a682e, 0x332bc682],
+						[0x28680000, 0x32fffff7, 0xbf800000, 0x333bbd38],
+						[0xbf7f9d17, 0xb4ff9d17, 0xb2e196c8, 0x3d60f40c]
+					]
 				]
 			}
 			bone_count_array: [  # u16[901]
