@@ -1,13 +1,14 @@
 #pragma once
 #include "dlb/dlb_types.h"
 
-typedef float ogx_vec2[2];
-typedef float ogx_vec3[3];
-typedef float ogx_mat4[16];
+typedef float ogx_vec2[2];  // xy
+typedef float ogx_vec3[3];  // xyz
+typedef float ogx_vec4[4];  // xyzw
+typedef float ogx_mat4[16]; // 00, 01, 02, 03, 10, ..., 33
 
 typedef struct ogx_transform {
-    const char *type;
-    ogx_mat4 data;
+    ogx_vec3 position;
+    ogx_vec4 orientation;
 } ogx_transform;
 
 typedef enum ogx_key_kind {
@@ -202,7 +203,8 @@ typedef struct ogx_index_array {
 
 typedef struct ogx_skeleton {
     const char **bones;
-    ogx_mat4 *bind_poses;
+    ogx_vec3 *bind_pose_positions;
+    ogx_vec4 *bind_pose_orientations;
 } ogx_skeleton;
 
 typedef struct ogx_skin {

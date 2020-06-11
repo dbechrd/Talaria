@@ -764,8 +764,7 @@ bool ta_ui_image(ta_texture *texture, int face)
 }
 void ta_ui_label(const char *text, size_t text_len, ta_rect_uv **text_rects)
 {
-    DLB_ASSERT(text);
-    DLB_ASSERT(text_len);
+    if (!text || !text_len) return;
 
     ta_rect_uv *text_rects_internal = 0;
     if (text_rects) {

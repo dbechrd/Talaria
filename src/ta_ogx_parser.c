@@ -27,72 +27,75 @@ const char *ogx_result_str[OGX_RESULT_COUNT] = {
 #define OGX_SYMBOL_DECLARE(e) static const char *ogxs_##e = 0;
 #define OGX_SYMBOL_DEFINE(e) ogxs_##e = ta_symbol_intern(CSTR(#e));
 
-#define OGX_SYMBOLS(f)  \
-    f(albedo_factor)    \
-    f(albedo_texture)   \
-    f(alpha_factor)     \
-    f(alpha_texture)    \
-    f(animation)        \
-    f(atten)            \
-    f(attrib)           \
-    f(base)             \
-    f(begin)            \
-    f(bind_poses)       \
-    f(bones)            \
-    f(bone_count_array) \
-    f(bone_index_array) \
-    f(bone_node)        \
-    f(bone_weight_array)\
-    f(camera)           \
-    f(camera_node)      \
-    f(children)         \
-    f(color)            \
-    f(curve)            \
-    f(data)             \
-    f(end)              \
-    f(emissive_factor)  \
-    f(emissive_texture) \
-    f(far)              \
-    f(fov)              \
-    f(geometry)         \
-    f(geometry_node)    \
-    f(index)            \
-    f(index_array)      \
-    f(intensity)        \
-    f(key)              \
-    f(kind)             \
-    f(light)            \
-    f(light_node)       \
-    f(material)         \
-    f(materials)        \
-    f(mesh)             \
-    f(metallic_factor)  \
-    f(metallic_texture) \
-    f(morph)            \
-    f(morph_weights)    \
-    f(morphs)           \
-    f(name)             \
-    f(near)             \
-    f(node)             \
-    f(normal_factor)    \
-    f(normal_texture)   \
-    f(parent)           \
-    f(path)             \
-    f(roughness_factor) \
-    f(roughness_texture)\
-    f(scale)            \
-    f(shadow)           \
-    f(skeleton)         \
-    f(skin)             \
-    f(target)           \
-    f(target_index)     \
-    f(texture)          \
-    f(time)             \
-    f(track)            \
-    f(transform)        \
-    f(type)             \
-    f(value)            \
-    f(vertex_array)     \
+#define OGX_SYMBOLS(f)          \
+    f(albedo_factor)            \
+    f(albedo_texture)           \
+    f(alpha_factor)             \
+    f(alpha_texture)            \
+    f(animation)                \
+    f(atten)                    \
+    f(attrib)                   \
+    f(base)                     \
+    f(begin)                    \
+    f(bind_pose_positions)      \
+    f(bind_pose_orientations)   \
+    f(bones)                    \
+    f(bone_count_array)         \
+    f(bone_index_array)         \
+    f(bone_node)                \
+    f(bone_weight_array)        \
+    f(camera)                   \
+    f(camera_node)              \
+    f(children)                 \
+    f(color)                    \
+    f(curve)                    \
+    f(data)                     \
+    f(end)                      \
+    f(emissive_factor)          \
+    f(emissive_texture)         \
+    f(far)                      \
+    f(fov)                      \
+    f(geometry)                 \
+    f(geometry_node)            \
+    f(index)                    \
+    f(index_array)              \
+    f(intensity)                \
+    f(key)                      \
+    f(kind)                     \
+    f(light)                    \
+    f(light_node)               \
+    f(material)                 \
+    f(materials)                \
+    f(mesh)                     \
+    f(metallic_factor)          \
+    f(metallic_texture)         \
+    f(morph)                    \
+    f(morph_weights)            \
+    f(morphs)                   \
+    f(name)                     \
+    f(near)                     \
+    f(node)                     \
+    f(normal_factor)            \
+    f(normal_texture)           \
+    f(orientation)              \
+    f(parent)                   \
+    f(path)                     \
+    f(position)                 \
+    f(roughness_factor)         \
+    f(roughness_texture)        \
+    f(scale)                    \
+    f(shadow)                   \
+    f(skeleton)                 \
+    f(skin)                     \
+    f(target)                   \
+    f(target_index)             \
+    f(texture)                  \
+    f(time)                     \
+    f(track)                    \
+    f(transform)                \
+    f(type)                     \
+    f(value)                    \
+    f(vertex_array)             \
 
 OGX_SYMBOLS(OGX_SYMBOL_DECLARE);
 
@@ -202,6 +205,52 @@ static ogx_result ogx_load_vec3(dml_document *doc, ogx_vec3 *vec, dml_value *val
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected float literal, found %s\n", value->dbg_symbol.filename,
                     value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
+#endif
+                result = OGX_EXPECTED_FLOAT;
+                break;
+            } else {
+                (*vec)[i] = arr_value->data.as_literal.data.as_float;
+            }
+        }
+    }
+    return result;
+}
+
+static ogx_result ogx_load_vec4(dml_document *doc, ogx_vec4 *vec, dml_value *value)
+{
+    assert(vec);
+    assert(value);
+
+    ogx_result result = OGX_SUCCESS;
+    if (value->type != DML_VALUE_ARRAY) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected array, found %s\n", value->dbg_symbol.filename,
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+#endif
+        result = OGX_EXPECTED_ARRAY;
+    } else if (dlb_vec_len(value->data.as_array.values) != 4) {
+#if _DEBUG
+        ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected array length 4 for vec4, array length is %zu\n",
+            value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
+            dlb_vec_len(value->data.as_array.values));
+#endif
+        result = OGX_INVALID_ARRAY_LENGTH;
+    } else {
+        for (size_t i = 0; i < 4; i++) {
+            dml_value *arr_value = &doc->value_pool[value->data.as_array.values[i]];
+            if (arr_value->type != DML_VALUE_LITERAL) {
+#if _DEBUG
+                ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected literal, found %s\n",
+                    value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
+                    dml_value_type_str[value->type]);
+#endif
+                result = OGX_EXPECTED_LITERAL;
+                break;
+            } else if (arr_value->data.as_literal.type != DML_LITERAL_FLOAT) {
+#if _DEBUG
+                ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected float literal, found %s\n",
+                    value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
+                    dml_literal_type_str[value->data.as_literal.type]);
 #endif
                 result = OGX_EXPECTED_FLOAT;
                 break;
@@ -369,6 +418,30 @@ static ogx_result ogx_load_vec3_array(dml_document *doc, ogx_vec3 **array, dml_v
     return result;
 }
 
+static ogx_result ogx_load_vec4_array(dml_document *doc, ogx_vec4 **array, dml_value *value)
+{
+    assert(array);
+    assert(value);
+
+    ogx_result result = OGX_SUCCESS;
+    if (value->type != DML_VALUE_ARRAY) {
+        result = OGX_EXPECTED_ARRAY;
+    } else {
+        size_t len = dlb_vec_len(value->data.as_array.values);
+        dlb_vec_reserve(*array, len);
+        dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
+            dml_value *arr_value = &doc->value_pool[*value_idx];
+            ogx_vec4 *vec = dlb_vec_alloc(*array);
+            result = ogx_load_float_array(doc, &(float *)vec, 4, arr_value);
+            if (result != OGX_SUCCESS) {
+                dlb_vec_free(*array);
+                break;
+            }
+        }
+    }
+    return result;
+}
+
 static ogx_result ogx_load_mat4_array(dml_document *doc, ogx_mat4 **array, dml_value *value)
 {
     assert(array);
@@ -404,10 +477,10 @@ static ogx_result ogx_load_transform(dml_document *doc, ogx_transform *transform
     } else {
         dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
             dml_field *field = &doc->field_pool[*field_idx];
-            if (field->name == ogxs_type) {
-                result = ogx_load_string(&transform->type, &doc->value_pool[field->value_idx]);
-            } else if (field->name == ogxs_data) {
-                result = ogx_load_mat4(doc, &transform->data, &doc->value_pool[field->value_idx]);
+            if (field->name == ogxs_position) {
+                result = ogx_load_vec3(doc, &transform->position, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_orientation) {
+                result = ogx_load_vec4(doc, &transform->orientation, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1031,9 +1104,10 @@ static ogx_result ogx_load_skeleton(dml_document *doc, ogx_skeleton *skeleton, d
             dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == ogxs_bones) {
                 result = ogx_load_string_array(doc, &skeleton->bones, &doc->value_pool[field->value_idx]);
-            } else if (field->name == ogxs_bind_poses) {
-                // TODO: Is this a safe cast? Do we even need ogx_mat4 type?
-                result = ogx_load_mat4_array(doc, &skeleton->bind_poses, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_bind_pose_positions) {
+                result = ogx_load_vec3_array(doc, &skeleton->bind_pose_positions, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_bind_pose_orientations) {
+                result = ogx_load_vec4_array(doc, &skeleton->bind_pose_orientations, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -1044,7 +1118,8 @@ static ogx_result ogx_load_skeleton(dml_document *doc, ogx_skeleton *skeleton, d
 
             if (result != OGX_SUCCESS) {
                 dlb_vec_free(skeleton->bones);
-                dlb_vec_free(skeleton->bind_poses);
+                dlb_vec_free(skeleton->bind_pose_positions);
+                dlb_vec_free(skeleton->bind_pose_orientations);
                 break;
             }
         }

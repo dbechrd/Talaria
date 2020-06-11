@@ -499,6 +499,7 @@ void ta_game_state_set(ta_game_state state)
 }
 void *ta_game_alloc(ta_res_type type, const char *name, size_t name_len)
 {
+    DLB_ASSERT(type >= RES_COMP_COUNT && "When would we not use ta_game_component_add for components?");
     const char *type_str = 0;
     ta_res_type_str(type, &type_str);
     ta_log_write(&tg_debug_log, SRC_GAME, "ta_game_alloc %s %.*s\n", type_str, name_len, name);

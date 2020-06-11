@@ -29,7 +29,7 @@ static void ta_ogx_load_camera(ogx_camera *o_cam)
     UNUSED(o_cam);
 }
 
-static void ta_ogx_load_mesh(ogx_mesh *o_mesh)
+static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
 {
     static int mesh_id = 1;
     char buf[32] = { 0 };
@@ -88,19 +88,24 @@ static void ta_ogx_load_mesh(ogx_mesh *o_mesh)
 
     // TODO: Load skin (if present)
     UNUSED(o_mesh->skin);
+
+    return mesh->name;
 }
 
 static void ta_ogx_load_geometry(ogx_geometry *o_geo)
 {
-    ta_model *model = ta_game_by_name_try(RES_COMP_MODEL, SYM(o_geo->name));
+    // TODO: We shouldn't just be overwriting stuff with the same name if it exists.. remove this once we longer have
+    // 3 different loaders running in parallel, heh.
+    ta_model *model = ta_game_component_try(o_geo->name, RES_COMP_MODEL);
     if (!model) {
-        model = ta_game_alloc(RES_COMP_MODEL, SYM(o_geo->name));
+        model = ta_game_component_add(o_geo->name, RES_COMP_MODEL, SYM(o_geo->name));
     }
-    dlb_vec_each(ogx_mesh *, mesh, o_geo->meshes) {
-        // TODO: Create pieces or wutevs man
-        UNUSED(model);
-        UNUSED(model->pieces);
-        ta_ogx_load_mesh(mesh);
+    dlb_vec_each(ogx_mesh *, o_mesh, o_geo->meshes) {
+        const char *mesh_name = ta_ogx_load_mesh(o_mesh);
+        ta_piece *piece = dlb_vec_alloc(model->pieces);
+        piece->mesh = mesh_name;
+        // TODO: Figure out materials..
+        UNUSED(piece->material);
     }
 }
 
@@ -145,6 +150,11 @@ static void ta_ogx_load_material(ogx_material *o_mat)
 
 static void ta_ogx_load_texture(ogx_texture *o_tex)
 {
+    ta_texture *tex = ta_game_by_sym_try(RES_TEXTURE, o_tex->name);
+    if (tex) {
+        return;
+    }
+
     char filepath[1024] = { 0 };
     snprintf(filepath, sizeof(filepath) - 1, "data/mesh/%s", o_tex->path);
 
@@ -165,7 +175,7 @@ static void ta_ogx_load_texture(ogx_texture *o_tex)
     DLB_ASSERT(h);
     DLB_ASSERT(channels);
 
-    ta_texture *tex = ta_game_alloc(RES_TEXTURE, SYM(o_tex->name));
+    tex = ta_game_alloc(RES_TEXTURE, SYM(o_tex->name));
     tex->width = w;
     tex->height = h;
     tex->channels = (u8)channels;
@@ -203,9 +213,14 @@ static void ta_ogx_load_node(ogx_node *o_node)
     UNUSED(o_node->type);
     //o_node->
 
-    ta_transform *transform = ta_game_alloc(RES_COMP_TRANSFORM, SYM(o_node->name));
+    //ta_transform *transform = ta_game_alloc(RES_COMP_TRANSFORM, SYM(o_node->name));
 
-    //transform->xform.position
+    ta_transform *transform = ta_game_component_add(o_node->name, RES_COMP_TRANSFORM, SYM(o_node->name));
+
+    DLB_ASSERT(sizeof(ta_vec3) == sizeof(ogx_vec3));
+    DLB_ASSERT(sizeof(ta_vec4) == sizeof(ogx_vec4));
+    transform->xform.position = *(ta_vec3 *)o_node->transform.position;
+    transform->xform.orientation = *(ta_vec4 *)o_node->transform.orientation;
 
     //ogx_transform transform;
     //ogx_animation *animations;

@@ -195,7 +195,11 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
     ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
     dlb_vec_each(ta_piece *, piece, model->pieces) {
-        ta_mesh *mesh = ta_game_by_sym(RES_MESH, piece->mesh);
+        ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, piece->mesh);
+        if (!mesh) {
+            // HACK: Decide if we really want to do this here..?
+            mesh = tg_mesh_default;
+        }
         if (vec3_zero(mesh->offset)) {
             ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
         } else {
