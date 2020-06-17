@@ -18,6 +18,76 @@
 #define DEFAULT_SHADOWMAP_ZNEAR         0.1f
 #define DEFAULT_SHADOWMAP_ZFAR          100.0f
 
+void ta_lighting_init(ta_lighting *state)
+{
+    dlb_vec_reserve(state->light_records, TA_LIGHTING_MAX_ACTIVE_LIGHTS);
+    dlb_vec_reserve(state->shadowmap2d, TA_LIGHTING_MAX_ACTIVE_LIGHTS);
+    dlb_vec_reserve(state->shadowmap3d, TA_LIGHTING_MAX_ACTIVE_LIGHTS);
+
+    glGenBuffers(1, &state->gl_ubo_lights);
+    glBindBufferBase(GL_UNIFORM_BUFFER, TA_GL_UNIFORM_BLOCK_BINDING_LIGHTS, state->gl_ubo_lights);
+    glBindBuffer(GL_UNIFORM_BUFFER, state->gl_ubo_lights);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(ta_lighting_record) * TA_LIGHTING_MAX_ACTIVE_LIGHTS, 0, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void ta_lighting_bind_lights(ta_lighting *state)
+{
+    ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+    int light_idx = 0;
+    for (int i = 0; i < dlb_vec_len(lights) && i < TA_LIGHTING_MAX_ACTIVE_LIGHTS; ++i) {
+        ta_light *light = &lights[i];
+        if (light->disabled) {
+            continue;
+        }
+
+        // Set default values (some are overridden for specific light types below)
+        state->light_records[light_idx].type            = light->type;
+        state->light_records[light_idx].position        = ta_light_position(light);
+        state->light_records[light_idx].color           = *(ta_vec3 *)&light->color;
+        state->light_records[light_idx].intensity       = light->intensity;
+        state->light_records[light_idx].cast_shadows    = light->cast_shadows;
+        state->light_records[light_idx].direction       = VEC3_ZERO;
+        state->light_records[light_idx].light_pv        = MAT4_IDENT;
+        state->light_records[light_idx].shadowmap_zfar  = 0.0f;
+        //u_shadowmap2d->value.sampler2d    = 0;
+        //u_shadowmap3d->value.sampler_cube = 0;
+
+        // Light type-dependent properties
+        switch (light->type) {
+            case TA_LIGHT_AMBIENT:
+                break;
+            case TA_LIGHT_DIRECTIONAL:
+                state->light_records[light_idx].direction = ta_light_direction(light);
+                state->light_records[light_idx].light_pv = ta_light_pv(light);
+                //u_shadowmap2d->value.sampler2d = light->shadowmap.texture.gl_id;
+                break;
+            case TA_LIGHT_POINT:
+                state->light_records[light_idx].shadowmap_zfar  = light->shadowmap.zfar;
+                //u_shadowmap3d->value.sampler_cube = light->shadowmap.texture.gl_id;
+                break;
+            case TA_LIGHT_SPOT:
+                state->light_records[light_idx].direction = ta_light_direction(light);
+                //u_shadowmap2d->value.sampler2d = light->shadowmap.texture.gl_id;
+                DLB_ASSERT(!"Don't handle spot lights yet");
+                break;
+            default:
+                DLB_ASSERT(!"Don't know how to initialize this type of light");
+        }
+
+        // HACK: xform_world isn't set yet, so we need to fix light positions until this code runs every frame
+        ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
+        state->light_records[light_idx].position = transform->xform.position;
+
+        light_idx++;
+    }
+
+    glBindBuffer(GL_UNIFORM_BUFFER, state->gl_ubo_lights);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(ta_lighting_record) * TA_LIGHTING_MAX_ACTIVE_LIGHTS, state->light_records,
+        GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 static void shadowmap_directional_create(ta_light *light);
 static void shadowmap_point_create(ta_light *light);
 
@@ -101,6 +171,9 @@ static void shadowmap_directional_create(ta_light *light)
     float borderColor[4] = { 0 };
     //float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    // TODO: Possibly use shadow samplers and depth comparison mode? (Faster PCF, but only 2x2?)
+    // https://www.khronos.org/opengl/wiki/Sampler_Object#Comparison_mode
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
     // TOOD: Not sure if this if these formats are worth refactoring out either

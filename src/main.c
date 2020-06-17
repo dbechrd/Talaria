@@ -1,3 +1,5 @@
+#define TA_FLAG_DISABLE_MIPMAPS 0
+
 #include "ta_audio.h"
 #include "ta_console.h"
 #include "ta_editor.h"

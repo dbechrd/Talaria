@@ -26,8 +26,8 @@ typedef struct ta_mesh_joint_array {
 } ta_mesh_joint_array;
 
 typedef struct ta_mesh_index_array {
-    const char *material;  // material ID
-    GLuint *values;        // vector of index values
+    u32 material_slot;  // material ID
+    GLuint *values;     // vector of index values
     GLint base_vertex;
 } ta_mesh_index_array;
 

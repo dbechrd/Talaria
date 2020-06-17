@@ -36,26 +36,26 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
     size_t buf_len = snprintf(buf, sizeof(buf), "ogx_mesh_%04d", mesh_id++);
     ta_mesh *mesh = ta_game_alloc(RES_MESH, buf, buf_len);
 
-    dlb_vec_each(ogx_vertex_array *, vtx_arr, o_mesh->vertex_arrays) {
+    dlb_vec_each(ogx_vertex_array *, o_vertex_array, o_mesh->vertex_arrays) {
         // TODO: Store morph index alongside vertex array
-        UNUSED(vtx_arr->morph);
+        UNUSED(o_vertex_array->morph);
 
-        switch (vtx_arr->attrib) {
+        switch (o_vertex_array->attrib) {
             case OGX_VERTEX_ATTRIB_POSIITON:
-                DLB_ASSERT(sizeof(*mesh->positions) == sizeof(*vtx_arr->values.as_vec3));
-                mesh->positions = (ta_vec3 *)vtx_arr->values.as_vec3;
+                DLB_ASSERT(sizeof(*mesh->positions) == sizeof(*o_vertex_array->values.as_vec3));
+                mesh->positions = (ta_vec3 *)o_vertex_array->values.as_vec3;
                 break;
             case OGX_VERTEX_ATTRIB_NORMAL:
-                DLB_ASSERT(sizeof(*mesh->normals) == sizeof(*vtx_arr->values.as_vec3));
-                mesh->normals = (ta_vec3 *)vtx_arr->values.as_vec3;
+                DLB_ASSERT(sizeof(*mesh->normals) == sizeof(*o_vertex_array->values.as_vec3));
+                mesh->normals = (ta_vec3 *)o_vertex_array->values.as_vec3;
                 break;
             case OGX_VERTEX_ATTRIB_TANGENT:
-                DLB_ASSERT(sizeof(*mesh->tangents) == sizeof(*vtx_arr->values.as_vec3));
-                mesh->tangents = (ta_vec3 *)vtx_arr->values.as_vec3;
+                DLB_ASSERT(sizeof(*mesh->tangents) == sizeof(*o_vertex_array->values.as_vec3));
+                mesh->tangents = (ta_vec3 *)o_vertex_array->values.as_vec3;
                 break;
             case OGX_VERTEX_ATTRIB_TEXCOORD0:
-                DLB_ASSERT(sizeof(*mesh->uvs) == sizeof(*vtx_arr->values.as_vec2));
-                mesh->uvs = (ta_vec2 *)vtx_arr->values.as_vec2;
+                DLB_ASSERT(sizeof(*mesh->uvs) == sizeof(*o_vertex_array->values.as_vec2));
+                mesh->uvs = (ta_vec2 *)o_vertex_array->values.as_vec2;
                 break;
             default:
                 DLB_ASSERT(!"I wanted to know when ogx_vertex_attrib_lookup fails.");
@@ -65,23 +65,15 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
     }
 
     dlb_vec_each(ogx_index_array *, o_index_array, o_mesh->index_arrays) {
-
-        // TODO: Materials.. ugh.
-        UNUSED(o_index_array->material);
-
+        // TODO: Allow u16 in DML or ogx_parser
         ta_mesh_index_array *index_array = dlb_vec_alloc(mesh->indexes);
-
-        // TODO: Not slow stuff (allow u16 in? force all index_array on read?)
         size_t index_count = dlb_vec_len(o_index_array->values.as_float);
         dlb_vec_reserve(index_array->values, index_count);
-
         for (size_t i = 0; i < index_count; ++i) {
             dlb_vec_push(index_array->values, (u16)o_index_array->values.as_float[i]);
-            //dlb_vec_push(index_array->values, o_index_array->values[i]);
         }
 
-        // TODO: Use u16 for floats
-        //mesh->indexes = idx_arr->values.as_float;
+        index_array->material_slot = (u16)o_index_array->material_slot;
     }
 
     ta_mesh_create(mesh);
@@ -99,13 +91,20 @@ static void ta_ogx_load_geometry(ogx_geometry *o_geo)
     ta_model *model = ta_game_component_try(o_geo->name, RES_COMP_MODEL);
     if (!model) {
         model = ta_game_component_add(o_geo->name, RES_COMP_MODEL, SYM(o_geo->name));
+    } else {
+        DLB_ASSERT(1);
     }
     dlb_vec_each(ogx_mesh *, o_mesh, o_geo->meshes) {
         const char *mesh_name = ta_ogx_load_mesh(o_mesh);
         ta_piece *piece = dlb_vec_alloc(model->pieces);
         piece->mesh = mesh_name;
+
         // TODO: Figure out materials..
+        //piece->material = o_mesh->index_arrays[0].material_slot;
         UNUSED(piece->material);
+
+        // TODO: Bind all needed materials at once via a UBO? Pass material indices as uniform/attrib?
+        // https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object
     }
 }
 

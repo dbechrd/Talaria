@@ -1253,7 +1253,7 @@ void ta_gltf_load(ta_gltf *gltf)
                         break;
                 }
 
-                index_array->material = material_name;
+                index_array->material_slot = (u32)dlb_vec_len(model->materials);
             }
 
             dlb_vec_push(model->materials, material_name);

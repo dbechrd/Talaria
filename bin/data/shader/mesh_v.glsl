@@ -1,5 +1,7 @@
 #version 330 core
 
+#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 8
+
 layout(location =  0) in vec3 attr_position;
 layout(location =  1) in vec4 attr_color;
 layout(location =  2) in vec2 attr_uv;
@@ -33,8 +35,30 @@ struct Light {
     samplerCube shadowmap3d;
     float shadowmap_zfar;
 };
+//uniform int u_lights_count;
+uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+
+struct LightNew {
+    // Common
+    int type;
+    float intensity;
+    bool cast_shadows;
+    vec3 position;
+    vec3 color;
+
+    // Directional / Spot
+    vec3 direction;
+    mat4 light_pv;
+
+    // Point
+    float shadowmap_zfar;
+};
+layout (std140) uniform u_lights_new_block {
+    LightNew u_lights_new[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+};
+uniform sampler2D shadowmap2d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+uniform samplerCube shadowmap3d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 uniform int u_lights_count;
-uniform Light[8] u_lights;
 
 out vs_out {
     vec3 position;
@@ -45,9 +69,9 @@ out vs_out {
     vec3 tbn_position;
 	vec3 tbn_normal;
     vec3 tbn_camera_pos;
-    vec3 tbn_light_pos[8];
-    vec3 tbn_light_dir[8];
-    vec4 light_pvm[8];
+    vec3 tbn_light_pos[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    vec3 tbn_light_dir[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    vec4 light_pvm[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 } vertex;
 
 void main()
@@ -95,12 +119,13 @@ void main()
 
     vertex.tbn_position = TBN * vertex.position;
     vertex.tbn_camera_pos = TBN * u_camera_pos;
+#if 0
     for (int i = 0; i < u_lights_count; i++) {
         vertex.tbn_light_pos[i] = TBN * u_lights[i].position;
         vertex.tbn_light_dir[i] = TBN * u_lights[i].direction;
 
         // TODO: Why the fuck isn't this working? Causes linker error!?!?
-        vertex.light_pvm[i] = u_lights[i].light_pv * position;
+        //vertex.light_pvm[i] = u_lights[i].light_pv * position;
     }
 
     // HACK: GLSL bullshit preventing this from happening in for loop
@@ -112,6 +137,24 @@ void main()
     vertex.light_pvm[5] = u_lights[5].light_pv * position;
     vertex.light_pvm[6] = u_lights[6].light_pv * position;
     vertex.light_pvm[7] = u_lights[7].light_pv * position;
+#else
+    for (int i = 0; i < u_lights_count; i++) {
+        vertex.tbn_light_pos[i] = TBN * u_lights_new[i].position;
+        vertex.tbn_light_dir[i] = TBN * u_lights_new[i].direction;
 
+        // TODO: Why the fuck isn't this working? Causes linker error!?!?
+        //vertex.light_pvm[i] = u_lights_new[i].light_pv * position;
+    }
+
+    // HACK: GLSL bullshit preventing this from happening in for loop
+    vertex.light_pvm[0] = u_lights_new[0].light_pv * position;
+    vertex.light_pvm[1] = u_lights_new[1].light_pv * position;
+    vertex.light_pvm[2] = u_lights_new[2].light_pv * position;
+    vertex.light_pvm[3] = u_lights_new[3].light_pv * position;
+    vertex.light_pvm[4] = u_lights_new[4].light_pv * position;
+    vertex.light_pvm[5] = u_lights_new[5].light_pv * position;
+    vertex.light_pvm[6] = u_lights_new[6].light_pv * position;
+    vertex.light_pvm[7] = u_lights_new[7].light_pv * position;
+#endif
     gl_Position = u_proj * u_view * position;
 }

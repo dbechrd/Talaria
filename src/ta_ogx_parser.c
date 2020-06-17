@@ -65,6 +65,7 @@ const char *ogx_result_str[OGX_RESULT_COUNT] = {
     f(light)                    \
     f(light_node)               \
     f(material)                 \
+    f(material_slot)            \
     f(materials)                \
     f(mesh)                     \
     f(metallic_factor)          \
@@ -1066,8 +1067,8 @@ static ogx_result ogx_load_index_array(dml_document *doc, ogx_index_array *index
     } else {
         dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
             dml_field *field = &doc->field_pool[*field_idx];
-            if (field->name == ogxs_material) {
-                result = ogx_load_string(&index_array->material, &doc->value_pool[field->value_idx]);
+            if (field->name == ogxs_material_slot) {
+                result = ogx_load_float(&index_array->material_slot, &doc->value_pool[field->value_idx]);
             } else if (field->name == ogxs_data) {
                 result = ogx_load_float_array(doc, &index_array->values.as_float, 0, &doc->value_pool[field->value_idx]);
             } else {

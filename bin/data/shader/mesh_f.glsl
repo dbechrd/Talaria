@@ -1,5 +1,7 @@
 #version 330 core
 
+#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 8
+
 in vs_out {
     vec3 position;
     vec4 color;
@@ -9,9 +11,9 @@ in vs_out {
     vec3 tbn_position;
 	vec3 tbn_normal;
     vec3 tbn_camera_pos;
-    vec3 tbn_light_pos[8];
-    vec3 tbn_light_dir[8];
-    vec4 light_pvm[8];
+    vec3 tbn_light_pos[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    vec3 tbn_light_dir[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    vec4 light_pvm[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 } vertex;
 
 out vec4 final_color;
@@ -75,8 +77,30 @@ struct Light {
     samplerCube shadowmap3d;
     float shadowmap_zfar;
 };
+//uniform int u_lights_count;
+uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+
+struct LightNew {
+    // Common
+    int type;
+    float intensity;
+    bool cast_shadows;
+    vec3 position;
+    vec3 color;
+
+    // Directional / Spot
+    vec3 direction;
+    mat4 light_pv;
+
+    // Point
+    float shadowmap_zfar;
+};
+layout (std140) uniform u_lights_new_block {
+    LightNew u_lights_new[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+};
+uniform sampler2D shadowmap2d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+uniform samplerCube shadowmap3d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 uniform int u_lights_count;
-uniform Light[8] u_lights;
 
 uniform vec3 u_camera_pos;
 
@@ -134,9 +158,9 @@ void main()
     const vec3 dielectricSpecular = vec3(0.04);
     vec3 F0 = mix(dielectricSpecular, mtl_albedo.rgb, mtl_metallic);
 
-    float shadows[8];
-    float shadow_map_depths[8];
-    float shadow_dists[8];
+    float shadows[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    float shadow_map_depths[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    float shadow_dists[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
     vec3 debug;
 
     vec3 L0 = vec3(0.0);
@@ -148,20 +172,20 @@ void main()
         float attenuation;
 		float shadow = 0.0;
 
-        switch(u_lights[i].type) {
+        switch(u_lights_new[i].type) {
             case LIGHT_DIRECTIONAL: {
-                fragToLight = -u_lights[i].direction;
+                fragToLight = -u_lights_new[i].direction;
 
                 vec3 projCoords = vertex.light_pvm[i].xyz / vertex.light_pvm[i].w;
                 projCoords = projCoords * 0.5 + 0.5;
                 debug = projCoords;
                 dist = projCoords.z;
-                attenuation = u_lights[i].intensity;
+                attenuation = u_lights_new[i].intensity;
 
-                if (u_lights[i].cast_shadows) {
+                if (u_lights_new[i].cast_shadows) {
                     shadow_bias = 0.00001;
 #if 0
-                    shadow_map_depth = texture(u_lights[i].shadowmap2d, projCoords.st).r;
+                    shadow_map_depth = texture(u_lights_new[i].shadowmap2d, projCoords.st).r;
                     // TODO: Better bias based on direction of light? This code
                     // doesn't work, but tried to write it based on:
                     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
@@ -191,16 +215,16 @@ void main()
                 fragToLight = -vertex.tbn_light_dir[i];
                 break;
             } case LIGHT_POINT: {
-                fragToLight = u_lights[i].position - vertex.position;
+                fragToLight = u_lights_new[i].position - vertex.position;
 
                 dist = length(fragToLight);
-                attenuation = u_lights[i].intensity / dist * dist;
+                attenuation = u_lights_new[i].intensity / dist * dist;
 
-                if (u_lights[i].cast_shadows) {
+                if (u_lights_new[i].cast_shadows) {
                     shadow_bias = 0.05;
 #if 0
-                    shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
-                    shadow_map_depth *= u_lights[i].shadowmap_zfar;
+                    shadow_map_depth = texture(u_lights_new[i].shadowmap3d, -fragToLight).r;
+                    shadow_map_depth *= u_lights_new[i].shadowmap_zfar;
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
 #else
                     // Soft shadows
@@ -211,7 +235,7 @@ void main()
 					        for (float z = -1.0; z <= 1.0; z += 1.0) {
 							    vec3 ss_offset = vec3(x, y, z) * 0.004 * dist;
 							    float ss_depth = texture(u_lights[i].shadowmap3d, -fragToLight + ss_offset).r;
-							    ss_depth *= u_lights[i].shadowmap_zfar;
+							    ss_depth *= u_lights_new[i].shadowmap_zfar;
 			                    shadow += step(ss_depth, dist - shadow_bias);
                                 ss_count += 1.0;
 					        }
@@ -251,7 +275,7 @@ void main()
         shadow_dists[i] = dist;
         //shadow = 0.0;
 
-        vec3 radiance = u_lights[i].color * attenuation;
+        vec3 radiance = u_lights_new[i].color * attenuation;
 
         vec3 L = normalize(fragToLight);
         vec3 H = normalize(V + L);
@@ -305,7 +329,7 @@ void main()
      // lighting
     //vec4 dbg_shadow0 = vec4(vec3(1.0 - shadows[0]), 1.0);
     //vec4 dbg_shadow1 = vec4(vec3(1.0 - shadows[1]), 1.0);
-    //int light_idx = 0;
+    //int light_idx = 1;
     //final_color = vec4(vec3(1.0 - shadows[light_idx]), 1.0);
     //final_color = vec4(vec3(1.0 - (shadow_map_depths[light_idx] / 30.0f)), 1.0);
     //final_color = vec4(vec3(1.0 - shadow_dists[light_idx] / 40.0f), 1.0);

@@ -5,14 +5,58 @@
 #include "dlb/dlb_types.h"
 #include "misc/glad.h"
 
+#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 8
+
 struct ta_model;
 struct ta_shader;
 
+// TODO: Quick hacks.. needs a better name
+enum {
+    TA_GL_UNIFORM_BLOCK_BINDING_LIGHTS = 0
+};
+
+// NOTE: This must match the GLSL ubo_lights structure byte-for-byte (including padding!)
+// https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL
+typedef struct ta_lighting_record {
+    // Common
+    int type;
+    float intensity;
+    int cast_shadows;
+    float ___pad0;
+
+    ta_vec3 position;
+    float ___pad1;
+
+    ta_vec3 color;
+    float ___pad2;
+
+    // Directional / Spot
+    ta_vec3 direction;
+    float ___pad3;
+
+    ta_mat4 light_pv;
+
+    // Point
+    float shadowmap_zfar;
+    float ___pad4;
+    float ___pad5;
+    float ___pad6;
+} ta_lighting_record;
+
+typedef struct ta_lighting {
+    ta_lighting_record *light_records;
+    u32 *shadowmap2d;  // NOTE: sampler2D
+    u32 *shadowmap3d;  // NOTE: samplerCube
+    GLuint gl_ubo_lights;
+    GLuint gl_ubo_shadowmap2d;
+    GLuint gl_ubo_shadowmap3d;
+} ta_lighting;
+
 typedef enum ta_light_type {
-    TA_LIGHT_AMBIENT,       // @Name("Ambient")
-    TA_LIGHT_DIRECTIONAL,   // @Name("Directional")
-    TA_LIGHT_POINT,         // @Name("Point")
-    TA_LIGHT_SPOT,          // @Name("Spot")
+    TA_LIGHT_AMBIENT      = 0,  // @Name("Ambient")
+    TA_LIGHT_DIRECTIONAL  = 1,  // @Name("Directional")
+    TA_LIGHT_POINT        = 2,  // @Name("Point")
+    TA_LIGHT_SPOT         = 3,  // @Name("Spot")
     TA_LIGHT_COUNT
 } ta_light_type;
 
@@ -58,6 +102,9 @@ typedef struct ta_light {
     } data;
     ta_light_shadowmap shadowmap;  // Shadow map properties
 } ta_light;
+
+void ta_lighting_init                   (ta_lighting *state);
+void ta_lighting_bind_lights            (ta_lighting *state);
 
 const char *ta_light_type_str           (int type);
 void ta_light_init                      (ta_light *light);

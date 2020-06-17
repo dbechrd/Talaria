@@ -64,6 +64,7 @@ typedef struct ta_game {
     int simulate;               // physics sim: -1 = on, 0 = off, 1+ = simulate N frames
     u64 sim_step;               // current simulation step
     ta_scene scene;             // active scene
+    ta_lighting lighting;       // active lighting
     ta_camera minimap_camera;   // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
     ta_keybind *keybinds;
     bool console_visible;
@@ -145,7 +146,6 @@ void ta_game_init()
     //       Maybe also have JUMPING, CLIMBING, etc.? Could use bit flags to
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
     ta_game_state_set(TA_STATE_STARTUP);
-
 
     ta_log_write(&tg_debug_log, SRC_GAME, "Determining base path...\n");
 #if _DEBUG
@@ -235,12 +235,18 @@ void ta_game_init()
     //ta_game_load_gltf("data/mesh/hier_test.gltf");
     //ta_game_load_gltf("data/mesh/rock_0001.gltf");
     //ta_game_load_gltf("data/mesh/button_silly.gltf");
-    ta_game_load_gltf("data/mesh/button.gltf");
+    //ta_game_load_gltf("data/mesh/button.gltf");
     //ta_game_load_gltf("data/mesh/dude.gltf");
     //ta_game_load_gltf("data/mesh/skeleton_test.gltf");
 
     tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
     tg_material_default = ta_game_by_name_try(RES_MATERIAL, SYM(INTERN("material_unknown")));
+
+    //--------------------------------------------------------------------------
+    // Lighting
+    //--------------------------------------------------------------------------
+    // TODO: Find closest 8 lights and store them in tg_game.lights
+    ta_lighting_init(&game.lighting);
 
     //--------------------------------------------------------------------------
     // Scene (OGX) ** MUST COME AFTER game.scene.index_by_name[*] INITIALIZED
@@ -259,8 +265,6 @@ void ta_game_init()
     // Simulation
     //--------------------------------------------------------------------------
     game.simulate = -1;
-
-    // TODO: Find closest 8 lights and store them in tg_game.lights
 
     //--------------------------------------------------------------------------
     // Player
@@ -1107,6 +1111,9 @@ void ta_game_loop()
 
         // Update transforms (model matrix and lerp)
         ta_transform_update_all(transforms, sim_alpha);
+
+        // Update light data UBO
+        ta_lighting_bind_lights(&game.lighting);
 
         //----------------------------------------------------------------------
         // Shadow pass

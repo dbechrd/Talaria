@@ -72,6 +72,7 @@ typedef struct ta_shader {
     GLint               max_uniform_name_len;   // [DEBUG] max length of a shader uniform name
     ta_shader_attribute *attributes;            // Array of vertex attributes
     ta_shader_uniform   *uniforms;              // Array of uniforms
+    GLuint              u_lights_new_ubo_index; // TODO(cleanup): This probably needs more thought
     GLuint              program_id;             // [GL] shader program id
 } ta_shader;
 

@@ -191,7 +191,7 @@ typedef struct ogx_vertex_array {
 
 // NOTE: always GL_TRIANGLES (to allow other types, we would need a "kind" field)
 typedef struct ogx_index_array {
-    const char *material;
+    float material_slot;  // TODO: uint16
     union {
         // TODO: Use u16 for these
         //uint16_t as_u16;

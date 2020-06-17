@@ -207,19 +207,14 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     ta_log_write(&tg_debug_log, SRC_WINDOW, "w: %d, h: %d, vsync: %s\n", window->width, window->height,
         window->vsync ? "on" : "off");
 
+    // TODO: Separate render thread and have the data loading thread update a progress that the render thread can draw.
     // Draw something as soon as humanly possible (just a dark gray for now to get rid of the default white)
-    glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+    glClearColor(0.1f, 0.15f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     ta_window_swap(tg_window);
 
     ta_log_write(&tg_debug_log, SRC_WINDOW, "Initializing OpenGL state...\n");
 #if _DEBUG
-    {
-        GLint gl_max_vertex_attribs;
-        glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &gl_max_vertex_attribs);
-        ta_log_write(&tg_debug_log, SRC_WINDOW, "GL_MAX_VERTEX_ATTRIBS = %d\n", gl_max_vertex_attribs);
-    }
-
     // TODO: Use newer version of GL to get debug messages, or find an old way to do something similar
     //if (glDebugMessageCallback != NULL)
     //{th
@@ -245,6 +240,8 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     glGetIntegerv(pname, &data_int); \
     ta_log_write(&tg_debug_log, SRC_WINDOW, "%s: %d\n", #pname, data_int);
 
+    GLGET_LOG_INT(GL_MAX_FRAGMENT_INPUT_COMPONENTS);
+
     // The value gives the maximum number of texels allowed in the texel array of a texture buffer object. Value must be at least 65536.
     GLGET_LOG_INT(GL_MAX_TEXTURE_BUFFER_SIZE);
 
@@ -256,6 +253,11 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 
     // The value gives a rough estimate of the largest texture that the GL can handle. The value must be at least 1024. Use a proxy texture target such as GL_PROXY_TEXTURE_1D or GL_PROXY_TEXTURE_2D to determine if a texture is too large. See glTexImage1D and glTexImage2D.
     GLGET_LOG_INT(GL_MAX_TEXTURE_SIZE);
+
+    GLGET_LOG_INT(GL_MAX_VERTEX_UNIFORM_BLOCKS);
+    GLGET_LOG_INT(GL_MAX_GEOMETRY_UNIFORM_BLOCKS);
+    GLGET_LOG_INT(GL_MAX_FRAGMENT_UNIFORM_BLOCKS);
+    GLGET_LOG_INT(GL_MAX_COMBINED_UNIFORM_BLOCKS);
 
     // The maximum number of uniform buffer binding points on the context, which must be at least 36.
     GLGET_LOG_INT(GL_MAX_UNIFORM_BUFFER_BINDINGS);
@@ -286,18 +288,28 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 
     // The maximum supported texture image units that can be used to access texture maps from the vertex shader. The value may be at least 16. See glActiveTexture.
     GLGET_LOG_INT(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+    GLGET_LOG_INT(GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS);
+    GLGET_LOG_INT(GL_MAX_TEXTURE_IMAGE_UNITS);           // NOTE: Fragment shader limit
+    GLGET_LOG_INT(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);  // NOTE: All shaders, combined limit
 
-    // The maximum number of individual floating-point, integer, or boolean values that can be held in uniform variable storage for a vertex shader. The value must be at least 1024. See glUniform.
+    // NOTE: I'm not really sure what this means...
+    // The number of words for shader uniform variables in all uniform blocks (including default). The value must be at least 1.
+    GLGET_LOG_INT(GL_MAX_COMBINED_VERTEX_UNIFORM_COMPONENTS);
+    GLGET_LOG_INT(GL_MAX_COMBINED_GEOMETRY_UNIFORM_COMPONENTS);
+    GLGET_LOG_INT(GL_MAX_COMBINED_FRAGMENT_UNIFORM_COMPONENTS);
+
+    // The maximum number of individual floating-point, integer, or boolean values that can be held in uniform variable storage for a shader. The value must be at least 1024. See glUniform.
     GLGET_LOG_INT(GL_MAX_VERTEX_UNIFORM_COMPONENTS);
+    GLGET_LOG_INT(GL_MAX_GEOMETRY_UNIFORM_COMPONENTS);
+    GLGET_LOG_INT(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS);
+
+    GLGET_LOG_INT(GL_MAX_ARRAY_TEXTURE_LAYERS);
 
     // The maximum number of 4-vectors that may be held in uniform variable storage for the vertex shader. The value of GL_MAX_VERTEX_UNIFORM_VECTORS is equal to the value of GL_MAX_VERTEX_UNIFORM_COMPONENTS and must be at least 256.
     //GLGET_LOG_INT(GL_MAX_VERTEX_UNIFORM_VECTORS);
 
     // The maximum number of components of output written by a vertex shader, which must be at least 64.
     GLGET_LOG_INT(GL_MAX_VERTEX_OUTPUT_COMPONENTS);
-
-    // The maximum number of uniform blocks per vertex shader. The value must be at least 12. See glUniformBlockBinding.
-    GLGET_LOG_INT(GL_MAX_VERTEX_UNIFORM_BLOCKS);
 
 #undef GLGET_LOG_INT
 #endif

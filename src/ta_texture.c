@@ -102,6 +102,22 @@ void ta_texture_create_and_bind(ta_texture *tex, GLuint *gl_id)
         glTexParameteri(target, GL_TEXTURE_WRAP_R, param);
     }
 
+#if TA_FLAG_DISABLE_MIPMAPS
+    switch (tex->gl_filter_min) {
+        case GL_NEAREST_MIPMAP_NEAREST: case GL_NEAREST_MIPMAP_LINEAR:
+            tex->gl_filter_min = GL_NEAREST; break;
+        case GL_LINEAR_MIPMAP_NEAREST: case GL_LINEAR_MIPMAP_LINEAR: default:
+            tex->gl_filter_min = GL_LINEAR; break;
+    }
+
+    switch (tex->gl_filter_mag) {
+        case GL_NEAREST_MIPMAP_NEAREST: case GL_NEAREST_MIPMAP_LINEAR:
+            tex->gl_filter_mag = GL_NEAREST; break;
+        case GL_LINEAR_MIPMAP_NEAREST: case GL_LINEAR_MIPMAP_LINEAR: default:
+            tex->gl_filter_mag = GL_LINEAR; break;
+    }
+#endif
+
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture parameters set\n");
@@ -244,6 +260,26 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
         target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
     }
     glTexImage2D(target, 0, format_internal, tex->width, tex->height, 0, format, GL_UNSIGNED_BYTE, pixels);
+
+    // https://github.com/hglm/detex/blob/master/dds.c
+    // https://github.com/nothings/stb/blob/master/stb_dxt.h
+
+    // TODO: Handle S3TC formats
+    // https://www.khronos.org/opengl/wiki/S3_Texture_Compression
+    // http://www.buckarooshangar.com/flightgear/tut_dds.html
+    // Extension: EXT_texture_compression_s3tc
+    // GL_COMPRESSED_RGB_S3TC_DXT1_EXT  ("BC1")
+    // GL_COMPRESSED_RGBA_S3TC_DXT1_EXT ("BC1")
+    // GL_COMPRESSED_RGBA_S3TC_DXT3_EXT ("BC2")
+    // GL_COMPRESSED_RGBA_S3TC_DXT5_EXT ("BC3")
+
+    // TODO: Possibly use RGTC for normal maps?
+    // https://www.khronos.org/opengl/wiki/Red_Green_Texture_Compression
+    // Extension: ARB_texture_compression_rgtc
+    // GL_COMPRESSED_RED_RGTC1          ("BC4")
+    // GL_COMPRESSED_SIGNED_RED_RGTC1   ("BC4")
+    // GL_COMPRESSED_RG_RGTC2           ("BC5")
+    // GL_COMPRESSED_SIGNED_RG_RGTC2    ("BC5")
 
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Upload complete.\n", tex->name);
 }

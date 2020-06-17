@@ -232,12 +232,20 @@ void ta_shader_load(ta_shader *shader)
     glBindAttribLocation(program_id, TA_SHADER_ATTR_MORPH0_TANGENT,  "attr_morph0_tangent");
     ta_shader_program_link(program_id);
 
-    glGetProgramiv(shader->program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &shader->max_attrib_name_len);
-    glGetProgramiv(shader->program_id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &shader->max_uniform_name_len);
+    glGetProgramiv(program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &shader->max_attrib_name_len);
+    glGetProgramiv(program_id, GL_ACTIVE_UNIFORM_MAX_LENGTH, &shader->max_uniform_name_len);
 
     dlb_vec_each(ta_shader_attribute *, attr, shader->attributes) {
         attr->location = ta_shader_attribute_location(shader, attr->name);
     }
+
+    /////////////////////////////////////////
+    // TODO: Bind this buffer to each shader that needs to know about lights
+    shader->u_lights_new_ubo_index = glGetUniformBlockIndex(program_id, "u_lights_new_block");
+    if (shader->u_lights_new_ubo_index != GL_INVALID_INDEX) {
+        glUniformBlockBinding(program_id, shader->u_lights_new_ubo_index, TA_GL_UNIFORM_BLOCK_BINDING_LIGHTS);
+    }
+    /////////////////////////////////////////
 
     // Ensure vertex attributes are at the correct locations
     ta_shader_attribute *attr_pos         = find_attribute_by_name(shader, SYM_ATTR_POSITION,        TA_GLSL_VEC3);
