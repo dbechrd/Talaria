@@ -1,7 +1,8 @@
 #version 330 core
 
-#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 8
-
+//------------------------------------------------------
+// Vertex attributes
+//------------------------------------------------------
 layout(location =  0) in vec3 attr_position;
 layout(location =  1) in vec4 attr_color;
 layout(location =  2) in vec2 attr_uv;
@@ -15,11 +16,20 @@ layout(location =  9) in vec3 attr_morph0_tangent;
 layout(location = 10) in vec4 attr_joints;
 layout(location = 11) in vec4 attr_weights;
 
+//------------------------------------------------------
+// Camera, model, animation
+//------------------------------------------------------
+// TODO: Uniform block(s) grouped by update frequency
 uniform float u_morph_weights[1];
 uniform mat4 u_proj;
 uniform mat4 u_view;
 uniform mat4 u_model;
 uniform vec3 u_camera_pos;
+
+//------------------------------------------------------
+// Lights
+//------------------------------------------------------
+#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 8
 
 struct Light {
     float intensity;
@@ -52,13 +62,38 @@ struct LightNew {
 
     // Point
     float shadowmap_zfar;
+
+    float shadowmap_texture_pool_index;  // NOTE: point light "cubemaps" will use 6 consecutive layers
+    float shadowmap_texture_array_layer;
 };
 layout (std140) uniform u_lights_new_block {
     LightNew u_lights_new[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 };
-uniform sampler2D shadowmap2d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-uniform samplerCube shadowmap3d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 uniform int u_lights_count;
+
+//------------------------------------------------------
+// Textures
+//------------------------------------------------------
+// NOTE: Needs to match #defines in ta_texture.h
+#define TA_TEXTURE_POOL_1      0
+//#define TA_TEXTURE_POOL_2
+//#define TA_TEXTURE_POOL_4
+//#define TA_TEXTURE_POOL_8
+//#define TA_TEXTURE_POOL_16
+#define TA_TEXTURE_POOL_32     1
+//#define TA_TEXTURE_POOL_64
+//#define TA_TEXTURE_POOL_128
+//#define TA_TEXTURE_POOL_256
+#define TA_TEXTURE_POOL_512    2
+#define TA_TEXTURE_POOL_1024   3
+#define TA_TEXTURE_POOL_2048   4
+#define TA_TEXTURE_POOL_4096   5
+#define TA_TEXTURE_POOL_COUNT  6
+
+uniform sampler2DArray u_textures[TA_TEXTURE_POOL_COUNT];
+// TODO: Use sampler2DArray * 6, map direction into 2D somehow?
+uniform samplerCube u_cubemaps[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+//------------------------------------------------------
 
 out vs_out {
     vec3 position;
@@ -147,6 +182,7 @@ void main()
     }
 
     // HACK: GLSL bullshit preventing this from happening in for loop
+    // https://community.khronos.org/t/samplers-inside-structs/58843/13 (loop unroll macro)
     vertex.light_pvm[0] = u_lights_new[0].light_pv * position;
     vertex.light_pvm[1] = u_lights_new[1].light_pv * position;
     vertex.light_pvm[2] = u_lights_new[2].light_pv * position;

@@ -16,6 +16,68 @@
 #include "misc/stb_image.h"
 #pragma warning(pop)
 
+void ta_texture_array_create_and_bind(ta_texture_array *texture_array)
+{
+    glGenTextures(1, &texture_array->gl_id);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array->gl_id);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, texture_array->width, texture_array->height, texture_array->layers,
+        0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+void ta_texture_array_bind(ta_texture_array *texture_array)
+{
+    DLB_ASSERT(texture_array->gl_id);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array->gl_id);
+}
+
+void ta_texture_array_unbind(ta_texture_array *texture_array)
+{
+    UNUSED(texture_array);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+}
+
+void ta_texture_array_set_layer_texels(ta_texture_array *texture_array, int layer, u8 *texels)
+{
+    DLB_ASSERT(texture_array);
+    DLB_ASSERT(texture_array->gl_id);
+    DLB_ASSERT(texels);
+
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, texture_array->width, texture_array->height,
+        1, GL_RGBA, GL_UNSIGNED_BYTE, texels);
+}
+
+void ta_texture_array_init_and_bind(ta_texture_array *texture_array, int width, int height, int layers)
+{
+    texture_array->width = width;
+    texture_array->height = height;
+    texture_array->layers = layers;
+    dlb_vec_reserve(texture_array->layer_textures, layers);
+    ta_texture_array_create_and_bind(texture_array);
+}
+
+void ta_texturing_init(ta_texturing *texturing)
+{
+    ta_texture_array_init_and_bind(&texturing->textures_arrays[TA_TEXTURE_POOL_1], 1, 1, 32);
+
+    // 1x1, RGBA
+    u8 texels[4] = { 0 };
+    texels[3] = 0xff;
+    for (u32 i = 0; i < 32; ++i) {
+        texels[0] = (u8)(i * 256 / 32);
+        texels[1] = (u8)(i * 256 / 32);
+        texels[2] = (u8)(i * 256 / 32);
+        ta_texture_array_set_layer_texels(&texturing->textures_arrays[TA_TEXTURE_POOL_1], i, texels);
+    }
+    //glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+
+    ta_texture_array_unbind(&texturing->textures_arrays[TA_TEXTURE_POOL_1]);
+}
+
 const char *ta_texture_type_str(int type)
 {
     switch (type) {

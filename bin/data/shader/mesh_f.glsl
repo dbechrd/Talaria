@@ -1,25 +1,15 @@
 #version 330 core
 
+//------------------------------------------------------
+// Constants
+//------------------------------------------------------
 #define TA_LIGHTING_MAX_ACTIVE_LIGHTS 8
-
-in vs_out {
-    vec3 position;
-    vec4 color;
-	vec2 uv;
-	vec3 normal;
-    vec3 tangent;
-    vec3 tbn_position;
-	vec3 tbn_normal;
-    vec3 tbn_camera_pos;
-    vec3 tbn_light_pos[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-    vec3 tbn_light_dir[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-    vec4 light_pvm[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-} vertex;
-
-out vec4 final_color;
 
 const float PI = 3.14159265359;
 
+//------------------------------------------------------
+// Materials
+//------------------------------------------------------
 // https://forum.substance3d.com/index.php?topic=3243.0#msg14976
 // Albedo
 // Raw color with no lighting information. Small amount of ambient occlusion can
@@ -42,7 +32,6 @@ const float PI = 3.14159265359;
 
 // TODO: Premultiplied alpha?
 // TODO: Combine channels for performance
-// NOTE: All values default to 1.0 when not in use (for identity multiplication)
 struct Material {
     sampler2D albedo_texture;
     vec4      albedo_factor;
@@ -59,6 +48,9 @@ struct Material {
 };
 uniform Material u_material;
 
+//------------------------------------------------------
+// Lights
+//------------------------------------------------------
 #define LIGHT_AMBIENT       0
 #define LIGHT_DIRECTIONAL   1
 #define LIGHT_POINT         2
@@ -94,6 +86,9 @@ struct LightNew {
 
     // Point
     float shadowmap_zfar;
+
+    float shadowmap_texture_pool_index;  // NOTE: point light "cubemaps" will use 6 consecutive layers
+    float shadowmap_texture_array_layer;
 };
 layout (std140) uniform u_lights_new_block {
     LightNew u_lights_new[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
@@ -102,11 +97,43 @@ uniform sampler2D shadowmap2d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 uniform samplerCube shadowmap3d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 uniform int u_lights_count;
 
+//------------------------------------------------------
+// Textures
+//------------------------------------------------------
+// NOTE: Needs to match #defines in ta_texture.h
+#define TA_TEXTURE_POOL_1      0
+//#define TA_TEXTURE_POOL_2
+//#define TA_TEXTURE_POOL_4
+//#define TA_TEXTURE_POOL_8
+//#define TA_TEXTURE_POOL_16
+#define TA_TEXTURE_POOL_32     1
+//#define TA_TEXTURE_POOL_64
+//#define TA_TEXTURE_POOL_128
+//#define TA_TEXTURE_POOL_256
+#define TA_TEXTURE_POOL_512    2
+#define TA_TEXTURE_POOL_1024   3
+#define TA_TEXTURE_POOL_2048   4
+#define TA_TEXTURE_POOL_4096   5
+#define TA_TEXTURE_POOL_COUNT  6
+
+uniform sampler2DArray u_textures[TA_TEXTURE_POOL_COUNT];
+// TODO: Use sampler2DArray * 6, map direction into 2D somehow?
+uniform samplerCube u_cubemaps[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+
+//------------------------------------------------------
+// Camera
+//------------------------------------------------------
 uniform vec3 u_camera_pos;
 
+//------------------------------------------------------
+// Editor
+//------------------------------------------------------
 // TODO: Use this to color selected object differently
 uniform bool u_selected;
 
+//------------------------------------------------------
+// Debug
+//------------------------------------------------------
 #define DBG_VTX_COLOR       1
 #define DBG_VTX_UV          2
 #define DBG_VTX_NORMAL      3
@@ -119,6 +146,23 @@ uniform bool u_selected;
 #define DBG_MTL_ROUGHNESS   10
 #define DBG_MTL_OCCLUSION   11
 uniform int u_debug_channel;
+//------------------------------------------------------
+
+in vs_out {
+    vec3 position;
+    vec4 color;
+	vec2 uv;
+	vec3 normal;
+    vec3 tangent;
+    vec3 tbn_position;
+	vec3 tbn_normal;
+    vec3 tbn_camera_pos;
+    vec3 tbn_light_pos[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    vec3 tbn_light_dir[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    vec4 light_pvm[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+} vertex;
+
+out vec4 final_color;
 
 vec2 ParallaxMapping(sampler2D heightmap, vec2 texCoords, vec3 viewDir);
 float DistributionGGX(vec3 N, vec3 H, float roughness);

@@ -20,10 +20,6 @@
 
 void ta_lighting_init(ta_lighting *state)
 {
-    dlb_vec_reserve(state->light_records, TA_LIGHTING_MAX_ACTIVE_LIGHTS);
-    dlb_vec_reserve(state->shadowmap2d, TA_LIGHTING_MAX_ACTIVE_LIGHTS);
-    dlb_vec_reserve(state->shadowmap3d, TA_LIGHTING_MAX_ACTIVE_LIGHTS);
-
     glGenBuffers(1, &state->gl_ubo_lights);
     glBindBufferBase(GL_UNIFORM_BUFFER, TA_GL_UNIFORM_BLOCK_BINDING_LIGHTS, state->gl_ubo_lights);
     glBindBuffer(GL_UNIFORM_BUFFER, state->gl_ubo_lights);

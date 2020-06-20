@@ -3,6 +3,36 @@
 #include "dlb/dlb_types.h"
 #include "misc/glad.h"
 
+typedef struct ta_texture_array {
+    int width;
+    int height;
+    int layers;
+    const char *layer_textures;  // vector[layers], if null layer is unused
+    GLuint gl_id;
+} ta_texture_array;
+
+// NOTE: Needs to match #defines in GLSL
+typedef enum ta_texture_array_size {
+    TA_TEXTURE_POOL_1      = 0,
+    //TA_TEXTURE_POOL_2,
+    //TA_TEXTURE_POOL_4,
+    //TA_TEXTURE_POOL_8,
+    //TA_TEXTURE_POOL_16,
+    TA_TEXTURE_POOL_32     = 1,
+    //TA_TEXTURE_POOL_64,
+    //TA_TEXTURE_POOL_128,
+    //TA_TEXTURE_POOL_256,
+    TA_TEXTURE_POOL_512    = 2,
+    TA_TEXTURE_POOL_1024   = 3,
+    TA_TEXTURE_POOL_2048   = 4,
+    TA_TEXTURE_POOL_4096   = 5,
+    TA_TEXTURE_POOL_COUNT  = 6
+} ta_texture_array_size;
+
+typedef struct ta_texturing {
+    ta_texture_array textures_arrays[TA_TEXTURE_POOL_COUNT];  // sampler2DArray
+} ta_texturing;
+
 typedef enum ta_texture_type {
     TA_TEXTURE_2D,
     TA_TEXTURE_CUBEMAP,
@@ -37,14 +67,16 @@ typedef struct ta_texture {
 } ta_texture;
 //#pragma warning(pop)
 
-const char *ta_texture_type_str(int type);
-void ta_texture_init            (ta_texture *tex);
-void ta_texture_bind            (ta_texture *tex);
-void ta_texture_unbind          (ta_texture *tex);
+void ta_texturing_init              (ta_texturing *texturing);
+
+const char *ta_texture_type_str     (int type);
+void ta_texture_init                (ta_texture *tex);
+void ta_texture_bind                (ta_texture *tex);
+void ta_texture_unbind              (ta_texture *tex);
 // Load data from memory into VRAM
-void ta_texture_create_and_bind (ta_texture *tex, GLuint *gl_id);
+void ta_texture_create_and_bind     (ta_texture *tex, GLuint *gl_id);
 // Load data from disk (if `path` instead of `pixels`) then create VRAM textures
-void ta_texture_load            (ta_texture *tex);
-void ta_texture_delete          (ta_texture *tex);
-void ta_texture_reload          (ta_texture *tex);
-void ta_texture_free            (ta_texture *tex);
+void ta_texture_load                (ta_texture *tex);
+void ta_texture_delete              (ta_texture *tex);
+void ta_texture_reload              (ta_texture *tex);
+void ta_texture_free                (ta_texture *tex);

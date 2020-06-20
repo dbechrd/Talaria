@@ -17,36 +17,28 @@ enum {
 
 // NOTE: This must match the GLSL ubo_lights structure byte-for-byte (including padding!)
 // https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL
+// NOTE: This could obviously be packed tighter, but there are only 8 dynamic lights so it's not a priority
 typedef struct ta_lighting_record {
-    // Common
-    int type;
-    float intensity;
-    int cast_shadows;
+    int type;                               // ta_light_type: type of light
+    float intensity;                        // light intensity [0.0, +INF]
+    int cast_shadows;                       // bool: light casts dynamic shadows if true
     float ___pad0;
 
-    ta_vec3 position;
-    float ___pad1;
+    ta_vec3 position;   float ___pad1;      // light position in world space (note: for directional lights, position determines where the entity is renderered in the editor
+    ta_vec3 color;      float ___pad2;      // RGB light color ([0.0, 1.0], [0.0, 1.0], [0.0, 1.0])
+    ta_vec3 direction;  float ___pad3;      // light direction in world space (note: ignored for point lights)
+    ta_mat4 light_pv;                       // light projection-view matrix
 
-    ta_vec3 color;
-    float ___pad2;
-
-    // Directional / Spot
-    ta_vec3 direction;
-    float ___pad3;
-
-    ta_mat4 light_pv;
-
-    // Point
-    float shadowmap_zfar;
+    float shadowmap_zfar;                   // z-far perspective divide for point light shadow maps (ignored for all other light types)
+    float shadowmap_texture_pool_index;     // index of texture pool where shadowmap is stored (note: pools are grouped by texture size)
+    float shadowmap_texture_array_layer;    // array texture layer index (determines which texture in the pool to use, where "pool" is an array texture)
     float ___pad4;
-    float ___pad5;
-    float ___pad6;
 } ta_lighting_record;
 
 typedef struct ta_lighting {
-    ta_lighting_record *light_records;
-    u32 *shadowmap2d;  // NOTE: sampler2D
-    u32 *shadowmap3d;  // NOTE: samplerCube
+    ta_lighting_record light_records[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    u32 shadowmap2d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];  // NOTE: sampler2D
+    u32 shadowmap3d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];  // NOTE: samplerCube
     GLuint gl_ubo_lights;
     GLuint gl_ubo_shadowmap2d;
     GLuint gl_ubo_shadowmap3d;

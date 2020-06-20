@@ -64,6 +64,7 @@ typedef struct ta_game {
     int simulate;               // physics sim: -1 = on, 0 = off, 1+ = simulate N frames
     u64 sim_step;               // current simulation step
     ta_scene scene;             // active scene
+    ta_texturing texturing;     // texture manager
     ta_lighting lighting;       // active lighting
     ta_camera minimap_camera;   // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
     ta_keybind *keybinds;
@@ -243,6 +244,11 @@ void ta_game_init()
     tg_material_default = ta_game_by_name_try(RES_MATERIAL, SYM(INTERN("material_unknown")));
 
     //--------------------------------------------------------------------------
+    // Texturing
+    //--------------------------------------------------------------------------
+    ta_texturing_init(&game.texturing);
+
+    //--------------------------------------------------------------------------
     // Lighting
     //--------------------------------------------------------------------------
     // TODO: Find closest 8 lights and store them in tg_game.lights
@@ -338,8 +344,8 @@ void ta_game_init()
     // TODO(cleanup): This isn't used anywhere. Not sure if we need it.
     // Generate magenta/white grid pattern
     tex_invalid_albedo->type = TA_TEXTURE_2D;
-    tex_invalid_albedo->width = 64;
-    tex_invalid_albedo->height = 64;
+    tex_invalid_albedo->width = 32;
+    tex_invalid_albedo->height = 32;
     tex_invalid_albedo->channels = 4;
     u32 bytes = tex_invalid_albedo->width * tex_invalid_albedo->height * tex_invalid_albedo->channels;
     dlb_vec_reserve(tex_invalid_albedo->pixels, bytes);

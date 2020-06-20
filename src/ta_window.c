@@ -240,19 +240,25 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     glGetIntegerv(pname, &data_int); \
     ta_log_write(&tg_debug_log, SRC_WINDOW, "%s: %d\n", #pname, data_int);
 
+    // Max # of textures in a single texture array (at least 256 in OpenGL 3.0, query if need more dynamically)
+    GLGET_LOG_INT(GL_MAX_ARRAY_TEXTURE_LAYERS);
+
     GLGET_LOG_INT(GL_MAX_FRAGMENT_INPUT_COMPONENTS);
 
     // The value gives the maximum number of texels allowed in the texel array of a texture buffer object. Value must be at least 65536.
     GLGET_LOG_INT(GL_MAX_TEXTURE_BUFFER_SIZE);
-
-    // the maximum supported texture image units that can be used to access texture maps from the fragment shader. The value must be at least 16. See glActiveTexture.
-    GLGET_LOG_INT(GL_MAX_TEXTURE_IMAGE_UNITS);
 
     // The maximum, absolute value of the texture level-of-detail bias. The value must be at least 2.0.
     GLGET_LOG_INT(GL_MAX_TEXTURE_LOD_BIAS);
 
     // The value gives a rough estimate of the largest texture that the GL can handle. The value must be at least 1024. Use a proxy texture target such as GL_PROXY_TEXTURE_1D or GL_PROXY_TEXTURE_2D to determine if a texture is too large. See glTexImage1D and glTexImage2D.
     GLGET_LOG_INT(GL_MAX_TEXTURE_SIZE);
+
+    // The maximum supported texture image units that can be used to access texture maps from the vertex shader. The value may be at least 16. See glActiveTexture.
+    GLGET_LOG_INT(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS);
+    GLGET_LOG_INT(GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS);
+    GLGET_LOG_INT(GL_MAX_TEXTURE_IMAGE_UNITS);           // NOTE: Fragment shader limit
+    GLGET_LOG_INT(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);  // NOTE: All shaders, combined limit
 
     GLGET_LOG_INT(GL_MAX_VERTEX_UNIFORM_BLOCKS);
     GLGET_LOG_INT(GL_MAX_GEOMETRY_UNIFORM_BLOCKS);
@@ -285,12 +291,6 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 
     // The maximum number of active shader storage blocks that may be accessed by a vertex shader.
     //GLGET_LOG_INT(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS);
-
-    // The maximum supported texture image units that can be used to access texture maps from the vertex shader. The value may be at least 16. See glActiveTexture.
-    GLGET_LOG_INT(GL_MAX_VERTEX_TEXTURE_IMAGE_UNITS);
-    GLGET_LOG_INT(GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS);
-    GLGET_LOG_INT(GL_MAX_TEXTURE_IMAGE_UNITS);           // NOTE: Fragment shader limit
-    GLGET_LOG_INT(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS);  // NOTE: All shaders, combined limit
 
     // NOTE: I'm not really sure what this means...
     // The number of words for shader uniform variables in all uniform blocks (including default). The value must be at least 1.
