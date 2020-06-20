@@ -942,7 +942,7 @@ ta_material:
 ta_material:
   name: "metal_plate_019"
   shader: "mesh"
-  albedo_texture: "metal_plate_019_albedo"
+  albedo_texture: "data/texture/Metal_Plate_019_albedo.tga"
   albedo_factor:
     r: 0x3F800000 (1.000000)
     g: 0x3F800000 (1.000000)
@@ -1794,27 +1794,6 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "data/texture/pbr_default_0.tga"
-  type: 0  # TA_TEXTURE_2D
-  path: "data/texture/pbr_default_0.tga"
-  width: 32
-  height: 32
-  channels: 3
-  repeat: true
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
-ta_texture:
-  name: "data/texture/pbr_default_1.tga"
-  type: 0  # TA_TEXTURE_2D
-  path: "data/texture/pbr_default_1.tga"
-  width: 32
-  height: 32
-  channels: 3
-  linear: true
-  repeat: true
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
-ta_texture:
   name: "data/texture/cobble_albedo.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/cobble_albedo.tga"
@@ -1932,7 +1911,7 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "metal_plate_019_albedo"
+  name: "data/texture/Metal_Plate_019_albedo.tga"
   type: 0  # TA_TEXTURE_2D
   path: "data/texture/Metal_Plate_019_albedo.tga"
   width: 1024
@@ -2057,27 +2036,6 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  repeat: true
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
-ta_texture:
-  name: "data/texture/martin_luther.tga"
-  type: 0  # TA_TEXTURE_2D
-  path: "data/texture/martin_luther.tga"
-  width: 512
-  height: 512
-  channels: 3
-  repeat: true
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
-ta_texture:
-  name: "data/texture/sphere_albedo.tga"
-  type: 0  # TA_TEXTURE_2D
-  path: "data/texture/sphere_albedo.tga"
-  width: 1024
-  height: 1024
-  channels: 3
-  linear: true
   repeat: true
   gl_filter_min: 9987
   gl_filter_mag: 9728
