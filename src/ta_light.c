@@ -46,7 +46,7 @@ void ta_lighting_bind_lights(ta_lighting *state)
         state->light_records[light_idx].direction       = VEC3_ZERO;
         state->light_records[light_idx].light_pv        = MAT4_IDENT;
         state->light_records[light_idx].shadowmap_zfar  = 0.0f;
-        //u_shadowmap2d->value.sampler2d    = 0;
+        //u_shadowmap2d->value.sampler_2d    = 0;
         //u_shadowmap3d->value.sampler_cube = 0;
 
         // Light type-dependent properties
@@ -56,7 +56,7 @@ void ta_lighting_bind_lights(ta_lighting *state)
             case TA_LIGHT_DIRECTIONAL:
                 state->light_records[light_idx].direction = ta_light_direction(light);
                 state->light_records[light_idx].light_pv = ta_light_pv(light);
-                //u_shadowmap2d->value.sampler2d = light->shadowmap.texture.gl_id;
+                //u_shadowmap2d->value.sampler_2d = light->shadowmap.texture.gl_id;
                 break;
             case TA_LIGHT_POINT:
                 state->light_records[light_idx].shadowmap_zfar  = light->shadowmap.zfar;
@@ -64,7 +64,7 @@ void ta_lighting_bind_lights(ta_lighting *state)
                 break;
             case TA_LIGHT_SPOT:
                 state->light_records[light_idx].direction = ta_light_direction(light);
-                //u_shadowmap2d->value.sampler2d = light->shadowmap.texture.gl_id;
+                //u_shadowmap2d->value.sampler_2d = light->shadowmap.texture.gl_id;
                 DLB_ASSERT(!"Don't handle spot lights yet");
                 break;
             default:
@@ -155,9 +155,9 @@ static void shadowmap_directional_create(ta_light *light)
     light->shadowmap.texture.height = light->shadowmap.resolution;
     light->shadowmap.texture.gl_filter_min = GL_LINEAR; // GL_NEAREST;
     light->shadowmap.texture.gl_filter_mag = GL_LINEAR; // GL_NEAREST;
+    ta_texture_init(&light->shadowmap.texture);
 
-    GLuint gl_id = 0;
-    ta_texture_create_and_bind(&light->shadowmap.texture, &gl_id);
+    ta_texture_create_and_bind(&light->shadowmap.texture);
 
     // TODO: Specify wrap mode as part of texture params, not sure if border
     // mode/color is worth refactoring out though.
@@ -177,16 +177,12 @@ static void shadowmap_directional_create(ta_light *light)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, light->shadowmap.resolution, light->shadowmap.resolution, 0,
         GL_DEPTH_COMPONENT, GL_FLOAT, 0);
 
-    light->shadowmap.texture.gl_id = gl_id;
-
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
     glGenFramebuffers(1, &light->shadowmap.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-        light->shadowmap.texture.gl_id, 0);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, light->shadowmap.texture.gl_id, 0);
     // For reflection maps
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-    //    light->shadowmap.texture.gl_id, 0);
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, light->shadowmap.texture.gl_id, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
@@ -213,17 +209,15 @@ static void shadowmap_point_create(ta_light *light)
     light->shadowmap.texture.height = light->shadowmap.resolution;
     light->shadowmap.texture.gl_filter_min = GL_LINEAR; // GL_NEAREST;
     light->shadowmap.texture.gl_filter_mag = GL_LINEAR; // GL_NEAREST;
+    ta_texture_init(&light->shadowmap.texture);
 
-    GLuint gl_id = 0;
-    ta_texture_create_and_bind(&light->shadowmap.texture, &gl_id);
+    ta_texture_create_and_bind(&light->shadowmap.texture);
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
     for (int i = 0; i < 6; ++i) {
         glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT16, light->shadowmap.resolution,
             light->shadowmap.resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     }
-
-    light->shadowmap.texture.gl_id = gl_id;
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
     glGenFramebuffers(1, &light->shadowmap.framebuffer);
@@ -276,6 +270,13 @@ static void shadowpass_render_directional(ta_light *light, ta_transform *transfo
 {
     DLB_ASSERT(light->shadowmap.framebuffer);
 
+    //ta_texture_pool *texture_pool = ta_game_texture_pool(light->shadowmap.texture.gl_texture_pool_index);
+    //GLint prev_min = texture_pool->gl_filter_min;
+    //GLint prev_mag = texture_pool->gl_filter_mag;
+    //ta_texture_pool_bind(texture_pool);
+    //ta_texture_pool_set_filter_mode(texture_pool, light->shadowmap.texture.gl_filter_min,
+    //    light->shadowmap.texture.gl_filter_mag);
+
     ta_shader *shader = ta_game_by_sym(RES_SHADER, light->shadowmap.shader);
     ta_shader_bind(shader);
 
@@ -302,6 +303,8 @@ static void shadowpass_render_directional(ta_light *light, ta_transform *transfo
     }
 
     ta_shader_unbind();
+    //ta_texture_pool_set_filter_mode(texture_pool, prev_min, prev_mag);
+    //ta_texture_pool_unbind(texture_pool);
 }
 
 // Draw into shadowmap from light perspective
@@ -311,6 +314,13 @@ static void shadowpass_render_directional(ta_light *light, ta_transform *transfo
 static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
 {
     DLB_ASSERT(light->shadowmap.framebuffer);
+
+    //ta_texture_pool *texture_pool = ta_game_texture_pool(light->shadowmap.texture.gl_texture_pool_index);
+    //GLint prev_min = texture_pool->gl_filter_min;
+    //GLint prev_mag = texture_pool->gl_filter_mag;
+    //ta_texture_pool_bind(texture_pool);
+    //ta_texture_pool_set_filter_mode(texture_pool, light->shadowmap.texture.gl_filter_min,
+    //    light->shadowmap.texture.gl_filter_mag);
 
     ta_vec3 position = ta_light_position(light);
     ta_shader *shader = ta_game_by_sym(RES_SHADER, light->shadowmap.shader);
@@ -353,6 +363,8 @@ static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
     }
 
     ta_shader_unbind();
+    //ta_texture_pool_set_filter_mode(texture_pool, prev_min, prev_mag);
+    //ta_texture_pool_unbind(texture_pool);
 }
 
 void ta_light_shadowpass_render(ta_light *light, ta_transform *transforms)
@@ -377,7 +389,7 @@ void ta_light_shadowpass_render(ta_light *light, ta_transform *transforms)
 
 void render_shadowmap_debug_directional(ta_light *light, int x, int y)
 {
-    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX,
+    ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX,
         light->shadowmap.texture.gl_id);
 
     s32 resolution = light->shadowmap.resolution / 10;
@@ -390,7 +402,7 @@ void render_shadowmap_debug_directional(ta_light *light, int x, int y)
     ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
         true, true);
 
-    ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+    ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
 }
 void render_shadowmap_debug_point(ta_light *light, int x, int y)
 {

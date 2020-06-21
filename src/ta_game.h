@@ -1,4 +1,9 @@
 #pragma once
+#include "ta_asset_watcher.h"
+#include "ta_camera.h"
+#include "ta_light.h"
+#include "ta_scene.h"
+#include "ta_texture.h"
 #include "dlb/dlb_types.h"
 
 struct ta_event;
@@ -73,36 +78,59 @@ typedef enum ta_command {
 
     COMMAND_COUNT
 } ta_command;
+
+typedef struct ta_game {
+    ta_game_state state;        // current game state
+    u64 frame_num;              // current frame number
+    int simulate;               // physics sim: -1 = on, 0 = off, 1+ = simulate N frames
+    u64 sim_step;               // current simulation step
+    ta_scene scene;             // active scene
+    ta_texturing texturing;     // texture manager
+    ta_lighting lighting;       // active lighting
+    ta_camera minimap_camera;   // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
+    struct ta_keybind *keybinds;
+    bool console_visible;
+    const char *base_path;      // symbol (working dir in debug mode, otherwise the .exe directory)
+    ta_asset_watcher texture_watcher;
+
+    // HACK: Temp data, need to persist between frames for debug rendering to work when sim is paused
+    // TODO(cleanup): Holding pointers across frames is a _BAD IDEA_. At the very least, hold names instead.
+    struct ta_rigid_body_pair *pairs;  // Array of most recent broadphase pairs
+    struct ta_manifold *manifolds;     // Array of most recent collision manifolds
+} ta_game;
+
+ta_game tg_game;
+
 const char *ta_command_str(ta_command cmd);
 
-void ta_game_init                   ();
-ta_game_state ta_game_state_current ();
-void ta_game_state_set              (ta_game_state state);
-void *ta_game_alloc                 (enum ta_res_type type, const char *name, size_t name_len);
-void ta_game_destroy                (enum ta_res_type type, const char *name, size_t name_len);
-void *ta_game_by_name               (enum ta_res_type type, const char *name, size_t name_len);
-void *ta_game_by_name_try           (enum ta_res_type type, const char *name, size_t name_len);
-void *ta_game_by_name_or_default    (enum ta_res_type type, const char *name, size_t name_len);
-void *ta_game_by_sym                (enum ta_res_type type, const char *sym);
-void *ta_game_by_sym_try            (enum ta_res_type type, const char *sym);
-void *ta_game_by_sym_or_default     (enum ta_res_type type, const char *sym);
-void *ta_game_component_add         (const char *entity, enum ta_res_type type, const char *name, size_t name_len);
-void *ta_game_component             (const char *entity, enum ta_res_type type);
-void *ta_game_component_try         (const char *entity, enum ta_res_type type);
-void *ta_game_resource_pool         (enum ta_res_type type);
-void ta_game_load_gltf              (const char *filename);
-struct ta_camera *ta_game_camera    ();
-struct ta_ray ta_game_camera_ray    ();
-struct ta_player *ta_game_player    ();
-void ta_game_sim_pause              ();
-void ta_game_sim_resume             ();
-void ta_game_sim_step_n_frames      (int frames);
-bool ta_game_sim_running            ();
-bool ta_game_sim_paused             ();
-u64 ta_game_sim_step                ();
-u64 ta_game_frame_num               ();
-void ta_game_window_resize          ();
-void ta_game_loop                   ();
-void ta_game_update_keybinds        ();
-void ta_game_event                  (struct ta_event *event);
-void ta_game_save                   ();
+void ta_game_init                           ();
+ta_game_state ta_game_state_current         ();
+void ta_game_state_set                      (ta_game_state state);
+void *ta_game_alloc                         (enum ta_res_type type, const char *name, size_t name_len);
+void ta_game_destroy                        (enum ta_res_type type, const char *name, size_t name_len);
+void *ta_game_by_name                       (enum ta_res_type type, const char *name, size_t name_len);
+void *ta_game_by_name_try                   (enum ta_res_type type, const char *name, size_t name_len);
+void *ta_game_by_name_or_default            (enum ta_res_type type, const char *name, size_t name_len);
+void *ta_game_by_sym                        (enum ta_res_type type, const char *sym);
+void *ta_game_by_sym_try                    (enum ta_res_type type, const char *sym);
+void *ta_game_by_sym_or_default             (enum ta_res_type type, const char *sym);
+void *ta_game_component_add                 (const char *entity, enum ta_res_type type, const char *name, size_t name_len);
+void *ta_game_component                     (const char *entity, enum ta_res_type type);
+void *ta_game_component_try                 (const char *entity, enum ta_res_type type);
+void *ta_game_resource_pool                 (enum ta_res_type type);
+void ta_game_load_gltf                      (const char *filename);
+struct ta_camera *ta_game_camera            ();
+struct ta_ray ta_game_camera_ray            ();
+struct ta_player *ta_game_player            ();
+void ta_game_sim_pause                      ();
+void ta_game_sim_resume                     ();
+void ta_game_sim_step_n_frames              (int frames);
+bool ta_game_sim_running                    ();
+bool ta_game_sim_paused                     ();
+u64 ta_game_sim_step                        ();
+u64 ta_game_frame_num                       ();
+void ta_game_window_resize                  ();
+void ta_game_loop                           ();
+void ta_game_update_keybinds                ();
+void ta_game_event                          (struct ta_event *event);
+void ta_game_save                           ();

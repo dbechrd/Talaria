@@ -48,6 +48,7 @@ struct Light {
 //uniform int u_lights_count;
 uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 
+#if 0
 struct LightNew {
     // Common
     int type;
@@ -69,30 +70,9 @@ struct LightNew {
 layout (std140) uniform u_lights_new_block {
     LightNew u_lights_new[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 };
+#endif
+
 uniform int u_lights_count;
-
-//------------------------------------------------------
-// Textures
-//------------------------------------------------------
-// NOTE: Needs to match #defines in ta_texture.h
-#define TA_TEXTURE_POOL_1      0
-//#define TA_TEXTURE_POOL_2
-//#define TA_TEXTURE_POOL_4
-//#define TA_TEXTURE_POOL_8
-//#define TA_TEXTURE_POOL_16
-#define TA_TEXTURE_POOL_32     1
-//#define TA_TEXTURE_POOL_64
-//#define TA_TEXTURE_POOL_128
-//#define TA_TEXTURE_POOL_256
-#define TA_TEXTURE_POOL_512    2
-#define TA_TEXTURE_POOL_1024   3
-#define TA_TEXTURE_POOL_2048   4
-#define TA_TEXTURE_POOL_4096   5
-#define TA_TEXTURE_POOL_COUNT  6
-
-uniform sampler2DArray u_textures[TA_TEXTURE_POOL_COUNT];
-// TODO: Use sampler2DArray * 6, map direction into 2D somehow?
-uniform samplerCube u_cubemaps[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 //------------------------------------------------------
 
 out vs_out {
@@ -154,7 +134,7 @@ void main()
 
     vertex.tbn_position = TBN * vertex.position;
     vertex.tbn_camera_pos = TBN * u_camera_pos;
-#if 0
+#if 1
     for (int i = 0; i < u_lights_count; i++) {
         vertex.tbn_light_pos[i] = TBN * u_lights[i].position;
         vertex.tbn_light_dir[i] = TBN * u_lights[i].direction;

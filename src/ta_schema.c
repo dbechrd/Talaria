@@ -439,15 +439,13 @@ void ta_schema_register()
     TYPE_START      (ta_texture, TYP_TEXTURE, ta_texture_init, ta_texture_free);
     TYPE_FIELD      (ta_texture, name,          ATOM_STRING);
     TYPE_UNION_TYPE (ta_texture, type,          ATOM_ENUM, ta_texture_type_str);
-    TYPE_UNION_FIELD(ta_texture, path,          ATOM_STRING, data, TA_TEXTURE_2D);
+    //TYPE_UNION_FIELD(ta_texture, path,          ATOM_STRING, data, TA_TEXTURE_2D);
+    TYPE_UNION_FIELD(ta_texture, path,          ATOM_STRING, data, TA_TEXTURE_2D_ARRAY);
     TYPE_UNION_ARRAY(ta_texture, path_faces,    ATOM_STRING, 6, data, TA_TEXTURE_CUBEMAP);
     TYPE_VECTOR     (ta_texture, pixels,        ATOM_UINT8);
     TYPE_FIELD      (ta_texture, width,         ATOM_INT);
     TYPE_FIELD      (ta_texture, height,        ATOM_INT);
     TYPE_FIELD      (ta_texture, channels,      ATOM_INT);
-    TYPE_FIELD      (ta_texture, linear,        ATOM_BOOL);
-    TYPE_FIELD      (ta_texture, repeat,        ATOM_BOOL);
-    TYPE_FIELD      (ta_texture, flip_y,        ATOM_BOOL);
     TYPE_FIELD      (ta_texture, gl_filter_min, ATOM_INT);
     TYPE_FIELD      (ta_texture, gl_filter_mag, ATOM_INT);
     TYPE_END        (ta_texture);

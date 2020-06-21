@@ -25,7 +25,7 @@ https://glad.dav1d.de/#profile=core&language=c-debug&specification=gl&loader=on&
 #include "misc/glad.h"
 
 // TODO(perf): Disable debug callbacks in release mode (remove the || 1)
-#if 0 //_DEBUG || 1
+#if _DEBUG
 void _pre_call_callback_default(const char *name, void *funcptr, int len_args, ...) {
     (void) name;
     (void) funcptr;

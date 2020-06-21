@@ -31,8 +31,9 @@ typedef enum ta_glsl_type {
     TA_GLSL_MAT3            = 7,
     TA_GLSL_MAT4            = 8,
     TA_GLSL_STRUCT          = 9,
-    TA_GLSL_SAMPLER_CUBE    = 10,  // TODO: Renumber these? Handle enums by string
+    TA_GLSL_SAMPLER_CUBE    = 10,  // TODO: Re-number these? Handle enums by string
     TA_GLSL_BOOL            = 11,
+    TA_GLSL_SAMPLER2D_ARRAY = 12,
 } ta_glsl_type;
 
 typedef struct ta_shader_attribute {
@@ -55,7 +56,8 @@ typedef struct ta_shader_uniform {
         ta_vec4     vec4;
         ta_mat3     mat3;
         ta_mat4     mat4;
-        GLuint      sampler2d;
+        GLuint      sampler_2d;
+        GLuint      sampler_2d_array;
         GLuint      sampler_cube;
         // NOTE: for structs, array of struct properties
         struct ta_shader_uniform *properties;
@@ -92,7 +94,8 @@ void ta_shader_set_bool         (ta_shader *shader, const char *name, GLboolean 
 void ta_shader_set_int          (ta_shader *shader, const char *name, GLint value);
 void ta_shader_set_uint         (ta_shader *shader, const char *name, GLuint value);
 void ta_shader_set_float        (ta_shader *shader, const char *name, GLfloat value);
-void ta_shader_set_sampler2d    (ta_shader *shader, const char *name, GLuint tex_id);
+void ta_shader_set_sampler_2d   (ta_shader *shader, const char *name, GLuint tex_id);
+void ta_shader_set_sampler_2d_array(ta_shader *shader, const char *name, GLuint tex_id);
 void ta_shader_set_sampler_cube (ta_shader *shader, const char *name, GLuint tex_id);
 void ta_shader_set_vec2         (ta_shader *shader, const char *name, const ta_vec2 *v);
 void ta_shader_set_vec3         (ta_shader *shader, const char *name, const ta_vec3 *v);

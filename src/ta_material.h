@@ -21,9 +21,9 @@ typedef struct ta_material {
     TA_RESOURCE_HEADER
     const char *shader;
     ta_rgba     albedo_factor;
-    const char *albedo_texture;
+    const char *albedo_texture;     // note: Expect sRGB texture (shader will convert to linear color space)
     ta_rgb      emission_factor;
-    const char *emission_texture;
+    const char *emission_texture;   // note: Expect sRGB texture (shader will convert to linear color space)
     float       height_factor;
     const char *height_texture;
     float       metallic_factor;

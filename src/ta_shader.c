@@ -334,13 +334,22 @@ void ta_shader_set_float(ta_shader *shader, const char *name, GLfloat value)
         u->dirty = true;
     }
 }
-void ta_shader_set_sampler2d(ta_shader *shader, const char *name, GLuint tex_id)
+void ta_shader_set_sampler_2d(ta_shader *shader, const char *name, GLuint tex_id)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D);
     // TODO: Figure out why this doesn't work
     //if (u->value.sampler2d != tex_id || tex_id == 0) {
-        u->value.sampler2d = tex_id;
+        u->value.sampler_2d = tex_id;
         u->dirty = true;
+    //}
+}
+void ta_shader_set_sampler_2d_array(ta_shader *shader, const char *name, GLuint tex_id)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D_ARRAY);
+    // TODO: Figure out why this doesn't work
+    //if (u->value.sampler2d != tex_id || tex_id == 0) {
+    u->value.sampler_2d_array = tex_id;
+    u->dirty = true;
     //}
 }
 void ta_shader_set_sampler_cube(ta_shader *shader, const char *name, GLuint tex_id)
@@ -416,7 +425,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
     u_type->value.glint               = light->type;
     u_direction->value.vec3           = VEC3_ZERO;
     u_cast_shadows->value.glbool      = (GLboolean)light->cast_shadows;
-    u_shadowmap2d->value.sampler2d    = 0;
+    u_shadowmap2d->value.sampler_2d    = 0;
     u_shadowmap3d->value.sampler_cube = 0;
     u_shadowmap_zfar->value.glfloat   = 0;
     u_light_pv->value.mat4            = MAT4_IDENT;
@@ -427,7 +436,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
             break;
         case TA_LIGHT_DIRECTIONAL:
             u_direction->value.vec3 = ta_light_direction(light);
-            u_shadowmap2d->value.sampler2d = light->shadowmap.texture.gl_id;
+            u_shadowmap2d->value.sampler_2d = light->shadowmap.texture.gl_id;
             u_light_pv->value.mat4 = ta_light_pv(light);
             break;
         case TA_LIGHT_POINT:
@@ -436,7 +445,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
             break;
         case TA_LIGHT_SPOT:
             u_direction->value.vec3 = ta_light_direction(light);
-            u_shadowmap2d->value.sampler2d = light->shadowmap.texture.gl_id;
+            u_shadowmap2d->value.sampler_2d = light->shadowmap.texture.gl_id;
             DLB_ASSERT(!"Don't handle spot lights yet");
             break;
         default:
@@ -460,78 +469,99 @@ void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *ma
 {
     ta_texture *albedo_texture    = ta_game_by_sym_try(RES_TEXTURE, material->albedo_texture);
     ta_texture *emission_texture  = ta_game_by_sym_try(RES_TEXTURE, material->emission_texture);
+    ta_texture *height_texture    = ta_game_by_sym_try(RES_TEXTURE, material->height_texture);
     ta_texture *metallic_texture  = ta_game_by_sym_try(RES_TEXTURE, material->metallic_texture);
-    ta_texture *roughness_texture = ta_game_by_sym_try(RES_TEXTURE, material->roughness_texture);
     ta_texture *normal_texture    = ta_game_by_sym_try(RES_TEXTURE, material->normal_texture);
     ta_texture *occlusion_texture = ta_game_by_sym_try(RES_TEXTURE, material->occlusion_texture);
-    ta_texture *height_texture    = ta_game_by_sym_try(RES_TEXTURE, material->height_texture);
+    ta_texture *roughness_texture = ta_game_by_sym_try(RES_TEXTURE, material->roughness_texture);
 
     // NOTE: Seems dumb to bind a texture only for the multiplication factor to be 0.0, right?
     DLB_ASSERT(material->albedo_factor.a);
     if (emission_texture)  { DLB_ASSERT(material->emission_factor.r || material->emission_factor.g || material->emission_factor.b); }
+    if (height_texture)    { DLB_ASSERT(material->height_factor); }
     if (metallic_texture)  { DLB_ASSERT(material->metallic_factor); }
     if (roughness_texture) { DLB_ASSERT(material->roughness_factor); }
-    if (height_texture)    { DLB_ASSERT(material->height_factor); }
 
-    if (!albedo_texture    || !albedo_texture   ->gl_id) { albedo_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo); }
-    if (!emission_texture  || !emission_texture ->gl_id) { emission_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission); }
-    if (!metallic_texture  || !metallic_texture ->gl_id) { metallic_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic); }
-    if (!roughness_texture || !roughness_texture->gl_id) { roughness_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness); }
-    if (!normal_texture    || !normal_texture   ->gl_id) { normal_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_normal); }
-    if (!occlusion_texture || !occlusion_texture->gl_id) { occlusion_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion); }
-    if (!height_texture    || !height_texture   ->gl_id) { height_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height); }
+    if (!albedo_texture   ) { albedo_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo); }
+    if (!emission_texture ) { emission_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission); }
+    if (!height_texture   ) { height_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height); }
+    if (!metallic_texture ) { metallic_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic); }
+    if (!normal_texture   ) { normal_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_normal); }
+    if (!occlusion_texture) { occlusion_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion); }
+    if (!roughness_texture) { roughness_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness); }
 
-    DLB_ASSERT(albedo_texture   );
-    DLB_ASSERT(emission_texture );
-    DLB_ASSERT(metallic_texture );
-    DLB_ASSERT(roughness_texture);
-    DLB_ASSERT(normal_texture   );
-    DLB_ASSERT(occlusion_texture);
-    DLB_ASSERT(height_texture   );
+    DLB_ASSERT(albedo_texture    && albedo_texture   ->type == TA_TEXTURE_2D_ARRAY);
+    DLB_ASSERT(emission_texture  && emission_texture ->type == TA_TEXTURE_2D_ARRAY);
+    DLB_ASSERT(height_texture    && height_texture   ->type == TA_TEXTURE_2D_ARRAY);
+    DLB_ASSERT(metallic_texture  && metallic_texture ->type == TA_TEXTURE_2D_ARRAY);
+    DLB_ASSERT(normal_texture    && normal_texture   ->type == TA_TEXTURE_2D_ARRAY);
+    DLB_ASSERT(occlusion_texture && occlusion_texture->type == TA_TEXTURE_2D_ARRAY);
+    DLB_ASSERT(roughness_texture && roughness_texture->type == TA_TEXTURE_2D_ARRAY);
 
-    // TODO: Use the other set calls above to eliminate duplicate sets once that's implemented for the basic types.
-    ta_shader_uniform *u_material                   = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
-    ta_shader_uniform *u_material_albedo_texture    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ALBEDO_TEXTURE,    TA_GLSL_SAMPLER2D);
-    ta_shader_uniform *u_material_albedo_factor     = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ALBEDO_FACTOR,     TA_GLSL_VEC4);
-    ta_shader_uniform *u_material_emission_texture  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_EMISSION_TEXTURE,  TA_GLSL_SAMPLER2D);
-    ta_shader_uniform *u_material_emission_factor   = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_EMISSION_FACTOR,   TA_GLSL_VEC3);
-    ta_shader_uniform *u_material_metallic_texture  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_METALLIC_TEXTURE,  TA_GLSL_SAMPLER2D);
-    ta_shader_uniform *u_material_metallic_factor   = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_METALLIC_FACTOR,   TA_GLSL_FLOAT);
-    ta_shader_uniform *u_material_roughness_texture = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_TEXTURE, TA_GLSL_SAMPLER2D);
-    ta_shader_uniform *u_material_roughness_factor  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_FACTOR,  TA_GLSL_FLOAT);
-    ta_shader_uniform *u_material_height_texture    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_HEIGHT_TEXTURE,    TA_GLSL_SAMPLER2D);
-    ta_shader_uniform *u_material_height_factor     = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_HEIGHT_FACTOR,     TA_GLSL_FLOAT);
-    ta_shader_uniform *u_material_normal_texture    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_NORMAL_TEXTURE,    TA_GLSL_SAMPLER2D);
-    ta_shader_uniform *u_material_occlusion_texture = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_OCCLUSION_TEXTURE, TA_GLSL_SAMPLER2D);
+    // TODO: Use material UBO
+    ta_shader_uniform *u_material                              = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
+    ta_shader_uniform *u_material_albedo_texture_pool_index    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ALBEDO_TEXTURE_POOL_INDEX,    TA_GLSL_UINT);
+    ta_shader_uniform *u_material_albedo_texture_pool_layer    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ALBEDO_TEXTURE_POOL_LAYER,    TA_GLSL_UINT);
+    ta_shader_uniform *u_material_albedo_factor                = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ALBEDO_FACTOR,                TA_GLSL_VEC4);
+    ta_shader_uniform *u_material_emission_texture_pool_index  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_EMISSION_TEXTURE_POOL_INDEX,  TA_GLSL_UINT);
+    ta_shader_uniform *u_material_emission_texture_pool_layer  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_EMISSION_TEXTURE_POOL_LAYER,  TA_GLSL_UINT);
+    ta_shader_uniform *u_material_emission_factor              = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_EMISSION_FACTOR,              TA_GLSL_VEC3);
+    ta_shader_uniform *u_material_height_texture_pool_index    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_HEIGHT_TEXTURE_POOL_INDEX,    TA_GLSL_UINT);
+    ta_shader_uniform *u_material_height_texture_pool_layer    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_HEIGHT_TEXTURE_POOL_LAYER,    TA_GLSL_UINT);
+    ta_shader_uniform *u_material_height_factor                = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_HEIGHT_FACTOR,                TA_GLSL_FLOAT);
+    ta_shader_uniform *u_material_metallic_texture_pool_index  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_METALLIC_TEXTURE_POOL_INDEX,  TA_GLSL_UINT);
+    ta_shader_uniform *u_material_metallic_texture_pool_layer  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_METALLIC_TEXTURE_POOL_LAYER,  TA_GLSL_UINT);
+    ta_shader_uniform *u_material_metallic_factor              = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_METALLIC_FACTOR,              TA_GLSL_FLOAT);
+    ta_shader_uniform *u_material_normal_texture_pool_index    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_NORMAL_TEXTURE_POOL_INDEX,    TA_GLSL_UINT);
+    ta_shader_uniform *u_material_normal_texture_pool_layer    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_NORMAL_TEXTURE_POOL_LAYER,    TA_GLSL_UINT);
+    ta_shader_uniform *u_material_occlusion_texture_pool_index = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_OCCLUSION_TEXTURE_POOL_INDEX, TA_GLSL_UINT);
+    ta_shader_uniform *u_material_occlusion_texture_pool_layer = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_OCCLUSION_TEXTURE_POOL_LAYER, TA_GLSL_UINT);
+    ta_shader_uniform *u_material_roughness_texture_pool_index = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_INDEX, TA_GLSL_UINT);
+    ta_shader_uniform *u_material_roughness_texture_pool_layer = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_LAYER, TA_GLSL_UINT);
+    ta_shader_uniform *u_material_roughness_factor             = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_FACTOR,             TA_GLSL_FLOAT);
 
     // Set default values (some are overridden for specific light types below)
-    u_material_albedo_texture   ->value.sampler2d = albedo_texture->gl_id;
-    u_material_albedo_factor    ->value.vec4      = *(ta_vec4 *)&material->albedo_factor;
-    u_material_emission_texture ->value.sampler2d = emission_texture->gl_id;
-    u_material_emission_factor  ->value.vec3      = *(ta_vec3 *)&material->emission_factor;
-    u_material_metallic_texture ->value.sampler2d = metallic_texture->gl_id;
-    u_material_metallic_factor  ->value.glfloat   = material->metallic_factor;
-    u_material_roughness_texture->value.sampler2d = roughness_texture->gl_id;
-    u_material_roughness_factor ->value.glfloat   = material->roughness_factor;
-    u_material_height_texture   ->value.sampler2d = height_texture->gl_id;
-    u_material_height_factor    ->value.glfloat   = material->height_factor;
-    u_material_normal_texture   ->value.sampler2d = normal_texture->gl_id;
-    u_material_occlusion_texture->value.sampler2d = occlusion_texture->gl_id;
+    u_material_albedo_texture_pool_index    ->value.gluint  = albedo_texture->gl_texture_pool_index;
+    u_material_albedo_texture_pool_layer    ->value.gluint  = albedo_texture->gl_texture_pool_layer;
+    u_material_albedo_factor                ->value.vec4    = *(ta_vec4 *)&material->albedo_factor;
+    u_material_emission_texture_pool_index  ->value.gluint  = emission_texture->gl_texture_pool_index;
+    u_material_emission_texture_pool_layer  ->value.gluint  = emission_texture->gl_texture_pool_layer;
+    u_material_emission_factor              ->value.vec3    = *(ta_vec3 *)&material->emission_factor;
+    u_material_height_texture_pool_index    ->value.gluint  = height_texture->gl_texture_pool_index;
+    u_material_height_texture_pool_layer    ->value.gluint  = height_texture->gl_texture_pool_layer;
+    u_material_height_factor                ->value.glfloat = material->height_factor;
+    u_material_metallic_texture_pool_index  ->value.gluint  = metallic_texture->gl_texture_pool_index;
+    u_material_metallic_texture_pool_layer  ->value.gluint  = metallic_texture->gl_texture_pool_layer;
+    u_material_metallic_factor              ->value.glfloat = material->metallic_factor;
+    u_material_normal_texture_pool_index    ->value.gluint  = normal_texture->gl_texture_pool_index;
+    u_material_normal_texture_pool_layer    ->value.gluint  = normal_texture->gl_texture_pool_layer;
+    u_material_occlusion_texture_pool_index ->value.gluint  = occlusion_texture->gl_texture_pool_index;
+    u_material_occlusion_texture_pool_layer ->value.gluint  = occlusion_texture->gl_texture_pool_layer;
+    u_material_roughness_texture_pool_index ->value.gluint  = roughness_texture->gl_texture_pool_index;
+    u_material_roughness_texture_pool_layer ->value.gluint  = roughness_texture->gl_texture_pool_layer;
+    u_material_roughness_factor             ->value.glfloat = material->roughness_factor;
 
     // Mark all material uniforms as dirty
-    u_material                  ->dirty = true;
-    u_material_albedo_texture   ->dirty = true;
-    u_material_albedo_factor    ->dirty = true;
-    u_material_emission_texture ->dirty = true;
-    u_material_emission_factor  ->dirty = true;
-    u_material_metallic_texture ->dirty = true;
-    u_material_metallic_factor  ->dirty = true;
-    u_material_roughness_texture->dirty = true;
-    u_material_roughness_factor ->dirty = true;
-    u_material_height_texture   ->dirty = true;
-    u_material_height_factor    ->dirty = true;
-    u_material_normal_texture   ->dirty = true;
-    u_material_occlusion_texture->dirty = true;
+    u_material                             ->dirty = true;
+    u_material_albedo_texture_pool_index   ->dirty = true;
+    u_material_albedo_texture_pool_layer   ->dirty = true;
+    u_material_albedo_factor               ->dirty = true;
+    u_material_emission_texture_pool_index ->dirty = true;
+    u_material_emission_texture_pool_layer ->dirty = true;
+    u_material_emission_factor             ->dirty = true;
+    u_material_height_texture_pool_index   ->dirty = true;
+    u_material_height_texture_pool_layer   ->dirty = true;
+    u_material_height_factor               ->dirty = true;
+    u_material_metallic_texture_pool_index ->dirty = true;
+    u_material_metallic_texture_pool_layer ->dirty = true;
+    u_material_metallic_factor             ->dirty = true;
+    u_material_normal_texture_pool_index   ->dirty = true;
+    u_material_normal_texture_pool_layer   ->dirty = true;
+    u_material_occlusion_texture_pool_index->dirty = true;
+    u_material_occlusion_texture_pool_layer->dirty = true;
+    u_material_roughness_texture_pool_index->dirty = true;
+    u_material_roughness_texture_pool_layer->dirty = true;
+    u_material_roughness_factor            ->dirty = true;
 }
 
 static void shader_store_uniforms(ta_shader_uniform *store,
@@ -570,7 +600,7 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
                 glUniform1f(u->location, u->value.glfloat);
                 break;
             } case TA_GLSL_SAMPLER2D: {
-                GLuint tex_id = u->value.gluint;
+                GLuint tex_id = u->value.sampler_2d;
                 if (tex_id >= 0) {
                     glActiveTexture(GL_TEXTURE0 + *tex_count);
                     glBindTexture(GL_TEXTURE_2D, tex_id);
@@ -578,8 +608,17 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
                     (*tex_count)++;
                 }
                 break;
+            } case TA_GLSL_SAMPLER2D_ARRAY: {
+                GLuint tex_id = u->value.sampler_2d_array;
+                if (tex_id >= 0) {
+                    glActiveTexture(GL_TEXTURE0 + *tex_count);
+                    glBindTexture(GL_TEXTURE_2D_ARRAY, tex_id);
+                    glUniform1i(u->location, *tex_count);
+                    (*tex_count)++;
+                }
+                break;
             } case TA_GLSL_SAMPLER_CUBE: {
-                GLuint tex_id = u->value.gluint;
+                GLuint tex_id = u->value.sampler_cube;
                 if (tex_id >= 0) {
                     glActiveTexture(GL_TEXTURE0 + *tex_count);
                     glBindTexture(GL_TEXTURE_CUBE_MAP, tex_id);

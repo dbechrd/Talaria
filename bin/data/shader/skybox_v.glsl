@@ -11,7 +11,7 @@ uniform mat4 u_view;
 
 void main()
 {
-    vertex.uvw = vec3(attr_position.x, attr_position.y, -attr_position.z);
+    vertex.uvw = vec3(attr_position.x, -attr_position.y, -attr_position.z);
     vec4 pos = u_proj * u_view * vec4(attr_position, 1.0);
     gl_Position = pos.xyww;
 }

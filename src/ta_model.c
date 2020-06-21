@@ -126,6 +126,10 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     ta_transform *transform = ta_game_component(model->entity, RES_COMP_TRANSFORM);
 
     if (!camera->debug_no_mesh) {
+        const char *selected_entity = 0;
+        ta_editor_selected_entity(&selected_entity);
+        bool selected = model->entity == selected_entity;
+
         // TODO(perf): This probably does a lot of redundant work for models with multiple meshes
         dlb_vec_each(ta_piece *, piece, model->pieces) {
             ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, piece->mesh);
@@ -139,6 +143,8 @@ void ta_model_render(ta_model *model, ta_camera *camera)
                 material = tg_material_default;
             }
             ta_shader *shader = ta_game_by_sym(RES_SHADER, material->shader);
+
+            ta_shader_set_bool(shader, SYM_U_SELECTED, (GLboolean)selected);
 
             ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
             ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &cam_trans->xform_world.position);

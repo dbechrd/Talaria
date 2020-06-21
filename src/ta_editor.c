@@ -641,7 +641,7 @@ void ta_editor_draw_world()
     if (selected_entity) {
         ta_camera *camera = ta_game_camera();
 
-#if 1
+#if 0
         // Render selected entity as yellow wireframes
         ta_model *e_model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
         if (e_model) {
@@ -1796,20 +1796,18 @@ static void ui_texture_panel()
                 "width   : %u\n"
                 "height  : %u\n"
                 "channels: %u\n"
-                "linear  : %s\n"
-                "repeat  : %s\n"
                 "type    : %s\n"
                 "path    : %s\n"
-                "glid    : %u",
+                "gl_pool : %u\n"
+                "gl_layer: %u",
                 texture->name,
                 texture->width,
                 texture->height,
                 (u32)texture->channels,
-                texture->linear ? "True" : "False",
-                texture->repeat ? "True" : "False",
                 ta_texture_type_str(texture->type),
                 texture->data.path,
-                texture->gl_id);
+                texture->gl_texture_pool_index,
+                texture->gl_texture_pool_layer);
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
         }

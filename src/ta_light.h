@@ -9,6 +9,7 @@
 
 struct ta_model;
 struct ta_shader;
+struct ta_transform;
 
 // TODO: Quick hacks.. needs a better name
 enum {
@@ -30,8 +31,8 @@ typedef struct ta_lighting_record {
     ta_mat4 light_pv;                       // light projection-view matrix
 
     float shadowmap_zfar;                   // z-far perspective divide for point light shadow maps (ignored for all other light types)
-    float shadowmap_texture_pool_index;     // index of texture pool where shadowmap is stored (note: pools are grouped by texture size)
-    float shadowmap_texture_array_layer;    // array texture layer index (determines which texture in the pool to use, where "pool" is an array texture)
+    float shadowmap_texture_pool_index;     // texture pool index where shadowmap is stored (note: pools are grouped by texture size)
+    float shadowmap_texture_array_layer;    // array texture layer (determines which texture in the pool to use, where "pool" is an array texture)
     float ___pad4;
 } ta_lighting_record;
 

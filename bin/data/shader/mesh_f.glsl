@@ -6,6 +6,7 @@
 #define TA_LIGHTING_MAX_ACTIVE_LIGHTS 8
 
 const float PI = 3.14159265359;
+const float GAMMA = 2.2;  // TODO: Make this a user-configurable uniform
 
 //------------------------------------------------------
 // Materials
@@ -33,18 +34,25 @@ const float PI = 3.14159265359;
 // TODO: Premultiplied alpha?
 // TODO: Combine channels for performance
 struct Material {
-    sampler2D albedo_texture;
-    vec4      albedo_factor;
-    sampler2D emission_texture;
-    vec3      emission_factor;
-    sampler2D metallic_texture;
-    float     metallic_factor;
-    sampler2D roughness_texture;
-    float     roughness_factor;
-    sampler2D height_texture;
-    float     height_factor;   // 0.02
-    sampler2D normal_texture;
-    sampler2D occlusion_texture;
+    uint    albedo_texture_pool_index;
+    uint    albedo_texture_pool_layer;
+    vec4    albedo_factor;
+    uint    emission_texture_pool_index;
+    uint    emission_texture_pool_layer;
+    vec3    emission_factor;
+    uint    metallic_texture_pool_index;
+    uint    metallic_texture_pool_layer;
+    float   metallic_factor;
+    uint    roughness_texture_pool_index;
+    uint    roughness_texture_pool_layer;
+    float   roughness_factor;
+    uint    height_texture_pool_index;
+    uint    height_texture_pool_layer;
+    float   height_factor;   // 0.02
+    uint    normal_texture_pool_index;
+    uint    normal_texture_pool_layer;
+    uint    occlusion_texture_pool_index;
+    uint    occlusion_texture_pool_layer;
 };
 uniform Material u_material;
 
@@ -72,6 +80,7 @@ struct Light {
 //uniform int u_lights_count;
 uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 
+#if 0
 struct LightNew {
     // Common
     int type;
@@ -95,28 +104,17 @@ layout (std140) uniform u_lights_new_block {
 };
 uniform sampler2D shadowmap2d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 uniform samplerCube shadowmap3d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+#endif
+
 uniform int u_lights_count;
 
 //------------------------------------------------------
 // Textures
 //------------------------------------------------------
-// NOTE: Needs to match #defines in ta_texture.h
-#define TA_TEXTURE_POOL_1      0
-//#define TA_TEXTURE_POOL_2
-//#define TA_TEXTURE_POOL_4
-//#define TA_TEXTURE_POOL_8
-//#define TA_TEXTURE_POOL_16
-#define TA_TEXTURE_POOL_32     1
-//#define TA_TEXTURE_POOL_64
-//#define TA_TEXTURE_POOL_128
-//#define TA_TEXTURE_POOL_256
-#define TA_TEXTURE_POOL_512    2
-#define TA_TEXTURE_POOL_1024   3
-#define TA_TEXTURE_POOL_2048   4
-#define TA_TEXTURE_POOL_4096   5
-#define TA_TEXTURE_POOL_COUNT  6
+// NOTE: Needs to match the #define in ta_texture.h
+#define TA_TEXTURE_POOL_MAX 8
 
-uniform sampler2DArray u_textures[TA_TEXTURE_POOL_COUNT];
+uniform sampler2DArray u_textures[TA_TEXTURE_POOL_MAX];
 // TODO: Use sampler2DArray * 6, map direction into 2D somehow?
 uniform samplerCube u_cubemaps[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 
@@ -128,7 +126,6 @@ uniform vec3 u_camera_pos;
 //------------------------------------------------------
 // Editor
 //------------------------------------------------------
-// TODO: Use this to color selected object differently
 uniform bool u_selected;
 
 //------------------------------------------------------
@@ -178,7 +175,7 @@ void main()
     // https://learnopengl.com/Advanced-Lighting/Parallax-Mapping
 #if 0
     float height_factor = u_material.height_factor;
-    float mtl_height  = texture(u_material.height_texture, scaled_uv).r * height_factor;
+    float mtl_height = texture(u_textures[u_material.height_texture_pool_index], vec3(scaled_uv, u_material.height_texture_pool_layer)).r  * u_material.height_factor;
     vec2 displacement = V.xy / V.z * (height_factor - mtl_height);  // NOTE: Invert to get depth instead of height
     vec2 displaced_uv = scaled_uv - displacement;
     // Edge artifacts can sometimes be cleaned up like so, but I don't like this idea since it disallows UVs > 1.0
@@ -187,12 +184,26 @@ void main()
 #else
     vec2 displaced_uv = scaled_uv;
 #endif
-    vec4  mtl_albedo    = texture(u_material.albedo_texture,    displaced_uv).rgba * u_material.albedo_factor;
-    vec3  mtl_emission  = texture(u_material.emission_texture,  displaced_uv).rgb  * u_material.emission_factor;
-    float mtl_metallic  = texture(u_material.metallic_texture,  displaced_uv).r    * u_material.metallic_factor;
-    float mtl_roughness = texture(u_material.roughness_texture, displaced_uv).r    * u_material.roughness_factor;
-    vec3  mtl_normal    = texture(u_material.normal_texture,    displaced_uv).rgb;
-    float mtl_occlusion = texture(u_material.occlusion_texture, displaced_uv).r;
+    // TODO: Use layer index from material properties
+    vec4  mtl_albedo    = texture(u_textures[u_material.albedo_texture_pool_index   ], vec3(displaced_uv, u_material.albedo_texture_pool_layer   )).rgba * u_material.albedo_factor;
+    vec3  mtl_emission  = texture(u_textures[u_material.emission_texture_pool_index ], vec3(displaced_uv, u_material.emission_texture_pool_layer )).rgb  * u_material.emission_factor;
+    float mtl_metallic  = texture(u_textures[u_material.metallic_texture_pool_index ], vec3(displaced_uv, u_material.metallic_texture_pool_layer )).r    * u_material.metallic_factor;
+    float mtl_roughness = texture(u_textures[u_material.roughness_texture_pool_index], vec3(displaced_uv, u_material.roughness_texture_pool_layer)).r    * u_material.roughness_factor;
+    vec3  mtl_normal    = texture(u_textures[u_material.normal_texture_pool_index   ], vec3(displaced_uv, u_material.normal_texture_pool_layer   )).rgb;
+    float mtl_occlusion = texture(u_textures[u_material.occlusion_texture_pool_index], vec3(displaced_uv, u_material.occlusion_texture_pool_layer)).r;
+
+    // NOTE(debug): Override material with safe defaults
+    //mtl_albedo = vec4(1.0);
+    //mtl_emission = vec3(1.0);
+    //mtl_metallic = 0.0;
+    //mtl_normal = vec3(0.5, 0.5, 1.0);
+    //mtl_occlusion = 1.0;
+    //mtl_roughness = 0.5;
+
+    // Convert sRGB textures to linear color space
+    // https://learnopengl.com/Advanced-Lighting/Gamma-Correction
+    mtl_albedo.rgb   = pow(mtl_albedo.rgb,   vec3(GAMMA));
+    mtl_emission.rgb = pow(mtl_emission.rgb, vec3(GAMMA));
 
     // TODO: Why did I do this?
     //mtl_roughness = max(mtl_roughness, 0.001);
@@ -216,20 +227,20 @@ void main()
         float attenuation;
 		float shadow = 0.0;
 
-        switch(u_lights_new[i].type) {
+        switch(u_lights[i].type) {
             case LIGHT_DIRECTIONAL: {
-                fragToLight = -u_lights_new[i].direction;
+                fragToLight = -u_lights[i].direction;
 
                 vec3 projCoords = vertex.light_pvm[i].xyz / vertex.light_pvm[i].w;
                 projCoords = projCoords * 0.5 + 0.5;
                 debug = projCoords;
                 dist = projCoords.z;
-                attenuation = u_lights_new[i].intensity;
+                attenuation = u_lights[i].intensity;
 
-                if (u_lights_new[i].cast_shadows) {
+                if (u_lights[i].cast_shadows) {
                     shadow_bias = 0.00001;
 #if 0
-                    shadow_map_depth = texture(u_lights_new[i].shadowmap2d, projCoords.st).r;
+                    shadow_map_depth = texture(u_lights[i].shadowmap2d, projCoords.st).r;
                     // TODO: Better bias based on direction of light? This code
                     // doesn't work, but tried to write it based on:
                     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
@@ -259,16 +270,19 @@ void main()
                 fragToLight = -vertex.tbn_light_dir[i];
                 break;
             } case LIGHT_POINT: {
-                fragToLight = u_lights_new[i].position - vertex.position;
+                fragToLight = u_lights[i].position - vertex.position;
 
                 dist = length(fragToLight);
-                attenuation = u_lights_new[i].intensity / dist * dist;
+                attenuation = u_lights[i].intensity / dist * dist;
+                // Alternative attenutation for finer control:
+                // https://learnopengl.com/Lighting/Light-casters
+                //attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-                if (u_lights_new[i].cast_shadows) {
+                if (u_lights[i].cast_shadows) {
                     shadow_bias = 0.05;
 #if 0
-                    shadow_map_depth = texture(u_lights_new[i].shadowmap3d, -fragToLight).r;
-                    shadow_map_depth *= u_lights_new[i].shadowmap_zfar;
+                    shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
+                    shadow_map_depth *= u_lights[i].shadowmap_zfar;
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
 #else
                     // Soft shadows
@@ -279,7 +293,7 @@ void main()
 					        for (float z = -1.0; z <= 1.0; z += 1.0) {
 							    vec3 ss_offset = vec3(x, y, z) * 0.004 * dist;
 							    float ss_depth = texture(u_lights[i].shadowmap3d, -fragToLight + ss_offset).r;
-							    ss_depth *= u_lights_new[i].shadowmap_zfar;
+							    ss_depth *= u_lights[i].shadowmap_zfar;
 			                    shadow += step(ss_depth, dist - shadow_bias);
                                 ss_count += 1.0;
 					        }
@@ -319,7 +333,7 @@ void main()
         shadow_dists[i] = dist;
         //shadow = 0.0;
 
-        vec3 radiance = u_lights_new[i].color * attenuation;
+        vec3 radiance = u_lights[i].color * attenuation;
 
         vec3 L = normalize(fragToLight);
         vec3 H = normalize(V + L);
@@ -348,6 +362,19 @@ void main()
     color /= color + vec3(1.0);
     // Gamma correction
     color = pow(color, vec3(1.0 / 2.2));
+
+    if (true || u_selected) {
+        // add red to color
+        // TODO: Make this a time-based pulse
+        float cam_dist = length(vertex.tbn_camera_pos - vertex.tbn_position);
+        color = mix(color, vec3(0.7), clamp((cam_dist - 10.0)/50.0, 0.0, 0.9));
+
+        // invert color
+        //color = vec3(1.0) - color;
+
+        // distance from camera
+        //color = vec3(1.0 - length(vertex.tbn_camera_pos - vertex.tbn_position)/30.0);
+    }
 
     final_color = vec4(color, mtl_albedo.a);
 

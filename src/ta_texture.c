@@ -16,74 +16,121 @@
 #include "misc/stb_image.h"
 #pragma warning(pop)
 
-void ta_texture_array_create_and_bind(ta_texture_array *texture_array)
+static void ta_texture_pool_create_and_bind(ta_texture_pool *texture_pool)
 {
-    glGenTextures(1, &texture_array->gl_id);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array->gl_id);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, texture_array->width, texture_array->height, texture_array->layers,
-        0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+    glGenTextures(1, &texture_pool->gl_id);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_pool->gl_id);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, GL_RGBA8, texture_pool->width, texture_pool->height,
+        (GLsizei)dlb_vec_cap(texture_pool->layers), 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
 
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);  //GL_CLAMP_TO_EDGE
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);  //GL_CLAMP_TO_EDGE
 }
 
-void ta_texture_array_bind(ta_texture_array *texture_array)
+static void ta_texture_pool_init_and_bind(ta_texture_pool *texture_pool, int width, int height, int layers)
 {
-    DLB_ASSERT(texture_array->gl_id);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_array->gl_id);
+    texture_pool->width = width;
+    texture_pool->height = height;
+    dlb_vec_reserve_fixed(texture_pool->layers, layers);
+    dlb_vec_alloc_count(texture_pool->layers, layers);
+    ta_texture_pool_create_and_bind(texture_pool);
 }
 
-void ta_texture_array_unbind(ta_texture_array *texture_array)
+void ta_texture_pool_bind(ta_texture_pool *texture_pool)
 {
-    UNUSED(texture_array);
+    DLB_ASSERT(texture_pool->gl_id);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, texture_pool->gl_id);
+}
+
+void ta_texture_pool_unbind()
+{
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 
-void ta_texture_array_set_layer_texels(ta_texture_array *texture_array, int layer, u8 *texels)
+void ta_texture_pool_set_filter_mode(ta_texture_pool *texture_pool, GLint min, GLint mag)
 {
-    DLB_ASSERT(texture_array);
-    DLB_ASSERT(texture_array->gl_id);
-    DLB_ASSERT(texels);
-
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, texture_array->width, texture_array->height,
-        1, GL_RGBA, GL_UNSIGNED_BYTE, texels);
+    texture_pool->gl_filter_min = min;
+    texture_pool->gl_filter_mag = mag;
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, texture_pool->gl_filter_min);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, texture_pool->gl_filter_mag);
 }
 
-void ta_texture_array_init_and_bind(ta_texture_array *texture_array, int width, int height, int layers)
+void ta_texture_pool_set_layer_texels(ta_texture_pool *texture_pool, int layer, GLenum format, u8 *texels)
 {
-    texture_array->width = width;
-    texture_array->height = height;
-    texture_array->layers = layers;
-    dlb_vec_reserve(texture_array->layer_textures, layers);
-    ta_texture_array_create_and_bind(texture_array);
+    DLB_ASSERT(texture_pool);
+    DLB_ASSERT(texture_pool->gl_id);
+    DLB_ASSERT(texels);
+
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, texture_pool->width, texture_pool->height,
+        1, format, GL_UNSIGNED_BYTE, texels);
 }
 
 void ta_texturing_init(ta_texturing *texturing)
 {
-    ta_texture_array_init_and_bind(&texturing->textures_arrays[TA_TEXTURE_POOL_1], 1, 1, 32);
+    UNUSED(texturing);
 
-    // 1x1, RGBA
-    u8 texels[4] = { 0 };
-    texels[3] = 0xff;
-    for (u32 i = 0; i < 32; ++i) {
-        texels[0] = (u8)(i * 256 / 32);
-        texels[1] = (u8)(i * 256 / 32);
-        texels[2] = (u8)(i * 256 / 32);
-        ta_texture_array_set_layer_texels(&texturing->textures_arrays[TA_TEXTURE_POOL_1], i, texels);
-    }
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),    1,    1, 32);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),   32,   32, 32);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),  512,  512, 32);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 1024, 1024, 32);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 2048, 2048, 32);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 4096, 4096, 32);
+    ta_texture_pool_unbind();
+
+    // TODO: Generate mipmaps whenever we change the array? After we load everything? Hmm..
     //glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 
-    ta_texture_array_unbind(&texturing->textures_arrays[TA_TEXTURE_POOL_1]);
+    // TODO: Fill unused textures with some default texture data to make it obvious when we accidentally use the wrong
+    // layer or forget to regenerate mipmaps? I think we can use glTexSubImage3D to fill all layers at the same time.
+    //// 1x1, RGBA
+    //u8 texels[4] = { 0 };
+    //texels[3] = 0xff;
+    //for (u32 i = 0; i < 32; ++i) {
+    //    texels[0] = (u8)(i * 256 / 32);
+    //    texels[1] = (u8)(i * 256 / 32);
+    //    texels[2] = (u8)(i * 256 / 32);
+    //    ta_texture_pool_set_layer_texels(&texturing->texture_pools[TA_TEXTURE_POOL_1], i, texels);
+    //}
+}
+
+static void ta_texturing_add_texture(ta_texturing *texturing, ta_texture *tex)
+{
+    DLB_ASSERT(tex->type == TA_TEXTURE_2D_ARRAY);
+    DLB_ASSERT(!tex->gl_id);
+
+    bool found = false;
+    u32 index = 0;
+    dlb_vec_each(ta_texture_pool *, tex_pool, texturing->texture_pools) {
+        if (tex_pool->width == tex->width && tex_pool->height == tex->height) {
+            tex->gl_texture_pool_index = index;
+            u32 layer = 0;
+            dlb_vec_each(const char **, layer_name, tex_pool->layers) {
+                if (*layer_name == 0 || *layer_name == tex->name) {
+                    *layer_name = tex->name;
+                    tex->gl_texture_pool_layer = layer;
+                    found = true;
+                    break;
+                }
+                layer++;
+            }
+            if (found) break;
+        }
+        index++;
+    }
+    // TODO: What to do when no matching pool found? For now, just hard crash, but we could do something fancy like
+    // make a new pool automatically, or even pack non power-of-two textures into atlases. Avoid complexity if possible.
+    DLB_ASSERT(found);
 }
 
 const char *ta_texture_type_str(int type)
 {
     switch (type) {
-        case TA_TEXTURE_2D:      return "TA_TEXTURE_2D     ";
-        case TA_TEXTURE_CUBEMAP: return "TA_TEXTURE_CUBEMAP";
-        default: DLB_ASSERT(0);  return "TA_TEXTURE_???    ";
+        case TA_TEXTURE_2D:         return "TA_TEXTURE_2D     ";
+        case TA_TEXTURE_2D_ARRAY:  return "TA_TEXTURE_2D_POOLED";
+        case TA_TEXTURE_CUBEMAP:    return "TA_TEXTURE_CUBEMAP";
+        default: DLB_ASSERT(0);     return "TA_TEXTURE_???    ";
     }
 }
 
@@ -109,17 +156,33 @@ void ta_texture_init(ta_texture *tex)
     }
 }
 
-static inline GLenum texture_target(ta_texture *tex)
+static GLenum texture_target(ta_texture *tex)
 {
-    GLenum target = tex->type == TA_TEXTURE_CUBEMAP ? GL_TEXTURE_CUBE_MAP : GL_TEXTURE_2D;
+    GLenum target = 0;
+    switch (tex->type) {
+        case TA_TEXTURE_2D:       target = GL_TEXTURE_2D;       break;  // 3553
+        case TA_TEXTURE_2D_ARRAY: target = GL_TEXTURE_2D_ARRAY; break;  // 35966
+        case TA_TEXTURE_CUBEMAP:  target = GL_TEXTURE_CUBE_MAP; break;  // 34067
+        default: DLB_ASSERT(!"Invalid texture type");
+    }
     return target;
+}
+
+static ta_texture_pool *texture_pool(ta_texture *tex)
+{
+    DLB_ASSERT(!tex->gl_id);
+    return &tg_game.texturing.texture_pools[tex->gl_texture_pool_index];
 }
 
 void ta_texture_bind(ta_texture *tex)
 {
-    DLB_ASSERT(tex->gl_id);
     GLenum target = texture_target(tex);
-    glBindTexture(target, tex->gl_id);
+    if (tex->gl_id) {
+        glBindTexture(target, tex->gl_id);
+    } else {
+        ta_texture_pool *tex_pool = &tg_game.texturing.texture_pools[tex->gl_texture_pool_index];
+        glBindTexture(target, tex_pool->gl_id);
+    }
 }
 
 void ta_texture_unbind(ta_texture *tex)
@@ -128,64 +191,25 @@ void ta_texture_unbind(ta_texture *tex)
     glBindTexture(target, 0);
 }
 
-void ta_texture_create_and_bind(ta_texture *tex, GLuint *gl_id)
+void ta_texture_create_and_bind(ta_texture *tex)
 {
     ta_log_write(&tg_debug_log, SRC_TEXTURE,
         "Generating GPU texture %s (w: %d, h: %d, channels: %d)\n",
         tex->name, tex->width, tex->height, tex->channels);
 
-// TODO: Too much variance in engine load times.. not obvious if this is better or not.
-#if 0
-    static GLuint *tex_id_pool = 0;
-    static size_t next_id = 0;
-    size_t pool_len = dlb_vec_len(tex_id_pool);
-    if (next_id >= pool_len) {
-        size_t new_pool_len = MAX(pool_len * 2, 32);
-        dlb_vec_alloc_count(tex_id_pool, new_pool_len - pool_len);
-        glGenTextures((GLsizei)(new_pool_len - pool_len), tex_id_pool + pool_len);
-        ta_log_write(&tg_debug_log, SRC_TEXTURE, "tex_id_pool resized\n", tex->gl_id);
-    }
-    *gl_id = tex_id_pool[next_id];
-    next_id++;
-    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID %u claimed\n", *gl_id);
-#else
-    glGenTextures(1, gl_id);
-    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID %u generated\n", *gl_id);
-#endif
+    glGenTextures(1, &tex->gl_id);
+    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID %u generated\n", tex->gl_id);
 
     GLenum target = texture_target(tex);
-    glBindTexture(target, *gl_id);
-    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID bound\n");
-
-    GLint param = tex->repeat ? GL_REPEAT : GL_CLAMP_TO_EDGE;
-    glTexParameteri(target, GL_TEXTURE_WRAP_S, param);
-    glTexParameteri(target, GL_TEXTURE_WRAP_T, param);
+    glBindTexture(target, tex->gl_id);
+    // Do we ever need GL_CLAMP_TO_EDGE? We weren't using it anywhere so I got rid of the "repeat" flag.
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_REPEAT);
     if (target == GL_TEXTURE_CUBE_MAP) {
-        glTexParameteri(target, GL_TEXTURE_WRAP_R, param);
+        glTexParameteri(target, GL_TEXTURE_WRAP_R, GL_REPEAT);
     }
-
-#if TA_FLAG_DISABLE_MIPMAPS
-    switch (tex->gl_filter_min) {
-        case GL_NEAREST_MIPMAP_NEAREST: case GL_NEAREST_MIPMAP_LINEAR:
-            tex->gl_filter_min = GL_NEAREST; break;
-        case GL_LINEAR_MIPMAP_NEAREST: case GL_LINEAR_MIPMAP_LINEAR: default:
-            tex->gl_filter_min = GL_LINEAR; break;
-    }
-
-    switch (tex->gl_filter_mag) {
-        case GL_NEAREST_MIPMAP_NEAREST: case GL_NEAREST_MIPMAP_LINEAR:
-            tex->gl_filter_mag = GL_NEAREST; break;
-        case GL_LINEAR_MIPMAP_NEAREST: case GL_LINEAR_MIPMAP_LINEAR: default:
-            tex->gl_filter_mag = GL_LINEAR; break;
-    }
-#endif
-
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
-    ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture parameters set\n");
-
-    //GLuint *gl_id = dlb_vec_alloc(gl_ids[queue]);
-    //*gl_id = texture->gl_id;
 
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Generation complete.\n");
 }
@@ -195,8 +219,7 @@ static short texture_le_short(unsigned char *bytes)
 {
     return bytes[0] | ((char)bytes[1] << 8);
 }
-static u8 *texture_read_tga(const char *path, u32 *width, u32 *height,
-    u8 *channels, bool flip_y)
+static u8 *texture_read_tga(const char *path, u32 *width, u32 *height, u8 *channels)
 {
     struct tga_header
     {
@@ -266,21 +289,11 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height,
     pixels = dlb_malloc(pixels_size);
     DLB_ASSERT(pixels);
 
-    if (flip_y) {
-        ta_log_write(&tg_debug_log, SRC_TEXTURE, "Perf Note: Performing vertical flip on %s\n", path);
-        // Vertical flip (slower)
-        read = 0;
-        int row_width = *width * *channels;
-        for (int row = *height - 1; row >= 0; --row) {
-            read += fread((char *)pixels + (size_t)row * row_width, 1, row_width, f);
-        }
-    } else {
-        read = fread(pixels, 1, pixels_size, f);
-    }
+    read = fread(pixels, 1, pixels_size, f);
     fclose(f);
 
     if (read != pixels_size) {
-        fprintf(stderr, "%s has incomplete image\n", path);
+        ta_log_write(&tg_debug_log, SRC_TEXTURE, "ERROR: TGA pixel data does not match width/height/channels\n", path);
         dlb_free(pixels);
         return NULL;
     }
@@ -296,21 +309,24 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
     DLB_ASSERT(pixels);
 
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Uploading texture to GPU %s\n", tex->name);
+
+    // TODO: Always use GL_RGBA textures, but somehow pack 1 and 3 channel textures. This needs to happen on the CPU
+    // side, but it would be preferable to have the packed texture data be what gets loaded from disk so we can quickly
+    // dump it straight to VRAM without manually interleaving channels at texture load time.
     GLint format_internal = 0;
     GLint format = 0;
     switch (tex->channels)
     {
         case 1: // Grayscale
-            //DLB_ASSERT(tex->linear);  // OpenGL doesn't support sRGB for grayscale
             format_internal = GL_R8;
             format = GL_RED;
             break;
         case 3: // RGB
-            format_internal = tex->linear ? GL_RGB8 : GL_SRGB8;
+            format_internal = GL_RGB8;
             format = bgr ? GL_BGR : GL_RGB;
             break;
         case 4: // RGBA
-            format_internal = tex->linear ? GL_RGBA8 : GL_SRGB8_ALPHA8;
+            format_internal = GL_RGBA8;
             format = bgr ? GL_BGRA : GL_RGBA;
             break;
         default: // Unsupported BPP
@@ -318,10 +334,54 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
     }
 
     GLenum target = texture_target(tex);
-    if (target == GL_TEXTURE_CUBE_MAP) {
-        target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
+    switch (target) {
+        case GL_TEXTURE_2D: {
+            glTexImage2D(target, 0, format_internal, tex->width, tex->height, 0, format, GL_UNSIGNED_BYTE, pixels);
+            break;
+        } case GL_TEXTURE_2D_ARRAY: {
+            ta_texture_pool *tex_pool = texture_pool(tex);
+            switch (format_internal) {
+                case GL_R8: {
+                    size_t pixels_len = tex->width * tex->height;
+                    u8 *padded_texels = dlb_calloc(tex->width * tex->height, 4);
+                    u8 *dst = padded_texels;
+                    for (size_t i = 0; i < pixels_len; i += 1, dst += 4) {
+                        dst[0] = pixels[i];
+                    }
+                    ta_texture_pool_set_layer_texels(tex_pool, tex->gl_texture_pool_layer, GL_RGBA, padded_texels);
+                    dlb_free(padded_texels);
+                    break;
+                } case GL_RGB8: {
+                    size_t pixels_len = tex->width * tex->height * 3;
+                    u8 *padded_texels = dlb_calloc(tex->width * tex->height, 4);
+                    u8 *src = pixels;
+                    u8 *dst = padded_texels;
+                    for (size_t i = 0; i < pixels_len; i += 3, src += 3, dst += 4) {
+                        dst[0] = src[0];
+                        dst[1] = src[1];
+                        dst[2] = src[2];
+                        dst[3] = 0xff;
+                    }
+                    format = bgr ? GL_BGRA : GL_RGBA;
+                    ta_texture_pool_set_layer_texels(tex_pool, tex->gl_texture_pool_layer, format, padded_texels);
+                    dlb_free(padded_texels);
+                    break;
+                } case GL_RGBA8: {
+                    ta_texture_pool_set_layer_texels(tex_pool, tex->gl_texture_pool_layer, format, pixels);
+                    break;
+                } default: {
+                    DLB_ASSERT(!"Uknown texture format");
+                }
+            }
+            break;
+        } case GL_TEXTURE_CUBE_MAP: {
+            target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
+            glTexImage2D(target, 0, format_internal, tex->width, tex->height, 0, format, GL_UNSIGNED_BYTE, pixels);
+            break;
+        } default: {
+            DLB_ASSERT(!"Uknown texture target");
+        }
     }
-    glTexImage2D(target, 0, format_internal, tex->width, tex->height, 0, format, GL_UNSIGNED_BYTE, pixels);
 
     // https://github.com/hglm/detex/blob/master/dds.c
     // https://github.com/nothings/stb/blob/master/stb_dxt.h
@@ -369,7 +429,7 @@ void ta_texture_load(ta_texture *tex)
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Loading texture %s\n", tex->name);
     ta_log_timed_region_start(&tg_debug_log, SRC_TEXTURE, CSTR("ta_texture_load"));
 
-    if (tex->type == TA_TEXTURE_2D) {
+    if (tex->type == TA_TEXTURE_2D || tex->type == TA_TEXTURE_2D_ARRAY) {
         DLB_ASSERT(tex->pixels || tex->data.path);
     } else if (tex->type == TA_TEXTURE_CUBEMAP) {
         DLB_ASSERT(
@@ -384,23 +444,27 @@ void ta_texture_load(ta_texture *tex)
         DLB_ASSERT(!"invalid texture type");
     }
 
-    GLuint gl_id = 0;
-    ta_texture_create_and_bind(tex, &gl_id);
+    if (tex->type == TA_TEXTURE_CUBEMAP) {
+        ta_texture_create_and_bind(tex);
+    } else {
+        ta_texturing_add_texture(&tg_game.texturing, tex);
+        ta_texture_bind(tex);
+    }
 
     // Pixel textures contain inlined pixel data, path should be null
     if (tex->pixels) {
-        DLB_ASSERT(tex->type == TA_TEXTURE_2D);
+        DLB_ASSERT(tex->type == TA_TEXTURE_2D || tex->type == TA_TEXTURE_2D_ARRAY);
         texture_upload(tex, 0, tex->pixels, false);
     } else {
         // Load image data from file(s) and upload to VRAM
-        int face_count = tex->type == TA_TEXTURE_2D ? 1 : 6;
+        int face_count = tex->type == TA_TEXTURE_CUBEMAP ? 6 : 1;
         for (int i = 0; i < face_count; ++i) {
             const char *path = tex->data.path_faces[i];
 
             u32 width = 0;
             u32 height = 0;
             u8 channels = 0;
-            u8 *pixels = texture_read_tga(path, &width, &height, &channels, tex->flip_y);
+            u8 *pixels = texture_read_tga(path, &width, &height, &channels);
             if (!pixels) {
                 ta_log_write(&tg_debug_log, SRC_TEXTURE, "Failed to load tex: %s\n", path);
                 DLB_ASSERT(!"ta_texture_init: Failed to load tex");
@@ -440,7 +504,6 @@ void ta_texture_load(ta_texture *tex)
     texture_generate_mipmap(tex);
     ta_texture_unbind(tex);
 
-    tex->gl_id = gl_id;
     ta_log_timed_region_end(&tg_debug_log, CSTR("ta_texture_load"));
 }
 

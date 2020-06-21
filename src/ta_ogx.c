@@ -175,6 +175,7 @@ static void ta_ogx_load_texture(ogx_texture *o_tex)
     DLB_ASSERT(channels);
 
     tex = ta_game_alloc(RES_TEXTURE, SYM(o_tex->name));
+    tex->type = TA_TEXTURE_2D_ARRAY;
     tex->width = w;
     tex->height = h;
     tex->channels = (u8)channels;

@@ -1519,11 +1519,11 @@ static void ui_render_image(ui_frame *frame)
             ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
             ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
             ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
-            ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, frame->texture->gl_id);
+            ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, frame->texture->gl_id);
             ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
             ta_primitive_push_rect(0, img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
             ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
-            ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+            ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
         }
     }
 }

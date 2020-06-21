@@ -46,11 +46,11 @@ const char *tg_tex_audio_icon;
 const char *tg_tex_invalid_albedo;      // magenta/white checkerboard
 const char *tg_tex_default_albedo;      // vec4(1.0)
 const char *tg_tex_default_emission;    // vec3(1.0)
+const char *tg_tex_default_height;      // 0.0
 const char *tg_tex_default_metallic;    // 0.0
-const char *tg_tex_default_roughness;   // 0.5
 const char *tg_tex_default_normal;      // vec3(0.5, 0.5, 1.0)
 const char *tg_tex_default_occlusion;   // 1.0
-const char *tg_tex_default_height;      // 0.0
+const char *tg_tex_default_roughness;   // 0.5
 
 const char *tg_e_background_music;
 const char *tg_e_freecam;
@@ -58,27 +58,7 @@ const char *tg_e_player_camera;
 const char *tg_e_player_one;
 const char *tg_e_active_camera;
 
-typedef struct ta_game {
-    ta_game_state state;        // current game state
-    u64 frame_num;              // current frame number
-    int simulate;               // physics sim: -1 = on, 0 = off, 1+ = simulate N frames
-    u64 sim_step;               // current simulation step
-    ta_scene scene;             // active scene
-    ta_texturing texturing;     // texture manager
-    ta_lighting lighting;       // active lighting
-    ta_camera minimap_camera;   // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
-    ta_keybind *keybinds;
-    bool console_visible;
-    const char *base_path;      // symbol (working dir in debug mode, otherwise the .exe directory)
-    ta_asset_watcher texture_watcher;
-
-    // HACK: Temp data, need to persist between frames for debug rendering to work when sim is paused
-    // TODO(cleanup): Holding pointers across frames is a _BAD IDEA_. At the very least, hold names instead.
-    ta_rigid_body_pair *pairs;  // Array of most recent broadphase pairs
-    ta_manifold *manifolds;     // Array of most recent collision manifolds
-} ta_game;
-
-static ta_game game;
+ta_game tg_game;
 
 const char *game_state_str(ta_game_state state)
 {
@@ -157,17 +137,17 @@ void ta_game_init()
         if (buf[i] == '\\') buf[i] = '/';
     }
     buf[len] = '/';
-    game.base_path = ta_symbol_intern(buf, len + 1);
+    tg_game.base_path = ta_symbol_intern(buf, len + 1);
 #else
     char *buf = SDL_GetBasePath();
     size_t len = strlen(buf);
     for (int i = 0; i < len; ++i) {
         if (buf[i] == '\\') buf[i] = '/';
     }
-    game.base_path = ta_symbol_intern(buf, len);
+    tg_game.base_path = ta_symbol_intern(buf, len);
     SDL_free(buf);
 #endif
-    ta_log_write(&tg_debug_log, SRC_GAME, "Base path: %s\n", game.base_path);
+    ta_log_write(&tg_debug_log, SRC_GAME, "Base path: %s\n", tg_game.base_path);
 
     ta_log_write(&tg_debug_log, SRC_GAME, "Initializing key binds\n");
 
@@ -179,53 +159,58 @@ void ta_game_init()
     // indirection and don't have to worry about handling repeat anymore.
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     //                               Command                          Game States                                          Triggers            Keys
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAY                   ,                 TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   SDL_SCANCODE_X);
-    ta_keybind_init1(&game.keybinds, COMMAND_FREE_CAM               , TA_STATE_PLAY                                      , TA_KEYBIND_PRESS,   SDL_SCANCODE_X);
-    ta_keybind_init2(&game.keybinds, COMMAND_CONSOLE_TOGGLE         , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_GRAVE, SDL_SCANCODE_LSHIFT);
-    ta_keybind_init1(&game.keybinds, COMMAND_CONSOLE_HIDE           , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_ESCAPE);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR                 , TA_STATE_PLAY | TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   SDL_SCANCODE_GRAVE);
-    ta_keybind_init1(&game.keybinds, COMMAND_SHUTDOWN               , TA_STATE_PLAY | TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   SDL_SCANCODE_ESCAPE);
-    ta_keybind_init1(&game.keybinds, COMMAND_TOGGLE_FULLSCREEN      , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_F11);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_FORWARD    , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    SDL_SCANCODE_W);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_BACKWARD   , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    SDL_SCANCODE_S);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_RIGHT      , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    SDL_SCANCODE_D);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_LEFT       , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    SDL_SCANCODE_A);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_JUMP            , TA_STATE_PLAY                                      , TA_KEYBIND_PRESS,   SDL_SCANCODE_SPACE);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_SHOOT           , TA_STATE_PLAY                                      , TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_FORWARD    ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_I);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_BACKWARD   ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_K);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_RIGHT      ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_L);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_MOVE_LEFT       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_J);
-    ta_keybind_init1(&game.keybinds, COMMAND_PLAYER_JUMP            ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_SEMICOLON);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_FORWARD    ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_W);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_BACKWARD   ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_S);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_RIGHT      ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_D);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_LEFT       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_A);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_UP         ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_E);
-    ta_keybind_init1(&game.keybinds, COMMAND_CAMERA_MOVE_DOWN       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_Q);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_MOUSE_LOCK       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_RIGHT);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_MOUSE_UNLOCK     ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_RELEASE, SDL_SCANCODE_MOUSE_RIGHT);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_MOUSE_LOCK_TOGGLE, TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_M);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_WIREFRAME , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_1);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_MESH      , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_2);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_COLLIDERS , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_NAMETAGS  , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
-    ta_keybind_init1(&game.keybinds, COMMAND_DEBUG_TOGGLE_NORMALS   , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SELECT          ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SELECT_RELEASE  ,                                     TA_STATE_EDITOR, TA_KEYBIND_RELEASE, SDL_SCANCODE_MOUSE_LEFT);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_CANCEL          ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_ESCAPE);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_CLOSE           ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_GRAVE);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_PAUSE_RESUME,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_F5);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_NEXT        ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_F6);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_NEXT_10     ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_F7);
-    ta_keybind_init1(&game.keybinds, COMMAND_EDITOR_SIM_WHILE_HELD  ,                                     TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_F8);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAY                   ,                 TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   SDL_SCANCODE_X);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_FREE_CAM               , TA_STATE_PLAY                                      , TA_KEYBIND_PRESS,   SDL_SCANCODE_X);
+    ta_keybind_init2(&tg_game.keybinds, COMMAND_CONSOLE_TOGGLE         , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_GRAVE, SDL_SCANCODE_LSHIFT);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_CONSOLE_HIDE           , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_ESCAPE);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR                 , TA_STATE_PLAY | TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   SDL_SCANCODE_GRAVE);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_SHUTDOWN               , TA_STATE_PLAY | TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   SDL_SCANCODE_ESCAPE);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_TOGGLE_FULLSCREEN      , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_F11);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_MOVE_FORWARD    , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    SDL_SCANCODE_W);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_MOVE_BACKWARD   , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    SDL_SCANCODE_S);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_MOVE_RIGHT      , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    SDL_SCANCODE_D);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_MOVE_LEFT       , TA_STATE_PLAY                                      , TA_KEYBIND_HOLD,    SDL_SCANCODE_A);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_JUMP            , TA_STATE_PLAY                                      , TA_KEYBIND_PRESS,   SDL_SCANCODE_SPACE);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_SHOOT           , TA_STATE_PLAY                                      , TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_MOVE_FORWARD    ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_I);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_MOVE_BACKWARD   ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_K);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_MOVE_RIGHT      ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_L);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_MOVE_LEFT       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_J);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAYER_JUMP            ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_SEMICOLON);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_CAMERA_MOVE_FORWARD    ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_W);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_CAMERA_MOVE_BACKWARD   ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_S);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_CAMERA_MOVE_RIGHT      ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_D);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_CAMERA_MOVE_LEFT       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_A);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_CAMERA_MOVE_UP         ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_E);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_CAMERA_MOVE_DOWN       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_Q);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_MOUSE_LOCK       ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_RIGHT);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_MOUSE_UNLOCK     ,                 TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_RELEASE, SDL_SCANCODE_MOUSE_RIGHT);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_MOUSE_LOCK_TOGGLE, TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_M);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_WIREFRAME , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_1);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_MESH      , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_2);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_COLLIDERS , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_NAMETAGS  , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_NORMALS   , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SELECT          ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SELECT_RELEASE  ,                                     TA_STATE_EDITOR, TA_KEYBIND_RELEASE, SDL_SCANCODE_MOUSE_LEFT);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_CANCEL          ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_ESCAPE);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_CLOSE           ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_GRAVE);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SIM_PAUSE_RESUME,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_F5);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SIM_NEXT        ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_F6);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SIM_NEXT_10     ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_F7);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SIM_WHILE_HELD  ,                                     TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_F8);
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+    //--------------------------------------------------------------------------
+    // Texturing
+    //--------------------------------------------------------------------------
+    ta_texturing_init(&tg_game.texturing);
 
     //--------------------------------------------------------------------------
     // Scene
     //--------------------------------------------------------------------------
     ta_log_write(&tg_debug_log, SRC_GAME, "Loading first scene...\n");
-    ta_scene_load_file(&game.scene, "data/scene/scene.dml");
+    ta_scene_load_file(&tg_game.scene, "data/scene/scene.dml");
     //ta_scene_save_file_json(&game.scene, "data/scene/scene.json");
 
     //ta_game_load_gltf("data/mesh/MetalRoughSpheres.glb"); // stride != 0 (interleaved attributes)
@@ -244,15 +229,10 @@ void ta_game_init()
     tg_material_default = ta_game_by_name_try(RES_MATERIAL, SYM(INTERN("material_unknown")));
 
     //--------------------------------------------------------------------------
-    // Texturing
-    //--------------------------------------------------------------------------
-    ta_texturing_init(&game.texturing);
-
-    //--------------------------------------------------------------------------
     // Lighting
     //--------------------------------------------------------------------------
     // TODO: Find closest 8 lights and store them in tg_game.lights
-    ta_lighting_init(&game.lighting);
+    ta_lighting_init(&tg_game.lighting);
 
     //--------------------------------------------------------------------------
     // Scene (OGX) ** MUST COME AFTER game.scene.index_by_name[*] INITIALIZED
@@ -270,7 +250,7 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // Simulation
     //--------------------------------------------------------------------------
-    game.simulate = -1;
+    tg_game.simulate = -1;
 
     //--------------------------------------------------------------------------
     // Player
@@ -286,10 +266,10 @@ void ta_game_init()
     tg_e_freecam = SYM_ENTITY_FREECAM;
     DLB_ASSERT(tg_e_freecam);
 
-    game.minimap_camera.fov = 90.0f;
-    game.minimap_camera.up = VEC3_NZ;
-    game.minimap_camera.ortho = true;
-    ta_camera_init(&game.minimap_camera);
+    tg_game.minimap_camera.fov = 90.0f;
+    tg_game.minimap_camera.up = VEC3_NZ;
+    tg_game.minimap_camera.ortho = true;
+    ta_camera_init(&tg_game.minimap_camera);
 
     //--------------------------------------------------------------------------
     // Audio
@@ -317,33 +297,33 @@ void ta_game_init()
     tg_tex_invalid_albedo    = INTERN("#invalid_albedo");
     tg_tex_default_albedo    = INTERN("#default_albedo");
     tg_tex_default_emission  = INTERN("#default_emission");
+    tg_tex_default_height    = INTERN("#default_height");
     tg_tex_default_metallic  = INTERN("#default_metallic");
-    tg_tex_default_roughness = INTERN("#default_roughness");
     tg_tex_default_normal    = INTERN("#default_normal");
     tg_tex_default_occlusion = INTERN("#default_occlusion");
-    tg_tex_default_height    = INTERN("#default_height");
+    tg_tex_default_roughness = INTERN("#default_roughness");
 
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_invalid_albedo   ));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_albedo   ));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_emission ));
+    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_height   ));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_metallic ));
-    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_roughness));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_normal   ));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_occlusion));
-    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_height   ));
+    ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_roughness));
 
     ta_texture *tex_invalid_albedo    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_invalid_albedo   );
     ta_texture *tex_default_albedo    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo   );
     ta_texture *tex_default_emission  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission );
+    ta_texture *tex_default_height    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height   );
     ta_texture *tex_default_metallic  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic );
-    ta_texture *tex_default_roughness = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness);
     ta_texture *tex_default_normal    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_normal   );
     ta_texture *tex_default_occlusion = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion);
-    ta_texture *tex_default_height    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height   );
+    ta_texture *tex_default_roughness = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness);
 
     // TODO(cleanup): This isn't used anywhere. Not sure if we need it.
     // Generate magenta/white grid pattern
-    tex_invalid_albedo->type = TA_TEXTURE_2D;
+    tex_invalid_albedo->type = TA_TEXTURE_2D_ARRAY;
     tex_invalid_albedo->width = 32;
     tex_invalid_albedo->height = 32;
     tex_invalid_albedo->channels = 4;
@@ -363,13 +343,9 @@ void ta_game_init()
     }
     size_t pixels_len = dlb_vec_len(tex_invalid_albedo->pixels);
     DLB_ASSERT(pixels_len == bytes);
-    tex_invalid_albedo->repeat = true;
-    tex_invalid_albedo->linear = false;
-    tex_invalid_albedo->gl_filter_min = GL_NEAREST;
-    tex_invalid_albedo->gl_filter_mag = GL_NEAREST;
 
     // TODO: Just create 3 white textures, for 1, 2 and 4 channels. Then reuse.
-    tex_default_albedo->type = TA_TEXTURE_2D;
+    tex_default_albedo->type = TA_TEXTURE_2D_ARRAY;
     tex_default_albedo->width = 1;
     tex_default_albedo->height = 1;
     tex_default_albedo->channels = 4;
@@ -377,83 +353,55 @@ void ta_game_init()
     dlb_vec_push(tex_default_albedo->pixels, 255);
     dlb_vec_push(tex_default_albedo->pixels, 255);
     dlb_vec_push(tex_default_albedo->pixels, 255);
-    tex_default_albedo->repeat = true;
-    tex_default_albedo->linear = false;
-    tex_default_albedo->gl_filter_min = GL_NEAREST;
-    tex_default_albedo->gl_filter_mag = GL_NEAREST;
 
-    tex_default_emission->type = TA_TEXTURE_2D;
+    tex_default_emission->type = TA_TEXTURE_2D_ARRAY;
     tex_default_emission->width = 1;
     tex_default_emission->height = 1;
     tex_default_emission->channels = 3;
     dlb_vec_push(tex_default_emission->pixels, 255);
     dlb_vec_push(tex_default_emission->pixels, 255);
     dlb_vec_push(tex_default_emission->pixels, 255);
-    tex_default_emission->repeat = true;
-    tex_default_emission->linear = false;
-    tex_default_emission->gl_filter_min = GL_NEAREST;
-    tex_default_emission->gl_filter_mag = GL_NEAREST;
 
-    tex_default_metallic->type = TA_TEXTURE_2D;
-    tex_default_metallic->width = 1;
-    tex_default_metallic->height = 1;
-    tex_default_metallic->channels = 1;
-    dlb_vec_push(tex_default_metallic->pixels, 255);
-    tex_default_metallic->repeat = true;
-    tex_default_metallic->linear = true;
-    tex_default_metallic->gl_filter_min = GL_NEAREST;
-    tex_default_metallic->gl_filter_mag = GL_NEAREST;
-
-    tex_default_roughness->type = TA_TEXTURE_2D;
-    tex_default_roughness->width = 1;
-    tex_default_roughness->height = 1;
-    tex_default_roughness->channels = 1;
-    dlb_vec_push(tex_default_roughness->pixels, 255);
-    tex_default_roughness->repeat = true;
-    tex_default_roughness->linear = true;
-    tex_default_roughness->gl_filter_min = GL_NEAREST;
-    tex_default_roughness->gl_filter_mag = GL_NEAREST;
-
-    tex_default_height->type = TA_TEXTURE_2D;
+    tex_default_height->type = TA_TEXTURE_2D_ARRAY;
     tex_default_height->width = 1;
     tex_default_height->height = 1;
     tex_default_height->channels = 1;
     dlb_vec_push(tex_default_height->pixels, 0);
-    tex_default_height->repeat = true;
-    tex_default_height->linear = true;
-    tex_default_height->gl_filter_min = GL_NEAREST;
-    tex_default_height->gl_filter_mag = GL_NEAREST;
 
-    tex_default_normal->type = TA_TEXTURE_2D;
+    tex_default_metallic->type = TA_TEXTURE_2D_ARRAY;
+    tex_default_metallic->width = 1;
+    tex_default_metallic->height = 1;
+    tex_default_metallic->channels = 1;
+    dlb_vec_push(tex_default_metallic->pixels, 255);
+
+    tex_default_normal->type = TA_TEXTURE_2D_ARRAY;
     tex_default_normal->width = 1;
     tex_default_normal->height = 1;
     tex_default_normal->channels = 3;
     dlb_vec_push(tex_default_normal->pixels, 127);
     dlb_vec_push(tex_default_normal->pixels, 127);
     dlb_vec_push(tex_default_normal->pixels, 255);
-    tex_default_normal->repeat = true;
-    tex_default_normal->linear = true;
-    tex_default_normal->gl_filter_min = GL_NEAREST;
-    tex_default_normal->gl_filter_mag = GL_NEAREST;
 
-    tex_default_occlusion->type = TA_TEXTURE_2D;
+    tex_default_occlusion->type = TA_TEXTURE_2D_ARRAY;
     tex_default_occlusion->width = 1;
     tex_default_occlusion->height = 1;
     tex_default_occlusion->channels = 1;
     dlb_vec_push(tex_default_occlusion->pixels, 255);
-    tex_default_occlusion->repeat = true;
-    tex_default_occlusion->linear = true;
-    tex_default_occlusion->gl_filter_min = GL_NEAREST;
-    tex_default_occlusion->gl_filter_mag = GL_NEAREST;
 
-    ta_texture_load(tex_invalid_albedo);
-    ta_texture_load(tex_default_albedo);
-    ta_texture_load(tex_default_emission);
-    ta_texture_load(tex_default_metallic);
-    ta_texture_load(tex_default_roughness);
-    ta_texture_load(tex_default_normal);
-    ta_texture_load(tex_default_occlusion);
-    ta_texture_load(tex_default_height);
+    tex_default_roughness->type = TA_TEXTURE_2D_ARRAY;
+    tex_default_roughness->width = 1;
+    tex_default_roughness->height = 1;
+    tex_default_roughness->channels = 1;
+    dlb_vec_push(tex_default_roughness->pixels, 255);
+
+    ta_texture_init(tex_invalid_albedo);
+    ta_texture_init(tex_default_albedo);
+    ta_texture_init(tex_default_emission);
+    ta_texture_init(tex_default_height);
+    ta_texture_init(tex_default_metallic);
+    ta_texture_init(tex_default_normal);
+    ta_texture_init(tex_default_occlusion);
+    ta_texture_init(tex_default_roughness);
 
     //--------------------------------------------------------------------------
     // Shaders
@@ -463,7 +411,7 @@ void ta_game_init()
     tg_shader_quads   = ta_game_by_sym(RES_SHADER, INTERN("quads"));
     tg_shader_cubemap = ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
 
-    ta_asset_watcher_init(&game.texture_watcher, SYM(game.base_path));
+    ta_asset_watcher_init(&tg_game.texture_watcher, SYM(tg_game.base_path));
 
 #if _DEBUG
     ta_game_state_set(TA_STATE_FREE_CAM);
@@ -475,17 +423,17 @@ void ta_game_init()
 }
 ta_game_state ta_game_state_current()
 {
-    return game.state;
+    return tg_game.state;
 }
 void ta_game_state_set(ta_game_state state)
 {
-    if (state == game.state) {
+    if (state == tg_game.state) {
         return;
     }
 
-    game.state = state;
+    tg_game.state = state;
     ta_log_write(&tg_debug_log, SRC_GAME, "State = %s\n", game_state_str(state));
-    switch (game.state) {
+    switch (tg_game.state) {
         case TA_STATE_PLAY: {
             tg_e_active_camera = tg_e_player_camera;
             ta_mouse_capture_set(true);
@@ -513,27 +461,27 @@ void *ta_game_alloc(ta_res_type type, const char *name, size_t name_len)
     const char *type_str = 0;
     ta_res_type_str(type, &type_str);
     ta_log_write(&tg_debug_log, SRC_GAME, "ta_game_alloc %s %.*s\n", type_str, name_len, name);
-    return ta_scene_alloc(&game.scene, type, name, name_len);
+    return ta_scene_alloc(&tg_game.scene, type, name, name_len);
 }
 void ta_game_destroy(ta_res_type type, const char *name, size_t name_len)
 {
-    ta_scene_destroy(&game.scene, type, name, name_len);
-    dlb_vec_free(game.keybinds);
+    ta_scene_destroy(&tg_game.scene, type, name, name_len);
+    dlb_vec_free(tg_game.keybinds);
 }
 // If not found, ASSERT
 void *ta_game_by_name(ta_res_type type, const char *name, size_t name_len)
 {
-    return ta_scene_find(&game.scene, type, name, name_len);
+    return ta_scene_find(&tg_game.scene, type, name, name_len);
 }
 // If not found, returns NULL
 void *ta_game_by_name_try(ta_res_type type, const char *name, size_t name_len)
 {
-    return ta_scene_find_try(&game.scene, type, name, name_len);
+    return ta_scene_find_try(&tg_game.scene, type, name, name_len);
 }
 // If not found, returns the first resource of the given type
 void *ta_game_by_name_or_default(ta_res_type type, const char *name, size_t name_len)
 {
-    return ta_scene_find_or_default(&game.scene, type, name, name_len);
+    return ta_scene_find_or_default(&tg_game.scene, type, name, name_len);
 }
 void *ta_game_by_sym(ta_res_type type, const char *sym)
 {
@@ -549,19 +497,19 @@ void *ta_game_by_sym_or_default(ta_res_type type, const char *sym)
 }
 void *ta_game_component_add(const char *entity, ta_res_type type, const char *name, size_t name_len)
 {
-    return ta_scene_component_add(&game.scene, entity, type, name, name_len);
+    return ta_scene_component_add(&tg_game.scene, entity, type, name, name_len);
 }
 void *ta_game_component(const char *entity, ta_res_type type)
 {
-    return ta_scene_component(&game.scene, entity, type);
+    return ta_scene_component(&tg_game.scene, entity, type);
 }
 void *ta_game_component_try(const char *entity, ta_res_type type)
 {
-    return ta_scene_component_try(&game.scene, entity, type);
+    return ta_scene_component_try(&tg_game.scene, entity, type);
 }
 void *ta_game_resource_pool(ta_res_type type)
 {
-    void *pool = game.scene.resource_data[type];
+    void *pool = tg_game.scene.resource_data[type];
     return pool;
 }
 void ta_game_load_gltf(const char *filename)
@@ -595,32 +543,32 @@ ta_player *ta_game_player()
 }
 void ta_game_sim_pause()
 {
-    game.simulate = 0;
+    tg_game.simulate = 0;
 }
 void ta_game_sim_resume()
 {
-    game.simulate = -1;
+    tg_game.simulate = -1;
 }
 void ta_game_sim_step_n_frames(int frames)
 {
     DLB_ASSERT(frames > 0);
-    game.simulate = frames;
+    tg_game.simulate = frames;
 }
 bool ta_game_sim_running()
 {
-    return game.simulate != 0;
+    return tg_game.simulate != 0;
 }
 bool ta_game_sim_paused()
 {
-    return game.simulate == 0;
+    return tg_game.simulate == 0;
 }
 u64 ta_game_sim_step()
 {
-    return game.sim_step;
+    return tg_game.sim_step;
 }
 u64 ta_game_frame_num()
 {
-    return game.frame_num;
+    return tg_game.frame_num;
 }
 void ta_game_window_resize()
 {
@@ -633,8 +581,8 @@ void ta_game_window_resize()
 }
 static void game_hotload_textures()
 {
-    for (size_t i = 0; i < ARRAY_SIZE(game.texture_watcher.changed_files); ++i) {
-        char *filename = game.texture_watcher.changed_files[i];
+    for (size_t i = 0; i < ARRAY_SIZE(tg_game.texture_watcher.changed_files); ++i) {
+        char *filename = tg_game.texture_watcher.changed_files[i];
         if (filename) {
             ta_texture *tex = ta_game_by_name_try(RES_TEXTURE, filename, strlen(filename));
             if (tex) {
@@ -644,7 +592,7 @@ static void game_hotload_textures()
                 //printf("[GAME] not found: %s\n", filename);
             }
             dlb_free(filename);
-            game.texture_watcher.changed_files[i] = 0;
+            tg_game.texture_watcher.changed_files[i] = 0;
         }
     }
 }
@@ -828,12 +776,12 @@ static void game_simulate(ta_camera *active_camera, float dt)
     // Target minimap camera
     ta_vec3 minimap_target_pos = active_cam_trans->xform_world.position;
     minimap_target_pos.y += 50.0f;
-    game.minimap_camera.focal_point = active_cam_trans->xform_world.position;
-    ta_camera_set_target_pos_absolute(&game.minimap_camera, minimap_target_pos);
+    tg_game.minimap_camera.focal_point = active_cam_trans->xform_world.position;
+    ta_camera_set_target_pos_absolute(&tg_game.minimap_camera, minimap_target_pos);
 
-    if (game.simulate) {
-        if (game.simulate > 0) {
-            game.simulate--;
+    if (tg_game.simulate) {
+        if (tg_game.simulate > 0) {
+            tg_game.simulate--;
         }
 
         ta_rigid_body *rigid_bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
@@ -843,15 +791,15 @@ static void game_simulate(ta_camera *active_camera, float dt)
             ta_rigid_body_update(body, dt);
         }
 
-        dlb_vec_zero(game.pairs);
-        dlb_vec_zero(game.manifolds);
+        dlb_vec_zero(tg_game.pairs);
+        dlb_vec_zero(tg_game.manifolds);
 
         // Broad phase
-        collision_broadphase(&game.pairs, rigid_bodies, dt);
-        if (game.pairs) {
+        collision_broadphase(&tg_game.pairs, rigid_bodies, dt);
+        if (tg_game.pairs) {
             // Narrow phase
-            collision_narrowphase(&game.manifolds, game.pairs, dt);
-            dlb_vec_each(ta_manifold *, manifold, game.manifolds) {
+            collision_narrowphase(&tg_game.manifolds, tg_game.pairs, dt);
+            dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
                 // Resolution
                 ta_rigid_body_resolve_collision(manifold, dt);
 
@@ -861,7 +809,7 @@ static void game_simulate(ta_camera *active_camera, float dt)
             }
         }
 
-        game.sim_step++;
+        tg_game.sim_step++;
     }
 
     // Update cameras
@@ -912,7 +860,7 @@ static void game_render_skybox()
 static void game_render_manifolds_debug()
 {
     const float radius = 0.05f;
-    dlb_vec_each(ta_manifold *, manifold, game.manifolds) {
+    dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
         for (u32 i = 0; i < manifold->contact_count; ++i) {
             ta_sphere dbg_contact_world;
             dbg_contact_world.center = manifold->contacts[i];
@@ -1017,7 +965,7 @@ static void game_render_nametags_debug(ta_camera *camera)
         tag_background.rect.h = (int)NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
         ta_primitive_push_rect_uv(0, tag_background, TA_COLOR_DARK_RED, UI_LAYER_HUD_BG, false, false);
         ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
-        ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, 0);
+        ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
 
         // Name tag text
         ta_shader *font_shader = ta_game_by_sym(RES_SHADER, font->shader);
@@ -1069,7 +1017,7 @@ void ta_game_loop()
         ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
 
-        game_hotload_textures(&game);
+        game_hotload_textures(&tg_game);
 
         ta_camera *active_camera = ta_game_camera();
         ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
@@ -1119,7 +1067,7 @@ void ta_game_loop()
         ta_transform_update_all(transforms, sim_alpha);
 
         // Update light data UBO
-        ta_lighting_bind_lights(&game.lighting);
+        ta_lighting_bind_lights(&tg_game.lighting);
 
         //----------------------------------------------------------------------
         // Shadow pass
@@ -1164,8 +1112,17 @@ void ta_game_loop()
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
 
-        // TODO: Group by shader / material to minimize redundant uniform calls
         // Render models
+        // TODO: Group by shader / material to minimize redundant uniform calls
+        ta_shader *mesh_shader = ta_game_by_name(RES_SHADER, CSTR("mesh"));
+        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[0], tg_game.texturing.texture_pools[0].gl_id);
+        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[1], tg_game.texturing.texture_pools[1].gl_id);
+        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[2], tg_game.texturing.texture_pools[2].gl_id);
+        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[3], tg_game.texturing.texture_pools[3].gl_id);
+        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[4], tg_game.texturing.texture_pools[4].gl_id);
+        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[5], tg_game.texturing.texture_pools[5].gl_id);
+        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[6], tg_game.texturing.texture_pools[6].gl_id);
+        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[7], tg_game.texturing.texture_pools[7].gl_id);
         dlb_vec_each(ta_transform *, transform, transforms) {
             ta_model *model = ta_game_component_try(transform->entity, RES_COMP_MODEL);
             if (model) {
@@ -1181,7 +1138,7 @@ void ta_game_loop()
 
         ta_primitive_render(true, false);
 
-        if (game.state == TA_STATE_EDITOR) {
+        if (tg_game.state == TA_STATE_EDITOR) {
             // Debug render cameras as RGB spheres
             dlb_vec_each(ta_camera *, camera, cameras) {
                 if (camera->name != tg_e_active_camera) {
@@ -1270,7 +1227,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Editor UI (world)
         //----------------------------------------------------------------------
-        if (game.state == TA_STATE_EDITOR) {
+        if (tg_game.state == TA_STATE_EDITOR) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor world UI pass...\n");
             ta_editor_update_widgets();
             ta_editor_draw_world();
@@ -1303,7 +1260,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         ta_rect map_rect = { 10, 50, 200, 200 };
         ta_viewport_bind(map_rect, TA_COLOR_GRAY7, true);
-        ta_scene_render(&game.scene, &minimap_camera, sim_alpha);
+        ta_scene_render(&tg_game.scene, &minimap_camera, sim_alpha);
         ta_viewport_unbind();
         ta_primitive_render(true, true);
 
@@ -1334,7 +1291,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Editor UI (screen)
         //----------------------------------------------------------------------
-        if (game.state == TA_STATE_EDITOR) {
+        if (tg_game.state == TA_STATE_EDITOR) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor screen UI pass...\n");
             ta_editor_draw_screen();
         }
@@ -1342,7 +1299,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Console UI (screen)
         //----------------------------------------------------------------------
-        if (game.console_visible) {
+        if (tg_game.console_visible) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Console screen UI pass...\n");
             ta_console_draw_screen();
         }
@@ -1405,16 +1362,16 @@ void ta_game_loop()
 
         // TODO: Add "show_fps" flag and bind to key; off by default in release
         ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
-        game.frame_num++;
+        tg_game.frame_num++;
         ta_log_write(&tg_debug_log, SRC_GAME, " FPS pass...\n");
-        game_draw_frame_info(game.frame_num, ms_frame_time, ms_frame_delta, game.sim_step);
+        game_draw_frame_info(tg_game.frame_num, ms_frame_time, ms_frame_delta, tg_game.sim_step);
 
         ta_log_write(&tg_debug_log, SRC_GAME, " Swap...\n");
         ta_window_swap(tg_window);
 
         ta_log_write(&tg_debug_log, SRC_GAME,
             "Frame %llu displayed. time: %5.3f delta: %5.3f\n",
-            game.frame_num, ms_frame_time, ms_frame_delta);
+            tg_game.frame_num, ms_frame_time, ms_frame_delta);
 
         // Sob profusely when frame time goes over 16ms
         if (ms_frame_time > 16) {
@@ -1435,14 +1392,14 @@ void game_command_free_cam()
 }
 void game_command_console_toggle()
 {
-    game.console_visible = !game.console_visible;
+    tg_game.console_visible = !tg_game.console_visible;
 }
 void game_command_console_exit()
 {
-    if (game.console_visible) {
-        game.console_visible = false;
+    if (tg_game.console_visible) {
+        tg_game.console_visible = false;
     } else {
-        ta_keybind_not_handled(&game.keybinds[COMMAND_CONSOLE_HIDE]);
+        ta_keybind_not_handled(&tg_game.keybinds[COMMAND_CONSOLE_HIDE]);
     }
 }
 void game_command_editor()
@@ -1727,8 +1684,8 @@ void ta_game_update_keybinds()
         [COMMAND_EDITOR_SIM_WHILE_HELD]   = editor_command_sim_while_held,
     };
 
-    dlb_vec_each(ta_keybind *, keybind, game.keybinds) {
-        ta_keybind_update(keybind, game.state);
+    dlb_vec_each(ta_keybind *, keybind, tg_game.keybinds) {
+        ta_keybind_update(keybind, tg_game.state);
         if (ta_keybind_triggered(keybind) && commands[keybind->command]) {
             commands[keybind->command]();
         }
@@ -1827,5 +1784,5 @@ void ta_game_event(ta_event *event)
 void ta_game_save()
 {
     // TODO: Back up original save file before overwriting, handle errors
-    ta_scene_save_file(&game.scene, game.scene.filename);
+    ta_scene_save_file(&tg_game.scene, tg_game.scene.filename);
 }

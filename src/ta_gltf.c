@@ -820,7 +820,7 @@ static void gltf_texture(const char **out_texture_name, cgltf_texture_view *view
 
     ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc TEXTURE %s\n", texture_name);
     ta_texture *texture = ta_game_alloc(RES_TEXTURE, texture_name, texture_name_len);
-
+    texture->type = TA_TEXTURE_2D_ARRAY;
     texture->width = w;
     texture->height = h;
     texture->channels = (u8)channels;
