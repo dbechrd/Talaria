@@ -41,7 +41,10 @@ void ta_mesh_init(ta_mesh *mesh)
         ta_mesh_load_file(mesh, mesh->path);
     }
 }
-
+void ta_mesh_init_void(void *mesh)
+{
+    ta_mesh_init(mesh);
+}
 void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
 {
     mesh->path = filename;
@@ -379,4 +382,8 @@ void ta_mesh_free(ta_mesh *mesh)
     glDeleteVertexArrays(1, &mesh->gl_vao);
     glDeleteBuffers(1, &mesh->gl_vertex_buffer);
     glDeleteBuffers(1, &mesh->gl_index_buffer);
+}
+void ta_mesh_free_void(void *mesh)
+{
+    ta_mesh_free(mesh);
 }

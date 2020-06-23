@@ -137,7 +137,7 @@ static void dml_parser_error_context(dml_parser *parser, const char *message, dm
     fputs(context_buf, stdout);
     fputc('\n', stdout);
     fputs(caret_buf, stdout);
-    fputc('\n\n', stdout);
+    fputs("\n\n", stdout);
 }
 
 /*

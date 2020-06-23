@@ -54,6 +54,7 @@ void ta_audio_listener_unmute       (ta_audio_listener *listener);
 void ta_audio_listener_toggle       (ta_audio_listener *listener);
 
 void ta_audio_buffer_init           (ta_audio_buffer *buffer);
+void ta_audio_buffer_init_void      (void *buffer);
 void ta_audio_buffer_load_path      (ta_audio_buffer *buffer, const char *path);
 void ta_audio_buffer_set_samples    (ta_audio_buffer *buffer, char *samples);
 void ta_audio_buffer_load           (ta_audio_buffer *buffer);
@@ -61,7 +62,9 @@ double ta_audio_buffer_duration_ms  (ta_audio_buffer *buffer);
 void ta_audio_buffer_free           (ta_audio_buffer *buffer);
 
 void ta_audio_source_init           (ta_audio_source *source);
+void ta_audio_source_init_void      (void *source);
 void ta_audio_source_free           (ta_audio_source *source);
+void ta_audio_source_free_void      (void *source);
 void ta_audio_source_set_pitch      (ta_audio_source *source, float pitch);
 void ta_audio_source_set_gain       (ta_audio_source *source, float gain);
 ta_result ta_audio_source_set_buffer(ta_audio_source *source, const char *audio_buffer);

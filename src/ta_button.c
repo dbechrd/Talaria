@@ -9,7 +9,10 @@ void e_button_init(ta_e_button *button)
 {
     UNUSED(button);
 }
-
+void e_button_init_void(void *button)
+{
+    e_button_init(button);
+}
 static bool button_activated(ta_e_button *button)
 {
     bool activated =

@@ -71,9 +71,11 @@ ta_mesh *tg_mesh_default;
 
 const char *ta_vertex_attrib_type_str(int type);
 void ta_mesh_init           (ta_mesh *mesh);
+void ta_mesh_init_void      (void *mesh);
 void ta_mesh_load_file      (ta_mesh *mesh, const char *filename);
 void ta_mesh_create         (ta_mesh *mesh);
 void ta_mesh_init_normals   (ta_mesh *mesh, float scale);
 void ta_mesh_push_normals   (ta_mesh *mesh);
 void ta_mesh_render         (ta_mesh *mesh);
 void ta_mesh_free           (ta_mesh *mesh);
+void ta_mesh_free_void      (void *mesh);

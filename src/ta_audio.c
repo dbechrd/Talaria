@@ -65,6 +65,8 @@ FMOD_RESULT F_CALLBACK audio_fmod_callback(FMOD_SYSTEM *system, FMOD_SYSTEM_CALL
                     info->result == FMOD_ERR_CHANNEL_STOLEN) {
                     return result;
                 }
+            default:
+                break;
         }
         ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD Error:\n");
         ta_log_write(&tg_debug_log, SRC_AUDIO, "  %d(%s)\n", info->result, FMOD_ErrorString(info->result));
@@ -277,6 +279,10 @@ void ta_audio_buffer_init(ta_audio_buffer *buffer)
         ta_audio_buffer_load(buffer);
     }
 }
+void ta_audio_buffer_init_void(void *buffer)
+{
+    ta_audio_buffer_init(buffer);
+}
 void ta_audio_buffer_load_path(ta_audio_buffer *buffer, const char *path)
 {
     buffer->path = path;
@@ -364,9 +370,17 @@ void ta_audio_source_init(ta_audio_source *source)
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
 }
+void ta_audio_source_init_void(void *source)
+{
+    ta_audio_source_init(source);
+}
 void ta_audio_source_free(ta_audio_source *source)
 {
     alDeleteSources(1, &source->al_source_id);
+}
+void ta_audio_source_free_void(void *source)
+{
+    ta_audio_source_free(source);
 }
 void ta_audio_source_set_pitch(ta_audio_source *source, float pitch)
 {

@@ -54,6 +54,7 @@ typedef struct ta_camera {
 } ta_camera;
 
 void ta_camera_init                     (ta_camera *camera);
+void ta_camera_init_void                (void *camera);
 void ta_camera_set_ortho                (ta_camera *camera, bool ortho);
 void ta_camera_set_position             (ta_camera *camera, float x, float y, float z);
 void ta_camera_set_rotation             (ta_camera *camera, float yaw, float pitch);

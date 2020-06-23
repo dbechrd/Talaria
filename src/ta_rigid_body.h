@@ -96,6 +96,9 @@ typedef struct ta_rigid_body_pair {
 
 const char *ta_collider_type_str        (int type);
 void ta_rigid_body_init                 (ta_rigid_body *body);
+void ta_rigid_body_init_void            (void *body);
+void ta_rigid_body_free                 (ta_rigid_body *body);
+void ta_rigid_body_free_void            (void *body);
 void ta_rigid_body_apply_force          (ta_rigid_body *body, ta_vec3 force);
 void ta_rigid_body_apply_force_at       (ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
 void ta_rigid_body_apply_impulse        (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);

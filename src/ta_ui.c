@@ -340,6 +340,8 @@ static ta_ui_scroll_state *ui_scroll_state(ui_frame *frame)
         } case UI_TEXTBOX: {
             scroll = &frame->data.textbox->scroll;
             break;
+        } default: {
+            break;
         }
     }
     return scroll;
@@ -671,7 +673,7 @@ void ta_ui_panel_end()
     ui_frame *frame = ui_frame_end(UI_PANEL);
     if (frame->state.hover) {
         char tex_buf[512] = { 0 };
-        int len = snprintf(tex_buf, sizeof(tex_buf),
+        size_t len = snprintf(tex_buf, sizeof(tex_buf),
             "\n"
             "name: %s\n"
             "            %4d\n"
@@ -1170,7 +1172,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
     } else {
         // If not editing (or just canceled), render text
         char text[16] = { 0 };
-        int text_len = snprintf(CSTR(text), "%.3f", *value);
+        size_t text_len = snprintf(CSTR(text), "%.3f", *value);
         DLB_ASSERT(text_len < sizeof(text));
         text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects);
     }
@@ -1209,7 +1211,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
                 // If drag ended and value didn't change, start edit mode
                 if (!drag_float_end()) {
                     char text[16] = { 0 };
-                    int text_len = snprintf(CSTR(text), "%.3f", *value);
+                    size_t text_len = snprintf(CSTR(text), "%.3f", *value);
                     DLB_ASSERT(text_len < sizeof(text));
                     textbox_set_text(textbox, text, text_len);
                     textbox_focus(textbox);

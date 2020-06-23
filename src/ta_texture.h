@@ -63,6 +63,7 @@ void ta_texture_pool_set_layer_texels(ta_texture_pool *texture_pool, int layer, 
 
 const char *ta_texture_type_str     (int type);
 void ta_texture_init                (ta_texture *tex);
+void ta_texture_init_void           (void *tex);
 void ta_texture_bind                (ta_texture *tex);
 void ta_texture_unbind              (ta_texture *tex);
 // Load data from memory into VRAM
@@ -72,3 +73,4 @@ void ta_texture_load                (ta_texture *tex);
 void ta_texture_delete              (ta_texture *tex);
 void ta_texture_reload              (ta_texture *tex);
 void ta_texture_free                (ta_texture *tex);
+void ta_texture_free_void           (void *tex);

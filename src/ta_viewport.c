@@ -12,7 +12,7 @@ typedef struct viewport {
 } viewport;
 
 static viewport viewports[16];
-static int next = 0;
+static size_t next = 0;
 
 // TODO: Push previously bound viewport onto stack if we want to enable nested
 //       viewports.

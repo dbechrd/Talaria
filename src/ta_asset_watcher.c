@@ -29,7 +29,7 @@ static ta_watcher_result ta_asset_watcher_wait_changes(ta_asset_watcher *watcher
     );
     if (!success) {
         DWORD err = GetLastError();
-        printf("[ASSET_WATCHER] ERROR: ReadDirectoryChangesW failed with error code: %u\n", err);
+        printf("[ASSET_WATCHER] ERROR: ReadDirectoryChangesW failed with error code: %lu\n", err);
         return TA_WATCHER_ERR_READ_DIRECTORY_CHANGES;
     }
 
@@ -137,9 +137,10 @@ static ta_watcher_result ta_open_directory(const char *path, HANDLE *handle)
     return TA_WATCHER_SUCCESS;
 }
 
-static int ta_asset_watcher_watch(ta_asset_watcher *watcher)
+static int ta_asset_watcher_watch(void *arg)
 {
     ta_watcher_result err;
+    ta_asset_watcher *watcher = arg;
 
     HANDLE handle;
     err = ta_open_directory(watcher->dir_path, &handle);
@@ -158,6 +159,8 @@ static int ta_asset_watcher_watch(ta_asset_watcher *watcher)
             break;
         case TA_WATCHER_ERR_BUFFER_SIZE_OUT_OF_RANGE:
             printf("[ASSET_WATCHER] ERROR: Failed to populate change buffer due to size (out of range).\n");
+            break;
+        default:
             break;
     }
 

@@ -43,12 +43,15 @@ int ta_json_dump(const char *js, jsmntok_t *t, size_t count, int indent) {
                 printf("\n");
             }
             return j + 1;
+        } default: {
+            DLB_ASSERT(!"Undefined token type");
+            break;
         }
     }
     return 0;
 }
 
-static void json_log_jsmn_error(int err_code)
+static void json_log_jsmn_error(size_t err_code)
 {
     // TODO: Log more detailed error
     switch (err_code) {
@@ -90,7 +93,7 @@ ta_json_result ta_json_parse(const char *json_data, size_t json_len,
     jsmn_init(&parser);
 
     size_t tokens_max = dlb_vec_cap(*tokens);
-    int token_count = jsmn_parse(&parser, json_data, json_len, *tokens, (unsigned int)tokens_max);
+    size_t token_count = jsmn_parse(&parser, json_data, json_len, *tokens, (unsigned int)tokens_max);
     if (token_count <= 0) {
         dlb_vec_free(*tokens);
         json_log_jsmn_error(token_count);

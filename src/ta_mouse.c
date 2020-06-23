@@ -140,6 +140,8 @@ void ta_mouse_event(ta_event *event)
             if (!event->data.mouse_scroll.flipped) {
                 mouse.scroll_dy *= -1;
             }
+        } default: {
+            break;
         }
     }
 }

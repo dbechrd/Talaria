@@ -18,6 +18,10 @@ void ta_model_free(ta_model *model)
 {
     dlb_vec_free(model->pieces);
 }
+void ta_model_free_void(void *model)
+{
+    ta_model_free(model);
+}
 
 float ta_model_get_morph_target_weight(ta_model *model, const char *morph_target_name)
 {

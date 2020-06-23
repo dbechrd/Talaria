@@ -33,7 +33,10 @@ void ta_camera_init(ta_camera *camera)
 
     camera->focal_point = VEC3_MIN;
 }
-
+void ta_camera_init_void(void *camera)
+{
+    ta_camera_init(camera);
+}
 void ta_camera_set_ortho(ta_camera *camera, bool ortho)
 {
     camera->ortho = ortho;

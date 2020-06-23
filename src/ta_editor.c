@@ -160,7 +160,8 @@ static void editor_gizmo_end(bool keep_changes)
         if (selected_entity) {
             switch (editor.widget) {
                 case WIDGET_TRANSLATE:
-                case WIDGET_ROTATE: {
+                case WIDGET_ROTATE:
+                case WIDGET_SCALE: {
                     ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
                     e_transform->xform = editor.gizmo_start_xform;
                     break;
@@ -415,6 +416,8 @@ void ta_editor_textbox_event(ta_event *event)
             // Consume all unhandled keystrokes when text editor is active
             event->handled = true;
             break;
+        } default: {
+            break;
         }
     }
 }
@@ -617,6 +620,8 @@ void ta_editor_update_widgets()
                         //}
                     }
                     break;
+                } default: {
+                    break;
                 }
             }
             break;
@@ -768,6 +773,8 @@ void ta_editor_draw_world()
                         ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
                         ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
                         ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                        break;
+                    } default: {
                         break;
                     }
                 }
@@ -1075,7 +1082,7 @@ static void ui_node_panel()
         ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors, true, false, true);
 
         char text[256] = { 0 };
-        int text_len = 0;
+        size_t text_len = 0;
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
         ta_ui_label(CSTR("position_world:"), 0);
@@ -1234,7 +1241,7 @@ static void ui_node_panel()
             ta_ui_textbox_float(&rigid_body->density, &density_editor, 0);
 
             char text[64] = { 0 };
-            int text_len = 0;
+            size_t text_len = 0;
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1633,12 +1640,12 @@ static void ui_camera_panel()
             [DBG_MTL_OCCLUSION]  = { CSTR("Occlusion") },
         };
 
-        for (int mode = 0; mode < ARRAY_SIZE(dbg_modes); ++mode) {
+        for (size_t mode = 0; mode < ARRAY_SIZE(dbg_modes); ++mode) {
             if (mode && mode % 2 == 0) ta_ui_row_begin();
             ta_ui_next_size(120, 0);
             ta_ui_toggle_button_begin(TA_UI_AUTOSIZE_H);
             ta_ui_label(dbg_modes[mode].text, dbg_modes[mode].len, 0);
-            bool checked = mode == camera->dbg_channel;
+            bool checked = mode == (size_t)camera->dbg_channel;
             if (ta_ui_toggle_button_end(&checked)) {
                 camera->dbg_channel = mode;
             }
@@ -1672,7 +1679,7 @@ static void ui_material_panel()
         }
         if (ta_ui_last_state().hover) {
             char tex_buf[2048] = { 0 };
-            int len = snprintf(tex_buf, sizeof(tex_buf),
+            size_t len = snprintf(tex_buf, sizeof(tex_buf),
                 "name             : %s\n"
                 "shader           : %s\n"
                 "albedo_factor    : %f %f %f %f\n"
@@ -1731,7 +1738,7 @@ static void ui_mesh_panel()
         // TODO: Preview mesh in carousel while mouse hover
         if (ta_ui_last_state().hover) {
             char tex_buf[1024] = { 0 };
-            int len = snprintf(tex_buf, sizeof(tex_buf), "%s\n", mesh->name);
+            size_t len = snprintf(tex_buf, sizeof(tex_buf), "%s\n", mesh->name);
             DLB_ASSERT(len < sizeof(tex_buf));
 
             for (int i = 0; i < TA_VERTEX_ATTRIB_COUNT; i++) {
@@ -1791,7 +1798,7 @@ static void ui_texture_panel()
         }
         if (ta_ui_last_state().hover) {
             char tex_buf[256] = { 0 };
-            int len = snprintf(tex_buf, sizeof(tex_buf),
+            size_t len = snprintf(tex_buf, sizeof(tex_buf),
                 "name    : %s\n"
                 "width   : %u\n"
                 "height  : %u\n"
@@ -1835,12 +1842,12 @@ static void ui_textbox_panel()
     ta_ui_row_end();
 
     char tb_buffer[20] = { 0 };
-    int tb_buffer_len = snprintf(CSTR(tb_buffer), "Length: %zu", dlb_vec_len(textbox.buffer));
+    size_t tb_buffer_len = snprintf(CSTR(tb_buffer), "Length: %zu", dlb_vec_len(textbox.buffer));
     DLB_ASSERT(tb_buffer_len < sizeof(tb_buffer));
     ta_ui_label(tb_buffer, tb_buffer_len, 0);
 
     char tb_cursor[20] = { 0 };
-    int tb_cursor_len = snprintf(CSTR(tb_cursor), "Cursor: %zu", textbox.cursor);
+    size_t tb_cursor_len = snprintf(CSTR(tb_cursor), "Cursor: %zu", textbox.cursor);
     DLB_ASSERT(tb_cursor_len < sizeof(tb_cursor));
     ta_ui_label(tb_cursor, tb_cursor_len, 0);
 
@@ -1862,13 +1869,13 @@ static void ui_editor_sidebar()
         { CSTR("Textures"),  ui_texture_panel },
         { CSTR("Textbox"),   ui_textbox_panel },
     };
-    static int category_selected = 1;
+    static size_t category_selected = 1;
 
     ta_ui_row_begin();
     ta_ui_next_pad(4, 4, 4, 4);
     static ta_ui_panel_state category_panel = { 0 };
     ta_ui_panel_begin(&category_panel, TA_UI_AUTOSIZE);
-    for (int i = 0; i < ARRAY_SIZE(categories); i++) {
+    for (size_t i = 0; i < ARRAY_SIZE(categories); i++) {
         if (i % 4 == 0) {
             ta_ui_row_begin();
             ta_ui_next_margin(0, 0, 0, 2);

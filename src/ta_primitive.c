@@ -754,12 +754,12 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
 
         // Create/fill vertex attribute buffer
         if (vertex_size_total) {
-            int buffer_size = 0;
+            GLint buffer_size = 0;
             glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vertex_buffer);
             glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size);
 
             // Resize if necessary
-            if (vertex_size_total > buffer_size) {
+            if (vertex_size_total > (size_t)buffer_size) {
                 glBufferData(GL_ARRAY_BUFFER, vertex_size_total, 0, GL_DYNAMIC_DRAW);
             }
 

@@ -149,7 +149,7 @@ void gltf_dump(cgltf_data *data)
     }
     if (data->extensions_required_v) {
         printf("extensions_required:\n");
-        dlb_vec_each(const char **, extension, data->extensions_required_v) {
+        dlb_vec_each(char **, extension, data->extensions_required_v) {
             printf("  %s\n", *extension);
         }
     }
@@ -370,7 +370,7 @@ void gltf_dump(cgltf_data *data)
             }
             if (mesh->target_names_v) {
                 printf("    target_names:\n");
-                dlb_vec_each(const char **, target_name, mesh->target_names_v) {
+                dlb_vec_each(char **, target_name, mesh->target_names_v) {
                     printf("      [%zu]: %s\n", target_name - mesh->target_names_v, *target_name);
                 }
             }
@@ -562,7 +562,7 @@ cgltf_result ta_gltf_parse_file(ta_gltf *gltf)
 }
 
 static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_attribute_type cgltf_attr_type,
-    u32 target)
+    size_t target)
 {
     static const ta_vertex_attrib_type attr_type_lookup[] = {
         [cgltf_attribute_type_position] = TA_VERTEX_ATTRIB_POSITION,
@@ -757,7 +757,7 @@ static void gltf_texture(const char **out_texture_name, cgltf_texture_view *view
         char name_buf[256] = { 0 };
 
         const size_t name_size = ARRAY_SIZE(name_buf);
-        int name_len = snprintf(name_buf, name_size, "gltf_texture_%04d", placeholder_tex_id++);
+        size_t name_len = snprintf(name_buf, name_size, "gltf_texture_%04d", placeholder_tex_id++);
         DLB_ASSERT(name_len < name_size);
         temp_name = ta_symbol_intern(name_buf, name_len);
     } else {
@@ -777,7 +777,7 @@ static void gltf_texture(const char **out_texture_name, cgltf_texture_view *view
 
     char texture_name[256] = { 0 };
     const size_t texture_name_size = ARRAY_SIZE(texture_name);
-    int texture_name_len = snprintf(texture_name, texture_name_size, "#%s", temp_name);
+    size_t texture_name_len = snprintf(texture_name, texture_name_size, "#%s", temp_name);
     DLB_ASSERT(texture_name_len < texture_name_size);
 
     ta_resource *exists = ta_game_by_name_try(RES_TEXTURE, texture_name, texture_name_len);
@@ -853,7 +853,7 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
         char name_buf[256] = { 0 };
 
         const size_t name_size = ARRAY_SIZE(name_buf);
-        int name_len = snprintf(name_buf, name_size, "gltf_texture_%04d", placeholder_tex_id++);
+        size_t name_len = snprintf(name_buf, name_size, "gltf_texture_%04d", placeholder_tex_id++);
         DLB_ASSERT(name_len < name_size);
         temp_name = ta_symbol_intern(name_buf, name_len);
     } else {
@@ -875,8 +875,8 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
     char roughness_name_buf[256] = { 0 };
     const size_t metallic_name_size = ARRAY_SIZE(metallic_name_buf);
     const size_t roughness_name_size = ARRAY_SIZE(roughness_name_buf);
-    int metallic_name_len = snprintf(metallic_name_buf, metallic_name_size, "#%s.r", temp_name);
-    int roughness_name_len = snprintf(roughness_name_buf, roughness_name_size, "#%s.g", temp_name);
+    size_t metallic_name_len = snprintf(metallic_name_buf, metallic_name_size, "#%s.r", temp_name);
+    size_t roughness_name_len = snprintf(roughness_name_buf, roughness_name_size, "#%s.g", temp_name);
     DLB_ASSERT(metallic_name_len < metallic_name_size);
     DLB_ASSERT(roughness_name_len < roughness_name_size);
 
@@ -933,26 +933,26 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
     ta_texture *metallic = ta_game_by_sym(RES_TEXTURE, metallic_name);
     ta_texture *roughness = ta_game_by_sym(RES_TEXTURE, roughness_name);
 
+    size_t pixels_len = w * h * channels;
     metallic->width = w;
     metallic->height = h;
     metallic->channels = 1;
-    dlb_vec_reserve(metallic->pixels, w * h);
+    dlb_vec_reserve(metallic->pixels, pixels_len);
     roughness->width = w;
     roughness->height = h;
     roughness->channels = 1;
-    dlb_vec_reserve(roughness->pixels, w * h);
+    dlb_vec_reserve(roughness->pixels, pixels_len);
 
     // Split channels into two separate textures
     // NOTE: glTF spec states that metallic is in B channel and roughness is in G channel, other channels are ignored
     // https://github.com/KhronosGroup/glTF/blob/master/specification/2.0/schema/material.pbrMetallicRoughness.schema.json
-    size_t pixels_len = w * h * channels;
     for (size_t i = 0; i < pixels_len; i += channels) {
         dlb_vec_push(metallic->pixels, pixels[i+2]);  // G channel
         dlb_vec_push(roughness->pixels, pixels[i+1]); // B channel
     }
 
-    DLB_ASSERT(dlb_vec_len(metallic->pixels) == w * h);
-    DLB_ASSERT(dlb_vec_len(roughness->pixels) == w * h);
+    DLB_ASSERT(dlb_vec_len(metallic->pixels) == pixels_len);
+    DLB_ASSERT(dlb_vec_len(roughness->pixels) == pixels_len);
 
     ta_texture_init(metallic);
     ta_texture_init(roughness);
@@ -984,7 +984,7 @@ void ta_gltf_load(ta_gltf *gltf)
     dlb_vec_each(cgltf_animation *, gltf_animation, gltf->data->animations_v) {
         char animation_name[256] = { 0 };
         const size_t animation_name_size = ARRAY_SIZE(animation_name);
-        int animation_name_len = snprintf(animation_name, animation_name_size, "#%s", gltf_animation->name);
+        size_t animation_name_len = snprintf(animation_name, animation_name_size, "#%s", gltf_animation->name);
         DLB_ASSERT(animation_name_len < animation_name_size);
 
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc ANIMATION %s\n", animation_name);
@@ -1099,7 +1099,7 @@ void ta_gltf_load(ta_gltf *gltf)
             char name_buf[256] = { 0 };
 
             const size_t name_size = ARRAY_SIZE(name_buf);
-            int name_len = snprintf(name_buf, name_size, "gltf_material_%04d", placeholder_material_id++);
+            size_t name_len = snprintf(name_buf, name_size, "gltf_material_%04d", placeholder_material_id++);
             DLB_ASSERT(name_len < name_size);
             temp_material_name = ta_symbol_intern(name_buf, name_len);
         } else {
@@ -1109,7 +1109,7 @@ void ta_gltf_load(ta_gltf *gltf)
 
         char material_name[256] = { 0 };
         const size_t material_name_size = ARRAY_SIZE(material_name);
-        int material_name_len = snprintf(material_name, material_name_size, "#%s", temp_material_name);
+        size_t material_name_len = snprintf(material_name, material_name_size, "#%s", temp_material_name);
         DLB_ASSERT(material_name_len < material_name_size);
 
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MATERIAL %s\n", material_name);
@@ -1159,7 +1159,7 @@ void ta_gltf_load(ta_gltf *gltf)
             char name_buf[256] = { 0 };
 
             const size_t name_size = ARRAY_SIZE(name_buf);
-            int name_len = snprintf(name_buf, name_size, "gltf_mesh_%04d", placeholder_mesh_id++);
+            size_t name_len = snprintf(name_buf, name_size, "gltf_mesh_%04d", placeholder_mesh_id++);
             DLB_ASSERT(name_len < name_size);
             entity_name = ta_symbol_intern(name_buf, name_len);
         } else {
@@ -1168,7 +1168,7 @@ void ta_gltf_load(ta_gltf *gltf)
         DLB_ASSERT(entity_name);
 
         const size_t model_name_size = ARRAY_SIZE(model_name_buf);
-        int model_name_len = snprintf(model_name_buf, model_name_size, "%s", entity_name);
+        size_t model_name_len = snprintf(model_name_buf, model_name_size, "%s", entity_name);
         DLB_ASSERT(model_name_len < model_name_size);
 
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MODEL %s\n", model_name_buf);
@@ -1188,7 +1188,7 @@ void ta_gltf_load(ta_gltf *gltf)
         dlb_vec_zero((char **)model->anim_target_weights);
         dlb_vec_zero(model->pieces);
 
-        dlb_vec_each(const char **, gltf_target, gltf_mesh->target_names_v) {
+        dlb_vec_each(char **, gltf_target, gltf_mesh->target_names_v) {
             const char *target = ta_symbol_intern(*gltf_target, strlen(*gltf_target));
             dlb_vec_push(model->anim_targets, target);
             dlb_vec_push(model->anim_target_weights, 0.0f);
@@ -1197,12 +1197,12 @@ void ta_gltf_load(ta_gltf *gltf)
         int prim_idx = 0;
         dlb_vec_each(cgltf_primitive *, gltf_prim, gltf_mesh->primitives_v) {
             const size_t mesh_name_size = ARRAY_SIZE(mesh_name_buf);
-            int mesh_name_len = snprintf(mesh_name_buf, mesh_name_size, "#%s.prim%03d", model->name, prim_idx);
+            size_t mesh_name_len = snprintf(mesh_name_buf, mesh_name_size, "#%s.prim%03d", model->name, prim_idx);
             DLB_ASSERT(mesh_name_len < mesh_name_size);
 
             char material_name_buf[256] = { 0 };
             const size_t material_name_size = ARRAY_SIZE(material_name_buf);
-            int material_name_len = snprintf(material_name_buf, material_name_size, "#%s", gltf_prim->material->name);
+            size_t material_name_len = snprintf(material_name_buf, material_name_size, "#%s", gltf_prim->material->name);
             DLB_ASSERT(material_name_len < material_name_size);
             const char *material_name = ta_symbol_intern(material_name_buf, material_name_len);
 
@@ -1265,15 +1265,15 @@ void ta_gltf_load(ta_gltf *gltf)
             // Load animation target meshes
             char target_name_buf[256] = { 0 };
             const size_t target_name_size = ARRAY_SIZE(target_name_buf);
-            int target_idx = 0;
+            size_t target_idx = 0;
             dlb_vec_each(cgltf_morph_target *, target, gltf_prim->targets_v) {
 #if 1
-                int target_name_len = 0;
+                size_t target_name_len = 0;
                 if (target_idx < dlb_vec_len(model->anim_targets)) {
                     target_name_len = snprintf(target_name_buf, target_name_size, "%s", model->anim_targets[target_idx]);
                 } else {
                     DLB_ASSERT(!"Target names missing from gltf_mesh, this will break finding targets later");
-                    target_name_len = snprintf(target_name_buf, target_name_size, "target_%03d", target_idx);
+                    target_name_len = snprintf(target_name_buf, target_name_size, "target_%03zu", target_idx);
                 }
                 DLB_ASSERT(target_name_len < target_name_size);
                 const char *target_name = ta_symbol_intern(target_name_buf, target_name_len);
@@ -1285,7 +1285,7 @@ void ta_gltf_load(ta_gltf *gltf)
                 dlb_vec_push(piece.anim_targets, target_name);
                 target_idx++;
 #else
-                int target_name_len = 0;
+                size_t target_name_len = 0;
                 if (target_idx < dlb_vec_len(model->anim_targets)) {
                     target_name_len = snprintf(target_name, target_name_size, "%s.%s", mesh->name, model->anim_targets[target_idx]);
                 } else {

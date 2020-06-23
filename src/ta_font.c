@@ -31,7 +31,10 @@ void ta_font_init(ta_font *font)
         }
     }
 }
-
+void ta_font_init_void(void *font)
+{
+    ta_font_init(font);
+}
 void ta_font_load_path(ta_font *font, const char *path)
 {
     char *buf = ta_file_read_all(path);

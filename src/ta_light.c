@@ -31,7 +31,7 @@ void ta_lighting_bind_lights(ta_lighting *state)
 {
     ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
     int light_idx = 0;
-    for (int i = 0; i < dlb_vec_len(lights) && i < TA_LIGHTING_MAX_ACTIVE_LIGHTS; ++i) {
+    for (size_t i = 0; i < dlb_vec_len(lights) && i < TA_LIGHTING_MAX_ACTIVE_LIGHTS; ++i) {
         ta_light *light = &lights[i];
         if (light->disabled) {
             continue;
@@ -142,7 +142,10 @@ void ta_light_init(ta_light *light)
         }
     }
 }
-
+void ta_light_init_void(void *light)
+{
+    ta_light_init(light);
+}
 static void shadowmap_directional_create(ta_light *light)
 {
     ta_log_write(&tg_debug_log, SRC_LIGHT, "shadowmap_directional_create\n");

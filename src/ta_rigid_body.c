@@ -48,11 +48,18 @@ void ta_rigid_body_init(ta_rigid_body *body)
     }
     body->inv_tensor_local = ta_collider_inv_tensor(&body->collider, body->mass);
 }
+void ta_rigid_body_init_void(void *body)
+{
+    ta_rigid_body_init(body);
+}
 void ta_rigid_body_free(ta_rigid_body *body)
 {
     dlb_vec_free(body->colliding_with);
 }
-
+void ta_rigid_body_free_void(void *body)
+{
+    ta_rigid_body_free(body);
+}
 void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force)
 {
     body->force_accum = vec3_add(body->force_accum, force);

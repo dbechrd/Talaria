@@ -29,7 +29,7 @@ static void ta_texture_pool_create_and_bind(ta_texture_pool *texture_pool)
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);  //GL_CLAMP_TO_EDGE
 }
 
-static void ta_texture_pool_init_and_bind(ta_texture_pool *texture_pool, int width, int height, int layers)
+static void ta_texture_pool_init_and_bind(ta_texture_pool *texture_pool, int width, int height, size_t layers)
 {
     texture_pool->width = width;
     texture_pool->height = height;
@@ -154,6 +154,10 @@ void ta_texture_init(ta_texture *tex)
     if (tex->pixels || tex->data.path) {
         ta_texture_load(tex);
     }
+}
+void ta_texture_init_void(void *tex)
+{
+    ta_texture_init(tex);
 }
 
 static GLenum texture_target(ta_texture *tex)
@@ -411,8 +415,8 @@ static void texture_generate_mipmap(ta_texture *tex)
     // TODO: Are there any other reasons to generate mipmaps?
     // Only generate mipmap if requested filtering mode requires it
     if (tex->width > 1 && tex->height > 1 &&
-        (tex->gl_filter_min != GL_NEAREST && tex->gl_filter_min != GL_LINEAR) ||
-        (tex->gl_filter_mag != GL_NEAREST && tex->gl_filter_mag != GL_LINEAR))
+        ((tex->gl_filter_min != GL_NEAREST && tex->gl_filter_min != GL_LINEAR) ||
+        (tex->gl_filter_mag != GL_NEAREST && tex->gl_filter_mag != GL_LINEAR)))
     {
         ta_log_write(&tg_debug_log, SRC_TEXTURE, "Generating mipmap for %s\n", tex->name);
         ta_log_timed_region_start(&tg_debug_log, SRC_TEXTURE, CSTR("texture_generate_mipmap"));
@@ -533,4 +537,8 @@ void ta_texture_free(ta_texture *tex)
     //glDeleteTextures(dlb_vec_len(gl_ids[queue]), gl_ids[queue]);
     //dlb_vec_clear(tex[queue]);
     //dlb_vec_clear(gl_ids[queue]);
+}
+void ta_texture_free_void(void *tex)
+{
+    ta_texture_free(tex);
 }

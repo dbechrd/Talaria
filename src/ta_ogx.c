@@ -76,6 +76,8 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
         index_array->material_slot = (u16)o_index_array->material_slot;
     }
 
+    // TODO: Calculate mesh AABB (or better, precalculate it and store it in the file)
+
     ta_mesh_create(mesh);
 
     // TODO: Load skin (if present)
@@ -239,6 +241,8 @@ static void ta_ogx_load_node(ogx_node *o_node)
             break;
         case OGX_LIGHT_NODE:
             ta_ogx_load_light_node(o_node);
+            break;
+        default:
             break;
     }
 }

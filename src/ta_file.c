@@ -104,7 +104,7 @@ char ta_file_char(ta_file *f) {
         f->eof = true;
     }
 #endif
-    if (f->context_len < sizeof(f->context_buf)) {
+    if ((size_t)f->context_len < sizeof(f->context_buf)) {
         f->context_buf[f->context_len] = (char)c;
     }
     f->context_len++;

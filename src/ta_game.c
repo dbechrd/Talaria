@@ -141,7 +141,7 @@ void ta_game_init()
 #else
     char *buf = SDL_GetBasePath();
     size_t len = strlen(buf);
-    for (int i = 0; i < len; ++i) {
+    for (size_t i = 0; i < len; ++i) {
         if (buf[i] == '\\') buf[i] = '/';
     }
     tg_game.base_path = ta_symbol_intern(buf, len);
@@ -411,7 +411,9 @@ void ta_game_init()
     tg_shader_quads   = ta_game_by_sym(RES_SHADER, INTERN("quads"));
     tg_shader_cubemap = ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
 
+#if defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)
     ta_asset_watcher_init(&tg_game.texture_watcher, SYM(tg_game.base_path));
+#endif
 
 #if _DEBUG
     ta_game_state_set(TA_STATE_FREE_CAM);
@@ -451,6 +453,8 @@ void ta_game_state_set(ta_game_state state)
             tg_e_active_camera = tg_e_freecam;
             break;
         } case TA_STATE_EDITOR: {
+            break;
+        } default: {
             break;
         }
     }
@@ -614,7 +618,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_
 
     // Print frame time on the screen
     char frame_info[512] = { 0 };
-    int len = snprintf(CSTR(frame_info),
+    size_t len = snprintf(CSTR(frame_info),
         "Frame\n"
         "  count: %08llu\n"
         "  logic: %5.2f ms\n"
@@ -1017,7 +1021,7 @@ void ta_game_loop()
         ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
 
-        game_hotload_textures(&tg_game);
+        game_hotload_textures();
 
         ta_camera *active_camera = ta_game_camera();
         ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
@@ -1486,7 +1490,7 @@ static void spawn_bullet(ta_vec3 position)
         "bullet_08",
         "bullet_09",
     };
-    static int next_idx = 0;
+    static size_t next_idx = 0;
     DLB_ASSERT(next_idx < ARRAY_SIZE(bullet_names));
     //const char *name = ta_symbol_intern(bullet_names[next_idx], strlen(bullet_names[next_idx]));
     next_idx++;
@@ -1763,7 +1767,7 @@ void ta_game_event(ta_event *event)
             //       or should the button queue the play request itself?
             ta_audio_source *source = ta_game_by_sym_try(RES_COMP_AUDIO_SOURCE, button->entity);
             if (source) {
-                float randf = (float)dlb_rand_u32() / UINT32_MAX;
+                float randf = (float)dlb_rand_u32() / (float)UINT32_MAX;
                 float vary_by = 0.1f;
                 float rand_pitch = 1.0f + (randf * 2 * vary_by - vary_by);  // vary pitch by +/- vary_by
                 ta_audio_source_set_pitch(source, rand_pitch);

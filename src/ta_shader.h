@@ -87,9 +87,11 @@ struct ta_material;
 
 const char *ta_glsl_type_str    (int type);     // NOTE: Has to be int because it's used by ta_schema with other types
 void ta_shader_init             (ta_shader *shader);
+void ta_shader_init_void        (void *shader);
 void ta_shader_load             (ta_shader *shader);
 void ta_shader_delete           (ta_shader *shader);
 void ta_shader_free             (ta_shader *shader);
+void ta_shader_free_void        (void *shader);
 void ta_shader_set_bool         (ta_shader *shader, const char *name, GLboolean value);
 void ta_shader_set_int          (ta_shader *shader, const char *name, GLint value);
 void ta_shader_set_uint         (ta_shader *shader, const char *name, GLuint value);

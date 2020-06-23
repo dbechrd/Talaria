@@ -385,7 +385,7 @@ static ogx_result ogx_load_vec2_array(dml_document *doc, ogx_vec2 **array, dml_v
         dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
             dml_value *arr_value = &doc->value_pool[*value_idx];
             ogx_vec2 *vec = dlb_vec_alloc(*array);
-            result = ogx_load_float_array(doc, &(float *)vec, 2, arr_value);
+            result = ogx_load_float_array(doc, (float **)&vec, 2, arr_value);
             if (result != OGX_SUCCESS) {
                 dlb_vec_free(*array);
                 break;
@@ -409,7 +409,7 @@ static ogx_result ogx_load_vec3_array(dml_document *doc, ogx_vec3 **array, dml_v
         dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
             dml_value *arr_value = &doc->value_pool[*value_idx];
             ogx_vec3 *vec = dlb_vec_alloc(*array);
-            result = ogx_load_float_array(doc, &(float *)vec, 3, arr_value);
+            result = ogx_load_float_array(doc, (float **)&vec, 3, arr_value);
             if (result != OGX_SUCCESS) {
                 dlb_vec_free(*array);
                 break;
@@ -433,7 +433,7 @@ static ogx_result ogx_load_vec4_array(dml_document *doc, ogx_vec4 **array, dml_v
         dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
             dml_value *arr_value = &doc->value_pool[*value_idx];
             ogx_vec4 *vec = dlb_vec_alloc(*array);
-            result = ogx_load_float_array(doc, &(float *)vec, 4, arr_value);
+            result = ogx_load_float_array(doc, (float **)&vec, 4, arr_value);
             if (result != OGX_SUCCESS) {
                 dlb_vec_free(*array);
                 break;
@@ -457,7 +457,7 @@ static ogx_result ogx_load_mat4_array(dml_document *doc, ogx_mat4 **array, dml_v
         dlb_vec_each(size_t *, value_idx, value->data.as_array.values) {
             dml_value *arr_value = &doc->value_pool[*value_idx];
             ogx_mat4 *mat = dlb_vec_alloc(*array);
-            result = ogx_load_float_array(doc, &(float *)mat, 16, arr_value);
+            result = ogx_load_float_array(doc, (float **)&mat, 16, arr_value);
             if (result != OGX_SUCCESS) {
                 dlb_vec_free(*array);
                 break;
@@ -920,6 +920,8 @@ static ogx_result ogx_load_node(dml_document *doc, ogx_node *node, dml_value *va
                         break;
                     case OGX_LIGHT_NODE:
                         result = ogx_load_light_node_field(doc, &node->properties.light, field);
+                        break;
+                    default:
                         break;
                 }
             }

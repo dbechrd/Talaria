@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #define TA_FLAG_DISABLE_MIPMAPS 0
 
 #include "ta_audio.h"
@@ -149,9 +150,11 @@ int main(int argc, char *argv[])
 #include "dml_parser.c"
 #include "dml_scanner.c"
 #include "dml_token.c"
-#include "glad.c"  // TODO: This might need to go back to the top of the file?? Idk why it was there.
+#include "glad.c"
 #include "ta_animation.c"
+#if defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)
 #include "ta_asset_watcher.c"
+#endif
 #include "ta_audio.c"
 #include "ta_button.c"
 #include "ta_camera.c"

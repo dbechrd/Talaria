@@ -33,3 +33,7 @@ void ta_material_init(ta_material *material)
         material->height_factor = 0.02f;
     }
 }
+void ta_material_init_void(void *material)
+{
+    ta_material_init(material);
+}

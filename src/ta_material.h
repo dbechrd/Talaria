@@ -36,4 +36,5 @@ typedef struct ta_material {
 
 ta_material *tg_material_default;
 
-void ta_material_init(ta_material *material);
+void ta_material_init       (ta_material *material);
+void ta_material_init_void  (void *material);

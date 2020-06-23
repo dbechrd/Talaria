@@ -101,6 +101,7 @@ void ta_lighting_bind_lights            (ta_lighting *state);
 
 const char *ta_light_type_str           (int type);
 void ta_light_init                      (ta_light *light);
+void ta_light_init_void                 (void *light);
 ta_vec3 ta_light_position               (ta_light *light);
 ta_vec3 ta_light_direction              (ta_light *light);
 ta_mat4 ta_light_pv                     (ta_light *light);

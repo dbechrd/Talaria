@@ -30,6 +30,7 @@ typedef struct ta_font {
 } ta_font;
 
 void ta_font_init           (ta_font *font);
+void ta_font_init_void      (void *font);
 void ta_font_load_path      (ta_font *font, const char *path);
 void ta_font_delete         (ta_font *font);
 void ta_font_free           (ta_font *font);

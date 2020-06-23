@@ -19,4 +19,5 @@ typedef struct ta_e_button {
 } ta_e_button;
 
 void e_button_init      (ta_e_button *button);
+void e_button_init_void (void *button);
 void e_button_update    (ta_e_button *button);

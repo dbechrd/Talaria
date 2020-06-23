@@ -41,3 +41,7 @@ void ta_animation_free(ta_animation *animation)
     }
     dlb_vec_free(animation->channels);
 }
+void ta_animation_free_void(void *animation)
+{
+    ta_animation_free(animation);
+}

@@ -60,7 +60,7 @@ typedef enum ogx_value_curve {
 } ogx_value_curve;
 
 typedef struct ogx_value {
-    ogx_time_curve curve;
+    ogx_value_curve curve;
     ogx_key key;
 } ogx_value;
 

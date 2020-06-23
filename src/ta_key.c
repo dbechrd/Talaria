@@ -74,6 +74,8 @@ void ta_key_event(ta_event *event)
             keys[event->data.key.scancode].changed = true;
             keys[event->data.key.scancode].last_change_ms = ta_timer_elapsed_ms();
             break;
+        } default: {
+            break;
         }
     }
 }

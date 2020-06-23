@@ -45,4 +45,5 @@ typedef struct ta_animation {
 } ta_animation;
 
 const char *ta_animation_path_type_str(int type);
-void ta_animation_free(ta_animation *animation);
+void ta_animation_free      (ta_animation *animation);
+void ta_animation_free_void (void *animation);

@@ -35,6 +35,10 @@ void ta_shader_init(ta_shader *shader)
 {
     ta_shader_load(shader);
 }
+void ta_shader_init_void(void *shader)
+{
+    ta_shader_init(shader);
+}
 
 static GLuint ta_shader_compile(GLenum type, char *buf)
 {
@@ -43,7 +47,7 @@ static GLuint ta_shader_compile(GLenum type, char *buf)
     // Read shader source
     GLint len = (GLint)dlb_vec_len(buf);
     // TODO(cleanup): void * (idk wtf OpenGL wants.. const bullshit)
-    glShaderSource(shader, 1, &(GLchar *)buf, &len);
+    glShaderSource(shader, 1, (const GLchar *const *)&buf, &len);
 
     // Compile shader
     GLint status;
@@ -58,7 +62,7 @@ static GLuint ta_shader_compile(GLenum type, char *buf)
         GLenum gl_err = glGetError();
         if (length) {
             char *log = 0;
-            dlb_vec_reserve(log, length);
+            dlb_vec_reserve(log, (size_t)length);
             dlb_vec_hdr(log)->len = length;
             glGetShaderInfoLog(shader, (GLsizei)dlb_vec_len(log), NULL, log);
             ta_log_write(&tg_debug_log, SRC_SHADER,
@@ -104,7 +108,7 @@ static void ta_shader_program_link(GLuint program)
         GLenum gl_err = glGetError();
         if (length) {
             char *log = 0;
-            dlb_vec_reserve(log, length);
+            dlb_vec_reserve(log, (size_t)length);
             dlb_vec_hdr(log)->len = length;
             glGetProgramInfoLog(program, (GLsizei)dlb_vec_len(log), NULL, log);
             ta_log_write(&tg_debug_log, SRC_SHADER,
@@ -301,7 +305,10 @@ void ta_shader_free(ta_shader *shader)
     }
     dlb_vec_free(shader->uniforms);
 }
-
+void ta_shader_free_void(void *shader)
+{
+    ta_shader_free(shader);
+}
 void ta_shader_set_bool(ta_shader *shader, const char *name, GLboolean value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_BOOL);

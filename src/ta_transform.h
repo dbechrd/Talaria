@@ -15,5 +15,7 @@ typedef struct ta_transform {
 } ta_transform;
 
 void ta_transform_init          (ta_transform *transform);
+void ta_transform_init_void     (void *transform);
 void ta_transform_free          (ta_transform *transform);
+void ta_transform_free_void     (void *transform);
 void ta_transform_update_all    (ta_transform *transforms, float alpha);

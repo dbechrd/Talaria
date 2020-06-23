@@ -12,10 +12,18 @@ void ta_transform_init(ta_transform *transform)
     //}
     transform->xform_prev = transform->xform;
 }
+void ta_transform_init_void(void *transform)
+{
+    ta_transform_init(transform);
+}
 
 void ta_transform_free(ta_transform *transform)
 {
     dlb_vec_free(transform->children);
+}
+void ta_transform_free_void(void *transform)
+{
+    ta_transform_free(transform);
 }
 
 static void ta_transform_update(ta_transform *transform, float alpha, bool dirty_flag)
