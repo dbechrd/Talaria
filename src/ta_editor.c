@@ -1105,6 +1105,28 @@ static void ui_node_panel()
             transform->xform_world.orientation.w);
         DLB_ASSERT(text_len < sizeof(text));
         ta_ui_label(text, text_len, 0);
+
+        // TODO: Everything has parent of "root" except root itself? Each sub-scene has the scene name as parent? Hmm..
+        if (transform->parent) {
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("parent:"), 0);
+            if (ta_ui_button(SYM(transform->parent), 0)) {
+                ta_editor_select_entity(transform->parent);
+            }
+        }
+        if (transform->children) {
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("children:"), 0);
+            dlb_vec_each(const char **, child, transform->children) {
+                ta_ui_row_begin();
+                ta_ui_next_margin_left(32);
+                if (ta_ui_button(SYM(*child), 0)) {
+                    ta_editor_select_entity(*child);
+                }
+            }
+        }
     }
 
     ta_ui_row_end();

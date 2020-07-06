@@ -457,6 +457,7 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
+  children: ["light_point_0003"]
 ta_transform:
   name: "dude"
   entity: "dude"

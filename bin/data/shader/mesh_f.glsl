@@ -363,17 +363,14 @@ void main()
     // Gamma correction
     color = pow(color, vec3(1.0 / 2.2));
 
-    if (true || u_selected) {
-        // add red to color
-        // TODO: Make this a time-based pulse
-        float cam_dist = length(vertex.tbn_camera_pos - vertex.tbn_position);
-        color = mix(color, vec3(0.7), clamp((cam_dist - 10.0)/50.0, 0.0, 0.9));
+    // Distance-based "fog" (not good.. random hacks heh)
+    float cam_dist = length(vertex.tbn_camera_pos - vertex.tbn_position);
+    color = mix(color, vec3(0.7), clamp((cam_dist - 10.0)/50.0, 0.0, 0.9));
 
-        // invert color
-        //color = vec3(1.0) - color;
-
-        // distance from camera
-        //color = vec3(1.0 - length(vertex.tbn_camera_pos - vertex.tbn_position)/30.0);
+    if (u_selected) {
+        // TODO: Time-based pulse
+        // brighten color
+        color *= vec3(1.5);
     }
 
     final_color = vec4(color, mtl_albedo.a);
