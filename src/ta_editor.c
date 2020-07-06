@@ -1111,7 +1111,7 @@ static void ui_node_panel()
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("parent:"), 0);
-            if (ta_ui_button(SYM(transform->parent), 0)) {
+            if (ta_ui_button(SYM(transform->parent))) {
                 ta_editor_select_entity(transform->parent);
             }
         }
@@ -1122,7 +1122,7 @@ static void ui_node_panel()
             dlb_vec_each(const char **, child, transform->children) {
                 ta_ui_row_begin();
                 ta_ui_next_margin_left(32);
-                if (ta_ui_button(SYM(*child), 0)) {
+                if (ta_ui_button(SYM(*child))) {
                     ta_editor_select_entity(*child);
                 }
             }

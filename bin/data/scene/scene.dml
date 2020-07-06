@@ -1139,8 +1139,44 @@ ta_shader:
       type: 8,  # TA_GLSL_MAT4
     },
     {
-      name: "u_tex",
-      type: 3,  # TA_GLSL_SAMPLER2D
+      name: "u_textures[0]",
+      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+    },
+    {
+      name: "u_textures[1]",
+      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+    },
+    {
+      name: "u_textures[2]",
+      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+    },
+    {
+      name: "u_textures[3]",
+      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+    },
+    {
+      name: "u_textures[4]",
+      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+    },
+    {
+      name: "u_textures[5]",
+      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+    },
+    {
+      name: "u_textures[6]",
+      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+    },
+    {
+      name: "u_textures[7]",
+      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+    },
+    {
+      name: "u_texture_pool_index",
+      type: 1,  # TA_GLSL_UINT
+    },
+    {
+      name: "u_texture_pool_layer",
+      type: 1,  # TA_GLSL_UINT
     },
   ]
 ta_shader:
@@ -1892,8 +1928,6 @@ ta_texture:
   name: "data/texture/audio_icon.tga"
   type: 1  # TA_TEXTURE_2D_ARRAY
   path: "data/texture/audio_icon.tga"
-  width: 32
-  height: 32
   channels: 4
   gl_filter_min: 9987
   gl_filter_mag: 9728

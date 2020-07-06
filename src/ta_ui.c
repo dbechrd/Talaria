@@ -1516,16 +1516,14 @@ static void ui_render_image(ui_frame *frame)
             ta_primitive_render_mesh(&primitive_quads, tg_shader_cubemap, TA_TRIANGLES, true, false);
             ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
         } else {
-            // TODO: Make a shader specifically for rendering 1-channel depth maps so that it doesn't appear red. Not
-            // possible with tg_shader_quads because it's used for other things as well.
-            ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
-            ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
-            ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
-            ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, frame->texture->gl_id);
             ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
+            DLB_ASSERT(frame->texture->type == TA_TEXTURE_2D_ARRAY);
+            ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_INDEX, frame->texture->gl_texture_pool_index);
+            ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_LAYER, frame->texture->gl_texture_pool_layer);
             ta_primitive_push_rect(0, img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
             ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
-            ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
+            ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_INDEX, 0);
+            ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_LAYER, 0);
         }
     }
 }
@@ -1761,6 +1759,21 @@ void ta_ui_render()
 
     glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_SCISSOR_TEST);
+
+    // TODO: Make a shader specifically for rendering 1-channel depth maps so that it doesn't appear red. Not
+    // possible with tg_shader_quads because it's used for other things as well.
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+    // TODO: This is likely duplicate work.. especially if these pool gl_ids never change
+    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[0], tg_game.texturing.texture_pools[0].gl_id);
+    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[1], tg_game.texturing.texture_pools[1].gl_id);
+    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[2], tg_game.texturing.texture_pools[2].gl_id);
+    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[3], tg_game.texturing.texture_pools[3].gl_id);
+    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[4], tg_game.texturing.texture_pools[4].gl_id);
+    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[5], tg_game.texturing.texture_pools[5].gl_id);
+    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[6], tg_game.texturing.texture_pools[6].gl_id);
+    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[7], tg_game.texturing.texture_pools[7].gl_id);
 
     dlb_vec_each(ui_frame *, frame, ui_frames) {
         if (!(frame->internal_flags & TA_UI_INVISIBLE) && ui_renderers[frame->type]) {

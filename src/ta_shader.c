@@ -130,9 +130,9 @@ static GLint ta_shader_attribute_location(ta_shader *shader, const char *name)
     GLint location = glGetAttribLocation(shader->program_id, name);
     if (location < 0) {
         // TODO: Log as warning
-        //ta_log_write(&tg_debug_log, SRC_SHADER,
-        //    "Failed to locate attribute by '%s' in '%s'. "
-        //    "Possibly optimized out.\n", name, shader->path_frag);
+        ta_log_write(&tg_debug_log, SRC_SHADER,
+            "Failed to locate attribute by '%s' in '%s'. "
+            "Possibly optimized out.\n", name, shader->path_frag);
     }
     return location;
 }
@@ -141,9 +141,9 @@ static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
     GLint location = glGetUniformLocation(shader->program_id, name);
     if (location < 0) {
         // TODO: Log as warning
-        //ta_log_write(&tg_debug_log, SRC_SHADER,
-        //    "Failed to locate uniform '%s' in '%s'. "
-        //    "Possibly optimized out.\n", name, shader->path_frag);
+        ta_log_write(&tg_debug_log, SRC_SHADER,
+            "Failed to locate uniform '%s' in '%s'. "
+            "Possibly optimized out.\n", name, shader->path_frag);
     }
     return location;
 }

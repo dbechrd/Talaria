@@ -72,7 +72,7 @@ void ta_texturing_init(ta_texturing *texturing)
     UNUSED(texturing);
 
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),    1,    1, 32);
-    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),   32,   32, 32);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),   64,   64, 32);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),  512,  512, 32);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 1024, 1024, 32);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 2048, 2048, 32);
@@ -448,16 +448,17 @@ void ta_texture_load(ta_texture *tex)
         DLB_ASSERT(!"invalid texture type");
     }
 
-    if (tex->type == TA_TEXTURE_CUBEMAP) {
-        ta_texture_create_and_bind(tex);
-    } else {
-        ta_texturing_add_texture(&tg_game.texturing, tex);
-        ta_texture_bind(tex);
-    }
-
     // Pixel textures contain inlined pixel data, path should be null
     if (tex->pixels) {
         DLB_ASSERT(tex->type == TA_TEXTURE_2D || tex->type == TA_TEXTURE_2D_ARRAY);
+
+        if (tex->type == TA_TEXTURE_CUBEMAP) {
+            ta_texture_create_and_bind(tex);
+        } else {
+            ta_texturing_add_texture(&tg_game.texturing, tex);
+            ta_texture_bind(tex);
+        }
+
         texture_upload(tex, 0, tex->pixels, false);
     } else {
         // Load image data from file(s) and upload to VRAM
@@ -483,6 +484,13 @@ void ta_texture_load(ta_texture *tex)
                 tex->width = width;
                 tex->height = height;
                 tex->channels = channels;
+            }
+
+            if (tex->type == TA_TEXTURE_CUBEMAP) {
+                ta_texture_create_and_bind(tex);
+            } else {
+                ta_texturing_add_texture(&tg_game.texturing, tex);
+                ta_texture_bind(tex);
             }
 
             texture_upload(tex, i, pixels, true);

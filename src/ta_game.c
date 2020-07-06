@@ -324,8 +324,8 @@ void ta_game_init()
     // TODO(cleanup): This isn't used anywhere. Not sure if we need it.
     // Generate magenta/white grid pattern
     tex_invalid_albedo->type = TA_TEXTURE_2D_ARRAY;
-    tex_invalid_albedo->width = 32;
-    tex_invalid_albedo->height = 32;
+    tex_invalid_albedo->width = 64;
+    tex_invalid_albedo->height = 64;
     tex_invalid_albedo->channels = 4;
     u32 bytes = tex_invalid_albedo->width * tex_invalid_albedo->height * tex_invalid_albedo->channels;
     dlb_vec_reserve(tex_invalid_albedo->pixels, bytes);

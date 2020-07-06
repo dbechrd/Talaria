@@ -101,6 +101,8 @@ extern const char *SYM_U_PROJ;
 extern const char *SYM_U_SELECTED;
 extern const char *SYM_U_TEX;
 extern const char *SYM_U_TEXTURES[8];
+extern const char *SYM_U_TEXTURE_POOL_INDEX;
+extern const char *SYM_U_TEXTURE_POOL_LAYER;
 extern const char *SYM_U_VIEW;
 
 // Constants
