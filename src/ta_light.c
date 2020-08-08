@@ -205,7 +205,7 @@ static void shadowmap_point_create(ta_light *light)
     ta_log_write(&tg_debug_log, SRC_LIGHT, "shadowmap_point_create\n");
     ta_log_write(&tg_debug_log, SRC_LIGHT, "texture_create_and_bind\n");
     // HACK: Should probably just make this as a regular texture? But then it shows up in texture selector... could
-    // push a '#' in front of the name to make it as a system resource?
+    // push a '#' in front of the name to mark it as a system resource?
     light->shadowmap.texture.res_type = RES_TEXTURE;
     light->shadowmap.texture.type = TA_TEXTURE_CUBEMAP;
     light->shadowmap.texture.width = light->shadowmap.resolution;

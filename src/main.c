@@ -160,6 +160,7 @@ int main(int argc, char *argv[])
 #include "ta_camera.c"
 #include "ta_collider.c"
 #include "ta_console.c"
+#include "ta_cubemap.c"
 #include "ta_editor.c"
 #include "ta_event.c"
 #include "ta_file.c"

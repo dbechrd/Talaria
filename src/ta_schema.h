@@ -77,6 +77,7 @@ typedef enum ta_schema_field_type {
     TYP_MESH,
     TYP_SHADER,
     TYP_TEXTURE,
+    TYP_CUBEMAP,
     TYP_ANIMATION,
 
     TYP_COUNT,
@@ -110,6 +111,7 @@ typedef enum ta_res_type {
     RES_MESH,
     RES_SHADER,
     RES_TEXTURE,
+    RES_CUBEMAP,
     RES_ANIMATION,
     RES_COUNT,
 } ta_res_type;

@@ -70,6 +70,7 @@ void ta_schema_field_type_str(ta_schema_field_type type, const char **str)
         case TYP_MESH:              *str = "TYP_MESH";               break;
         case TYP_SHADER:            *str = "TYP_SHADER";             break;
         case TYP_TEXTURE:           *str = "TYP_TEXTURE";            break;
+        case TYP_CUBEMAP:           *str = "TYP_CUBEMAP";            break;
         case TYP_ANIMATION:         *str = "TYP_ANIMATION";          break;
         /// Atomic types //////////////////////////////////////////////////
         case ATOM_BOOL:             *str = "ATOM_BOOL";              break;
@@ -101,6 +102,7 @@ void ta_res_type_str(ta_res_type type, const char **str)
         case RES_MESH              : *str = "RES_MESH";              break;
         case RES_SHADER            : *str = "RES_SHADER";            break;
         case RES_TEXTURE           : *str = "RES_TEXTURE";           break;
+        case RES_CUBEMAP           : *str = "RES_CUBEMAP";           break;
         case RES_ANIMATION         : *str = "RES_ANIMATION";         break;
         default: DLB_ASSERT(0);      *str = "RES_???";
     }
@@ -127,6 +129,7 @@ ta_schema_field_type res_to_typ(ta_res_type type)
         case RES_MESH:              schema_type = TYP_MESH         ; break;
         case RES_SHADER:            schema_type = TYP_SHADER       ; break;
         case RES_TEXTURE:           schema_type = TYP_TEXTURE      ; break;
+        case RES_CUBEMAP:           schema_type = TYP_CUBEMAP      ; break;
         case RES_ANIMATION:         schema_type = TYP_ANIMATION    ; break;
         default:                    schema_type = TYP_NULL         ; break;
     }
@@ -154,6 +157,7 @@ ta_res_type typ_to_res(ta_schema_field_type type)
         case TYP_MESH:          res_type = RES_MESH             ; break;
         case TYP_SHADER:        res_type = RES_SHADER           ; break;
         case TYP_TEXTURE:       res_type = RES_TEXTURE          ; break;
+        case TYP_CUBEMAP:       res_type = RES_CUBEMAP          ; break;
         case TYP_ANIMATION:     res_type = RES_ANIMATION        ; break;
         default:                res_type = RES_COUNT            ; break;
     }
@@ -449,6 +453,10 @@ void ta_schema_register()
     TYPE_FIELD      (ta_texture, gl_filter_min, ATOM_INT);
     TYPE_FIELD      (ta_texture, gl_filter_mag, ATOM_INT);
     TYPE_END        (ta_texture);
+
+    TYPE_START  (ta_cubemap, TYP_CUBEMAP, 0, 0);
+    TYPE_FIELD  (ta_cubemap, name,     ATOM_STRING);
+    TYPE_ARRAY  (ta_cubemap, textures, ATOM_STRING, 6);
 
     TYPE_START  (ta_animation, TYP_ANIMATION, 0, ta_animation_free_void);
     TYPE_FIELD  (ta_animation, name,     ATOM_STRING);

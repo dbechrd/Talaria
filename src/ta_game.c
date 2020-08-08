@@ -843,7 +843,7 @@ static void game_simulate(ta_camera *active_camera, float dt)
 }
 static void game_render_skybox()
 {
-    ta_texture *skybox = ta_game_by_name_try(RES_TEXTURE, SYM(INTERN("miramar_skybox")));
+    ta_texture *skybox = ta_game_by_name_try(RES_CUBEMAP, SYM(INTERN("miramar_skybox")));
     if (skybox) {
         ta_camera *camera = ta_game_camera();
         ta_shader *shader = ta_game_by_name(RES_SHADER, SYM(INTERN("skybox")));
