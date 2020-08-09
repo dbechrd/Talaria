@@ -431,32 +431,41 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
     u_position->value.vec3            = ta_light_position(light);
     u_type->value.glint               = light->type;
     u_direction->value.vec3           = VEC3_ZERO;
-    u_cast_shadows->value.glbool      = (GLboolean)light->cast_shadows;
-    u_shadowmap2d->value.sampler_2d    = 0;
+    u_cast_shadows->value.glbool      = false;
+    u_shadowmap2d->value.sampler_2d   = 0;
     u_shadowmap3d->value.sampler_cube = 0;
     u_shadowmap_zfar->value.glfloat   = 0;
     u_light_pv->value.mat4            = MAT4_IDENT;
 
     // Light type-dependent properties
     switch (light->type) {
-        case TA_LIGHT_AMBIENT:
+        case TA_LIGHT_AMBIENT: {
             break;
-        case TA_LIGHT_DIRECTIONAL:
-            u_direction->value.vec3 = ta_light_direction(light);
-            u_shadowmap2d->value.sampler_2d = light->shadowmap.texture.gl_id;
-            u_light_pv->value.mat4 = ta_light_pv(light);
+        } case TA_LIGHT_DIRECTIONAL: {
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
+            u_direction->value.vec3         = ta_light_direction(light);
+            u_cast_shadows->value.glbool    = (GLboolean)light->data.directional.cast_shadows;
+            u_shadowmap2d->value.sampler_2d = tex->gl_id;
+            u_light_pv->value.mat4          = ta_light_pv(light);
             break;
-        case TA_LIGHT_POINT:
-            u_shadowmap3d->value.sampler_cube = light->shadowmap.texture.gl_id;
-            u_shadowmap_zfar->value.glfloat = light->shadowmap.zfar;
+        } case TA_LIGHT_POINT: {
+            // NOTE: Use sampler_2d and assume that all 6 cubemap face textures are contiguous in the texture pool
+            // TODO: We probably need to store pool index and layer rather than just gl_id to figure out "contiguous"
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
+            u_cast_shadows->value.glbool    = (GLboolean)light->data.point.cast_shadows;
+            u_shadowmap_zfar->value.glfloat = light->data.point.shadow_properties.zfar;
+            u_shadowmap2d->value.sampler_2d = tex->gl_id;
             break;
-        case TA_LIGHT_SPOT:
-            u_direction->value.vec3 = ta_light_direction(light);
-            u_shadowmap2d->value.sampler_2d = light->shadowmap.texture.gl_id;
+        } case TA_LIGHT_SPOT: {
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
+            u_direction->value.vec3         = ta_light_direction(light);
+            u_cast_shadows->value.glbool    = (GLboolean)light->data.spot.cast_shadows;
+            u_shadowmap2d->value.sampler_2d = tex->gl_id;
             DLB_ASSERT(!"Don't handle spot lights yet");
             break;
-        default:
+        } default: {
             DLB_ASSERT(!"Don't know how to initialize this type of light");
+        }
     }
 
     // Mark all light uniforms as dirty

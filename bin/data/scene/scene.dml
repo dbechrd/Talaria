@@ -122,13 +122,15 @@ ta_light:
     r: 0x3E3851EC (0.180000)
     g: 0x3E8F5C2E (0.280000)
     b: 0x3EB33342 (0.350000)
+  enabled: true
   type: 1  # TA_LIGHT_DIRECTIONAL
-  shadowmap:
-    shader: "shadow_dir"
-    resolution: 4096
-    znear: 0xC2200000 (-40.000000)
-    zfar: 0x42200000 (40.000000)
-  cast_shadows: true
+  directional:
+    cast_shadows: true
+    shadow_properties:
+      shader: "shadow_dir"
+      resolution: 4096
+      znear: 0xC2200000 (-40.000000)
+      zfar: 0x42200000 (40.000000)
 ta_light:
   name: "light_point_0002"
   entity: "light_point_0002"
@@ -137,14 +139,15 @@ ta_light:
     r: 0x3F800000 (1.000000)
     g: 0x3F800000 (1.000000)
     b: 0x3F800000 (1.000000)
+  enabled: false
   type: 2  # TA_LIGHT_POINT
-  shadowmap:
-    shader: "shadow_point"
-    resolution: 1024
-    znear: 0x3DCCCCCD (0.100000)
-    zfar: 0x42C80000 (100.000000)
-  disabled: true
-  cast_shadows: true
+  point:
+    cast_shadows: true
+    shadow_properties:
+      shader: "shadow_point"
+      resolution: 1024
+      znear: 0x3DCCCCCD (0.100000)
+      zfar: 0x42C80000 (100.000000)
 ta_light:
   name: "light_point_0003"
   entity: "light_point_0003"
@@ -153,13 +156,15 @@ ta_light:
     r: 0x3F800000 (1.000000)
     g: 0x3E4CCCCD (0.200000)
     b: 0x00000000 (0.000000)
+  enabled: true
   type: 2  # TA_LIGHT_POINT
-  shadowmap:
-    shader: "shadow_point"
-    resolution: 1024
-    znear: 0x3DCCCCCD (0.100000)
-    zfar: 0x42C80000 (100.000000)
-  cast_shadows: true
+  point:
+    cast_shadows: true
+    shadow_properties:
+      shader: "shadow_point"
+      resolution: 1024
+      znear: 0x3DCCCCCD (0.100000)
+      zfar: 0x42C80000 (100.000000)
 ta_light:
   name: "light_point_0004"
   entity: "light_point_0004"
@@ -168,13 +173,15 @@ ta_light:
     r: 0x3F800000 (1.000000)
     g: 0x3F800000 (1.000000)
     b: 0x3F800000 (1.000000)
+  enabled: true
   type: 2  # TA_LIGHT_POINT
-  shadowmap:
-    shader: "shadow_point"
-    resolution: 1024
-    znear: 0x3DCCCCCD (0.100000)
-    zfar: 0x42C80000 (100.000000)
-  cast_shadows: true
+  point:
+    cast_shadows: true
+    shadow_properties:
+      shader: "shadow_point"
+      resolution: 1024
+      znear: 0x3DCCCCCD (0.100000)
+      zfar: 0x42C80000 (100.000000)
 #-------------------------------------------------------------------------------
 # TYP_MODEL
 #-------------------------------------------------------------------------------
@@ -2094,9 +2101,54 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "miramar_skybox"
-  type: 2  # TA_TEXTURE_CUBEMAP
-  path_faces: ["data/texture/miramar_rt.tga", "data/texture/miramar_lf.tga", "data/texture/miramar_dn.tga", "data/texture/miramar_up.tga", "data/texture/miramar_ft.tga", "data/texture/miramar_bk.tga", ]
+  name: "data/texture/miramar_rt.tga"
+  type: 1  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_rt.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_lf.tga"
+  type: 1  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_lf.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_dn.tga"
+  type: 1  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_dn.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_up.tga"
+  type: 1  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_up.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_ft.tga"
+  type: 1  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_ft.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_bk.tga"
+  type: 1  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_bk.tga"
   width: 1024
   height: 1024
   channels: 3

@@ -63,8 +63,8 @@ void ta_texture_pool_set_layer_texels(ta_texture_pool *texture_pool, int layer, 
     DLB_ASSERT(texture_pool->gl_id);
     DLB_ASSERT(texels);
 
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, texture_pool->width, texture_pool->height,
-        1, format, GL_UNSIGNED_BYTE, texels);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, texture_pool->width, texture_pool->height, 1, format,
+        GL_UNSIGNED_BYTE, texels);
 }
 
 void ta_texturing_init(ta_texturing *texturing)
@@ -128,8 +128,7 @@ const char *ta_texture_type_str(int type)
 {
     switch (type) {
         case TA_TEXTURE_2D:         return "TA_TEXTURE_2D     ";
-        case TA_TEXTURE_2D_ARRAY:  return "TA_TEXTURE_2D_POOLED";
-        case TA_TEXTURE_CUBEMAP:    return "TA_TEXTURE_CUBEMAP";
+        case TA_TEXTURE_2D_ARRAY:   return "TA_TEXTURE_2D_POOLED";
         default: DLB_ASSERT(0);     return "TA_TEXTURE_???    ";
     }
 }
@@ -151,28 +150,26 @@ void ta_texture_init(ta_texture *tex)
         tex->gl_filter_mag = GL_NEAREST;
     }
 
-    if (tex->pixels || tex->data.path) {
-        ta_texture_load(tex);
-    }
+    ta_texture_load(tex);
 }
 void ta_texture_init_void(void *tex)
 {
     ta_texture_init(tex);
 }
 
-static GLenum texture_target(ta_texture *tex)
+GLenum ta_texture_target(ta_texture *tex)
 {
     GLenum target = 0;
     switch (tex->type) {
         case TA_TEXTURE_2D:       target = GL_TEXTURE_2D;       break;  // 3553
         case TA_TEXTURE_2D_ARRAY: target = GL_TEXTURE_2D_ARRAY; break;  // 35966
-        case TA_TEXTURE_CUBEMAP:  target = GL_TEXTURE_CUBE_MAP; break;  // 34067
+        //case TA_TEXTURE_CUBEMAP:  target = GL_TEXTURE_CUBE_MAP; break;  // 34067
         default: DLB_ASSERT(!"Invalid texture type");
     }
     return target;
 }
 
-static ta_texture_pool *texture_pool(ta_texture *tex)
+ta_texture_pool *ta_texture_texture_pool(ta_texture *tex)
 {
     DLB_ASSERT(!tex->gl_id);
     return &tg_game.texturing.texture_pools[tex->gl_texture_pool_index];
@@ -180,7 +177,7 @@ static ta_texture_pool *texture_pool(ta_texture *tex)
 
 void ta_texture_bind(ta_texture *tex)
 {
-    GLenum target = texture_target(tex);
+    GLenum target = ta_texture_target(tex);
     if (tex->gl_id) {
         glBindTexture(target, tex->gl_id);
     } else {
@@ -191,10 +188,11 @@ void ta_texture_bind(ta_texture *tex)
 
 void ta_texture_unbind(ta_texture *tex)
 {
-    GLenum target = texture_target(tex);
+    GLenum target = ta_texture_target(tex);
     glBindTexture(target, 0);
 }
 
+#if 0
 void ta_texture_create_and_bind(ta_texture *tex)
 {
     ta_log_write(&tg_debug_log, SRC_TEXTURE,
@@ -204,7 +202,7 @@ void ta_texture_create_and_bind(ta_texture *tex)
     glGenTextures(1, &tex->gl_id);
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Texture ID %u generated\n", tex->gl_id);
 
-    GLenum target = texture_target(tex);
+    GLenum target = ta_texture_target(tex);
     glBindTexture(target, tex->gl_id);
     // Do we ever need GL_CLAMP_TO_EDGE? We weren't using it anywhere so I got rid of the "repeat" flag.
     glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -217,6 +215,7 @@ void ta_texture_create_and_bind(ta_texture *tex)
 
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Generation complete.\n");
 }
+#endif
 
 // Read in little-endian short from char array
 static short texture_le_short(unsigned char *bytes)
@@ -305,7 +304,7 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height, u8 *chann
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "TGA read complete\n", path);
     return pixels;
 }
-static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
+void ta_texture_upload(ta_texture *tex, u8 *pixels, GLint format_internal, GLint format)
 {
     DLB_ASSERT(tex->width);
     DLB_ASSERT(tex->height);
@@ -314,36 +313,13 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
 
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Uploading texture to GPU %s\n", tex->name);
 
-    // TODO: Always use GL_RGBA textures, but somehow pack 1 and 3 channel textures. This needs to happen on the CPU
-    // side, but it would be preferable to have the packed texture data be what gets loaded from disk so we can quickly
-    // dump it straight to VRAM without manually interleaving channels at texture load time.
-    GLint format_internal = 0;
-    GLint format = 0;
-    switch (tex->channels)
-    {
-        case 1: // Grayscale
-            format_internal = GL_R8;
-            format = GL_RED;
-            break;
-        case 3: // RGB
-            format_internal = GL_RGB8;
-            format = bgr ? GL_BGR : GL_RGB;
-            break;
-        case 4: // RGBA
-            format_internal = GL_RGBA8;
-            format = bgr ? GL_BGRA : GL_RGBA;
-            break;
-        default: // Unsupported BPP
-            DLB_ASSERT(!"Sorry, don't know what to do with this texture, man.");
-    }
-
-    GLenum target = texture_target(tex);
+    GLenum target = ta_texture_target(tex);
     switch (target) {
         case GL_TEXTURE_2D: {
             glTexImage2D(target, 0, format_internal, tex->width, tex->height, 0, format, GL_UNSIGNED_BYTE, pixels);
             break;
         } case GL_TEXTURE_2D_ARRAY: {
-            ta_texture_pool *tex_pool = texture_pool(tex);
+            ta_texture_pool *tex_pool = ta_texture_texture_pool(tex);
             switch (format_internal) {
                 case GL_R8: {
                     size_t pixels_len = tex->width * tex->height;
@@ -356,6 +332,7 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
                     dlb_free(padded_texels);
                     break;
                 } case GL_RGB8: {
+                    DLB_ASSERT(tex->channels == 3);
                     size_t pixels_len = tex->width * tex->height * 3;
                     u8 *padded_texels = dlb_calloc(tex->width * tex->height, 4);
                     u8 *src = pixels;
@@ -366,21 +343,18 @@ static void texture_upload(ta_texture *tex, int face, u8 *pixels, bool bgr)
                         dst[2] = src[2];
                         dst[3] = 0xff;
                     }
-                    format = bgr ? GL_BGRA : GL_RGBA;
+                    format = (format == GL_BGR) ? GL_BGRA : GL_RGBA;
                     ta_texture_pool_set_layer_texels(tex_pool, tex->gl_texture_pool_layer, format, padded_texels);
                     dlb_free(padded_texels);
                     break;
                 } case GL_RGBA8: {
+                    DLB_ASSERT(tex->channels == 4);
                     ta_texture_pool_set_layer_texels(tex_pool, tex->gl_texture_pool_layer, format, pixels);
                     break;
                 } default: {
                     DLB_ASSERT(!"Uknown texture format");
                 }
             }
-            break;
-        } case GL_TEXTURE_CUBE_MAP: {
-            target = GL_TEXTURE_CUBE_MAP_POSITIVE_X + face;
-            glTexImage2D(target, 0, format_internal, tex->width, tex->height, 0, format, GL_UNSIGNED_BYTE, pixels);
             break;
         } default: {
             DLB_ASSERT(!"Uknown texture target");
@@ -421,7 +395,7 @@ static void texture_generate_mipmap(ta_texture *tex)
         ta_log_write(&tg_debug_log, SRC_TEXTURE, "Generating mipmap for %s\n", tex->name);
         ta_log_timed_region_start(&tg_debug_log, SRC_TEXTURE, CSTR("texture_generate_mipmap"));
 
-        GLenum target = texture_target(tex);
+        GLenum target = ta_texture_target(tex);
         glGenerateMipmap(target);
 
         ta_log_timed_region_end(&tg_debug_log, CSTR("texture_generate_mipmap"));
@@ -433,83 +407,97 @@ void ta_texture_load(ta_texture *tex)
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Loading texture %s\n", tex->name);
     ta_log_timed_region_start(&tg_debug_log, SRC_TEXTURE, CSTR("ta_texture_load"));
 
-    if (tex->type == TA_TEXTURE_2D || tex->type == TA_TEXTURE_2D_ARRAY) {
-        DLB_ASSERT(tex->pixels || tex->data.path);
-    } else if (tex->type == TA_TEXTURE_CUBEMAP) {
-        DLB_ASSERT(
-            tex->data.path_faces[0] &&
-            tex->data.path_faces[1] &&
-            tex->data.path_faces[2] &&
-            tex->data.path_faces[3] &&
-            tex->data.path_faces[4] &&
-            tex->data.path_faces[5]
-        );
-    } else {
-        DLB_ASSERT(!"invalid texture type");
-    }
-
     // Pixel textures contain inlined pixel data, path should be null
-    if (tex->pixels) {
-        DLB_ASSERT(tex->type == TA_TEXTURE_2D || tex->type == TA_TEXTURE_2D_ARRAY);
+    if (tex->path) {
+        // NOTE: Assuming all texture paths point to BGR TGA images for now.
+        const bool bgr = true;
 
-        if (tex->type == TA_TEXTURE_CUBEMAP) {
-            ta_texture_create_and_bind(tex);
-        } else {
-            ta_texturing_add_texture(&tg_game.texturing, tex);
-            ta_texture_bind(tex);
+        // Load image data from file(s) and upload to VRAM
+        u32 width = 0;
+        u32 height = 0;
+        u8 channels = 0;
+        u8 *pixels = texture_read_tga(tex->path, &width, &height, &channels);
+        if (!pixels) {
+            ta_log_write(&tg_debug_log, SRC_TEXTURE, "Failed to load tex: %s\n", tex->path);
+            DLB_ASSERT(!"ta_texture_init: Failed to load tex");
         }
 
-        texture_upload(tex, 0, tex->pixels, false);
+        tex->width = width;
+        tex->height = height;
+        tex->channels = channels;
+
+        // TODO: Always use GL_RGBA textures, but somehow pack 1 and 3 channel textures. This needs to happen on the CPU
+        // side, but it would be preferable to have the packed texture data be what gets loaded from disk so we can quickly
+        // dump it straight to VRAM without manually interleaving channels at texture load time.
+        GLint format_internal = 0;
+        GLint format = 0;
+        switch (tex->channels)
+        {
+            case 1: // Grayscale
+                format_internal = GL_R8;
+                format = GL_RED;
+                break;
+            case 3: // RGB
+                format_internal = GL_RGB8;
+                format = bgr ? GL_BGR : GL_RGB;
+                break;
+            case 4: // RGBA
+                format_internal = GL_RGBA8;
+                format = bgr ? GL_BGRA : GL_RGBA;
+                break;
+            default: // Unsupported BPP
+                DLB_ASSERT(!"Sorry, don't know what to do with this texture, man.");
+        }
+
+        ta_texturing_add_texture(&tg_game.texturing, tex);
+        ta_texture_bind(tex);
+        ta_texture_upload(tex, pixels, format_internal, format);
+        dlb_free(pixels);
+
+        //stbi_set_flip_vertically_on_load(true);
+        //u8 *pixels = stbi_load(tex->path, &w, &h, &channels, tex->channels);
+        //if (!pixels) {
+        //    const char *reason = stbi_failure_reason();
+        //    ta_log_write(&tg_debug_log, SRC_TEXTURE,
+        //        "Failed to load tex: %s\nSTBI Reason: %s\n", tex->path, reason);
+        //    DLB_ASSERT(!"ta_texture_init: Failed to load tex");
+        //}
+        //
+        //tex->width = w;
+        //tex->height = h;
+        //tex->channels = channels;
+        //ta_texture_load(tex, pixels, 0);
+        //stbi_image_free(pixels);
     } else {
-        // Load image data from file(s) and upload to VRAM
-        int face_count = tex->type == TA_TEXTURE_CUBEMAP ? 6 : 1;
-        for (int i = 0; i < face_count; ++i) {
-            const char *path = tex->data.path_faces[i];
+        ta_texturing_add_texture(&tg_game.texturing, tex);
 
-            u32 width = 0;
-            u32 height = 0;
-            u8 channels = 0;
-            u8 *pixels = texture_read_tga(path, &width, &height, &channels);
-            if (!pixels) {
-                ta_log_write(&tg_debug_log, SRC_TEXTURE, "Failed to load tex: %s\n", path);
-                DLB_ASSERT(!"ta_texture_init: Failed to load tex");
+        if (tex->pixels) {
+            ta_texture_bind(tex);
+
+            // TODO: Always use GL_RGBA textures, but somehow pack 1 and 3 channel textures. This needs to happen on the CPU
+            // side, but it would be preferable to have the packed texture data be what gets loaded from disk so we can quickly
+            // dump it straight to VRAM without manually interleaving channels at texture load time.
+            GLint format_internal = 0;
+            GLint format = 0;
+            switch (tex->channels)
+            {
+                case 1: // Grayscale
+                    format_internal = GL_R8;
+                    format = GL_RED;
+                    break;
+                case 3: // RGB
+                    format_internal = GL_RGB8;
+                    format = GL_RGB;
+                    break;
+                case 4: // RGBA
+                    format_internal = GL_RGBA8;
+                    format = GL_RGBA;
+                    break;
+                default: // Unsupported BPP
+                    DLB_ASSERT(!"Sorry, don't know what to do with this texture, man.");
             }
 
-            if (face_count > 1 && tex->width) {
-                // Ensure textures are all the same size/type
-                DLB_ASSERT(tex->width == width);
-                DLB_ASSERT(tex->height == height);
-                DLB_ASSERT(tex->channels == channels);
-            } else {
-                tex->width = width;
-                tex->height = height;
-                tex->channels = channels;
-            }
-
-            if (tex->type == TA_TEXTURE_CUBEMAP) {
-                ta_texture_create_and_bind(tex);
-            } else {
-                ta_texturing_add_texture(&tg_game.texturing, tex);
-                ta_texture_bind(tex);
-            }
-
-            texture_upload(tex, i, pixels, true);
-            dlb_free(pixels);
-
-            //stbi_set_flip_vertically_on_load(true);
-            //u8 *pixels = stbi_load(tex->path, &w, &h, &channels, tex->channels);
-            //if (!pixels) {
-            //    const char *reason = stbi_failure_reason();
-            //    ta_log_write(&tg_debug_log, SRC_TEXTURE,
-            //        "Failed to load tex: %s\nSTBI Reason: %s\n", tex->path, reason);
-            //    DLB_ASSERT(!"ta_texture_init: Failed to load tex");
-            //}
-            //
-            //tex->width = w;
-            //tex->height = h;
-            //tex->channels = channels;
-            //ta_texture_load(tex, pixels, 0);
-            //stbi_image_free(pixels);
+            ta_texture_upload(tex, tex->pixels, format_internal, format);
         }
     }
 

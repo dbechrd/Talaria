@@ -679,11 +679,9 @@ static void game_draw_hud()
         ta_ui_next_size(20, 20);
         ta_ui_next_pad(2, 2, 2, 2);
         if (i < gun->carrying_ammo) {
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
-            ta_ui_image(tex, 0);
+            ta_ui_image(tg_tex_orange);
         } else {
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_red);
-            ta_ui_image(tex, 0);
+            ta_ui_image(tg_tex_red);
         }
     }
     //ta_ui_pad(0, 4);
@@ -692,11 +690,9 @@ static void game_draw_hud()
         ta_ui_next_size(20, 20);
         ta_ui_next_pad(2, 2, 2, 2);
         if (i < gun->loaded_ammo) {
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
-            ta_ui_image(tex, 0);
+            ta_ui_image(tg_tex_orange);
         } else {
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, tg_tex_red);
-            ta_ui_image(tex, 0);
+            ta_ui_image(tg_tex_red);
         }
     }
     ta_ui_window_end();
@@ -1167,21 +1163,32 @@ void ta_game_loop()
                 light_pos.center = transform->xform_world.position;
                 light_pos.radius = 0.2f;
                 ta_rgba color = { 0 };
-                if (light->disabled) {
-                    color.r = 0.5f;
-                    color.g = 0.5f;
-                    color.b = 0.5f;
-                } else {
+                if (light->enabled) {
                     color.r = light->color.r;
                     color.g = light->color.g;
                     color.b = light->color.b;
+                } else {
+                    color.r = 0.5f;
+                    color.g = 0.5f;
+                    color.b = 0.5f;
                 }
                 ta_primitive_push_sphere(0, light_pos, color);
 
                 if (active_camera->debug_colliders) {
                     ta_sphere light_aoe = { 0 };
                     light_aoe.center = transform->xform_world.position;
-                    light_aoe.radius = light->shadowmap.zfar;
+                    light_aoe.radius = 1.0;
+                    switch (light->type) {
+                        case TA_LIGHT_DIRECTIONAL:
+                            light_aoe.radius = light->data.directional.shadow_properties.zfar;
+                            break;
+                        case TA_LIGHT_POINT:
+                            light_aoe.radius = light->data.point.shadow_properties.zfar;
+                            break;
+                        case TA_LIGHT_SPOT:
+                            light_aoe.radius = light->data.spot.shadow_properties.zfar;
+                            break;
+                    }
                     ta_primitive_push_sphere(0, light_aoe, color);
                 }
             }

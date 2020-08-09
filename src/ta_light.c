@@ -33,7 +33,7 @@ void ta_lighting_bind_lights(ta_lighting *state)
     int light_idx = 0;
     for (size_t i = 0; i < dlb_vec_len(lights) && i < TA_LIGHTING_MAX_ACTIVE_LIGHTS; ++i) {
         ta_light *light = &lights[i];
-        if (light->disabled) {
+        if (!light->enabled) {
             continue;
         }
 
@@ -42,7 +42,7 @@ void ta_lighting_bind_lights(ta_lighting *state)
         state->light_records[light_idx].position        = ta_light_position(light);
         state->light_records[light_idx].color           = *(ta_vec3 *)&light->color;
         state->light_records[light_idx].intensity       = light->intensity;
-        state->light_records[light_idx].cast_shadows    = light->cast_shadows;
+        state->light_records[light_idx].cast_shadows    = false;
         state->light_records[light_idx].direction       = VEC3_ZERO;
         state->light_records[light_idx].light_pv        = MAT4_IDENT;
         state->light_records[light_idx].shadowmap_zfar  = 0.0f;
@@ -56,14 +56,17 @@ void ta_lighting_bind_lights(ta_lighting *state)
             case TA_LIGHT_DIRECTIONAL:
                 state->light_records[light_idx].direction = ta_light_direction(light);
                 state->light_records[light_idx].light_pv = ta_light_pv(light);
+                state->light_records[light_idx].cast_shadows = light->data.directional.cast_shadows;
                 //u_shadowmap2d->value.sampler_2d = light->shadowmap.texture.gl_id;
                 break;
             case TA_LIGHT_POINT:
-                state->light_records[light_idx].shadowmap_zfar  = light->shadowmap.zfar;
+                state->light_records[light_idx].cast_shadows = light->data.point.cast_shadows;
+                state->light_records[light_idx].shadowmap_zfar  = light->data.point.shadow_properties.zfar;
                 //u_shadowmap3d->value.sampler_cube = light->shadowmap.texture.gl_id;
                 break;
             case TA_LIGHT_SPOT:
                 state->light_records[light_idx].direction = ta_light_direction(light);
+                state->light_records[light_idx].cast_shadows = light->data.spot.cast_shadows;
                 //u_shadowmap2d->value.sampler_2d = light->shadowmap.texture.gl_id;
                 DLB_ASSERT(!"Don't handle spot lights yet");
                 break;
@@ -100,41 +103,59 @@ const char *ta_light_type_str(int type)
 
 void ta_light_init(ta_light *light)
 {
-    if (!light->intensity) {
-        light->intensity = DEFAULT_LIGHT_INTENSITY;
-    }
-    if (light->type != TA_LIGHT_AMBIENT) {
-        if (!light->shadowmap.resolution) {
-            light->shadowmap.resolution = DEFAULT_SHADOWMAP_RESOLUTION;
-        }
-        if (!light->shadowmap.znear) {
-            light->shadowmap.znear = DEFAULT_SHADOWMAP_ZNEAR;
-        }
-        if (!light->shadowmap.zfar) {
-            light->shadowmap.zfar = DEFAULT_SHADOWMAP_ZFAR;
-        }
-    }
+    // NOTE: Branchless because I felt like it.. should actually look at generated code :D
+    light->intensity += !light->intensity * DEFAULT_LIGHT_INTENSITY;
+
     switch (light->type) {
         case TA_LIGHT_AMBIENT: {
-            DLB_ASSERT(!light->cast_shadows);
             break;
-        } case TA_LIGHT_DIRECTIONAL: {
+        }
+        case TA_LIGHT_DIRECTIONAL: {
+            // NOTE: Branchless because I felt like it.. should actually look at generated code :D
+            light->data.directional.shadow_properties.resolution +=
+                !light->data.directional.shadow_properties.resolution * DEFAULT_SHADOWMAP_RESOLUTION;
+            light->data.directional.shadow_properties.znear +=
+                !light->data.directional.shadow_properties.znear * DEFAULT_SHADOWMAP_ZNEAR;
+            light->data.directional.shadow_properties.zfar +=
+                !light->data.directional.shadow_properties.zfar * DEFAULT_SHADOWMAP_ZFAR;
+
             const float ortho = 50.0f;
-            light->shadowmap.projection = mat4_ortho(
+            light->data.directional.shadow_properties.projection = mat4_ortho(
                 -ortho, ortho, -ortho, ortho,
-                light->shadowmap.znear, light->shadowmap.zfar
+                light->data.directional.shadow_properties.znear,
+                light->data.directional.shadow_properties.zfar
             );
             shadowmap_directional_create(light);
             break;
         } case TA_LIGHT_POINT: {
-            light->shadowmap.projection = mat4_perspective(
-                90.0f, 1.0f, light->shadowmap.znear, light->shadowmap.zfar
+            // NOTE: Branchless because I felt like it.. should actually look at generated code :D
+            light->data.point.shadow_properties.resolution +=
+                !light->data.point.shadow_properties.resolution * DEFAULT_SHADOWMAP_RESOLUTION;
+            light->data.point.shadow_properties.znear +=
+                !light->data.point.shadow_properties.znear * DEFAULT_SHADOWMAP_ZNEAR;
+            light->data.point.shadow_properties.zfar +=
+                !light->data.point.shadow_properties.zfar * DEFAULT_SHADOWMAP_ZFAR;
+
+            light->data.point.shadow_properties.projection = mat4_perspective(
+                90.0f, 1.0f,
+                light->data.point.shadow_properties.znear,
+                light->data.point.shadow_properties.zfar
             );
             shadowmap_point_create(light);
             break;
         } case TA_LIGHT_SPOT: {
-            light->shadowmap.projection = mat4_perspective(
-                45.0f, 1.0f, light->shadowmap.znear, light->shadowmap.zfar
+            // NOTE: Branchless because I felt like it.. should actually look at generated code :D
+            light->data.spot.shadow_properties.resolution +=
+                !light->data.spot.shadow_properties.resolution * DEFAULT_SHADOWMAP_RESOLUTION;
+            light->data.spot.shadow_properties.znear +=
+                !light->data.spot.shadow_properties.znear * DEFAULT_SHADOWMAP_ZNEAR;
+            light->data.spot.shadow_properties.zfar +=
+                !light->data.spot.shadow_properties.zfar * DEFAULT_SHADOWMAP_ZFAR;
+
+            light->data.spot.shadow_properties.projection = mat4_perspective(
+                45.0f, 1.0f,
+                light->data.spot.shadow_properties.znear,
+                light->data.spot.shadow_properties.zfar
             );
             break;
         } default: {
@@ -149,27 +170,29 @@ void ta_light_init_void(void *light)
 static void shadowmap_directional_create(ta_light *light)
 {
     ta_log_write(&tg_debug_log, SRC_LIGHT, "shadowmap_directional_create\n");
-    ta_log_write(&tg_debug_log, SRC_LIGHT, "texture_create_and_bind\n");
-    // HACK: Should probably just make this as a regular texture? But then it shows up in texture selector... could
-    // push a '#' in front of the name to make it as a system resource?
-    light->shadowmap.texture.res_type = RES_TEXTURE;
-    light->shadowmap.texture.type = TA_TEXTURE_2D;
-    light->shadowmap.texture.width = light->shadowmap.resolution;
-    light->shadowmap.texture.height = light->shadowmap.resolution;
-    light->shadowmap.texture.gl_filter_min = GL_LINEAR; // GL_NEAREST;
-    light->shadowmap.texture.gl_filter_mag = GL_LINEAR; // GL_NEAREST;
-    ta_texture_init(&light->shadowmap.texture);
 
-    ta_texture_create_and_bind(&light->shadowmap.texture);
+    ta_game_alloc(RES_TEXTURE, SYM(light->name));
+    ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->name);
+    tex->res_type = RES_TEXTURE;
+    tex->type = TA_TEXTURE_2D_ARRAY;
+    tex->width = light->data.directional.shadow_properties.resolution;
+    tex->height = light->data.directional.shadow_properties.resolution;
+    tex->channels = 1;
+    tex->gl_filter_min = GL_LINEAR; // GL_NEAREST;
+    tex->gl_filter_mag = GL_LINEAR; // GL_NEAREST;
+    ta_texture_init(tex);
+    ta_texture_bind(tex);
+
+    GLenum target = ta_texture_target(tex);
 
     // TODO: Specify wrap mode as part of texture params, not sure if border
     // mode/color is worth refactoring out though.
     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     float borderColor[4] = { 0 };
     //float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    glTexParameterfv(target, GL_TEXTURE_BORDER_COLOR, borderColor);
 
     // TODO: Possibly use shadow samplers and depth comparison mode? (Faster PCF, but only 2x2?)
     // https://www.khronos.org/opengl/wiki/Sampler_Object#Comparison_mode
@@ -177,15 +200,18 @@ static void shadowmap_directional_create(ta_light *light)
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
     // TOOD: Not sure if this if these formats are worth refactoring out either
     // TODO: Should internalformat be GL_DEPTH_COMPONENT16 instead?
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT16, light->shadowmap.resolution, light->shadowmap.resolution, 0,
-        GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    glTexImage2D(target, 0, GL_DEPTH_COMPONENT16, tex->width, tex->height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+
+    //ta_texture_upload(tex, 0, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT);
+    //ta_texture_upload(tex, 0, GL_R8, GL_RED);
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
-    glGenFramebuffers(1, &light->shadowmap.framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, light->shadowmap.texture.gl_id, 0);
+    glGenFramebuffers(1, &light->data.directional.framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, light->data.directional.framebuffer);
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex->gl_id, 0);
+    glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, target, tex->gl_id, 0, tex->gl_texture_pool_layer);
     // For reflection maps
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, light->shadowmap.texture.gl_id, 0);
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex->gl_id, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
@@ -197,35 +223,37 @@ static void shadowmap_directional_create(ta_light *light)
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "unbind buffer and texture\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    ta_texture_unbind(&light->shadowmap.texture);
+    ta_texture_unbind(tex);
 }
 
 static void shadowmap_point_create(ta_light *light)
 {
     ta_log_write(&tg_debug_log, SRC_LIGHT, "shadowmap_point_create\n");
-    ta_log_write(&tg_debug_log, SRC_LIGHT, "texture_create_and_bind\n");
-    // HACK: Should probably just make this as a regular texture? But then it shows up in texture selector... could
-    // push a '#' in front of the name to mark it as a system resource?
-    light->shadowmap.texture.res_type = RES_TEXTURE;
-    light->shadowmap.texture.type = TA_TEXTURE_CUBEMAP;
-    light->shadowmap.texture.width = light->shadowmap.resolution;
-    light->shadowmap.texture.height = light->shadowmap.resolution;
-    light->shadowmap.texture.gl_filter_min = GL_LINEAR; // GL_NEAREST;
-    light->shadowmap.texture.gl_filter_mag = GL_LINEAR; // GL_NEAREST;
-    ta_texture_init(&light->shadowmap.texture);
 
-    ta_texture_create_and_bind(&light->shadowmap.texture);
+    // TODO: Create 6 textures of the same size/type
+
+    ta_game_alloc(RES_TEXTURE, SYM(light->name));
+    ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->name);
+    tex->res_type = RES_TEXTURE;
+    tex->type = TA_TEXTURE_2D_ARRAY;
+    tex->width = light->data.point.shadow_properties.resolution;
+    tex->height = light->data.point.shadow_properties.resolution;
+    tex->gl_filter_min = GL_LINEAR; // GL_NEAREST;
+    tex->gl_filter_mag = GL_LINEAR; // GL_NEAREST;
+    ta_texture_init(tex);
+    ta_texture_bind(tex);
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
     for (int i = 0; i < 6; ++i) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT16, light->shadowmap.resolution,
-            light->shadowmap.resolution, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT16, tex->width, tex->height, 0,
+            GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     }
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
-    glGenFramebuffers(1, &light->shadowmap.framebuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, light->shadowmap.framebuffer);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, light->shadowmap.texture.gl_id, 0);
+    glGenFramebuffers(1, &light->data.point.framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, light->data.point.framebuffer);
+    // TODO: Set frame buffer texture 6 times during render pass, or have 6 framebuffers
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex->gl_id, 0);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
@@ -237,7 +265,7 @@ static void shadowmap_point_create(ta_light *light)
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "unbind buffer and texture\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    ta_texture_unbind(&light->shadowmap.texture);
+    ta_texture_unbind(tex);
 }
 
 ta_vec3 ta_light_position(ta_light *light)
@@ -263,7 +291,22 @@ ta_mat4 ta_light_pv(ta_light *light)
 {
     ta_vec3 inv_dir = vec3_neg(ta_light_direction(light));
     ta_mat4 view = mat4_lookat(inv_dir, VEC3_ZERO, VEC3_Y);
-    ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view);
+    const ta_mat4 *proj = 0;
+    switch (light->type) {
+        case TA_LIGHT_DIRECTIONAL:
+            proj = &light->data.directional.shadow_properties.projection;
+            break;
+        case TA_LIGHT_POINT:
+            proj = &light->data.point.shadow_properties.projection;
+            break;
+        case TA_LIGHT_SPOT:
+            proj = &light->data.spot.shadow_properties.projection;
+            break;
+        default:
+            proj = &MAT4_IDENT;
+            break;
+    }
+    ta_mat4 light_pv = mat4_mul(proj, &view);
     return light_pv;
 }
 
@@ -271,7 +314,11 @@ ta_mat4 ta_light_pv(ta_light *light)
 // Use texture2Dproj to account for perspective-divide
 static void shadowpass_render_directional(ta_light *light, ta_transform *transforms)
 {
-    DLB_ASSERT(light->shadowmap.framebuffer);
+    if (!light->data.directional.cast_shadows) {
+        return;
+    }
+
+    DLB_ASSERT(light->data.directional.framebuffer);
 
     //ta_texture_pool *texture_pool = ta_game_texture_pool(light->shadowmap.texture.gl_texture_pool_index);
     //GLint prev_min = texture_pool->gl_filter_min;
@@ -280,15 +327,16 @@ static void shadowpass_render_directional(ta_light *light, ta_transform *transfo
     //ta_texture_pool_set_filter_mode(texture_pool, light->shadowmap.texture.gl_filter_min,
     //    light->shadowmap.texture.gl_filter_mag);
 
-    ta_shader *shader = ta_game_by_sym(RES_SHADER, light->shadowmap.shader);
+    ta_shader *shader = ta_game_by_sym(RES_SHADER, light->data.directional.shadow_properties.shader);
     ta_shader_bind(shader);
 
     // TODO: Draw into shadowmap from ortho big enough to cover camera
     // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#rendering-the-shadow-map
     // https://www.khronos.org/opengl/wiki/GLAPI/glBindFragDataLocation
 
-    glViewport(0, 0, light->shadowmap.resolution, light->shadowmap.resolution);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light->shadowmap.framebuffer);
+    glViewport(0, 0, light->data.directional.shadow_properties.resolution,
+        light->data.directional.shadow_properties.resolution);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light->data.directional.framebuffer);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -316,7 +364,11 @@ static void shadowpass_render_directional(ta_light *light, ta_transform *transfo
 // https://gamedev.stackexchange.com/questions/19461/opengl-glsl-render-to-cube-map
 static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
 {
-    DLB_ASSERT(light->shadowmap.framebuffer);
+    if (!light->data.point.cast_shadows) {
+        return;
+    }
+
+    DLB_ASSERT(light->data.point.framebuffer);
 
     //ta_texture_pool *texture_pool = ta_game_texture_pool(light->shadowmap.texture.gl_texture_pool_index);
     //GLint prev_min = texture_pool->gl_filter_min;
@@ -326,9 +378,9 @@ static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
     //    light->shadowmap.texture.gl_filter_mag);
 
     ta_vec3 position = ta_light_position(light);
-    ta_shader *shader = ta_game_by_sym(RES_SHADER, light->shadowmap.shader);
+    ta_shader *shader = ta_game_by_sym(RES_SHADER, light->data.point.shadow_properties.shader);
     ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &position);
-    ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->shadowmap.zfar);
+    ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->data.point.shadow_properties.zfar);
 
     // TODO: Cache lookat matrices in dlb_vec, store light_pos as lookat_pos and
     //       update if light_pos != lookat_pos (i.e. position has changed)
@@ -341,13 +393,12 @@ static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
     view[4] = mat4_lookat(position, vec3_add(position, VEC3_Z),  VEC3_NY);
     view[5] = mat4_lookat(position, vec3_add(position, VEC3_NZ), VEC3_NY);
 
-    glViewport(0, 0, light->shadowmap.resolution, light->shadowmap.resolution);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light->shadowmap.framebuffer);
+    glViewport(0, 0, light->data.point.shadow_properties.resolution, light->data.point.shadow_properties.resolution);
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light->data.point.framebuffer);
 
     for (int face = 0; face < 6; ++face) {
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
-            GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
-            light->shadowmap.texture.gl_id, 0);
+        ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[face]);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, tex->gl_id, 0);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -356,7 +407,7 @@ static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
 
         glClear(GL_DEPTH_BUFFER_BIT);
 
-        ta_mat4 light_pv = mat4_mul(&light->shadowmap.projection, &view[face]);
+        ta_mat4 light_pv = mat4_mul(&light->data.point.shadow_properties.projection, &view[face]);
         dlb_vec_each(ta_transform *, transform, transforms) {
             ta_model *model = ta_game_component_try(transform->entity, RES_COMP_MODEL);
             if (model) {
@@ -372,7 +423,7 @@ static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
 
 void ta_light_shadowpass_render(ta_light *light, ta_transform *transforms)
 {
-    if (light->disabled && !light->cast_shadows) {
+    if (!light->enabled) {
         return;
     }
 
@@ -392,25 +443,30 @@ void ta_light_shadowpass_render(ta_light *light, ta_transform *transforms)
 
 void render_shadowmap_debug_directional(ta_light *light, int x, int y)
 {
-    ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX,
-        light->shadowmap.texture.gl_id);
+    ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
 
-    s32 resolution = light->shadowmap.resolution / 10;
+    s32 resolution = (s32)(light->data.directional.shadow_properties.resolution / 10);
     ta_rect rect = { 0 };
     rect.x = x;
     rect.y = y;
     rect.w = resolution;
     rect.h = resolution;
-    ta_primitive_push_rect(0, rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES,
-        true, true);
 
+    ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, tex->gl_id);
+    ta_primitive_push_rect(0, rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, true);
     ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
 }
 void render_shadowmap_debug_point(ta_light *light, int x, int y)
 {
-    ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX,
-        light->shadowmap.texture.gl_id);
+    ta_texture *tex[6] = { 0 };
+
+    tex[0] = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
+    tex[1] = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[1]);
+    tex[2] = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[2]);
+    tex[3] = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[3]);
+    tex[4] = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[4]);
+    tex[5] = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[5]);
 
     // Render cubemap with the following layout:
     //      ------
@@ -429,20 +485,20 @@ void render_shadowmap_debug_point(ta_light *light, int x, int y)
         { 1, 1 },  // -Z
     };
 
-    s32 resolution = light->shadowmap.resolution / 10;
+    s32 resolution = (s32)(light->data.point.shadow_properties.resolution / 10);
     for (int face = 0; face < 6; face++) {
         ta_rect rect = { 0 };
         rect.x = x + resolution * face_grid[face].x;
         rect.y = y + resolution * face_grid[face].y;
         rect.w = resolution;
         rect.h = resolution;
-        ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, face);
+
+        ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, tex[0]->gl_id);
         ta_primitive_push_rect(0, rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-        ta_primitive_render_mesh(&primitive_quads, tg_shader_cubemap,
-            TA_TRIANGLES, true, true);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, true);
     }
 
-    ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
+    ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
 }
 void ta_light_render_shadowmap_debug(ta_light *light, int x, int y)
 {

@@ -157,7 +157,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
             size_t lights_len = dlb_vec_len(lights);
             u32 u_lights_count = 0;
             for (u32 i = 0; i < lights_len; ++i) {
-                if (!lights[i].disabled) {
+                if (lights[i].enabled) {
                     ta_shader_set_light(shader, SYM_U_LIGHTS, u_lights_count, &lights[i]);
                     u_lights_count++;
                 }

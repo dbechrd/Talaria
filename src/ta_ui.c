@@ -84,8 +84,7 @@ typedef struct ui_frame {
 
     ta_rect_uv *text_rects;    // vector
     bool text_rects_internal;  // if true, text_rects wasn't passed in and must be freed
-    ta_texture *texture;
-    int texture_face;          // for cubemaps
+    const char *texture;
     ta_vec2i cursor;           // cursor location for textboxes
 
     // Consolidate this and all bools into a single flags bitmap
@@ -737,16 +736,22 @@ bool ta_ui_toggle_button_end(bool *checked)
     }
     return frame->state.pressed;
 }
-bool ta_ui_toggle_button(const char *text, size_t text_len, bool *checked)
+bool ta_ui_toggle_button(const char *false_text, size_t false_text_len, const char *true_text, size_t true_text_len,
+    bool *checked)
 {
     //ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 0);
-    ta_ui_label(text, text_len, 0);
+    // NOTE: 1 frame delay because label size is required to do "pressed" hit test
+    if (*checked) {
+        ta_ui_label(true_text, true_text_len, 0);
+    } else {
+        ta_ui_label(false_text, false_text_len, 0);
+    }
     return ta_ui_toggle_button_end(checked);
 }
-bool ta_ui_image(ta_texture *texture, int face)
+bool ta_ui_image(const char *texture)
 {
 #if UI_DEBUG_NO_TEXTURES
     tex = 0;
@@ -754,14 +759,14 @@ bool ta_ui_image(ta_texture *texture, int face)
 
     if (texture) {
         if (!next_frame_size.w && !next_frame_size.h) {
-            ta_ui_next_size(texture->width, texture->height);
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, texture);
+            ta_ui_next_size(tex->width, tex->height);
         }
     }
 
     ui_frame_begin(UI_IMAGE, 0, false);
     ui_frame *frame = ui_frame_end(UI_IMAGE);
     frame->texture = texture;
-    frame->texture_face = face;
     return frame->state.pressed;
 }
 void ta_ui_label(const char *text, size_t text_len, ta_rect_uv **text_rects)
@@ -1507,24 +1512,15 @@ static void ui_render_toggle_button(ui_frame *frame)
 static void ui_render_image(ui_frame *frame)
 {
     if (frame->texture) {
-        if (frame->texture->type == TA_TEXTURE_CUBEMAP) {
-            DLB_ASSERT(frame->texture_face >= 0 && frame->texture_face <= 6);
-            ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, frame->texture->gl_id);
-            ta_shader_set_int(tg_shader_cubemap, SYM_U_FACE, frame->texture_face);
-            ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
-            ta_primitive_push_rect(0, img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-            ta_primitive_render_mesh(&primitive_quads, tg_shader_cubemap, TA_TRIANGLES, true, false);
-            ta_shader_set_sampler_cube(tg_shader_cubemap, SYM_U_TEX, 0);
-        } else {
-            ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
-            DLB_ASSERT(frame->texture->type == TA_TEXTURE_2D_ARRAY);
-            ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_INDEX, frame->texture->gl_texture_pool_index);
-            ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_LAYER, frame->texture->gl_texture_pool_layer);
-            ta_primitive_push_rect(0, img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-            ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
-            ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_INDEX, 0);
-            ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_LAYER, 0);
-        }
+        ta_texture *tex = ta_game_by_sym(RES_TEXTURE, frame->texture);
+        ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
+        DLB_ASSERT(tex->type == TA_TEXTURE_2D_ARRAY);
+        ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_INDEX, tex->gl_texture_pool_index);
+        ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_LAYER, tex->gl_texture_pool_layer);
+        ta_primitive_push_rect(0, img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
+        ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_INDEX, 0);
+        ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_LAYER, 0);
     }
 }
 static void ui_render_text(int x, int y, ta_rect_uv *text_rects, ta_rect clip_rect)

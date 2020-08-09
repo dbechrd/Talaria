@@ -1,7 +1,7 @@
 #pragma once
 #include "ta_schema.h"
 #include "ta_math.h"
-#include "ta_texture.h"
+#include "ta_cubemap.h"
 #include "dlb/dlb_types.h"
 #include "misc/glad.h"
 
@@ -57,43 +57,49 @@ typedef struct ta_light_ambient {
     int unused;
 } ta_light_ambient;
 
-typedef struct ta_light_directional {
-    int unused;
-} ta_light_directional;
-
-typedef struct ta_light_point {
-    int unused;
-} ta_light_point;
-
-typedef struct ta_light_spot {
-    float theta_cone;     //
-    float theta_falloff;  //
-} ta_light_spot;
-
-typedef struct ta_light_shadowmap {
+typedef struct ta_shadow_map_properties {
     const char  *shader;      //
     u32         resolution;   //
     float       znear;        //
     float       zfar;         //
     ta_mat4     projection;   //
-    GLuint      framebuffer;  //
-    ta_texture  texture;      //
-} ta_light_shadowmap;
+} ta_shadow_map_properties;
+
+typedef struct ta_light_directional {
+    bool                     cast_shadows;
+    ta_shadow_map_properties shadow_properties;
+    const char               *shadow_map;
+    GLuint                   framebuffer;       // shadowmap framebuffer
+} ta_light_directional;
+
+typedef struct ta_light_point {
+    bool                     cast_shadows;
+    ta_shadow_map_properties shadow_properties;
+    ta_cubemap               shadow_map;
+    GLuint                   framebuffer;       // shadowmap framebuffer
+} ta_light_point;
+
+typedef struct ta_light_spot {
+    float                    theta_cone;
+    float                    theta_falloff;
+    bool                     cast_shadows;
+    ta_shadow_map_properties shadow_properties;
+    const char               *shadow_map;
+    GLuint                   framebuffer;       // shadowmap framebuffer
+} ta_light_spot;
 
 typedef struct ta_light {
     TA_COMPONENT_HEADER
-    float         intensity;      // Light intensity
-    ta_rgb        color;          // Light color
-    bool          disabled;       // If true, light will not illuminate or cast shadows
-    bool          cast_shadows;   // If true, light will cast dynamic shadows
-    ta_light_type type;           // Light type
+    float         intensity;
+    ta_rgb        color;
+    bool          enabled;
+    ta_light_type type;
     union {
-        ta_light_ambient     ambient;      // Type-specific light properties
+        ta_light_ambient     ambient;
         ta_light_directional directional;
         ta_light_point       point;
         ta_light_spot        spot;
     } data;
-    ta_light_shadowmap shadowmap;  // Shadow map properties
 } ta_light;
 
 void ta_lighting_init                   (ta_lighting *state);
