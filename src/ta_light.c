@@ -103,7 +103,7 @@ const char *ta_light_type_str(int type)
 
 void ta_light_init(ta_light *light)
 {
-    // NOTE: Branchless because I felt like it.. should actually look at generated code :D
+    // TODO: Branchless because I felt like it.. should actually look at generated code :D
     light->intensity += !light->intensity * DEFAULT_LIGHT_INTENSITY;
 
     switch (light->type) {
@@ -111,7 +111,7 @@ void ta_light_init(ta_light *light)
             break;
         }
         case TA_LIGHT_DIRECTIONAL: {
-            // NOTE: Branchless because I felt like it.. should actually look at generated code :D
+            // TODO: Branchless because I felt like it.. should actually look at generated code :D
             light->data.directional.shadow_properties.resolution +=
                 !light->data.directional.shadow_properties.resolution * DEFAULT_SHADOWMAP_RESOLUTION;
             light->data.directional.shadow_properties.znear +=
@@ -128,7 +128,7 @@ void ta_light_init(ta_light *light)
             shadowmap_directional_create(light);
             break;
         } case TA_LIGHT_POINT: {
-            // NOTE: Branchless because I felt like it.. should actually look at generated code :D
+            // TODO: Branchless because I felt like it.. should actually look at generated code :D
             light->data.point.shadow_properties.resolution +=
                 !light->data.point.shadow_properties.resolution * DEFAULT_SHADOWMAP_RESOLUTION;
             light->data.point.shadow_properties.znear +=
@@ -144,7 +144,7 @@ void ta_light_init(ta_light *light)
             shadowmap_point_create(light);
             break;
         } case TA_LIGHT_SPOT: {
-            // NOTE: Branchless because I felt like it.. should actually look at generated code :D
+            // TODO: Branchless because I felt like it.. should actually look at generated code :D
             light->data.spot.shadow_properties.resolution +=
                 !light->data.spot.shadow_properties.resolution * DEFAULT_SHADOWMAP_RESOLUTION;
             light->data.spot.shadow_properties.znear +=
@@ -178,12 +178,16 @@ static void shadowmap_directional_create(ta_light *light)
     tex->width = light->data.directional.shadow_properties.resolution;
     tex->height = light->data.directional.shadow_properties.resolution;
     tex->channels = 1;
+    tex->pixels_format = GL_DEPTH_COMPONENT;
+    tex->pixels_type = GL_FLOAT;
+    tex->gl_internal_format = GL_DEPTH_COMPONENT;
     tex->gl_filter_min = GL_LINEAR; // GL_NEAREST;
     tex->gl_filter_mag = GL_LINEAR; // GL_NEAREST;
     ta_texture_init(tex);
     ta_texture_bind(tex);
 
     GLenum target = ta_texture_target(tex);
+    ta_texture_pool *pool = ta_texture_texture_pool(tex);
 
     // TODO: Specify wrap mode as part of texture params, not sure if border
     // mode/color is worth refactoring out though.
@@ -197,21 +201,12 @@ static void shadowmap_directional_create(ta_light *light)
     // TODO: Possibly use shadow samplers and depth comparison mode? (Faster PCF, but only 2x2?)
     // https://www.khronos.org/opengl/wiki/Sampler_Object#Comparison_mode
 
-    ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
-    // TOOD: Not sure if this if these formats are worth refactoring out either
-    // TODO: Should internalformat be GL_DEPTH_COMPONENT16 instead?
-    glTexImage2D(target, 0, GL_DEPTH_COMPONENT16, tex->width, tex->height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-
-    //ta_texture_upload(tex, 0, GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT);
-    //ta_texture_upload(tex, 0, GL_R8, GL_RED);
-
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
     glGenFramebuffers(1, &light->data.directional.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, light->data.directional.framebuffer);
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex->gl_id, 0);
-    glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, target, tex->gl_id, 0, tex->gl_texture_pool_layer);
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, pool->gl_id, 0, tex->gl_texture_pool_layer);
     // For reflection maps
-    //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex->gl_id, 0);
+    //glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, pool->gl_id, 0, tex->gl_texture_pool_layer);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
@@ -243,9 +238,12 @@ static void shadowmap_point_create(ta_light *light)
     ta_texture_init(tex);
     ta_texture_bind(tex);
 
+    GLenum target = ta_texture_target(tex);
+    ta_texture_pool *pool = ta_texture_texture_pool(tex);
+
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
     for (int i = 0; i < 6; ++i) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT16, tex->width, tex->height, 0,
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, tex->width, tex->height, 0,
             GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     }
 
@@ -253,7 +251,8 @@ static void shadowmap_point_create(ta_light *light)
     glGenFramebuffers(1, &light->data.point.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, light->data.point.framebuffer);
     // TODO: Set frame buffer texture 6 times during render pass, or have 6 framebuffers
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex->gl_id, 0);
+    //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex->gl_id, 0);
+    glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, target, pool->gl_id, 0, tex->gl_texture_pool_layer);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
