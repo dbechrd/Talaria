@@ -195,6 +195,8 @@ static void shadowmap_directional_create(ta_light *light)
 
     ta_texture_bind(tex);
 
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
     // TODO: Specify wrap mode as part of texture params, not sure if border
     // mode/color is worth refactoring out though.
     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
@@ -260,6 +262,9 @@ static void shadowmap_point_create(ta_light *light)
     ta_texture_pool *pool = ta_texture_texture_pool(tex);
 
     ta_texture_bind(tex);
+
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
 
     //ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
     //for (int i = 0; i < 6; ++i) {
@@ -372,6 +377,7 @@ static void shadowpass_render_directional(ta_light *light, ta_transform *transfo
         }
     }
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ta_shader_unbind();
     //ta_texture_pool_set_filter_mode(texture_pool, prev_min, prev_mag);
     //ta_texture_pool_unbind(texture_pool);
@@ -401,9 +407,6 @@ static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
     ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &position);
     ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->data.point.shadow_properties.zfar);
 
-    // TODO: Cache lookat matrices in dlb_vec, store light_pos as lookat_pos and
-    //       update if light_pos != lookat_pos (i.e. position has changed)
-    // PERF: Cache may be slower than just recalculating every frame.. profile!
     ta_mat4 view[6];
     view[0] = mat4_lookat(position, vec3_add(position, VEC3_X),  VEC3_NY);
     view[1] = mat4_lookat(position, vec3_add(position, VEC3_NX), VEC3_NY);
@@ -436,6 +439,7 @@ static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
         }
     }
 
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ta_shader_unbind();
     //ta_texture_pool_set_filter_mode(texture_pool, prev_min, prev_mag);
     //ta_texture_pool_unbind(texture_pool);
@@ -568,5 +572,7 @@ void ta_framebuffer_postfx()
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         DLB_ASSERT("Failed to set up framebuffer for some reason.");
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 #endif

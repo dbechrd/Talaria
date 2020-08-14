@@ -98,7 +98,7 @@ void ta_texture_pool_set_filter_mode(ta_texture_pool *texture_pool, GLint min, G
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, texture_pool->gl_filter_mag);
 }
 
-void ta_texture_pool_set_layer_texels(ta_texture_pool *texture_pool, int layer, GLenum format, GLenum type, u8 *texels)
+void ta_texture_pool_set_layer_texels(ta_texture_pool *texture_pool, int layer, GLenum format, GLenum type, void *texels)
 {
     DLB_ASSERT(texture_pool);
     DLB_ASSERT(texture_pool->gl_id);
@@ -118,26 +118,72 @@ void ta_texturing_init(ta_texturing *texturing)
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),   64,   64, 32, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),  512,  512, 32, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 1024, 1024, 32, GL_RGBA, GL_UNSIGNED_BYTE);
-    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 2048, 2048, 32, GL_RGBA, GL_UNSIGNED_BYTE);
-    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 4096, 4096, 32, GL_RGBA, GL_UNSIGNED_BYTE);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 2048, 2048, 1,  GL_RGBA, GL_UNSIGNED_BYTE);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 4096, 4096, 1,  GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 1024, 1024, 18, GL_DEPTH_COMPONENT, GL_FLOAT);
-    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 4096, 4096, 1, GL_DEPTH_COMPONENT, GL_FLOAT);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 4096, 4096, 1,  GL_DEPTH_COMPONENT, GL_FLOAT);
     ta_texture_pool_unbind();
 
-    // TODO: Generate mipmaps whenever we change the array? After we load everything? Hmm..
-    //glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-
     // TODO: Fill unused textures with some default texture data to make it obvious when we accidentally use the wrong
-    // layer or forget to regenerate mipmaps? I think we can use glTexSubImage3D to fill all layers at the same time.
-    //// 1x1, RGBA
-    //u8 texels[4] = { 0 };
-    //texels[3] = 0xff;
-    //for (u32 i = 0; i < 32; ++i) {
-    //    texels[0] = (u8)(i * 256 / 32);
-    //    texels[1] = (u8)(i * 256 / 32);
-    //    texels[2] = (u8)(i * 256 / 32);
-    //    ta_texture_pool_set_layer_texels(&texturing->texture_pools[TA_TEXTURE_POOL_1], i, texels);
-    //}
+    // layer or forget to regenerate mipmaps. I think we can use glTexSubImage3D to fill all layers at the same time.
+
+    // Generate RGBA texture placeholder
+    const size_t rgba_max_width = 4096;
+    const size_t rgba_max_height = 4096;
+    const size_t rgba_channels = 4;
+    u8 *rgba_pixels = 0;
+    size_t rgba_elements = rgba_max_width * rgba_max_height * rgba_channels;
+    size_t rgba_bytes = rgba_elements * sizeof(*rgba_pixels);
+    dlb_vec_reserve(rgba_pixels, rgba_elements);
+    size_t rgba_pixel_count = rgba_max_width * rgba_max_height;
+    for (size_t i = 0; i < rgba_pixel_count; ++i) {
+        // NOTE: 0xC000D3 as if you were saying: "I like to cooode!" Sort of a Barney purple color.
+        dlb_vec_push(rgba_pixels, 0xC0);
+        dlb_vec_push(rgba_pixels, 0x00);
+        dlb_vec_push(rgba_pixels, 0xD3);
+        dlb_vec_push(rgba_pixels, 0xFF);
+    }
+    size_t rgba_pixels_len = dlb_vec_len(rgba_pixels);
+    DLB_ASSERT(rgba_pixels_len == rgba_bytes);
+
+    // Generate depth texture placeholder
+    const size_t depth_max_width = 4096;
+    const size_t depth_max_height = 4096;
+    float *depth_pixels = 0;
+    size_t depth_elements = depth_max_width * depth_max_height;
+    size_t depth_bytes = depth_elements * sizeof(*depth_pixels);
+    dlb_vec_alloc_count(depth_pixels, depth_elements);
+    for (size_t i = 0; i < depth_elements; ++i) {
+        // NOTE: Magic number for easy graphics debugging
+        depth_pixels[i] = 0.42f;
+    }
+
+    dlb_vec_each(ta_texture_pool *, pool, texturing->texture_pools) {
+        ta_texture_pool_bind(pool);
+        switch (pool->format) {
+            case GL_RGBA: {
+                DLB_ASSERT(pool->type == GL_UNSIGNED_BYTE);
+                for (size_t layer = 0; layer < dlb_vec_len(pool->layers); ++layer) {
+                    ta_texture_pool_set_layer_texels(pool, (int)layer, pool->format, pool->type, rgba_pixels);
+                }
+                break;
+            } case GL_DEPTH_COMPONENT: {
+                DLB_ASSERT(pool->type == GL_FLOAT);
+                for (size_t layer = 0; layer < dlb_vec_len(pool->layers); ++layer) {
+                    ta_texture_pool_set_layer_texels(pool, (int)layer, pool->format, pool->type, depth_pixels);
+                }
+                break;
+            } default: {
+                DLB_ASSERT(!"I don't know what format this is");
+            }
+        }
+        // TODO: Generate mipmaps whenever we change the array? After we load everything? Hmm..
+        //glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+    }
+    ta_texture_pool_unbind();
+
+    dlb_vec_free(rgba_pixels);
+    dlb_vec_free(depth_pixels);
 }
 
 static void ta_texturing_add_texture(ta_texturing *texturing, ta_texture *tex)

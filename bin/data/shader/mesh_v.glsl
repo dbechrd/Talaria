@@ -32,47 +32,26 @@ uniform vec3 u_camera_pos;
 #define TA_LIGHTING_MAX_ACTIVE_LIGHTS 8
 
 struct Light {
-    float intensity;
-    vec3 position;
-    vec3 color;
-    int type;
-    bool cast_shadows;
-    // Directional / Spot
-    vec3 direction;
-    sampler2D shadowmap2d;
-    mat4 light_pv;
-    // Point
-    samplerCube shadowmap3d;
-    float shadowmap_zfar;
-};
-//uniform int u_lights_count;
-uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-
-#if 0
-struct LightNew {
     // Common
-    int type;
     float intensity;
-    bool cast_shadows;
     vec3 position;
     vec3 color;
+    int type;
+
+    // Directional / Point / Spot
+    bool cast_shadows;
 
     // Directional / Spot
     vec3 direction;
     mat4 light_pv;
 
-    // Point
-    float shadowmap_zfar;
-
-    float shadowmap_texture_pool_index;  // NOTE: point light "cubemaps" will use 6 consecutive layers
-    float shadowmap_texture_array_layer;
+    // Shadow mapping
+    float shadowmap_zfar;                   // Point
+    uint shadowmap_texture_pool_index;
+    uint shadowmap_texture_array_layers[6]; // Point light "cubemaps" require 6 layers, other lights only use index 0
 };
-layout (std140) uniform u_lights_new_block {
-    LightNew u_lights_new[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-};
-#endif
-
 uniform int u_lights_count;
+uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 //------------------------------------------------------
 
 out vs_out {

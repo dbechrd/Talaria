@@ -64,49 +64,26 @@ uniform Material u_material;
 #define LIGHT_POINT         2
 #define LIGHT_SPOT          3
 struct Light {
-    float intensity;
-    vec3 position;
-    vec3 color;
-    int type;
-    bool cast_shadows;
-    // Directional / Spot
-    vec3 direction;
-    sampler2D shadowmap2d;
-    mat4 light_pv;
-    // Point
-    samplerCube shadowmap3d;
-    float shadowmap_zfar;
-};
-//uniform int u_lights_count;
-uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-
-#if 0
-struct LightNew {
     // Common
-    int type;
     float intensity;
-    bool cast_shadows;
     vec3 position;
     vec3 color;
+    int type;
+
+    // Directional / Point / Spot
+    bool cast_shadows;
 
     // Directional / Spot
     vec3 direction;
     mat4 light_pv;
 
-    // Point
-    float shadowmap_zfar;
-
-    float shadowmap_texture_pool_index;  // NOTE: point light "cubemaps" will use 6 consecutive layers
-    float shadowmap_texture_array_layer;
+    // Shadow mapping
+    float shadowmap_zfar;                   // Point
+    uint shadowmap_texture_pool_index;
+    uint shadowmap_texture_array_layers[6]; // Point light "cubemaps" require 6 layers, other lights only use index 0
 };
-layout (std140) uniform u_lights_new_block {
-    LightNew u_lights_new[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-};
-uniform sampler2D shadowmap2d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-uniform samplerCube shadowmap3d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-#endif
-
 uniform int u_lights_count;
+uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 
 //------------------------------------------------------
 // Textures
@@ -184,7 +161,6 @@ void main()
 #else
     vec2 displaced_uv = scaled_uv;
 #endif
-    // TODO: Use layer index from material properties
     vec4  mtl_albedo    = texture(u_textures[u_material.albedo_texture_pool_index   ], vec3(displaced_uv, u_material.albedo_texture_pool_layer   )).rgba * u_material.albedo_factor;
     vec3  mtl_emission  = texture(u_textures[u_material.emission_texture_pool_index ], vec3(displaced_uv, u_material.emission_texture_pool_layer )).rgb  * u_material.emission_factor;
     float mtl_metallic  = texture(u_textures[u_material.metallic_texture_pool_index ], vec3(displaced_uv, u_material.metallic_texture_pool_layer )).r    * u_material.metallic_factor;
@@ -254,7 +230,8 @@ void main()
 				    for (float x = -1.0; x <= 1.0; x += 1.0) {
 					    for (float y = -1.0; y <= 1.0; y += 1.0) {
 							vec2 ss_offset = vec2(x, y) * 0.001;
-							float ss_depth = texture(u_lights[i].shadowmap2d, projCoords.st + ss_offset).r;
+                            float ss_depth = texture(u_textures[u_lights[i].shadowmap_texture_pool_index],
+                                vec3(projCoords.st + ss_offset, u_lights[i].shadowmap_texture_array_layers[0])).r;
 			                shadow += step(ss_depth, dist - ss_bias);
                             ss_count += 1.0;
 					    }
@@ -291,8 +268,18 @@ void main()
 				    for (float x = -1.0; x <= 1.0; x += 1.0) {
 					    for (float y = -1.0; y <= 1.0; y += 1.0) {
 					        for (float z = -1.0; z <= 1.0; z += 1.0) {
-							    vec3 ss_offset = vec3(x, y, z) * 0.004 * dist;
-							    float ss_depth = texture(u_lights[i].shadowmap3d, -fragToLight + ss_offset).r;
+
+                                /////////////////////////////////////////////////////////////////////////////////////
+                                // TODO: Need to convert 3D sample direction to UV coords and face index
+							    //vec3 ss_offset = vec3(x, y, z) * 0.004 * dist;
+                                vec2 sample_uv = -fragToLight.xy;
+                                int sample_face = 0;
+
+							    vec2 ss_offset = vec2(x, y) * 0.004 * dist;
+                                float ss_depth = texture(u_textures[u_lights[i].shadowmap_texture_pool_index],
+                                    vec3(sample_uv + ss_offset, u_lights[i].shadowmap_texture_array_layers[sample_face])).r;
+                                /////////////////////////////////////////////////////////////////////////////////////
+
 							    ss_depth *= u_lights[i].shadowmap_zfar;
 			                    shadow += step(ss_depth, dist - shadow_bias);
                                 ss_count += 1.0;

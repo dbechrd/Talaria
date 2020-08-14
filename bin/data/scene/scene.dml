@@ -1147,35 +1147,35 @@ ta_shader:
     },
     {
       name: "u_textures[0]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[1]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[2]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[3]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[4]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[5]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[6]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[7]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_texture_pool_index",
@@ -1558,36 +1558,68 @@ ta_shader:
           type: 11,  # TA_GLSL_BOOL
         },
         {
-          name: "u_lights[0].shadowmap2d",
-          type: 3,  # TA_GLSL_SAMPLER2D
+          name: "u_lights[0].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
         },
         {
-          name: "u_lights[1].shadowmap2d",
-          type: 3,  # TA_GLSL_SAMPLER2D
+          name: "u_lights[1].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
         },
         {
-          name: "u_lights[2].shadowmap2d",
-          type: 3,  # TA_GLSL_SAMPLER2D
+          name: "u_lights[2].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
         },
         {
-          name: "u_lights[3].shadowmap2d",
-          type: 3,  # TA_GLSL_SAMPLER2D
+          name: "u_lights[3].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
         },
         {
-          name: "u_lights[4].shadowmap2d",
-          type: 3,  # TA_GLSL_SAMPLER2D
+          name: "u_lights[4].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
         },
         {
-          name: "u_lights[5].shadowmap2d",
-          type: 3,  # TA_GLSL_SAMPLER2D
+          name: "u_lights[5].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
         },
         {
-          name: "u_lights[6].shadowmap2d",
-          type: 3,  # TA_GLSL_SAMPLER2D
+          name: "u_lights[6].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
         },
         {
-          name: "u_lights[7].shadowmap2d",
-          type: 3,  # TA_GLSL_SAMPLER2D
+          name: "u_lights[7].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_lights[0].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[1].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[2].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[3].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[4].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[5].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[6].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[7].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
         },
         {
           name: "u_lights[0].light_pv",
@@ -1771,35 +1803,35 @@ ta_shader:
     },
     {
       name: "u_textures[0]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[1]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[2]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[3]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[4]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[5]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[6]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_textures[7]",
-      type: 12,  # TA_GLSL_SAMPLER2D_ARRAY
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
       name: "u_selected",

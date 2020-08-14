@@ -145,10 +145,10 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing, ta_ui_text
 
     //ui_default_style[UI_PANEL].margin                     = TA_RECT(0, 0, 0, 0);
     ui_default_style[UI_PANEL].pad                          = TA_RECT(4, 4, 4, 4);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_NONE]      = TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]     = TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_DOWN]      = TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_ACTIVE]    = TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_NONE]      = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_DOWN]      = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_ACTIVE]    = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_HOVER]     = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS;
@@ -166,7 +166,7 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing, ta_ui_text
     //ui_default_style[UI_BUTTON].fg_color[UI_STATE_ACTIVE]   = TA_COLOR_INVIS;
 
     ui_default_style[UI_TOGGLE_BUTTON].margin                      = TA_RECT(2, 1, 0, 1);
-    ui_default_style[UI_TOGGLE_BUTTON].pad                         = TA_RECT(2, 2, 2, 2);
+    ui_default_style[UI_TOGGLE_BUTTON].pad                         = TA_RECT(4, 1, 4, 1);
     ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_NONE]     = TA_RGBA(0.4f, 0.2f, 1.0f, 0.9f);
     ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_HOVER]    = TA_RGBA(1.0f, 1.0f, 0.0f, 0.9f);
     ui_default_style[UI_TOGGLE_BUTTON].bg_color[UI_STATE_DOWN]     = TA_RGBA(0.5f, 0.5f, 0.0f, 0.9f);
@@ -713,9 +713,8 @@ bool ta_ui_button(const char *text, size_t text_len)
 {
     ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_button_begin(TA_UI_AUTOSIZE);
-    ta_ui_next_margin(0, 0, 0, 0);
-    ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 0);
     if (text) {
+        ta_ui_next_margin(0, 0, 0, 0);
         ta_ui_label(text, text_len, 0);
     }
     return ta_ui_button_end();
@@ -742,7 +741,7 @@ bool ta_ui_toggle_button(const char *false_text, size_t false_text_len, const ch
     //ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
     ta_ui_next_margin(0, 0, 0, 0);
-    ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 0);
+    ta_ui_next_pad(0, 0, 0, 0);
     // NOTE: 1 frame delay because label size is required to do "pressed" hit test
     if (*checked) {
         ta_ui_label(true_text, true_text_len, 0);
@@ -1263,12 +1262,18 @@ void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state, bool 
     ta_ui_panel_begin(&vec_state->panel_state, TA_UI_AUTOSIZE);
     if (!multiple_rows) ta_ui_row_begin();
 
-    const char *labels[2] = { "x:", "y:" };
+    // NOTE: Assuming length == 1 for ta_ui_label() below
+    static const char *labels[2] = { "x", "y" };
     float *components = (float *)vec;
     for (int i = 0; i < 2; ++i) {
         if (multiple_rows) ta_ui_row_begin();
 
-        ta_ui_label(CSTR(labels[i]), 0);
+        ta_ui_next_margin(0, 1, 0, 1);
+        ta_ui_label(labels[i], 1, 0);
+        ta_ui_next_bg_color(UI_STATE_NONE,
+            0.3f * (i == 0) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].r * (i == 3),
+            0.3f * (i == 1) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].g * (i == 3),
+            0.3f * (i == 2) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].b * (i == 3), 1.0f);
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
 
@@ -1307,10 +1312,10 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state, bool 
 
         ta_ui_next_margin(0, 1, 0, 1);
         ta_ui_label(labels[i], 1, 0);
-        //ta_ui_next_bg_color(UI_STATE_NONE,
-        //    0.3f * (i == 0),
-        //    0.3f * (i == 1),
-        //    0.3f * (i == 2), 1.0f);
+        ta_ui_next_bg_color(UI_STATE_NONE,
+            0.3f * (i == 0) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].r * (i == 3),
+            0.3f * (i == 1) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].g * (i == 3),
+            0.3f * (i == 2) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].b * (i == 3), 1.0f);
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
 
@@ -1346,7 +1351,12 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
     for (int i = 0; i < 4; ++i) {
         if (multiple_rows) ta_ui_row_begin();
 
+        ta_ui_next_margin(0, 1, 0, 1);
         ta_ui_label(labels[i], 1, 0);
+        ta_ui_next_bg_color(UI_STATE_NONE,
+            0.3f * (i == 0) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].r * (i == 3),
+            0.3f * (i == 1) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].g * (i == 3),
+            0.3f * (i == 2) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].b * (i == 3), 1.0f);
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
 

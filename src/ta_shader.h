@@ -33,7 +33,8 @@ typedef enum ta_glsl_type {
     TA_GLSL_STRUCT          = 9,
     TA_GLSL_SAMPLER_CUBE    = 10,  // TODO: Re-number these? Handle enums by string
     TA_GLSL_BOOL            = 11,
-    TA_GLSL_SAMPLER2D_ARRAY = 12,
+    TA_GLSL_SAMPLER2DARRAY  = 12,  // NOTE: This is an array texture sampler, not an array of sampler2Ds
+    TA_GLSL_UINT_ARRAY      = 13,
 } ta_glsl_type;
 
 typedef struct ta_shader_attribute {
@@ -49,6 +50,7 @@ typedef struct ta_shader_uniform {
         GLboolean   glbool;
         GLint       glint;
         GLuint      gluint;
+        GLuint      *gluint_array;
         GLfloat     glfloat;
         ta_vec2     vec2;
         ta_vec3     vec3;
@@ -57,7 +59,7 @@ typedef struct ta_shader_uniform {
         ta_mat3     mat3;
         ta_mat4     mat4;
         GLuint      sampler_2d;
-        GLuint      sampler_2d_array;
+        GLuint      sampler_2darray;  // NOTE: This is an array texture sampler, not an array of sampler2Ds
         GLuint      sampler_cube;
         // NOTE: for structs, array of struct properties
         struct ta_shader_uniform *properties;
@@ -95,6 +97,7 @@ void ta_shader_free_void        (void *shader);
 void ta_shader_set_bool         (ta_shader *shader, const char *name, GLboolean value);
 void ta_shader_set_int          (ta_shader *shader, const char *name, GLint value);
 void ta_shader_set_uint         (ta_shader *shader, const char *name, GLuint value);
+void ta_shader_set_uint_array   (ta_shader *shader, const char *name, GLuint *values);
 void ta_shader_set_float        (ta_shader *shader, const char *name, GLfloat value);
 void ta_shader_set_sampler_2d   (ta_shader *shader, const char *name, GLuint tex_id);
 void ta_shader_set_sampler_2d_array(ta_shader *shader, const char *name, GLuint tex_id);

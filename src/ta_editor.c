@@ -901,7 +901,7 @@ static void ui_node_panel()
     ta_ui_panel_begin(&node_panel, TA_UI_AUTOSIZE);
 
     ta_ui_row_begin();
-    ta_ui_next_size(200, 17);
+    ta_ui_next_size(200, 15);
     static ta_ui_textbox_state search_box = { 0 };
     if (ta_ui_textbox(0, 0, &search_box, 0)) {
 
@@ -1410,7 +1410,7 @@ static void ui_node_panel()
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("enabled:"), 0);
-            ta_ui_toggle_button(CSTR("True"), CSTR("False"), &light->enabled);
+            ta_ui_toggle_button(CSTR("False"), CSTR("True"), &light->enabled);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1423,23 +1423,20 @@ static void ui_node_panel()
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("color:"), 0);
             static ta_ui_textbox_vec3_state color_editor = { 0 };
-            ta_ui_textbox_vec3((ta_vec3 *)&light->color,
-                &color_editor, false, false, false);
+            ta_ui_textbox_vec3((ta_vec3 *)&light->color, &color_editor, false, false, false);
             light->color.r = clampf(light->color.r, 0.0f, 1.0f);
             light->color.g = clampf(light->color.g, 0.0f, 1.0f);
             light->color.b = clampf(light->color.b, 0.0f, 1.0f);
             ta_ui_next_size(17, 17);
-            ta_ui_next_bg_color(UI_STATE_ALL, light->color.r,
-                light->color.g, light->color.b, 1.0f);
+            ta_ui_next_bg_color(UI_STATE_ALL, light->color.r, light->color.g, light->color.b, 1.0f);
             ta_ui_button(0, 0);
-
-            bool *cast_shadows = 0;
 
             switch (light->type) {
                 case TA_LIGHT_DIRECTIONAL: {
                     ta_ui_row_begin();
                     ta_ui_next_size(label_width, 0);
-                    ta_ui_toggle_button(CSTR("Shadows: Off"), CSTR("Shadows: On"), &light->data.directional.cast_shadows);
+                    ta_ui_label(CSTR("cast shadows:"), 0);
+                    ta_ui_toggle_button(CSTR("False"), CSTR("True"), &light->data.directional.cast_shadows);
 
                     ta_ui_row_begin();
                     ta_ui_next_size(label_width, 0);
@@ -1458,8 +1455,9 @@ static void ui_node_panel()
                     break;
                 } case TA_LIGHT_POINT: {
                     ta_ui_row_begin();
-                    //ta_ui_next_size(label_width, 0);
-                    ta_ui_toggle_button(CSTR("Shadows: Off"), CSTR("Shadows: On"), &light->data.point.cast_shadows);
+                    ta_ui_next_size(label_width, 0);
+                    ta_ui_label(CSTR("cast shadows:"), 0);
+                    ta_ui_toggle_button(CSTR("False"), CSTR("True"), &light->data.point.cast_shadows);
 
                     ta_ui_row_begin();
                     //ta_ui_next_size(label_width, 0);

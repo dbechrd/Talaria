@@ -93,7 +93,7 @@ void ta_texturing_init              (ta_texturing *texturing);
 void ta_texture_pool_bind           (ta_texture_pool *texture_pool);
 void ta_texture_pool_unbind         ();
 void ta_texture_pool_set_filter_mode(ta_texture_pool *texture_pool, GLint min, GLint mag);
-void ta_texture_pool_set_layer_texels(ta_texture_pool *texture_pool, int layer, GLenum format, GLenum type, u8 *texels);
+void ta_texture_pool_set_layer_texels(ta_texture_pool *texture_pool, int layer, GLenum format, GLenum type, void *texels);
 
 const char *ta_texture_type_str     (int type);
 void ta_texture_init                (ta_texture *tex);

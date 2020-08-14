@@ -27,6 +27,7 @@ const char *ta_glsl_type_str(int type)
         case TA_GLSL_MAT4:         return "TA_GLSL_MAT4";
         case TA_GLSL_STRUCT:       return "TA_GLSL_STRUCT";
         case TA_GLSL_SAMPLER_CUBE: return "TA_GLSL_SAMPLER_CUBE";
+        case TA_GLSL_UINT_ARRAY:   return "TA_GLSL_UINT_ARRAY";
         default: DLB_ASSERT(0);    return "TA_GLSL_???";
     }
 }
@@ -312,103 +313,81 @@ void ta_shader_free_void(void *shader)
 void ta_shader_set_bool(ta_shader *shader, const char *name, GLboolean value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_BOOL);
-    if (u->value.glbool != value) {
-        u->value.glbool = value;
-        u->dirty = true;
-    }
+    u->value.glbool = value;
+    u->dirty = true;
 }
 void ta_shader_set_int(ta_shader *shader, const char *name, GLint value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_INT);
-    if (u->value.glint != value) {
-        u->value.glint = value;
-        u->dirty = true;
-    }
+    u->value.glint = value;
+    u->dirty = true;
 }
 void ta_shader_set_uint(ta_shader *shader, const char *name, GLuint value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_UINT);
-    if (u->value.gluint != value) {
-        u->value.gluint = value;
-        u->dirty = true;
-    }
+    u->value.gluint = value;
+    u->dirty = true;
+}
+void ta_shader_set_uint_array(ta_shader *shader, const char *name, GLuint *values)
+{
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_UINT_ARRAY);
+    dlb_vec_free(u->value.gluint_array);
+    u->value.gluint_array = values;
+    u->dirty = true;
 }
 void ta_shader_set_float(ta_shader *shader, const char *name, GLfloat value)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_FLOAT);
-    if (u->value.glfloat != value) {
-        u->value.glfloat = value;
-        u->dirty = true;
-    }
+    u->value.glfloat = value;
+    u->dirty = true;
 }
 void ta_shader_set_sampler_2d(ta_shader *shader, const char *name, GLuint tex_id)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D);
-    // TODO: Figure out why this doesn't work
-    //if (u->value.sampler2d != tex_id || tex_id == 0) {
-        u->value.sampler_2d = tex_id;
-        u->dirty = true;
-    //}
+    u->value.sampler_2d = tex_id;
+    u->dirty = true;
 }
 void ta_shader_set_sampler_2d_array(ta_shader *shader, const char *name, GLuint tex_id)
 {
-    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D_ARRAY);
-    // TODO: Figure out why this doesn't work
-    //if (u->value.sampler2d != tex_id || tex_id == 0) {
-    u->value.sampler_2d_array = tex_id;
+    ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2DARRAY);
+    u->value.sampler_2darray = tex_id;
     u->dirty = true;
-    //}
 }
 void ta_shader_set_sampler_cube(ta_shader *shader, const char *name, GLuint tex_id)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER_CUBE);
-    // TODO: Figure out why this doesn't work
-    //if (u->value.sampler_cube != tex_id || tex_id == 0) {
-        u->value.sampler_cube = tex_id;
-        u->dirty = true;
-    //}
+    u->value.sampler_cube = tex_id;
+    u->dirty = true;
 }
 void ta_shader_set_vec2(ta_shader *shader, const char *name, const ta_vec2 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC2);
-    if (!vec2_equal(u->value.vec2, *v)) {
-        u->value.vec2 = *v;
-        u->dirty = true;
-    }
+    u->value.vec2 = *v;
+    u->dirty = true;
 }
 void ta_shader_set_vec3(ta_shader *shader, const char *name, const ta_vec3 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC3);
-    if (!vec3_equal(u->value.vec3, *v)) {
-        u->value.vec3 = *v;
-        u->dirty = true;
-    }
+    u->value.vec3 = *v;
+    u->dirty = true;
 }
 void ta_shader_set_vec4(ta_shader *shader, const char *name, const ta_vec4 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC4);
-    if (!vec4_equal(u->value.vec4, *v)) {
-        u->value.vec4 = *v;
-        u->dirty = true;
-    }
+    u->value.vec4 = *v;
+    u->dirty = true;
 }
 void ta_shader_set_mat3(ta_shader *shader, const char *name, const ta_mat3 *m)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT3);
-    if (!mat3_equal(&u->value.mat3, m)) {
-        u->value.mat3 = *m;
-        u->dirty = true;
-    }
+    u->value.mat3 = *m;
+    u->dirty = true;
 }
 void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT4);
-    //u_light->value.mat4 = *m;
-    //u_light->dirty = true;
-    if (!mat4_equal(&u->value.mat4, m)) {
-        u->value.mat4 = *m;
-        u->dirty = true;
-    }
+    u->value.mat4 = *m;
+    u->dirty = true;
 }
 void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_light *light)
 {
@@ -420,10 +399,10 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
     ta_shader_uniform *u_type           = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_TYPE[index],           TA_GLSL_INT);
     ta_shader_uniform *u_direction      = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_DIRECTION[index],      TA_GLSL_VEC3);
     ta_shader_uniform *u_cast_shadows   = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_CAST_SHADOWS[index],   TA_GLSL_BOOL);
-    ta_shader_uniform *u_shadowmap2d    = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP2D[index],    TA_GLSL_SAMPLER2D);
-    ta_shader_uniform *u_shadowmap3d    = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP3D[index],    TA_GLSL_SAMPLER_CUBE);
-    ta_shader_uniform *u_shadowmap_zfar = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP_ZFAR[index], TA_GLSL_FLOAT);
     ta_shader_uniform *u_light_pv       = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_LIGHT_PV[index],       TA_GLSL_MAT4);
+    ta_shader_uniform *u_shadowmap_zfar = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP_ZFAR[index], TA_GLSL_FLOAT);
+    ta_shader_uniform *u_shadowmap_texture_pool_index   = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP_TEXTURE_POOL_INDEX[index],   TA_GLSL_UINT);
+    ta_shader_uniform *u_shadowmap_texture_array_layers = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP_TEXTURE_ARRAY_LAYERS[index], TA_GLSL_UINT_ARRAY);
 
     // Set default values (some are overridden for specific light types below)
     u_intensity->value.glfloat        = light->intensity;
@@ -432,35 +411,46 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
     u_type->value.glint               = light->type;
     u_direction->value.vec3           = VEC3_ZERO;
     u_cast_shadows->value.glbool      = false;
-    u_shadowmap2d->value.sampler_2d   = 0;
-    u_shadowmap3d->value.sampler_cube = 0;
-    u_shadowmap_zfar->value.glfloat   = 0;
     u_light_pv->value.mat4            = MAT4_IDENT;
+    u_shadowmap_zfar->value.glfloat   = 0;
+    u_shadowmap_texture_pool_index->value.gluint         = 0;
+    u_shadowmap_texture_array_layers->value.gluint_array = 0;
 
     // Light type-dependent properties
     switch (light->type) {
         case TA_LIGHT_AMBIENT: {
             break;
         } case TA_LIGHT_DIRECTIONAL: {
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
             u_direction->value.vec3         = ta_light_direction(light);
             u_cast_shadows->value.glbool    = (GLboolean)light->data.directional.cast_shadows;
-            u_shadowmap2d->value.sampler_2d = tex->gl_id;
             u_light_pv->value.mat4          = ta_light_pv(light);
+
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
+            u_shadowmap_texture_pool_index->value.gluint = tex->gl_texture_pool_index;
+            dlb_vec_push(u_shadowmap_texture_array_layers->value.gluint_array, tex->gl_texture_pool_layer);
             break;
         } case TA_LIGHT_POINT: {
             // NOTE: Use sampler_2d and assume that all 6 cubemap face textures are contiguous in the texture pool
             // TODO: We probably need to store pool index and layer rather than just gl_id to figure out "contiguous"
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
             u_cast_shadows->value.glbool    = (GLboolean)light->data.point.cast_shadows;
             u_shadowmap_zfar->value.glfloat = light->data.point.shadow_properties.zfar;
-            u_shadowmap2d->value.sampler_2d = tex->gl_id;
+
+            // NOTE: Assume all textures are in the same pool (asserts)
+            ta_texture *first_tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
+            u_shadowmap_texture_pool_index->value.gluint = first_tex->gl_texture_pool_index;
+            for (int i = 0; i < 6; i++) {
+                ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[i]);
+                dlb_vec_push(u_shadowmap_texture_array_layers->value.gluint_array, tex->gl_texture_pool_layer);
+                DLB_ASSERT(tex->gl_texture_pool_index == u_shadowmap_texture_pool_index->value.gluint);
+            }
             break;
         } case TA_LIGHT_SPOT: {
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
             u_direction->value.vec3         = ta_light_direction(light);
             u_cast_shadows->value.glbool    = (GLboolean)light->data.spot.cast_shadows;
-            u_shadowmap2d->value.sampler_2d = tex->gl_id;
+
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
+            u_shadowmap_texture_pool_index->value.gluint = tex->gl_texture_pool_index;
+            dlb_vec_push(u_shadowmap_texture_array_layers->value.gluint_array, tex->gl_texture_pool_layer);
             DLB_ASSERT(!"Don't handle spot lights yet");
             break;
         } default: {
@@ -476,10 +466,10 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
     u_type->dirty = true;
     u_direction->dirty = true;
     u_cast_shadows->dirty = true;
-    u_shadowmap2d->dirty = true;
-    u_shadowmap3d->dirty = true;
-    u_shadowmap_zfar->dirty = true;
     u_light_pv->dirty = true;
+    u_shadowmap_zfar->dirty = true;
+    u_shadowmap_texture_pool_index->dirty = true;
+    u_shadowmap_texture_array_layers->dirty = true;
 }
 void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *material)
 {
@@ -612,6 +602,9 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
             } case TA_GLSL_UINT: {
                 glUniform1ui(u->location, u->value.gluint);
                 break;
+            } case TA_GLSL_UINT_ARRAY: {
+                glUniform1uiv(u->location, (GLsizei)dlb_vec_len(u->value.gluint_array), u->value.gluint_array);
+                break;
             } case TA_GLSL_FLOAT: {
                 glUniform1f(u->location, u->value.glfloat);
                 break;
@@ -624,8 +617,8 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
                     (*tex_count)++;
                 }
                 break;
-            } case TA_GLSL_SAMPLER2D_ARRAY: {
-                GLuint tex_id = u->value.sampler_2d_array;
+            } case TA_GLSL_SAMPLER2DARRAY: {
+                GLuint tex_id = u->value.sampler_2darray;
                 if (tex_id >= 0) {
                     glActiveTexture(GL_TEXTURE0 + *tex_count);
                     glBindTexture(GL_TEXTURE_2D_ARRAY, tex_id);
