@@ -16,6 +16,37 @@
 #include "misc/stb_image.h"
 #pragma warning(pop)
 
+const char *ta_gl_pixels_format_str(GLenum format)
+{
+    const char *result = 0;
+    switch (format) {
+        case GL_DEPTH_COMPONENT: result = "GL_DEPTH_COMPONENT";  break;
+        case GL_RED:             result = "GL_RED";              break;
+        case GL_RGB:             result = "GL_RGB";              break;
+        case GL_RGBA:            result = "GL_RGBA";             break;
+        case GL_BGR:             result = "GL_BGR";              break;
+        case GL_BGRA:            result = "GL_BGRA";             break;
+        default:                 result = "???";                 break;
+    }
+    return result;
+}
+
+const char *ta_gl_pixels_type_str(GLenum type)
+{
+    const char *result = 0;
+    switch (type) {
+        case GL_BYTE:           result = "GL_BYTE";             break;
+        case GL_UNSIGNED_BYTE:  result = "GL_UNSIGNED_BYTE";    break;
+        case GL_SHORT:          result = "GL_SHORT";            break;
+        case GL_UNSIGNED_SHORT: result = "GL_UNSIGNED_SHORT";   break;
+        case GL_INT:            result = "GL_INT";              break;
+        case GL_UNSIGNED_INT:   result = "GL_UNSIGNED_INT";     break;
+        case GL_FLOAT:          result = "GL_FLOAT";            break;
+        default:                result = "???";                 break;
+    }
+    return result;
+}
+
 static void ta_texture_pool_create_and_bind(ta_texture_pool *texture_pool)
 {
     DLB_ASSERT(texture_pool->width);
@@ -89,7 +120,8 @@ void ta_texturing_init(ta_texturing *texturing)
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 1024, 1024, 32, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 2048, 2048, 32, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 4096, 4096, 32, GL_RGBA, GL_UNSIGNED_BYTE);
-    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 4096, 4096, 32, GL_DEPTH_COMPONENT, GL_FLOAT);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 1024, 1024, 18, GL_DEPTH_COMPONENT, GL_FLOAT);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 4096, 4096, 1, GL_DEPTH_COMPONENT, GL_FLOAT);
     ta_texture_pool_unbind();
 
     // TODO: Generate mipmaps whenever we change the array? After we load everything? Hmm..
@@ -135,6 +167,11 @@ static void ta_texturing_add_texture(ta_texturing *texturing, ta_texture *tex)
                 layer++;
             }
             if (found) break;
+
+            // NOTE: The way the code is currently written there could be multiple matching pools, but for now I'm
+            // assuming width/height/format are distinct pools and that if no slot is found in this pool, then no slot
+            // will be found in any pool.
+            DLB_ASSERT(found && "Texture pool has no more free slots, need to resize or reserve a bigger pool");
         }
         index++;
     }

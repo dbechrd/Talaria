@@ -10,7 +10,22 @@ typedef struct ta_texture_pool {
     u32 width;
     u32 height;
     const char **layers;    // vector[layers], if null layer is unused
+
+    // GL_DEPTH_COMPONENT        0x1902 6402
+    // GL_RED                    0x1903 6403
+    // GL_RGB                    0x1907 6407
+    // GL_RGBA                   0x1908 6408
+    // GL_BGR                    0x80E0 32992
+    // GL_BGRA                   0x80E1 32993
     GLenum format;
+
+    // GL_BYTE                   0x1400 5120
+    // GL_UNSIGNED_BYTE          0x1401 5121
+    // GL_SHORT                  0x1402 5122
+    // GL_UNSIGNED_SHORT         0x1403 5123
+    // GL_INT                    0x1404 5124
+    // GL_UNSIGNED_INT           0x1405 5125
+    // GL_FLOAT                  0x1406 5126
     GLenum type;
 
     GLuint gl_id;           // [GL] texture id
@@ -70,6 +85,9 @@ typedef struct ta_texture {
     u32 gl_texture_pool_layer;  // array texture layer
 } ta_texture;
 //#pragma warning(pop)
+
+const char *ta_gl_pixels_format_str (GLenum format);
+const char *ta_gl_pixels_type_str   (GLenum type);
 
 void ta_texturing_init              (ta_texturing *texturing);
 void ta_texture_pool_bind           (ta_texture_pool *texture_pool);

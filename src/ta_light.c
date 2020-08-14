@@ -171,8 +171,11 @@ static void shadowmap_directional_create(ta_light *light)
 {
     ta_log_write(&tg_debug_log, SRC_LIGHT, "shadowmap_directional_create\n");
 
-    ta_game_alloc(RES_TEXTURE, SYM(light->name));
-    ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->name);
+    char tex_name[256] = { 0 };
+    size_t tex_name_len = 0;
+    tex_name_len = snprintf(tex_name, sizeof(tex_name), "#%s_shadowmap", light->name);
+
+    ta_texture *tex = ta_game_alloc(RES_TEXTURE, tex_name, tex_name_len);
     tex->res_type = RES_TEXTURE;
     tex->type = TA_TEXTURE_2D_ARRAY;
     tex->width = light->data.directional.shadow_properties.resolution;
@@ -184,10 +187,13 @@ static void shadowmap_directional_create(ta_light *light)
     tex->gl_filter_min = GL_LINEAR; // GL_NEAREST;
     tex->gl_filter_mag = GL_LINEAR; // GL_NEAREST;
     ta_texture_init(tex);
-    ta_texture_bind(tex);
+
+    light->data.directional.shadow_map = tex->name;
 
     GLenum target = ta_texture_target(tex);
     ta_texture_pool *pool = ta_texture_texture_pool(tex);
+
+    ta_texture_bind(tex);
 
     // TODO: Specify wrap mode as part of texture params, not sure if border
     // mode/color is worth refactoring out though.
@@ -225,34 +231,48 @@ static void shadowmap_point_create(ta_light *light)
 {
     ta_log_write(&tg_debug_log, SRC_LIGHT, "shadowmap_point_create\n");
 
-    // TODO: Create 6 textures of the same size/type
+    // Create 6 textures of the same size/type
+    char tex_name[256] = { 0 };
+    size_t tex_name_len = 0;
+    const char *face_names[6] = { "+X", "-X", "+Y", "-Y", "+Z", "-Z" };
 
-    ta_game_alloc(RES_TEXTURE, SYM(light->name));
-    ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->name);
-    tex->res_type = RES_TEXTURE;
-    tex->type = TA_TEXTURE_2D_ARRAY;
-    tex->width = light->data.point.shadow_properties.resolution;
-    tex->height = light->data.point.shadow_properties.resolution;
-    tex->gl_filter_min = GL_LINEAR; // GL_NEAREST;
-    tex->gl_filter_mag = GL_LINEAR; // GL_NEAREST;
-    ta_texture_init(tex);
-    ta_texture_bind(tex);
+    for (int face = 0; face < 6; ++face) {
+        tex_name_len = snprintf(tex_name, sizeof(tex_name), "#%s_shadowmap%s", light->name, face_names[face]);
 
+        ta_texture *tex = ta_game_alloc(RES_TEXTURE, tex_name, tex_name_len);
+        tex->res_type = RES_TEXTURE;
+        tex->type = TA_TEXTURE_2D_ARRAY;
+        tex->width = light->data.point.shadow_properties.resolution;
+        tex->height = light->data.point.shadow_properties.resolution;
+        tex->channels = 1;
+        tex->pixels_format = GL_DEPTH_COMPONENT;
+        tex->pixels_type = GL_FLOAT;
+        tex->gl_internal_format = GL_DEPTH_COMPONENT;
+        tex->gl_filter_min = GL_LINEAR; // GL_NEAREST;
+        tex->gl_filter_mag = GL_LINEAR; // GL_NEAREST;
+        ta_texture_init(tex);
+
+        light->data.point.shadow_map.textures[face] = tex->name;
+    }
+
+    ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
     GLenum target = ta_texture_target(tex);
     ta_texture_pool *pool = ta_texture_texture_pool(tex);
 
-    ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
-    for (int i = 0; i < 6; ++i) {
-        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, tex->width, tex->height, 0,
-            GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    }
+    ta_texture_bind(tex);
+
+    //ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
+    //for (int i = 0; i < 6; ++i) {
+    //    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_DEPTH_COMPONENT, tex->width, tex->height, 0,
+    //        GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    //}
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
     glGenFramebuffers(1, &light->data.point.framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, light->data.point.framebuffer);
     // TODO: Set frame buffer texture 6 times during render pass, or have 6 framebuffers
     //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex->gl_id, 0);
-    glFramebufferTexture3D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, target, pool->gl_id, 0, tex->gl_texture_pool_layer);
+    glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, pool->gl_id, 0, tex->gl_texture_pool_layer);
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
@@ -397,7 +417,8 @@ static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
 
     for (int face = 0; face < 6; ++face) {
         ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[face]);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, tex->gl_id, 0);
+        ta_texture_pool *tex_pool = ta_texture_texture_pool(tex);
+        glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex_pool->gl_id, 0, tex->gl_texture_pool_layer);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
         if (status != GL_FRAMEBUFFER_COMPLETE) {

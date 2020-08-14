@@ -1845,22 +1845,28 @@ static void ui_texture_panel()
 #endif
         }
         if (ta_ui_last_state().hover) {
-            char tex_buf[256] = { 0 };
+            char tex_buf[512] = { 0 };
             size_t len = snprintf(tex_buf, sizeof(tex_buf),
-                "name    : %s\n"
-                "width   : %u\n"
-                "height  : %u\n"
-                "channels: %u\n"
-                "type    : %s\n"
-                "path    : %s\n"
-                "gl_pool : %u\n"
-                "gl_layer: %u",
+                "name               : %s\n"
+                "type               : %s\n"
+                "path               : %s\n"
+                "width              : %u\n"
+                "height             : %u\n"
+                "channels           : %u\n"
+                "pixels_format      : %-18s (0x%4x / %5u)\n"
+                "pixels_type        : %-18s (0x%4x / %5u)\n"
+                "gl_internal_format : %-18s (0x%4x / %5u)\n"
+                "gl_pool            : %u\n"
+                "gl_layer           : %u",
                 texture->name,
+                ta_texture_type_str(texture->type),
+                texture->path,
                 texture->width,
                 texture->height,
                 (u32)texture->channels,
-                ta_texture_type_str(texture->type),
-                texture->path,
+                ta_gl_pixels_format_str(texture->pixels_format), texture->pixels_format, texture->pixels_format,
+                ta_gl_pixels_type_str(texture->pixels_type), texture->pixels_type, texture->pixels_type,
+                ta_gl_pixels_format_str(texture->gl_internal_format), texture->gl_internal_format, texture->gl_internal_format,
                 texture->gl_texture_pool_index,
                 texture->gl_texture_pool_layer);
             DLB_ASSERT(len < sizeof(tex_buf));
