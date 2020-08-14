@@ -142,6 +142,7 @@ vec2 ParallaxMapping(sampler2D heightmap, vec2 texCoords, vec3 viewDir);
 float DistributionGGX(vec3 N, vec3 H, float roughness);
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness);
 vec3 FresnelSchlick(float cosTheta, vec3 F0);
+vec3 convert_xyz_to_cube_uv(vec3 uvw);
 
 void main()
 {
@@ -271,13 +272,15 @@ void main()
 
                                 /////////////////////////////////////////////////////////////////////////////////////
                                 // TODO: Need to convert 3D sample direction to UV coords and face index
-							    //vec3 ss_offset = vec3(x, y, z) * 0.004 * dist;
-                                vec2 sample_uv = -fragToLight.xy;
-                                int sample_face = 0;
+							    vec3 ss_offset = vec3(x, y, z) * 0.004 * dist;
+                                vec3 sample_uvw = -fragToLight + ss_offset;
 
-							    vec2 ss_offset = vec2(x, y) * 0.004 * dist;
+                                vec3 uv_face = convert_xyz_to_cube_uv(sample_uvw);
+                                vec2 sample_uv = uv_face.xy;
+                                int sample_face = int(uv_face.z);
+
                                 float ss_depth = texture(u_textures[u_lights[i].shadowmap_texture_pool_index],
-                                    vec3(sample_uv + ss_offset, u_lights[i].shadowmap_texture_array_layers[sample_face])).r;
+                                    vec3(sample_uv, u_lights[i].shadowmap_texture_array_layers[sample_face])).r;
                                 /////////////////////////////////////////////////////////////////////////////////////
 
 							    ss_depth *= u_lights[i].shadowmap_zfar;
@@ -481,4 +484,87 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 vec3 FresnelSchlick(float cosTheta, vec3 F0)
 {
     return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+// https://en.wikipedia.org/wiki/Cube_mapping#Memory_addressing
+// returns u, v, face as vec
+vec3 convert_xyz_to_cube_uv(vec3 uvw)
+{
+    vec3 uv_face;
+
+    float absX = abs(uvw.x);
+    float absY = abs(uvw.y);
+    float absZ = abs(uvw.z);
+
+    bool isXPositive = uvw.x > 0;
+    bool isYPositive = uvw.y > 0;
+    bool isZPositive = uvw.z > 0;
+
+    float maxAxis, uc, vc;
+    int index = 0;
+
+    // POSITIVE X
+    if (isXPositive && absX >= absY && absX >= absZ) {
+        // u (0 to 1) goes from +z to -z
+        // v (0 to 1) goes from -y to +y
+        maxAxis = absX;
+        uc = -uvw.z;
+        vc = uvw.y;
+        index = 0;
+    }
+    // NEGATIVE X
+    if (!isXPositive && absX >= absY && absX >= absZ) {
+        // u (0 to 1) goes from -z to +z
+        // v (0 to 1) goes from -y to +y
+        maxAxis = absX;
+        uc = uvw.z;
+        vc = uvw.y;
+        index = 1;
+    }
+    // POSITIVE Y
+    if (isYPositive && absY >= absX && absY >= absZ) {
+        // u (0 to 1) goes from -x to +x
+        // v (0 to 1) goes from +z to -z
+        maxAxis = absY;
+        uc = uvw.x;
+        vc = -uvw.z;
+        index = 2;
+    }
+    // NEGATIVE Y
+    if (!isYPositive && absY >= absX && absY >= absZ) {
+        // u (0 to 1) goes from -x to +x
+        // v (0 to 1) goes from -z to +z
+        maxAxis = absY;
+        uc = uvw.x;
+        vc = uvw.z;
+        index = 3;
+    }
+    // POSITIVE Z
+    if (isZPositive && absZ >= absX && absZ >= absY) {
+        // u (0 to 1) goes from -x to +x
+        // v (0 to 1) goes from -y to +y
+        maxAxis = absZ;
+        uc = uvw.x;
+        vc = uvw.y;
+        index = 4;
+    }
+    // NEGATIVE Z
+    if (!isZPositive && absZ >= absX && absZ >= absY) {
+        // u (0 to 1) goes from +x to -x
+        // v (0 to 1) goes from -y to +y
+        maxAxis = absZ;
+        uc = -uvw.x;
+        vc = uvw.y;
+        index = 5;
+    }
+
+    // Convert range from -1 to 1 to 0 to 1
+    uv_face.x = 0.5 * (uc / maxAxis + 1.0);
+    uv_face.y = 0.5 * (vc / maxAxis + 1.0);
+    uv_face.z = index;
+
+    // NOTE: Our UV coords are upside down
+    uv_face.y = 1.0 - uv_face.y;
+
+    return uv_face;
 }
