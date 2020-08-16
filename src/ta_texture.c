@@ -259,7 +259,7 @@ GLenum ta_texture_target(ta_texture *tex)
     GLenum target = 0;
     switch (tex->type) {
         //case TA_TEXTURE_2D:       target = GL_TEXTURE_2D;       break;  // 3553
-        case TA_TEXTURE_2D_ARRAY: target = GL_TEXTURE_2D_ARRAY; break;  // 35966
+        case TA_TEXTURE_2D_ARRAY: target = GL_TEXTURE_2D_ARRAY; break;  // 35866
         //case TA_TEXTURE_CUBEMAP:  target = GL_TEXTURE_CUBE_MAP; break;  // 34067
         default: DLB_ASSERT(!"Invalid texture type");
     }

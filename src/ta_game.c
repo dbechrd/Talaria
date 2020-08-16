@@ -839,14 +839,42 @@ static void game_simulate(ta_camera *active_camera, float dt)
 }
 static void game_render_skybox()
 {
-    ta_texture *skybox = ta_game_by_name_try(RES_CUBEMAP, SYM(INTERN("miramar_skybox")));
+    ta_cubemap *skybox = ta_game_by_name_try(RES_CUBEMAP, SYM(INTERN("miramar_skybox")));
     if (skybox) {
         ta_camera *camera = ta_game_camera();
         ta_shader *shader = ta_game_by_name(RES_SHADER, SYM(INTERN("skybox")));
         ta_mesh *mesh = ta_game_by_name(RES_MESH, SYM(INTERN("prim_skybox")));
-        ta_shader_set_sampler_cube(shader, SYM_U_TEX, skybox->gl_id);
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->frustum);
+        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[0], tg_game.texturing.texture_pools[0].gl_id);
+        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[1], tg_game.texturing.texture_pools[1].gl_id);
+        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[2], tg_game.texturing.texture_pools[2].gl_id);
+        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[3], tg_game.texturing.texture_pools[3].gl_id);
+        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[4], tg_game.texturing.texture_pools[4].gl_id);
+        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[5], tg_game.texturing.texture_pools[5].gl_id);
+        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[6], tg_game.texturing.texture_pools[6].gl_id);
+        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[7], tg_game.texturing.texture_pools[7].gl_id);
+
+        // NOTE: Assume all textures are in the same pool (asserts)
+        ta_texture *first_tex = ta_game_by_sym(RES_TEXTURE, skybox->textures[0]);
+        GLuint *layers = 0;
+        for (int i = 0; i < 6; i++) {
+            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, skybox->textures[i]);
+            dlb_vec_push(layers, tex->gl_texture_pool_layer);
+            DLB_ASSERT(tex->gl_texture_pool_index == first_tex->gl_texture_pool_index);
+        }
+        ta_shader_set_uint(shader, SYM_U_TEXTURE_POOL_INDEX, first_tex->gl_texture_pool_index);
+        ta_shader_set_uint_array(shader, SYM_U_TEXTURE_ARRAY_LAYERS, layers);
+
+        //ta_shader_set_sampler_cube(shader, SYM_U_TEX, skybox->gl_id);
+
+        ta_texture_pool *pool = ta_texture_texture_pool(first_tex);
+        ta_texture_pool_bind(pool);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, first_tex->gl_filter_min);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, first_tex->gl_filter_mag);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        ta_texture_pool_unbind();
 
         glDisable(GL_CULL_FACE);
         glDepthMask(GL_FALSE);
@@ -855,6 +883,13 @@ static void game_render_skybox()
         ta_shader_unbind();
         glDepthMask(GL_TRUE);
         glEnable(GL_CULL_FACE);
+
+        ta_texture_pool_bind(pool);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        ta_texture_pool_unbind();
     }
 }
 static void game_render_manifolds_debug()
@@ -1115,6 +1150,7 @@ void ta_game_loop()
         // Render models
         // TODO: Group by shader / material to minimize redundant uniform calls
         ta_shader *mesh_shader = ta_game_by_name(RES_SHADER, CSTR("mesh"));
+        // TODO: This doesn't have to be called every frame.. it never changes. Right?
         ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[0], tg_game.texturing.texture_pools[0].gl_id);
         ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[1], tg_game.texturing.texture_pools[1].gl_id);
         ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[2], tg_game.texturing.texture_pools[2].gl_id);

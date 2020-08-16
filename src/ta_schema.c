@@ -447,22 +447,24 @@ void ta_schema_register()
     TYPE_END    (ta_shader);
 
     TYPE_START      (ta_texture, TYP_TEXTURE, ta_texture_init_void, ta_texture_free_void);
-    TYPE_FIELD      (ta_texture, name,          ATOM_STRING);
-    TYPE_UNION_TYPE (ta_texture, type,          ATOM_ENUM, ta_texture_type_str);
-    TYPE_FIELD      (ta_texture, path,          ATOM_STRING);
-    TYPE_FIELD      (ta_texture, width,         ATOM_INT);
-    TYPE_FIELD      (ta_texture, height,        ATOM_INT);
-    TYPE_FIELD      (ta_texture, channels,      ATOM_INT);
-    TYPE_FIELD      (ta_texture, pixels_format, ATOM_UINT);
-    TYPE_FIELD      (ta_texture, pixels_type,   ATOM_UINT);
-    TYPE_VECTOR     (ta_texture, pixels,        ATOM_UINT8);
-    TYPE_FIELD      (ta_texture, gl_filter_min, ATOM_INT);
-    TYPE_FIELD      (ta_texture, gl_filter_mag, ATOM_INT);
+    TYPE_FIELD      (ta_texture, name,               ATOM_STRING);
+    TYPE_UNION_TYPE (ta_texture, type,               ATOM_ENUM, ta_texture_type_str);
+    TYPE_FIELD      (ta_texture, path,               ATOM_STRING);
+    TYPE_FIELD      (ta_texture, width,              ATOM_INT);
+    TYPE_FIELD      (ta_texture, height,             ATOM_INT);
+    TYPE_FIELD      (ta_texture, channels,           ATOM_INT);
+    TYPE_FIELD      (ta_texture, pixels_format,      ATOM_UINT);
+    TYPE_FIELD      (ta_texture, pixels_type,        ATOM_UINT);
+    TYPE_VECTOR     (ta_texture, pixels,             ATOM_UINT8);
+    TYPE_FIELD      (ta_texture, gl_internal_format, ATOM_UINT);
+    TYPE_FIELD      (ta_texture, gl_filter_min,      ATOM_INT);
+    TYPE_FIELD      (ta_texture, gl_filter_mag,      ATOM_INT);
     TYPE_END        (ta_texture);
 
     TYPE_START  (ta_cubemap, TYP_CUBEMAP, 0, 0);
     TYPE_FIELD  (ta_cubemap, name,     ATOM_STRING);
     TYPE_ARRAY  (ta_cubemap, textures, ATOM_STRING, 6);
+    TYPE_END    (ta_cubemap);
 
     TYPE_START  (ta_animation, TYP_ANIMATION, 0, ta_animation_free_void);
     TYPE_FIELD  (ta_animation, name,     ATOM_STRING);

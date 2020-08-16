@@ -722,7 +722,7 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  mass: 0x3E1999C9 (0.150001)
+  mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "rock_0001"
   entity: "rock_0001"
@@ -1182,7 +1182,7 @@ ta_shader:
       type: 1,  # TA_GLSL_UINT
     },
     {
-      name: "u_texture_pool_layer",
+      name: "u_texture_array_layer",
       type: 1,  # TA_GLSL_UINT
     },
   ]
@@ -1278,8 +1278,44 @@ ta_shader:
       type: 8,  # TA_GLSL_MAT4
     },
     {
-      name: "u_tex",
-      type: 10,  # TA_GLSL_SAMPLER_CUBE
+      name: "u_textures[0]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[1]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[2]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[3]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[4]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[5]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[6]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[7]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_texture_pool_index",
+      type: 1,  # TA_GLSL_UINT
+    },
+    {
+      name: "u_texture_array_layers",
+      type: 13,  # TA_GLSL_UINT_ARRAY
     },
   ]
 ta_shader:
@@ -2139,8 +2175,8 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
 ta_texture:
   name: "data/texture/miramar_lf.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
@@ -2148,8 +2184,8 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
 ta_texture:
   name: "data/texture/miramar_dn.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
@@ -2157,8 +2193,8 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
 ta_texture:
   name: "data/texture/miramar_up.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
@@ -2166,8 +2202,8 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
 ta_texture:
   name: "data/texture/miramar_ft.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
@@ -2175,8 +2211,8 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
 ta_texture:
   name: "data/texture/miramar_bk.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
@@ -2184,8 +2220,21 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
+#-------------------------------------------------------------------------------
+# TYP_CUBEMAP
+#-------------------------------------------------------------------------------
+ta_cubemap:
+  name: "miramar_skybox"
+  textures: [
+    "data/texture/miramar_rt.tga",
+    "data/texture/miramar_lf.tga",
+    "data/texture/miramar_up.tga",
+    "data/texture/miramar_dn.tga",
+    "data/texture/miramar_bk.tga",
+    "data/texture/miramar_ft.tga",
+  ]
 #-------------------------------------------------------------------------------
 # TYP_ANIMATION
 #-------------------------------------------------------------------------------

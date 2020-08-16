@@ -79,6 +79,12 @@ static void console_cmd_log(char **history)
     UNUSED(history);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Log command says: '%s'.\n", "It Works!");
 }
+static void console_cmd_jesza(char **history)
+{
+    console_history_push(history, CSTR("$$$ CASH MONEY $$$\n"));
+    console_history_push(history, CSTR("$$$ CASH MONEY $$$\n"));
+    console_history_push(history, CSTR("$$$ CASH MONEY $$$"));
+}
 static void console_cmd_unknown(char **history)
 {
     console_history_push(history, CSTR("Unknown command"));
@@ -92,14 +98,15 @@ static console_cmd_type console_exec(char **history, char *command)
         void (*handler)(char **history);
         bool newline;
     } commands[CONSOLE_CMD_COUNT] = {
-        [CONSOLE_CMD_EXIT]    = { CSTR0("exit"),  console_cmd_clear,   false },
-        [CONSOLE_CMD_CLEAR]   = { CSTR0("clear"), console_cmd_clear,   false },
-        [CONSOLE_CMD_MOTD]    = { CSTR0("motd"),  console_cmd_motd,    true },
-        [CONSOLE_CMD_LIFE]    = { CSTR0("42"),    console_cmd_42,      true },
-        [CONSOLE_CMD_PING]    = { CSTR0("ping"),  console_cmd_ping,    true },
-        [CONSOLE_CMD_CAT]     = { CSTR0("cat"),   console_cmd_cat,     true },
-        [CONSOLE_CMD_LOG]     = { CSTR0("log"),   console_cmd_log,     true },
-        [CONSOLE_CMD_UNKNOWN] = { 0, 0,           console_cmd_unknown, true }
+        [CONSOLE_CMD_EXIT]    = { CSTR0("exit"),        console_cmd_clear,   false },
+        [CONSOLE_CMD_CLEAR]   = { CSTR0("clear"),       console_cmd_clear,   false },
+        [CONSOLE_CMD_MOTD]    = { CSTR0("motd"),        console_cmd_motd,    true },
+        [CONSOLE_CMD_LIFE]    = { CSTR0("42"),          console_cmd_42,      true },
+        [CONSOLE_CMD_PING]    = { CSTR0("ping"),        console_cmd_ping,    true },
+        [CONSOLE_CMD_CAT]     = { CSTR0("cat"),         console_cmd_cat,     true },
+        [CONSOLE_CMD_LOG]     = { CSTR0("log"),         console_cmd_log,     true },
+        [CONSOLE_CMD_LOG]     = { CSTR0("jesza.exe"),   console_cmd_jesza,   true },
+        [CONSOLE_CMD_UNKNOWN] = { 0, 0,                 console_cmd_unknown, true }
     };
 
     console_history_push(history, CSTR("\n"));

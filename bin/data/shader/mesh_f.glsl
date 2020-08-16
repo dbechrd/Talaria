@@ -92,8 +92,9 @@ uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 #define TA_TEXTURE_POOL_MAX 8
 
 uniform sampler2DArray u_textures[TA_TEXTURE_POOL_MAX];
-// TODO: Use sampler2DArray * 6, map direction into 2D somehow?
-uniform samplerCube u_cubemaps[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+// TODO: Should we just use regular cubemaps? Idk what overhead of the xyz -> cube_uv mapping function is, or what
+// trade-offs there are. If performance is similiar, I'd much rather have just pools of sampler2Ds for simplicity.
+//uniform samplerCube u_cubemaps[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 
 //------------------------------------------------------
 // Camera
@@ -259,7 +260,13 @@ void main()
                 if (u_lights[i].cast_shadows) {
                     shadow_bias = 0.05;
 #if 0
-                    shadow_map_depth = texture(u_lights[i].shadowmap3d, -fragToLight).r;
+                    vec3 sample_uvw = -fragToLight;
+                    vec3 uv_face = convert_xyz_to_cube_uv(sample_uvw);
+                    vec2 sample_uv = uv_face.xy;
+                    int sample_face = int(uv_face.z);
+
+                    shadow_map_depth = texture(u_textures[u_lights[i].shadowmap_texture_pool_index],
+                        vec3(sample_uv, u_lights[i].shadowmap_texture_array_layers[sample_face])).r;
                     shadow_map_depth *= u_lights[i].shadowmap_zfar;
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
 #else
@@ -353,9 +360,11 @@ void main()
     // Gamma correction
     color = pow(color, vec3(1.0 / 2.2));
 
+#if 0
     // Distance-based "fog" (not good.. random hacks heh)
     float cam_dist = length(vertex.tbn_camera_pos - vertex.tbn_position);
     color = mix(color, vec3(0.7), clamp((cam_dist - 10.0)/50.0, 0.0, 0.9));
+#endif
 
     if (u_selected) {
         // TODO: Time-based pulse
@@ -387,7 +396,7 @@ void main()
      // lighting
     //vec4 dbg_shadow0 = vec4(vec3(1.0 - shadows[0]), 1.0);
     //vec4 dbg_shadow1 = vec4(vec3(1.0 - shadows[1]), 1.0);
-    //int light_idx = 1;
+    //int light_idx = 2;
     //final_color = vec4(vec3(1.0 - shadows[light_idx]), 1.0);
     //final_color = vec4(vec3(1.0 - (shadow_map_depths[light_idx] / 30.0f)), 1.0);
     //final_color = vec4(vec3(1.0 - shadow_dists[light_idx] / 40.0f), 1.0);

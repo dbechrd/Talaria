@@ -195,8 +195,8 @@ static void shadowmap_directional_create(ta_light *light)
 
     ta_texture_bind(tex);
 
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
     // TODO: Specify wrap mode as part of texture params, not sure if border
     // mode/color is worth refactoring out though.
     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
@@ -263,8 +263,10 @@ static void shadowmap_point_create(ta_light *light)
 
     ta_texture_bind(tex);
 
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
+    glTexParameteri(target, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
+    glTexParameteri(target, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
+    glTexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     //ta_log_write(&tg_debug_log, SRC_LIGHT, "glTexImage2D\n");
     //for (int i = 0; i < 6; ++i) {

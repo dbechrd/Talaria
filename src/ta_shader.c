@@ -15,20 +15,21 @@ ta_shader *tg_shader_cubemap;
 const char *ta_glsl_type_str(int type)
 {
     switch(type) {
-        case TA_GLSL_BOOL:         return "TA_GLSL_BOOL";
-        case TA_GLSL_INT:          return "TA_GLSL_INT";
-        case TA_GLSL_UINT:         return "TA_GLSL_UINT";
-        case TA_GLSL_FLOAT:        return "TA_GLSL_FLOAT";
-        case TA_GLSL_SAMPLER2D:    return "TA_GLSL_SAMPLER2D";
-        case TA_GLSL_VEC2:         return "TA_GLSL_VEC2";
-        case TA_GLSL_VEC3:         return "TA_GLSL_VEC3";
-        case TA_GLSL_VEC4:         return "TA_GLSL_VEC4";
-        case TA_GLSL_MAT3:         return "TA_GLSL_MAT3";
-        case TA_GLSL_MAT4:         return "TA_GLSL_MAT4";
-        case TA_GLSL_STRUCT:       return "TA_GLSL_STRUCT";
-        case TA_GLSL_SAMPLER_CUBE: return "TA_GLSL_SAMPLER_CUBE";
-        case TA_GLSL_UINT_ARRAY:   return "TA_GLSL_UINT_ARRAY";
-        default: DLB_ASSERT(0);    return "TA_GLSL_???";
+        case TA_GLSL_INT:            return "TA_GLSL_INT";
+        case TA_GLSL_UINT:           return "TA_GLSL_UINT";
+        case TA_GLSL_FLOAT:          return "TA_GLSL_FLOAT";
+        case TA_GLSL_SAMPLER2D:      return "TA_GLSL_SAMPLER2D";
+        case TA_GLSL_VEC2:           return "TA_GLSL_VEC2";
+        case TA_GLSL_VEC3:           return "TA_GLSL_VEC3";
+        case TA_GLSL_VEC4:           return "TA_GLSL_VEC4";
+        case TA_GLSL_MAT3:           return "TA_GLSL_MAT3";
+        case TA_GLSL_MAT4:           return "TA_GLSL_MAT4";
+        case TA_GLSL_STRUCT:         return "TA_GLSL_STRUCT";
+        case TA_GLSL_SAMPLER_CUBE:   return "TA_GLSL_SAMPLER_CUBE";
+        case TA_GLSL_BOOL:           return "TA_GLSL_BOOL";
+        case TA_GLSL_SAMPLER2DARRAY: return "TA_GLSL_SAMPLER2DARRAY";
+        case TA_GLSL_UINT_ARRAY:     return "TA_GLSL_UINT_ARRAY";
+        default: DLB_ASSERT(0);      return "TA_GLSL_???";
     }
 }
 

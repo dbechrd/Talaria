@@ -1526,11 +1526,11 @@ static void ui_render_image(ui_frame *frame)
         ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
         DLB_ASSERT(tex->type == TA_TEXTURE_2D_ARRAY);
         ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_INDEX, tex->gl_texture_pool_index);
-        ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_LAYER, tex->gl_texture_pool_layer);
+        ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_ARRAY_LAYER, tex->gl_texture_pool_layer);
         ta_primitive_push_rect(0, img_rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
         ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
         ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_INDEX, 0);
-        ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_LAYER, 0);
+        ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_ARRAY_LAYER, 0);
     }
 }
 static void ui_render_text(int x, int y, ta_rect_uv *text_rects, ta_rect clip_rect)

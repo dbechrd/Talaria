@@ -88,7 +88,7 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
 
 static void ta_ogx_load_geometry(ogx_geometry *o_geo)
 {
-    // TODO: We shouldn't just be overwriting stuff with the same name if it exists.. remove this once we longer have
+    // TODO: We shouldn't just be overwriting stuff with the same name if it exists.. remove this once we no longer have
     // 3 different loaders running in parallel, heh.
     ta_model *model = ta_game_component_try(o_geo->name, RES_COMP_MODEL);
     if (!model) {

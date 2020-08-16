@@ -78,7 +78,8 @@ const char *SYM_U_SELECTED;
 const char *SYM_U_TEX;
 const char *SYM_U_TEXTURES[8];
 const char *SYM_U_TEXTURE_POOL_INDEX;
-const char *SYM_U_TEXTURE_POOL_LAYER;
+const char *SYM_U_TEXTURE_ARRAY_LAYER;
+const char *SYM_U_TEXTURE_ARRAY_LAYERS;
 const char *SYM_U_VIEW;
 
 // Constants
@@ -238,8 +239,9 @@ void ta_symbol_init() {
     SYM_U_TEXTURES[5] = INTERN("u_textures[5]");
     SYM_U_TEXTURES[6] = INTERN("u_textures[6]");
     SYM_U_TEXTURES[7] = INTERN("u_textures[7]");
-    SYM_U_TEXTURE_POOL_INDEX = INTERN("u_texture_pool_index");
-    SYM_U_TEXTURE_POOL_LAYER = INTERN("u_texture_pool_layer");
+    SYM_U_TEXTURE_POOL_INDEX   = INTERN("u_texture_pool_index");
+    SYM_U_TEXTURE_ARRAY_LAYER  = INTERN("u_texture_array_layer");
+    SYM_U_TEXTURE_ARRAY_LAYERS = INTERN("u_texture_array_layers");
 
     SYM_U_MODEL            = INTERN("u_model");
     SYM_U_MORPH_WEIGHTS[0] = INTERN("u_morph_weights[0]");
