@@ -120,6 +120,10 @@ uniform bool u_selected;
 #define DBG_MTL_METALLIC    9
 #define DBG_MTL_ROUGHNESS   10
 #define DBG_MTL_OCCLUSION   11
+#define DBG_SHADOW_0        12
+#define DBG_SHADOW_1        13
+#define DBG_SHADOW_2        14
+#define DBG_SHADOW_3        15
 uniform int u_debug_channel;
 //------------------------------------------------------
 
@@ -216,7 +220,7 @@ void main()
                 attenuation = u_lights[i].intensity;
 
                 if (u_lights[i].cast_shadows) {
-                    shadow_bias = 0.00001;
+                    shadow_bias = 0.0001;
 #if 0
                     shadow_map_depth = texture(u_lights[i].shadowmap2d, projCoords.st).r;
                     // TODO: Better bias based on direction of light? This code
@@ -231,7 +235,7 @@ void main()
                     float ss_count = 0.0;
 				    for (float x = -1.0; x <= 1.0; x += 1.0) {
 					    for (float y = -1.0; y <= 1.0; y += 1.0) {
-							vec2 ss_offset = vec2(x, y) * 0.001;
+							vec2 ss_offset = vec2(x, y) * 0.0001;
                             float ss_depth = texture(u_textures[u_lights[i].shadowmap_texture_pool_index],
                                 vec3(projCoords.st + ss_offset, u_lights[i].shadowmap_texture_array_layers[0])).r;
 			                shadow += step(ss_depth, dist - ss_bias);
@@ -279,7 +283,7 @@ void main()
 
                                 /////////////////////////////////////////////////////////////////////////////////////
                                 // TODO: Need to convert 3D sample direction to UV coords and face index
-							    vec3 ss_offset = vec3(x, y, z) * 0.004 * dist;
+							    vec3 ss_offset = vec3(x, y, z) * 0.04;
                                 vec3 sample_uvw = -fragToLight + ss_offset;
 
                                 vec3 uv_face = convert_xyz_to_cube_uv(sample_uvw);
@@ -366,11 +370,11 @@ void main()
     color = mix(color, vec3(0.7), clamp((cam_dist - 10.0)/50.0, 0.0, 0.9));
 #endif
 
+#if 0
     if (u_selected) {
         // TODO: Time-based pulse
-        // brighten color
-        color *= vec3(1.5);
     }
+#endif
 
     final_color = vec4(color, mtl_albedo.a);
 
@@ -435,6 +439,18 @@ void main()
             break;
         case DBG_MTL_OCCLUSION:
             final_color = dbg_mtl_occlusion;
+            break;
+        case DBG_SHADOW_0:
+            final_color = vec4(vec3(1.0 - shadows[0]), 1.0);
+            break;
+        case DBG_SHADOW_1:
+            final_color = vec4(vec3(1.0 - shadows[1]), 1.0);
+            break;
+        case DBG_SHADOW_2:
+            final_color = vec4(vec3(1.0 - shadows[2]), 1.0);
+            break;
+        case DBG_SHADOW_3:
+            final_color = vec4(vec3(1.0 - shadows[3]), 1.0);
             break;
     };
 }

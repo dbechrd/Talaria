@@ -79,9 +79,11 @@ typedef struct dml_field {
 #undef DML_DEBUG_SYMBOL
 
 typedef struct dml_document {
-    dml_field *field_pool;  // vector
-    dml_value *value_pool;  // vector
+    const char *filename;
+    dml_field *field_pool;   // vector
+    dml_value *value_pool;   // vector
     size_t root_value_idx;
+    struct ogx_scene *scene; // temp scene we're loading the document into
 } dml_document;
 
 dml_result dml_document_from_file(dml_document *document, const char *filename);

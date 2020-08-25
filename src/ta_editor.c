@@ -646,7 +646,7 @@ void ta_editor_draw_world()
     if (selected_entity) {
         ta_camera *camera = ta_game_camera();
 
-#if 0
+#if 1
         // Render selected entity as yellow wireframes
         ta_model *e_model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
         if (e_model) {
@@ -1684,6 +1684,10 @@ static void ui_camera_panel()
             [DBG_MTL_METALLIC]   = { CSTR("Metallic") },
             [DBG_MTL_ROUGHNESS]  = { CSTR("Roughness") },
             [DBG_MTL_OCCLUSION]  = { CSTR("Occlusion") },
+            [DBG_SHADOW_0]       = { CSTR("Shadow[0]") },
+            [DBG_SHADOW_1]       = { CSTR("Shadow[1]") },
+            [DBG_SHADOW_2]       = { CSTR("Shadow[2]") },
+            [DBG_SHADOW_3]       = { CSTR("Shadow[3]") },
         };
 
         for (size_t mode = 0; mode < ARRAY_SIZE(dbg_modes); ++mode) {

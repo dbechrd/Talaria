@@ -145,13 +145,17 @@ typedef struct ogx_light_node {
     const char *light;
 } ogx_light_node;
 
+#define OGX_INDEX_NULL -1
+
 typedef struct ogx_node {
     ogx_node_type type;
     const char *name;
+    s32 index;      // pool index (scene->nodes)
+    s32 parent;     // parent index
+                       // TODO: Do we need this, or is parent sufficient? I assume we do.
+    s32 *children;  // vector of child indices
     ogx_transform transform;
     ogx_animation *animations;
-    struct ogx_node *parent;    // TODO: Use index (or name), not pointer
-    struct ogx_node *children;  // TODO: Use index (or name), not pointer
     union {
         ogx_bone_node bone;
         ogx_camera_node camera;
@@ -202,7 +206,7 @@ typedef struct ogx_index_array {
 } ogx_index_array;
 
 typedef struct ogx_skeleton {
-    const char **bones;
+    const char **bones;                // i.e. joints
     ogx_vec3 *bind_pose_positions;
     ogx_vec4 *bind_pose_orientations;
 } ogx_skeleton;
@@ -285,6 +289,7 @@ typedef struct ogx_material {
 } ogx_material;
 
 typedef struct ogx_scene {
+    const char *filename;
     ogx_node *nodes;
     ogx_camera *cameras;
     ogx_geometry *geometry;

@@ -1,0 +1,2191 @@
+#-------------------------------------------------------------------------------
+# [SCENE] data/scene/scene.dml
+#-------------------------------------------------------------------------------
+# TYP_AUDIO_SOURCE
+#-------------------------------------------------------------------------------
+ta_audio_source:
+  name: "background_music"
+  entity: "background_music"
+  audio_buffer: "mus_wakeup"
+  pitch: 0x3F800000 (1.000000)
+  gain: 0x41200000 (10.000000)
+ta_audio_source:
+  name: "button_0001"
+  entity: "button_0001"
+  audio_buffer: "sfx_button_deactivated"
+  pitch: 0x3F81C9CD (1.013971)
+  gain: 0x3F800000 (1.000000)
+ta_audio_source:
+  name: "gun"
+  entity: "gun"
+  pitch: 0x3F800000 (1.000000)
+  gain: 0x3F800000 (1.000000)
+ta_audio_source:
+  name: "player_camera"
+  entity: "player_camera"
+  pitch: 0x3F800000 (1.000000)
+  gain: 0x3F800000 (1.000000)
+#-------------------------------------------------------------------------------
+# TYP_BUTTON
+#-------------------------------------------------------------------------------
+ta_e_button:
+  name: "button_0001"
+  entity: "button_0001"
+  sfx_activated: "sfx_button_activated"
+  sfx_deactivated: "sfx_button_deactivated"
+#-------------------------------------------------------------------------------
+# TYP_CAMERA
+#-------------------------------------------------------------------------------
+ta_camera:
+  name: "freecam"
+  entity: "freecam"
+  position_smooth: 0x3DCCCCCD (0.100000)
+  position_target_vel: 0x3E19999A (0.150000)
+  target_xform:
+    position:
+      x: 0x4175793C (15.342098)
+      y: 0x41176CA2 (9.464022)
+      z: 0xC08A336D (-4.318778)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x00000000 (0.000000)
+  yaw: 0x42F0D458 (120.414734)
+  yaw_smooth: 0x3F333333 (0.700000)
+  pitch: 0xC1D8009E (-27.000301)
+  pitch_smooth: 0x3F333333 (0.700000)
+  pitch_min: 0xC2B40000 (-90.000000)
+  pitch_max: 0x42B40000 (90.000000)
+  fov: 0x428C0000 (70.000000)
+  znear: 0x3C23D712 (0.010000)
+  focal_point:
+    x: 0x00800000 (0.000000)
+    y: 0x00800000 (0.000000)
+    z: 0x00800000 (0.000000)
+  up:
+    x: 0xBE6B5A91 (-0.229838)
+    y: 0x3F6418DA (0.891004)
+    z: 0xBEC8750A (-0.391518)
+ta_camera:
+  name: "player_camera"
+  entity: "player_camera"
+  position_smooth: 0x3F000000 (0.500000)
+  position_target_vel: 0x3E4CCCCD (0.200000)
+  target_xform:
+    position:
+      x: 0x401EBF36 (2.480421)
+      y: 0x40DFFF2F (6.999900)
+      z: 0xC0B0A3BC (-5.519987)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x00000000 (0.000000)
+  yaw: 0x428E020C (71.003998)
+  yaw_smooth: 0x3F333333 (0.700000)
+  pitch: 0xC0C999A5 (-6.300005)
+  pitch_smooth: 0x3F333333 (0.700000)
+  pitch_min: 0xC2960000 (-75.000000)
+  pitch_max: 0x42960000 (75.000000)
+  fov: 0x42820000 (65.000000)
+  znear: 0x3DCCCCCD (0.100000)
+  focal_point:
+    x: 0x00800000 (0.000000)
+    y: 0x00800000 (0.000000)
+    z: 0x00800000 (0.000000)
+  up:
+    x: 0x3D124DDE (0.035719)
+    y: 0x3F7E743A (0.993961)
+    z: 0xBDD47F4C (-0.103758)
+#-------------------------------------------------------------------------------
+# TYP_GUN
+#-------------------------------------------------------------------------------
+ta_gun:
+  name: "gun"
+  entity: "gun"
+  carrying_ammo: 20
+  carrying_ammo_max: 20
+  loaded_ammo: 8
+  loaded_ammo_max: 8
+  sfx_bang: "sfx_gunshot"
+  sfx_reload: "sfx_cock"
+  sfx_empty: "sfx_oh_no"
+#-------------------------------------------------------------------------------
+# TYP_LIGHT
+#-------------------------------------------------------------------------------
+ta_light:
+  name: "light_sun"
+  entity: "light_sun"
+  intensity: 0x3FD99A50 (1.700022)
+  color:
+    r: 0x3E3851EC (0.180000)
+    g: 0x3E8F5C2E (0.280000)
+    b: 0x3EB33342 (0.350000)
+  enabled: true
+  type: 1  # TA_LIGHT_DIRECTIONAL
+  directional:
+    cast_shadows: true
+    shadow_properties:
+      shader: "shadow_dir"
+      resolution: 4096
+      znear: 0xC2200000 (-40.000000)
+      zfar: 0x42200000 (40.000000)
+ta_light:
+  name: "light_point_0002"
+  entity: "light_point_0002"
+  intensity: 0x3F800000 (1.000000)
+  color:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+  enabled: false
+  type: 2  # TA_LIGHT_POINT
+  point:
+    cast_shadows: true
+    shadow_properties:
+      shader: "shadow_point"
+      resolution: 1024
+      znear: 0x3DCCCCCD (0.100000)
+      zfar: 0x42C80000 (100.000000)
+ta_light:
+  name: "light_point_0003"
+  entity: "light_point_0003"
+  intensity: 0x3E99999A (0.300000)
+  color:
+    r: 0x3F800000 (1.000000)
+    g: 0x3E4CCCCD (0.200000)
+    b: 0x00000000 (0.000000)
+  enabled: true
+  type: 2  # TA_LIGHT_POINT
+  point:
+    cast_shadows: true
+    shadow_properties:
+      shader: "shadow_point"
+      resolution: 1024
+      znear: 0x3DCCCCCD (0.100000)
+      zfar: 0x42C80000 (100.000000)
+ta_light:
+  name: "light_point_0004"
+  entity: "light_point_0004"
+  intensity: 0x40400009 (3.000002)
+  color:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+  enabled: true
+  type: 2  # TA_LIGHT_POINT
+  point:
+    cast_shadows: true
+    shadow_properties:
+      shader: "shadow_point"
+      resolution: 1024
+      znear: 0x3DCCCCCD (0.100000)
+      zfar: 0x42C80000 (100.000000)
+#-------------------------------------------------------------------------------
+# TYP_MODEL
+#-------------------------------------------------------------------------------
+ta_model:
+  name: "chamber_0001"
+  entity: "chamber_0001"
+  pieces: [
+    {
+      mesh: "chamber_0001",
+      material: "terrazzo",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "wakeup"
+  entity: "wakeup"
+  pieces: [
+    {
+      mesh: "wakeup",
+      material: "cobble",
+    },
+  ]
+  invisible: true
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "player_one"
+  entity: "player_one"
+  pieces: [
+    {
+      mesh: "prim_sphere",
+      material: "metal_plate_019",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "sphere2"
+  entity: "sphere2"
+  pieces: [
+    {
+      mesh: "prim_sphere",
+      material: "red",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "shadow_test_1"
+  entity: "shadow_test_1"
+  pieces: [
+    {
+      mesh: "letter_r",
+      material: "test",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "column_0001"
+  entity: "column_0001"
+  pieces: [
+    {
+      mesh: "column_0001",
+      material: "test",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "column_0002"
+  entity: "column_0002"
+  pieces: [
+    {
+      mesh: "column_0001",
+      material: "test",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "column_0003"
+  entity: "column_0003"
+  pieces: [
+    {
+      mesh: "column_0001",
+      material: "test",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "star_0001"
+  entity: "star_0001"
+  pieces: [
+    {
+      mesh: "star_0001",
+      material: "star_0001",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "rock_0001"
+  entity: "rock_0001"
+  pieces: [
+    {
+      mesh: "#rock_0001.prim000",
+      material: "#rock_0001",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "button_0001"
+  entity: "button_0001"
+  pieces: [
+    {
+      mesh: "#button_0001.prim000",
+      material: "#mat_grid",
+    },
+    {
+      mesh: "#button_0001.prim001",
+      material: "#mat_rainbow",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+ta_model:
+  name: "skeleton_test_1bone"
+  entity: "skeleton_test_1bone"
+  pieces: [
+    {
+      mesh: "#skeleton_test_1bone.prim000",
+      material: "#Material",
+    },
+  ]
+  cast_shadows: true
+  receive_shadows: true
+#-------------------------------------------------------------------------------
+# TYP_PLAYER
+#-------------------------------------------------------------------------------
+ta_player:
+  name: "player_one"
+  entity: "player_one"
+  e_gun: "gun"
+  e_guns: ["gun", ]
+#-------------------------------------------------------------------------------
+# TYP_TRANSFORM
+#-------------------------------------------------------------------------------
+ta_transform:
+  name: "light_sun"
+  entity: "light_sun"
+  xform:
+    position:
+      x: 0x411D14B0 (9.817551)
+      y: 0x418FF00E (17.992214)
+      z: 0xC19B45DF (-19.409117)
+    orientation:
+      x: 0xBE7E7FA2 (-0.248534)
+      y: 0x3ED529FF (0.416336)
+      z: 0x398ED556 (0.000272)
+      w: 0x3F5FE4AC (0.874583)
+ta_transform:
+  name: "light_point_0002"
+  entity: "light_point_0002"
+  xform:
+    position:
+      x: 0xC11D0213 (-9.813006)
+      y: 0x423C7ABF (47.119869)
+      z: 0xC202E11C (-32.719833)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "light_point_0003"
+  entity: "light_point_0003"
+  xform:
+    position:
+      x: 0xBF000000 (-0.500000)
+      y: 0x4006900C (2.102542)
+      z: 0xBF000000 (-0.500000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+  parent: "button_0001"
+ta_transform:
+  name: "light_point_0004"
+  entity: "light_point_0004"
+  xform:
+    position:
+      x: 0x40863ECE (4.195167)
+      y: 0x40FA7554 (7.826822)
+      z: 0xC1E18311 (-28.188997)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "chamber_0001"
+  entity: "chamber_0001"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "chamber_0001_collider_platform_south"
+  entity: "chamber_0001_collider_platform_south"
+  xform:
+    position:
+      x: 0x411FFFFB (9.999995)
+      y: 0x406B851F (3.680000)
+      z: 0x3EA882C4 (0.329123)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "chamber_0001_collider_platform_north"
+  entity: "chamber_0001_collider_platform_north"
+  xform:
+    position:
+      x: 0x411FFFF8 (9.999992)
+      y: 0x406B851F (3.680000)
+      z: 0xC2063336 (-33.550011)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "chamber_0001_collider_lava_pit_floor"
+  entity: "chamber_0001_collider_lava_pit_floor"
+  xform:
+    position:
+      x: 0x41200000 (10.000000)
+      y: 0xBEA5EA74 (-0.324054)
+      z: 0xC197FFF8 (-18.999985)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "wakeup"
+  entity: "wakeup"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x41000000 (8.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "button_0001"
+  entity: "button_0001"
+  xform:
+    position:
+      x: 0x40F95020 (7.791031)
+      y: 0x4080000E (4.000007)
+      z: 0xC0C81484 (-6.252504)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+  children: ["light_point_0003"]
+ta_transform:
+  name: "dude"
+  entity: "dude"
+  xform:
+    position:
+      x: 0x4116DBF1 (9.428697)
+      y: 0xBBA93620 (-0.005164)
+      z: 0xC1A5E3E8 (-20.736282)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "skeleton_test_1bone"
+  entity: "skeleton_test_1bone"
+  xform:
+    position:
+      x: 0x409D85F2 (4.922601)
+      y: 0x40409276 (3.008939)
+      z: 0xC1965D06 (-18.795422)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "gltf_mesh_0001"
+  entity: "gltf_mesh_0001"
+  xform:
+    position:
+      x: 0x40EFD178 (7.494320)
+      y: 0x40409276 (3.008939)
+      z: 0xC1965D06 (-18.795422)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "freecam"
+  entity: "freecam"
+  xform:
+    position:
+      x: 0x41757940 (15.342102)
+      y: 0x41176CA6 (9.464025)
+      z: 0xC08A3372 (-4.318780)
+    orientation:
+      x: 0xBE773313 (-0.241406)
+      y: 0x3E759C28 (0.239854)
+      z: 0x00000000 (0.000000)
+      w: 0x3F70B889 (0.940316)
+ta_transform:
+  name: "player_one"
+  entity: "player_one"
+  xform:
+    position:
+      x: 0x401EBAAE (2.480144)
+      y: 0x409FFF2F (4.999900)
+      z: 0xC0B0A485 (-5.520083)
+    orientation:
+      x: 0xBB9933D1 (-0.004675)
+      y: 0x3F4CF70B (0.800645)
+      z: 0xBEB6266E (-0.355762)
+      w: 0xBEF6D04F (-0.482058)
+ta_transform:
+  name: "player_camera"
+  entity: "player_camera"
+  xform:
+    position:
+      x: 0x401EBDB3 (2.480328)
+      y: 0x40DFFF30 (6.999901)
+      z: 0xC0B0A3FF (-5.520019)
+    orientation:
+      x: 0xBD6431E4 (-0.055712)
+      y: 0xBE28333A (-0.164258)
+      z: 0x80000000 (-0.000000)
+      w: 0x3F7C1EAC (0.984843)
+ta_transform:
+  name: "rock_0001"
+  entity: "rock_0001"
+  xform:
+    position:
+      x: 0x408B46D7 (4.352397)
+      y: 0x4099AAA0 (4.802078)
+      z: 0xC20D8E54 (-35.388992)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "sphere2"
+  entity: "sphere2"
+  xform:
+    position:
+      x: 0x412D335C (10.825039)
+      y: 0x3F7EEFBD (0.995846)
+      z: 0xC189516C (-17.164757)
+    orientation:
+      x: 0x3DFD7BD2 (0.123771)
+      y: 0xBD5043A6 (-0.050846)
+      z: 0xBF237BD6 (-0.638608)
+      w: 0x3F41FFCA (0.757809)
+ta_transform:
+  name: "shadow_test_1"
+  entity: "shadow_test_1"
+  xform:
+    position:
+      x: 0x41862900 (16.770020)
+      y: 0x40366667 (2.850000)
+      z: 0xC132B850 (-11.169998)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0xBF352524 (-0.707598)
+      z: 0x00000000 (0.000000)
+      w: 0x3F34E4BD (0.706615)
+ta_transform:
+  name: "column_0001"
+  entity: "column_0001"
+  xform:
+    position:
+      x: 0x41A900A0 (21.125305)
+      y: 0x407FFE5C (3.999900)
+      z: 0x403BB0C8 (2.932665)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "column_0002"
+  entity: "column_0002"
+  xform:
+    position:
+      x: 0x413E617E (11.898802)
+      y: 0xBF42445B (-0.758856)
+      z: 0xC1494668 (-12.579689)
+    orientation:
+      x: 0x3EE080C2 (0.438482)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F6613D0 (0.898740)
+ta_transform:
+  name: "column_0003"
+  entity: "column_0003"
+  xform:
+    position:
+      x: 0x410C3014 (8.761738)
+      y: 0xBF401D9F (-0.750452)
+      z: 0xC148DFE2 (-12.554659)
+    orientation:
+      x: 0x3EDF7A94 (0.436482)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F665396 (0.899713)
+ta_transform:
+  name: "star_0001"
+  entity: "star_0001"
+  xform:
+    position:
+      x: 0x4181D402 (16.228519)
+      y: 0x3EFDDF7A (0.495846)
+      z: 0xC1B35CF3 (-22.420385)
+    orientation:
+      x: 0x3E41D8C1 (0.189303)
+      y: 0x00000000 (0.000000)
+      z: 0x3E99C6B9 (0.300344)
+      w: 0x3F6F52C9 (0.934857)
+#-------------------------------------------------------------------------------
+# TYP_RIGID_BODY
+#-------------------------------------------------------------------------------
+ta_rigid_body:
+  name: "chamber_0001_collider_platform_south"
+  entity: "chamber_0001_collider_platform_south"
+  collider:
+    type: 2  # TA_COLLIDER_OBB
+    obb:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      extents:
+        x: 0x4148000C (12.500011)
+        y: 0x3EA3D70D (0.320000)
+        z: 0x4108CCDD (8.550015)
+      orientation:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+        w: 0x3F800000 (1.000000)
+  no_gravity: true
+ta_rigid_body:
+  name: "chamber_0001_collider_platform_north"
+  entity: "chamber_0001_collider_platform_north"
+  collider:
+    type: 2  # TA_COLLIDER_OBB
+    obb:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      extents:
+        x: 0x41480002 (12.500002)
+        y: 0x3EA3D70A (0.320000)
+        z: 0x4108CCCD (8.550000)
+      orientation:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+        w: 0x3F800000 (1.000000)
+  no_gravity: true
+ta_rigid_body:
+  name: "chamber_0001_collider_lava_pit_floor"
+  entity: "chamber_0001_collider_lava_pit_floor"
+  collider:
+    type: 2  # TA_COLLIDER_OBB
+    obb:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      extents:
+        x: 0x41480001 (12.500001)
+        y: 0x3EA3D70A (0.320000)
+        z: 0x41380014 (11.500019)
+      orientation:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+        w: 0x3F800000 (1.000000)
+  no_gravity: true
+ta_rigid_body:
+  name: "button_0001"
+  entity: "button_0001"
+  collider:
+    type: 1  # TA_COLLIDER_SPHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x3F199998 (0.600000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F333333 (0.700000)
+  mass: 0x3F800000 (1.000000)
+  trigger: true
+  no_gravity: true
+ta_rigid_body:
+  name: "player_one"
+  entity: "player_one"
+  collider:
+    type: 1  # TA_COLLIDER_SPHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  mass: 0x3E1999C9 (0.150001)
+ta_rigid_body:
+  name: "rock_0001"
+  entity: "rock_0001"
+  collider:
+    type: 2  # TA_COLLIDER_OBB
+    obb:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x3F828F59 (1.020000)
+        z: 0x3DF5C28D (0.120000)
+      extents:
+        x: 0x3FD3332E (1.649999)
+        y: 0x3FC51EB4 (1.539999)
+        z: 0x3FBEB84E (1.490000)
+      orientation:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+        w: 0x3F800000 (1.000000)
+  no_gravity: true
+ta_rigid_body:
+  name: "sphere2"
+  entity: "sphere2"
+  collider:
+    type: 1  # TA_COLLIDER_SPHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  mass: 0x3F800000 (1.000000)
+ta_rigid_body:
+  name: "column_0001"
+  entity: "column_0001"
+  collider:
+    type: 1  # TA_COLLIDER_SPHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x3F800000 (1.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  mass: 0x3F800000 (1.000000)
+ta_rigid_body:
+  name: "column_0002"
+  entity: "column_0002"
+  collider:
+    type: 2  # TA_COLLIDER_OBB
+    obb:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x404CCCC7 (3.199999)
+        z: 0x00000000 (0.000000)
+      extents:
+        x: 0x3F800000 (1.000000)
+        y: 0x404CCCC5 (3.199998)
+        z: 0x3F800000 (1.000000)
+      orientation:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+        w: 0x3F800000 (1.000000)
+ta_rigid_body:
+  name: "column_0003"
+  entity: "column_0003"
+  collider:
+    type: 2  # TA_COLLIDER_OBB
+    obb:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x404CCCCD (3.200000)
+        z: 0x00000000 (0.000000)
+      extents:
+        x: 0x3F800000 (1.000000)
+        y: 0x404CCCCD (3.200000)
+        z: 0x3F800000 (1.000000)
+      orientation:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+        w: 0x3F800000 (1.000000)
+ta_rigid_body:
+  name: "star_0001"
+  entity: "star_0001"
+  collider:
+    type: 1  # TA_COLLIDER_SPHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F000000 (0.500000)
+  mass: 0x3E4CCCCD (0.200000)
+#-------------------------------------------------------------------------------
+# TYP_AUDIO_BUFFER
+#-------------------------------------------------------------------------------
+ta_audio_buffer:
+  name: "mus_wakeup"
+  path: "data/music/wakeup.raw"
+ta_audio_buffer:
+  name: "mus_genesis"
+  path: "data/music/genesis.raw"
+ta_audio_buffer:
+  name: "mus_overture"
+  path: "data/music/william_tell_overture.raw"
+ta_audio_buffer:
+  name: "mus_cello"
+  path: "data/music/kevin_olusola_beatbox_cello.raw"
+ta_audio_buffer:
+  name: "sfx_button_activated"
+  path: "data/sfx/button_activated.raw"
+ta_audio_buffer:
+  name: "sfx_button_deactivated"
+  path: "data/sfx/button_deactivated.raw"
+ta_audio_buffer:
+  name: "sfx_cock"
+  path: "data/sfx/cock.raw"
+ta_audio_buffer:
+  name: "sfx_gunshot"
+  path: "data/sfx/gunshot.raw"
+ta_audio_buffer:
+  name: "sfx_oh_no"
+  path: "data/sfx/oh_no.raw"
+ta_audio_buffer:
+  name: "sfx_explosion"
+  path: "data/sfx/explosion.raw"
+#-------------------------------------------------------------------------------
+# TYP_FONT
+#-------------------------------------------------------------------------------
+ta_font:
+  name: "data/font/UbuntuMono-Regular.ttf"
+  path: "data/font/UbuntuMono-Regular.ttf"
+  pixel_height: 0x41800000 (16.000000)
+  shader: "text"
+ta_font:
+  name: "data/font/LexendDeca-Regular.ttf"
+  path: "data/font/LexendDeca-Regular.ttf"
+  pixel_height: 0x41900000 (18.000000)
+  shader: "text"
+#-------------------------------------------------------------------------------
+# TYP_MATERIAL
+#-------------------------------------------------------------------------------
+ta_material:
+  name: "material_unknown"
+  shader: "mesh"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x3F4CCCCD (0.800000)
+    g: 0x3E4CCCCD (0.200000)
+    b: 0x3F4CCCCD (0.800000)
+  metallic_factor: 0x3F000000 (0.500000)
+  roughness_factor: 0x3F800000 (1.000000)
+ta_material:
+  name: "red"
+  shader: "mesh"
+  albedo_texture: "red_albedo"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x3E4CCCCD (0.200000)
+    g: 0x3F19999A (0.600000)
+    b: 0x3E4CCCCD (0.200000)
+  metallic_factor: 0x3F000000 (0.500000)
+  roughness_factor: 0x3F800000 (1.000000)
+ta_material:
+  name: "test"
+  shader: "mesh"
+  albedo_texture: "white_albedo"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  metallic_factor: 0x3F800000 (1.000000)
+  roughness_factor: 0x3F000000 (0.500000)
+ta_material:
+  name: "cobble"
+  shader: "mesh"
+  albedo_texture: "data/texture/cobble_albedo.tga"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  metallic_factor: 0x3F800000 (1.000000)
+  roughness_texture: "data/texture/cobble_roughness.tga"
+  roughness_factor: 0x3F800000 (1.000000)
+  normal_texture: "data/texture/cobble_normal.tga"
+  occlusion_texture: "data/texture/cobble_occlusion.tga"
+ta_material:
+  name: "terrazzo"
+  shader: "mesh"
+  albedo_texture: "data/texture/Terrazzo_Tiles_001_albedo.tga"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  roughness_texture: "data/texture/Terrazzo_Tiles_001_roughness.tga"
+  roughness_factor: 0x3F800000 (1.000000)
+  height_texture: "data/texture/Terrazzo_Tiles_001_height.tga"
+  height_factor: 0x3C23D70A (0.010000)
+  normal_texture: "data/texture/Terrazzo_Tiles_001_normal.tga"
+  occlusion_texture: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
+ta_material:
+  name: "metal_plate_019"
+  shader: "mesh"
+  albedo_texture: "data/texture/Metal_Plate_019_albedo.tga"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  metallic_texture: "data/texture/Metal_Plate_019_metallic.tga"
+  metallic_factor: 0x3F800000 (1.000000)
+  roughness_texture: "data/texture/Metal_Plate_019_roughness.tga"
+  roughness_factor: 0x3F800000 (1.000000)
+  height_texture: "data/texture/Metal_Plate_019_height.tga"
+  height_factor: 0x3CA3D70A (0.020000)
+  normal_texture: "data/texture/Metal_Plate_019_normal.tga"
+  occlusion_texture: "data/texture/Metal_Plate_019_occlusion.tga"
+ta_material:
+  name: "acoustic_foam"
+  shader: "mesh"
+  albedo_texture: "data/texture/Acoustic_Foam_001_albedo.tga"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  metallic_factor: 0x3F800000 (1.000000)
+  roughness_texture: "data/texture/Acoustic_Foam_001_roughness.tga"
+  roughness_factor: 0x3F800000 (1.000000)
+  height_texture: "data/texture/Acoustic_Foam_001_height.tga"
+  height_factor: 0x3CA3D70A (0.020000)
+  normal_texture: "data/texture/Acoustic_Foam_001_normal.tga"
+  occlusion_texture: "data/texture/Acoustic_Foam_001_occlusion.tga"
+ta_material:
+  name: "column_0001"
+  shader: "mesh"
+  albedo_texture: "red_albedo"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  metallic_factor: 0x3F800000 (1.000000)
+  roughness_factor: 0x3F800000 (1.000000)
+ta_material:
+  name: "star_0001"
+  shader: "mesh"
+  albedo_texture: "data/texture/star_albedo.tga"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  roughness_factor: 0x3F000000 (0.500000)
+#-------------------------------------------------------------------------------
+# TYP_MESH
+#-------------------------------------------------------------------------------
+ta_mesh:
+  name: "prim_unknown"
+  path: "data/mesh/prim_unknown.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "prim_cube"
+  path: "data/mesh/prim_cube.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "prim_sphere"
+  path: "data/mesh/prim_sphere.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "prim_skybox"
+  path: "data/mesh/prim_skybox.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "chamber_0001"
+  path: "data/mesh/chamber_punt.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "wakeup"
+  path: "data/mesh/wakeup.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "letter_r"
+  path: "data/mesh/letter_r.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "column_0001"
+  path: "data/mesh/column_0001.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+ta_mesh:
+  name: "star_0001"
+  path: "data/mesh/star.obj"
+  offset:
+    x: 0x00000000 (0.000000)
+    y: 0x00000000 (0.000000)
+    z: 0x00000000 (0.000000)
+#-------------------------------------------------------------------------------
+# TYP_SHADER
+#-------------------------------------------------------------------------------
+ta_shader:
+  name: "lines"
+  path_vert: "data/shader/lines_v.glsl"
+  path_frag: "data/shader/lines_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_color",
+      type: 6,  # TA_GLSL_VEC4
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+  ]
+ta_shader:
+  name: "quads"
+  path_vert: "data/shader/quads_v.glsl"
+  path_frag: "data/shader/quads_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_color",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_uv",
+      type: 4,  # TA_GLSL_VEC2
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_textures[0]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[1]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[2]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[3]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[4]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[5]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[6]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[7]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_texture_pool_index",
+      type: 1,  # TA_GLSL_UINT
+    },
+    {
+      name: "u_texture_pool_layer",
+      type: 1,  # TA_GLSL_UINT
+    },
+  ]
+ta_shader:
+  name: "text"
+  path_vert: "data/shader/text_v.glsl"
+  path_frag: "data/shader/text_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_color",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_uv",
+      type: 4,  # TA_GLSL_VEC2
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_tex",
+      type: 3,  # TA_GLSL_SAMPLER2D
+    },
+  ]
+ta_shader:
+  name: "cubemap"
+  path_vert: "data/shader/cubemap_v.glsl"
+  path_frag: "data/shader/cubemap_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_uv",
+      type: 4,  # TA_GLSL_VEC2
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_face",
+      type: 0,  # TA_GLSL_INT
+    },
+    {
+      name: "u_tex",
+      type: 10,  # TA_GLSL_SAMPLER_CUBE
+    },
+  ]
+ta_shader:
+  name: "skybox"
+  path_vert: "data/shader/skybox_v.glsl"
+  path_frag: "data/shader/skybox_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_tex",
+      type: 10,  # TA_GLSL_SAMPLER_CUBE
+    },
+  ]
+ta_shader:
+  name: "mesh"
+  path_vert: "data/shader/mesh_v.glsl"
+  path_frag: "data/shader/mesh_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_color",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_uv",
+      type: 4,  # TA_GLSL_VEC2
+    },
+    {
+      name: "attr_normal",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_tangent",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_morph0_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_morph0_color",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_morph0_uv",
+      type: 4,  # TA_GLSL_VEC2
+    },
+    {
+      name: "attr_morph0_normal",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_morph0_tangent",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_joints",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_weights",
+      type: 6,  # TA_GLSL_VEC4
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_morph_weights[0]",
+      type: 2,  # TA_GLSL_FLOAT
+    },
+    {
+      name: "u_proj",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_view",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_camera_pos",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "u_lights_count",
+      type: 0,  # TA_GLSL_INT
+    },
+    {
+      name: "u_lights",
+      type: 9,  # TA_GLSL_STRUCT
+      properties: [
+        {
+          name: "u_lights[0].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[1].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[2].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[3].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[4].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[5].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[6].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[7].intensity",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[0].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[1].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[2].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[3].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[4].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[5].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[6].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[7].position",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[0].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[1].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[2].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[3].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[4].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[5].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[6].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[7].color",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[0].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[1].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[2].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[3].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[4].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[5].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[6].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[7].type",
+          type: 0,  # TA_GLSL_INT
+        },
+        {
+          name: "u_lights[0].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[1].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[2].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[3].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[4].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[5].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[6].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[7].direction",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_lights[0].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[1].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[2].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[3].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[4].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[5].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[6].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[7].cast_shadows",
+          type: 11,  # TA_GLSL_BOOL
+        },
+        {
+          name: "u_lights[0].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_lights[1].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_lights[2].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_lights[3].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_lights[4].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_lights[5].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_lights[6].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_lights[7].shadowmap_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_lights[0].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[1].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[2].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[3].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[4].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[5].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[6].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[7].shadowmap_texture_array_layers",
+          type: 13,  # TA_GLSL_UINT_ARRAY
+        },
+        {
+          name: "u_lights[0].light_pv",
+          type: 8,  # TA_GLSL_MAT4
+        },
+        {
+          name: "u_lights[1].light_pv",
+          type: 8,  # TA_GLSL_MAT4
+        },
+        {
+          name: "u_lights[2].light_pv",
+          type: 8,  # TA_GLSL_MAT4
+        },
+        {
+          name: "u_lights[3].light_pv",
+          type: 8,  # TA_GLSL_MAT4
+        },
+        {
+          name: "u_lights[4].light_pv",
+          type: 8,  # TA_GLSL_MAT4
+        },
+        {
+          name: "u_lights[5].light_pv",
+          type: 8,  # TA_GLSL_MAT4
+        },
+        {
+          name: "u_lights[6].light_pv",
+          type: 8,  # TA_GLSL_MAT4
+        },
+        {
+          name: "u_lights[7].light_pv",
+          type: 8,  # TA_GLSL_MAT4
+        },
+        {
+          name: "u_lights[0].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[1].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[2].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[3].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[4].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[5].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[6].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[7].shadowmap3d",
+          type: 10,  # TA_GLSL_SAMPLER_CUBE
+        },
+        {
+          name: "u_lights[0].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[1].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[2].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[3].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[4].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[5].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[6].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_lights[7].shadowmap_zfar",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+      ]
+    },
+    {
+      name: "u_material",
+      type: 9,  # TA_GLSL_STRUCT
+      properties: [
+        {
+          name: "u_material.albedo_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.albedo_texture_pool_layer",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.albedo_factor",
+          type: 6,  # TA_GLSL_VEC4
+        },
+        {
+          name: "u_material.emission_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.emission_texture_pool_layer",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.emission_factor",
+          type: 5,  # TA_GLSL_VEC3
+        },
+        {
+          name: "u_material.metallic_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.metallic_texture_pool_layer",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.metallic_factor",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_material.roughness_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.roughness_texture_pool_layer",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.roughness_factor",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_material.height_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.height_texture_pool_layer",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.height_factor",
+          type: 2,  # TA_GLSL_FLOAT
+        },
+        {
+          name: "u_material.normal_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.normal_texture_pool_layer",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.occlusion_texture_pool_index",
+          type: 1,  # TA_GLSL_UINT
+        },
+        {
+          name: "u_material.occlusion_texture_pool_layer",
+          type: 1,  # TA_GLSL_UINT
+        },
+      ]
+    },
+    {
+      name: "u_textures[0]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[1]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[2]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[3]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[4]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[5]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[6]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[7]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_selected",
+      type: 11,  # TA_GLSL_BOOL
+    },
+    {
+      name: "u_debug_channel",
+      type: 0,  # TA_GLSL_INT
+    },
+  ]
+ta_shader:
+  name: "shadow_dir"
+  path_vert: "data/shader/shadow_dir_v.glsl"
+  path_frag: "data/shader/shadow_dir_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_morph0_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_morph_weights[0]",
+      type: 2,  # TA_GLSL_FLOAT
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_light_pvm",
+      type: 8,  # TA_GLSL_MAT4
+    },
+  ]
+ta_shader:
+  name: "shadow_point"
+  path_vert: "data/shader/shadow_point_v.glsl"
+  path_frag: "data/shader/shadow_point_f.glsl"
+  attributes: [
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_morph0_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+  ]
+  uniforms: [
+    {
+      name: "u_morph_weights[0]",
+      type: 2,  # TA_GLSL_FLOAT
+    },
+    {
+      name: "u_model",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_light_pvm",
+      type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_light_pos",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "u_light_zfar",
+      type: 2,  # TA_GLSL_FLOAT
+    },
+  ]
+#-------------------------------------------------------------------------------
+# TYP_TEXTURE
+#-------------------------------------------------------------------------------
+ta_texture:
+  name: "white_albedo"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  pixels: [255, 255, 255, 255, ]
+  width: 1
+  height: 1
+  channels: 4
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "red_albedo"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  pixels: [255, 0, 0, 255, ]
+  width: 1
+  height: 1
+  channels: 4
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/cobble_albedo.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/cobble_albedo.tga"
+  width: 512
+  height: 512
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/cobble_normal.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/cobble_normal.tga"
+  width: 512
+  height: 512
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/cobble_occlusion.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/cobble_occlusion.tga"
+  width: 512
+  height: 512
+  channels: 1
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/cobble_roughness.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/cobble_roughness.tga"
+  width: 512
+  height: 512
+  channels: 1
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/audio_icon.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/audio_icon.tga"
+  channels: 4
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Terrazzo_Tiles_001_albedo.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Terrazzo_Tiles_001_albedo.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Terrazzo_Tiles_001_emission.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Terrazzo_Tiles_001_emission.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Terrazzo_Tiles_001_height.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Terrazzo_Tiles_001_height.tga"
+  width: 1024
+  height: 1024
+  channels: 1
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Terrazzo_Tiles_001_normal.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Terrazzo_Tiles_001_normal.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
+  width: 1024
+  height: 1024
+  channels: 1
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Terrazzo_Tiles_001_roughness.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Terrazzo_Tiles_001_roughness.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Metal_Plate_019_albedo.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Metal_Plate_019_albedo.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Metal_Plate_019_height.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Metal_Plate_019_height.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Metal_Plate_019_metallic.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Metal_Plate_019_metallic.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Metal_Plate_019_normal.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Metal_Plate_019_normal.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Metal_Plate_019_occlusion.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Metal_Plate_019_occlusion.tga"
+  width: 1024
+  height: 1024
+  channels: 1
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Metal_Plate_019_roughness.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Metal_Plate_019_roughness.tga"
+  width: 1024
+  height: 1024
+  channels: 1
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Acoustic_Foam_001_albedo.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Acoustic_Foam_001_albedo.tga"
+  width: 1024
+  height: 1024
+  channels: 1
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Acoustic_Foam_001_height.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Acoustic_Foam_001_height.tga"
+  width: 1024
+  height: 1024
+  channels: 1
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Acoustic_Foam_001_normal.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Acoustic_Foam_001_normal.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Acoustic_Foam_001_occlusion.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Acoustic_Foam_001_occlusion.tga"
+  width: 1024
+  height: 1024
+  channels: 1
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/Acoustic_Foam_001_roughness.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/Acoustic_Foam_001_roughness.tga"
+  width: 1024
+  height: 1024
+  channels: 1
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/star_albedo.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/star_albedo.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_rt.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_rt.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_lf.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_lf.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_dn.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_dn.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_up.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_up.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_ft.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_ft.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/miramar_bk.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/miramar_bk.tga"
+  width: 1024
+  height: 1024
+  channels: 3
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+#-------------------------------------------------------------------------------
+# TYP_ANIMATION
+#-------------------------------------------------------------------------------

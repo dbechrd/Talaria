@@ -29,6 +29,8 @@ dml_result dml_document_from_file(dml_document *document, const char *filename)
     ta_log_timed_region_start(&tg_debug_log, SRC_DML, CSTR("dml_load"));
     ta_log_write(&tg_debug_log, SRC_DML, "Reading file %s\n", filename);
 
+    document->filename = filename;
+
     char *source = ta_file_read_all(filename);
     size_t source_len = dlb_vec_len(source) - 1;
     if (!source) {

@@ -17,6 +17,10 @@ typedef enum ta_glsl_dbg_channel {
     DBG_MTL_METALLIC    = 9,
     DBG_MTL_ROUGHNESS   = 10,
     DBG_MTL_OCCLUSION   = 11,
+    DBG_SHADOW_0        = 12,
+    DBG_SHADOW_1        = 13,
+    DBG_SHADOW_2        = 14,
+    DBG_SHADOW_3        = 15,
 } ta_glsl_dbg_channel;
 
 typedef struct ta_camera {
