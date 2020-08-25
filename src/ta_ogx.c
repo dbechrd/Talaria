@@ -221,12 +221,15 @@ static void ta_ogx_load_node(ogx_node *o_node)
     ta_transform *transform = ta_game_by_sym_try(RES_COMP_TRANSFORM, SYM(o_node->name));
     if (!transform) {
         transform = ta_game_component_add(o_node->name, RES_COMP_TRANSFORM, SYM(o_node->name));
+        ta_transform_init(transform);
     }
 
     DLB_ASSERT(sizeof(ta_vec3) == sizeof(ogx_vec3));
     DLB_ASSERT(sizeof(ta_vec4) == sizeof(ogx_vec4));
-    transform->xform.position = *(ta_vec3 *)o_node->transform.position;
-    transform->xform.orientation = *(ta_vec4 *)o_node->transform.orientation;
+    ta_vec3 ogx_pos = *(ta_vec3 *)o_node->transform.position;
+    ta_vec4 ogx_rot = *(ta_vec4 *)o_node->transform.orientation;
+    transform->xform.position = vec3_add(transform->xform.position, ogx_pos);
+    transform->xform.orientation = quat_normalize(quat_mul(transform->xform.orientation, ogx_rot));
 
     //ogx_transform transform;
     //ogx_animation *animations;

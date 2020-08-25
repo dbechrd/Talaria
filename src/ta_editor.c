@@ -244,7 +244,7 @@ static void editor_command_select()
                     ta_obb obb = body->collider.data.obb;
                     obb.center = vec3_rotate_quat(obb.center, transform->xform_world.orientation);
                     obb.center = vec3_add(obb.center, transform->xform_world.position);
-                    obb.orientation = quat_mul(transform->xform_world.orientation, obb.orientation);
+                    obb.orientation = quat_normalize(quat_mul(transform->xform_world.orientation, obb.orientation));
                     if (ta_ray_v_obb(&ray, &obb, &t)) {
                         DLB_ASSERT(t >= 0.0f);
                         if (t < t_min) {

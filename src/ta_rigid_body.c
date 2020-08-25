@@ -208,7 +208,7 @@ static bool intersector_plane_v_obb(ta_manifold *manifold, const ta_rigid_body *
     ta_obb obb_b = b->collider.data.obb;
     obb_b.center = vec3_rotate_quat(obb_b.center, btrans->xform.orientation);
     obb_b.center = vec3_add(obb_b.center, btrans->xform.position);
-    obb_b.orientation = quat_mul(btrans->xform.orientation, obb_b.orientation);
+    obb_b.orientation = quat_normalize(quat_mul(btrans->xform.orientation, obb_b.orientation));
     bool collided = ta_plane_v_obb(manifold, &plane_a, &obb_b);
     return collided;
 }
@@ -243,7 +243,7 @@ static bool intersector_sphere_v_obb(ta_manifold *manifold, const ta_rigid_body 
     ta_obb obb_b = b->collider.data.obb;
     obb_b.center = vec3_rotate_quat(obb_b.center, btrans->xform.orientation);
     obb_b.center = vec3_add(obb_b.center, btrans->xform.position);
-    obb_b.orientation = quat_mul(btrans->xform.orientation, obb_b.orientation);
+    obb_b.orientation = quat_normalize(quat_mul(btrans->xform.orientation, obb_b.orientation));
     bool collided = ta_sphere_v_obb(manifold, &sphere_a, &obb_b);
     return collided;
 }

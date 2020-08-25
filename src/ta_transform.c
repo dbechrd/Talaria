@@ -57,7 +57,7 @@ static void ta_transform_update(ta_transform *transform, float alpha, bool dirty
         transform->world = mat4_mul(&transform->local, &parent->world);
         transform->xform_world = transform->xform;
         transform->xform_world.position = vec3_add(parent->xform_world.position, transform->xform.position);
-        transform->xform_world.orientation = quat_mul(parent->xform_world.orientation, transform->xform.orientation);
+        transform->xform_world.orientation = quat_normalize(quat_mul(parent->xform_world.orientation, transform->xform.orientation));
     } else {
         transform->xform_world = transform->xform;
         transform->world = transform->local;
