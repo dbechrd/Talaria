@@ -71,6 +71,7 @@ const char *SYM_U_MATERIAL_OCCLUSION_TEXTURE_POOL_LAYER;
 const char *SYM_U_MATERIAL_ROUGHNESS_FACTOR;
 const char *SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_INDEX;
 const char *SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_LAYER;
+const char *SYM_U_MATERIAL_SLOT;
 const char *SYM_U_MODEL;
 const char *SYM_U_MORPH_WEIGHTS[1];
 const char *SYM_U_PROJ;
@@ -230,6 +231,7 @@ void ta_symbol_init() {
     SYM_U_MATERIAL_ROUGHNESS_FACTOR             = INTERN("u_material.roughness_factor");
     SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_INDEX = INTERN("u_material.roughness_texture_pool_index");
     SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_LAYER = INTERN("u_material.roughness_texture_pool_layer");
+    SYM_U_MATERIAL_SLOT                         = INTERN("u_material_slot");
 
     SYM_U_TEXTURES[0] = INTERN("u_textures[0]");
     SYM_U_TEXTURES[1] = INTERN("u_textures[1]");

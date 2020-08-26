@@ -109,7 +109,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
 
         model_piece_set_shader_anim_targets(model, piece, shader);
         ta_shader_bind(shader);
-        ta_mesh_render(mesh);
+        ta_mesh_render(mesh, shader);
     }
 }
 
@@ -178,7 +178,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
 
             model_piece_set_shader_anim_targets(model, piece, shader);
             ta_shader_bind(shader);
-            ta_mesh_render(mesh);
+            ta_mesh_render(mesh, shader);
         }
         ta_shader_unbind();
     }
@@ -221,7 +221,7 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
         // TODO: Fix this for editor_select (either make it a set_try or don't do it at all in this function)
         //model_piece_set_shader_anim_targets(model, piece, shader);
         ta_shader_bind(shader);
-        ta_mesh_render(mesh);
+        ta_mesh_render(mesh, shader);
     }
     ta_shader_unbind();
 }

@@ -879,7 +879,7 @@ static void game_render_skybox()
         glDisable(GL_CULL_FACE);
         glDepthMask(GL_FALSE);
         ta_shader_bind(shader);
-        ta_mesh_render(mesh);
+        ta_mesh_render(mesh, shader);
         ta_shader_unbind();
         glDepthMask(GL_TRUE);
         glEnable(GL_CULL_FACE);

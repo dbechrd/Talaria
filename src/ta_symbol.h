@@ -95,6 +95,7 @@ extern const char *SYM_U_MATERIAL_OCCLUSION_TEXTURE_POOL_LAYER;
 extern const char *SYM_U_MATERIAL_ROUGHNESS_FACTOR;
 extern const char *SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_INDEX;
 extern const char *SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_LAYER;
+extern const char *SYM_U_MATERIAL_SLOT;
 extern const char *SYM_U_MODEL;
 extern const char *SYM_U_MORPH_WEIGHTS[1];
 extern const char *SYM_U_PROJ;

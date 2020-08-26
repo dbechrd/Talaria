@@ -236,8 +236,8 @@ typedef struct ogx_morph {
 
 typedef struct ogx_geometry {
     const char *name;
-    ogx_morph *morphs;  // *
     ogx_mesh *meshes;   // +
+    ogx_morph *morphs;  // *
 } ogx_geometry;
 
 typedef enum ogx_light_type {

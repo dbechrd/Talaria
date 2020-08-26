@@ -66,7 +66,7 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
 
     dlb_vec_each(ogx_index_array *, o_index_array, o_mesh->index_arrays) {
         // TODO: Allow u16 in DML or ogx_parser
-        ta_mesh_index_array *index_array = dlb_vec_alloc(mesh->indexes);
+        ta_mesh_index_array *index_array = dlb_vec_alloc(mesh->index_arrays);
         size_t index_count = dlb_vec_len(o_index_array->values.as_float);
         dlb_vec_reserve(index_array->values, index_count);
         for (size_t i = 0; i < index_count; ++i) {
@@ -80,8 +80,11 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
 
     ta_mesh_create(mesh);
 
-    // TODO: Load skin (if present)
-    UNUSED(o_mesh->skin);
+    if (o_mesh->skin.bone_count_array) {
+        // TODO: Load skin (if present)
+        UNUSED(o_mesh->skin);
+        //ta_skin skin = { 0 };
+    }
 
     return mesh->name;
 }
@@ -96,6 +99,7 @@ static void ta_ogx_load_geometry(ogx_geometry *o_geo)
     } else {
         DLB_ASSERT(1);
     }
+
     dlb_vec_each(ogx_mesh *, o_mesh, o_geo->meshes) {
         const char *mesh_name = ta_ogx_load_mesh(o_mesh);
         ta_piece *piece = dlb_vec_alloc(model->pieces);
@@ -107,6 +111,11 @@ static void ta_ogx_load_geometry(ogx_geometry *o_geo)
 
         // TODO: Bind all needed materials at once via a UBO? Pass material indices as uniform/attrib?
         // https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object
+    }
+
+    dlb_vec_each(ogx_morph *, o_morph, o_geo->morphs) {
+        // TODO: Load morphs
+        UNUSED(o_morph);
     }
 }
 

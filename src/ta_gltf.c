@@ -1222,7 +1222,7 @@ void ta_gltf_load(ta_gltf *gltf)
                 DLB_ASSERT(data);
 
                 DLB_ASSERT(accessor->type == cgltf_type_scalar);
-                ta_mesh_index_array *index_array = dlb_vec_alloc(mesh->indexes);
+                ta_mesh_index_array *index_array = dlb_vec_alloc(mesh->index_arrays);
                 dlb_vec_alloc_count(index_array->values, accessor->count);
 
                 // TODO(perf): Make sure all input data is already the correct size

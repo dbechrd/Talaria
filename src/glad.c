@@ -34,8 +34,8 @@ void _post_call_callback_default(const char *name, void *funcptr, int len_args, 
     (void) funcptr;
     (void) len_args;
 
-// TODO(perf): Disable debug callbacks in release mode (remove the || 1)
-#if _DEBUG
+    // TODO(perf): Disable debug callbacks in release mode (remove the || 1)
+#if 0
     GLenum error_code;
     // TODO(perf): This is *really* slow??
     error_code = glad_glGetError();

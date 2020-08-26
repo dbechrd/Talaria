@@ -1305,11 +1305,11 @@ static ogx_result ogx_load_geometry(dml_document *doc, ogx_geometry *geometry, d
             dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == ogxs_name) {
                 result = ogx_load_string(&geometry->name, &doc->value_pool[field->value_idx]);
-            } else if (field->name == ogxs_morphs) {
-                result = ogx_load_morph_array(doc, &geometry->morphs, &doc->value_pool[field->value_idx]);
             } else if (field->name == ogxs_mesh) {
                 ogx_mesh *mesh = dlb_vec_alloc(geometry->meshes);
                 result = ogx_load_mesh(doc, mesh, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_morphs) {
+                result = ogx_load_morph_array(doc, &geometry->morphs, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,

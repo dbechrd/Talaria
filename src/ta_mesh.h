@@ -55,7 +55,7 @@ typedef struct ta_mesh {
         };
         void *buffers[TA_VERTEX_ATTRIB_COUNT];
     };
-    ta_mesh_index_array *indexes;
+    ta_mesh_index_array *index_arrays;
     ta_line_3d *vertex_normals;
     ta_line_3d *face_normals;
     ta_line_3d *tangent_lines;
@@ -76,6 +76,6 @@ void ta_mesh_load_file      (ta_mesh *mesh, const char *filename);
 void ta_mesh_create         (ta_mesh *mesh);
 void ta_mesh_init_normals   (ta_mesh *mesh, float scale);
 void ta_mesh_push_normals   (ta_mesh *mesh);
-void ta_mesh_render         (ta_mesh *mesh);
+void ta_mesh_render         (ta_mesh *mesh, struct ta_shader *shader);
 void ta_mesh_free           (ta_mesh *mesh);
 void ta_mesh_free_void      (void *mesh);

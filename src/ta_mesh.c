@@ -221,7 +221,7 @@ void ta_mesh_create(ta_mesh *mesh)
 
     // Calculate size of all index data
     size_t index_size_total = 0;
-    dlb_vec_each(ta_mesh_index_array *, index_array, mesh->indexes) {
+    dlb_vec_each(ta_mesh_index_array *, index_array, mesh->index_arrays) {
         index_size_total += dlb_vec_size(index_array->values);
     }
 
@@ -232,7 +232,7 @@ void ta_mesh_create(ta_mesh *mesh)
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_size_total, 0, GL_STATIC_DRAW);
 
         size_t index_offset = 0;
-        dlb_vec_each(ta_mesh_index_array *, index_array, mesh->indexes) {
+        dlb_vec_each(ta_mesh_index_array *, index_array, mesh->index_arrays) {
             size_t index_size = dlb_vec_size(index_array->values);
             glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, index_offset, index_size, index_array->values);
             index_offset += index_size;
@@ -352,20 +352,24 @@ void ta_mesh_log_normals_dbg(ta_mesh *mesh)
 }
 #endif
 
-void ta_mesh_render(ta_mesh *mesh)
+void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
 {
     if (!mesh->gl_vao) {
         mesh = tg_mesh_default;
         DLB_ASSERT(mesh);  // No mesh & no default mesh, this seems undesirable!
     }
     glBindVertexArray(mesh->gl_vao);
-    if (mesh->indexes) {
-        size_t index_count_total = 0;
-        dlb_vec_each(ta_mesh_index_array *, index_array, mesh->indexes) {
+    if (mesh->index_arrays) {
+        dlb_vec_each(ta_mesh_index_array *, index_array, mesh->index_arrays) {
+            // TODO: Material slots
+            // TODO: Bind all needed materials at once via a UBO? Pass material indices as uniform/attrib?
+            // https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object
+            //ta_shader_set_uint(shader, SYM_U_MATERIAL_SLOT, index_array->material_slot);
+
             size_t index_count = dlb_vec_len(index_array->values);
-            index_count_total += index_count;
+            DLB_ASSERT(index_count);
+            glDrawElementsBaseVertex(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0, index_array->base_vertex);
         }
-        glDrawElements(GL_TRIANGLES, (GLsizei)index_count_total, GL_UNSIGNED_INT, 0);
     } else {
         size_t positions_count = dlb_vec_len(mesh->positions);
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)positions_count);
