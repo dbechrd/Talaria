@@ -59,6 +59,7 @@ const char *tg_e_player_one;
 const char *tg_e_active_camera;
 
 ta_game tg_game;
+static ogx_scene ogx_chamber_0002;
 
 const char *game_state_str(ta_game_state state)
 {
@@ -242,10 +243,11 @@ void ta_game_init()
     //dml_document_load("data/mesh/button.ogex");
     //dml_document_load("data/mesh/dude.ogex");
 
-    ogx_scene scene = { 0 };
-    if (ogx_scene_from_file(&scene, "data/mesh/chamber_0002.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&scene);
+    //ogx_scene scene = { 0 };
+    if (ogx_scene_from_file(&ogx_chamber_0002, "data/mesh/chamber_0002.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(&ogx_chamber_0002);
     }
+    // TODO: Free the ogx scene if it's not needed after being loaded
 
     //--------------------------------------------------------------------------
     // Simulation
@@ -1146,6 +1148,34 @@ void ta_game_loop()
         if (active_camera->debug_wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
+
+        // Cleanup (debug): This is a mess with the ogx_vec3 -> ta_vec3 conversion, and also could be cached. It's
+        // just temporary nonsense for bind pose debug viz.
+        if (ogx_chamber_0002.geometry && dlb_vec_len(ogx_chamber_0002.geometry->meshes)) {
+            ogx_skin *skin = &ogx_chamber_0002.geometry->meshes[0].skin;
+            size_t bone_count = dlb_vec_len(skin->skeleton.bones);
+            DLB_ASSERT(dlb_vec_len(skin->skeleton.bind_pose_positions) == bone_count);
+            DLB_ASSERT(dlb_vec_len(skin->skeleton.bind_pose_orientations) == bone_count);
+
+            ta_xform skin_xform = { 0 };
+            skin_xform.position = *(ta_vec3 *)skin->transform.position;
+            skin_xform.orientation = *(ta_vec4 *)skin->transform.orientation;
+            for (size_t i = 0; i < bone_count; ++i) {
+                const char *name = skin->skeleton.bones[i];
+                ta_vec3 pos = *(ta_vec3 *)skin->skeleton.bind_pose_positions[i];
+                ta_vec4 rot = *(ta_vec4 *)skin->skeleton.bind_pose_orientations[i];
+
+                ta_xform xform = { 0 };
+                xform.position = vec3_add(skin_xform.position, pos);
+                xform.orientation = quat_mul(skin_xform.orientation, rot);
+
+                ta_primitive_push_axes_arrow(0, xform.position, xform.orientation, 0.05f);
+                // TODO: ta_primitive_push_text(shader, pos, rot, text);
+            }
+        }
+
+        // TODO: Render dude_armature node and all children bone_nodes (as axes arrows, and maybe with spheres of
+        // varying color to represent their depth in the hierarchy).
 
         // Render models
         // TODO: Group by shader / material to minimize redundant uniform calls

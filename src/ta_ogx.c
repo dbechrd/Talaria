@@ -227,7 +227,7 @@ static void ta_ogx_load_node(ogx_node *o_node)
     //ta_transform *transform = ta_game_alloc(RES_COMP_TRANSFORM, SYM(o_node->name));
 
     // HACK: Let OGX transform override DML transform
-    ta_transform *transform = ta_game_by_sym_try(RES_COMP_TRANSFORM, SYM(o_node->name));
+    ta_transform *transform = ta_game_by_sym_try(RES_COMP_TRANSFORM, o_node->name);
     if (!transform) {
         transform = ta_game_component_add(o_node->name, RES_COMP_TRANSFORM, SYM(o_node->name));
         ta_transform_init(transform);

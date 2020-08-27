@@ -364,11 +364,12 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
             // TODO: Material slots
             // TODO: Bind all needed materials at once via a UBO? Pass material indices as uniform/attrib?
             // https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object
+            UNUSED(shader);
             //ta_shader_set_uint(shader, SYM_U_MATERIAL_SLOT, index_array->material_slot);
 
             size_t index_count = dlb_vec_len(index_array->values);
             DLB_ASSERT(index_count);
-            glDrawElementsBaseVertex(GL_TRIANGLES, index_count, GL_UNSIGNED_INT, 0, index_array->base_vertex);
+            glDrawElementsBaseVertex(GL_TRIANGLES, (GLsizei)index_count, GL_UNSIGNED_INT, 0, index_array->base_vertex);
         }
     } else {
         size_t positions_count = dlb_vec_len(mesh->positions);

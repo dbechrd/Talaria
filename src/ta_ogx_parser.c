@@ -111,13 +111,13 @@ static ogx_node *ogx_node_at(dml_document *doc, s32 index)
     DLB_ASSERT(index < nodes_len);
     return &doc->scene->nodes[index];
 }
-static s32 ogx_node_alloc(dml_document *doc, s32 parent, ogx_node_type type)
+static s32 ogx_node_alloc(dml_document *doc, s32 parent_index, ogx_node_type type)
 {
     ogx_node *node = dlb_vec_alloc(doc->scene->nodes);
     node->type = type;
-    node->index = dlb_vec_len(doc->scene->nodes) - 1;
-    node->parent = parent;
-    if (parent != OGX_INDEX_NULL) {
+    node->index = (s32)(dlb_vec_len(doc->scene->nodes) - 1);
+    node->parent = parent_index;
+    if (parent_index != OGX_INDEX_NULL) {
         ogx_node *parent = ogx_node_at(doc, node->parent);
         DLB_ASSERT(parent->index == node->parent);  // ogx_get_node returned a node with the wrong index.. pool corrupt
         s32 *parent_child = dlb_vec_alloc(parent->children);
