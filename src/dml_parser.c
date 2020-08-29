@@ -368,10 +368,10 @@ void dml_parser_parse(dml_parser *parser, dml_document *document)
     dml_parser_value(parser, document, 0);
 
     // TODO(cleanup): temp validate
-    for (size_t i = 0; i < dlb_vec_len(document->value_pool); i++) {
-        if (document->value_pool[i].type == DML_VALUE_ARRAY &&
-            document->value_pool[i].data.as_array.values == 0) {
-            DLB_ASSERT(!"fuck");
-        }
-    }
+    //for (size_t i = 0; i < dlb_vec_len(document->value_pool); i++) {
+    //    if (document->value_pool[i].type == DML_VALUE_ARRAY &&
+    //        document->value_pool[i].data.as_array.values == 0) {
+    //        DLB_ASSERT(!"fuck");
+    //    }
+    //}
 }

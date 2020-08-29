@@ -26,6 +26,8 @@
 #include "dlb/dlb_vector.h"
 #include <float.h>
 
+#define TA_EDITOR_WIDGET_MIN_SCALE 0.05f
+
 // Higher level widgets
 typedef enum editor_widget {
     WIDGET_TRANSLATE,
@@ -434,7 +436,7 @@ void ta_editor_update_widgets()
     ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
     ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
     float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
-    float scale = MAX(0.5f, dist * 0.2f);
+    float scale = MAX(TA_EDITOR_WIDGET_MIN_SCALE, dist * 0.2f);
     float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
 
     switch (editor.widget) {
@@ -671,7 +673,7 @@ void ta_editor_draw_world()
         ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
         ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
         float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
-        float scale = MAX(0.5f, dist * 0.2f);
+        float scale = MAX(TA_EDITOR_WIDGET_MIN_SCALE, dist * 0.2f);
 
         switch (editor.widget) {
             case WIDGET_TRANSLATE: {

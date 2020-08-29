@@ -366,6 +366,15 @@ int quat_equal(ta_vec4 a, ta_vec4 b)
         fabs((double)a.z - b.z) < TA_EPSILON &&
         fabs((double)a.w - b.w) < TA_EPSILON;
 }
+ta_vec4 quat_init(float x, float y, float z, float w)
+{
+    ta_vec4 q;
+    q.x = x;
+    q.y = y;
+    q.z = z;
+    q.w = w;
+    return q;
+}
 ta_vec4 quat_from_axis_angle(ta_vec3 axis, float deg)
 {
     DLB_ASSERT(vec3_equal(axis, vec3_normalize(axis)));
@@ -447,6 +456,15 @@ ta_vec4 quat_inverse(ta_vec4 q)
     result.x *= inv_norm_sq;
     result.y *= inv_norm_sq;
     result.z *= inv_norm_sq;
+    return result;
+}
+ta_vec4 quat_scale(ta_vec4 q, float s)
+{
+    ta_vec4 result;
+    result.x = q.x *= s;
+    result.y = q.y *= s;
+    result.z = q.z *= s;
+    result.w = q.w *= s;
     return result;
 }
 ta_vec4 quat_mul(ta_vec4 a, ta_vec4 b)
@@ -872,6 +890,75 @@ ta_mat4 mat4_rotate_quat(ta_vec4 q)
     m.data.f[3][3] = 1;
     return m;
 }
+ta_vec3 mat4_to_location(const ta_mat4 *m)
+{
+    ta_vec3 loc;
+    loc.x = m->data.f[0][3];
+    loc.y = m->data.f[1][3];
+    loc.z = m->data.f[2][3];
+    return loc;
+}
+ta_vec4 mat4_to_quaternion(const ta_mat4 *m)
+{
+// NOTE: These defines also transpose the matrix (makes it easier to check both transpositions when debugging)
+#define m00 (m->data.f[0][0])
+#define m01 (m->data.f[1][0])
+#define m02 (m->data.f[2][0])
+#define m03 (m->data.f[3][0])
+#define m10 (m->data.f[0][1])
+#define m11 (m->data.f[1][1])
+#define m12 (m->data.f[2][1])
+#define m13 (m->data.f[3][1])
+#define m20 (m->data.f[0][2])
+#define m21 (m->data.f[1][2])
+#define m22 (m->data.f[2][2])
+#define m23 (m->data.f[3][2])
+#define m30 (m->data.f[0][3])
+#define m31 (m->data.f[1][3])
+#define m32 (m->data.f[2][3])
+#define m33 (m->data.f[3][3])
+
+    ta_vec4 q;
+    float t;
+    if (m22 < 0) {
+        if (m00 > m11) {
+            t = 1 + m00 - m11 - m22;
+            q = quat_init(t, m01+m10, m20+m02, m12-m21);
+        } else {
+            t = 1 - m00 + m11 - m22;
+            q = quat_init(m01+m10, t, m12+m21, m20-m02);
+        }
+    } else {
+        if (m00 < -m11) {
+            t = 1 - m00 - m11 + m22;
+            q = quat_init(m20+m02, m12+m21, t, m01-m10);
+        }
+        else
+        {
+            t = 1 + m00 + m11 + m22;
+            q = quat_init(m12-m21, m20-m02, m01-m10, t);
+        }
+    }
+    q = quat_scale(q, 0.5f / sqrtf(t));
+    return q;
+
+#undef m00
+#undef m01
+#undef m02
+#undef m03
+#undef m10
+#undef m11
+#undef m12
+#undef m13
+#undef m20
+#undef m21
+#undef m22
+#undef m23
+#undef m30
+#undef m31
+#undef m32
+#undef m33
+}
 ta_mat4 mat4_mul(const ta_mat4 *a, const ta_mat4 *b)
 {
     ta_mat4 result = { 0 };
@@ -1252,25 +1339,46 @@ ta_rgb hsl_to_rbg(ta_hsl hsl)
 
 void ta_math_test()
 {
-    ta_vec4 q = { 1.0f, 2.0f, 3.0f, 1.0f };
-    q = quat_normalize(q);
-    ta_mat4 result = mat4_rotate_quat(q);
-    DLB_ASSERT(result.data.f[0][0] - -0.733333f < TA_EPSILON);
-    DLB_ASSERT(result.data.f[0][1] - -0.133333f < TA_EPSILON);
-    DLB_ASSERT(result.data.f[0][2] -  0.666667f < TA_EPSILON);
-    DLB_ASSERT(result.data.f[0][3] < TA_EPSILON);
-    DLB_ASSERT(result.data.f[1][0] -  0.666667f < TA_EPSILON);
-    DLB_ASSERT(result.data.f[1][1] - -0.333333f < TA_EPSILON);
-    DLB_ASSERT(result.data.f[1][2] -  0.666667f < TA_EPSILON);
-    DLB_ASSERT(result.data.f[1][3] < TA_EPSILON);
-    DLB_ASSERT(result.data.f[2][0] -  0.133333f < TA_EPSILON);
-    DLB_ASSERT(result.data.f[2][1] -  0.933333f < TA_EPSILON);
-    DLB_ASSERT(result.data.f[2][2] -  0.333333f < TA_EPSILON);
-    DLB_ASSERT(result.data.f[2][3] < TA_EPSILON);
-    DLB_ASSERT(result.data.f[3][0] < TA_EPSILON);
-    DLB_ASSERT(result.data.f[3][1] < TA_EPSILON);
-    DLB_ASSERT(result.data.f[3][2] < TA_EPSILON);
-    DLB_ASSERT(result.data.f[3][3] - 1.0f < TA_EPSILON);
+    {
+        ta_vec4 q = { 1.0f, 2.0f, 3.0f, 1.0f };
+        q = quat_normalize(q);
+        ta_mat4 result = mat4_rotate_quat(q);
+        DLB_ASSERT(result.data.f[0][0] - -0.733333f < TA_EPSILON);
+        DLB_ASSERT(result.data.f[0][1] - -0.133333f < TA_EPSILON);
+        DLB_ASSERT(result.data.f[0][2] -  0.666667f < TA_EPSILON);
+        DLB_ASSERT(result.data.f[0][3] < TA_EPSILON);
+        DLB_ASSERT(result.data.f[1][0] -  0.666667f < TA_EPSILON);
+        DLB_ASSERT(result.data.f[1][1] - -0.333333f < TA_EPSILON);
+        DLB_ASSERT(result.data.f[1][2] -  0.666667f < TA_EPSILON);
+        DLB_ASSERT(result.data.f[1][3] < TA_EPSILON);
+        DLB_ASSERT(result.data.f[2][0] -  0.133333f < TA_EPSILON);
+        DLB_ASSERT(result.data.f[2][1] -  0.933333f < TA_EPSILON);
+        DLB_ASSERT(result.data.f[2][2] -  0.333333f < TA_EPSILON);
+        DLB_ASSERT(result.data.f[2][3] < TA_EPSILON);
+        DLB_ASSERT(result.data.f[3][0] < TA_EPSILON);
+        DLB_ASSERT(result.data.f[3][1] < TA_EPSILON);
+        DLB_ASSERT(result.data.f[3][2] < TA_EPSILON);
+        DLB_ASSERT(result.data.f[3][3] - 1.0f < TA_EPSILON);
+    }
+
+    {
+        ta_vec3 orig_loc = { 1.0f, 2.0f, 3.0f };
+        ta_vec4 orig_quat = quat_normalize(quat_init(4.0f, 5.0f, 6.0f, 7.0f));
+
+        ta_mat4 mat_trans = mat4_translate(orig_loc);
+        ta_mat4 mat_rot = mat4_rotate_quat(orig_quat);
+
+        ta_mat4 mat = MAT4_IDENT;
+        mat = mat4_mul(&mat_rot, &mat);
+        mat = mat4_mul(&mat_trans, &mat);
+
+        ta_vec3 loc = mat4_to_location(&mat);
+        ta_vec4 quat = mat4_to_quaternion(&mat);
+
+        DLB_ASSERT(vec3_equal(loc, orig_loc));
+        DLB_ASSERT(quat_equal(quat, orig_quat));
+    }
+
     //quat_print(stdout, q);
     //mat4_print(stdout, &result);
 }

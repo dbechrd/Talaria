@@ -155,6 +155,7 @@ typedef struct ogx_node {
                        // TODO: Do we need this, or is parent sufficient? I assume we do.
     s32 *children;  // vector of child indices
     ogx_transform transform;
+    ta_mat4 animated_transform;
     ogx_animation *animations;
     union {
         ogx_bone_node bone;

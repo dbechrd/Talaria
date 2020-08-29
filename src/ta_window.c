@@ -208,8 +208,9 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
         window->vsync ? "on" : "off");
 
     // TODO: Separate render thread and have the data loading thread update a progress that the render thread can draw.
-    // Draw something as soon as humanly possible (just a dark gray for now to get rid of the default white)
-    glClearColor(0.1f, 0.15f, 0.3f, 1.0f);
+    // Draw something as soon as humanly possible (just a color for now to get rid of the default white)
+    //glClearColor(0.1f, 0.15f, 0.3f, 1.0f);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
     ta_window_swap(tg_window);
 

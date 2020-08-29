@@ -59,7 +59,7 @@ const char *tg_e_player_one;
 const char *tg_e_active_camera;
 
 ta_game tg_game;
-static ogx_scene ogx_chamber_0002;
+static ogx_scene test_ogx_scene;
 
 const char *game_state_str(ta_game_state state)
 {
@@ -138,7 +138,7 @@ void ta_game_init()
         if (buf[i] == '\\') buf[i] = '/';
     }
     buf[len] = '/';
-    tg_game.base_path = ta_symbol_intern(buf, len + 1);
+    tg_game.base_path = ta_symbol_intern(buf, (size_t)len + 1);
 #else
     char *buf = SDL_GetBasePath();
     size_t len = strlen(buf);
@@ -244,8 +244,8 @@ void ta_game_init()
     //dml_document_load("data/mesh/dude.ogex");
 
     //ogx_scene scene = { 0 };
-    if (ogx_scene_from_file(&ogx_chamber_0002, "data/mesh/chamber_0002.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&ogx_chamber_0002);
+    if (ogx_scene_from_file(&test_ogx_scene, "data/mesh/dude.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(&test_ogx_scene);
     }
     // TODO: Free the ogx scene if it's not needed after being loaded
 
@@ -1145,39 +1145,13 @@ void ta_game_loop()
         ta_primitive_render_mesh(&primitive_lines_perma, tg_shader_lines, TA_LINES, false, false);
         ta_primitive_render(true, false);
 
+        //----------------------------------------------------------------------
+        // Render models
+        //----------------------------------------------------------------------
         if (active_camera->debug_wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
 
-        // Cleanup (debug): This is a mess with the ogx_vec3 -> ta_vec3 conversion, and also could be cached. It's
-        // just temporary nonsense for bind pose debug viz.
-        if (ogx_chamber_0002.geometry && dlb_vec_len(ogx_chamber_0002.geometry->meshes)) {
-            ogx_skin *skin = &ogx_chamber_0002.geometry->meshes[0].skin;
-            size_t bone_count = dlb_vec_len(skin->skeleton.bones);
-            DLB_ASSERT(dlb_vec_len(skin->skeleton.bind_pose_positions) == bone_count);
-            DLB_ASSERT(dlb_vec_len(skin->skeleton.bind_pose_orientations) == bone_count);
-
-            ta_xform skin_xform = { 0 };
-            skin_xform.position = *(ta_vec3 *)skin->transform.position;
-            skin_xform.orientation = *(ta_vec4 *)skin->transform.orientation;
-            for (size_t i = 0; i < bone_count; ++i) {
-                const char *name = skin->skeleton.bones[i];
-                ta_vec3 pos = *(ta_vec3 *)skin->skeleton.bind_pose_positions[i];
-                ta_vec4 rot = *(ta_vec4 *)skin->skeleton.bind_pose_orientations[i];
-
-                ta_xform xform = { 0 };
-                xform.position = vec3_add(skin_xform.position, pos);
-                xform.orientation = quat_mul(skin_xform.orientation, rot);
-
-                ta_primitive_push_axes_arrow(0, xform.position, xform.orientation, 0.05f);
-                // TODO: ta_primitive_push_text(shader, pos, rot, text);
-            }
-        }
-
-        // TODO: Render dude_armature node and all children bone_nodes (as axes arrows, and maybe with spheres of
-        // varying color to represent their depth in the hierarchy).
-
-        // Render models
         // TODO: Group by shader / material to minimize redundant uniform calls
         ta_shader *mesh_shader = ta_game_by_name(RES_SHADER, CSTR("mesh"));
         // TODO: This doesn't have to be called every frame.. it never changes. Right?
@@ -1199,8 +1173,9 @@ void ta_game_loop()
         if (active_camera->debug_wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
+        //----------------------------------------------------------------------
 
-        game_render_skybox();
+        //game_render_skybox();
 
         ta_primitive_render(true, false);
 
@@ -1364,6 +1339,126 @@ void ta_game_loop()
         ta_ui_barchart_draw(&chart, 0, 0);
         ta_primitive_render(true, true);
 #endif
+
+        //----------------------------------------------------------------------
+        // Crazy bone debug viz; temporary
+        //----------------------------------------------------------------------
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &active_camera->projection);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &active_camera->look_at);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &active_camera->projection);
+
+        static ta_ui_panel_state bone_labels = { 0 };
+        ta_ui_next_offset(WINDOW_W / 2, WINDOW_H / 2);
+        ta_ui_next_pad(0, 0, 0, 0);
+        ta_ui_panel_begin(&bone_labels, TA_UI_AUTOSIZE);
+
+#if 0
+        // Cleanup (debug): This is a mess with the ogx_vec3 -> ta_vec3 conversion, and also could be cached. It's
+        // just temporary nonsense for bind pose debug viz.
+        if (test_ogx_scene.geometry && dlb_vec_len(test_ogx_scene.geometry->meshes)) {
+            ogx_skin *skin = &test_ogx_scene.geometry->meshes[0].skin;
+            size_t bone_count = dlb_vec_len(skin->skeleton.bones);
+            DLB_ASSERT(dlb_vec_len(skin->skeleton.bind_pose_positions) == bone_count);
+            DLB_ASSERT(dlb_vec_len(skin->skeleton.bind_pose_orientations) == bone_count);
+
+            ta_xform skin_xform = { 0 };
+            skin_xform.position = *(ta_vec3 *)skin->transform.position;
+            skin_xform.orientation = *(ta_vec4 *)skin->transform.orientation;
+            for (size_t i = 0; i < bone_count; ++i) {
+                const char *name = skin->skeleton.bones[i];
+                ta_vec3 pos = *(ta_vec3 *)skin->skeleton.bind_pose_positions[i];
+                ta_vec4 rot = *(ta_vec4 *)skin->skeleton.bind_pose_orientations[i];
+
+                ta_xform xform = { 0 };
+                xform.position = vec3_add(skin_xform.position, pos);
+                xform.orientation = quat_mul(skin_xform.orientation, rot);
+
+                ta_primitive_push_axes_arrow(0, xform.position, xform.orientation, 0.05f);
+                ta_sphere sphere = { 0 };
+                sphere.center = xform.position;
+                sphere.radius = 0.05f;
+                ta_primitive_push_sphere(0, sphere, TA_COLOR_CYAN);
+
+                ta_ray camera_ray = ta_game_camera_ray();
+                if (ta_ray_v_sphere(&camera_ray, &sphere, 0)) {
+                    ta_ui_row_begin();
+                    ta_ui_label(SYM(name), 0);
+                }
+            }
+        }
+
+#else
+        // Render dude_armature node and all children bone_nodes (as axes arrows, and maybe with spheres of
+        // varying color to represent their depth in the hierarchy).
+
+        s32 root_idx = OGX_INDEX_NULL;
+        const char *armature_name = INTERN("dude_armature");
+        dlb_vec_each(ogx_node *, node, test_ogx_scene.nodes) {
+            if (node->name == armature_name) {
+                root_idx = node->index;
+                break;
+            }
+        }
+        DLB_ASSERT(root_idx != OGX_INDEX_NULL);
+
+        // Add children to list
+        ogx_node *root = &test_ogx_scene.nodes[root_idx];
+        s32 *traversal_list = 0;
+        dlb_vec_each(s32 *, child_idx, root->children) {
+            dlb_vec_push(traversal_list, *child_idx);
+        }
+
+        // Initialize root node's transform
+        test_ogx_scene.nodes[root_idx].animated_transform = MAT4_IDENT;
+
+        while (dlb_vec_len(traversal_list)) {
+            s32 top = *dlb_vec_last(traversal_list);
+            dlb_vec_popz(traversal_list);
+            ogx_node *node = &test_ogx_scene.nodes[top];
+
+            DLB_ASSERT(node->parent != OGX_INDEX_NULL);
+            ogx_node *parent = &test_ogx_scene.nodes[node->parent];
+
+            ta_mat4 mat_trans = mat4_translate(*(ta_vec3 *)node->transform.position);
+            ta_mat4 mat_rot = mat4_rotate_quat(*(ta_vec4 *)node->transform.orientation);
+
+            ta_mat4 mat = MAT4_IDENT;
+            mat = mat4_mul(&mat_rot, &mat);
+            mat = mat4_mul(&mat_trans, &mat);
+
+            mat = mat4_mul(&parent->animated_transform, &mat);
+            node->animated_transform = mat;
+
+            ta_vec3 pos = mat4_to_location(&mat);
+            ta_vec4 rot = mat4_to_quaternion(&mat);
+
+            ta_sphere sphere = { 0 };
+            sphere.center = pos;
+            sphere.radius = 0.05f;
+            //ta_primitive_push_sphere(0, sphere, node->type == OGX_BONE_NODE ? TA_COLOR_CYAN : TA_COLOR_WHITE);
+
+            float axes_scale = 0.05f;
+
+            ta_ray camera_ray = ta_game_camera_ray();
+            if (ta_ray_v_sphere(&camera_ray, &sphere, 0)) {
+                ta_ui_row_begin();
+                ta_ui_label(SYM(node->name), 0);
+                axes_scale *= 2.0f;
+            }
+
+            ta_primitive_push_axes_arrow(0, pos, rot, axes_scale);
+
+            // Add children to list
+            dlb_vec_each(s32 *, child_idx, node->children) {
+                dlb_vec_push(traversal_list, *child_idx);
+            }
+        }
+#endif
+
+        ta_ui_panel_end();
+
+        ta_primitive_render(true, false);
+        ta_ui_render();
 
         //----------------------------------------------------------------------
         // Editor UI (screen)
