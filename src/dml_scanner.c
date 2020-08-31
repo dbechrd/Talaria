@@ -38,6 +38,14 @@ static char dml_scanner_peek_next(dml_scanner *scanner)
 
     return scanner->source[scanner->current + 1];
 }
+static char dml_scanner_peek_next_2(dml_scanner *scanner)
+{
+    if (scanner->current + 2 >= scanner->source_len) {
+        return '\0';
+    }
+
+    return scanner->source[scanner->current + 2];
+}
 static bool dml_scanner_match(dml_scanner *scanner, char expected)
 {
     if (!dml_scanner_eof(scanner) && scanner->source[scanner->current] == expected) {
@@ -128,6 +136,7 @@ static void dml_scanner_scan_comment(dml_scanner *scanner)
 }
 static void dml_scanner_scan_number(dml_scanner *scanner)
 {
+    // 0x3f3504f4
     if (scanner->source[scanner->start] == '0' && dml_scanner_peek(scanner) == 'x') {
         dml_scanner_advance(scanner);
         dml_scanner_advance(scanner);
@@ -135,20 +144,61 @@ static void dml_scanner_scan_number(dml_scanner *scanner)
             dml_scanner_advance(scanner);
         }
     } else {
+        // -123, +123
+        if ((scanner->source[scanner->start] == '-' || scanner->source[scanner->start] == '+')
+            && dml_scanner_is_digit(dml_scanner_peek(scanner)))
+        {
+            // consume sign ('-' or '+')
+            dml_scanner_advance(scanner);
+        }
+
+        // left side of decimal
         while (dml_scanner_is_digit(dml_scanner_peek(scanner))) {
             dml_scanner_advance(scanner);
         }
 
-        if (dml_scanner_peek(scanner) == '.' && dml_scanner_is_digit(dml_scanner_peek_next(scanner))) {
-            // eat the '.'
+        // 1e-05, 1e+05
+        if (dml_scanner_peek(scanner) == 'e' &&
+            (dml_scanner_peek_next(scanner) == '-' || dml_scanner_peek_next(scanner) == '+') &&
+            (dml_scanner_is_digit(dml_scanner_peek_next_2(scanner))))
+        {
+            // consume 'e'
+            dml_scanner_advance(scanner);
+            // consume sign ('-' or '+')
+            dml_scanner_advance(scanner);
+
+            // consume exponent
+            while (dml_scanner_is_digit(dml_scanner_peek(scanner))) {
+                dml_scanner_advance(scanner);
+            }
+        // 1.23
+        } else if (dml_scanner_peek(scanner) == '.' && dml_scanner_is_digit(dml_scanner_peek_next(scanner))) {
+            // consume decimal '.'
             dml_scanner_advance(scanner);
 
             while (dml_scanner_is_digit(dml_scanner_peek(scanner))) {
                 dml_scanner_advance(scanner);
             }
+
+            // 1.2e-05, 1.2e+05
+            if (dml_scanner_peek(scanner) == 'e' &&
+                (dml_scanner_peek_next(scanner) == '-' || dml_scanner_peek_next(scanner) == '+') &&
+                (dml_scanner_is_digit(dml_scanner_peek_next_2(scanner))))
+            {
+                // consume 'e'
+                dml_scanner_advance(scanner);
+                // consume sign ('-' or '+')
+                dml_scanner_advance(scanner);
+
+                // consume exponent
+                while (dml_scanner_is_digit(dml_scanner_peek(scanner))) {
+                    dml_scanner_advance(scanner);
+                }
+            }
         }
     }
 
+    // NOTE: This is dangerous because it could read past scanner->current even if we didn't want to advance that far
     float value = parse_float(scanner->source + scanner->start);
     dml_token *token = dml_scanner_add_token(scanner, "<number>", TOK_NUMBER);
     token->literal.as_float = value;
@@ -220,7 +270,7 @@ bool dml_scanner_scan_tokens(dml_scanner *scanner, dml_token **tokens)
                 dml_scanner_scan_comment(scanner);
                 break;
             default:
-                if (dml_scanner_is_digit(c)) {
+                if (c == '-' || c == '+' || dml_scanner_is_digit(c)) {
                     dml_scanner_scan_number(scanner);
                 } else if (dml_scanner_is_alpha(c)) {
                     dml_scanner_scan_identifier(scanner);

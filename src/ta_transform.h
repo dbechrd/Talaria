@@ -5,7 +5,7 @@
 typedef struct ta_transform {
     TA_COMPONENT_HEADER
     ta_xform    xform;      // current transform
-    ta_xform    xform_prev; // xform last frame (for interpolation)
+    //ta_xform    xform_prev; // xform last frame (for interpolation)
     ta_xform    xform_world;// xform in world space (all parents included)
     ta_mat4     local;      // cached model matrix (local space, relative to parent)
     ta_mat4     world;      // cached model matrix (world space, all parents included)

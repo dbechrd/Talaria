@@ -1419,8 +1419,8 @@ void ta_game_loop()
             DLB_ASSERT(node->parent != OGX_INDEX_NULL);
             ogx_node *parent = &test_ogx_scene.nodes[node->parent];
 
-            ta_mat4 mat_trans = mat4_translate(*(ta_vec3 *)node->transform.position);
-            ta_mat4 mat_rot = mat4_rotate_quat(*(ta_vec4 *)node->transform.orientation);
+            ta_mat4 mat_trans = mat4_translate(node->transform.position);
+            ta_mat4 mat_rot = mat4_rotate_quat(node->transform.orientation);
 
             ta_mat4 mat = MAT4_IDENT;
             mat = mat4_mul(&mat_rot, &mat);

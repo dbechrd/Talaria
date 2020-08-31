@@ -235,8 +235,8 @@ static void ta_ogx_load_node(ogx_node *o_node)
 
     DLB_ASSERT(sizeof(ta_vec3) == sizeof(ogx_vec3));
     DLB_ASSERT(sizeof(ta_vec4) == sizeof(ogx_vec4));
-    ta_vec3 ogx_pos = *(ta_vec3 *)o_node->transform.position;
-    ta_vec4 ogx_rot = *(ta_vec4 *)o_node->transform.orientation;
+    ta_vec3 ogx_pos = o_node->transform.position;
+    ta_vec4 ogx_rot = o_node->transform.orientation;
     transform->xform.position = vec3_add(transform->xform.position, ogx_pos);
     transform->xform.orientation = quat_normalize(quat_mul(transform->xform.orientation, ogx_rot));
 

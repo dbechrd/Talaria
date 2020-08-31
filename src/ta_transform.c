@@ -10,7 +10,7 @@ void ta_transform_init(ta_transform *transform)
     //if (vec3_zero(node->xform.scale)) {
     //    node->xform.scale = VEC3_ONE;
     //}
-    transform->xform_prev = transform->xform;
+    //transform->xform_prev = transform->xform;
 }
 void ta_transform_init_void(void *transform)
 {
@@ -54,14 +54,13 @@ static void ta_transform_update(ta_transform *transform, float alpha, bool dirty
         if (parent->dirty_flag == dirty_flag) {
             ta_transform_update(parent, alpha, dirty_flag);
         }
-        transform->world = mat4_mul(&transform->local, &parent->world);
-        transform->xform_world = transform->xform;
-        transform->xform_world.position = vec3_add(parent->xform_world.position, transform->xform.position);
-        transform->xform_world.orientation = quat_normalize(quat_mul(parent->xform_world.orientation, transform->xform.orientation));
+        transform->world = mat4_mul(&parent->world, &transform->local);
     } else {
-        transform->xform_world = transform->xform;
         transform->world = transform->local;
     }
+
+    transform->xform_world.position = mat4_to_location(&transform->world);
+    transform->xform_world.orientation = mat4_to_quaternion(&transform->world);
 
     transform->dirty_flag = !dirty_flag;
 }

@@ -20,11 +20,14 @@ layout(location = 11) in vec4 attr_weights;
 // Camera, model, animation
 //------------------------------------------------------
 // TODO: Uniform block(s) grouped by update frequency
-uniform float u_morph_weights[1];
+//--------
 uniform mat4 u_proj;
 uniform mat4 u_view;
-uniform mat4 u_model;
 uniform vec3 u_camera_pos;
+//--------
+uniform mat4 u_model;
+uniform float u_morph_weights[1];
+uniform mat4 u_bone_xforms[64];  // NOTE: Max array size is determined by GL_MAX_VERTEX_UNIFORM_COMPONENTS / 4
 
 //------------------------------------------------------
 // Lights

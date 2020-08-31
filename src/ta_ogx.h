@@ -6,11 +6,6 @@ typedef float ogx_vec3[3];  // xyz
 typedef float ogx_vec4[4];  // xyzw
 typedef float ogx_mat4[16]; // 00, 01, 02, 03, 10, ..., 33
 
-typedef struct ogx_transform {
-    ogx_vec3 position;
-    ogx_vec4 orientation;
-} ogx_transform;
-
 typedef enum ogx_key_kind {
     OGX_KEY_KIND_UNKNOWN,
     OGX_KEY_KIND_VALUE,
@@ -25,6 +20,7 @@ typedef enum ogx_type {
     OGX_TYPE_FLOAT,
     OGX_TYPE_VEC2,
     OGX_TYPE_VEC3,
+    OGX_TYPE_VEC4,
     OGX_TYPE_MAT4,
     OGX_TYPE_COUNT
 } ogx_type;
@@ -34,6 +30,7 @@ typedef struct ogx_key {
     ogx_type type;
     union {
         float *as_float;
+        ogx_vec4* as_vec4;
         ogx_mat4* as_mat4;
     } values;
 } ogx_key;
@@ -74,7 +71,8 @@ typedef struct ogx_track {
 typedef struct ogx_animation {
     float begin;
     float end;
-    ogx_track track;
+    const char *clip;
+    ogx_track *tracks;
 } ogx_animation;
 
 typedef enum ogx_node_type {
@@ -154,7 +152,7 @@ typedef struct ogx_node {
     s32 parent;     // parent index
                        // TODO: Do we need this, or is parent sufficient? I assume we do.
     s32 *children;  // vector of child indices
-    ogx_transform transform;
+    ta_xform transform;
     ta_mat4 animated_transform;
     ogx_animation *animations;
     union {
@@ -213,7 +211,7 @@ typedef struct ogx_skeleton {
 } ogx_skeleton;
 
 typedef struct ogx_skin {
-    ogx_transform transform;
+    ta_xform transform;
     ogx_skeleton skeleton;
     // TODO: Use u16 for these
     //uint16_t *bone_count_array;
