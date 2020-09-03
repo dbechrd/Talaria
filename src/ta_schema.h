@@ -3,6 +3,20 @@
 
 typedef struct _iobuf FILE;
 
+// TODO: OGX -> TA mapping
+// [x] node -> ta_transform
+// [ ] bode_node -> <3 options>:
+//     1) nothing, transform being bone is implicit based on skeleton->skin->nodes containing its name
+//     2) ta_transform with `node_type` flag of TA_NODE_BONE
+//     3) ta_bone component, doesn't have any properties other than a name for now
+// [ ] geometry_node -> ta_model (probably need this one..)
+
+// [x] geometry -> ta_mesh
+// [x] mesh -> ta_mesh
+// [x] texture -> ta_texture
+// [x] material -> ta_material
+
+
 // HACK: Need to support atomic vectors for e.g. texture->pixels
 typedef struct ta_rgba_u8 {
     u8 r, g, b, a;
@@ -33,9 +47,10 @@ typedef enum ta_schema_field_type {
     TYP_AABB,
     TYP_OBB,
     TYP_COLLIDER,
-    TYP_PIECE,
     TYP_ANIMATION_SAMPLER,
     TYP_ANIMATION_CHANNEL,
+    TYP_SKELETON,
+    TYP_SKIN,
 
     //TYP_OGX_TRANSFORM,
     //TYP_OGX_NODE_LIGHT,
@@ -71,14 +86,14 @@ typedef enum ta_schema_field_type {
     TYP_RIGID_BODY,
 
     // Resource types
+    TYP_ANIMATION,
     TYP_AUDIO_BUFFER,
+    TYP_CUBEMAP,
     TYP_FONT,
     TYP_MATERIAL,
     TYP_MESH,
     TYP_SHADER,
     TYP_TEXTURE,
-    TYP_CUBEMAP,
-    TYP_ANIMATION,
 
     TYP_COUNT,
 
@@ -105,14 +120,14 @@ typedef enum ta_res_type {
     RES_COMP_RIGID_BODY,
     RES_COMP_COUNT,
     // Resource types
-    RES_AUDIO_BUFFER = RES_COMP_COUNT,
+    RES_ANIMATION = RES_COMP_COUNT,
+    RES_AUDIO_BUFFER,
+    RES_CUBEMAP,
     RES_FONT,
     RES_MATERIAL,
     RES_MESH,
     RES_SHADER,
     RES_TEXTURE,
-    RES_CUBEMAP,
-    RES_ANIMATION,
     RES_COUNT,
 } ta_res_type;
 

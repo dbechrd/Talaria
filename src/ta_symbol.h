@@ -42,16 +42,14 @@ extern const char *SYM_MAT4;
 extern const char *SYM_STRUCT;
 
 // Shader attributes
-extern const char *SYM_ATTR_POSITION;
 extern const char *SYM_ATTR_COLOR;
 extern const char *SYM_ATTR_UV;
+extern const char *SYM_ATTR_POSITION;
 extern const char *SYM_ATTR_NORMAL;
 extern const char *SYM_ATTR_TANGENT;
-extern const char *SYM_ATTR_MORPH0_POSITION;
-extern const char *SYM_ATTR_MORPH0_COLOR;
-extern const char *SYM_ATTR_MORPH0_UV;
-extern const char *SYM_ATTR_MORPH0_NORMAL;
-extern const char *SYM_ATTR_MORPH0_TANGENT;
+extern const char *SYM_ATTR_MORPH1_POSITION;
+extern const char *SYM_ATTR_MORPH1_NORMAL;
+extern const char *SYM_ATTR_MORPH1_TANGENT;
 extern const char *SYM_ATTR_JOINTS;
 extern const char *SYM_ATTR_WEIGHTS;
 

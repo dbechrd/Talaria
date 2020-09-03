@@ -1145,51 +1145,38 @@ static void ui_node_panel()
             ta_ui_label(CSTR("name:"), 0);
             ta_ui_label(SYM(model->name), 0);
 
-            // List all of the model pieces
-            dlb_vec_each(ta_piece *, piece, model->pieces) {
-                ta_ui_row_begin();
-                ta_ui_next_size(label_width, 0);
-                ta_ui_label(CSTR("piece:"), 0);
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("mesh:"), 0);
+            ta_ui_label(SYM(model->mesh), 0);
 
-                ta_ui_row_begin();
-                ta_ui_next_margin_left(16);
-                ta_ui_next_size(label_width, 0);
-                ta_ui_label(CSTR("mesh:"), 0);
-                ta_ui_label(SYM(piece->mesh), 0);
-
+            ta_ui_row_begin();
+            ta_ui_label(CSTR("materials:"), 0);
+            dlb_vec_each(const char **, material, model->materials) {
                 ta_ui_row_begin();
                 ta_ui_next_margin_left(16);
                 ta_ui_next_size(label_width, 0);
-                ta_ui_label(CSTR("material:"), 0);
-                ta_ui_label(SYM(piece->material), 0);
-
-                ta_ui_row_begin();
-                ta_ui_next_margin_left(16);
-                ta_ui_next_size(label_width, 0);
-                ta_ui_label(CSTR("anim_targets:"), 0);
-
-                // List all of the piece animation targets
-                if (piece->anim_targets) {
-                    dlb_vec_each(const char **, anim_target, piece->anim_targets) {
-                        ta_ui_row_begin();
-                        ta_ui_next_margin_left(32);
-                        ta_ui_next_size(label_width, 0);
-                        ta_ui_label(SYM(*anim_target), 0);
-                    }
-                } else {
-                    ta_ui_row_begin();
-                    ta_ui_next_margin_left(32);
-                    ta_ui_next_size(label_width, 0);
-                    ta_ui_label(CSTR("none"), 0);
-                }
+                ta_ui_label(SYM(*material), 0);
             }
 
-            // List all of the model animation targets
-            dlb_vec_each(const char **, anim_target, model->anim_targets) {
+            if (model->morph_target_weights) {
                 ta_ui_row_begin();
                 ta_ui_next_size(label_width, 0);
-                ta_ui_label(CSTR("anim_target:"), 0);
-                ta_ui_label(SYM(*anim_target), 0);
+                ta_ui_label(CSTR("morph_target_weights:"), 0);
+
+                static ta_ui_textbox_state *morph_target_weight_textboxes = 0;
+                if (!morph_target_weight_textboxes) {
+                    size_t morph_target_weight_count = dlb_vec_len(model->morph_target_weights);
+                    dlb_vec_reserve(morph_target_weight_textboxes, morph_target_weight_count);
+                }
+                size_t morph_target_index = 0;
+                dlb_vec_each(float *, morph_target_weight, model->morph_target_weights) {
+                    ta_ui_row_begin();
+                    ta_ui_next_margin_left(16);
+                    // TODO: ta_ui_label_float(float value) that does the conversion for me
+                    ta_ui_textbox_float(morph_target_weight, &morph_target_weight_textboxes[morph_target_index], 0);
+                    morph_target_index++;
+                }
             }
 
             ta_ui_row_begin();
@@ -1723,9 +1710,9 @@ static void ui_material_panel()
             ta_editor_selected_entity(&selected_entity);
             if (selected_entity) {
                 ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
-                if (model && model->pieces) {
-                    // TODO: Select material per piece, not per model. For now, arbitrarily set material of first piece
-                    model->pieces[0].material = material->name;
+                if (model && model->materials) {
+                    // TODO: Set via material slots in node editor. For now, arbitrarily override material in slot 0.
+                    model->materials[0] = material->name;
                 }
             }
         }
@@ -1781,9 +1768,8 @@ static void ui_mesh_panel()
             ta_editor_selected_entity(&selected_entity);
             if (selected_entity) {
                 ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
-                if (model && model->pieces) {
-                    // TODO: Select mesh per piece, not per model. For now, arbitrarily set mesh of first piece
-                    model->pieces[0].mesh = mesh->name;
+                if (model) {
+                    model->mesh = mesh->name;
                 }
             }
         }
@@ -1793,21 +1779,22 @@ static void ui_mesh_panel()
             size_t len = snprintf(tex_buf, sizeof(tex_buf), "%s\n", mesh->name);
             DLB_ASSERT(len < sizeof(tex_buf));
 
-            for (int i = 0; i < TA_VERTEX_ATTRIB_COUNT; i++) {
+            for (int attr_type = 0; attr_type < TA_VERTEX_ATTR_COUNT; attr_type++) {
                 len += snprintf(tex_buf + len, sizeof(tex_buf) - len,
                     "[%3u] %s %zu\n",
                     mesh->gl_vertex_buffer,
-                    ta_vertex_attrib_type_str(i),
-                    dlb_vec_len(mesh->buffers[i])
+                    ta_vertex_attrib_type_str(attr_type),
+                    dlb_vec_len(mesh->buffers[attr_type])
                 );
                 DLB_ASSERT(len < sizeof(tex_buf));
             }
-            dlb_vec_each(ta_mesh_index_array *, index_array, mesh->index_arrays) {
+            dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
                 len += snprintf(tex_buf + len, sizeof(tex_buf) - len,
-                    "[%3u] %s %zu\n",
+                    "[%3u] %s %zu (base_vertex: %5d)\n",
                     mesh->gl_index_buffer,
                     "TA_INDEX_BUFFER                 ",
-                    dlb_vec_len(index_array->values)
+                    dlb_vec_len(index_array->values),
+                    index_array->base_vertex
                 );
                 DLB_ASSERT(len < sizeof(tex_buf));
             }

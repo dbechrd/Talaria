@@ -300,6 +300,11 @@ static bool dml_parser_array(dml_parser *parser, dml_document *document, size_t 
             return false;
         }
 
+        // Ignore trailing comma after last array element
+        if (dml_parser_check(parser, TOK_RIGHT_SQUARE_BRACKET)) {
+            break;
+        }
+
         size_t value_idx = dlb_vec_len(document->value_pool);
         dlb_vec_push(values, value_idx);
         dlb_vec_alloc(document->value_pool);

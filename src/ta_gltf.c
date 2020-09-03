@@ -565,13 +565,13 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
     size_t target)
 {
     static const ta_vertex_attrib_type attr_type_lookup[] = {
-        [cgltf_attribute_type_position] = TA_VERTEX_ATTRIB_POSITION,
-        [cgltf_attribute_type_color   ] = TA_VERTEX_ATTRIB_COLOR,
-        [cgltf_attribute_type_texcoord] = TA_VERTEX_ATTRIB_UV,
-        [cgltf_attribute_type_normal  ] = TA_VERTEX_ATTRIB_NORMAL,
-        [cgltf_attribute_type_tangent ] = TA_VERTEX_ATTRIB_TANGENT,
-        [cgltf_attribute_type_joints  ] = TA_VERTEX_ATTRIB_JOINTS,
-        [cgltf_attribute_type_weights ] = TA_VERTEX_ATTRIB_WEIGHTS,
+        [cgltf_attribute_type_position] = TA_VERTEX_ATTR_POSITION,
+        [cgltf_attribute_type_color   ] = TA_VERTEX_ATTR_COLOR,
+        [cgltf_attribute_type_texcoord] = TA_VERTEX_ATTR_UV,
+        [cgltf_attribute_type_normal  ] = TA_VERTEX_ATTR_NORMAL,
+        [cgltf_attribute_type_tangent ] = TA_VERTEX_ATTR_TANGENT,
+        [cgltf_attribute_type_joints  ] = TA_VERTEX_ATTR_JOINTS,
+        [cgltf_attribute_type_weights ] = TA_VERTEX_ATTR_WEIGHTS,
     };
 
     cgltf_size data_size = accessor->buffer_view->size;
@@ -592,74 +592,68 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
     if (target) {
         // NOTE: We don't support morph targets on top of joints/weight for now
         DLB_ASSERT(
-            attr_type == TA_VERTEX_ATTRIB_POSITION ||
-            attr_type == TA_VERTEX_ATTRIB_COLOR    ||
-            attr_type == TA_VERTEX_ATTRIB_UV       ||
-            attr_type == TA_VERTEX_ATTRIB_NORMAL   ||
-            attr_type == TA_VERTEX_ATTRIB_TANGENT
+            attr_type == TA_VERTEX_ATTR_COLOR    ||
+            attr_type == TA_VERTEX_ATTR_UV       ||
+            attr_type == TA_VERTEX_ATTR_POSITION ||
+            attr_type == TA_VERTEX_ATTR_NORMAL   ||
+            attr_type == TA_VERTEX_ATTR_TANGENT
         );
     }
-    attr_type += (TA_VERTEX_ATTRIB_MORPH0_POSITION - TA_VERTEX_ATTRIB_POSITION) * target;
+    attr_type += (TA_VERTEX_ATTR_MORPH1_POSITION - TA_VERTEX_ATTR_POSITION) * target;
     if (target == 1) {
-        // NOTE: Make sure first morph mapped to the correct morph0 attr_type (assume that this means others will too)
+        // NOTE: Make sure first morph mapped to the correct attr_type (assume that this means others will too)
         DLB_ASSERT(
-            attr_type == TA_VERTEX_ATTRIB_MORPH0_POSITION ||
-            attr_type == TA_VERTEX_ATTRIB_MORPH0_COLOR    ||
-            attr_type == TA_VERTEX_ATTRIB_MORPH0_UV       ||
-            attr_type == TA_VERTEX_ATTRIB_MORPH0_NORMAL   ||
-            attr_type == TA_VERTEX_ATTRIB_MORPH0_TANGENT
+            attr_type == TA_VERTEX_ATTR_MORPH1_POSITION ||
+            attr_type == TA_VERTEX_ATTR_MORPH1_NORMAL   ||
+            attr_type == TA_VERTEX_ATTR_MORPH1_TANGENT
         );
     }
 
     // TODO: Could make a size lookup table for each TA_MESH_BUFFER type and use dlb_vec_reserve_size()
     switch (attr_type) {
-        case TA_VERTEX_ATTRIB_POSITION:
-        case TA_VERTEX_ATTRIB_MORPH0_POSITION: {
+        case TA_VERTEX_ATTR_POSITION:
+        case TA_VERTEX_ATTR_MORPH1_POSITION: {
             DLB_ASSERT(accessor->type == cgltf_type_vec3);
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->positions) * accessor->count);
-            DLB_ASSERT(sizeof(*mesh->positions) == sizeof(*mesh->morph0_positions));
+            DLB_ASSERT(sizeof(*mesh->positions) == sizeof(*mesh->morph1_positions));
             dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->positions));
             break;
         }
-        case TA_VERTEX_ATTRIB_COLOR:
-        case TA_VERTEX_ATTRIB_MORPH0_COLOR: {
+        case TA_VERTEX_ATTR_COLOR: {
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->colors) * accessor->count);
-            DLB_ASSERT(sizeof(*mesh->colors) == sizeof(*mesh->morph0_colors));
             dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->colors));
             break;
         }
-        case TA_VERTEX_ATTRIB_UV:
-        case TA_VERTEX_ATTRIB_MORPH0_UV: {
+        case TA_VERTEX_ATTR_UV: {
             DLB_ASSERT(accessor->type == cgltf_type_vec2);
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->uvs) * accessor->count);
-            DLB_ASSERT(sizeof(*mesh->uvs) == sizeof(*mesh->morph0_uvs));
             dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->uvs));
             break;
         }
-        case TA_VERTEX_ATTRIB_NORMAL:
-        case TA_VERTEX_ATTRIB_MORPH0_NORMAL: {
+        case TA_VERTEX_ATTR_NORMAL:
+        case TA_VERTEX_ATTR_MORPH1_NORMAL: {
             DLB_ASSERT(accessor->type == cgltf_type_vec3);
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             DLB_ASSERT(data_size == sizeof(*mesh->normals) * accessor->count);
-            DLB_ASSERT(sizeof(*mesh->normals) == sizeof(*mesh->morph0_normals));
+            DLB_ASSERT(sizeof(*mesh->normals) == sizeof(*mesh->morph1_normals));
             dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->normals));
             break;
         }
-        case TA_VERTEX_ATTRIB_TANGENT:
-        case TA_VERTEX_ATTRIB_MORPH0_TANGENT: {
+        case TA_VERTEX_ATTR_TANGENT:
+        case TA_VERTEX_ATTR_MORPH1_TANGENT: {
             DLB_ASSERT(accessor->component_type == cgltf_component_type_r_32f);
             if (accessor->type == cgltf_type_vec3) {
                 DLB_ASSERT(data_size == sizeof(*mesh->tangents) * accessor->count);
-                DLB_ASSERT(sizeof(*mesh->tangents) == sizeof(*mesh->morph0_tangents));
+                DLB_ASSERT(sizeof(*mesh->tangents) == sizeof(*mesh->morph1_tangents));
                 dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->tangents));
             } else if (accessor->type == cgltf_type_vec4) {
                 // NOTE: gltf decided tangents should be vec4.. but only sometimes. Fix that dumb shit. -.-
                 DLB_ASSERT(sizeof(*mesh->tangents) == 12);
-                DLB_ASSERT(sizeof(*mesh->tangents) == sizeof(*mesh->morph0_tangents));
+                DLB_ASSERT(sizeof(*mesh->tangents) == sizeof(*mesh->morph1_tangents));
                 DLB_ASSERT(data_size / accessor->count == 16);
                 dlb_vec_alloc_count_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->tangents));
 
@@ -685,18 +679,18 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
                 DLB_ASSERT(!"Unexpected accessor type for tangents");
             }
             break;
-        } case TA_VERTEX_ATTRIB_JOINTS: {
+        } case TA_VERTEX_ATTR_JOINTS: {
             DLB_ASSERT(!target);
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
             if (accessor->component_type == cgltf_component_type_r_16u) {
                 DLB_ASSERT(data_size == sizeof(*mesh->joints) * accessor->count);
-                //DLB_ASSERT(sizeof(*mesh->joints) == sizeof(*mesh->morph0_joints));
+                //DLB_ASSERT(sizeof(*mesh->joints) == sizeof(*mesh->morph1_joints));
                 dlb_vec_reserve(mesh->joints, accessor->count);
                 //dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->joints));
             } else if (accessor->component_type == cgltf_component_type_r_8u) {
                 // NOTE: gltf decided joints should be 8u.. but only sometimes. Fix that dumb shit. -.-
                 DLB_ASSERT(sizeof(*mesh->joints) / VERTEX_MAX_JOINTS == sizeof(u16));
-                //DLB_ASSERT(sizeof(*mesh->joints) == sizeof(*mesh->morph0_joints));
+                //DLB_ASSERT(sizeof(*mesh->joints) == sizeof(*mesh->morph1_joints));
                 DLB_ASSERT(data_size / accessor->count / VERTEX_MAX_JOINTS == sizeof(u8));
                 //dlb_vec_reserve_size(mesh->buffers[attr_type], accessor->count, sizeof(*mesh->joints));
                 dlb_vec_alloc_count(mesh->joints, accessor->count);
@@ -715,7 +709,7 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
                 DLB_ASSERT(!"Unexpected component type for joints");
             }
             break;
-        } case TA_VERTEX_ATTRIB_WEIGHTS: {
+        } case TA_VERTEX_ATTR_WEIGHTS: {
             // NOTE: We don't support morph targets on top of joints/weight for now
             DLB_ASSERT(!target);
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
@@ -1222,7 +1216,7 @@ void ta_gltf_load(ta_gltf *gltf)
                 DLB_ASSERT(data);
 
                 DLB_ASSERT(accessor->type == cgltf_type_scalar);
-                ta_mesh_index_array *index_array = dlb_vec_alloc(mesh->index_arrays);
+                ta_index_array *index_array = dlb_vec_alloc(mesh->index_arrays);
                 dlb_vec_alloc_count(index_array->values, accessor->count);
 
                 // TODO(perf): Make sure all input data is already the correct size
@@ -1242,10 +1236,10 @@ void ta_gltf_load(ta_gltf *gltf)
                         }
                         break;
                     case cgltf_component_type_r_32u:
-                        for (cgltf_size i = 0; i < accessor->count; ++i) {
-                            index_array->values[i] = ((u32 *)data)[i];
-                        }
-                        break;
+                        //for (cgltf_size i = 0; i < accessor->count; ++i) {
+                        //    index_array->values[i] = ((u32 *)data)[i];
+                        //}
+                        //break;
                     case cgltf_component_type_r_32f:
                     case cgltf_component_type_invalid:
                     default:

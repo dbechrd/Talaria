@@ -904,19 +904,12 @@ ta_vec4 mat4_to_quaternion(const ta_mat4 *m)
 #define m00 (m->data.f[0][0])
 #define m01 (m->data.f[1][0])
 #define m02 (m->data.f[2][0])
-#define m03 (m->data.f[3][0])
 #define m10 (m->data.f[0][1])
 #define m11 (m->data.f[1][1])
 #define m12 (m->data.f[2][1])
-#define m13 (m->data.f[3][1])
 #define m20 (m->data.f[0][2])
 #define m21 (m->data.f[1][2])
 #define m22 (m->data.f[2][2])
-#define m23 (m->data.f[3][2])
-#define m30 (m->data.f[0][3])
-#define m31 (m->data.f[1][3])
-#define m32 (m->data.f[2][3])
-#define m33 (m->data.f[3][3])
 
     ta_vec4 q;
     float t;
@@ -945,19 +938,12 @@ ta_vec4 mat4_to_quaternion(const ta_mat4 *m)
 #undef m00
 #undef m01
 #undef m02
-#undef m03
 #undef m10
 #undef m11
 #undef m12
-#undef m13
 #undef m20
 #undef m21
 #undef m22
-#undef m23
-#undef m30
-#undef m31
-#undef m32
-#undef m33
 }
 ta_mat4 mat4_mul(const ta_mat4 *a, const ta_mat4 *b)
 {

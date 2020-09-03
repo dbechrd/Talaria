@@ -41,12 +41,14 @@ typedef enum dml_literal_type {
 
 extern const char *dml_literal_type_str[DML_LITERAL_COUNT];
 
+// NOTE: Representing ints as floats in the parser. Maximum representable int is 2^24 (16,777,216).
+// TODO: If we need 32-bit integers, we should parse into a double instead: 2^53 (9,007,199,254,740,992).
 typedef struct dml_literal {
     dml_literal_type type;
     union {
+        int as_bool;
         float as_float;
         const char *as_string;
-        int as_bool;
     } data;
     DML_DEBUG_SYMBOL
 } dml_literal;

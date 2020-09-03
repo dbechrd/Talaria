@@ -1,9 +1,9 @@
 #version 330 core
 
 in vs_out {
-    //vec3 position;
     vec4 color;
 	vec2 uv;
+    //vec3 position;
 } vertex;
 
 //------------------------------------------------------

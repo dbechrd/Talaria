@@ -3,18 +3,16 @@
 //------------------------------------------------------
 // Vertex attributes
 //------------------------------------------------------
-layout(location =  0) in vec3 attr_position;
-layout(location =  1) in vec4 attr_color;
-layout(location =  2) in vec2 attr_uv;
-layout(location =  3) in vec3 attr_normal;
-layout(location =  4) in vec3 attr_tangent;
-layout(location =  5) in vec3 attr_morph0_position;
-layout(location =  6) in vec4 attr_morph0_color;
-layout(location =  7) in vec2 attr_morph0_uv;
-layout(location =  8) in vec3 attr_morph0_normal;
-layout(location =  9) in vec3 attr_morph0_tangent;
-layout(location = 10) in vec4 attr_joints;
-layout(location = 11) in vec4 attr_weights;
+layout(location = 0) in vec4 attr_color;
+layout(location = 1) in vec2 attr_uv;
+layout(location = 2) in vec3 attr_position;
+layout(location = 3) in vec3 attr_normal;
+layout(location = 4) in vec3 attr_tangent;
+layout(location = 5) in vec3 attr_morph1_position;
+layout(location = 6) in vec3 attr_morph1_normal;
+layout(location = 7) in vec3 attr_morph1_tangent;
+layout(location = 8) in vec4 attr_joints;
+layout(location = 9) in vec4 attr_weights;
 
 //------------------------------------------------------
 // Camera, model, animation
@@ -26,7 +24,7 @@ uniform mat4 u_view;
 uniform vec3 u_camera_pos;
 //--------
 uniform mat4 u_model;
-uniform float u_morph_weights[1];
+uniform float u_morph_weights[2];
 uniform mat4 u_bone_xforms[64];  // NOTE: Max array size is determined by GL_MAX_VERTEX_UNIFORM_COMPONENTS / 4
 
 //------------------------------------------------------
@@ -58,9 +56,9 @@ uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 //------------------------------------------------------
 
 out vs_out {
-    vec3 position;
     vec4 color;
 	vec2 uv;
+    vec3 position;
     vec3 normal;
     vec3 tangent;
     vec3 tbn_position;
@@ -77,23 +75,21 @@ void main()
 #if 0
     // http://antongerdelan.net/opengl/blend_shapes.html
     // if other weights add up to less than 1, use neutral target
-    float neutral_w = 1.0 - u_morph_weights[0];  // - u_morph_weights[1]
+    float neutral_w = 1.0 - u_morph_weights[1];  // - u_morph_weights[2]
     clamp(neutral_w, 0.0, 1.0);
 
     // get a sum of weights and work out factors for each target
-    float sum_w = neutral_w + u_morph_weights[0];
+    float sum_w = neutral_w + u_morph_weights[1];
     float neutral_f = neutral_w / sum_w;
-    float morph0_f = u_morph_weights[0] / sum_w;
+    float morph1_f = u_morph_weights[1] / sum_w;
 
     // interpolate targets to give us current pose
     vec3 morphed_pos =
         neutral_f * attr_position +
-        morph0_f * attr_morph0_position;
+        morph1_f * attr_morph1_position;
 #else
     // add weighted morph targets to give us current pose
-    vec3 morphed_pos =
-        attr_position +
-        u_morph_weights[0] * attr_morph0_position;
+    vec3 morphed_pos = attr_position; // + u_morph_weights[0] * attr_morph1_position;
 #endif
 
     // TODO: Premultiply MVP matrix and pass as uniform

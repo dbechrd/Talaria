@@ -2,23 +2,6 @@
 #include "ta_math.h"
 #include "misc/glad.h"
 
-// Note: Morphable attributes must be contiguous and in the same order as their respective morph target attributes
-typedef enum ta_shader_attr {
-    TA_SHADER_ATTR_POSITION        = 0,
-    TA_SHADER_ATTR_COLOR           = 1,
-    TA_SHADER_ATTR_UV              = 2,
-    TA_SHADER_ATTR_NORMAL          = 3,
-    TA_SHADER_ATTR_TANGENT         = 4,
-    TA_SHADER_ATTR_MORPH0_POSITION = 5,
-    TA_SHADER_ATTR_MORPH0_COLOR    = 6,
-    TA_SHADER_ATTR_MORPH0_UV       = 7,
-    TA_SHADER_ATTR_MORPH0_NORMAL   = 8,
-    TA_SHADER_ATTR_MORPH0_TANGENT  = 9,
-    TA_SHADER_ATTR_JOINTS          = 10,
-    TA_SHADER_ATTR_WEIGHTS         = 11,
-    TA_SHADER_ATTR_COUNT
-} ta_shader_attr;
-
 // TODO: Map DML string to enum to avoid confusing int values in DML
 typedef enum ta_glsl_type {
     TA_GLSL_INT             = 0,
@@ -109,6 +92,7 @@ void ta_shader_set_mat3         (ta_shader *shader, const char *name, const ta_m
 void ta_shader_set_mat4         (ta_shader *shader, const char *name, const ta_mat4 *m);
 void ta_shader_set_light        (ta_shader *shader, const char *name, int index, struct ta_light *light);
 void ta_shader_set_material     (ta_shader *shader, const char *name, struct ta_material *material);
+void ta_shader_reset_pvm        (ta_shader *shader);
 void ta_shader_state_save       (ta_shader *shader, ta_shader_uniform *store);
 void ta_shader_state_load       (ta_shader_uniform *uniforms);
 void ta_shader_bind             (ta_shader *shader);

@@ -30,6 +30,7 @@ const char *ta_log_source_str(ta_log_source src) {
         case SRC_KEYBIND:       return "KEYBIND";
         case SRC_LIGHT:         return "LIGHT";
         case SRC_MATH:          return "MATH";
+        case SRC_MODEL:         return "MODEL";
         case SRC_OGX:           return "OGX";
         case SRC_OPENGL:        return "OPENGL";
         case SRC_PRIMITIVE:     return "PRIMITIVE";

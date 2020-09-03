@@ -52,7 +52,7 @@ static GLuint ta_shader_compile(GLenum type, char *buf)
     glShaderSource(shader, 1, (const GLchar *const *)&buf, &len);
 
     // Compile shader
-    GLint status;
+    GLint status = 0;
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (!status) {
@@ -98,7 +98,7 @@ static void ta_shader_program_link(GLuint program)
 {
     glLinkProgram(program);
 
-    GLint status;
+    GLint status = 0;
     glGetProgramiv(program, GL_LINK_STATUS, &status);
     if (status == GL_FALSE)
     {
@@ -175,19 +175,17 @@ static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, cons
 }
 static void shader_print_uniforms(ta_shader *shader)
 {
-    GLint count;
+    GLint count = 0;
     glGetProgramiv(shader->program_id, GL_ACTIVE_UNIFORMS, &count);
     //ta_log_write(&tg_debug_log, SRC_SHADER, " Active uniforms: %d\n", count);
 
-    GLsizei length;
-    GLint size; // size of the variable
-    GLenum type; // type of the variable (float, vec3 or mat4, etc)
+    GLsizei length = 0;
+    GLint size = 0; // size of the variable
+    GLenum type = 0; // type of the variable (float, vec3 or mat4, etc)
     GLchar *name = dlb_malloc(shader->max_uniform_name_len);
     for (GLint i = 0; i < count; i++) {
-        glGetActiveUniform(shader->program_id, (GLuint)i,
-            shader->max_uniform_name_len, &length, &size, &type, name);
-        //ta_log_write(&tg_debug_log, SRC_SHADER, "   Uniform #%d Name: %s Type: %u_light\n",
-        //    i, name, type);
+        glGetActiveUniform(shader->program_id, (GLuint)i, shader->max_uniform_name_len, &length, &size, &type, name);
+        //ta_log_write(&tg_debug_log, SRC_SHADER, "   Uniform #%d Name: %s Type: %u_light\n", i, name, type);
     }
     dlb_free(name);
 }
@@ -226,16 +224,16 @@ void ta_shader_load(ta_shader *shader)
     GLuint program_id = shader->program_id;
     glAttachShader(program_id, vshader);
     glAttachShader(program_id, fshader);
-    glBindAttribLocation(program_id, TA_SHADER_ATTR_POSITION,        "attr_position");
-    glBindAttribLocation(program_id, TA_SHADER_ATTR_COLOR,           "attr_color");
-    glBindAttribLocation(program_id, TA_SHADER_ATTR_UV,              "attr_uv");
-    glBindAttribLocation(program_id, TA_SHADER_ATTR_NORMAL,          "attr_normal");
-    glBindAttribLocation(program_id, TA_SHADER_ATTR_TANGENT,         "attr_tangent");
-    glBindAttribLocation(program_id, TA_SHADER_ATTR_MORPH0_POSITION, "attr_morph0_position");
-    glBindAttribLocation(program_id, TA_SHADER_ATTR_MORPH0_COLOR,    "attr_morph0_color");
-    glBindAttribLocation(program_id, TA_SHADER_ATTR_MORPH0_UV,       "attr_morph0_uv");
-    glBindAttribLocation(program_id, TA_SHADER_ATTR_MORPH0_NORMAL,   "attr_morph0_normal");
-    glBindAttribLocation(program_id, TA_SHADER_ATTR_MORPH0_TANGENT,  "attr_morph0_tangent");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_COLOR,           "attr_color");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_UV,              "attr_uv");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_POSITION,        "attr_position");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_NORMAL,          "attr_normal");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_TANGENT,         "attr_tangent");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_MORPH1_POSITION, "attr_morph1_position");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_MORPH1_NORMAL,   "attr_morph1_normal");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_MORPH1_TANGENT,  "attr_morph1_tangent");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_JOINTS,          "attr_joints");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_WEIGHTS,         "attr_weights");
     ta_shader_program_link(program_id);
 
     glGetProgramiv(program_id, GL_ACTIVE_ATTRIBUTE_MAX_LENGTH, &shader->max_attrib_name_len);
@@ -254,31 +252,27 @@ void ta_shader_load(ta_shader *shader)
     /////////////////////////////////////////
 
     // Ensure vertex attributes are at the correct locations
-    ta_shader_attribute *attr_pos         = find_attribute_by_name(shader, SYM_ATTR_POSITION,        TA_GLSL_VEC3);
     ta_shader_attribute *attr_col         = find_attribute_by_name(shader, SYM_ATTR_COLOR,           TA_GLSL_VEC4);
     ta_shader_attribute *attr_uv          = find_attribute_by_name(shader, SYM_ATTR_UV,              TA_GLSL_VEC2);
+    ta_shader_attribute *attr_pos         = find_attribute_by_name(shader, SYM_ATTR_POSITION,        TA_GLSL_VEC3);
     ta_shader_attribute *attr_norm        = find_attribute_by_name(shader, SYM_ATTR_NORMAL,          TA_GLSL_VEC3);
     ta_shader_attribute *attr_tang        = find_attribute_by_name(shader, SYM_ATTR_TANGENT,         TA_GLSL_VEC3);
-    ta_shader_attribute *attr_morph0_pos  = find_attribute_by_name(shader, SYM_ATTR_MORPH0_POSITION, TA_GLSL_VEC3);
-    ta_shader_attribute *attr_morph0_col  = find_attribute_by_name(shader, SYM_ATTR_MORPH0_COLOR,    TA_GLSL_VEC4);
-    ta_shader_attribute *attr_morph0_uv   = find_attribute_by_name(shader, SYM_ATTR_MORPH0_UV,       TA_GLSL_VEC2);
-    ta_shader_attribute *attr_morph0_norm = find_attribute_by_name(shader, SYM_ATTR_MORPH0_NORMAL,   TA_GLSL_VEC3);
-    ta_shader_attribute *attr_morph0_tang = find_attribute_by_name(shader, SYM_ATTR_MORPH0_TANGENT,  TA_GLSL_VEC3);
+    ta_shader_attribute *attr_morph1_pos  = find_attribute_by_name(shader, SYM_ATTR_MORPH1_POSITION, TA_GLSL_VEC3);
+    ta_shader_attribute *attr_morph1_norm = find_attribute_by_name(shader, SYM_ATTR_MORPH1_NORMAL,   TA_GLSL_VEC3);
+    ta_shader_attribute *attr_morph1_tang = find_attribute_by_name(shader, SYM_ATTR_MORPH1_TANGENT,  TA_GLSL_VEC3);
     ta_shader_attribute *attr_joints      = find_attribute_by_name(shader, SYM_ATTR_JOINTS,          TA_GLSL_VEC4);
     ta_shader_attribute *attr_weights     = find_attribute_by_name(shader, SYM_ATTR_WEIGHTS,         TA_GLSL_VEC4);
 
-    DLB_ASSERT(!attr_pos         || attr_pos->location         < 0 || attr_pos->location         == TA_SHADER_ATTR_POSITION);
-    DLB_ASSERT(!attr_col         || attr_col->location         < 0 || attr_col->location         == TA_SHADER_ATTR_COLOR);
-    DLB_ASSERT(!attr_uv          || attr_uv->location          < 0 || attr_uv->location          == TA_SHADER_ATTR_UV);
-    DLB_ASSERT(!attr_norm        || attr_norm->location        < 0 || attr_norm->location        == TA_SHADER_ATTR_NORMAL);
-    DLB_ASSERT(!attr_tang        || attr_tang->location        < 0 || attr_tang->location        == TA_SHADER_ATTR_TANGENT);
-    DLB_ASSERT(!attr_morph0_pos  || attr_morph0_pos->location  < 0 || attr_morph0_pos->location  == TA_SHADER_ATTR_MORPH0_POSITION);
-    DLB_ASSERT(!attr_morph0_col  || attr_morph0_col->location  < 0 || attr_morph0_col->location  == TA_SHADER_ATTR_MORPH0_COLOR);
-    DLB_ASSERT(!attr_morph0_uv   || attr_morph0_uv->location   < 0 || attr_morph0_uv->location   == TA_SHADER_ATTR_MORPH0_UV);
-    DLB_ASSERT(!attr_morph0_norm || attr_morph0_norm->location < 0 || attr_morph0_norm->location == TA_SHADER_ATTR_MORPH0_NORMAL);
-    DLB_ASSERT(!attr_morph0_tang || attr_morph0_tang->location < 0 || attr_morph0_tang->location == TA_SHADER_ATTR_MORPH0_TANGENT);
-    DLB_ASSERT(!attr_joints      || attr_joints->location      < 0 || attr_joints->location      == TA_SHADER_ATTR_JOINTS);
-    DLB_ASSERT(!attr_weights     || attr_weights->location     < 0 || attr_weights->location     == TA_SHADER_ATTR_WEIGHTS);
+    DLB_ASSERT(!attr_col         || attr_col->location         < 0 || attr_col->location         == TA_VERTEX_ATTR_COLOR);
+    DLB_ASSERT(!attr_uv          || attr_uv->location          < 0 || attr_uv->location          == TA_VERTEX_ATTR_UV);
+    DLB_ASSERT(!attr_pos         || attr_pos->location         < 0 || attr_pos->location         == TA_VERTEX_ATTR_POSITION);
+    DLB_ASSERT(!attr_norm        || attr_norm->location        < 0 || attr_norm->location        == TA_VERTEX_ATTR_NORMAL);
+    DLB_ASSERT(!attr_tang        || attr_tang->location        < 0 || attr_tang->location        == TA_VERTEX_ATTR_TANGENT);
+    DLB_ASSERT(!attr_morph1_pos  || attr_morph1_pos->location  < 0 || attr_morph1_pos->location  == TA_VERTEX_ATTR_MORPH1_POSITION);
+    DLB_ASSERT(!attr_morph1_norm || attr_morph1_norm->location < 0 || attr_morph1_norm->location == TA_VERTEX_ATTR_MORPH1_NORMAL);
+    DLB_ASSERT(!attr_morph1_tang || attr_morph1_tang->location < 0 || attr_morph1_tang->location == TA_VERTEX_ATTR_MORPH1_TANGENT);
+    DLB_ASSERT(!attr_joints      || attr_joints->location      < 0 || attr_joints->location      == TA_VERTEX_ATTR_JOINTS);
+    DLB_ASSERT(!attr_weights     || attr_weights->location     < 0 || attr_weights->location     == TA_VERTEX_ATTR_WEIGHTS);
 
     shader_init_uniforms(shader, shader->uniforms);
 
@@ -569,6 +563,12 @@ void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *ma
     u_material_roughness_texture_pool_index->dirty = true;
     u_material_roughness_texture_pool_layer->dirty = true;
     u_material_roughness_factor            ->dirty = true;
+}
+void ta_shader_reset_pvm(ta_shader *shader)
+{
+    ta_shader_set_mat4(shader, SYM_U_PROJ, &MAT4_IDENT);
+    ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
+    ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
 }
 
 static void shader_store_uniforms(ta_shader_uniform *store,

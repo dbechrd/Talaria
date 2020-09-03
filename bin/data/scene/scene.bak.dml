@@ -188,22 +188,18 @@ ta_light:
 ta_model:
   name: "chamber_0001"
   entity: "chamber_0001"
-  pieces: [
-    {
-      mesh: "chamber_0001",
-      material: "terrazzo",
-    },
+  mesh: "chamber_0001"
+  materials: [
+    "terrazzo"
   ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "wakeup"
   entity: "wakeup"
-  pieces: [
-    {
-      mesh: "wakeup",
-      material: "cobble",
-    },
+  mesh: "wakeup"
+  materials: [
+    "cobble"
   ]
   invisible: true
   cast_shadows: true
@@ -211,114 +207,90 @@ ta_model:
 ta_model:
   name: "player_one"
   entity: "player_one"
-  pieces: [
-    {
-      mesh: "prim_sphere",
-      material: "metal_plate_019",
-    },
+  mesh: "prim_sphere"
+  materials: [
+    "metal_plate_019"
   ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "sphere2"
   entity: "sphere2"
-  pieces: [
-    {
-      mesh: "prim_sphere",
-      material: "red",
-    },
+  mesh: "prim_sphere"
+  materials: [
+    "red"
   ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "shadow_test_1"
   entity: "shadow_test_1"
-  pieces: [
-    {
-      mesh: "letter_r",
-      material: "test",
-    },
+  mesh: "letter_r"
+  materials: [
+    "test"
   ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0001"
   entity: "column_0001"
-  pieces: [
-    {
-      mesh: "column_0001",
-      material: "test",
-    },
+  mesh: "column_0001",
+  materials: [
+    "test"
   ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0002"
   entity: "column_0002"
-  pieces: [
-    {
-      mesh: "column_0001",
-      material: "test",
-    },
+  mesh: "column_0001"
+  materials: [
+    "test"
   ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "column_0003"
   entity: "column_0003"
-  pieces: [
-    {
-      mesh: "column_0001",
-      material: "test",
-    },
+  mesh: "column_0001"
+  materials: [
+    "test"
   ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "star_0001"
   entity: "star_0001"
-  pieces: [
-    {
-      mesh: "star_0001",
-      material: "star_0001",
-    },
+  mesh: "star_0001"
+  materials: [
+    "star_0001"
   ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "rock_0001"
   entity: "rock_0001"
-  pieces: [
-    {
-      mesh: "#rock_0001.prim000",
-      material: "#rock_0001",
-    },
+  mesh: "#rock_0001.prim000"
+  materials: [
+    "#rock_0001"
   ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "button_0001"
   entity: "button_0001"
-  pieces: [
-    {
-      mesh: "#button_0001.prim000",
-      material: "#mat_grid",
-    },
-    {
-      mesh: "#button_0001.prim001",
-      material: "#mat_rainbow",
-    },
+  mesh: "#button_0001.prim000"
+  materials: [
+    "#mat_grid"
   ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
   name: "skeleton_test_1bone"
   entity: "skeleton_test_1bone"
-  pieces: [
-    {
-      mesh: "#skeleton_test_1bone.prim000",
-      material: "#Material",
-    },
+  mesh: "#skeleton_test_1bone.prim000"
+  materials: [
+    "#Material"
   ]
   cast_shadows: true
   receive_shadows: true
@@ -484,19 +456,6 @@ ta_transform:
   xform:
     position:
       x: 0x409D85F2 (4.922601)
-      y: 0x40409276 (3.008939)
-      z: 0xC1965D06 (-18.795422)
-    orientation:
-      x: 0x00000000 (0.000000)
-      y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
-ta_transform:
-  name: "gltf_mesh_0001"
-  entity: "gltf_mesh_0001"
-  xform:
-    position:
-      x: 0x40EFD178 (7.494320)
       y: 0x40409276 (3.008939)
       z: 0xC1965D06 (-18.795422)
     orientation:
@@ -722,7 +681,7 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  mass: 0x3E1999C9 (0.150001)
+  mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "rock_0001"
   entity: "rock_0001"
@@ -1182,7 +1141,7 @@ ta_shader:
       type: 1,  # TA_GLSL_UINT
     },
     {
-      name: "u_texture_pool_layer",
+      name: "u_texture_array_layer",
       type: 1,  # TA_GLSL_UINT
     },
   ]
@@ -1278,8 +1237,44 @@ ta_shader:
       type: 8,  # TA_GLSL_MAT4
     },
     {
-      name: "u_tex",
-      type: 10,  # TA_GLSL_SAMPLER_CUBE
+      name: "u_textures[0]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[1]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[2]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[3]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[4]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[5]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[6]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[7]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_texture_pool_index",
+      type: 1,  # TA_GLSL_UINT
+    },
+    {
+      name: "u_texture_array_layers",
+      type: 13,  # TA_GLSL_UINT_ARRAY
     },
   ]
 ta_shader:
@@ -1288,16 +1283,16 @@ ta_shader:
   path_frag: "data/shader/mesh_f.glsl"
   attributes: [
     {
-      name: "attr_position",
-      type: 5,  # TA_GLSL_VEC3
-    },
-    {
       name: "attr_color",
       type: 6,  # TA_GLSL_VEC4
     },
     {
       name: "attr_uv",
       type: 4,  # TA_GLSL_VEC2
+    },
+    {
+      name: "attr_position",
+      type: 5,  # TA_GLSL_VEC3
     },
     {
       name: "attr_normal",
@@ -1308,23 +1303,15 @@ ta_shader:
       type: 5,  # TA_GLSL_VEC3
     },
     {
-      name: "attr_morph0_position",
+      name: "attr_morph1_position",
       type: 5,  # TA_GLSL_VEC3
     },
     {
-      name: "attr_morph0_color",
-      type: 6,  # TA_GLSL_VEC4
-    },
-    {
-      name: "attr_morph0_uv",
-      type: 4,  # TA_GLSL_VEC2
-    },
-    {
-      name: "attr_morph0_normal",
+      name: "attr_morph1_normal",
       type: 5,  # TA_GLSL_VEC3
     },
     {
-      name: "attr_morph0_tangent",
+      name: "attr_morph1_tangent",
       type: 5,  # TA_GLSL_VEC3
     },
     {
@@ -1851,10 +1838,6 @@ ta_shader:
       name: "attr_position",
       type: 5,  # TA_GLSL_VEC3
     },
-    {
-      name: "attr_morph0_position",
-      type: 5,  # TA_GLSL_VEC3
-    },
   ]
   uniforms: [
     {
@@ -1877,10 +1860,6 @@ ta_shader:
   attributes: [
     {
       name: "attr_position",
-      type: 5,  # TA_GLSL_VEC3
-    },
-    {
-      name: "attr_morph0_position",
       type: 5,  # TA_GLSL_VEC3
     },
   ]
@@ -2139,8 +2118,8 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
 ta_texture:
   name: "data/texture/miramar_lf.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
@@ -2148,8 +2127,8 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
 ta_texture:
   name: "data/texture/miramar_dn.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
@@ -2157,8 +2136,8 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
 ta_texture:
   name: "data/texture/miramar_up.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
@@ -2166,8 +2145,8 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
 ta_texture:
   name: "data/texture/miramar_ft.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
@@ -2175,8 +2154,8 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
 ta_texture:
   name: "data/texture/miramar_bk.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
@@ -2184,8 +2163,21 @@ ta_texture:
   width: 1024
   height: 1024
   channels: 3
-  gl_filter_min: 9987
-  gl_filter_mag: 9728
+  gl_filter_min: 9729
+  gl_filter_mag: 9729
+#-------------------------------------------------------------------------------
+# TYP_CUBEMAP
+#-------------------------------------------------------------------------------
+ta_cubemap:
+  name: "miramar_skybox"
+  textures: [
+    "data/texture/miramar_rt.tga",
+    "data/texture/miramar_lf.tga",
+    "data/texture/miramar_up.tga",
+    "data/texture/miramar_dn.tga",
+    "data/texture/miramar_bk.tga",
+    "data/texture/miramar_ft.tga",
+  ]
 #-------------------------------------------------------------------------------
 # TYP_ANIMATION
 #-------------------------------------------------------------------------------

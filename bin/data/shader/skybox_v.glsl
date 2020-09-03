@@ -1,6 +1,6 @@
 #version 330 core
 
-layout(location = 0) in vec3 attr_position;
+layout(location = 2) in vec3 attr_position;
 
 out vs_out {
 	vec3 uvw;

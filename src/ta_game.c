@@ -520,6 +520,9 @@ void *ta_game_resource_pool(ta_res_type type)
 }
 void ta_game_load_gltf(const char *filename)
 {
+    UNUSED(filename);
+    DLB_ASSERT(!"GLTF loader broken due to model/pieces refactor");
+#if 0
     ta_gltf gltf = { 0 };
     gltf.filename = filename;
     int err = ta_gltf_parse_file(&gltf);
@@ -529,6 +532,7 @@ void ta_game_load_gltf(const char *filename)
     }
     ta_gltf_load(&gltf);
     ta_gltf_free(&gltf);
+#endif
 }
 ta_camera *ta_game_camera()
 {
@@ -613,7 +617,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_
 
     ta_size window_size = { 0 };
     ta_rect restore = { 0 };
-    bool vsync;
+    bool vsync = false;
     ta_window_get_size(tg_window, &window_size.w, &window_size.h);
     ta_window_get_restore_rect(tg_window, &restore);
     ta_window_get_vsync(tg_window, &vsync);
@@ -899,11 +903,11 @@ static void game_render_manifolds_debug()
     const float radius = 0.05f;
     dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
         for (u32 i = 0; i < manifold->contact_count; ++i) {
-            ta_sphere dbg_contact_world;
+            ta_sphere dbg_contact_world = { 0 };
             dbg_contact_world.center = manifold->contacts[i];
             dbg_contact_world.radius = radius;
             ta_primitive_push_sphere(0, dbg_contact_world, TA_COLOR_DARK_RED);
-            ta_line_3d dbg_contact_normal;
+            ta_line_3d dbg_contact_normal = { 0 };
             dbg_contact_normal.p0 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, radius));
             dbg_contact_normal.p1 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, 1.0f - radius));
             ta_primitive_push_line_3d(0, dbg_contact_normal, TA_COLOR_DARK_RED, TA_COLOR_DARK_RED);
@@ -1002,7 +1006,7 @@ static void game_render_nametags_debug(ta_camera *camera)
         tag_background.rect.h = (int)NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
         ta_primitive_push_rect_uv(0, tag_background, TA_COLOR_DARK_RED, UI_LAYER_HUD_BG, false, false);
         ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
-        ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
+        //ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
 
         // Name tag text
         ta_shader *font_shader = ta_game_by_sym(RES_SHADER, font->shader);
@@ -1018,6 +1022,7 @@ static void game_render_nametags_debug(ta_camera *camera)
         }
         dlb_vec_zero(tag_rects);
         ta_font_render(font, 0, 0, 0, true, false, &primitive_quads);
+        ta_shader_reset_pvm(font_shader);
     }
 }
 void ta_game_loop()
@@ -1044,10 +1049,10 @@ void ta_game_loop()
     double ms_sim_t = 0;                    // current simulation time
     double ms_frame_accum = 0;
 
-    double ms_frame_prev = 0;   // Last frame started
-    double ms_frame_start;      // This frame started
-    double ms_frame_delta;      // Total delta time (including v-sync)
-    double ms_frame_time;       // Actual frame time before v-sync
+    double ms_frame_prev = 0;  // Last frame started
+    double ms_frame_start = 0; // This frame started
+    double ms_frame_delta = 0; // Total delta time (including v-sync)
+    double ms_frame_time = 0;  // Actual frame time before v-sync
 
     while (ta_game_state_current() != TA_STATE_SHUTDOWN) {
         ms_frame_start = ta_timer_elapsed_ms();
@@ -1386,8 +1391,8 @@ void ta_game_loop()
                 }
             }
         }
-
-#else
+#endif
+#if 0
         // Render dude_armature node and all children bone_nodes (as axes arrows, and maybe with spheres of
         // varying color to represent their depth in the hierarchy).
 
@@ -1455,6 +1460,35 @@ void ta_game_loop()
         }
 #endif
 
+        dlb_vec_each(ta_transform *, transform, transforms) {
+            if (ta_game_component_try(transform->entity, RES_COMP_CAMERA)) {
+                continue;
+            }
+
+#if 0
+            ta_vec3 pos = mat4_to_location(&transform->world);
+            ta_vec4 rot = mat4_to_quaternion(&transform->world);
+#else
+            ta_vec3 pos = transform->xform_world.position;
+            ta_vec4 rot = transform->xform_world.orientation;
+#endif
+            float axes_scale = 0.25f;
+
+            ta_sphere sphere = { 0 };
+            sphere.center = pos;
+            sphere.radius = axes_scale;
+            //ta_primitive_push_sphere(0, sphere, node->type == OGX_BONE_NODE ? TA_COLOR_CYAN : TA_COLOR_WHITE);
+
+            ta_ray camera_ray = ta_game_camera_ray();
+            if (ta_ray_v_sphere(&camera_ray, &sphere, 0)) {
+                ta_ui_row_begin();
+                ta_ui_label(SYM(transform->name), 0);
+                axes_scale *= 2.0f;
+            }
+
+            ta_primitive_push_axes_arrow(0, pos, rot, axes_scale);
+        }
+
         ta_ui_panel_end();
 
         ta_primitive_render(true, false);
@@ -1511,7 +1545,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // TODO: dlb_vec_each(ta_audio_listener_update)
         ta_transform *active_cam_trans = ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
-        ta_vec3 fwd_up[2];
+        ta_vec3 fwd_up[2] = { 0 };
         fwd_up[0] = active_camera->front;
         fwd_up[1] = active_camera->up;
         alListenerfv(AL_ORIENTATION, (float *)fwd_up);
@@ -1585,7 +1619,7 @@ void game_command_shutdown()
 }
 void game_command_toggle_fullscreen()
 {
-    bool fullscreen;
+    bool fullscreen = false;
     ta_window_get_fullscreen(tg_window, &fullscreen);
     ta_window_set_fullscreen(tg_window, !fullscreen);
 }
@@ -1779,8 +1813,9 @@ void game_command_debug_mouse_lock_toggle()
 {
     ta_mouse_capture_toggle();
 
+    // TODO(cleanup): You're stoopid.
     // HACK: Too lazy to make a proper keybind for this
-    for (int i = 0; i < TA_VERTEX_ATTRIB_COUNT; ++i) {
+    for (int i = 0; i < TA_VERTEX_ATTR_COUNT; ++i) {
         dlb_vec_clear(primitive_lines_perma.buffers[i]);
     }
 }

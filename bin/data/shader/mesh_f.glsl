@@ -128,9 +128,9 @@ uniform int u_debug_channel;
 //------------------------------------------------------
 
 in vs_out {
-    vec3 position;
     vec4 color;
 	vec2 uv;
+    vec3 position;
 	vec3 normal;
     vec3 tangent;
     vec3 tbn_position;

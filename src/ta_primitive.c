@@ -21,28 +21,14 @@ ta_mesh primitive_quads_tooltip_fg;
 void ta_primitive_init()
 {
     ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing lines...\n");
-    dlb_vec_reserve(primitive_lines.positions, 128);
-    dlb_vec_reserve(primitive_lines.colors, 128);
     ta_mesh_create(&primitive_lines);
-
-    dlb_vec_reserve(primitive_lines_perma.positions, 128);
-    dlb_vec_reserve(primitive_lines_perma.colors, 128);
     ta_mesh_create(&primitive_lines_perma);
 
     ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing quads...\n");
-    dlb_vec_reserve(primitive_quads.positions, 128);
-    dlb_vec_reserve(primitive_quads.colors, 128);
-    dlb_vec_reserve(primitive_quads.uvs, 128);
     ta_mesh_create(&primitive_quads);
 
     ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing tooltips...\n");
-    dlb_vec_reserve(primitive_quads_tooltip_bg.positions, 6);
-    dlb_vec_reserve(primitive_quads_tooltip_bg.colors, 6);
-    dlb_vec_reserve(primitive_quads_tooltip_bg.uvs, 6);
     ta_mesh_create(&primitive_quads_tooltip_bg);
-    dlb_vec_reserve(primitive_quads_tooltip_fg.positions, 6);
-    dlb_vec_reserve(primitive_quads_tooltip_fg.colors, 6);
-    dlb_vec_reserve(primitive_quads_tooltip_fg.uvs, 6);
     ta_mesh_create(&primitive_quads_tooltip_fg);
 }
 
@@ -118,7 +104,7 @@ void ta_primitive_push_line_2d(ta_mesh *mesh, ta_line_2d line2d, ta_rgba color0,
 {
     ta_vec3 p0 = { 0 };
     p0.x = NDC_X(line2d.p0.x);
-    p0.y = NDC_Y(line2d.p0.y);;
+    p0.y = NDC_Y(line2d.p0.y);
     ta_vec3 p1 = { 0 };
     p1.x = NDC_X(line2d.p1.x);
     p1.y = NDC_Y(line2d.p1.y);
@@ -728,73 +714,18 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
     bool clear_buffers, bool reset_uniforms)
 {
     // TODO: Move this out into its own explicit call, it's more confusing here
-    // ta_shader_reset_pvm()
     if (reset_uniforms) {
-        ta_shader_set_mat4(shader, SYM_U_PROJ, &MAT4_IDENT);
-        ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
-        ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
+        ta_shader_reset_pvm(shader);
     }
 
-    // TODO: This is basically just mesh_render, use that instead
+    //ta_mesh_render(mesh, shader);
     size_t positions_count = dlb_vec_len(mesh->positions);
     if (positions_count) {
         GLboolean cull_face = 0;
         glGetBooleanv(GL_CULL_FACE, &cull_face);
         if (cull_face) glDisable(GL_CULL_FACE);
 
-        // Calculate size of all vertex attribute data
-        size_t vertex_size_total = 0;
-        for (int i = 0; i < TA_SHADER_ATTR_COUNT; ++i) {
-            vertex_size_total += dlb_vec_size(mesh->buffers[i]);
-        }
-
-        // There's data in the mesh, but no GL buffer exists (could create on-demand instead of asserting, but
-        // this seems undesirable).
-        DLB_ASSERT(mesh->gl_vertex_buffer);
-
-        // Create/fill vertex attribute buffer
-        if (vertex_size_total) {
-            GLint buffer_size = 0;
-            glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vertex_buffer);
-            glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &buffer_size);
-
-            // Resize if necessary
-            if (vertex_size_total > (size_t)buffer_size) {
-                glBufferData(GL_ARRAY_BUFFER, vertex_size_total, 0, GL_DYNAMIC_DRAW);
-            }
-
-            size_t vertex_offset = 0;
-
-
-#define FILL_BUFFER(shader_attr, data, c_type, gl_type)                                               \
-            if (data) {                                                                               \
-                size_t vertex_size = dlb_vec_size(data);                                              \
-                glBufferSubData(GL_ARRAY_BUFFER, vertex_offset, vertex_size, data);                   \
-                glVertexAttribPointer(shader_attr, sizeof(*data) / sizeof(c_type), gl_type, false, 0, \
-                    (void *)vertex_offset);                                                           \
-                vertex_offset += vertex_size;                                                         \
-            }
-
-            glBindVertexArray(mesh->gl_vao);
-            FILL_BUFFER(TA_SHADER_ATTR_POSITION,        mesh->positions,        GLfloat,  GL_FLOAT);
-            FILL_BUFFER(TA_SHADER_ATTR_COLOR,           mesh->colors,           GLfloat,  GL_FLOAT);
-            FILL_BUFFER(TA_SHADER_ATTR_UV,              mesh->uvs,              GLfloat,  GL_FLOAT);
-            FILL_BUFFER(TA_SHADER_ATTR_NORMAL,          mesh->normals,          GLfloat,  GL_FLOAT);
-            FILL_BUFFER(TA_SHADER_ATTR_TANGENT,         mesh->tangents,         GLfloat,  GL_FLOAT);
-            FILL_BUFFER(TA_SHADER_ATTR_MORPH0_POSITION, mesh->morph0_positions, GLfloat,  GL_FLOAT);
-            FILL_BUFFER(TA_SHADER_ATTR_MORPH0_COLOR,    mesh->morph0_colors,    GLfloat,  GL_FLOAT);
-            FILL_BUFFER(TA_SHADER_ATTR_MORPH0_UV,       mesh->morph0_uvs,       GLfloat,  GL_FLOAT);
-            FILL_BUFFER(TA_SHADER_ATTR_MORPH0_NORMAL,   mesh->morph0_normals,   GLfloat,  GL_FLOAT);
-            FILL_BUFFER(TA_SHADER_ATTR_MORPH0_TANGENT,  mesh->morph0_tangents,  GLfloat,  GL_FLOAT);
-            FILL_BUFFER(TA_SHADER_ATTR_JOINTS,          mesh->joints,           GLushort, GL_UNSIGNED_SHORT);
-            FILL_BUFFER(TA_SHADER_ATTR_WEIGHTS,         mesh->weights,          GLfloat,  GL_FLOAT);
-            glBindVertexArray(0);
-
-#undef FILL_BUFFER
-
-            DLB_ASSERT(vertex_offset == vertex_size_total);
-        }
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        ta_mesh_update_buffers(mesh);
 
         // Draw the primitives
         ta_shader_bind(shader);
@@ -809,7 +740,7 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
     // TODO: Move this out into its own explicit call, it's more confusing here
     // ta_mesh_clear_buffers();
     if (clear_buffers) {
-        for (int i = 0; i < TA_VERTEX_ATTRIB_COUNT; ++i) {
+        for (int i = 0; i < TA_VERTEX_ATTR_COUNT; ++i) {
             dlb_vec_clear(mesh->buffers[i]);
         }
     }

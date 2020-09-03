@@ -19,19 +19,17 @@ ta_mesh *tg_mesh_default;
 
 const char *ta_vertex_attrib_type_str(int type) {
     switch (type) {
-        case TA_VERTEX_ATTRIB_POSITION:        return "TA_VERTEX_ATTRIB_POSITION       ";
-        case TA_VERTEX_ATTRIB_COLOR:           return "TA_VERTEX_ATTRIB_COLOR          ";
-        case TA_VERTEX_ATTRIB_UV:              return "TA_VERTEX_ATTRIB_UV             ";
-        case TA_VERTEX_ATTRIB_NORMAL:          return "TA_VERTEX_ATTRIB_NORMAL         ";
-        case TA_VERTEX_ATTRIB_TANGENT:         return "TA_VERTEX_ATTRIB_TANGENT        ";
-        case TA_VERTEX_ATTRIB_MORPH0_POSITION: return "TA_VERTEX_ATTRIB_MORPH0_POSITION";
-        case TA_VERTEX_ATTRIB_MORPH0_COLOR:    return "TA_VERTEX_ATTRIB_MORPH0_COLOR   ";
-        case TA_VERTEX_ATTRIB_MORPH0_UV:       return "TA_VERTEX_ATTRIB_MORPH0_UV      ";
-        case TA_VERTEX_ATTRIB_MORPH0_NORMAL:   return "TA_VERTEX_ATTRIB_MORPH0_NORMAL  ";
-        case TA_VERTEX_ATTRIB_MORPH0_TANGENT:  return "TA_VERTEX_ATTRIB_MORPH0_TANGENT ";
-        case TA_VERTEX_ATTRIB_JOINTS:          return "TA_VERTEX_ATTRIB_JOINTS         ";
-        case TA_VERTEX_ATTRIB_WEIGHTS:         return "TA_VERTEX_ATTRIB_WEIGHTS        ";
-        default: DLB_ASSERT(0);                return "TA_VERTEX_ATTRIB_???            ";
+        case TA_VERTEX_ATTR_COLOR:           return "TA_VERTEX_ATTR_COLOR          ";
+        case TA_VERTEX_ATTR_UV:              return "TA_VERTEX_ATTR_UV             ";
+        case TA_VERTEX_ATTR_POSITION:        return "TA_VERTEX_ATTR_POSITION       ";
+        case TA_VERTEX_ATTR_NORMAL:          return "TA_VERTEX_ATTR_NORMAL         ";
+        case TA_VERTEX_ATTR_TANGENT:         return "TA_VERTEX_ATTR_TANGENT        ";
+        case TA_VERTEX_ATTR_MORPH1_POSITION: return "TA_VERTEX_ATTR_MORPH1_POSITION";
+        case TA_VERTEX_ATTR_MORPH1_NORMAL:   return "TA_VERTEX_ATTR_MORPH1_NORMAL  ";
+        case TA_VERTEX_ATTR_MORPH1_TANGENT:  return "TA_VERTEX_ATTR_MORPH1_TANGENT ";
+        case TA_VERTEX_ATTR_JOINTS:          return "TA_VERTEX_ATTR_JOINTS         ";
+        case TA_VERTEX_ATTR_WEIGHTS:         return "TA_VERTEX_ATTR_WEIGHTS        ";
+        default: DLB_ASSERT(0);              return "TA_VERTEX_ATTR_???            ";
     }
 }
 
@@ -80,6 +78,7 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
 
     // We could make multiple meshes, but it doesn't really make sense unless
     // we have some sort of mesh_primitive, right?
+    // NOTE: If we want to handle more than 1, we should create multiple ta_mesh_vertex_arrays.
     DLB_ASSERT(num_shapes == 1);
 
     // Each object in file
@@ -151,6 +150,7 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
         }
 
         ta_mesh_create(mesh);
+        ta_mesh_update_buffers(mesh);
 
         mesh->aabb.extents = vec3_scalef(vec3_sub(mesh_max, mesh_min), 0.5f);
         mesh->aabb.center = vec3_add(mesh_min, mesh->aabb.extents);
@@ -177,43 +177,63 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
 void ta_mesh_create(ta_mesh *mesh)
 {
     glGenVertexArrays(1, &mesh->gl_vao);
+
+    // Create/fill vertex attribute buffer
+    glGenBuffers(1, &mesh->gl_vertex_buffer);
+
+    // Calculate size of all index data
+    size_t index_size_total = 0;
+    dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
+        index_size_total += dlb_vec_size(index_array->values);
+        if (index_size_total) break;
+    }
+
+    // Create/fill index buffer
+    if (index_size_total) {
+        glGenBuffers(1, &mesh->gl_index_buffer);
+    }
+}
+
+void ta_mesh_update_buffers(ta_mesh *mesh)
+{
+    DLB_ASSERT(mesh->gl_vao);
     glBindVertexArray(mesh->gl_vao);
 
     // Calculate size of all vertex attribute data
     size_t vertex_size_total = 0;
-    for (int i = 0; i < TA_SHADER_ATTR_COUNT; ++i) {
+    for (int i = 0; i < TA_VERTEX_ATTR_COUNT; ++i) {
         vertex_size_total += dlb_vec_size(mesh->buffers[i]);
     }
+    DLB_ASSERT(vertex_size_total);
 
     // Create/fill vertex attribute buffer
-    glGenBuffers(1, &mesh->gl_vertex_buffer);
+    DLB_ASSERT(mesh->gl_vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vertex_buffer);
     glBufferData(GL_ARRAY_BUFFER, vertex_size_total, 0, GL_STATIC_DRAW);
 
-    size_t vertex_offset = 0;
-
-#define FILL_BUFFER(shader_attr, data, c_type, gl_type)                                            \
+#define FILL_BUFFER(shader_attr, data, c_type, gl_type)                                       \
     if (data) {                                                                               \
         size_t vertex_size = dlb_vec_size(data);                                              \
-        glBufferSubData(GL_ARRAY_BUFFER, vertex_offset, vertex_size, data);                   \
         glEnableVertexAttribArray(shader_attr);                                               \
         glVertexAttribPointer(shader_attr, sizeof(*data) / sizeof(c_type), gl_type, false, 0, \
             (void *)vertex_offset);                                                           \
+        glBufferSubData(GL_ARRAY_BUFFER, vertex_offset, vertex_size, data);                   \
         vertex_offset += vertex_size;                                                         \
     }
 
-    FILL_BUFFER(TA_SHADER_ATTR_POSITION,        mesh->positions,        GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_SHADER_ATTR_COLOR,           mesh->colors,           GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_SHADER_ATTR_UV,              mesh->uvs,              GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_SHADER_ATTR_NORMAL,          mesh->normals,          GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_SHADER_ATTR_TANGENT,         mesh->tangents,         GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_SHADER_ATTR_MORPH0_POSITION, mesh->morph0_positions, GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_SHADER_ATTR_MORPH0_COLOR,    mesh->morph0_colors,    GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_SHADER_ATTR_MORPH0_UV,       mesh->morph0_uvs,       GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_SHADER_ATTR_MORPH0_NORMAL,   mesh->morph0_normals,   GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_SHADER_ATTR_MORPH0_TANGENT,  mesh->morph0_tangents,  GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_SHADER_ATTR_JOINTS,          mesh->joints,           GLushort, GL_UNSIGNED_SHORT);
-    FILL_BUFFER(TA_SHADER_ATTR_WEIGHTS,         mesh->weights,          GLfloat,  GL_FLOAT);
+    const size_t blah = dlb_vec_len(mesh->positions);
+
+    size_t vertex_offset = 0;
+    FILL_BUFFER(TA_VERTEX_ATTR_COLOR,           mesh->colors,           GLfloat,  GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_UV,              mesh->uvs,              GLfloat,  GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_POSITION,        mesh->positions,        GLfloat,  GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_NORMAL,          mesh->normals,          GLfloat,  GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_TANGENT,         mesh->tangents,         GLfloat,  GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_MORPH1_POSITION, mesh->morph1_positions, GLfloat,  GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_MORPH1_NORMAL,   mesh->morph1_normals,   GLfloat,  GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_MORPH1_TANGENT,  mesh->morph1_tangents,  GLfloat,  GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_JOINTS,          mesh->joints,           GLushort, GL_UNSIGNED_SHORT);
+    FILL_BUFFER(TA_VERTEX_ATTR_WEIGHTS,         mesh->weights,          GLfloat,  GL_FLOAT);
 
 #undef FILL_BUFFER
 
@@ -221,18 +241,19 @@ void ta_mesh_create(ta_mesh *mesh)
 
     // Calculate size of all index data
     size_t index_size_total = 0;
-    dlb_vec_each(ta_mesh_index_array *, index_array, mesh->index_arrays) {
+    dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
         index_size_total += dlb_vec_size(index_array->values);
     }
 
     // Create/fill index buffer
     if (index_size_total) {
-        glGenBuffers(1, &mesh->gl_index_buffer);
+        DLB_ASSERT(mesh->gl_index_buffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_index_buffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_size_total, 0, GL_STATIC_DRAW);
 
         size_t index_offset = 0;
-        dlb_vec_each(ta_mesh_index_array *, index_array, mesh->index_arrays) {
+        dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
+            index_array->base_vertex = (GLint)index_offset;
             size_t index_size = dlb_vec_size(index_array->values);
             glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, index_offset, index_size, index_array->values);
             index_offset += index_size;
@@ -250,6 +271,7 @@ void ta_mesh_create(ta_mesh *mesh)
 // debug mode
 void ta_mesh_init_normals(ta_mesh *mesh, float scale)
 {
+    // TODO: Iterate all mesh->vertex_arrays and calculate normals for all of them? Is this that useful.. idk.. too lazy
     DLB_ASSERT(!mesh->vertex_normals);
 
     size_t normals_count = dlb_vec_len(mesh->normals);
@@ -360,7 +382,7 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
     }
     glBindVertexArray(mesh->gl_vao);
     if (mesh->index_arrays) {
-        dlb_vec_each(ta_mesh_index_array *, index_array, mesh->index_arrays) {
+        dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
             // TODO: Material slots
             // TODO: Bind all needed materials at once via a UBO? Pass material indices as uniform/attrib?
             // https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object
@@ -369,7 +391,7 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
 
             size_t index_count = dlb_vec_len(index_array->values);
             DLB_ASSERT(index_count);
-            glDrawElementsBaseVertex(GL_TRIANGLES, (GLsizei)index_count, GL_UNSIGNED_INT, 0, index_array->base_vertex);
+            glDrawElementsBaseVertex(GL_TRIANGLES, (GLsizei)index_count, GL_UNSIGNED_SHORT, 0, index_array->base_vertex);
         }
     } else {
         size_t positions_count = dlb_vec_len(mesh->positions);
@@ -381,8 +403,11 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
 void ta_mesh_free(ta_mesh *mesh)
 {
     //dlb_hash_delete(&mesh->group->meshes_by_name, SYM(mesh->name));
-    for (int i = 0; i < TA_SHADER_ATTR_COUNT; ++i) {
+    for (int i = 0; i < TA_VERTEX_ATTR_COUNT; ++i) {
         dlb_vec_free(mesh->buffers[i]);
+    }
+    dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
+        dlb_vec_free(index_array->values);
     }
     glDeleteVertexArrays(1, &mesh->gl_vao);
     glDeleteBuffers(1, &mesh->gl_vertex_buffer);

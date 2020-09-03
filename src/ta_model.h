@@ -2,24 +2,16 @@
 #include "ta_schema.h"
 #include "ta_math.h"
 
-typedef struct ta_piece {
-    const char *mesh;
-    const char *material;
-    const char **anim_targets;  // Array of animation target meshes
-} ta_piece;
-
+// TODO: This could be named ta_geometry_instance, this comes from geometry_node in OGX file
 typedef struct ta_model {
     TA_COMPONENT_HEADER
-    ta_piece   *pieces;               // Array of mesh pieces in this model
     const char *mesh;
-
-    const char **materials;           // Array of material names
-    const char **anim_targets;        // Array of animation target names
-    float      *anim_target_weights;  // Array of animation target weights
-    bool       invisible;             // If true, model is not rendered
-    bool       cast_shadows;          // If true, allows model to cast real-time shadows
-    bool       receive_shadows;       // If true, model will use shadow maps                      // TODO: Pass as flag to PBR shader, skip shadows if false
-    //bool       no_serialize;          // If true, do not serialize this model to the scene file   // HACK: Exclude GLTF models from scene file
+    const char **materials;            // Vector of material names
+    float      *morph_target_weights;  // Vector of morph target weights
+    bool       invisible;              // If true, model is not rendered
+    bool       cast_shadows;           // If true, allows model to cast real-time shadows
+    bool       receive_shadows;        // If true, model will use shadow maps                      // TODO: Pass as flag to PBR shader, skip shadows if false
+    //bool       no_serialize;           // If true, do not serialize this model to the scene file   // HACK: Exclude GLTF models from scene file
 } ta_model;
 
 struct ta_camera;
