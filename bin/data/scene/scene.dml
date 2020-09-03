@@ -277,15 +277,6 @@ ta_model:
   cast_shadows: true
   receive_shadows: true
 ta_model:
-  name: "button_0001"
-  entity: "button_0001"
-  mesh: "#button_0001.prim000"
-  materials: [
-    "#mat_grid"
-  ]
-  cast_shadows: true
-  receive_shadows: true
-ta_model:
   name: "skeleton_test_1bone"
   entity: "skeleton_test_1bone"
   mesh: "#skeleton_test_1bone.prim000"

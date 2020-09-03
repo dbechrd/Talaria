@@ -35,7 +35,7 @@ const char *ogx_result_str[OGX_RESULT_COUNT] = {
     f(animation)                \
     f(atten)                    \
     f(attrib)                   \
-    f(base)                     \
+    f(base_morph_target_index)  \
     f(begin)                    \
     f(bind_pose_positions)      \
     f(bind_pose_orientations)   \
@@ -1237,7 +1237,7 @@ static ogx_result ogx_load_morph_target(dml_document *doc, ogx_morph_target *mor
             dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == ogxs_name) {
                 result = ogx_load_string(&morph_target->name, &doc->value_pool[field->value_idx]);
-            } else if (field->name == ogxs_base) {
+            } else if (field->name == ogxs_base_morph_target_index) {
                 result = ogx_load_float(&morph_target->base, &doc->value_pool[field->value_idx]);
             } else {
 #if _DEBUG

@@ -116,6 +116,7 @@ void ta_texturing_init(ta_texturing *texturing)
 
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),    1,    1, 32, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),   64,   64, 32, GL_RGBA, GL_UNSIGNED_BYTE);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),  256,  256, 32, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),  512,  512, 32, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 1024, 1024, 32, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 2048, 2048, 1,  GL_RGBA, GL_UNSIGNED_BYTE);

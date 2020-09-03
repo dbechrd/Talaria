@@ -243,9 +243,12 @@ void ta_game_init()
     //dml_document_load("data/mesh/button.ogex");
     //dml_document_load("data/mesh/dude.ogex");
 
-    //ogx_scene scene = { 0 };
     if (ogx_scene_from_file(&test_ogx_scene, "data/mesh/dude.ogex") == OGX_SUCCESS) {
         ta_ogx_load(&test_ogx_scene);
+    }
+    ogx_scene scene2 = { 0 };
+    if (ogx_scene_from_file(&scene2, "data/mesh/button.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(&scene2);
     }
     // TODO: Free the ogx scene if it's not needed after being loaded
 
