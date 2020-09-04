@@ -1790,11 +1790,11 @@ static void ui_mesh_panel()
             }
             dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
                 len += snprintf(tex_buf + len, sizeof(tex_buf) - len,
-                    "[%3u] %s %zu (base_vertex: %5d)\n",
+                    "[%3u] %s %zu (offset_bytes: %zu)\n",
                     mesh->gl_index_buffer,
-                    "TA_INDEX_BUFFER                 ",
+                    "TA_INDEX_BUFFER               ",
                     dlb_vec_len(index_array->values),
-                    index_array->base_vertex
+                    index_array->offset_bytes
                 );
                 DLB_ASSERT(len < sizeof(tex_buf));
             }

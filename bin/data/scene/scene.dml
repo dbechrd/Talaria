@@ -354,7 +354,7 @@ ta_transform:
   entity: "chamber_0001"
   xform:
     position:
-      x: 0x00000000 (0.000000)
+      x: -40.0 #0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
     orientation:

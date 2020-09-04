@@ -171,19 +171,10 @@ typedef struct ogx_camera {
     float farz;
 } ogx_camera;
 
-typedef enum ogx_vertex_attrib {
-    OGX_VERTEX_ATTRIB_UNKNOWN,
-    OGX_VERTEX_ATTRIB_TEXCOORD0,  // vec2
-    OGX_VERTEX_ATTRIB_POSIITON,   // vec3
-    OGX_VERTEX_ATTRIB_NORMAL,     // vec3
-    OGX_VERTEX_ATTRIB_TANGENT,    // vec3
-    OGX_VERTEX_ATTRIB_COUNT,
-} ogx_vertex_attrib;
-
 // NOTE: The perfectly representable integer range of a float is [0 - 16,777,216]
 // (2^24 because a float has 24 bits of mantissa)
 typedef struct ogx_vertex_array {
-    ogx_vertex_attrib attrib;
+    ta_vertex_attrib_type attrib_type;
     u16 morph_index;
     union {
         float *as_float;

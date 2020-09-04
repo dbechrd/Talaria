@@ -1034,20 +1034,23 @@ static ogx_result ogx_load_vertex_array(dml_document *doc, ogx_vertex_array *ver
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
+        int attrib_type_found = 0;
         dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
             dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == ogxs_attrib) {
                 const char *attrib = 0;
                 result = ogx_load_string(&attrib, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
+                    DLB_ASSERT(vertex_array->morph_index <= MORPH_MAX);
                     if (!strcmp(attrib, "position")) {
-                        vertex_array->attrib = OGX_VERTEX_ATTRIB_POSIITON;
+                        vertex_array->attrib_type = TA_VERTEX_ATTR_POSITION + MORPH_OFFSET * vertex_array->morph_index;
                     } else if (!strcmp(attrib, "normal")) {
-                        vertex_array->attrib = OGX_VERTEX_ATTRIB_NORMAL;
+                        vertex_array->attrib_type = TA_VERTEX_ATTR_NORMAL + MORPH_OFFSET * vertex_array->morph_index;
                     } else if (!strcmp(attrib, "tangent")) {
-                        vertex_array->attrib = OGX_VERTEX_ATTRIB_TANGENT;
+                        vertex_array->attrib_type = TA_VERTEX_ATTR_TANGENT + MORPH_OFFSET * vertex_array->morph_index;
                     } else if (!strcmp(attrib, "texcoord0")) {
-                        vertex_array->attrib = OGX_VERTEX_ATTRIB_TEXCOORD0;
+                        DLB_ASSERT(vertex_array->morph_index == 0 && "Morphing UVs not currently supported");
+                        vertex_array->attrib_type = TA_VERTEX_ATTR_UV;
                     } else {
 #if _DEBUG
                         ta_log_write(&tg_debug_log, SRC_OGX,
@@ -1056,15 +1059,20 @@ static ogx_result ogx_load_vertex_array(dml_document *doc, ogx_vertex_array *ver
 #endif
                         result = OGX_UNEXPECTED_VALUE;
                     }
+                    attrib_type_found = 1;
                 }
             } else if (field->name == ogxs_data) {
-                static size_t components_by_attrib[OGX_VERTEX_ATTRIB_COUNT] = {
-                    [OGX_VERTEX_ATTRIB_POSIITON ] = 3,
-                    [OGX_VERTEX_ATTRIB_NORMAL   ] = 3,
-                    [OGX_VERTEX_ATTRIB_TANGENT  ] = 3,
-                    [OGX_VERTEX_ATTRIB_TEXCOORD0] = 2,
+                static size_t components_by_attrib[TA_VERTEX_ATTR_COUNT] = {
+                    [TA_VERTEX_ATTR_COLOR           ] = 4,
+                    [TA_VERTEX_ATTR_UV              ] = 2,
+                    [TA_VERTEX_ATTR_POSITION        ] = 3,
+                    [TA_VERTEX_ATTR_NORMAL          ] = 3,
+                    [TA_VERTEX_ATTR_TANGENT         ] = 3,
+                    [TA_VERTEX_ATTR_MORPH1_POSITION ] = 3,
+                    [TA_VERTEX_ATTR_MORPH1_NORMAL   ] = 3,
+                    [TA_VERTEX_ATTR_MORPH1_TANGENT  ] = 3,
                 };
-                size_t comp = components_by_attrib[vertex_array->attrib];
+                size_t comp = components_by_attrib[vertex_array->attrib_type];
                 if (comp == 1) {
                     result = ogx_load_float_array(doc, &vertex_array->values.as_float, 0, &doc->value_pool[field->value_idx]);
                 } else if (comp == 2) {
@@ -1081,6 +1089,9 @@ static ogx_result ogx_load_vertex_array(dml_document *doc, ogx_vertex_array *ver
                 }
             } else if (field->name == ogxs_morph_index) {
                 result = ogx_load_u16(&vertex_array->morph_index, &doc->value_pool[field->value_idx]);
+                DLB_ASSERT(vertex_array->morph_index <= MORPH_MAX);
+                // NOTE: This allows `morph_index` to appear after `attrib` property, but that should never happen.
+                vertex_array->attrib_type += attrib_type_found * MORPH_OFFSET * vertex_array->morph_index;
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,

@@ -89,6 +89,7 @@ void main()
         morph1_f * attr_morph1_position;
 #else
     // add weighted morph targets to give us current pose
+    //vec3 morphed_pos = attr_position + u_morph_weights[0] * attr_morph1_position;
     vec3 morphed_pos = attr_position + u_morph_weights[0] * attr_morph1_position;
 #endif
 

@@ -5,7 +5,7 @@
 #define VERTEX_MAX_JOINTS 4
 
 // Note: Morphable attributes must be contiguous and in the same order as their respective morph target attributes
-// because glTF loader does: `(TA_VERTEX_ATTR_MORPH1_POSITION - TA_VERTEX_ATTR_POSITION) * target;`
+// for MORPH_OFFSET to work.
 typedef enum ta_vertex_attrib_type {
     TA_VERTEX_ATTR_COLOR           = 0,
     TA_VERTEX_ATTR_UV              = 1,
@@ -20,6 +20,9 @@ typedef enum ta_vertex_attrib_type {
     TA_VERTEX_ATTR_COUNT
 } ta_vertex_attrib_type;
 
+#define MORPH_MAX (1)
+#define MORPH_OFFSET (TA_VERTEX_ATTR_MORPH1_POSITION - TA_VERTEX_ATTR_POSITION)
+
 typedef struct ta_morph_target {
     const char *name;             // Name of morph target
     u32 base_morph_target_index;  // Index of parent (for relative morph targets)... idk if I need this but OGX has it.
@@ -30,9 +33,9 @@ typedef struct ta_mesh_joint_array {
 } ta_mesh_joint_array;
 
 typedef struct ta_index_array {
-    GLint base_vertex;  // offset in gl_index_buffer where this array starts
-    u32 material_slot;  // material id
-    u16 *values;        // vector of index values
+    size_t offset_bytes; // offset in gl_index_buffer where this array starts
+    u32 material_slot;   // material id
+    u16 *values;         // vector of index values
 } ta_index_array;
 
 typedef struct ta_skeleton {

@@ -131,6 +131,15 @@ void ta_model_render(ta_model *model, ta_camera *camera)
 
     ta_transform *transform = ta_game_component(model->entity, RES_COMP_TRANSFORM);
 
+    static const char *button = 0;
+    if (!button) {
+        button = INTERN("button_0001");
+    }
+
+    if (model->entity == button) {
+        DLB_ASSERT(1);
+    }
+
     if (!camera->debug_no_mesh) {
         const char *selected_entity = 0;
         ta_editor_selected_entity(&selected_entity);
@@ -150,6 +159,8 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         if (!material) {
             material = tg_material_default;
         }
+
+        // TODO: Need to group materials by shader if we allow them to start having custom shaders
         ta_shader *shader = ta_game_by_sym(RES_SHADER, material->shader);
 
         ta_shader_set_bool(shader, SYM_U_SELECTED, (GLboolean)selected);

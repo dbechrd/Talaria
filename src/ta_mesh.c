@@ -181,15 +181,8 @@ void ta_mesh_create(ta_mesh *mesh)
     // Create/fill vertex attribute buffer
     glGenBuffers(1, &mesh->gl_vertex_buffer);
 
-    // Calculate size of all index data
-    size_t index_size_total = 0;
-    dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
-        index_size_total += dlb_vec_size(index_array->values);
-        if (index_size_total) break;
-    }
-
     // Create/fill index buffer
-    if (index_size_total) {
+    if (mesh->index_arrays) {
         glGenBuffers(1, &mesh->gl_index_buffer);
     }
 }
@@ -221,8 +214,6 @@ void ta_mesh_update_buffers(ta_mesh *mesh)
         vertex_offset += vertex_size;                                                         \
     }
 
-    const size_t blah = dlb_vec_len(mesh->positions);
-
     size_t vertex_offset = 0;
     FILL_BUFFER(TA_VERTEX_ATTR_COLOR,           mesh->colors,           GLfloat,  GL_FLOAT);
     FILL_BUFFER(TA_VERTEX_ATTR_UV,              mesh->uvs,              GLfloat,  GL_FLOAT);
@@ -251,15 +242,15 @@ void ta_mesh_update_buffers(ta_mesh *mesh)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_index_buffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_size_total, 0, GL_STATIC_DRAW);
 
-        size_t index_offset = 0;
+        size_t byte_offset = 0;
         dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
-            index_array->base_vertex = (GLint)index_offset;
+            index_array->offset_bytes = (GLint)byte_offset;
             size_t index_size = dlb_vec_size(index_array->values);
-            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, index_offset, index_size, index_array->values);
-            index_offset += index_size;
+            glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, byte_offset, index_size, index_array->values);
+            byte_offset += index_size;
         }
 
-        DLB_ASSERT(index_offset == index_size_total);
+        DLB_ASSERT(byte_offset == index_size_total);
     }
 
     glBindVertexArray(0);
@@ -391,7 +382,7 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
 
             size_t index_count = dlb_vec_len(index_array->values);
             DLB_ASSERT(index_count);
-            glDrawElementsBaseVertex(GL_TRIANGLES, (GLsizei)index_count, GL_UNSIGNED_SHORT, 0, index_array->base_vertex);
+            glDrawElements(GL_TRIANGLES, (GLsizei)index_count, GL_UNSIGNED_SHORT, (void *)index_array->offset_bytes);
         }
     } else {
         size_t positions_count = dlb_vec_len(mesh->positions);

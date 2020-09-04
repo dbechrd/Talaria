@@ -43,22 +43,34 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
         // TODO: Store morph index alongside vertex array
         UNUSED(o_vertex_array->morph_index);
 
-        switch (o_vertex_array->attrib) {
-            case OGX_VERTEX_ATTRIB_TEXCOORD0:
+        switch (o_vertex_array->attrib_type) {
+            case TA_VERTEX_ATTR_UV:
                 DLB_ASSERT(sizeof(*mesh->uvs) == sizeof(*o_vertex_array->values.as_vec2));
                 mesh->uvs = (ta_vec2 *)o_vertex_array->values.as_vec2;
                 break;
-            case OGX_VERTEX_ATTRIB_POSIITON:
+            case TA_VERTEX_ATTR_POSITION:
                 DLB_ASSERT(sizeof(*mesh->positions) == sizeof(*o_vertex_array->values.as_vec3));
                 mesh->positions = (ta_vec3 *)o_vertex_array->values.as_vec3;
                 break;
-            case OGX_VERTEX_ATTRIB_NORMAL:
+            case TA_VERTEX_ATTR_NORMAL:
                 DLB_ASSERT(sizeof(*mesh->normals) == sizeof(*o_vertex_array->values.as_vec3));
                 mesh->normals = (ta_vec3 *)o_vertex_array->values.as_vec3;
                 break;
-            case OGX_VERTEX_ATTRIB_TANGENT:
+            case TA_VERTEX_ATTR_TANGENT:
                 DLB_ASSERT(sizeof(*mesh->tangents) == sizeof(*o_vertex_array->values.as_vec3));
                 mesh->tangents = (ta_vec3 *)o_vertex_array->values.as_vec3;
+                break;
+            case TA_VERTEX_ATTR_MORPH1_POSITION:
+                DLB_ASSERT(sizeof(*mesh->morph1_positions) == sizeof(*o_vertex_array->values.as_vec3));
+                mesh->morph1_positions = (ta_vec3 *)o_vertex_array->values.as_vec3;
+                break;
+            case TA_VERTEX_ATTR_MORPH1_NORMAL:
+                DLB_ASSERT(sizeof(*mesh->morph1_normals) == sizeof(*o_vertex_array->values.as_vec3));
+                mesh->morph1_normals = (ta_vec3 *)o_vertex_array->values.as_vec3;
+                break;
+            case TA_VERTEX_ATTR_MORPH1_TANGENT:
+                DLB_ASSERT(sizeof(*mesh->morph1_tangents) == sizeof(*o_vertex_array->values.as_vec3));
+                mesh->morph1_tangents = (ta_vec3 *)o_vertex_array->values.as_vec3;
                 break;
             default:
                 DLB_ASSERT(!"I wanted to know when ogx_vertex_attrib_lookup fails.");
@@ -67,9 +79,7 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
         }
     }
 
-
     dlb_vec_each(ogx_index_array *, o_index_array, o_mesh->index_arrays) {
-        const size_t blah = dlb_vec_len(o_index_array->values);
         ta_index_array *index_array = dlb_vec_alloc(mesh->index_arrays);
         index_array->material_slot = o_index_array->material_slot;
         index_array->values = o_index_array->values;

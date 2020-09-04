@@ -599,7 +599,7 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
             attr_type == TA_VERTEX_ATTR_TANGENT
         );
     }
-    attr_type += (TA_VERTEX_ATTR_MORPH1_POSITION - TA_VERTEX_ATTR_POSITION) * target;
+    attr_type += MORPH_OFFSET * target;
     if (target == 1) {
         // NOTE: Make sure first morph mapped to the correct attr_type (assume that this means others will too)
         DLB_ASSERT(
