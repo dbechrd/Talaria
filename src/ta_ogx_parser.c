@@ -577,6 +577,10 @@ static ogx_result ogx_load_key(dml_document *doc, ogx_key *key, dml_value *value
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(type, "float")) {
                         key->type = OGX_TYPE_FLOAT;
+                    } else if (!strcmp(type, "vec2")) {
+                        key->type = OGX_TYPE_VEC2;
+                    } else if (!strcmp(type, "vec3")) {
+                        key->type = OGX_TYPE_VEC3;
                     } else if (!strcmp(type, "vec4")) {
                         key->type = OGX_TYPE_VEC4;
                     } else if (!strcmp(type, "mat4")) {
@@ -584,7 +588,7 @@ static ogx_result ogx_load_key(dml_document *doc, ogx_key *key, dml_value *value
                     } else {
 #if _DEBUG
                         ta_log_write(&tg_debug_log, SRC_OGX,
-                            "[%s:%zu:%zu] unexpected key type, expected 'float', 'vec4' or 'mat4', found '%s'\n",
+                            "[%s:%zu:%zu] unexpected key type, expected ['float', 'vec2, 'vec3', 'vec4', 'mat4'], found '%s'\n",
                             value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column, type);
 #endif
                         result = OGX_UNEXPECTED_TYPE;
@@ -593,6 +597,10 @@ static ogx_result ogx_load_key(dml_document *doc, ogx_key *key, dml_value *value
             } else if (field->name == ogxs_data) {
                 if (key->type == OGX_TYPE_FLOAT) {
                     result = ogx_load_float_array(doc, &key->values.as_float, 0, &doc->value_pool[field->value_idx]);
+                } else if (key->type == OGX_TYPE_VEC2) {
+                    result = ogx_load_vec2_array(doc, &key->values.as_vec2, &doc->value_pool[field->value_idx]);
+                } else if (key->type == OGX_TYPE_VEC3) {
+                    result = ogx_load_vec3_array(doc, &key->values.as_vec3, &doc->value_pool[field->value_idx]);
                 } else if (key->type == OGX_TYPE_VEC4) {
                     result = ogx_load_vec4_array(doc, &key->values.as_vec4, &doc->value_pool[field->value_idx]);
                 } else if (key->type == OGX_TYPE_MAT4) {

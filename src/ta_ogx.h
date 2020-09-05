@@ -30,6 +30,8 @@ typedef struct ogx_key {
     ogx_type type;
     union {
         float *as_float;
+        ta_vec2* as_vec2;
+        ta_vec3* as_vec3;
         ta_vec4* as_vec4;
         ta_mat4* as_mat4;
     } values;

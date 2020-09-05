@@ -1170,6 +1170,7 @@ static void ui_node_panel()
                     ta_ui_next_margin_left(16);
                     // TODO: ta_ui_label_float(float value) that does the conversion for me
                     ta_ui_textbox_float(morph_target_weight, &morph_target_weight_textboxes[morph_target_index], 0);
+                    *morph_target_weight = clampf(*morph_target_weight, 0.0f, 1.0f);
                     morph_target_index++;
                 }
             }

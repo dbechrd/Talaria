@@ -259,18 +259,18 @@ void ta_game_init()
     //dml_document_load("data/mesh/button.ogex");
     //dml_document_load("data/mesh/dude.ogex");
 
-    //ogx_scene scene1 = { 0 };
-    //if (ogx_scene_from_file(&scene1, "data/mesh/dude.ogex") == OGX_SUCCESS) {
-    //    ta_ogx_load(&scene1);
-    //}
-    //ogx_scene scene2 = { 0 };
-    //if (ogx_scene_from_file(&scene2, "data/mesh/button.ogex") == OGX_SUCCESS) {
-    //    ta_ogx_load(&scene2);
-    //}
-    //ogx_scene scene3 = { 0 };
-    //if (ogx_scene_from_file(&scene3, "data/mesh/skeleton_test.ogex") == OGX_SUCCESS) {
-    //    ta_ogx_load(&scene3);
-    //}
+    ogx_scene scene1 = { 0 };
+    if (ogx_scene_from_file(&scene1, "data/mesh/dude.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(&scene1);
+    }
+    ogx_scene scene2 = { 0 };
+    if (ogx_scene_from_file(&scene2, "data/mesh/button.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(&scene2);
+    }
+    ogx_scene scene3 = { 0 };
+    if (ogx_scene_from_file(&scene3, "data/mesh/skeleton_test.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(&scene3);
+    }
     ogx_scene test_bone_1 = { 0 };
     if (ogx_scene_from_file(&test_bone_1, "data/mesh/test_bone_1.ogex") == OGX_SUCCESS) {
         ta_ogx_load(&test_bone_1);

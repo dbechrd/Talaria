@@ -721,12 +721,11 @@ bool ta_ui_button(const char *text, size_t text_len)
 }
 bool ta_ui_reset_button()
 {
-    //ta_ui_next_bg_color(UI_STATE_NONE, 0.5f, 0.0f, 0.0f, 1.0f);
-    //ta_ui_next_bg_color(UI_STATE_INTERACT, 0.7f, 0.0f, 0.0f, 1.0f);
-
     ta_rgba c = TA_COLOR_DARK_RED;
     ta_ui_next_bg_color(UI_STATE_NONE, c.r, c.g, c.b, c.a);
     ta_ui_next_bg_color(UI_STATE_INTERACT, 0.8f, 0.0f, 0.0f, 0.9f);
+    //ta_ui_next_bg_color(UI_STATE_NONE, 0.5f, 0.0f, 0.0f, 1.0f);
+    //ta_ui_next_bg_color(UI_STATE_INTERACT, 0.7f, 0.0f, 0.0f, 1.0f);
     return ta_ui_button(CSTR("Reset"));
 }
 void ta_ui_toggle_button_begin(u32 flags)
