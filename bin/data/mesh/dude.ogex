@@ -9,35 +9,35 @@ node: {
 		name: "lumbar"
 		# ExportBoneTransform (poseBone = true)
 		translation: [0, 0x3fed9c8c, 0xbd0deeec]
-		rotation: [0, 0x3f3504f4, 0xbf3504f4, 0]
+		rotation: [0, 0x3f800000, 0, 0]
 		bone_node: {
 			name: "thoratic"
 			# ExportBoneTransform (poseBone = true)
-			translation: [0, 0, 0xbf2c6558]
-			rotation: [0xbca02fb1, 0, 0xb5943ceb, 0x3f7ff378]
+			translation: [0, 0x3f2c6558, 0]
+			rotation: [0xbca02fb1, 0x35943ceb, 0, 0x3f7ff378]
 			bone_node: {
 				name: "cervical"
 				# ExportBoneTransform (poseBone = true)
-				translation: [0, 0, 0xbf4a9098]
+				translation: [0, 0x3f4a9098, 0]
 				rotation: [0xbce4b232, 0, 0, 0x3f7fe675]
 				bone_node: {
 					name: "head"
 					# ExportBoneTransform (poseBone = true)
-					translation: [0, 0, 0xbe14841b]
-					rotation: [0, 0x3d5d4c94, 0xbf7fa048, 0x368e533b]
+					translation: [0, 0x3e14841b, 0]
+					rotation: [0, 0x3f7fa048, 0x3d5d4c94, 0x368e533b]
 					bone_node: {
 						name: "hat"
 						# ExportBoneTransform (poseBone = true)
-						translation: [0, 0, 0xbf85c734]
-						rotation: [0x3bd79094, 0, 0xb68bff3a, 0x3f7ffe95]
+						translation: [0, 0x3f85c734, 0]
+						rotation: [0x3bd79094, 0x368bff3a, 0, 0x3f7ffe95]
 					}
 				}
 			}
 			bone_node: {
 				name: "upper_arm.l"
 				# ExportBoneTransform (poseBone = true)
-				translation: [0xbece9272, 0x3d1d2b18, 0xbf22ac77]
-				rotation: [0xbf208bef, 0x3f3312c9, 0xbe7e60d3, 0x3e71a2c1]
+				translation: [0xbece9272, 0x3f22ac77, 0x3d1d2b18]
+				rotation: [0xbf208bef, 0x3e7e60d3, 0x3f3312c9, 0x3e71a2c1]
 				animation: {  # ExportBoneSampledAnimationRotation
 					clip: "dude_armature_wave"
 					track: {
@@ -107,8 +107,8 @@ node: {
 				bone_node: {
 					name: "forearm.l"
 					# ExportBoneTransform (poseBone = true)
-					translation: [0, 0, 0xbf68aea6]
-					rotation: [0xbcc98a34, 0xbe1e609e, 0xbe357c8e, 0x3f78bca5]
+					translation: [0, 0x3f68aea6, 0]
+					rotation: [0xbcc98a34, 0x3e357c8e, 0xbe1e609e, 0x3f78bca5]
 					animation: {  # ExportBoneSampledAnimationRotation
 						clip: "dude_armature_wave"
 						track: {
@@ -178,8 +178,8 @@ node: {
 					bone_node: {
 						name: "hand.l"
 						# ExportBoneTransform (poseBone = true)
-						translation: [0, 0, 0xbf2b528a]
-						rotation: [0xbd35001b, 0xbd68c97c, 0xbda8f539, 0x3f7e75f8]
+						translation: [0, 0x3f2b528a, 0]
+						rotation: [0xbd35001b, 0x3da8f539, 0xbd68c97c, 0x3f7e75f8]
 						animation: {  # ExportBoneSampledAnimationRotation
 							clip: "dude_armature_wave"
 							track: {
@@ -249,8 +249,8 @@ node: {
 						bone_node: {
 							name: "fingers_proximal.l"
 							# ExportBoneTransform (poseBone = true)
-							translation: [0, 0, 0xbe762b92]
-							rotation: [0xbddee9bc, 0xbe57c49a, 0xbee9a759, 0x3f5b8c4c]
+							translation: [0, 0x3e762b8a, 0]
+							rotation: [0xbddee9bc, 0x3ee9a759, 0xbe57c49a, 0x3f5b8c4c]
 							animation: {  # ExportBoneSampledAnimationRotation
 								clip: "dude_armature_wave"
 								track: {
@@ -320,8 +320,8 @@ node: {
 							bone_node: {
 								name: "fingers_distal.l"
 								# ExportBoneTransform (poseBone = true)
-								translation: [0, 0, 0xbdb03ef2]
-								rotation: [0xbc95900f, 0xbc7f0d04, 0xbd573716, 0x3f7f9295]
+								translation: [0, 0x3db03ef2, 0]
+								rotation: [0xbc95900f, 0x3d573716, 0xbc7f0d04, 0x3f7f9295]
 								animation: {  # ExportBoneSampledAnimationRotation
 									clip: "dude_armature_wave"
 									track: {
@@ -393,8 +393,8 @@ node: {
 						bone_node: {
 							name: "thumb_proximal.l"
 							# ExportBoneTransform (poseBone = true)
-							translation: [0x3dafa7ad, 0x3bbccc30, 0xbdf3b90f]
-							rotation: [0x3ebc3b40, 0xbf2bd4cc, 0xbe9f40c9, 0x3f104362]
+							translation: [0x3dafa7a5, 0x3df3b8ff, 0x3bbccc30]
+							rotation: [0x3ebc3b40, 0x3e9f40c9, 0xbf2bd4cc, 0x3f104362]
 							animation: {  # ExportBoneSampledAnimationRotation
 								clip: "dude_armature_wave"
 								track: {
@@ -464,8 +464,8 @@ node: {
 							bone_node: {
 								name: "thumb_distal.l"
 								# ExportBoneTransform (poseBone = true)
-								translation: [0, 0, 0xbd4022d0]
-								rotation: [0xbd07db86, 0x3ccd1dcc, 0xbb36b549, 0x3f7fc721]
+								translation: [0, 0x3d4022d0, 0]
+								rotation: [0xbd07db86, 0x3b36b549, 0x3ccd1dcc, 0x3f7fc721]
 								animation: {  # ExportBoneSampledAnimationRotation
 									clip: "dude_armature_wave"
 									track: {
@@ -540,40 +540,40 @@ node: {
 			bone_node: {
 				name: "upper_arm.r"
 				# ExportBoneTransform (poseBone = true)
-				translation: [0x3ece9270, 0x3d1d2bd4, 0xbf22ac77]
-				rotation: [0xbf1db554, 0xbf3593fc, 0x3e7a8b3e, 0x3e759be9]
+				translation: [0x3ece9270, 0x3f22ac77, 0x3d1d2bd4]
+				rotation: [0xbf1db554, 0xbe7a8b3e, 0xbf3593fc, 0x3e759be9]
 				bone_node: {
 					name: "forearm.r"
 					# ExportBoneTransform (poseBone = true)
-					translation: [0, 0, 0xbf68aea7]
-					rotation: [0xbcdd7456, 0x3e1df61b, 0x3e451f51, 0x3f77fdf6]
+					translation: [0, 0x3f68aea7, 0]
+					rotation: [0xbcdd7456, 0xbe451f51, 0x3e1df61b, 0x3f77fdf6]
 					bone_node: {
 						name: "hand.r"
 						# ExportBoneTransform (poseBone = true)
-						translation: [0, 0, 0xbf2b5290]
-						rotation: [0xbd350010, 0x3d68c97f, 0x3da8f54e, 0x3f7e75f8]
+						translation: [0, 0x3f2b5290, 0]
+						rotation: [0xbd350010, 0xbda8f54e, 0x3d68c97f, 0x3f7e75f8]
 						bone_node: {
 							name: "fingers_proximal.r"
 							# ExportBoneTransform (poseBone = true)
-							translation: [0, 0, 0xbe762b98]
-							rotation: [0xbddee9ab, 0x3e57c495, 0x3ee9a757, 0x3f5b8c4d]
+							translation: [0, 0x3e762b98, 0]
+							rotation: [0xbddee9ab, 0xbee9a757, 0x3e57c495, 0x3f5b8c4d]
 							bone_node: {
 								name: "fingers_distal.r"
 								# ExportBoneTransform (poseBone = true)
-								translation: [0, 0, 0xbdb03ee7]
-								rotation: [0xbc95901d, 0x3c7f0d17, 0x3d5736e4, 0x3f7f9295]
+								translation: [0, 0x3db03ee7, 0]
+								rotation: [0xbc95901d, 0xbd5736e4, 0x3c7f0d17, 0x3f7f9295]
 							}
 						}
 						bone_node: {
 							name: "thumb_proximal.r"
 							# ExportBoneTransform (poseBone = true)
-							translation: [0xbdafa7b2, 0x3bbccd08, 0xbdf3b918]
-							rotation: [0x3ebc3b39, 0x3f2bd4cc, 0x3e9f40c3, 0x3f104366]
+							translation: [0xbdafa7b2, 0x3df3b918, 0x3bbccd08]
+							rotation: [0x3ebc3b39, 0xbe9f40c3, 0x3f2bd4cc, 0x3f104366]
 							bone_node: {
 								name: "thumb_distal.r"
 								# ExportBoneTransform (poseBone = true)
-								translation: [0, 0, 0xbd4022bc]
-								rotation: [0xbd07db7d, 0xbccd1e34, 0x3b36bac0, 0x3f7fc721]
+								translation: [0, 0x3d4022bc, 0]
+								rotation: [0xbd07db7d, 0xbb36bac0, 0xbccd1e34, 0x3f7fc721]
 							}
 						}
 					}
@@ -583,8 +583,8 @@ node: {
 		bone_node: {
 			name: "thigh.l"
 			# ExportBoneTransform (poseBone = true)
-			translation: [0xbe8d074b, 0, 0x3d20a540]
-			rotation: [0xbf7ff222, 0x39186ada, 0x39352cf4, 0x3ca888c1]
+			translation: [0xbe8d074b, 0xbd20a540, 0]
+			rotation: [0xbf7ff222, 0xb9352cf4, 0x39186ada, 0x3ca888c1]
 			animation: {  # ExportBoneSampledAnimationRotation
 				clip: "dude_armature_squat"
 				track: {
@@ -654,8 +654,8 @@ node: {
 			bone_node: {
 				name: "leg.l"
 				# ExportBoneTransform (poseBone = true)
-				translation: [0, 0, 0xbf39e065]
-				rotation: [0, 0xbd869aec, 0xbf7f724c, 0]
+				translation: [0, 0x3f39e065, 0]
+				rotation: [0, 0x3f7f724c, 0xbd869aec, 0]
 				animation: {  # ExportBoneSampledAnimationRotation
 					clip: "dude_armature_squat"
 					track: {
@@ -727,8 +727,8 @@ node: {
 		bone_node: {
 			name: "thigh.r"
 			# ExportBoneTransform (poseBone = true)
-			translation: [0x3e8d074b, 0, 0x3d20a540]
-			rotation: [0xbf7ff222, 0xb9170b30, 0xb9353b93, 0x3ca888c1]
+			translation: [0x3e8d074b, 0xbd20a540, 0]
+			rotation: [0xbf7ff222, 0x39353b93, 0xb9170b30, 0x3ca888c1]
 			animation: {  # ExportBoneSampledAnimationRotation
 				clip: "dude_armature_squat"
 				track: {
@@ -798,8 +798,8 @@ node: {
 			bone_node: {
 				name: "leg.r"
 				# ExportBoneTransform (poseBone = true)
-				translation: [0, 0, 0xbf39e065]
-				rotation: [0, 0xbd869aec, 0xbf7f724c, 0]
+				translation: [0, 0x3f39e065, 0]
+				rotation: [0, 0x3f7f724c, 0xbd869aec, 0]
 				animation: {  # ExportBoneSampledAnimationRotation
 					clip: "dude_armature_squat"
 					track: {
@@ -873,17 +873,17 @@ node: {
 		name: "leg_pole_target.l"
 		# ExportBoneTransform (poseBone = true)
 		translation: [0x3e8d074b, 0x3f8bbb4e, 0x3f5e7376]
-		rotation: [0, 0x3f800000, 0, 0]
+		rotation: [0, 0x3f3504f4, 0x3f3504f4, 0]
 	}
 	bone_node: {
 		name: "leg_control.l"
 		# ExportBoneTransform (poseBone = true)
 		translation: [0x3e8b8d29, 0xb9752000, 0xbe5df850]
-		rotation: [0, 0x3f800000, 0xb95a9ea1, 0]
+		rotation: [0, 0x3f350e9c, 0x3f34fb4b, 0]
 		bone_node: {
 			name: "foot.l"
 			# ExportBoneTransform (poseBone = true)
-			translation: [0xbb1921bd, 0x3e9559a5, 0xbe0ede43]
+			translation: [0xbb1921bd, 0x3e0ede43, 0x3e9559a5]
 			rotation: [0xbecde4c0, 0, 0, 0x3f6a6374]
 			animation: {  # ExportBoneSampledAnimationRotation
 				clip: "dude_armature_squat"
@@ -954,26 +954,26 @@ node: {
 			bone_node: {
 				name: "toes.l"
 				# ExportBoneTransform (poseBone = true)
-				translation: [0, 0, 0xbe827761]
+				translation: [0, 0x3e827761, 0]
 				rotation: [0x3eb3bcba, 0, 0, 0x3f6fb518]
 			}
 		}
 		bone_node: {
 			name: "foot_roll.l"
 			# ExportBoneTransform (poseBone = true)
-			translation: [0xbb1921c3, 0x3dd51630, 0xbe9fb5c5]
-			rotation: [0, 0x3f6a62b0, 0xbecde83b, 0]
+			translation: [0xbb1921c3, 0x3e9fb5c5, 0x3dd51630]
+			rotation: [0, 0x3ecde83b, 0x3f6a62b0, 0]
 			bone_node: {
 				name: "leg_ik.l"
 				# ExportBoneTransform (poseBone = true)
-				translation: [0, 0, 0xbe827761]
+				translation: [0, 0x3e827761, 0]
 				rotation: [0xbecdcf35, 0, 0, 0x3f6a682f]
 			}
 		}
 		bone_node: {
 			name: "toes_control.l"
 			# ExportBoneTransform (poseBone = true)
-			translation: [0xbb1921c3, 0x3dd51620, 0xbe9fb5c5]
+			translation: [0xbb1921c3, 0x3e9fb5c5, 0x3dd51620]
 			rotation: [0xbd61cf05, 0, 0, 0x3f7f9c57]
 		}
 	}
@@ -981,17 +981,17 @@ node: {
 		name: "leg_pole_target.r"
 		# ExportBoneTransform (poseBone = true)
 		translation: [0xbe8d074b, 0x3f8bbb4e, 0x3f5e7376]
-		rotation: [0, 0x3f800000, 0, 0]
+		rotation: [0, 0x3f3504f4, 0x3f3504f4, 0]
 	}
 	bone_node: {
 		name: "leg_control.r"
 		# ExportBoneTransform (poseBone = true)
 		translation: [0xbe8b8d29, 0xb9752000, 0xbe5df850]
-		rotation: [0, 0x3f800000, 0xb95a9ea1, 0]
+		rotation: [0, 0x3f350e9c, 0x3f34fb4b, 0]
 		bone_node: {
 			name: "foot.r"
 			# ExportBoneTransform (poseBone = true)
-			translation: [0x3b1921bd, 0x3e9559a5, 0xbe0ede43]
+			translation: [0x3b1921bd, 0x3e0ede43, 0x3e9559a5]
 			rotation: [0xbecde4c0, 0, 0, 0x3f6a6374]
 			animation: {  # ExportBoneSampledAnimationRotation
 				clip: "dude_armature_squat"
@@ -1062,26 +1062,26 @@ node: {
 			bone_node: {
 				name: "toes.r"
 				# ExportBoneTransform (poseBone = true)
-				translation: [0, 0, 0xbe827761]
+				translation: [0, 0x3e827761, 0]
 				rotation: [0x3eb3bcba, 0, 0, 0x3f6fb518]
 			}
 		}
 		bone_node: {
 			name: "foot_roll.r"
 			# ExportBoneTransform (poseBone = true)
-			translation: [0x3b1921c3, 0x3dd51630, 0xbe9fb5c5]
-			rotation: [0, 0x3f6a62b0, 0xbecde83b, 0]
+			translation: [0x3b1921c3, 0x3e9fb5c5, 0x3dd51630]
+			rotation: [0, 0x3ecde83b, 0x3f6a62b0, 0]
 			bone_node: {
 				name: "leg_ik.r"
 				# ExportBoneTransform (poseBone = true)
-				translation: [0, 0, 0xbe827761]
+				translation: [0, 0x3e827761, 0]
 				rotation: [0xbecdcf35, 0, 0, 0x3f6a682f]
 			}
 		}
 		bone_node: {
 			name: "toes_control.r"
 			# ExportBoneTransform (poseBone = true)
-			translation: [0x3b1921c3, 0x3dd51620, 0xbe9fb5c5]
+			translation: [0x3b1921c3, 0x3e9fb5c5, 0x3dd51620]
 			rotation: [0xbd61cf05, 0, 0, 0x3f7f9c57]
 		}
 	}
@@ -1100,13 +1100,13 @@ node: {
 	name: "front"
 	# ExportNodeTransform
 	translation: [0, 0x401db698, 0]
-	rotation: [0, 0, 0, 0x3f800000]
+	rotation: [0x3f3504f4, 0, 0, 0x3f3504f2]
 }
 node: {
 	name: "side"
 	# ExportNodeTransform
 	translation: [0, 0x401db698, 0]
-	rotation: [0, 0, 0, 0x3f800000]
+	rotation: [0x3f000000, 0x3f000000, 0xbf000000, 0x3f000000]
 }
 mesh: {  # Node Table: dude
 	name: "dude"

@@ -234,6 +234,23 @@ void ta_game_init()
     // TODO: Find closest 8 lights and store them in tg_game.lights
     ta_lighting_init(&tg_game.lighting);
 
+    // TODO(cleanup): random tests that probably didn't help me solve anything
+    // translation: [0, 0, 0]
+    // rotation: [0xbf3504f4, 0, 0, 0x3f3504f4]
+    // # ExportNodeTransform
+    // translation: [0, 0, 0x3f800000]
+    // rotation: [0xbf3504f4, 0, 0, 0x3f3504f4]
+
+    //ta_vec4 q1 = (ta_vec4){ -0.707107, 0, 0, 0.707107 };
+    //ta_mat4 m1 = mat4_rotate_quat(q1);
+    //ta_vec3 t2 = (ta_vec3){ 0, 0, 1 };
+    //ta_vec4 q2 = (ta_vec4){ -0.707107, 0, 0, 0.707107 };
+    //ta_mat4 m2t = mat4_translate(t2);
+    //ta_mat4 m2q = mat4_rotate_quat(q2);
+    //ta_mat4 m2 = mat4_mul(&m2t, &m2q);
+    //ta_mat4 r1 = mat4_mul(&m1, &m2);
+    //ta_mat4 r2 = mat4_mul(&m2, &m1);
+
     //--------------------------------------------------------------------------
     // Scene (OGX) ** MUST COME AFTER game.scene.index_by_name[*] INITIALIZED
     //--------------------------------------------------------------------------
@@ -246,13 +263,17 @@ void ta_game_init()
     //if (ogx_scene_from_file(&scene1, "data/mesh/dude.ogex") == OGX_SUCCESS) {
     //    ta_ogx_load(&scene1);
     //}
-    ogx_scene scene2 = { 0 };
-    if (ogx_scene_from_file(&scene2, "data/mesh/button.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&scene2);
-    }
-    ogx_scene scene3 = { 0 };
-    if (ogx_scene_from_file(&scene3, "data/mesh/skeleton_test.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&scene3);
+    //ogx_scene scene2 = { 0 };
+    //if (ogx_scene_from_file(&scene2, "data/mesh/button.ogex") == OGX_SUCCESS) {
+    //    ta_ogx_load(&scene2);
+    //}
+    //ogx_scene scene3 = { 0 };
+    //if (ogx_scene_from_file(&scene3, "data/mesh/skeleton_test.ogex") == OGX_SUCCESS) {
+    //    ta_ogx_load(&scene3);
+    //}
+    ogx_scene test_bone_1 = { 0 };
+    if (ogx_scene_from_file(&test_bone_1, "data/mesh/test_bone_1.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(&test_bone_1);
     }
     // TODO: Free the ogx scene if it's not needed after being loaded
 
@@ -1291,6 +1312,11 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Editor UI (world)
         //----------------------------------------------------------------------
+        // Grid and world axes
+        ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
+        ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.3f);
+        ta_primitive_render(true, false);
+
         if (tg_game.state == TA_STATE_EDITOR) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Editor world UI pass...\n");
             ta_editor_update_widgets();

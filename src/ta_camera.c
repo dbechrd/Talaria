@@ -15,13 +15,16 @@ void ta_camera_init(ta_camera *camera)
     if (!camera->position_smooth)     camera->position_smooth = 1.0f;
     if (!camera->position_target_vel) camera->position_target_vel = 0.1f;
 
-    if (!camera->yaw)                 camera->yaw = 90.0f;
+    if (!camera->yaw)                 camera->yaw = CAMERA_YAW_DEFAULT;
     if (!camera->yaw_smooth)          camera->yaw_smooth = 1.0f;
+    if (!camera->yaw_min)             camera->yaw_min = CAMERA_YAW_MIN;
+    if (!camera->yaw_max)             camera->yaw_max = CAMERA_YAW_MAX;
     camera->yaw_target =              camera->yaw;
 
+    if (!camera->pitch)               camera->pitch = CAMERA_PITCH_DEFAULT;
     if (!camera->pitch_smooth)        camera->pitch_smooth = 1.0f;
-    if (!camera->pitch_min)           camera->pitch_min = -90.0f;
-    if (!camera->pitch_max)           camera->pitch_max = 90.0f;
+    if (!camera->pitch_min)           camera->pitch_min = CAMERA_PITCH_MIN;
+    if (!camera->pitch_max)           camera->pitch_max = CAMERA_PITCH_MAX;
     camera->pitch_target =            camera->pitch;
 
     if (!camera->fov)                 camera->fov = 90.0f;
@@ -88,6 +91,7 @@ void ta_camera_yaw(ta_camera *camera, float delta)
     camera->yaw_target += delta;
     while (camera->yaw_target < 0.0f)    { camera->yaw_target += 360.0f; }
     while (camera->yaw_target >= 360.0f) { camera->yaw_target -= 360.0f; }
+    camera->yaw_target = clampf(camera->yaw_target, camera->yaw_min, camera->yaw_max);
     camera->dirty = true;
 }
 
@@ -117,10 +121,10 @@ void ta_camera_recalc_projection(ta_camera *camera)
 static ta_vec3 camera_fps_target(ta_camera *camera)
 {
     // Prevent pathological orientations
-    DLB_ASSERT(camera->yaw >= 0.0f);
-    DLB_ASSERT(camera->yaw < 360.0f);
-    DLB_ASSERT(camera->pitch > -90.0f);
-    DLB_ASSERT(camera->pitch < 90.0f);
+    DLB_ASSERT(camera->yaw >= CAMERA_YAW_MIN);
+    DLB_ASSERT(camera->yaw < CAMERA_YAW_MAX);
+    DLB_ASSERT(camera->pitch >= CAMERA_PITCH_MIN);
+    DLB_ASSERT(camera->pitch <= CAMERA_PITCH_MAX);
 
     ta_vec3 result = { 0 };
     float pitch_rads = DEG_TO_RADF(camera->pitch);

@@ -4,6 +4,20 @@
 
 struct ta_event;
 
+#define CAMERA_YAW_MIN         0.0f  // inclusive
+#define CAMERA_YAW_DEFAULT    90.0f
+#define CAMERA_YAW_MAX       360.0f  // exclusive, enforce as: yaw < CAMERA_YAW_MAX
+
+#define CAMERA_YAW_SMOOTH_DEFAULT 1.0f
+
+#define CAMERA_PITCH_MIN     -90.0f  // inclusive
+#define CAMERA_PITCH_DEFAULT   0.0f
+#define CAMERA_PITCH_MAX      90.0f  // inclusive
+
+#define CAMERA_PITCH_SMOOTH_DEFAULT 1.0f
+
+#define CAMERA_FOV_DEFAULT 90.0f
+
 typedef enum ta_glsl_dbg_channel {
     DBG_NONE            = 0,
     DBG_VTX_COLOR       = 1,
@@ -25,17 +39,19 @@ typedef enum ta_glsl_dbg_channel {
 
 typedef struct ta_camera {
     TA_COMPONENT_HEADER
+    ta_xform target_xform;            // where the camera wants to be
     float    position_smooth;         // how fast to blend to target [0, 1]
     float    position_target_vel;     // how fast to move the target
-    ta_xform target_xform;            // where the camera wants to be
     float    follow_distance;         // how far to track target
     float    yaw;                     // current yaw
+    float    yaw_min;                 // yaw limit (min)
+    float    yaw_max;                 // yaw limit (max)
     float    yaw_smooth;              // yaw smoothing factor [0, 1]
     float    yaw_target;              // desired yaw
     float    pitch;                   // current pitch
-    float    pitch_smooth;            // pitch smoothing factor [0, 1]
     float    pitch_min;               // pitch limit (min)
     float    pitch_max;               // pitch limit (max)
+    float    pitch_smooth;            // pitch smoothing factor [0, 1]
     float    pitch_target;            // desired pitch
     float    fov;                     // field of view (degrees)
     float    znear;                   // near clip distance

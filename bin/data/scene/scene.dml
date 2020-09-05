@@ -43,17 +43,17 @@ ta_camera:
   position_target_vel: 0x3E19999A (0.150000)
   target_xform:
     position:
-      x: 0x4175793C (15.342098)
-      y: 0x41176CA2 (9.464022)
-      z: 0xC08A336D (-4.318778)
+      x: 0.0
+      y: 2.0
+      z: 7.0
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x00000000 (0.000000)
-  yaw: 0x42F0D458 (120.414734)
+      w: 1.0
+  yaw: 0.0
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1D8009E (-27.000301)
+  pitch: 0.0
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -64,9 +64,9 @@ ta_camera:
     y: 0x00800000 (0.000000)
     z: 0x00800000 (0.000000)
   up:
-    x: 0xBE6B5A91 (-0.229838)
-    y: 0x3F6418DA (0.891004)
-    z: 0xBEC8750A (-0.391518)
+    x: 0.0
+    y: 1.0
+    z: 0.0
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -343,7 +343,7 @@ ta_transform:
     position:
       x: 0x40863ECE (4.195167)
       y: 0x40FA7554 (7.826822)
-      z: 0xC1E18311 (-28.188997)
+      z: 15.0
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -459,14 +459,14 @@ ta_transform:
   entity: "freecam"
   xform:
     position:
-      x: 0x41757940 (15.342102)
-      y: 0x41176CA6 (9.464025)
-      z: 0xC08A3372 (-4.318780)
+      x: 0.0
+      y: 2.0
+      z: 7.0
     orientation:
-      x: 0xBE773313 (-0.241406)
-      y: 0x3E759C28 (0.239854)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F70B889 (0.940316)
+      w: 1.0
 ta_transform:
   name: "player_one"
   entity: "player_one"

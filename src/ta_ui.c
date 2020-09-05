@@ -719,6 +719,16 @@ bool ta_ui_button(const char *text, size_t text_len)
     }
     return ta_ui_button_end();
 }
+bool ta_ui_reset_button()
+{
+    //ta_ui_next_bg_color(UI_STATE_NONE, 0.5f, 0.0f, 0.0f, 1.0f);
+    //ta_ui_next_bg_color(UI_STATE_INTERACT, 0.7f, 0.0f, 0.0f, 1.0f);
+
+    ta_rgba c = TA_COLOR_DARK_RED;
+    ta_ui_next_bg_color(UI_STATE_NONE, c.r, c.g, c.b, c.a);
+    ta_ui_next_bg_color(UI_STATE_INTERACT, 0.8f, 0.0f, 0.0f, 0.9f);
+    return ta_ui_button(CSTR("Reset"));
+}
 void ta_ui_toggle_button_begin(u32 flags)
 {
     ui_frame_begin(UI_TOGGLE_BUTTON, 0, flags | TA_UI_CONTAINER);
@@ -791,6 +801,13 @@ void ta_ui_label(const char *text, size_t text_len, ta_rect_uv **text_rects)
     if (text_rects) {
         *text_rects = text_rects_internal;
     }
+}
+void ta_ui_label_float(float value, ta_rect_uv **text_rects)
+{
+    char text[16] = { 0 };
+    size_t text_len = snprintf(CSTR(text), "%.3f", value);
+    DLB_ASSERT(text_len < sizeof(text));
+    ta_ui_label(text, text_len, text_rects);
 }
 
 // TODO: Move this to the keybind and support it more generally
@@ -1151,7 +1168,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
 
     if (!next_frame_dirty.size) {
         // TODO: Add UI_TEXT_ALIGN_RIGHT flag to make this useful
-        ta_ui_next_size(50, 0);
+        ta_ui_next_size(60, 0);
     }
 
     //if (textbox->submit) {
@@ -1252,22 +1269,35 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
     frame->cursor = cursor;
     return frame->data.textbox->submit;
 }
-void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state, bool normalize, bool multiple_rows,
-    bool reset_button)
+bool ta_ui_textbox_float_reset(float *value, ta_ui_textbox_state *textbox, u32 flags, float reset_value)
+{
+    ta_ui_row_begin();
+    bool result = ta_ui_textbox_float(value, textbox, flags);
+
+    ta_ui_next_margin(6, 1, 0, 1);
+    if (ta_ui_reset_button()) {
+        *value = reset_value;
+    }
+
+    if (ta_ui_last_state().hover) {
+        char text[32] = { 0 };
+        size_t text_len = snprintf(CSTR(text), "Reset value to %.3f", reset_value);
+        DLB_ASSERT(text_len < sizeof(text));
+        ta_ui_tooltip(text, text_len);
+    }
+
+    ta_ui_row_end();
+    return result;
+}
+void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state)
 {
     DLB_ASSERT(vec);
     DLB_ASSERT(vec_state);
-
-    ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_panel_begin(&vec_state->panel_state, TA_UI_AUTOSIZE);
-    if (!multiple_rows) ta_ui_row_begin();
 
     // NOTE: Assuming length == 1 for ta_ui_label() below
     static const char *labels[2] = { "x", "y" };
     float *components = (float *)vec;
     for (int i = 0; i < 2; ++i) {
-        if (multiple_rows) ta_ui_row_begin();
-
         ta_ui_next_margin(0, 1, 0, 1);
         ta_ui_label(labels[i], 1, 0);
         ta_ui_next_bg_color(UI_STATE_NONE,
@@ -1276,40 +1306,46 @@ void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state, bool 
             0.3f * (i == 2) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].b * (i == 3), 1.0f);
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
-
-        if ((reset_button && multiple_rows && i == 0) ||
-            (reset_button && !multiple_rows && i == 1)) {
-            ta_ui_next_margin(6, 1, 0, 1);
-            ta_rgba c = TA_COLOR_DARK_RED;
-            ta_ui_next_bg_color(UI_STATE_NONE, c.r, c.g, c.b, c.a);
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.8f, 0.0f, 0.0f, 0.9f);
-            if (ta_ui_button(CSTR("Reset"))) {
-                *vec = VEC2_ZERO;
-            }
-        }
     }
-    if (normalize) {
+}
+void ta_ui_textbox_vec2_normalize(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state)
+{
+    ta_ui_textbox_vec2(vec, vec_state);
+    if (!vec2_zero(*vec)) {
         *vec = vec2_normalize(*vec);
     }
-
-    ta_ui_panel_end();
 }
-void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state, bool normalize, bool multiple_rows,
-    bool reset_button)
+void ta_ui_textbox_vec2_reset(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state, ta_vec2 reset_value)
+{
+    ta_ui_row_begin();
+    ta_ui_textbox_vec2(vec, vec_state);
+    ta_ui_next_margin(6, 1, 0, 1);
+    if (ta_ui_reset_button()) {
+        *vec = reset_value;
+    }
+    ta_ui_row_end();
+}
+void ta_ui_textbox_vec2_reset_normalize(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state, ta_vec2 reset_value)
+{
+    ta_ui_textbox_vec2_reset(vec, vec_state, reset_value);
+    if (!vec2_zero(*vec)) {
+        *vec = vec2_normalize(*vec);
+    }
+}
+
+void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state, bool normalize, bool reset_button)
 {
     DLB_ASSERT(vec);
     DLB_ASSERT(vec_state);
 
     ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_panel_begin(&vec_state->panel_state, TA_UI_AUTOSIZE);
-    if (!multiple_rows) ta_ui_row_begin();
+    ta_ui_row_begin();
 
     // NOTE: Assuming length == 1 for ta_ui_label() below
     static const char *labels[3] = { "x", "y", "z" };
     float *components = (float *)vec;
     for (int i = 0; i < 3; ++i) {
-        if (multiple_rows) ta_ui_row_begin();
-
         ta_ui_next_margin(0, 1, 0, 1);
         ta_ui_label(labels[i], 1, 0);
         ta_ui_next_bg_color(UI_STATE_NONE,
@@ -1318,39 +1354,33 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state, bool 
             0.3f * (i == 2) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].b * (i == 3), 1.0f);
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
-
-        if ((reset_button && multiple_rows && i == 0) ||
-            (reset_button && !multiple_rows && i == 2)) {
-            ta_ui_next_margin(6, 1, 0, 1);
-            ta_ui_next_bg_color(UI_STATE_NONE, 0.5f, 0.0f, 0.0f, 1.0f);
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.7f, 0.0f, 0.0f, 1.0f);
-            if (ta_ui_button(CSTR("Reset"))) {
-                *vec = VEC3_ZERO;
-            }
+    }
+    if (reset_button) {
+        ta_ui_next_margin(6, 1, 0, 1);
+        if (ta_ui_reset_button()) {
+            *vec = VEC3_ZERO;
         }
     }
     if (normalize) {
         *vec = vec3_normalize(*vec);
     }
 
+    ta_ui_row_end();
     ta_ui_panel_end();
 }
-void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
-    bool normalize, bool multiple_rows, bool reset_button)
+void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state, bool normalize, bool reset_button)
 {
     DLB_ASSERT(vec);
     DLB_ASSERT(vec_state);
 
     ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_panel_begin(&vec_state->panel_state, TA_UI_AUTOSIZE);
-    if (!multiple_rows) ta_ui_row_begin();
+    ta_ui_row_begin();
 
     // NOTE: Assuming length == 1 for ta_ui_label() below
     static const char *labels[4] = { "x", "y", "z", "w" };
     float *components = (float *)vec;
     for (int i = 0; i < 4; ++i) {
-        if (multiple_rows) ta_ui_row_begin();
-
         ta_ui_next_margin(0, 1, 0, 1);
         ta_ui_label(labels[i], 1, 0);
         ta_ui_next_bg_color(UI_STATE_NONE,
@@ -1359,21 +1389,18 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state,
             0.3f * (i == 2) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].b * (i == 3), 1.0f);
         ta_ui_textbox_state *state = &vec_state->textbox_states[i];
         ta_ui_textbox_float(&components[i], state, 0);
-
-        if ((reset_button && multiple_rows && i == 0) ||
-            (reset_button && !multiple_rows && i == 3)) {
-            ta_ui_next_margin(6, 1, 0, 1);
-            ta_ui_next_bg_color(UI_STATE_NONE, 0.5f, 0.0f, 0.0f, 1.0f);
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.7f, 0.0f, 0.0f, 1.0f);
-            if (ta_ui_button(CSTR("Reset"))) {
-                *vec = QUAT_IDENT;
-            }
+    }
+    if (reset_button) {
+        ta_ui_next_margin(6, 1, 0, 1);
+        if (ta_ui_reset_button()) {
+            *vec = QUAT_IDENT;
         }
     }
     if (normalize) {
         *vec = quat_normalize(*vec);
     }
 
+    ta_ui_row_end();
     ta_ui_panel_end();
 }
 void ta_ui_textbox_focus(ta_ui_textbox_state *textbox)

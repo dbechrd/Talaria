@@ -111,6 +111,13 @@ bool ta_editor_textbox_editing()
 {
     return editor.textbox_editing != 0;
 }
+static void ui_texture(const char *texture, int resolution)
+{
+    ta_ui_next_margin(0, 0, 0, 0);
+    ta_ui_next_size(resolution, resolution);
+    ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_image(texture);
+}
 
 static editor_gizmo editor_gizmo_nearest(ta_ray *ray)
 {
@@ -638,11 +645,6 @@ void ta_editor_update_widgets()
 }
 void ta_editor_draw_world()
 {
-    // Grid and world axes
-    ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
-    ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.3f);
-    ta_primitive_render(true, false);
-
     const char *selected_entity = 0;
     ta_editor_selected_entity(&selected_entity);
     if (selected_entity) {
@@ -889,13 +891,6 @@ static void ui_scene_panel()
 
     ta_ui_panel_end();
 }
-static void ui_texture(const char *texture, int resolution)
-{
-    ta_ui_next_margin(0, 0, 0, 0);
-    ta_ui_next_size(resolution, resolution);
-    ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_image(texture);
-}
 static void ui_node_panel()
 {
     //ta_ui_next_margin(2, 2, 0, 0);
@@ -1072,7 +1067,7 @@ static void ui_node_panel()
         ta_ui_next_size(label_width, 0);
         ta_ui_label(CSTR("position:"), 0);
         static ta_ui_textbox_vec3_state textbox = { 0 };
-        ta_ui_textbox_vec3(&transform->xform.position, &textbox, false, false, true);
+        ta_ui_textbox_vec3(&transform->xform.position, &textbox, false, true);
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
@@ -1081,7 +1076,7 @@ static void ui_node_panel()
         // the components need to be in the range [0.0, 1.0]. Let's create a
         // ta_ui_label_vec4, then figure out how to edit rotations (Euler XYZ).
         static ta_ui_textbox_vec4_state orient_editors = { 0 };
-        ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors, true, false, true);
+        ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors, true, true);
 
         char text[256] = { 0 };
         size_t text_len = 0;
@@ -1264,10 +1259,7 @@ static void ui_node_panel()
             DLB_ASSERT(text_len < sizeof(text));
             ta_ui_label(text, text_len, 0);
             ta_ui_next_margin(6, 1, 0, 1);
-            ta_rgba velc = TA_COLOR_DARK_RED;
-            ta_ui_next_bg_color(UI_STATE_NONE, velc.r, velc.g, velc.b, velc.a);
-            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.8f, 0.0f, 0.0f, 0.9f);
-            if (ta_ui_button(CSTR("Reset"))) {
+            if (ta_ui_reset_button()) {
                 rigid_body->velocity = VEC3_ZERO;
                 rigid_body->ang_velocity = VEC3_ZERO;
             }
@@ -1309,13 +1301,13 @@ static void ui_node_panel()
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("broad aabb center:"), 0);
             static ta_ui_textbox_vec3_state broad_center_editor = { 0 };
-            ta_ui_textbox_vec3(&rigid_body->aabb.center, &broad_center_editor, false, true, true);
+            ta_ui_textbox_vec3(&rigid_body->aabb.center, &broad_center_editor, false, true);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("broad aabb extents:"), 0);
             static ta_ui_textbox_vec3_state broad_extents_editor = { 0 };
-            ta_ui_textbox_vec3(&rigid_body->aabb.extents, &broad_extents_editor, false, true, false);
+            ta_ui_textbox_vec3(&rigid_body->aabb.extents, &broad_extents_editor, false, false);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1326,13 +1318,13 @@ static void ui_node_panel()
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("centroid local:"), 0);
             static ta_ui_textbox_vec3_state centroid_local_editor = { 0 };
-            ta_ui_textbox_vec3(&rigid_body->centroid_local, &centroid_local_editor, false, false, false);
+            ta_ui_textbox_vec3(&rigid_body->centroid_local, &centroid_local_editor, false, false);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("centroid global:"), 0);
             static ta_ui_textbox_vec3_state centroid_global_editor = { 0 };
-            ta_ui_textbox_vec3(&rigid_body->centroid_global, &centroid_global_editor, false, false, false);
+            ta_ui_textbox_vec3(&rigid_body->centroid_global, &centroid_global_editor, false, false);
 
             ta_ui_row_begin();
             ta_ui_next_margin(2, 12, 0, 4);
@@ -1350,14 +1342,14 @@ static void ui_node_panel()
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("center:"), 0);
             static ta_ui_textbox_vec3_state center_editor = { 0 };
-            ta_ui_textbox_vec3(&rigid_body->collider.data.center, &center_editor, false, true, true);
+            ta_ui_textbox_vec3(&rigid_body->collider.data.center, &center_editor, false, true);
 
             switch (rigid_body->collider.type) {
                 case TA_COLLIDER_PLANE: {
                     ta_ui_row_begin();
                     ta_ui_label(CSTR("normal:"), 0);
                     static ta_ui_textbox_vec3_state normal_editor = { 0 };
-                    ta_ui_textbox_vec3(&rigid_body->collider.data.plane.normal, &normal_editor, true, true, false);
+                    ta_ui_textbox_vec3(&rigid_body->collider.data.plane.normal, &normal_editor, true, false);
                     break;
                 } case TA_COLLIDER_SPHERE: {
                     ta_ui_row_begin();
@@ -1370,11 +1362,11 @@ static void ui_node_panel()
                     ta_ui_row_begin();
                     ta_ui_label(CSTR("extents:"), 0);
                     static ta_ui_textbox_vec3_state extents_editor = { 0 };
-                    ta_ui_textbox_vec3(&rigid_body->collider.data.obb.extents, &extents_editor, false, true, false);
+                    ta_ui_textbox_vec3(&rigid_body->collider.data.obb.extents, &extents_editor, false, false);
                     ta_ui_row_begin();
                     ta_ui_label(CSTR("orientation:"), 0);
                     static ta_ui_textbox_vec4_state orientation_editor = { 0 };
-                    ta_ui_textbox_vec4(&rigid_body->collider.data.obb.orientation, &orientation_editor, true, true, true);
+                    ta_ui_textbox_vec4(&rigid_body->collider.data.obb.orientation, &orientation_editor, true, true);
                     break;
                 } default: {
                     break;
@@ -1412,7 +1404,7 @@ static void ui_node_panel()
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("color:"), 0);
             static ta_ui_textbox_vec3_state color_editor = { 0 };
-            ta_ui_textbox_vec3((ta_vec3 *)&light->color, &color_editor, false, false, false);
+            ta_ui_textbox_vec3((ta_vec3 *)&light->color, &color_editor, false, false);
             light->color.r = clampf(light->color.r, 0.0f, 1.0f);
             light->color.g = clampf(light->color.g, 0.0f, 1.0f);
             light->color.b = clampf(light->color.b, 0.0f, 1.0f);
@@ -1602,30 +1594,50 @@ static void ui_camera_panel()
         ta_ui_label(CSTR("Name"), 0);
         ta_ui_label(CSTR("Entity name"), 0);
         ta_ui_label(CSTR("Target position"), 0);
-        ta_ui_label(CSTR("Position"), 0);
+        ta_ui_label(CSTR("xform position"), 0);
+        ta_ui_label(CSTR("Target orientation"), 0);
+        ta_ui_label(CSTR("xform orientation"), 0);
+        ta_ui_label(CSTR("Target follow distance"), 0);
         ta_ui_label(CSTR("Position smooth"), 0);
         ta_ui_label(CSTR("Position target vel"), 0);
+        ta_ui_label(CSTR("Yaw"), 0);
+        ta_ui_label(CSTR("Yaw min"), 0);
+        ta_ui_label(CSTR("Yaw max"), 0);
         ta_ui_label(CSTR("Yaw smooth"), 0);
+        ta_ui_label(CSTR("Yaw target"), 0);
+        ta_ui_label(CSTR("Pitch"), 0);
+        ta_ui_label(CSTR("Pitch min"), 0);
+        ta_ui_label(CSTR("Pitch max"), 0);
         ta_ui_label(CSTR("Pitch smooth"), 0);
+        ta_ui_label(CSTR("Pitch target"), 0);
         ta_ui_label(CSTR("FOV"), 0);
         ta_ui_label(CSTR("Z near"), 0);
+        ta_ui_label(CSTR("Ortho"), 0);
         ta_ui_label(CSTR("Debug channel"), 0);
         ta_ui_panel_end();
 
         static ta_ui_panel_state button_panel = { 0 };
         ta_ui_panel_begin(&button_panel, TA_UI_AUTOSIZE);
+
         ta_ui_label(SYM(camera->name), 0);
         ta_ui_label(SYM(camera->entity), 0);
+
         static ta_ui_textbox_vec3_state tpos_textbox = { 0 };
-        ta_ui_row_begin();
-        ta_ui_textbox_vec3(&camera->target_xform.position, &tpos_textbox, false, false, true);
-        static ta_ui_textbox_vec3_state pos_textbox = { 0 };
-        ta_ui_row_begin();
+        ta_ui_textbox_vec3(&camera->target_xform.position, &tpos_textbox, false, true);
+
         ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
-        ta_ui_textbox_vec3(&cam_trans->xform.position, &pos_textbox, false, false, false);
-        ta_ui_row_end();
+        static ta_ui_textbox_vec3_state pos_textbox = { 0 };
+        ta_ui_textbox_vec3(&cam_trans->xform.position, &pos_textbox, false, false);
+
+        static ta_ui_textbox_vec4_state trot_textbox = { 0 };
+        ta_ui_textbox_vec4(&camera->target_xform.orientation, &trot_textbox, false, true);
+
+        static ta_ui_textbox_vec4_state rot_textbox = { 0 };
+        ta_ui_textbox_vec4(&cam_trans->xform.orientation, &rot_textbox, false, false);
+
         static ta_ui_textbox_state pos_smooth_textbox = { 0 };
         ta_ui_textbox_float(&camera->position_smooth, &pos_smooth_textbox, 0);
+
         ta_ui_row_begin();
         static ta_ui_textbox_state pos_target_vel_textbox = { 0 };
         ta_ui_textbox_float(&camera->position_target_vel, &pos_target_vel_textbox, 0);
@@ -1642,17 +1654,63 @@ static void ui_camera_panel()
             camera->position_target_vel = 1.0f;
         }
         ta_ui_row_end();
+
+        static ta_ui_textbox_state follow_distance_textbox = { 0 };
+        ta_ui_textbox_float(&camera->follow_distance, &follow_distance_textbox, 0);
+
+        ta_ui_label_float(camera->yaw, 0);
+
+        static ta_ui_textbox_state yaw_min_textbox = { 0 };
+        ta_ui_textbox_float_reset(&camera->yaw_min, &yaw_min_textbox, 0, CAMERA_YAW_MIN);
+        camera->yaw_min = clampf(camera->yaw_min, CAMERA_YAW_MIN, camera->yaw_max);
+
+        static ta_ui_textbox_state yaw_max_textbox = { 0 };
+        ta_ui_textbox_float_reset(&camera->yaw_max, &yaw_max_textbox, 0, CAMERA_YAW_MAX);
+        camera->yaw_max = clampf(camera->yaw_max, camera->yaw_min, CAMERA_YAW_MAX);
+
         static ta_ui_textbox_state yaw_smooth_textbox = { 0 };
-        ta_ui_textbox_float(&camera->yaw_smooth, &yaw_smooth_textbox, 0);
+        ta_ui_textbox_float_reset(&camera->yaw_smooth, &yaw_smooth_textbox, 0, CAMERA_YAW_SMOOTH_DEFAULT);
+        camera->yaw_smooth = clampf(camera->yaw_smooth, 0.0f, 1.0f);
+
+        static ta_ui_textbox_state yaw_target_textbox = { 0 };
+        ta_ui_textbox_float_reset(&camera->yaw_target, &yaw_target_textbox, 0, CAMERA_YAW_DEFAULT);
+        camera->yaw_target = clampf(camera->yaw_target, camera->yaw_min, camera->yaw_max);
+
+        ta_ui_label_float(camera->pitch, 0);
+
+        static ta_ui_textbox_state pitch_min_textbox = { 0 };
+        ta_ui_textbox_float_reset(&camera->pitch_min, &pitch_min_textbox, 0, CAMERA_PITCH_MIN);
+        camera->pitch_min = clampf(camera->pitch_min, CAMERA_PITCH_MIN, camera->pitch_max);
+
+        static ta_ui_textbox_state pitch_max_textbox = { 0 };
+        ta_ui_textbox_float_reset(&camera->pitch_max, &pitch_max_textbox, 0, CAMERA_PITCH_MAX);
+        camera->pitch_max = clampf(camera->pitch_max, camera->pitch_min, CAMERA_PITCH_MAX);
+
         static ta_ui_textbox_state pitch_smooth_textbox = { 0 };
-        ta_ui_textbox_float(&camera->pitch_smooth, &pitch_smooth_textbox, 0);
+        ta_ui_textbox_float_reset(&camera->pitch_smooth, &pitch_smooth_textbox, 0, CAMERA_PITCH_SMOOTH_DEFAULT);
+        camera->pitch_smooth = clampf(camera->pitch_smooth, 0.0f, 1.0f);
+
+        static ta_ui_textbox_state pitch_target_textbox = { 0 };
+        ta_ui_textbox_float_reset(&camera->pitch_target, &pitch_target_textbox, 0, CAMERA_PITCH_DEFAULT);
+        camera->pitch_target = clampf(camera->pitch_target, camera->pitch_min, camera->pitch_max);
+
         static ta_ui_textbox_state fov_textbox = { 0 };
-        ta_ui_textbox_float(&camera->fov, &fov_textbox, 0);
+        float fov = camera->fov;
+        ta_ui_textbox_float_reset(&camera->fov, &fov_textbox, 0, CAMERA_FOV_DEFAULT);
+        if (camera->fov != fov) {
+            ta_camera_recalc_projection(camera);
+        }
+
         static ta_ui_textbox_state znear_textbox = { 0 };
-        ta_ui_row_begin();
+        float znear = camera->znear;
         ta_ui_textbox_float(&camera->znear, &znear_textbox, 0);
-        ta_ui_next_margin(8, 1, 0, 0);
-        if (ta_ui_button(CSTR("Recalc projection matrix"))) {
+        camera->znear = MAX(0.0f, camera->znear);
+        if (camera->znear != znear) {
+            ta_camera_recalc_projection(camera);
+        }
+
+        static ta_ui_textbox_state ortho_textbox = { 0 };
+        if (ta_ui_toggle_button(CSTR("Perspective"), CSTR("Orthographic"), &camera->ortho)) {
             ta_camera_recalc_projection(camera);
         }
 

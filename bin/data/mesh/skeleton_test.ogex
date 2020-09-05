@@ -9,7 +9,7 @@ node: {
 		name: "bone_body"
 		# ExportBoneTransform (poseBone = true)
 		translation: [0, 0x3f800000, 0]
-		rotation: [0x3f3504f4, 0, 0, 0x3f3504f4]
+		rotation: [0, 0, 0, 0x3f800000]
 		animation: {  # ExportBoneSampledAnimationRotation
 			clip: "armature_nodeAction"
 			track: {
@@ -62,7 +62,7 @@ node: {
 		bone_node: {
 			name: "bone_head"
 			# ExportBoneTransform (poseBone = true)
-			translation: [0, 0, 0xbfc00000]
+			translation: [0, 0x3fc00000, 0]
 			rotation: [0, 0, 0, 0x3f800000]
 			animation: {  # ExportBoneSampledAnimationRotation
 				clip: "armature_nodeAction"
@@ -119,11 +119,8 @@ node: {
 				materials: [
 					"head_material"
 				]
-				# ExportNode (poseBone.matrix.inverted())
-				translation: [0, 0, 0x40200000]
-				rotation: [0xbf3504f4, 0, 0, 0x3f3504f4]
 				# ExportNodeTransform
-				translation: [0, 0, 0]
+				translation: [0, 0, 0xc0400000]
 				rotation: [0, 0, 0, 0x3f800000]
 			}
 		}
