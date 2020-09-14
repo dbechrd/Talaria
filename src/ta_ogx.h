@@ -6,77 +6,6 @@
 //typedef float ogx_vec4[4];  // xyzw
 //typedef float ogx_mat4[16]; // 00, 01, 02, 03, 10, ..., 33
 
-typedef enum ogx_key_kind {
-    OGX_KEY_KIND_UNKNOWN,
-    OGX_KEY_KIND_VALUE,
-    // NOTE: "+control" and "-control" only valid for time/value with curve = "bezier"
-    OGX_KEY_KIND_POS_CONTROL,
-    OGX_KEY_KIND_NEG_CONTROL,
-    OGX_KEY_KIND_COUNT
-} ogx_key_kind;
-
-typedef enum ogx_type {
-    OGX_TYPE_UNKNOWN,
-    OGX_TYPE_FLOAT,
-    OGX_TYPE_VEC2,
-    OGX_TYPE_VEC3,
-    OGX_TYPE_VEC4,
-    OGX_TYPE_MAT4,
-    OGX_TYPE_COUNT
-} ogx_type;
-
-typedef struct ogx_key {
-    ogx_key_kind kind;
-    ogx_type type;
-    union {
-        float *as_float;
-        ta_vec2* as_vec2;
-        ta_vec3* as_vec3;
-        ta_vec4* as_vec4;
-        ta_mat4* as_mat4;
-    } values;
-} ogx_key;
-
-typedef enum ogx_time_curve {
-    OGX_TIME_CURVE_UNKNOWN,
-    OGX_TIME_CURVE_LINEAR,
-    OGX_TIME_CURVE_BEZIER,
-    OGX_TIME_CURVE_COUNT
-} ogx_time_curve;
-
-typedef struct ogx_time {
-    ogx_time_curve curve;
-    ogx_key key;
-} ogx_time;
-
-typedef enum ogx_value_curve {
-    OGX_VALUE_CURVE_UNKNOWN,
-    //OGX_VALUE_CURVE_CONSTANT, // Not used by Blender exporter
-    OGX_VALUE_CURVE_LINEAR,
-    OGX_VALUE_CURVE_BEZIER,
-    //OGX_VALUE_CURVE_TCB,      // Not used by Blender exporter
-    OGX_VALUE_CURVE_COUNT
-} ogx_value_curve;
-
-typedef struct ogx_value {
-    ogx_value_curve curve;
-    ogx_key key;
-} ogx_value;
-
-typedef struct ogx_track {
-    const char *target;
-    float morph_weight_idx;  // TODO: uint32 (morph weight target index, only applicable when target = "morph_weight")
-    ogx_time time;
-    ogx_value value;
-} ogx_track;
-
-typedef struct ogx_animation {
-    float begin;
-    float end;
-    const char *clip;
-    ogx_track *tracks;
-} ogx_animation;
-
 typedef enum ogx_node_type {
     OGX_BASIC_NODE,
     OGX_BONE_NODE,
@@ -156,7 +85,6 @@ typedef struct ogx_node {
     s32 *children;  // vector of child indices
     ta_xform transform;
     ta_mat4 animated_transform;  // TODO(cleanup): temp cache thing for ta_game debug viz, probably doesn't belong here
-    ogx_animation *animations;
     union {
         ogx_bone_node bone;
         ogx_camera_node camera;
@@ -280,10 +208,5 @@ typedef struct ogx_scene {
     ogx_material *materials;
     ogx_texture  *textures;
 } ogx_scene;
-
-const char *ogx_key_kind_str[OGX_KEY_KIND_COUNT];
-const char *ogx_type_str[OGX_TYPE_COUNT];
-const char *ogx_time_curve_str[OGX_TIME_CURVE_COUNT];
-const char *ogx_value_curve_str[OGX_VALUE_CURVE_COUNT];
 
 void ta_ogx_load(ogx_scene *scene);

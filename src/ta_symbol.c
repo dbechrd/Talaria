@@ -88,6 +88,10 @@ const char *SYM_ENTITY_FREECAM;
 const char *SYM_ENTITY_BACKGROUND_MUSIC;
 const char *SYM_SHADER_EDITOR_SELECT;
 
+// OGEX animation track target paths
+const char *SYM_TRANSLATION;
+const char *SYM_ROTATION;
+
 // TODO: It may be useful to have multiple symbol tables to allow freeing
 //       symbols that are no longer in use (e.g. table per scene file). This
 //       hasn't been necessary yet, so I'm not going to do it preemptively.
@@ -253,6 +257,9 @@ void ta_symbol_init() {
     SYM_ENTITY_PLAYER_CAMERA    = INTERN("player_camera");
     SYM_ENTITY_PLAYER_ONE       = INTERN("player_one");
     SYM_SHADER_EDITOR_SELECT    = INTERN("editor_select");
+
+    SYM_TRANSLATION = INTERN("translation");
+    SYM_ROTATION    = INTERN("rotation");
 }
 
 const char *ta_symbol_intern(const char *s, size_t len) {

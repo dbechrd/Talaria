@@ -1,6 +1,19 @@
 #include "ta_animation.h"
 #include "dlb/dlb_vector.h"
 
+const char *ta_animation_track_key_kind_str[TA_ANIMATION_TRACK_KEY_COUNT] = {
+    [TA_ANIMATION_TRACK_KEY_UNKNOWN    ] = "TA_ANIMATION_TRACK_KEY_UNKNOWN",
+    [TA_ANIMATION_TRACK_KEY_VALUE      ] = "TA_ANIMATION_TRACK_KEY_VALUE",
+    [TA_ANIMATION_TRACK_KEY_POS_CONTROL] = "TA_ANIMATION_TRACK_KEY_POS_CONTROL",
+    [TA_ANIMATION_TRACK_KEY_NEG_CONTROL] = "TA_ANIMATION_TRACK_KEY_NEG_CONTROL",
+};
+const char *ta_animation_track_curve_type_str[TA_ANIMATION_TRACK_CURVE_COUNT] = {
+    [TA_ANIMATION_TRACK_CURVE_UNKNOWN] = "TA_ANIMATION_TRACK_CURVE_UNKNOWN",
+    [TA_ANIMATION_TRACK_CURVE_LINEAR ] = "TA_ANIMATION_TRACK_CURVE_LINEAR",
+    [TA_ANIMATION_TRACK_CURVE_BEZIER ] = "TA_ANIMATION_TRACK_CURVE_BEZIER",
+};
+
+#if 0  // GLTF Animation data
 const char *ta_animation_path_type_str(int type)
 {
     switch (type) {
@@ -45,3 +58,4 @@ void ta_animation_free_void(void *animation)
 {
     ta_animation_free(animation);
 }
+#endif

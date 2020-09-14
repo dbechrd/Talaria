@@ -259,22 +259,22 @@ void ta_game_init()
     //dml_document_load("data/mesh/button.ogex");
     //dml_document_load("data/mesh/dude.ogex");
 
-    ogx_scene scene1 = { 0 };
-    if (ogx_scene_from_file(&scene1, "data/mesh/dude.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&scene1);
-    }
-    ogx_scene scene2 = { 0 };
-    if (ogx_scene_from_file(&scene2, "data/mesh/button.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&scene2);
-    }
+    //ogx_scene scene1 = { 0 };
+    //if (ogx_scene_from_file(&scene1, "data/mesh/dude.ogex") == OGX_SUCCESS) {
+    //    ta_ogx_load(&scene1);
+    //}
+    //ogx_scene scene2 = { 0 };
+    //if (ogx_scene_from_file(&scene2, "data/mesh/button.ogex") == OGX_SUCCESS) {
+    //    ta_ogx_load(&scene2);
+    //}
     ogx_scene scene3 = { 0 };
     if (ogx_scene_from_file(&scene3, "data/mesh/skeleton_test.ogex") == OGX_SUCCESS) {
         ta_ogx_load(&scene3);
     }
-    ogx_scene test_bone_1 = { 0 };
-    if (ogx_scene_from_file(&test_bone_1, "data/mesh/test_bone_1.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&test_bone_1);
-    }
+    //ogx_scene test_bone_1 = { 0 };
+    //if (ogx_scene_from_file(&test_bone_1, "data/mesh/test_bone_1.ogex") == OGX_SUCCESS) {
+    //    ta_ogx_load(&test_bone_1);
+    //}
     // TODO: Free the ogx scene if it's not needed after being loaded
 
     //--------------------------------------------------------------------------
@@ -1128,10 +1128,116 @@ void ta_game_loop()
             }
         }
 
+        float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
+
+        //----------------------------------------------------------------------
+        // Animation
+        // TODO: Should this go before, during or after physics simulation..?
+        //----------------------------------------------------------------------
+
+        // TODO: Track which animations are currently playing.. do blending.
+        //ta_animation *animations = ta_game_resource_pool(RES_ANIMATION);
+        //dlb_vec_each(ta_animation *, animation, animations) {
+        //    UNUSED(animation);
+        //}
+
+        static float animation_time_sec = 0.0f;
+        animation_time_sec += (float)(ms_frame_delta / 1000.0);
+        while (animation_time_sec > 1.0f) {
+            animation_time_sec -= 1.0f;
+        }
+
+        // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
+        //animation_time_sec = 0.0f;
+        // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
+
+        //const char *animation_name = INTERN("dude_armature_squat");
+        //const char *animation_name = INTERN("test.action_bob_up");
+        const char *animation_name = INTERN("skeleton_test.action.lean_forward");
+        ta_animation *animation = ta_game_by_sym(RES_ANIMATION, animation_name);
+        if (animation && animation->tracks) {
+            size_t animation_frames = dlb_vec_len(animation->tracks[0].time.key.values.as_float);
+            dlb_vec_each(ta_animation_track *, track, animation->tracks) {
+                // Samples must be linearly interpolated values
+                DLB_ASSERT(track->time.curve == TA_ANIMATION_TRACK_CURVE_LINEAR);
+                DLB_ASSERT(track->value.curve == TA_ANIMATION_TRACK_CURVE_LINEAR);
+                DLB_ASSERT(track->time.key.kind == TA_ANIMATION_TRACK_KEY_VALUE);
+                DLB_ASSERT(track->value.key.kind == TA_ANIMATION_TRACK_KEY_VALUE);
+
+                // Samples must all be equal in length (including across tracks, for now)
+                const size_t time_count = dlb_vec_len(track->time.key.values.as_float);
+                const size_t value_count = dlb_vec_len(track->value.key.values.as_float);
+                DLB_ASSERT(time_count == value_count);  // NOTE: This is strictly necessary
+                DLB_ASSERT(time_count == animation_frames);  // NOTE: This is not necessary; enforces fully sampled
+
+                // Target node must have a valid transform component
+                ta_transform *transform = ta_game_component(track->target_node, RES_COMP_TRANSFORM);
+
+                // Times must always be floats
+                DLB_ASSERT(track->time.key.type == ATOM_FLOAT);
+
+                // TODO: Binary search time values
+                int right = 0;
+                int count = (int)dlb_vec_len(track->time.key.values.as_float);
+                while (right < count && track->time.key.values.as_float[right] < animation_time_sec) {
+                    right++;
+                }
+
+                // We only know how to handle transforms and rotations for now
+                switch (track->value.key.type) {
+                    case TYP_VEC3: {
+                        DLB_ASSERT(track->target_path == SYM_TRANSLATION);
+                        ta_vec3 lerp = { 0 };
+
+                        if (right == 0) {
+                            lerp = track->value.key.values.as_vec3[0];
+                        } else if (right == count) {
+                            lerp = track->value.key.values.as_vec3[count - 1];
+                        } else {
+                            //float t0 = track->time.key.values.as_float[right - 1];
+                            //float t1 = track->time.key.values.as_float[right];
+                            //float alpha = (animation_time_sec - t0) * (t1 - t0);
+                            //ta_vec3 a = track->value.key.values.as_vec3[right - 1];
+                            //ta_vec3 b = track->value.key.values.as_vec3[right];
+                            //lerp.x = a.x + (b.x - a.x) * alpha;
+                            //lerp.y = a.y + (b.y - a.y) * alpha;
+                            //lerp.z = a.z + (b.z - a.z) * alpha;
+
+                            // HACK: No interpolation for now
+                            lerp = track->value.key.values.as_vec3[right];
+                        }
+
+                        //float y = lerp.y;
+                        //lerp.y = -lerp.z;
+                        //lerp.z = y;
+
+                        transform->xform.position = lerp;
+
+                        break;
+                    } case TYP_VEC4: {
+                        DLB_ASSERT(track->target_path == SYM_ROTATION);
+                        ta_vec4 lerp = { 0 };
+                        if (right == 0) {
+                            lerp = track->value.key.values.as_vec4[0];
+                        } else if (right == count) {
+                            lerp = track->value.key.values.as_vec4[count - 1];
+                        } else {
+                            // HACK: No interpolation for now
+                            lerp = track->value.key.values.as_vec4[right];
+                        }
+                        transform->xform.orientation = lerp;
+                        break;
+                    } default: {
+                        DLB_ASSERT(!"That target_path is not currently handled");
+                        break;
+                    }
+                }
+            }
+        }
+
         //----------------------------------------------------------------------
         // Post-simulation updates (e.g. recalculate cached transform matrices)
         //----------------------------------------------------------------------
-        float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
 
         // Update transforms (model matrix and lerp)
         ta_transform_update_all(transforms, sim_alpha);
@@ -1465,6 +1571,17 @@ void ta_game_loop()
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_ui_render();
 #endif
+
+        static ta_ui_window_state window = { 0 };
+        u32 flags = TA_UI_AUTOSIZE;
+        ta_ui_window_begin(&window, flags);
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("animation_time_sec: "), 0);
+        ta_ui_label_float(animation_time_sec, 0);
+        ta_ui_window_end();
+        glClear(GL_DEPTH_BUFFER_BIT);
+        ta_ui_render();
+
         //----------------------------------------------------------------------
         // Audio
         //----------------------------------------------------------------------

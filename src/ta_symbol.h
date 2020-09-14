@@ -112,5 +112,9 @@ extern const char *SYM_ENTITY_FREECAM;
 extern const char *SYM_ENTITY_BACKGROUND_MUSIC;
 extern const char *SYM_SHADER_EDITOR_SELECT;
 
+// OGEX animation track target paths
+extern const char *SYM_TRANSLATION;
+extern const char *SYM_ROTATION;
+
 const char *ta_symbol_intern(const char *s, size_t len);
 void ta_symbol_init();

@@ -541,7 +541,7 @@ static ogx_result ogx_load_mat4_array(dml_document *doc, ta_mat4 **array, dml_va
     return result;
 }
 
-static ogx_result ogx_load_key(dml_document *doc, ogx_key *key, dml_value *value)
+static ogx_result ogx_load_key(dml_document *doc, ta_animation_track_key *key, dml_value *value)
 {
     assert(key);
     assert(value);
@@ -557,11 +557,11 @@ static ogx_result ogx_load_key(dml_document *doc, ogx_key *key, dml_value *value
                 result = ogx_load_string(&key_kind, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(key_kind, "value")) {
-                        key->kind = OGX_KEY_KIND_VALUE;
+                        key->kind = TA_ANIMATION_TRACK_KEY_VALUE;
                     } else if (!strcmp(key_kind, "+control")) {
-                        key->kind = OGX_KEY_KIND_POS_CONTROL;
+                        key->kind = TA_ANIMATION_TRACK_KEY_POS_CONTROL;
                     } else if (!strcmp(key_kind, "-control")) {
-                        key->kind = OGX_KEY_KIND_NEG_CONTROL;
+                        key->kind = TA_ANIMATION_TRACK_KEY_NEG_CONTROL;
                     } else {
 #if _DEBUG
                         ta_log_write(&tg_debug_log, SRC_OGX,
@@ -576,15 +576,15 @@ static ogx_result ogx_load_key(dml_document *doc, ogx_key *key, dml_value *value
                 result = ogx_load_string(&type, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(type, "float")) {
-                        key->type = OGX_TYPE_FLOAT;
+                        key->type = ATOM_FLOAT;
                     } else if (!strcmp(type, "vec2")) {
-                        key->type = OGX_TYPE_VEC2;
+                        key->type = TYP_VEC2;
                     } else if (!strcmp(type, "vec3")) {
-                        key->type = OGX_TYPE_VEC3;
+                        key->type = TYP_VEC3;
                     } else if (!strcmp(type, "vec4")) {
-                        key->type = OGX_TYPE_VEC4;
+                        key->type = TYP_VEC4;
                     } else if (!strcmp(type, "mat4")) {
-                        key->type = OGX_TYPE_MAT4;
+                        key->type = TYP_MAT4;
                     } else {
 #if _DEBUG
                         ta_log_write(&tg_debug_log, SRC_OGX,
@@ -595,15 +595,15 @@ static ogx_result ogx_load_key(dml_document *doc, ogx_key *key, dml_value *value
                     }
                 }
             } else if (field->name == ogxs_data) {
-                if (key->type == OGX_TYPE_FLOAT) {
+                if (key->type == ATOM_FLOAT) {
                     result = ogx_load_float_array(doc, &key->values.as_float, 0, &doc->value_pool[field->value_idx]);
-                } else if (key->type == OGX_TYPE_VEC2) {
+                } else if (key->type == TYP_VEC2) {
                     result = ogx_load_vec2_array(doc, &key->values.as_vec2, &doc->value_pool[field->value_idx]);
-                } else if (key->type == OGX_TYPE_VEC3) {
+                } else if (key->type == TYP_VEC3) {
                     result = ogx_load_vec3_array(doc, &key->values.as_vec3, &doc->value_pool[field->value_idx]);
-                } else if (key->type == OGX_TYPE_VEC4) {
+                } else if (key->type == TYP_VEC4) {
                     result = ogx_load_vec4_array(doc, &key->values.as_vec4, &doc->value_pool[field->value_idx]);
-                } else if (key->type == OGX_TYPE_MAT4) {
+                } else if (key->type == TYP_MAT4) {
                     result = ogx_load_mat4_array(doc, &key->values.as_mat4, &doc->value_pool[field->value_idx]);
                 } else {
 #if _DEBUG
@@ -611,7 +611,7 @@ static ogx_result ogx_load_key(dml_document *doc, ogx_key *key, dml_value *value
                         "[%s:%zu:%zu] expected 'type' field, '%s' field cannot be loaded before type is known\n",
                         value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column, field->name);
 #endif
-                    result = OGX_UNKNOWN_TYPE;
+                    result = OGX_UNEXPECTED_FIELD;
                 }
             } else {
 #if _DEBUG
@@ -629,7 +629,7 @@ static ogx_result ogx_load_key(dml_document *doc, ogx_key *key, dml_value *value
     return result;
 }
 
-static ogx_result ogx_load_time(dml_document *doc, ogx_time *time, dml_value *value)
+static ogx_result ogx_load_time(dml_document *doc, ta_animation_track_time *time, dml_value *value)
 {
     assert(time);
     assert(value);
@@ -645,9 +645,9 @@ static ogx_result ogx_load_time(dml_document *doc, ogx_time *time, dml_value *va
                 result = ogx_load_string(&curve, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(curve, "linear")) {
-                        time->curve = OGX_TIME_CURVE_LINEAR;
+                        time->curve = TA_ANIMATION_TRACK_CURVE_LINEAR;
                     } else if (!strcmp(curve, "bezier")) {
-                        time->curve = OGX_TIME_CURVE_BEZIER;
+                        time->curve = TA_ANIMATION_TRACK_CURVE_BEZIER;
                     } else {
 #if _DEBUG
                         ta_log_write(&tg_debug_log, SRC_OGX,
@@ -658,18 +658,18 @@ static ogx_result ogx_load_time(dml_document *doc, ogx_time *time, dml_value *va
                     }
                 }
             } else if (field->name == ogxs_key) {
-                if (time->curve != OGX_TIME_CURVE_UNKNOWN) {
+                if (time->curve != TA_ANIMATION_TRACK_CURVE_UNKNOWN) {
                     result = ogx_load_key(doc, &time->key, &doc->value_pool[field->value_idx]);
                     if (result == OGX_SUCCESS) {
-                        if (time->curve != OGX_TIME_CURVE_BEZIER) {
-                            if (time->key.kind == OGX_KEY_KIND_POS_CONTROL ||
-                                time->key.kind == OGX_KEY_KIND_NEG_CONTROL)
+                        if (time->curve != TA_ANIMATION_TRACK_CURVE_BEZIER) {
+                            if (time->key.kind == TA_ANIMATION_TRACK_KEY_POS_CONTROL ||
+                                time->key.kind == TA_ANIMATION_TRACK_KEY_NEG_CONTROL)
                             {
 #if _DEBUG
                                 ta_log_write(&tg_debug_log, SRC_OGX,
                                     "[%s:%zu:%zu] unexpected key kind, '%s' not valid for curve type '%s'\n",
                                     value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
-                                    ogx_key_kind_str[time->key.kind], ogx_time_curve_str[time->curve]);
+                                    ta_animation_track_key_kind_str[time->key.kind], ta_animation_track_curve_type_str[time->curve]);
 #endif
                                 result = OGX_UNEXPECTED_VALUE;
                             }
@@ -681,7 +681,7 @@ static ogx_result ogx_load_time(dml_document *doc, ogx_time *time, dml_value *va
                         "[%s:%zu:%zu] expected 'curve' field, '%s' field cannot be loaded before curve type is known\n",
                         value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column, field->name);
 #endif
-                    result = OGX_UNKNOWN_TYPE;
+                    result = OGX_UNEXPECTED_FIELD;
                 }
             } else {
 #if _DEBUG
@@ -699,7 +699,7 @@ static ogx_result ogx_load_time(dml_document *doc, ogx_time *time, dml_value *va
     return result;
 }
 
-static ogx_result ogx_load_value(dml_document *doc, ogx_value *val, dml_value *value)
+static ogx_result ogx_load_value(dml_document *doc, ta_animation_track_value *val, dml_value *value)
 {
     assert(val);
     assert(value);
@@ -715,9 +715,9 @@ static ogx_result ogx_load_value(dml_document *doc, ogx_value *val, dml_value *v
                 result = ogx_load_string(&curve, &doc->value_pool[field->value_idx]);
                 if (result == OGX_SUCCESS) {
                     if (!strcmp(curve, "linear")) {
-                        val->curve = OGX_VALUE_CURVE_LINEAR;
+                        val->curve = TA_ANIMATION_TRACK_CURVE_LINEAR;
                     } else if (!strcmp(curve, "bezier")) {
-                        val->curve = OGX_VALUE_CURVE_BEZIER;
+                        val->curve = TA_ANIMATION_TRACK_CURVE_BEZIER;
                     } else {
 #if _DEBUG
                         ta_log_write(&tg_debug_log, SRC_OGX,
@@ -728,18 +728,18 @@ static ogx_result ogx_load_value(dml_document *doc, ogx_value *val, dml_value *v
                     }
                 }
             } else if (field->name == ogxs_key) {
-                if (val->curve != OGX_VALUE_CURVE_UNKNOWN) {
+                if (val->curve != TA_ANIMATION_TRACK_CURVE_UNKNOWN) {
                     result = ogx_load_key(doc, &val->key, &doc->value_pool[field->value_idx]);
                     if (result == OGX_SUCCESS) {
-                        if (val->curve != OGX_VALUE_CURVE_BEZIER) {
-                            if (val->key.kind == OGX_KEY_KIND_POS_CONTROL ||
-                                val->key.kind == OGX_KEY_KIND_NEG_CONTROL)
+                        if (val->curve != TA_ANIMATION_TRACK_CURVE_BEZIER) {
+                            if (val->key.kind == TA_ANIMATION_TRACK_KEY_POS_CONTROL ||
+                                val->key.kind == TA_ANIMATION_TRACK_KEY_NEG_CONTROL)
                             {
 #if _DEBUG
                                 ta_log_write(&tg_debug_log, SRC_OGX,
                                     "[%s:%zu:%zu] unexpected key kind, '%s' not valid for curve type '%s'\n",
                                     value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
-                                    ogx_key_kind_str[val->key.kind], ogx_value_curve_str[val->curve]);
+                                    ta_animation_track_key_kind_str[val->key.kind], ta_animation_track_curve_type_str[val->curve]);
 #endif
                                 result = OGX_UNEXPECTED_VALUE;
                             }
@@ -751,7 +751,7 @@ static ogx_result ogx_load_value(dml_document *doc, ogx_value *val, dml_value *v
                         "[%s:%zu:%zu] expected 'curve' field, '%s' field cannot be loaded before curve type is known\n",
                         value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column, field->name);
 #endif
-                    result = OGX_UNKNOWN_TYPE;
+                    result = OGX_UNEXPECTED_FIELD;
                 }
             } else {
 #if _DEBUG
@@ -769,7 +769,7 @@ static ogx_result ogx_load_value(dml_document *doc, ogx_value *val, dml_value *v
     return result;
 }
 
-static ogx_result ogx_load_track(dml_document *doc, ogx_track *track, dml_value *value)
+static ogx_result ogx_load_track(dml_document *doc, ta_animation_track *track, dml_value *value)
 {
     assert(track);
     assert(value);
@@ -781,7 +781,7 @@ static ogx_result ogx_load_track(dml_document *doc, ogx_track *track, dml_value 
         dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
             dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == ogxs_target) {
-                result = ogx_load_string(&track->target, &doc->value_pool[field->value_idx]);
+                result = ogx_load_string(&track->target_path, &doc->value_pool[field->value_idx]);
             } else if (field->name == ogxs_target_index) {
                 result = ogx_load_float(&track->morph_weight_idx, &doc->value_pool[field->value_idx]);
             } else if (field->name == ogxs_time) {
@@ -804,10 +804,15 @@ static ogx_result ogx_load_track(dml_document *doc, ogx_track *track, dml_value 
     return result;
 }
 
-static ogx_result ogx_load_animation(dml_document *doc, ogx_animation *animation, dml_value *value)
+static ogx_result ogx_load_animation(dml_document *doc, const char *target_node, dml_value *value)
 {
-    assert(animation);
+    assert(target_node);
     assert(value);
+
+    //ta_animation *animation = dlb_vec_alloc(doc->scene->animations);
+    //animation->target_node = node->name;
+
+    ta_animation *animation = 0;
 
     ogx_result result = OGX_SUCCESS;
     if (value->type != DML_VALUE_OBJECT) {
@@ -816,14 +821,50 @@ static ogx_result ogx_load_animation(dml_document *doc, ogx_animation *animation
         dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
             dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == ogxs_begin) {
-                result = ogx_load_float(&animation->begin, &doc->value_pool[field->value_idx]);
+                assert(!"This field would have to be per-track if we're going to combine all track by clip name");
+                if (animation) {
+                    result = ogx_load_float(&animation->begin, &doc->value_pool[field->value_idx]);
+                } else {
+#if _DEBUG
+                    ta_log_write(&tg_debug_log, SRC_OGX,
+                        "[%s:%zu:%zu] expected 'clip' field, '%s' field cannot be loaded before clip name is known\n",
+                        value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column, field->name);
+#endif
+                }
             } else if (field->name == ogxs_end) {
-                result = ogx_load_float(&animation->end, &doc->value_pool[field->value_idx]);
+                assert(!"This field would have to be per-track if we're going to combine all track by clip name");
+                if (animation) {
+                    result = ogx_load_float(&animation->end, &doc->value_pool[field->value_idx]);
+                } else {
+#if _DEBUG
+                    ta_log_write(&tg_debug_log, SRC_OGX,
+                        "[%s:%zu:%zu] expected 'clip' field, '%s' field cannot be loaded before clip name is known\n",
+                        value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column, field->name);
+#endif
+                }
             } else if (field->name == ogxs_clip) {
-                result = ogx_load_string(&animation->clip, &doc->value_pool[field->value_idx]);
+                assert(!animation);  // Already found clip name for this animation?
+                const char *clip = 0;
+                result = ogx_load_string(&clip, &doc->value_pool[field->value_idx]);
+                if (result == OGX_SUCCESS) {
+                    assert(clip);
+                    animation = ta_game_by_sym_try(RES_ANIMATION, clip);
+                    if (!animation) {
+                        animation = ta_game_alloc(RES_ANIMATION, SYM(clip));
+                    }
+                }
             } else if (field->name == ogxs_track) {
-                ogx_track *track = dlb_vec_alloc(animation->tracks);
-                result = ogx_load_track(doc, track, &doc->value_pool[field->value_idx]);
+                if (animation) {
+                    ta_animation_track *track = dlb_vec_alloc(animation->tracks);
+                    track->target_node = target_node;
+                    result = ogx_load_track(doc, track, &doc->value_pool[field->value_idx]);
+                } else {
+#if _DEBUG
+                    ta_log_write(&tg_debug_log, SRC_OGX,
+                        "[%s:%zu:%zu] expected 'clip' field, '%s' field cannot be loaded before clip name is known\n",
+                        value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column, field->name);
+#endif
+                }
             } else {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] unexpected field '%s'\n", value->dbg_symbol.filename,
@@ -857,8 +898,7 @@ static ogx_result ogx_load_node_field(dml_document *doc, s32 node_idx, dml_field
         result = ogx_load_vec4(doc, (ta_vec4 *)&node->transform.orientation, &doc->value_pool[field->value_idx]);
     } else if (field->name == ogxs_animation) {
         ogx_node *node = ogx_node_at(doc, node_idx);
-        ogx_animation *animation = dlb_vec_alloc(node->animations);
-        result = ogx_load_animation(doc, animation, &doc->value_pool[field->value_idx]);
+        result = ogx_load_animation(doc, node->name, &doc->value_pool[field->value_idx]);
     } else if (field->name == ogxs_bone_node) {
         s32 child = ogx_node_alloc(doc, node_idx, OGX_BONE_NODE);
         result = ogx_load_node(doc, child, &doc->value_pool[field->value_idx]);
@@ -1093,7 +1133,7 @@ static ogx_result ogx_load_vertex_array(dml_document *doc, ogx_vertex_array *ver
                         "[%s:%zu:%zu] expected 'attrib' field, '%s' field cannot be loaded before attribute type is known\n",
                         value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column, field->name);
 #endif
-                    result = OGX_UNKNOWN_TYPE;
+                    result = OGX_UNEXPECTED_FIELD;
                 }
             } else if (field->name == ogxs_morph_index) {
                 result = ogx_load_u16(&vertex_array->morph_index, &doc->value_pool[field->value_idx]);

@@ -1,29 +1,5 @@
 #include "ta_ogx.h"
 
-const char *ogx_key_kind_str[OGX_KEY_KIND_COUNT] = {
-    [OGX_KEY_KIND_UNKNOWN    ] = "OGX_KEY_KIND_UNKNOWN",
-    [OGX_KEY_KIND_VALUE      ] = "OGX_KEY_KIND_VALUE",
-    [OGX_KEY_KIND_POS_CONTROL] = "OGX_KEY_KIND_POS_CONTROL",
-    [OGX_KEY_KIND_NEG_CONTROL] = "OGX_KEY_KIND_NEG_CONTROL",
-};
-const char *ogx_type_str[OGX_TYPE_COUNT] = {
-    [OGX_TYPE_UNKNOWN] = "OGX_TYPE_UNKNOWN",
-    [OGX_TYPE_FLOAT  ] = "OGX_TYPE_FLOAT",
-    [OGX_TYPE_VEC2   ] = "OGX_TYPE_VEC2",
-    [OGX_TYPE_VEC3   ] = "OGX_TYPE_VEC3",
-    [OGX_TYPE_MAT4   ] = "OGX_TYPE_MAT4",
-};
-const char *ogx_time_curve_str[OGX_TIME_CURVE_COUNT] = {
-    [OGX_TIME_CURVE_UNKNOWN] = "OGX_TIME_CURVE_UNKNOWN",
-    [OGX_TIME_CURVE_LINEAR ] = "OGX_TIME_CURVE_LINEAR",
-    [OGX_TIME_CURVE_BEZIER ] = "OGX_TIME_CURVE_BEZIER",
-};
-const char *ogx_value_curve_str[OGX_VALUE_CURVE_COUNT] = {
-    [OGX_VALUE_CURVE_UNKNOWN] = "OGX_VALUE_CURVE_UNKNOWN",
-    [OGX_VALUE_CURVE_LINEAR ] = "OGX_VALUE_CURVE_LINEAR",
-    [OGX_VALUE_CURVE_BEZIER ] = "OGX_VALUE_CURVE_BEZIER",
-};
-
 static void ta_ogx_load_camera(ogx_camera *o_cam)
 {
     UNUSED(o_cam);
@@ -31,7 +7,6 @@ static void ta_ogx_load_camera(ogx_camera *o_cam)
 
 static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
 {
-    static int mesh_id = 1;
     ta_mesh *mesh = ta_game_alloc(RES_MESH, SYM(o_mesh->name));
 
     dlb_vec_each(ogx_morph_target *, o_morph_target, o_mesh->morph_targets) {
@@ -245,8 +220,15 @@ static void ta_ogx_load_node(ogx_node *o_node, ogx_scene *o_scene)
         }
     }
 
-    // TODO: Load animation data
-    UNUSED(o_node->animations);
+    //// Load animation data
+    //dlb_vec_each(ta_animation *, o_animation, o_node->animations) {
+    //    // TODO: Handle non-sampled animations? I think that's the only reason these properties exist.
+    //    DLB_ASSERT(!o_animation->begin);
+    //    DLB_ASSERT(!o_animation->end);
+    //
+    //    ta_game_alloc(RES_ANIMATION, SYM(o_animation->clip));
+    //    o_animation->tracks
+    //}
 
     switch (o_node->type) {
         case OGX_BONE_NODE:

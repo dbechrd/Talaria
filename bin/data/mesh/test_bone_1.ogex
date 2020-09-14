@@ -1,17 +1,17 @@
 #Metric (key = "up") {string {"y"}}
 {
 node: {
-	name: "Armature"
+	name: "test.armature"
 	# ExportNodeTransform
 	translation: [1.0, 0, 0]
 	rotation: [0, 0, 0, 1.0]
 	bone_node: {
 		name: "test.bone_base"
 		# ExportBoneTransform (poseBone = true)
-		translation: [0, 0.5, 0]  # [0, 0.5, 0]
+		translation: [0, 0.5, 0]
 		rotation: [0, 0, 0, 1.0]
 		animation: {  # ExportBoneSampledAnimationTranslation
-			clip: "ArmatureAction"
+			clip: "test.action_bob_up"
 			track: {
 				target: "translation"
 				time: {

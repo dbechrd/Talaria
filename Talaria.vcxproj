@@ -68,7 +68,7 @@
     <Link>
       <AdditionalDependencies>Shell32.lib;SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib;ole32.lib;fmodL_vc.lib</AdditionalDependencies>
       <SubSystem>Console</SubSystem>
-      <GenerateDebugInformation>DebugFastLink</GenerateDebugInformation>
+      <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

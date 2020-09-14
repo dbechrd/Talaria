@@ -379,6 +379,10 @@ void ta_schema_register()
     TYPE_UNION_FIELD(ta_collider, obb,    TYP_OBB,    data, TA_COLLIDER_OBB);
     TYPE_END        (ta_collider);
 
+    //TYPE_START  (ta_animation_track, TYP_ANIMATION_TRACK, 0, 0);
+    //TYPE_END    (ta_animation_track);
+
+#if 0  // GLTF Animation data
     TYPE_START        (ta_animation_sampler, TYP_ANIMATION_SAMPLER, 0, 0);
     TYPE_VECTOR       (ta_animation_sampler, input,              ATOM_FLOAT);
 #if 0
@@ -397,6 +401,7 @@ void ta_schema_register()
     TYPE_FIELD  (ta_animation_channel, sampler_idx,  ATOM_UINT);
     TYPE_FIELD  (ta_animation_channel, target_bone, ATOM_STRING);
     TYPE_END    (ta_animation_channel);
+#endif
 
     TYPE_START  (ta_skeleton, TYP_SKELETON, 0, 0);
     TYPE_FIELD  (ta_skeleton, bones,                  ATOM_STRING);
@@ -514,11 +519,18 @@ void ta_schema_register()
     //--------------------------------------------------------------------------
     // Resource types
     //--------------------------------------------------------------------------
+    TYPE_START  (ta_animation, TYP_ANIMATION, 0, 0);
+    TYPE_FIELD  (ta_animation, name,   ATOM_STRING);
+    TYPE_VECTOR (ta_animation, tracks, TYP_ANIMATION_SAMPLER);
+    TYPE_END    (ta_animation);
+
+#if 0  // GLTF Animation data
     TYPE_START  (ta_animation, TYP_ANIMATION, 0, ta_animation_free_void);
     TYPE_FIELD  (ta_animation, name,     ATOM_STRING);
     TYPE_VECTOR (ta_animation, samplers, TYP_ANIMATION_SAMPLER);
     TYPE_VECTOR (ta_animation, channels, TYP_ANIMATION_CHANNEL);
     TYPE_END    (ta_animation);
+#endif
 
     TYPE_START  (ta_audio_buffer, TYP_AUDIO_BUFFER, ta_audio_buffer_init_void, 0);
     TYPE_FIELD  (ta_audio_buffer, name, ATOM_STRING);
