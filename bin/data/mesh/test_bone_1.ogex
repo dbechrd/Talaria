@@ -2,8 +2,8 @@
 {
 node: {
 	name: "test.armature"
-	# ExportNodeTransform
-	translation: [1.0, 0, 0]
+	# ExportNodeTransform (poseBone = false)
+	translation: [-2.0, 0, 0]
 	rotation: [0, 0, 0, 1.0]
 	bone_node: {
 		name: "test.bone_base"
@@ -65,8 +65,8 @@ node: {
 			materials: [
 				"test.red_material"
 			]
-			# ExportNodeTransform
-			translation: [0, 1.0, 0]
+			# ExportNodeTransform (poseBone = true)
+			translation: [0, 1.5, 0]
 			rotation: [0, 0, 0, 1.0]
 			geometry_node: {
 				name: "test.child_object"
@@ -74,7 +74,7 @@ node: {
 				materials: [
 					"test.green_material"
 				]
-				# ExportNodeTransform
+				# ExportNodeTransform (poseBone = false)
 				translation: [0, 2.0, 0]
 				rotation: [0, 0, 0, 1.0]
 			}
