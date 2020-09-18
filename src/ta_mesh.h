@@ -41,12 +41,12 @@ typedef struct ta_index_array {
 typedef struct ta_skeleton {
     const char **bones;        // i.e. joints
     // TODO: These could probably be ta_mat4 *bind_pose_transforms; we're not interpolating bind poses, right?
-    ta_vec3 *bind_pose_positions;
+    ta_vec3 *bind_pose_positions;     // bone bind-pose transforms
     ta_vec4 *bind_pose_orientations;
 } ta_skeleton;
 
 typedef struct ta_skin {
-    ta_xform transform;  // relative offset
+    ta_xform transform;        // skin bind-pose transform
     ta_skeleton skeleton;
     u16 *bone_count_array;     // vector
     u16 *bone_index_array;     // vector

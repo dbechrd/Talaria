@@ -26,7 +26,7 @@ const char *SYM_ATTR_TANGENT;
 const char *SYM_ATTR_MORPH1_POSITION;
 const char *SYM_ATTR_MORPH1_NORMAL;
 const char *SYM_ATTR_MORPH1_TANGENT;
-const char *SYM_ATTR_JOINTS;
+const char *SYM_ATTR_BONES;
 const char *SYM_ATTR_WEIGHTS;
 
 // Shader uniforms
@@ -118,7 +118,7 @@ void ta_symbol_init() {
     SYM_ATTR_MORPH1_POSITION = INTERN("attr_morph1_position");
     SYM_ATTR_MORPH1_NORMAL   = INTERN("attr_morph1_normal");
     SYM_ATTR_MORPH1_TANGENT  = INTERN("attr_morph1_tangent");
-    SYM_ATTR_JOINTS          = INTERN("attr_joints");
+    SYM_ATTR_BONES          = INTERN("attr_bones");
     SYM_ATTR_WEIGHTS         = INTERN("attr_weights");
 
     SYM_U_CAMERA_POS               = INTERN("u_camera_pos");

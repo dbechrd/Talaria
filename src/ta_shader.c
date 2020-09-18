@@ -199,6 +199,13 @@ static void shader_init_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
         }
         uniform->dirty = true;
     }
+
+    // HACK: Test every shader for Lights UBO, and bind to point 0 if present
+    // TODO: This is bad if it fails for a shader that actually needs the Lights UBO :/
+    GLuint ubo_lights_index = glGetUniformBlockIndex(shader->program_id, "ubo_lights");
+    if (ubo_lights_index != GL_INVALID_INDEX) {
+        glUniformBlockBinding(shader->program_id, ubo_lights_index, TA_GLSL_UBO_LIGHTS);
+    }
 }
 void ta_shader_load(ta_shader *shader)
 {
@@ -232,7 +239,7 @@ void ta_shader_load(ta_shader *shader)
     glBindAttribLocation(program_id, TA_VERTEX_ATTR_MORPH1_POSITION, "attr_morph1_position");
     glBindAttribLocation(program_id, TA_VERTEX_ATTR_MORPH1_NORMAL,   "attr_morph1_normal");
     glBindAttribLocation(program_id, TA_VERTEX_ATTR_MORPH1_TANGENT,  "attr_morph1_tangent");
-    glBindAttribLocation(program_id, TA_VERTEX_ATTR_JOINTS,          "attr_joints");
+    glBindAttribLocation(program_id, TA_VERTEX_ATTR_JOINTS,          "attr_bones");
     glBindAttribLocation(program_id, TA_VERTEX_ATTR_WEIGHTS,         "attr_weights");
     ta_shader_program_link(program_id);
 
@@ -260,7 +267,7 @@ void ta_shader_load(ta_shader *shader)
     ta_shader_attribute *attr_morph1_pos  = find_attribute_by_name(shader, SYM_ATTR_MORPH1_POSITION, TA_GLSL_VEC3);
     ta_shader_attribute *attr_morph1_norm = find_attribute_by_name(shader, SYM_ATTR_MORPH1_NORMAL,   TA_GLSL_VEC3);
     ta_shader_attribute *attr_morph1_tang = find_attribute_by_name(shader, SYM_ATTR_MORPH1_TANGENT,  TA_GLSL_VEC3);
-    ta_shader_attribute *attr_joints      = find_attribute_by_name(shader, SYM_ATTR_JOINTS,          TA_GLSL_VEC4);
+    ta_shader_attribute *attr_bones       = find_attribute_by_name(shader, SYM_ATTR_BONES,          TA_GLSL_VEC4);
     ta_shader_attribute *attr_weights     = find_attribute_by_name(shader, SYM_ATTR_WEIGHTS,         TA_GLSL_VEC4);
 
     DLB_ASSERT(!attr_col         || attr_col->location         < 0 || attr_col->location         == TA_VERTEX_ATTR_COLOR);
@@ -271,7 +278,7 @@ void ta_shader_load(ta_shader *shader)
     DLB_ASSERT(!attr_morph1_pos  || attr_morph1_pos->location  < 0 || attr_morph1_pos->location  == TA_VERTEX_ATTR_MORPH1_POSITION);
     DLB_ASSERT(!attr_morph1_norm || attr_morph1_norm->location < 0 || attr_morph1_norm->location == TA_VERTEX_ATTR_MORPH1_NORMAL);
     DLB_ASSERT(!attr_morph1_tang || attr_morph1_tang->location < 0 || attr_morph1_tang->location == TA_VERTEX_ATTR_MORPH1_TANGENT);
-    DLB_ASSERT(!attr_joints      || attr_joints->location      < 0 || attr_joints->location      == TA_VERTEX_ATTR_JOINTS);
+    DLB_ASSERT(!attr_bones      || attr_bones->location      < 0 || attr_bones->location      == TA_VERTEX_ATTR_JOINTS);
     DLB_ASSERT(!attr_weights     || attr_weights->location     < 0 || attr_weights->location     == TA_VERTEX_ATTR_WEIGHTS);
 
     shader_init_uniforms(shader, shader->uniforms);

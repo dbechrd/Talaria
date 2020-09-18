@@ -3,7 +3,7 @@
 node: {
 	name: "test.armature"
 	# ExportNodeTransform (poseBone = false)
-	translation: [-2.0, 0, 0]
+	translation: [0, 0, 0]
 	rotation: [0, 0, 0, 1.0]
 	bone_node: {
 		name: "test.bone_base"

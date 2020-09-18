@@ -3,7 +3,7 @@
 //------------------------------------------------------
 // Constants
 //------------------------------------------------------
-#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 8
+#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 4
 
 const float PI = 3.14159265359;
 const float GAMMA = 2.2;  // TODO: Make this a user-configurable uniform
@@ -85,6 +85,28 @@ struct Light {
 uniform int u_lights_count;
 uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
 
+struct UboLight {
+    int type;                                // ta_light_type: type of light
+    float intensity;                         // light intensity [0.0, +INF]
+    bool cast_shadows;                       // bool: light casts dynamic shadows if true
+    float pad0;
+
+    vec3 position;   float pad1;             // light position in world space (note: for directional lights, position determines where the entity is renderered in the editor
+    vec3 color;      float pad2;             // RGB light color ([0.0, 1.0], [0.0, 1.0], [0.0, 1.0])
+    vec3 direction;  float pad3;             // light direction in world space (note: ignored for point lights)
+    mat4 light_pv;                           // light projection-view matrix
+
+    float shadowmap_zfar;                    // z-far perspective divide for point light shadow maps (ignored for all other light types)
+    uint shadowmap_texture_pool_index;       // texture pool index where shadowmap is stored (note: pools are grouped by texture size)
+    float pad4;
+    float pad5;
+
+    uint shadowmap_texture_array_layers[6];  // array texture layer (determines which texture in the pool to use, where "pool" is an array texture)
+} ta_lighting_record;
+layout (std140) uniform ubo_lights {
+    UboLight lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+};
+
 //------------------------------------------------------
 // Textures
 //------------------------------------------------------
@@ -128,17 +150,20 @@ uniform int u_debug_channel;
 //------------------------------------------------------
 
 in vs_out {
-    vec4 color;
 	vec2 uv;
     vec3 position;
-	vec3 normal;
-    vec3 tangent;
     vec3 tbn_position;
-	vec3 tbn_normal;
     vec3 tbn_camera_pos;
     vec3 tbn_light_pos[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
     vec3 tbn_light_dir[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
     vec4 light_pvm[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+
+    // NOTE: These are just passed to allow debug channels to display them
+    // TODO: Use a separate shader for each debug channel? Would simplify this shader and reduce interface block size
+    vec4 color;
+    vec3 normal;
+    vec3 tangent;
+	vec3 tbn_normal;
 } vertex;
 
 out vec4 final_color;
@@ -209,24 +234,24 @@ void main()
         float attenuation;
 		float shadow = 0.0;
 
-        switch(u_lights[i].type) {
+        switch(lights[i].type) {
             case LIGHT_DIRECTIONAL: {
-                fragToLight = -u_lights[i].direction;
+                fragToLight = -lights[i].direction;
 
                 vec3 projCoords = vertex.light_pvm[i].xyz / vertex.light_pvm[i].w;
                 projCoords = projCoords * 0.5 + 0.5;
                 debug = projCoords;
                 dist = projCoords.z;
-                attenuation = u_lights[i].intensity;
+                attenuation = lights[i].intensity;
 
-                if (u_lights[i].cast_shadows) {
+                if (lights[i].cast_shadows) {
                     shadow_bias = 0.0001;
 #if 0
-                    shadow_map_depth = texture(u_lights[i].shadowmap2d, projCoords.st).r;
+                    shadow_map_depth = texture(lights[i].shadowmap2d, projCoords.st).r;
                     // TODO: Better bias based on direction of light? This code
                     // doesn't work, but tried to write it based on:
                     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
-                    //shadow_bias = max(0.05 * (1.0 - dot(N, u_lights[i].direction)), 0.001);
+                    //shadow_bias = max(0.05 * (1.0 - dot(N, lights[i].direction)), 0.001);
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
 #else
                     // Soft shadows
@@ -236,8 +261,8 @@ void main()
 				    for (float x = -1.0; x <= 1.0; x += 1.0) {
 					    for (float y = -1.0; y <= 1.0; y += 1.0) {
 							vec2 ss_offset = vec2(x, y) * 0.0001;
-                            float ss_depth = texture(u_textures[u_lights[i].shadowmap_texture_pool_index],
-                                vec3(projCoords.st + ss_offset, u_lights[i].shadowmap_texture_array_layers[0])).r;
+                            float ss_depth = texture(u_textures[lights[i].shadowmap_texture_pool_index],
+                                vec3(projCoords.st + ss_offset, lights[i].shadowmap_texture_array_layers[0])).r;
 			                shadow += step(ss_depth, dist - ss_bias);
                             ss_count += 1.0;
 					    }
@@ -253,15 +278,15 @@ void main()
                 fragToLight = -vertex.tbn_light_dir[i];
                 break;
             } case LIGHT_POINT: {
-                fragToLight = u_lights[i].position - vertex.position;
+                fragToLight = lights[i].position - vertex.position;
 
                 dist = length(fragToLight);
-                attenuation = u_lights[i].intensity / dist * dist;
+                attenuation = lights[i].intensity / dist * dist;
                 // Alternative attenutation for finer control:
                 // https://learnopengl.com/Lighting/Light-casters
                 //attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));
 
-                if (u_lights[i].cast_shadows) {
+                if (lights[i].cast_shadows) {
                     shadow_bias = 0.05;
 #if 0
                     vec3 sample_uvw = -fragToLight;
@@ -269,9 +294,9 @@ void main()
                     vec2 sample_uv = uv_face.xy;
                     int sample_face = int(uv_face.z);
 
-                    shadow_map_depth = texture(u_textures[u_lights[i].shadowmap_texture_pool_index],
-                        vec3(sample_uv, u_lights[i].shadowmap_texture_array_layers[sample_face])).r;
-                    shadow_map_depth *= u_lights[i].shadowmap_zfar;
+                    shadow_map_depth = texture(u_textures[lights[i].shadowmap_texture_pool_index],
+                        vec3(sample_uv, lights[i].shadowmap_texture_array_layers[sample_face])).r;
+                    shadow_map_depth *= lights[i].shadowmap_zfar;
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
 #else
                     // Soft shadows
@@ -290,11 +315,11 @@ void main()
                                 vec2 sample_uv = uv_face.xy;
                                 int sample_face = int(uv_face.z);
 
-                                float ss_depth = texture(u_textures[u_lights[i].shadowmap_texture_pool_index],
-                                    vec3(sample_uv, u_lights[i].shadowmap_texture_array_layers[sample_face])).r;
+                                float ss_depth = texture(u_textures[lights[i].shadowmap_texture_pool_index],
+                                    vec3(sample_uv, lights[i].shadowmap_texture_array_layers[sample_face])).r;
                                 /////////////////////////////////////////////////////////////////////////////////////
 
-							    ss_depth *= u_lights[i].shadowmap_zfar;
+							    ss_depth *= lights[i].shadowmap_zfar;
 			                    shadow += step(ss_depth, dist - shadow_bias);
                                 ss_count += 1.0;
 					        }
@@ -334,7 +359,7 @@ void main()
         shadow_dists[i] = dist;
         //shadow = 0.0;
 
-        vec3 radiance = u_lights[i].color * attenuation;
+        vec3 radiance = lights[i].color * attenuation;
 
         vec3 L = normalize(fragToLight);
         vec3 H = normalize(V + L);
@@ -405,6 +430,7 @@ void main()
     //final_color = vec4(vec3(1.0 - (shadow_map_depths[light_idx] / 30.0f)), 1.0);
     //final_color = vec4(vec3(1.0 - shadow_dists[light_idx] / 40.0f), 1.0);
     //final_color = vec4(vertex.tbn_light_dir[light_idx], 1.0);
+    //final_color = vec4(lights[1].color, 1.0);
 
     switch (u_debug_channel) {
         case DBG_VTX_COLOR:

@@ -50,7 +50,7 @@ extern const char *SYM_ATTR_TANGENT;
 extern const char *SYM_ATTR_MORPH1_POSITION;
 extern const char *SYM_ATTR_MORPH1_NORMAL;
 extern const char *SYM_ATTR_MORPH1_TANGENT;
-extern const char *SYM_ATTR_JOINTS;
+extern const char *SYM_ATTR_BONES;
 extern const char *SYM_ATTR_WEIGHTS;
 
 // Shader uniforms

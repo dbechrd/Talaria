@@ -20,6 +20,10 @@ typedef enum ta_glsl_type {
     TA_GLSL_UINT_ARRAY      = 13,
 } ta_glsl_type;
 
+typedef enum ta_glsl_ubo_type {
+    TA_GLSL_UBO_LIGHTS = 0
+} ta_glsl_ubo_type;
+
 typedef struct ta_shader_attribute {
     const char      *name;      // [GL] vertex attribute name
     ta_glsl_type    type;       // [GL] vertex attribute type
