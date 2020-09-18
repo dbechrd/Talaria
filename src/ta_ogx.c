@@ -64,6 +64,7 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
 
     ta_mesh_create(mesh);
     ta_mesh_update_buffers(mesh);
+    ta_mesh_init_normals(mesh, 0.1f);
 
     // Load skin (if present)
     if (o_mesh->skin.bone_count_array) {

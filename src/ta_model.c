@@ -173,7 +173,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         u32 u_lights_count = 0;
         for (u32 i = 0; i < lights_len; ++i) {
             if (lights[i].enabled) {
-                ta_shader_set_light(shader, SYM_U_LIGHTS, u_lights_count, &lights[i]);
+                //ta_shader_set_light(shader, SYM_U_LIGHTS, u_lights_count, &lights[i]);
                 u_lights_count++;
             }
         }
@@ -197,12 +197,16 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_shader_unbind();
     }
 
+    // TODO: Do this in a separate pass, after all models are rendered. One big buffer, single render call.
     if (camera->debug_normals) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->world);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->world);
-        ta_mesh *mesh = ta_game_by_sym(RES_MESH, model->mesh);
+        ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
+        if (!mesh) {
+            mesh = tg_mesh_default;
+        }
         ta_mesh_push_normals(mesh);
         ta_primitive_render(true, false);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
     }
 }
 

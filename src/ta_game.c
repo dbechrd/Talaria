@@ -1500,6 +1500,7 @@ void ta_game_loop()
         ta_primitive_render(true, true);
 #endif
 
+#if 1
         //----------------------------------------------------------------------
         // Crazy bone debug viz; temporary
         //----------------------------------------------------------------------
@@ -1540,6 +1541,7 @@ void ta_game_loop()
 
         ta_primitive_render(true, false);
         ta_ui_render();
+#endif
 
         //----------------------------------------------------------------------
         // Editor UI (screen)
