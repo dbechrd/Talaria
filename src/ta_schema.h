@@ -76,6 +76,7 @@ typedef enum ta_schema_field_type {
 
     // Component types
     TYP_AUDIO_SOURCE,
+    TYP_BONE,
     TYP_BUTTON,
     TYP_CAMERA,
     TYP_GUN,
@@ -110,6 +111,7 @@ typedef enum ta_schema_field_type {
 typedef enum ta_res_type {
     // Component types
     RES_COMP_AUDIO_SOURCE,
+    RES_COMP_BONE,
     RES_COMP_BUTTON,
     RES_COMP_CAMERA,
     RES_COMP_GUN,

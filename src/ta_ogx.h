@@ -81,12 +81,12 @@ typedef struct ogx_node {
     const char *name;
     s32 index;      // pool index (scene->nodes)
     s32 parent;     // parent index
-                       // TODO: Do we need this, or is parent sufficient? I assume we do.
+                    // TODO: Do we need this, or is parent sufficient? I assume we do.
     s32 *children;  // vector of child indices
     ta_xform transform;
     ta_mat4 animated_transform;  // TODO(cleanup): temp cache thing for ta_game debug viz, probably doesn't belong here
     union {
-        ogx_bone_node bone;
+        ogx_bone_node bone_name;
         ogx_camera_node camera;
         ogx_geometry_node geometry;
         ogx_light_node light;

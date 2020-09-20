@@ -225,8 +225,8 @@ void ta_game_init()
     //ta_game_load_gltf("data/mesh/dude.gltf");
     //ta_game_load_gltf("data/mesh/skeleton_test.gltf");
 
-    tg_mesh_default = ta_game_by_name_try(RES_MESH, SYM(INTERN("prim_unknown")));
-    tg_material_default = ta_game_by_name_try(RES_MATERIAL, SYM(INTERN("material_unknown")));
+    tg_mesh_default = INTERN("prim_unknown");
+    tg_material_default = INTERN("material_unknown");
 
     //--------------------------------------------------------------------------
     // Lighting
@@ -259,21 +259,27 @@ void ta_game_init()
     //dml_document_load("data/mesh/button.ogex");
     //dml_document_load("data/mesh/dude.ogex");
 
-    ogx_scene scene1 = { 0 };
-    if (ogx_scene_from_file(&scene1, "data/mesh/dude.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&scene1);
+    ogx_scene *scenes = 0;
+    ogx_scene *scene = 0;
+    scene = dlb_vec_alloc(scenes);
+    if (ogx_scene_from_file(scene, "data/mesh/dude.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(scene);
     }
-    ogx_scene scene2 = { 0 };
-    if (ogx_scene_from_file(&scene2, "data/mesh/button.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&scene2);
+    scene = dlb_vec_alloc(scenes);
+    if (ogx_scene_from_file(scene, "data/mesh/button.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(scene);
     }
-    ogx_scene scene3 = { 0 };
-    if (ogx_scene_from_file(&scene3, "data/mesh/skeleton_test.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&scene3);
+    scene = dlb_vec_alloc(scenes);
+    if (ogx_scene_from_file(scene, "data/mesh/skeleton_test.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(scene);
     }
-    ogx_scene test_bone_1 = { 0 };
-    if (ogx_scene_from_file(&test_bone_1, "data/mesh/test_bone_1.ogex") == OGX_SUCCESS) {
-        ta_ogx_load(&test_bone_1);
+    scene = dlb_vec_alloc(scenes);
+    if (ogx_scene_from_file(scene, "data/mesh/test_bone_1.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(scene);
+    }
+    scene = dlb_vec_alloc(scenes);
+    if (ogx_scene_from_file(scene, "data/mesh/skeleton_test_skin.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(scene);
     }
     // TODO: Free the ogx scene if it's not needed after being loaded
 
@@ -1143,14 +1149,15 @@ void ta_game_loop()
         //    UNUSED(animation);
         //}
 
-        const char *dude_wave = INTERN("dude_armature_wave");
-        const char *dude_squat = INTERN("dude_armature_squat");
+        const char *dude_wave = INTERN("dude.clip.wave");
+        const char *dude_squat = INTERN("dude.clip.squat");
 
         static const char **animation_names = 0;
         if (!animation_names) {
-            dlb_vec_push(animation_names, INTERN("skeleton_test.action.lean_forward"));
-            dlb_vec_push(animation_names, INTERN("test.action_bob_up"));
-            dlb_vec_push(animation_names, INTERN("dude_armature_wave"));
+            dlb_vec_push(animation_names, INTERN("test_bone_1.clip.bob"));
+            dlb_vec_push(animation_names, INTERN("skeleton_test.clip.lean_forward"));
+            dlb_vec_push(animation_names, INTERN("skeleton_test_skin.clip.lean_forward"));
+            dlb_vec_push(animation_names, dude_wave);
         }
 
         static float animation_time_sec = 0.0f;
@@ -1272,37 +1279,37 @@ void ta_game_loop()
             }
 
             // TODO: Handle skin transforms
-            DLB_ASSERT(vec3_zero(mesh->skin.transform.position));
-            DLB_ASSERT(quat_ident(mesh->skin.transform.orientation));
+            //DLB_ASSERT(vec3_zero(mesh->skin.transform.position));
+            //DLB_ASSERT(quat_ident(mesh->skin.transform.orientation));
 
-            //ta_mat4 skin_pos = mat4_translate(mesh->skin.transform.position);
-            //ta_mat4 skin_rot = mat4_rotate_quat(mesh->skin.transform.orientation);
-            //ta_mat4 skin_pose = mat4_mul(&skin_pos, &skin_rot);
+            ta_mat4 skin_pos = mat4_translate(mesh->skin.transform.position);
+            ta_mat4 skin_rot = mat4_rotate_quat(mesh->skin.transform.orientation);
+            ta_mat4 skin_pose = mat4_mul(&skin_pos, &skin_rot);
 
             size_t bone_count = dlb_vec_len(mesh->skin.skeleton.bones);
             DLB_ASSERT(dlb_vec_len(mesh->skin.skeleton.bind_pose_positions) == bone_count);
             DLB_ASSERT(dlb_vec_len(mesh->skin.skeleton.bind_pose_orientations) == bone_count);
 
             size_t bone_idx = 0;
-            dlb_vec_each(const char **, bone, mesh->skin.skeleton.bones) {
-                ta_transform *transform = ta_game_component(*bone, RES_COMP_TRANSFORM);
+            dlb_vec_each(const char **, bone_name, mesh->skin.skeleton.bones) {
+                ta_transform *transform = ta_game_component(*bone_name, RES_COMP_TRANSFORM);
 
-                ta_vec3 p = mesh->skin.skeleton.bind_pose_positions[bone_idx];
-                ta_vec4 r = mesh->skin.skeleton.bind_pose_orientations[bone_idx];
+                ta_bone *bone = ta_game_component(*bone_name, RES_COMP_BONE);
+                ta_transform *armature = ta_game_component(bone->armature, RES_COMP_TRANSFORM);
 
-                //r = quat_init(r.x, r.y, r.z, r.w);
+                ta_mat4 armature_inv = { 0 };
+                DLB_ASSERT(mat4_inverse(&armature->world, &armature_inv));
 
-                ta_mat4 bone_bind_pose = { 0 };
-                ta_mat4 trans = mat4_translate(p);
-                ta_mat4 rot = mat4_rotate_quat(r);
-                bone_bind_pose = mat4_mul(&trans, &rot);
+                ta_mat4 bone_bind_pos = mat4_translate(mesh->skin.skeleton.bind_pose_positions[bone_idx]);
+                ta_mat4 bone_bind_rot = mat4_rotate_quat(mesh->skin.skeleton.bind_pose_orientations[bone_idx]);
+                ta_mat4 bone_bind_pose = mat4_mul(&bone_bind_pos, &bone_bind_rot);
 
                 ta_mat4 bone_bind_pose_inv = { 0 };
                 DLB_ASSERT(mat4_inverse(&bone_bind_pose, &bone_bind_pose_inv));
 
-                //ta_mat4 skinned_tmp = mat4_mul(&bone_bind_pose_inv, &skin_pose);
-                //ta_mat4 skinned = mat4_mul(&transform->world, &skinned_tmp);
-                ta_mat4 skinned = mat4_mul(&transform->world, &bone_bind_pose_inv);
+                ta_mat4 skinned = mat4_mul(&bone_bind_pose_inv, &skin_pose);
+                skinned = mat4_mul(&transform->world, &skinned);
+                skinned = mat4_mul(&armature_inv, &skinned);
                 mesh->skin.bone_xforms[bone_idx] = skinned;
 
                 bone_idx++;

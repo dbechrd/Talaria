@@ -11,7 +11,7 @@ node: {
 		translation: [0, 0, 0]
 		rotation: [0, 0, 0, 1.0]
 		animation: {  # ExportBoneSampledAnimationRotation
-			clip: "skeleton_test.action.lean_forward"
+			clip: "skeleton_test.clip.lean_forward"
 			track: {
 				target: "rotation"
 				time: {
@@ -65,7 +65,7 @@ node: {
 			translation: [0, 0.5, 0]
 			rotation: [0, 0, 0, 1.0]
 			animation: {  # ExportBoneSampledAnimationTranslation
-				clip: "skeleton_test.action.lean_forward"
+				clip: "skeleton_test.clip.lean_forward"
 				track: {
 					target: "translation"
 					time: {
@@ -114,7 +114,7 @@ node: {
 				}
 			}
 			animation: {  # ExportBoneSampledAnimationRotation
-				clip: "skeleton_test.action.lean_forward"
+				clip: "skeleton_test.clip.lean_forward"
 				track: {
 					target: "rotation"
 					time: {
@@ -177,7 +177,7 @@ node: {
 			name: "skeleton_test.node.body"
 			mesh: "skeleton_test.mesh.body"
 			materials: [
-				"body_material"
+				"skeleton_test.material.body"
 			]
 			# ExportNodeTransform (poseBone = true)
 			translation: [0, 0, 0]
@@ -185,7 +185,7 @@ node: {
 		}
 	}
 }
-mesh: {  # Node Table: skeleton_test.node.head
+mesh: {  # Node Table: head
 	name: "skeleton_test.mesh.head"
 	vertex_array: {  # vec3[28]
 		attrib: "position"
@@ -218,7 +218,7 @@ mesh: {  # Node Table: skeleton_test.node.head
 		]
 	}
 }
-mesh: {  # Node Table: skeleton_test.node.body
+mesh: {  # Node Table: body
 	name: "skeleton_test.mesh.body"
 	vertex_array: {  # vec3[26]
 		attrib: "position"
@@ -259,7 +259,7 @@ material: {
 	roughness_factor: 0.80000001
 }
 material: {
-	name: "body_material"
+	name: "skeleton_test.material.body"
 	alpha_factor: 1.0
 	albedo_factor: [0.30000001, 0, 0]
 	normal_factor: [0, 0, 0]

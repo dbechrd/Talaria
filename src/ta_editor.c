@@ -969,9 +969,11 @@ static void ui_node_panel()
                 match_res_neg = ta_game_component_try(transform->entity, res_filter_neg) == 0;
             }
             if (match_all || match_res_pos || match_res_neg || strstr(transform->entity, search_box.buffer)) {
+                // TODO: Insertion sort?
                 dlb_vec_push(search_results, transform->entity);
             }
         }
+
         dlb_vec_each(const char **, result, search_results) {
             ta_ui_row_begin();
             ta_ui_next_size(200, 0);

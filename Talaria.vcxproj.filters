@@ -164,6 +164,9 @@
     <ClCompile Include="src\ta_cubemap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\ta_bone.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src/ta_window.h">
@@ -311,6 +314,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\ta_cubemap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ta_bone.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

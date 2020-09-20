@@ -147,6 +147,7 @@ void main()
     // Skinning
     // TODO: Should this happen before or after morph target blending? Should we even mix those?
     //----------------------------------
+    mat4 armature_inv = inverse(u_model);
     vec4 vertex_skinned = (attr_bone_weights.x * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.x)]) +
                           (attr_bone_weights.y * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.y)]) +
                           (attr_bone_weights.z * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.z)]) +

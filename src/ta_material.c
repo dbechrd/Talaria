@@ -1,6 +1,6 @@
 #include "ta_material.h"
 
-ta_material *tg_material_default;
+const char *tg_material_default;
 
 void ta_material_init(ta_material *material)
 {

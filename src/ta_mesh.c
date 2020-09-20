@@ -15,7 +15,7 @@
 #define TINYOBJ_LOADER_C_IMPLEMENTATION
 #include "misc/tinyobj_loader_c.h"
 
-ta_mesh *tg_mesh_default;
+const char *tg_mesh_default;
 
 const char *ta_vertex_attrib_type_str(int type) {
     switch (type) {
@@ -209,6 +209,8 @@ void ta_mesh_calculate_joints_and_weights(ta_mesh *mesh)
         ta_vec4 weights = { 0 };
 
         for (;;) {
+            if (*bone_count == 0) break;
+
             indices.x = mesh->skin.bone_index_array[bone_offset];
             weights.x = mesh->skin.bone_weight_array[bone_offset];
             bone_offset++;
@@ -439,8 +441,7 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
     }
 
     if (!mesh->gl_vao) {
-        mesh = tg_mesh_default;
-        DLB_ASSERT(mesh);  // No mesh & no default mesh, this seems undesirable!
+        mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
     }
     glBindVertexArray(mesh->gl_vao);
     if (mesh->index_arrays) {

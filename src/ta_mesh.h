@@ -91,7 +91,7 @@ typedef struct ta_mesh {
 } ta_mesh;
 #pragma warning(pop)
 
-ta_mesh *tg_mesh_default;
+extern const char *tg_mesh_default;
 
 const char *ta_vertex_attrib_type_str(int type);
 void ta_mesh_init                           (ta_mesh *mesh);

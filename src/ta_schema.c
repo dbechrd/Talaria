@@ -1,6 +1,7 @@
 #include "ta_schema.h"
 #include "ta_animation.h"
 #include "ta_audio.h"
+#include "ta_bone.h"
 #include "ta_button.h"
 #include "ta_camera.h"
 #include "ta_file.h"
@@ -58,6 +59,7 @@ void ta_schema_field_type_str(ta_schema_field_type type, const char **str)
         case TYP_SKIN:                  *str = "TYP_SKIN";                  break;
         /// Component types ///
         case TYP_AUDIO_SOURCE:          *str = "TYP_AUDIO_SOURCE";          break;
+        case TYP_BONE:                  *str = "TYP_BONE";                  break;
         case TYP_BUTTON:                *str = "TYP_BUTTON";                break;
         case TYP_CAMERA:                *str = "TYP_CAMERA";                break;
         case TYP_GUN:                   *str = "TYP_GUN";                   break;
@@ -92,6 +94,7 @@ void ta_res_type_str(ta_res_type type, const char **str)
     switch (type) {
         /// Component types ///
         case RES_COMP_AUDIO_SOURCE : *str = "RES_COMP_AUDIO_SOURCE"; break;
+        case RES_COMP_BONE         : *str = "RES_COMP_BONE";         break;
         case RES_COMP_BUTTON       : *str = "RES_COMP_BUTTON";       break;
         case RES_COMP_CAMERA       : *str = "RES_COMP_CAMERA";       break;
         case RES_COMP_GUN          : *str = "RES_COMP_GUN";          break;
@@ -119,6 +122,7 @@ ta_schema_field_type res_to_typ(ta_res_type type)
     switch (type) {
         // Component types
         case RES_COMP_AUDIO_SOURCE: schema_type = TYP_AUDIO_SOURCE ; break;
+        case RES_COMP_BONE:         schema_type = TYP_BONE         ; break;
         case RES_COMP_BUTTON:       schema_type = TYP_BUTTON       ; break;
         case RES_COMP_CAMERA:       schema_type = TYP_CAMERA       ; break;
         case RES_COMP_GUN:          schema_type = TYP_GUN          ; break;
@@ -146,13 +150,14 @@ ta_res_type typ_to_res(ta_schema_field_type type)
     switch (type) {
         // Component types
         case TYP_AUDIO_SOURCE:  res_type = RES_COMP_AUDIO_SOURCE; break;
+        case TYP_BONE:          res_type = RES_COMP_BONE        ; break;
         case TYP_BUTTON:        res_type = RES_COMP_BUTTON      ; break;
         case TYP_CAMERA:        res_type = RES_COMP_CAMERA      ; break;
         case TYP_GUN:           res_type = RES_COMP_GUN         ; break;
         case TYP_LIGHT:         res_type = RES_COMP_LIGHT       ; break;
         case TYP_MODEL:         res_type = RES_COMP_MODEL       ; break;
         case TYP_PLAYER:        res_type = RES_COMP_PLAYER      ; break;
-        case TYP_TRANSFORM:     res_type = RES_COMP_TRANSFORM    ; break;
+        case TYP_TRANSFORM:     res_type = RES_COMP_TRANSFORM   ; break;
         case TYP_RIGID_BODY:    res_type = RES_COMP_RIGID_BODY  ; break;
         // Resource types
         case TYP_AUDIO_BUFFER:  res_type = RES_AUDIO_BUFFER     ; break;
@@ -429,6 +434,11 @@ void ta_schema_register()
     TYPE_FIELD  (ta_audio_source, loop,         ATOM_BOOL);
     TYPE_END    (ta_audio_source);
 
+    TYPE_START  (ta_bone, TYP_BONE, 0, 0);
+    TYPE_FIELD  (ta_bone, name,            ATOM_STRING);
+    TYPE_FIELD  (ta_bone, armature,        ATOM_STRING);
+    TYPE_END    (ta_bone);
+
     TYPE_START  (ta_e_button, TYP_BUTTON, e_button_init_void, 0);
     TYPE_FIELD  (ta_e_button, name,            ATOM_STRING);
     TYPE_FIELD  (ta_e_button, entity,          ATOM_STRING);
@@ -521,7 +531,7 @@ void ta_schema_register()
     //--------------------------------------------------------------------------
     TYPE_START  (ta_animation, TYP_ANIMATION, 0, 0);
     TYPE_FIELD  (ta_animation, name,   ATOM_STRING);
-    TYPE_VECTOR (ta_animation, tracks, TYP_ANIMATION_SAMPLER);
+    //TYPE_VECTOR (ta_animation, tracks, TYP_ANIMATION_SAMPLER);
     TYPE_END    (ta_animation);
 
 #if 0  // GLTF Animation data

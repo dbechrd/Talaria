@@ -1,17 +1,17 @@
 #Metric (key = "up") {string {"y"}}
 {
 node: {
-	name: "test.armature"
+	name: "test_bone_1.node.armature"
 	# ExportNodeTransform (poseBone = false)
 	translation: [0, 0, 0]
 	rotation: [0, 0, 0, 1.0]
 	bone_node: {
-		name: "test.bone_base"
+		name: "test_bone_1.bone.base"
 		# ExportBoneTransform (poseBone = true)
 		translation: [0, 0.5, 0]
 		rotation: [0, 0, 0, 1.0]
 		animation: {  # ExportBoneSampledAnimationTranslation
-			clip: "test.action_bob_up"
+			clip: "test_bone_1.clip.bob"
 			track: {
 				target: "translation"
 				time: {
@@ -60,19 +60,19 @@ node: {
 			}
 		}
 		geometry_node: {
-			name: "test.base_object"
-			mesh: "test.base_mesh"
+			name: "test_bone_1.node.base"
+			mesh: "test_bone_1.mesh.base"
 			materials: [
-				"test.red_material"
+				"test_bone_1.material.red"
 			]
 			# ExportNodeTransform (poseBone = true)
 			translation: [0, 1.5, 0]
 			rotation: [0, 0, 0, 1.0]
 			geometry_node: {
-				name: "test.child_object"
-				mesh: "test.child_mesh"
+				name: "test_bone_1.node.child"
+				mesh: "test_bone_1.mesh.child"
 				materials: [
-					"test.green_material"
+					"test_bone_1.material.green"
 				]
 				# ExportNodeTransform (poseBone = false)
 				translation: [0, 2.0, 0]
@@ -81,8 +81,8 @@ node: {
 		}
 	}
 }
-mesh: {  # Node Table: test.base_object
-	name: "test.base_mesh"
+mesh: {  # Node Table: base
+	name: "test_bone_1.mesh.base"
 	vertex_array: {  # vec3[24]
 		attrib: "position"
 		data: [
@@ -114,8 +114,8 @@ mesh: {  # Node Table: test.base_object
 		]
 	}
 }
-mesh: {  # Node Table: test.child_object
-	name: "test.child_mesh"
+mesh: {  # Node Table: child
+	name: "test_bone_1.mesh.child"
 	vertex_array: {  # vec3[24]
 		attrib: "position"
 		data: [
@@ -148,14 +148,14 @@ mesh: {  # Node Table: test.child_object
 	}
 }
 material: {
-	name: "test.red_material"
+	name: "test_bone_1.material.red"
 	alpha_factor: 1.0
 	albedo_factor: [1.0, 0, 0]
 	normal_factor: [0, 0, 0]
 	roughness_factor: 0.40000001
 }
 material: {
-	name: "test.green_material"
+	name: "test_bone_1.material.green"
 	alpha_factor: 1.0
 	albedo_factor: [0, 1.0, 0]
 	normal_factor: [0, 0, 0]

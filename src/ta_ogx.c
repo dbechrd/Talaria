@@ -161,11 +161,21 @@ static void ta_ogx_load_texture(ogx_texture *o_tex)
     stbi_image_free(pixels);
 }
 
-static void ta_ogx_load_bone_node(ogx_node *o_node)
+static void ta_ogx_load_bone_node(ogx_node *o_node, ogx_scene *o_scene)
 {
-    // TODO: Add RES_COMP_BONE with same name as transform
-    // These components will then be searchable via the names skin->skeleton->bones
-    UNUSED(o_node);
+    ogx_bone_node *o_bone = &o_node->properties.bone_name;
+
+    ta_bone *bone_name = ta_game_component_add(o_node->name, RES_COMP_BONE, SYM(o_node->name));
+
+    // Find the bone's armature (first parent that isn't a bone)
+    ogx_node *armature = &o_scene->nodes[o_node->parent];
+    while (armature && armature->type == OGX_BONE_NODE) {
+        armature = &o_scene->nodes[armature->parent];
+    }
+
+    DLB_ASSERT(armature);
+    DLB_ASSERT(armature->type == OGX_BASIC_NODE);
+    bone_name->armature = armature->name;
 }
 
 static void ta_ogx_load_camera_node(ogx_node *o_node)
@@ -235,7 +245,7 @@ static void ta_ogx_load_node(ogx_node *o_node, ogx_scene *o_scene)
 
     switch (o_node->type) {
         case OGX_BONE_NODE:
-            ta_ogx_load_bone_node(o_node);
+            ta_ogx_load_bone_node(o_node, o_scene);
             break;
         case OGX_CAMERA_NODE:
             ta_ogx_load_camera_node(o_node);

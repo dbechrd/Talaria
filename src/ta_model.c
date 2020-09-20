@@ -100,7 +100,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
     ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
     if (!mesh) {
         // HACK: Decide if we really want to do this here..?
-        mesh = tg_mesh_default;
+        mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
     }
 
     ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
@@ -141,7 +141,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
 
         ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
         if (!mesh) {
-            mesh = tg_mesh_default;
+            mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
         }
         // HACK: We need to assign all of the materials in model->materials to the material slots
         // TODO: Upload all materials in material UBO, use ta_shader_set_int to set material slots as index into
@@ -151,7 +151,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
             material = ta_game_by_sym_try(RES_MATERIAL, model->materials[0]);
         }
         if (!material) {
-            material = tg_material_default;
+            material = ta_game_by_sym(RES_MATERIAL, tg_material_default);
         }
 
         // TODO: Need to group materials by shader if we allow them to start having custom shaders
@@ -189,7 +189,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->world);
         ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
         if (!mesh) {
-            mesh = tg_mesh_default;
+            mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
         }
         ta_mesh_push_normals(mesh);
         ta_primitive_render(true, false);
@@ -212,7 +212,7 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
     ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
     if (!mesh) {
         // HACK: Decide if we really want to do this here..?
-        mesh = tg_mesh_default;
+        mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
     }
 
     // TODO: Fix this for editor_select (either make it a set_try or don't do it at all in this function)

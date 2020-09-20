@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
 #include "ta_asset_watcher.c"
 #endif
 #include "ta_audio.c"
+#include "ta_bone.c"
 #include "ta_button.c"
 #include "ta_camera.c"
 #include "ta_collider.c"
