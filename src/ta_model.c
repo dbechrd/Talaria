@@ -103,13 +103,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
         mesh = tg_mesh_default;
     }
 
-    if (vec3_zero(mesh->offset)) {
-        ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
-    } else {
-        ta_mat4 offset = mat4_translate(mesh->offset);
-        offset = mat4_mul(&offset, &transform->world);
-        ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
-    }
+    ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
 
     model_set_shader_morph_targets(model, shader);
     ta_shader_bind(shader);
@@ -182,14 +176,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_shader_set_int(shader, SYM_U_DEBUG_CHANNEL, camera->dbg_channel);
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
-
-        if (vec3_zero(mesh->offset)) {
-            ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
-        } else {
-            ta_mat4 offset = mat4_translate(mesh->offset);
-            offset = mat4_mul(&transform->world, &offset);
-            ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
-        }
+        ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
 
         model_set_shader_morph_targets(model, shader);
         ta_shader_bind(shader);
@@ -220,17 +207,12 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
 
     ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
+    ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
+
     ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
     if (!mesh) {
         // HACK: Decide if we really want to do this here..?
         mesh = tg_mesh_default;
-    }
-    if (vec3_zero(mesh->offset)) {
-        ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
-    } else {
-        ta_mat4 offset = mat4_translate(mesh->offset);
-        offset = mat4_mul(&transform->world, &offset);
-        ta_shader_set_mat4(shader, SYM_U_MODEL, &offset);
     }
 
     // TODO: Fix this for editor_select (either make it a set_try or don't do it at all in this function)

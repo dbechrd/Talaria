@@ -207,6 +207,14 @@ int vec3_equal(ta_vec3 a, ta_vec3 b)
            fabs((double)a.y - b.y) < TA_EPSILON &&
            fabs((double)a.z - b.z) < TA_EPSILON;
 }
+ta_vec3 vec3_init(float x, float y, float z)
+{
+    ta_vec3 v;
+    v.x = x;
+    v.y = y;
+    v.z = z;
+    return v;
+}
 ta_vec3 vec3_neg(ta_vec3 v)
 {
     ta_vec3 result;
@@ -345,10 +353,19 @@ int vec4_equal(ta_vec4 a, ta_vec4 b)
            fabs((double)a.z - b.z) < TA_EPSILON &&
            fabs((double)a.w - b.w) < TA_EPSILON;
 }
+ta_vec4 vec4_init(float x, float y, float z, float w)
+{
+    ta_vec4 v;
+    v.x = x;
+    v.y = y;
+    v.z = z;
+    v.w = w;
+    return v;
+}
 
 void quat_print(FILE *file, ta_vec4 q)
 {
-    fprintf(file, "q: %f %f %f %f\n", q.x, q.y, q.z, q.w);
+    fprintf(file, "v: %f %f %f %f\n", q.x, q.y, q.z, q.w);
 }
 int quat_zero(ta_vec4 v)
 {

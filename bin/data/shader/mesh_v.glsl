@@ -11,8 +11,8 @@ layout(location = 4) in vec3 attr_tangent;
 layout(location = 5) in vec3 attr_morph1_position;
 layout(location = 6) in vec3 attr_morph1_normal;
 layout(location = 7) in vec3 attr_morph1_tangent;
-layout(location = 8) in vec4 attr_bones;    // TODO: attr_bones (up to 4 bone indices that influence this vertex
-layout(location = 9) in vec4 attr_weights;  // TODO: respective weights for each of the influencing bones
+layout(location = 8) in vec4 attr_bone_indices;  // TODO: attr_bones (up to 4 bone indices that influence this vertex
+layout(location = 9) in vec4 attr_bone_weights;  // TODO: respective weights for each of the influencing bones
 
 //------------------------------------------------------
 // Camera, model, animation
@@ -27,26 +27,25 @@ uniform vec3 u_camera_pos;
 uniform mat4 u_model;
 uniform float u_morph_weights[2];
 
+//------------------------------------------------------
+// Animations
+//------------------------------------------------------
+#define TA_SKIN_MAX_BONES 64
+
 // NOTE: Max array size is determined by GL_MAX_VERTEX_UNIFORM_COMPONENTS / 4
 // TODO: Precalculated vertex pose matrix for every bone (w = 1)
 //       M B^-1 T P
 //       curent_bone_transform * bone_bind_pose_transform_inv * skin_bind_pose_transform * vec4(attr_position, 1.0)
-uniform mat4 u_bone_xforms[64];
+layout (std140) uniform ubo_bone_xforms {
+    mat4 bone_xforms[TA_SKIN_MAX_BONES];
+};
 
 // TODO: Precalculated normal pose matrix for every bone (w = 0)
 //       N T^-1 B M^-1
 //       skin_bind_pose_transform_inv * bone_bind_pose_transform * curent_bone_transform_inv
-uniform mat4 u_bone_normal_xforms[64];
-
-//vec4 vertex_skinned = (attr_weights[0] * vec4(attr_position, 1.0) * u_bone_xforms[int(attr_bones.x)]) +
-//                      (attr_weights[1] * vec4(attr_position, 1.0) * u_bone_xforms[int(attr_bones.y)]) +
-//                      (attr_weights[2] * vec4(attr_position, 1.0) * u_bone_xforms[int(attr_bones.z)]) +
-//                      (attr_weights[3] * vec4(attr_position, 1.0) * u_bone_xforms[int(attr_bones.w)]);
-//
-//vec4 normal_skinned = (attr_weights[0] * vec4(attr_normal, 0.0) * u_bone_normal_xforms[int(attr_bones.x)]) +
-//                      (attr_weights[1] * vec4(attr_normal, 0.0) * u_bone_normal_xforms[int(attr_bones.y)]) +
-//                      (attr_weights[2] * vec4(attr_normal, 0.0) * u_bone_normal_xforms[int(attr_bones.z)]) +
-//                      (attr_weights[3] * vec4(attr_normal, 0.0) * u_bone_normal_xforms[int(attr_bones.w)]);
+layout (std140) uniform ubo_bone_normal_xforms {
+    mat4 bone_normal_xforms[TA_SKIN_MAX_BONES];
+};
 
 //------------------------------------------------------
 // Lights
@@ -113,11 +112,17 @@ out vs_out {
     vec3 normal;
     vec3 tangent;
 	vec3 tbn_normal;
+
+    // TODO: Delete these.. we can't afford the space!
+    vec4 bone_indices;
+    vec4 bone_weights;
 } vertex;
 
 void main()
 {
+    //----------------------------------
     // Morph target blending
+    //----------------------------------
 #if 0
     // http://antongerdelan.net/opengl/blend_shapes.html
     // if other weights add up to less than 1, use neutral target
@@ -138,7 +143,22 @@ void main()
     vec3 morphed_pos = attr_position + u_morph_weights[1] * attr_morph1_position;
 #endif
 
-    vec4 position = u_model * vec4(morphed_pos, 1.0);
+    //----------------------------------
+    // Skinning
+    // TODO: Should this happen before or after morph target blending? Should we even mix those?
+    //----------------------------------
+    vec4 vertex_skinned = (attr_bone_weights.x * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.x)]) +
+                          (attr_bone_weights.y * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.y)]) +
+                          (attr_bone_weights.z * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.z)]) +
+                          (attr_bone_weights.w * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.w)]) +
+                          (float(attr_bone_weights.x == 0.0) * vec4(morphed_pos, 1.0));
+
+    //vec4 normal_skinned = (attr_weights[0] * vec4(attr_normal, 0.0) * bone_normal_xforms[int(attr_bones.x)]) +
+    //                      (attr_weights[1] * vec4(attr_normal, 0.0) * bone_normal_xforms[int(attr_bones.y)]) +
+    //                      (attr_weights[2] * vec4(attr_normal, 0.0) * bone_normal_xforms[int(attr_bones.z)]) +
+    //                      (attr_weights[3] * vec4(attr_normal, 0.0) * bone_normal_xforms[int(attr_bones.w)]);
+
+    vec4 position = u_model * vec4(vertex_skinned);
     vec4 normal = u_model * vec4(attr_normal, 0.0);
 
     vertex.position = vec3(position);
@@ -164,6 +184,9 @@ void main()
         vertex.tbn_light_dir[i] = TBN * lights[i].direction;
         vertex.light_pvm[i] = lights[i].light_pv * position;
     }
+
+    vertex.bone_indices = attr_bone_indices;
+    vertex.bone_weights = attr_bone_weights;
 
     gl_Position = u_proj * u_view * position;
 }

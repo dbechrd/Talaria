@@ -263,10 +263,10 @@ void ta_game_init()
     if (ogx_scene_from_file(&scene1, "data/mesh/dude.ogex") == OGX_SUCCESS) {
         ta_ogx_load(&scene1);
     }
-    //ogx_scene scene2 = { 0 };
-    //if (ogx_scene_from_file(&scene2, "data/mesh/button.ogex") == OGX_SUCCESS) {
-    //    ta_ogx_load(&scene2);
-    //}
+    ogx_scene scene2 = { 0 };
+    if (ogx_scene_from_file(&scene2, "data/mesh/button.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(&scene2);
+    }
     ogx_scene scene3 = { 0 };
     if (ogx_scene_from_file(&scene3, "data/mesh/skeleton_test.ogex") == OGX_SUCCESS) {
         ta_ogx_load(&scene3);
@@ -1091,6 +1091,8 @@ void ta_game_loop()
 
         ta_camera *active_camera = ta_game_camera();
         ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
+        ta_mesh *meshes = ta_game_resource_pool(RES_MESH);
+        ta_model *models = ta_game_resource_pool(RES_COMP_MODEL);
         ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
         ta_camera *cameras = ta_game_resource_pool(RES_COMP_CAMERA);
 
@@ -1132,7 +1134,7 @@ void ta_game_loop()
 
         //----------------------------------------------------------------------
         // Animation
-        // TODO: Should this go before, during or after physics simulation..?
+        // TODO: Should this go before or after physics simulation..?
         //----------------------------------------------------------------------
 
         // TODO: Track which animations are currently playing.. do blending.
@@ -1169,8 +1171,8 @@ void ta_game_loop()
         // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
 
         dlb_vec_each(const char **, animation_name, animation_names) {
-            ta_animation *animation = ta_game_by_sym(RES_ANIMATION, *animation_name);
-            if (animation->tracks) {
+            ta_animation *animation = ta_game_by_sym_try(RES_ANIMATION, *animation_name);
+            if (animation && animation->tracks) {
                 size_t animation_frames = dlb_vec_len(animation->tracks[0].time.key.values.as_float);
                 dlb_vec_each(ta_animation_track *, track, animation->tracks) {
                     // Samples must be linearly interpolated values
@@ -1191,7 +1193,7 @@ void ta_game_loop()
                     // Times must always be floats
                     DLB_ASSERT(track->time.key.type == ATOM_FLOAT);
 
-                    // TODO: Binary search time values
+                    // TODO: Binary search time values, where mid defaults to the index that we found last frame
                     int right = 0;
                     int count = (int)dlb_vec_len(track->time.key.values.as_float);
                     while (right < count && track->time.key.values.as_float[right] < animation_time_sec) {
@@ -1262,6 +1264,54 @@ void ta_game_loop()
         ta_lighting_bind_lights(&tg_game.lighting);
 
         //----------------------------------------------------------------------
+        // Skinning
+        //----------------------------------------------------------------------
+        dlb_vec_each(ta_mesh *, mesh, meshes) {
+            if (!mesh->skin.bone_count_array) {
+                continue;
+            }
+
+            // TODO: Handle skin transforms
+            DLB_ASSERT(vec3_zero(mesh->skin.transform.position));
+            DLB_ASSERT(quat_ident(mesh->skin.transform.orientation));
+
+            //ta_mat4 skin_pos = mat4_translate(mesh->skin.transform.position);
+            //ta_mat4 skin_rot = mat4_rotate_quat(mesh->skin.transform.orientation);
+            //ta_mat4 skin_pose = mat4_mul(&skin_pos, &skin_rot);
+
+            size_t bone_count = dlb_vec_len(mesh->skin.skeleton.bones);
+            DLB_ASSERT(dlb_vec_len(mesh->skin.skeleton.bind_pose_positions) == bone_count);
+            DLB_ASSERT(dlb_vec_len(mesh->skin.skeleton.bind_pose_orientations) == bone_count);
+
+            size_t bone_idx = 0;
+            dlb_vec_each(const char **, bone, mesh->skin.skeleton.bones) {
+                ta_transform *transform = ta_game_component(*bone, RES_COMP_TRANSFORM);
+
+                ta_vec3 p = mesh->skin.skeleton.bind_pose_positions[bone_idx];
+                ta_vec4 r = mesh->skin.skeleton.bind_pose_orientations[bone_idx];
+
+                //r = quat_init(r.x, r.y, r.z, r.w);
+
+                ta_mat4 bone_bind_pose = { 0 };
+                ta_mat4 trans = mat4_translate(p);
+                ta_mat4 rot = mat4_rotate_quat(r);
+                bone_bind_pose = mat4_mul(&trans, &rot);
+
+                ta_mat4 bone_bind_pose_inv = { 0 };
+                DLB_ASSERT(mat4_inverse(&bone_bind_pose, &bone_bind_pose_inv));
+
+                //ta_mat4 skinned_tmp = mat4_mul(&bone_bind_pose_inv, &skin_pose);
+                //ta_mat4 skinned = mat4_mul(&transform->world, &skinned_tmp);
+                ta_mat4 skinned = mat4_mul(&transform->world, &bone_bind_pose_inv);
+                mesh->skin.bone_xforms[bone_idx] = skinned;
+
+                bone_idx++;
+            }
+
+            mesh->skin.bone_xforms_dirty = true;
+        }
+
+        //----------------------------------------------------------------------
         // Shadow pass
         //----------------------------------------------------------------------
         ta_log_write(&tg_debug_log, SRC_GAME, " Shadow pass...\n");
@@ -1318,11 +1368,8 @@ void ta_game_loop()
         ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[5], tg_game.texturing.texture_pools[5].gl_id);
         ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[6], tg_game.texturing.texture_pools[6].gl_id);
         ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[7], tg_game.texturing.texture_pools[7].gl_id);
-        dlb_vec_each(ta_transform *, transform, transforms) {
-            ta_model *model = ta_game_component_try(transform->entity, RES_COMP_MODEL);
-            if (model) {
-                ta_model_render(model, active_camera);
-            }
+        dlb_vec_each(ta_model *, model, models) {
+            ta_model_render(model, active_camera);
         }
 
         if (active_camera->debug_wireframe) {

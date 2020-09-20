@@ -570,8 +570,8 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
         [cgltf_attribute_type_texcoord] = TA_VERTEX_ATTR_UV,
         [cgltf_attribute_type_normal  ] = TA_VERTEX_ATTR_NORMAL,
         [cgltf_attribute_type_tangent ] = TA_VERTEX_ATTR_TANGENT,
-        [cgltf_attribute_type_joints  ] = TA_VERTEX_ATTR_JOINTS,
-        [cgltf_attribute_type_weights ] = TA_VERTEX_ATTR_WEIGHTS,
+        [cgltf_attribute_type_joints  ] = TA_VERTEX_ATTR_BONE_INDICES,
+        [cgltf_attribute_type_weights ] = TA_VERTEX_ATTR_BONE_WEIGHTS,
     };
 
     cgltf_size data_size = accessor->buffer_view->size;
@@ -679,7 +679,7 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
                 DLB_ASSERT(!"Unexpected accessor type for tangents");
             }
             break;
-        } case TA_VERTEX_ATTR_JOINTS: {
+        } case TA_VERTEX_ATTR_BONE_INDICES: {
             DLB_ASSERT(!target);
             DLB_ASSERT(accessor->type == cgltf_type_vec4);
             if (accessor->component_type == cgltf_component_type_r_16u) {
@@ -709,7 +709,7 @@ static void gltf_mesh_accessor(ta_mesh *mesh, cgltf_accessor *accessor, cgltf_at
                 DLB_ASSERT(!"Unexpected component type for joints");
             }
             break;
-        } case TA_VERTEX_ATTR_WEIGHTS: {
+        } case TA_VERTEX_ATTR_BONE_WEIGHTS: {
             // NOTE: We don't support morph targets on top of joints/weight for now
             DLB_ASSERT(!target);
             DLB_ASSERT(accessor->type == cgltf_type_vec4);

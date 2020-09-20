@@ -27,8 +27,8 @@ const char *ta_vertex_attrib_type_str(int type) {
         case TA_VERTEX_ATTR_MORPH1_POSITION: return "TA_VERTEX_ATTR_MORPH1_POSITION";
         case TA_VERTEX_ATTR_MORPH1_NORMAL:   return "TA_VERTEX_ATTR_MORPH1_NORMAL  ";
         case TA_VERTEX_ATTR_MORPH1_TANGENT:  return "TA_VERTEX_ATTR_MORPH1_TANGENT ";
-        case TA_VERTEX_ATTR_JOINTS:          return "TA_VERTEX_ATTR_JOINTS         ";
-        case TA_VERTEX_ATTR_WEIGHTS:         return "TA_VERTEX_ATTR_WEIGHTS        ";
+        case TA_VERTEX_ATTR_BONE_INDICES:    return "TA_VERTEX_ATTR_BONE_INDICES   ";
+        case TA_VERTEX_ATTR_BONE_WEIGHTS:    return "TA_VERTEX_ATTR_BONE_WEIGHTS   ";
         default: DLB_ASSERT(0);              return "TA_VERTEX_ATTR_???            ";
     }
 }
@@ -187,6 +187,62 @@ void ta_mesh_create(ta_mesh *mesh)
     }
 }
 
+void ta_mesh_calculate_joints_and_weights(ta_mesh *mesh)
+{
+    size_t bone_count_len = dlb_vec_len(mesh->skin.bone_count_array);
+    if (!bone_count_len) {
+        return;
+    }
+
+    // If there are any bone counts, there should be the same ## as there are vertices?
+    DLB_ASSERT(bone_count_len == dlb_vec_len(mesh->positions));
+
+    dlb_vec_clear(mesh->bone_indices);
+    dlb_vec_clear(mesh->bone_weights);
+
+    dlb_vec_reserve(mesh->bone_indices, bone_count_len);
+    dlb_vec_reserve(mesh->bone_weights, bone_count_len);
+
+    size_t bone_offset = 0;
+    dlb_vec_each(u16 *, bone_count, mesh->skin.bone_count_array) {
+        ta_vec4 indices = { 0 };
+        ta_vec4 weights = { 0 };
+
+        for (;;) {
+            indices.x = mesh->skin.bone_index_array[bone_offset];
+            weights.x = mesh->skin.bone_weight_array[bone_offset];
+            bone_offset++;
+            if (*bone_count == 1) break;
+
+            indices.y = mesh->skin.bone_index_array[bone_offset];
+            weights.y = mesh->skin.bone_weight_array[bone_offset];
+            bone_offset++;
+            if (*bone_count == 2) break;
+
+            indices.z = mesh->skin.bone_index_array[bone_offset];
+            weights.z = mesh->skin.bone_weight_array[bone_offset];
+            bone_offset++;
+            if (*bone_count == 3) break;
+
+            indices.w = mesh->skin.bone_index_array[bone_offset];
+            weights.w = mesh->skin.bone_weight_array[bone_offset];
+            bone_offset++;
+            break;
+        }
+
+        // TODO: Pick the 4 biggest influences, rather than the first 4 (or just don't export > 4)
+        if (*bone_count > 4) {
+            bone_offset += *bone_count - 4;
+        }
+
+        dlb_vec_push(mesh->bone_indices, indices);
+        dlb_vec_push(mesh->bone_weights, weights);
+    }
+
+    DLB_ASSERT(bone_count_len == dlb_vec_len(mesh->bone_indices));
+    DLB_ASSERT(bone_count_len == dlb_vec_len(mesh->bone_weights));
+}
+
 void ta_mesh_update_buffers(ta_mesh *mesh)
 {
     DLB_ASSERT(mesh->gl_vao);
@@ -215,16 +271,16 @@ void ta_mesh_update_buffers(ta_mesh *mesh)
     }
 
     size_t vertex_offset = 0;
-    FILL_BUFFER(TA_VERTEX_ATTR_COLOR,           mesh->colors,           GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_VERTEX_ATTR_UV,              mesh->uvs,              GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_VERTEX_ATTR_POSITION,        mesh->positions,        GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_VERTEX_ATTR_NORMAL,          mesh->normals,          GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_VERTEX_ATTR_TANGENT,         mesh->tangents,         GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_VERTEX_ATTR_MORPH1_POSITION, mesh->morph1_positions, GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_VERTEX_ATTR_MORPH1_NORMAL,   mesh->morph1_normals,   GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_VERTEX_ATTR_MORPH1_TANGENT,  mesh->morph1_tangents,  GLfloat,  GL_FLOAT);
-    FILL_BUFFER(TA_VERTEX_ATTR_JOINTS,          mesh->joints,           GLushort, GL_UNSIGNED_SHORT);
-    FILL_BUFFER(TA_VERTEX_ATTR_WEIGHTS,         mesh->weights,          GLfloat,  GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_COLOR,           mesh->colors,           GLfloat, GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_UV,              mesh->uvs,              GLfloat, GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_POSITION,        mesh->positions,        GLfloat, GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_NORMAL,          mesh->normals,          GLfloat, GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_TANGENT,         mesh->tangents,         GLfloat, GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_MORPH1_POSITION, mesh->morph1_positions, GLfloat, GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_MORPH1_NORMAL,   mesh->morph1_normals,   GLfloat, GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_MORPH1_TANGENT,  mesh->morph1_tangents,  GLfloat, GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_BONE_INDICES,    mesh->bone_indices,     GLfloat, GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_BONE_WEIGHTS,    mesh->bone_weights,     GLfloat, GL_FLOAT);
 
 #undef FILL_BUFFER
 
@@ -256,6 +312,14 @@ void ta_mesh_update_buffers(ta_mesh *mesh)
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+    if (dlb_vec_len(mesh->skin.bone_count_array)) {
+        glGenBuffers(1, &mesh->skin.gl_ubo_bone_xforms);
+        glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, mesh->skin.gl_ubo_bone_xforms);
+        glBindBuffer(GL_UNIFORM_BUFFER, mesh->skin.gl_ubo_bone_xforms);
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(ta_mat4) * TA_SKIN_MAX_BONES, 0, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    }
 }
 
 // NOTE: Leave this separate from mesh_group load because it's only useful in
@@ -367,6 +431,13 @@ void ta_mesh_log_normals_dbg(ta_mesh *mesh)
 
 void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
 {
+    // TODO: If we want to use binding point 1 for other things in other shaders, then this mapping needs to be a
+    // bit more abstract.
+    glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, mesh->skin.gl_ubo_bone_xforms);
+    if (mesh->skin.bone_xforms_dirty) {
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh->skin.bone_xforms), mesh->skin.bone_xforms, GL_DYNAMIC_DRAW);
+    }
+
     if (!mesh->gl_vao) {
         mesh = tg_mesh_default;
         DLB_ASSERT(mesh);  // No mesh & no default mesh, this seems undesirable!
@@ -389,6 +460,8 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)positions_count);
     }
     glBindVertexArray(0);
+
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void ta_mesh_free(ta_mesh *mesh)

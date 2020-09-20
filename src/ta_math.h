@@ -251,6 +251,7 @@ void    vec3_print              (FILE *file, ta_vec3 v);
 int     vec3_zero               (ta_vec3 v);
 int     vec3_tiny               (ta_vec3 v);
 int     vec3_equal              (ta_vec3 a, ta_vec3 b);
+ta_vec3 vec3_init               (float x, float y, float z);
 ta_vec3 vec3_neg                (ta_vec3 v);
 ta_vec3 vec3_add                (ta_vec3 a, ta_vec3 b);
 ta_vec3 vec3_sub                (ta_vec3 a, ta_vec3 b);
@@ -271,6 +272,7 @@ void    vec4_print              (FILE *file, ta_vec4 v);
 int     vec4_zero               (ta_vec4 v);
 int     vec4_tiny               (ta_vec4 v);
 int     vec4_equal              (ta_vec4 a, ta_vec4 b);
+ta_vec4 vec4_init               (float x, float y, float z, float w);
 
 void    quat_print              (FILE *file, ta_vec4 q);
 int     quat_zero               (ta_vec4 v);

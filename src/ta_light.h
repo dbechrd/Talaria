@@ -5,16 +5,12 @@
 #include "dlb/dlb_types.h"
 #include "misc/glad.h"
 
+// NOTE: Has to match shader definition
 #define TA_LIGHTING_MAX_ACTIVE_LIGHTS 4
 
 struct ta_model;
 struct ta_shader;
 struct ta_transform;
-
-// TODO: Quick hacks.. needs a better name
-enum {
-    TA_GL_UNIFORM_BLOCK_BINDING_LIGHTS = 0
-};
 
 // NOTE: This must match the GLSL ubo_lights structure byte-for-byte (including padding!)
 // https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL
@@ -109,8 +105,8 @@ typedef struct ta_light {
     } data;
 } ta_light;
 
-void ta_lighting_init                   (ta_lighting *state);
-void ta_lighting_bind_lights            (ta_lighting *state);
+void ta_lighting_init                   (ta_lighting *lighting);
+void ta_lighting_bind_lights            (ta_lighting *lighting);
 
 const char *ta_light_type_str           (int type);
 void ta_light_init                      (ta_light *light);

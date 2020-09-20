@@ -2,7 +2,8 @@
 #include "ta_math.h"
 #include "misc/glad.h"
 
-#define VERTEX_MAX_JOINTS 4
+// NOTE: Has to match shader definition
+#define TA_SKIN_MAX_BONES 64
 
 // Note: Morphable attributes must be contiguous and in the same order as their respective morph target attributes
 // for MORPH_OFFSET to work.
@@ -15,8 +16,8 @@ typedef enum ta_vertex_attrib_type {
     TA_VERTEX_ATTR_MORPH1_POSITION = 5,
     TA_VERTEX_ATTR_MORPH1_NORMAL   = 6,
     TA_VERTEX_ATTR_MORPH1_TANGENT  = 7,
-    TA_VERTEX_ATTR_JOINTS          = 8,
-    TA_VERTEX_ATTR_WEIGHTS         = 9,
+    TA_VERTEX_ATTR_BONE_INDICES    = 8,
+    TA_VERTEX_ATTR_BONE_WEIGHTS    = 9,
     TA_VERTEX_ATTR_COUNT
 } ta_vertex_attrib_type;
 
@@ -27,10 +28,6 @@ typedef struct ta_morph_target {
     const char *name;             // Name of morph target
     u32 base_morph_target_index;  // Index of parent (for relative morph targets)... idk if I need this but OGX has it.
 } ta_morph_target;
-
-typedef struct ta_mesh_joint_array {
-    GLushort ids[VERTEX_MAX_JOINTS];  // NOTE: GLTF only supports 4 joints per vertex
-} ta_mesh_joint_array;
 
 typedef struct ta_index_array {
     size_t offset_bytes; // offset in gl_index_buffer where this array starts
@@ -48,9 +45,15 @@ typedef struct ta_skeleton {
 typedef struct ta_skin {
     ta_xform transform;        // skin bind-pose transform
     ta_skeleton skeleton;
-    u16 *bone_count_array;     // vector
-    u16 *bone_index_array;     // vector
-    float *bone_weight_array;  // vector
+    u16 *bone_count_array;
+    u16 *bone_index_array;
+    float *bone_weight_array;
+
+    ta_mat4 bone_xforms[TA_SKIN_MAX_BONES];         // NOTE: Re-calculated each frame
+    ta_mat4 bone_normal_xforms[TA_SKIN_MAX_BONES];  // NOTE: Re-calculated each frame
+    GLuint gl_ubo_bone_xforms;
+    GLuint gl_ubo_bone_normal_xforms;
+    bool bone_xforms_dirty;
 } ta_skin;
 
 #pragma warning(push)
@@ -58,8 +61,6 @@ typedef struct ta_skin {
 typedef struct ta_mesh {
     TA_RESOURCE_HEADER
     const char *path;
-    // TODO: Get rid of offset now that parenting is working correctly
-    ta_vec3 offset;
     ta_morph_target *morph_targets; // Array of morph targets
     //ta_vertex_array vertex_arrays[TA_VERTEX_ATTR_COUNT];
     union {
@@ -72,8 +73,8 @@ typedef struct ta_mesh {
             ta_vec3 *morph1_positions;
             ta_vec3 *morph1_normals;
             ta_vec3 *morph1_tangents;
-            ta_mesh_joint_array *joints;
-            ta_vec4 *weights;               // one weight for each joint
+            ta_vec4 *bone_indices;          // u16 bone indices casted to float (up to 4)
+            ta_vec4 *bone_weights;          // one weight for each joint
         };
         void *buffers[TA_VERTEX_ATTR_COUNT];
     };
@@ -93,13 +94,14 @@ typedef struct ta_mesh {
 ta_mesh *tg_mesh_default;
 
 const char *ta_vertex_attrib_type_str(int type);
-void ta_mesh_init           (ta_mesh *mesh);
-void ta_mesh_init_void      (void *mesh);
-void ta_mesh_load_file      (ta_mesh *mesh, const char *filename);
-void ta_mesh_create         (ta_mesh *mesh);
-void ta_mesh_update_buffers (ta_mesh *mesh);
-void ta_mesh_init_normals   (ta_mesh *mesh, float scale);
-void ta_mesh_push_normals   (ta_mesh *mesh);
-void ta_mesh_render         (ta_mesh *mesh, struct ta_shader *shader);
-void ta_mesh_free           (ta_mesh *mesh);
-void ta_mesh_free_void      (void *mesh);
+void ta_mesh_init                           (ta_mesh *mesh);
+void ta_mesh_init_void                      (void *mesh);
+void ta_mesh_load_file                      (ta_mesh *mesh, const char *filename);
+void ta_mesh_create                         (ta_mesh *mesh);
+void ta_mesh_calculate_joints_and_weights   (ta_mesh *mesh);
+void ta_mesh_update_buffers                 (ta_mesh *mesh);
+void ta_mesh_init_normals                   (ta_mesh *mesh, float scale);
+void ta_mesh_push_normals                   (ta_mesh *mesh);
+void ta_mesh_render                         (ta_mesh *mesh, struct ta_shader *shader);
+void ta_mesh_free                           (ta_mesh *mesh);
+void ta_mesh_free_void                      (void *mesh);

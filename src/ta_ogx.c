@@ -60,11 +60,6 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
         index_array->values = o_index_array->values;
     }
 
-    // TODO: Calculate mesh AABB (or better, precalculate it and store it in the file)
-
-    ta_mesh_create(mesh);
-    ta_mesh_update_buffers(mesh);
-    ta_mesh_init_normals(mesh, 0.1f);
 
     // Load skin (if present)
     if (o_mesh->skin.bone_count_array) {
@@ -76,6 +71,13 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
         mesh->skin.skeleton.bind_pose_positions = (ta_vec3 *)o_mesh->skin.skeleton.bind_pose_positions;
         mesh->skin.skeleton.bind_pose_orientations = (ta_vec4 *)o_mesh->skin.skeleton.bind_pose_orientations;
     }
+
+    ta_mesh_create(mesh);
+    ta_mesh_calculate_joints_and_weights(mesh);
+    ta_mesh_update_buffers(mesh);
+    ta_mesh_init_normals(mesh, 0.1f);
+
+    // TODO: Calculate mesh AABB (or better, precalculate it and store it in the file)
 
     return mesh->name;
 }

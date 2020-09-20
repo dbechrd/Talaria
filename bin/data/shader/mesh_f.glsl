@@ -164,6 +164,8 @@ in vs_out {
     vec3 normal;
     vec3 tangent;
 	vec3 tbn_normal;
+    vec4 bone_indices;
+    vec4 bone_weights;
 } vertex;
 
 out vec4 final_color;
@@ -431,6 +433,17 @@ void main()
     //final_color = vec4(vec3(1.0 - shadow_dists[light_idx] / 40.0f), 1.0);
     //final_color = vec4(vertex.tbn_light_dir[light_idx], 1.0);
     //final_color = vec4(lights[1].color, 1.0);
+
+    // bone weights
+    //final_color = vec4(vertex.bone_weights.xyz, 1.0);
+
+    // bone counts
+    //int bone_count = int(vertex.bone_weights.x > 0.0) +
+    //                 int(vertex.bone_weights.y > 0.0) +
+    //                 int(vertex.bone_weights.z > 0.0) +
+    //                 int(vertex.bone_weights.w > 0.0);
+    //vec3 bone_count_thing = vec3(bone_count * 0.2);
+    //final_color = vec4(bone_count_thing, 1.0);
 
     switch (u_debug_channel) {
         case DBG_VTX_COLOR:

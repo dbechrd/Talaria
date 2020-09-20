@@ -973,66 +973,30 @@ ta_material:
 ta_mesh:
   name: "prim_unknown"
   path: "data/mesh/prim_unknown.obj"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "prim_cube"
   path: "data/mesh/prim_cube.obj"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "prim_sphere"
   path: "data/mesh/prim_sphere.obj"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "prim_skybox"
   path: "data/mesh/prim_skybox.obj"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "chamber_0001"
   path: "data/mesh/chamber_punt.obj"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "wakeup"
   path: "data/mesh/wakeup.obj"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "letter_r"
   path: "data/mesh/letter_r.obj"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "column_0001"
   path: "data/mesh/column_0001.obj"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
 ta_mesh:
   name: "star_0001"
   path: "data/mesh/star.obj"
-  offset:
-    x: 0x00000000 (0.000000)
-    y: 0x00000000 (0.000000)
-    z: 0x00000000 (0.000000)
 #-------------------------------------------------------------------------------
 # TYP_SHADER
 #-------------------------------------------------------------------------------
@@ -1306,11 +1270,11 @@ ta_shader:
       type: 5,  # TA_GLSL_VEC3
     },
     {
-      name: "attr_bones",
+      name: "attr_bone_indices",
       type: 6,  # TA_GLSL_VEC4
     },
     {
-      name: "attr_weights",
+      name: "attr_bone_weights",
       type: 6,  # TA_GLSL_VEC4
     },
   ]

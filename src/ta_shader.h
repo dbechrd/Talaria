@@ -21,7 +21,8 @@ typedef enum ta_glsl_type {
 } ta_glsl_type;
 
 typedef enum ta_glsl_ubo_type {
-    TA_GLSL_UBO_LIGHTS = 0
+    TA_GLSL_UBO_LIGHTS = 0,
+    TA_GLSL_UBO_BONE_XFORMS = 1
 } ta_glsl_ubo_type;
 
 typedef struct ta_shader_attribute {
@@ -63,7 +64,6 @@ typedef struct ta_shader {
     GLint               max_uniform_name_len;   // [DEBUG] max length of a shader uniform name
     ta_shader_attribute *attributes;            // Array of vertex attributes
     ta_shader_uniform   *uniforms;              // Array of uniforms
-    GLuint              u_lights_new_ubo_index; // TODO(cleanup): This probably needs more thought
     GLuint              program_id;             // [GL] shader program id
 } ta_shader;
 
