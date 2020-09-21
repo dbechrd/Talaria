@@ -436,6 +436,7 @@ void ta_schema_register()
 
     TYPE_START  (ta_bone, TYP_BONE, 0, 0);
     TYPE_FIELD  (ta_bone, name,            ATOM_STRING);
+    TYPE_FIELD  (ta_bone, entity,          ATOM_STRING);
     TYPE_FIELD  (ta_bone, armature,        ATOM_STRING);
     TYPE_END    (ta_bone);
 

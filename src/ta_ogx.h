@@ -86,7 +86,7 @@ typedef struct ogx_node {
     ta_xform transform;
     ta_mat4 animated_transform;  // TODO(cleanup): temp cache thing for ta_game debug viz, probably doesn't belong here
     union {
-        ogx_bone_node bone_name;
+        ogx_bone_node bone;
         ogx_camera_node camera;
         ogx_geometry_node geometry;
         ogx_light_node light;

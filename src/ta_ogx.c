@@ -7,7 +7,14 @@ static void ta_ogx_load_camera(ogx_camera *o_cam)
 
 static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
 {
-    ta_mesh *mesh = ta_game_alloc(RES_MESH, SYM(o_mesh->name));
+    // HACK: Let OGX node override DML node
+    // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
+    ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, o_mesh->name);
+    if (!mesh) {
+        mesh = ta_game_alloc(RES_MESH, SYM(o_mesh->name));
+    } else {
+        ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting mesh for %s\n", o_mesh->name);
+    }
 
     dlb_vec_each(ogx_morph_target *, o_morph_target, o_mesh->morph_targets) {
         // TODO: Load morph targets
@@ -89,7 +96,15 @@ static void ta_ogx_load_light(ogx_light *o_light)
 
 static void ta_ogx_load_material(ogx_material *o_mat)
 {
-    ta_material *mat = ta_game_alloc(RES_MATERIAL, SYM(o_mat->name));
+    // HACK: Let OGX node override DML node
+    // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
+    ta_material *mat = ta_game_by_sym_try(RES_MATERIAL, o_mat->name);
+    if (!mat) {
+        mat = ta_game_alloc(RES_MATERIAL, SYM(o_mat->name));
+    } else {
+        ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting material for %s\n", o_mat->name);
+    }
+
     mat->albedo_texture     = o_mat->albedo_texture;
     mat->albedo_factor.r    = o_mat->albedo_factor.x;
     mat->albedo_factor.g    = o_mat->albedo_factor.y;
@@ -163,9 +178,16 @@ static void ta_ogx_load_texture(ogx_texture *o_tex)
 
 static void ta_ogx_load_bone_node(ogx_node *o_node, ogx_scene *o_scene)
 {
-    ogx_bone_node *o_bone = &o_node->properties.bone_name;
+    ogx_bone_node *o_bone = &o_node->properties.bone;
 
-    ta_bone *bone_name = ta_game_component_add(o_node->name, RES_COMP_BONE, SYM(o_node->name));
+    // HACK: Let OGX node override DML node
+    // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
+    ta_bone *bone = ta_game_by_sym_try(RES_COMP_BONE, o_node->name);
+    if (!bone) {
+        bone = ta_game_component_add(o_node->name, RES_COMP_BONE, SYM(o_node->name));
+    } else {
+        ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting bone for %s\n", o_node->name);
+    }
 
     // Find the bone's armature (first parent that isn't a bone)
     ogx_node *armature = &o_scene->nodes[o_node->parent];
@@ -175,7 +197,7 @@ static void ta_ogx_load_bone_node(ogx_node *o_node, ogx_scene *o_scene)
 
     DLB_ASSERT(armature);
     DLB_ASSERT(armature->type == OGX_BASIC_NODE);
-    bone_name->armature = armature->name;
+    bone->armature = armature->name;
 }
 
 static void ta_ogx_load_camera_node(ogx_node *o_node)
@@ -187,7 +209,8 @@ static void ta_ogx_load_geometry_node(ogx_node *o_node)
 {
     ogx_geometry_node *o_geom = &o_node->properties.geometry;
 
-    // HACK: Let OGX geometry node override DML model
+    // HACK: Let OGX node override DML node
+    // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
     ta_model *model = ta_game_by_sym_try(RES_COMP_MODEL, o_node->name);
     if (!model) {
         model = ta_game_component_add(o_node->name, RES_COMP_MODEL, SYM(o_node->name));
