@@ -62,7 +62,8 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
                 break;
             } case TA_LIGHT_DIRECTIONAL: {
                 lighting->light_records[light_idx].direction = ta_light_direction(light);
-                lighting->light_records[light_idx].light_pv = ta_light_pv(light);
+                ta_mat4 light_pv = ta_light_pv(light);
+                lighting->light_records[light_idx].light_pv = mat4_transpose(&light_pv);
                 lighting->light_records[light_idx].cast_shadows = light->data.directional.cast_shadows;
 
                 ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
