@@ -3,8 +3,6 @@
 //------------------------------------------------------
 // Constants
 //------------------------------------------------------
-#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 4
-
 const float PI = 3.14159265359;
 const float GAMMA = 2.2;  // TODO: Make this a user-configurable uniform
 
@@ -59,6 +57,8 @@ uniform Material u_material;
 //------------------------------------------------------
 // Lights
 //------------------------------------------------------
+#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 4
+
 #define LIGHT_AMBIENT       0
 #define LIGHT_DIRECTIONAL   1
 #define LIGHT_POINT         2
@@ -111,7 +111,7 @@ layout (std140) uniform ubo_lights {
 // Textures
 //------------------------------------------------------
 // NOTE: Needs to match the #define in ta_texture.h
-#define TA_TEXTURE_POOL_MAX 8
+#define TA_TEXTURE_POOL_MAX 16
 
 uniform sampler2DArray u_textures[TA_TEXTURE_POOL_MAX];
 // TODO: Should we just use regular cubemaps? Idk what overhead of the xyz -> cube_uv mapping function is, or what
@@ -236,7 +236,7 @@ void main()
         float attenuation;
 		float shadow = 0.0;
 
-        switch(lights[i].type) {
+        switch (lights[i].type) {
             case LIGHT_DIRECTIONAL: {
                 fragToLight = -lights[i].direction;
 
@@ -248,8 +248,9 @@ void main()
 
                 if (lights[i].cast_shadows) {
                     shadow_bias = 0.0001;
-#if 0
-                    shadow_map_depth = texture(lights[i].shadowmap2d, projCoords.st).r;
+#if 1
+                    shadow_map_depth = texture(u_textures[lights[i].shadowmap_texture_pool_index],
+                        vec3(projCoords.st, lights[i].shadowmap_texture_array_layers[0])).r;
                     // TODO: Better bias based on direction of light? This code
                     // doesn't work, but tried to write it based on:
                     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
@@ -425,14 +426,13 @@ void main()
     vec4 dbg_mtl_occlusion = vec4(vec3(mtl_occlusion), 1.0);
 
      // lighting
-    //vec4 dbg_shadow0 = vec4(vec3(1.0 - shadows[0]), 1.0);
-    //vec4 dbg_shadow1 = vec4(vec3(1.0 - shadows[1]), 1.0);
-    //int light_idx = 2;
-    //final_color = vec4(vec3(1.0 - shadows[light_idx]), 1.0);
+    //int light_idx = 0;
+    //final_color = vec4(vertex.tbn_light_dir[light_idx], 1.0);
     //final_color = vec4(vec3(1.0 - (shadow_map_depths[light_idx] / 30.0f)), 1.0);
     //final_color = vec4(vec3(1.0 - shadow_dists[light_idx] / 40.0f), 1.0);
-    //final_color = vec4(vertex.tbn_light_dir[light_idx], 1.0);
-    //final_color = vec4(lights[1].color, 1.0);
+
+    //final_color = vec4(debug, 1.0);
+    //final_color = vec4(vec3(debug.z), 1.0);
 
     // bone weights
     //final_color = vec4(vertex.bone_weights.xyz, 1.0);

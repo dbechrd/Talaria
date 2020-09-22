@@ -114,6 +114,7 @@ void ta_texturing_init(ta_texturing *texturing)
 {
     UNUSED(texturing);
 
+    dlb_vec_reserve_fixed(texturing->texture_pools, TA_TEXTURE_POOL_MAX);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),    1,    1, 32, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),   64,   64, 32, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools),  256,  256, 32, GL_RGBA, GL_UNSIGNED_BYTE);
@@ -505,18 +506,36 @@ void ta_texture_load(ta_texture *tex)
 
     // Pixel textures contain inlined pixel data, path should be null
     if (tex->path) {
-        // Load image data from file(s) and upload to VRAM
+        bool use_stb = true;
+        bool bgr = false;
+
         u32 width = 0;
         u32 height = 0;
         u8 channels = 0;
-        u8 *pixels = texture_read_tga(tex->path, &width, &height, &channels);
-        if (!pixels) {
-            ta_log_write(&tg_debug_log, SRC_TEXTURE, "Failed to load tex: %s\n", tex->path);
-            DLB_ASSERT(!"ta_texture_init: Failed to load tex");
-        }
+        u8 *pixels = 0;
 
-        // NOTE: Assuming all texture paths point to BGR TGA images for now.
-        const bool bgr = true;
+        if (use_stb) {
+            stbi_set_flip_vertically_on_load(true);
+            //pixels = stbi_load(tex->path, &width, &height, &channels, tex->channels);
+            pixels = stbi_load(tex->path, (int *)&width, (int *)&height, (int *)&channels, 4);
+            channels = 4;
+            if (!pixels) {
+                const char *reason = stbi_failure_reason();
+                ta_log_write(&tg_debug_log, SRC_TEXTURE,
+                    "Failed to load tex: %s\nSTBI Reason: %s\n", tex->path, reason);
+                DLB_ASSERT(!"ta_texture_init: Failed to load tex");
+            }
+        } else {
+            // Load image data from file(s) and upload to VRAM
+            pixels = texture_read_tga(tex->path, &width, &height, &channels);
+            if (!pixels) {
+                ta_log_write(&tg_debug_log, SRC_TEXTURE, "Failed to load tex: %s\n", tex->path);
+                DLB_ASSERT(!"ta_texture_init: Failed to load tex");
+            }
+
+            // NOTE: Assuming all texture paths point to BGR TGA images for now.
+            bgr = true;
+        }
 
         tex->width = width;
         tex->height = height;
@@ -548,22 +567,12 @@ void ta_texture_load(ta_texture *tex)
         ta_texturing_add_texture(&tg_game.texturing, tex);
         ta_texture_bind(tex);
         ta_texture_upload(tex, pixels);
-        dlb_free(pixels);
 
-        //stbi_set_flip_vertically_on_load(true);
-        //u8 *pixels = stbi_load(tex->path, &w, &h, &channels, tex->channels);
-        //if (!pixels) {
-        //    const char *reason = stbi_failure_reason();
-        //    ta_log_write(&tg_debug_log, SRC_TEXTURE,
-        //        "Failed to load tex: %s\nSTBI Reason: %s\n", tex->path, reason);
-        //    DLB_ASSERT(!"ta_texture_init: Failed to load tex");
-        //}
-        //
-        //tex->width = w;
-        //tex->height = h;
-        //tex->channels = channels;
-        //ta_texture_load(tex, pixels, 0);
-        //stbi_image_free(pixels);
+        if (use_stb) {
+            stbi_image_free(pixels);
+        } else {
+            dlb_free(pixels);
+        }
     } else {
         ////////////////////////////////////////////////////////////////////////////////////////
         // HACK: Using this to fix scene file, should be explicit

@@ -1797,15 +1797,6 @@ void ta_ui_render()
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
-    // TODO: This is likely duplicate work.. especially if these pool gl_ids never change
-    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[0], tg_game.texturing.texture_pools[0].gl_id);
-    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[1], tg_game.texturing.texture_pools[1].gl_id);
-    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[2], tg_game.texturing.texture_pools[2].gl_id);
-    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[3], tg_game.texturing.texture_pools[3].gl_id);
-    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[4], tg_game.texturing.texture_pools[4].gl_id);
-    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[5], tg_game.texturing.texture_pools[5].gl_id);
-    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[6], tg_game.texturing.texture_pools[6].gl_id);
-    ta_shader_set_sampler_2d_array(tg_shader_quads, SYM_U_TEXTURES[7], tg_game.texturing.texture_pools[7].gl_id);
 
     dlb_vec_each(ui_frame *, frame, ui_frames) {
         if (!(frame->internal_flags & TA_UI_INVISIBLE) && ui_renderers[frame->type]) {

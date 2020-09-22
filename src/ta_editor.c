@@ -918,6 +918,7 @@ static void ui_node_panel()
         [RES_COMP_PLAYER      ] = "player",
         [RES_COMP_TRANSFORM   ] = "transform",
         [RES_COMP_RIGID_BODY  ] = "rigidbody",
+        [RES_COMP_BONE        ] = "bone",
         //[RES_AUDIO_BUFFER     ] = "RES_AUDIO_BUFFER",
         //[RES_FONT             ] = "RES_FONT",
         //[RES_MATERIAL         ] = "RES_MATERIAL",

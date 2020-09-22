@@ -821,8 +821,7 @@ static ogx_result ogx_load_animation(dml_document *doc, const char *target_node,
         dlb_vec_each(size_t *, field_idx, value->data.as_object.fields) {
             dml_field *field = &doc->field_pool[*field_idx];
             if (field->name == ogxs_begin) {
-                ta_log_write(&tg_debug_log, SRC_OGX,
-                    "'begin' would have to be per-track if we're going to combine all tracks by clip name");
+                ta_log_write(&tg_debug_log, SRC_OGX, "WARN: 'begin' would have to be per-track if we're going to combine all tracks by clip name\n");
                 if (animation) {
                     result = ogx_load_float(&animation->begin, &doc->value_pool[field->value_idx]);
                 } else {
@@ -833,8 +832,7 @@ static ogx_result ogx_load_animation(dml_document *doc, const char *target_node,
 #endif
                 }
             } else if (field->name == ogxs_end) {
-                ta_log_write(&tg_debug_log, SRC_OGX,
-                    "'end' would have to be per-track if we're going to combine all tracks by clip name");
+                ta_log_write(&tg_debug_log, SRC_OGX, "WARN: 'end' would have to be per-track if we're going to combine all tracks by clip name\n");
                 if (animation) {
                     result = ogx_load_float(&animation->end, &doc->value_pool[field->value_idx]);
                 } else {

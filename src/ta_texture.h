@@ -4,7 +4,7 @@
 #include "misc/glad.h"
 
 // NOTE: Needs to match the GLSL #define
-#define TA_TEXTURE_POOL_MAX 8
+#define TA_TEXTURE_POOL_MAX 16
 
 typedef struct ta_texture_pool {
     u32 width;
@@ -34,7 +34,7 @@ typedef struct ta_texture_pool {
 } ta_texture_pool;
 
 typedef struct ta_texturing {
-    ta_texture_pool *texture_pools;
+    ta_texture_pool *texture_pools;  // NOTE: Fixed array of size TA_TEXTURE_POOL_MAX
 } ta_texturing;
 
 typedef enum ta_texture_type {

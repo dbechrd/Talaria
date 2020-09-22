@@ -92,6 +92,7 @@ typedef struct ta_mesh {
 #pragma warning(pop)
 
 extern const char *tg_mesh_default;
+extern GLuint tg_mesh_gl_default_bone_xforms;
 
 const char *ta_vertex_attrib_type_str(int type);
 void ta_mesh_init                           (ta_mesh *mesh);

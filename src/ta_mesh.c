@@ -16,6 +16,7 @@
 #include "misc/tinyobj_loader_c.h"
 
 const char *tg_mesh_default;
+GLuint tg_mesh_gl_default_bone_xforms;
 
 const char *ta_vertex_attrib_type_str(int type) {
     switch (type) {
@@ -317,9 +318,8 @@ void ta_mesh_update_buffers(ta_mesh *mesh)
 
     if (dlb_vec_len(mesh->skin.bone_count_array)) {
         glGenBuffers(1, &mesh->skin.gl_ubo_bone_xforms);
-        glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, mesh->skin.gl_ubo_bone_xforms);
         glBindBuffer(GL_UNIFORM_BUFFER, mesh->skin.gl_ubo_bone_xforms);
-        glBufferData(GL_UNIFORM_BUFFER, sizeof(ta_mat4) * TA_SKIN_MAX_BONES, 0, GL_DYNAMIC_DRAW);
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh->skin.bone_xforms), 0, GL_DYNAMIC_DRAW);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 }
@@ -435,9 +435,13 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
 {
     // TODO: If we want to use binding point 1 for other things in other shaders, then this mapping needs to be a
     // bit more abstract.
-    glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, mesh->skin.gl_ubo_bone_xforms);
-    if (mesh->skin.bone_xforms_dirty) {
-        glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh->skin.bone_xforms), mesh->skin.bone_xforms, GL_DYNAMIC_DRAW);
+    if (mesh->skin.gl_ubo_bone_xforms) {
+        glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, mesh->skin.gl_ubo_bone_xforms);
+        if (mesh->skin.bone_xforms_dirty) {
+            glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh->skin.bone_xforms), mesh->skin.bone_xforms, GL_DYNAMIC_DRAW);
+        }
+    } else {
+        glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, tg_mesh_gl_default_bone_xforms);
     }
 
     if (!mesh->gl_vao) {

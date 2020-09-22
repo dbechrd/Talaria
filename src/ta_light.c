@@ -105,8 +105,7 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
     }
 
     glBindBuffer(GL_UNIFORM_BUFFER, lighting->gl_ubo_lights);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(ta_lighting_record) * TA_LIGHTING_MAX_ACTIVE_LIGHTS, lighting->light_records,
-        GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting->light_records), lighting->light_records, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
@@ -346,6 +345,7 @@ ta_mat4 ta_light_pv(ta_light *light)
             proj = &light->data.directional.shadow_properties.projection;
             break;
         case TA_LIGHT_POINT:
+            // NOTE: This isn't used for point lights.. it would need to take face into account for the view matrix
             proj = &light->data.point.shadow_properties.projection;
             break;
         case TA_LIGHT_SPOT:
@@ -361,7 +361,7 @@ ta_mat4 ta_light_pv(ta_light *light)
 
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#spot-lights
 // Use texture2Dproj to account for perspective-divide
-static void shadowpass_render_directional(ta_light *light, ta_transform *transforms)
+static void shadowpass_render_directional(ta_light *light, ta_model *models)
 {
     if (!light->data.directional.cast_shadows) {
         return;
@@ -394,12 +394,15 @@ static void shadowpass_render_directional(ta_light *light, ta_transform *transfo
 
     glClear(GL_DEPTH_BUFFER_BIT);
 
+#if 1
     ta_mat4 light_pv = ta_light_pv(light);
-    dlb_vec_each(ta_transform *, transform, transforms) {
-        ta_model *model = ta_game_component_try(transform->entity, RES_COMP_MODEL);
-        if (model) {
-            ta_model_shadow_pass(model, shader, &light_pv);
-        }
+#else
+    ta_vec3 inv_dir = vec3_neg(ta_light_direction(light));
+    ta_mat4 view = mat4_lookat(inv_dir, VEC3_ZERO, VEC3_Y);
+    ta_mat4 light_pv = mat4_mul(&light->data.directional.shadow_properties.projection, &view);
+#endif
+    dlb_vec_each(ta_model *, model, models) {
+        ta_model_shadow_pass(model, shader, &light_pv);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -412,7 +415,7 @@ static void shadowpass_render_directional(ta_light *light, ta_transform *transfo
 // http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-16-shadow-mapping/#rendering-the-shadow-map
 // https://www.khronos.org/opengl/wiki/GLAPI/glBindFragDataLocation
 // https://gamedev.stackexchange.com/questions/19461/opengl-glsl-render-to-cube-map
-static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
+static void shadowpass_render_point(ta_light *light, ta_model *models)
 {
     if (!light->data.point.cast_shadows) {
         return;
@@ -456,11 +459,8 @@ static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
         glClear(GL_DEPTH_BUFFER_BIT);
 
         ta_mat4 light_pv = mat4_mul(&light->data.point.shadow_properties.projection, &view[face]);
-        dlb_vec_each(ta_transform *, transform, transforms) {
-            ta_model *model = ta_game_component_try(transform->entity, RES_COMP_MODEL);
-            if (model) {
-                ta_model_shadow_pass(model, shader, &light_pv);
-            }
+        dlb_vec_each(ta_model *, model, models) {
+            ta_model_shadow_pass(model, shader, &light_pv);
         }
     }
 
@@ -470,13 +470,13 @@ static void shadowpass_render_point(ta_light *light, ta_transform *transforms)
     //ta_texture_pool_unbind(texture_pool);
 }
 
-void ta_light_shadowpass_render(ta_light *light, ta_transform *transforms)
+void ta_light_shadowpass_render(ta_light *light, ta_model *models)
 {
     if (!light->enabled) {
         return;
     }
 
-    typedef void (* shadowpass_render)(ta_light *light, ta_transform *transforms);
+    typedef void (* shadowpass_render)(ta_light *light, ta_model *models);
 
     static shadowpass_render shadowpass_renderers[TA_LIGHT_COUNT] = {
         [TA_LIGHT_DIRECTIONAL] = shadowpass_render_directional,
@@ -484,7 +484,7 @@ void ta_light_shadowpass_render(ta_light *light, ta_transform *transforms)
     };
 
     if (shadowpass_renderers[light->type]) {
-        shadowpass_renderers[light->type](light, transforms);
+        shadowpass_renderers[light->type](light, models);
     } else {
         DLB_ASSERT(!"No shadowpass renderer for this light type");
     }
@@ -542,7 +542,7 @@ void render_shadowmap_debug_point(ta_light *light, int x, int y)
         rect.w = resolution;
         rect.h = resolution;
 
-        ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, tex[0]->gl_id);
+        ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, tex[face]->gl_id);
         ta_primitive_push_rect(0, rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
         ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, true);
     }

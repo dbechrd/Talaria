@@ -228,6 +228,13 @@ void ta_game_init()
     tg_mesh_default = INTERN("prim_unknown");
     tg_material_default = INTERN("material_unknown");
 
+    if (!tg_mesh_gl_default_bone_xforms) {
+        glGenBuffers(1, &tg_mesh_gl_default_bone_xforms);
+        glBindBuffer(GL_UNIFORM_BUFFER, tg_mesh_gl_default_bone_xforms);
+        glBufferData(GL_UNIFORM_BUFFER, FIELD_SIZEOF(ta_mesh, skin.bone_xforms), 0, GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    }
+
     //--------------------------------------------------------------------------
     // Lighting
     //--------------------------------------------------------------------------
@@ -886,14 +893,6 @@ static void game_render_skybox()
         ta_mesh *mesh = ta_game_by_name(RES_MESH, SYM(INTERN("prim_skybox")));
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->frustum);
-        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[0], tg_game.texturing.texture_pools[0].gl_id);
-        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[1], tg_game.texturing.texture_pools[1].gl_id);
-        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[2], tg_game.texturing.texture_pools[2].gl_id);
-        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[3], tg_game.texturing.texture_pools[3].gl_id);
-        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[4], tg_game.texturing.texture_pools[4].gl_id);
-        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[5], tg_game.texturing.texture_pools[5].gl_id);
-        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[6], tg_game.texturing.texture_pools[6].gl_id);
-        ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[7], tg_game.texturing.texture_pools[7].gl_id);
 
         // NOTE: Assume all textures are in the same pool (asserts)
         ta_texture *first_tex = ta_game_by_sym(RES_TEXTURE, skybox->textures[0]);
@@ -1274,6 +1273,9 @@ void ta_game_loop()
         // Skinning
         //----------------------------------------------------------------------
         dlb_vec_each(ta_mesh *, mesh, meshes) {
+            // Always set bone_xforms dirty for first frame to populate with zeros
+            mesh->skin.bone_xforms_dirty = (tg_game.frame_num == 0);
+
             if (!mesh->skin.bone_count_array) {
                 continue;
             }
@@ -1331,7 +1333,7 @@ void ta_game_loop()
         //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
         dlb_vec_each(ta_light *, light, lights) {
-            ta_light_shadowpass_render(light, transforms);
+            ta_light_shadowpass_render(light, models);
         }
         ta_shader_unbind();
         //glCullFace(GL_BACK);
@@ -1367,14 +1369,9 @@ void ta_game_loop()
         // TODO: Group by shader / material to minimize redundant uniform calls
         ta_shader *mesh_shader = ta_game_by_name(RES_SHADER, CSTR("mesh"));
         // TODO: This doesn't have to be called every frame.. it never changes. Right?
-        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[0], tg_game.texturing.texture_pools[0].gl_id);
-        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[1], tg_game.texturing.texture_pools[1].gl_id);
-        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[2], tg_game.texturing.texture_pools[2].gl_id);
-        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[3], tg_game.texturing.texture_pools[3].gl_id);
-        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[4], tg_game.texturing.texture_pools[4].gl_id);
-        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[5], tg_game.texturing.texture_pools[5].gl_id);
-        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[6], tg_game.texturing.texture_pools[6].gl_id);
-        ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[7], tg_game.texturing.texture_pools[7].gl_id);
+        //for (int i = 0; i < TA_TEXTURE_POOL_MAX; ++i) {
+        //    ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[i], tg_game.texturing.texture_pools[i].gl_id);
+        //}
         dlb_vec_each(ta_model *, model, models) {
             ta_model_render(model, active_camera);
         }
@@ -1489,7 +1486,7 @@ void ta_game_loop()
         // Editor UI (world)
         //----------------------------------------------------------------------
         // Grid and world axes
-        ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
+        //ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
         ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.3f);
         ta_primitive_render(true, false);
 

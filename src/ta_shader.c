@@ -161,7 +161,7 @@ static ta_shader_attribute *find_attribute_by_name(ta_shader *shader, const char
     DLB_ASSERT(!result || result->type == type);
     return result;
 }
-static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, const char *name, ta_glsl_type type)
+static ta_shader_uniform *find_uniform_by_name_try(ta_shader_uniform *uniforms, const char *name)
 {
     ta_shader_uniform *result = 0;
     dlb_vec_each(ta_shader_uniform *, uniform, uniforms) {
@@ -170,6 +170,11 @@ static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, cons
             break;
         }
     }
+    return result;
+}
+static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, const char *name, ta_glsl_type type)
+{
+    ta_shader_uniform *result = find_uniform_by_name_try(uniforms, name);
     DLB_ASSERT(result && result->type == type);
     return result;
 }
@@ -210,6 +215,13 @@ static void shader_init_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
     GLuint ubo_bone_xforms_index = glGetUniformBlockIndex(shader->program_id, "ubo_bone_xforms");
     if (ubo_bone_xforms_index != GL_INVALID_INDEX) {
         glUniformBlockBinding(shader->program_id, ubo_bone_xforms_index, TA_GLSL_UBO_BONE_XFORMS);
+    }
+
+    if (find_uniform_by_name_try(uniforms, SYM_U_TEXTURES[0])) {
+        size_t texture_pool_count = dlb_vec_len(tg_game.texturing.texture_pools);
+        for (size_t i = 0; i < texture_pool_count; ++i) {
+            ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[i], tg_game.texturing.texture_pools[i].gl_id);
+        }
     }
 }
 void ta_shader_load(ta_shader *shader)

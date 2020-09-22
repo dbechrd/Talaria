@@ -13,7 +13,7 @@ ta_audio_source:
   name: "button_0001"
   entity: "button_0001"
   audio_buffer: "sfx_button_deactivated"
-  pitch: 0x3F81C9CD (1.013971)
+  pitch: 0x3F891FA3 (1.071278)
   gain: 0x3F800000 (1.000000)
 ta_audio_source:
   name: "gun"
@@ -214,17 +214,17 @@ ta_camera:
   position_target_vel: 0x3E19999A (0.150000)
   target_xform:
     position:
-      x: 0x409C0608 (4.875736)
-      y: 0x40D91763 (6.784105)
-      z: 0x41141E60 (9.257416)
+      x: 0x4002F4EB (2.046199)
+      y: 0x412707A6 (10.439367)
+      z: 0x41460F3F (12.378722)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  yaw: 0x42ED99D6 (118.800461)
+  yaw: 0x42A69E34 (83.308990)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1E7337D (-28.900141)
+  pitch: 0xC20C6673 (-35.100048)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B40000 (-90.000000)
   pitch_max: 0x42B40000 (90.000000)
@@ -235,9 +235,9 @@ ta_camera:
     y: 0x00800000 (0.000000)
     z: 0x00800000 (0.000000)
   up:
-    x: 0xBE6E6A55 (-0.232827)
-    y: 0x3F601E5E (0.875463)
-    z: 0xBED8D578 (-0.423504)
+    x: 0x3D89358E (0.066997)
+    y: 0x3F51723A (0.818149)
+    z: 0xBF1232ED (-0.571090)
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -245,9 +245,9 @@ ta_camera:
   position_target_vel: 0x3E4CCCCD (0.200000)
   target_xform:
     position:
-      x: 0x401EBAAE (2.480144)
-      y: 0x40DFFF2F (6.999900)
-      z: 0xC0B0A485 (-5.520083)
+      x: 0x40EA2397 (7.316844)
+      y: 0x403FFE5C (2.999900)
+      z: 0x3F7E66EE (0.993758)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -288,7 +288,7 @@ ta_gun:
 ta_light:
   name: "light_sun"
   entity: "light_sun"
-  intensity: 0x3FD99A50 (1.700022)
+  intensity: 0x41200000 (10.000000)
   color:
     r: 0x3E3851EC (0.180000)
     g: 0x3E8F5C2E (0.280000)
@@ -334,7 +334,6 @@ ta_light:
       resolution: 1024
       znear: 0x3DCCCCCD (0.100000)
       zfar: 0x42C80000 (100.000000)
-  enabled: true
 ta_light:
   name: "light_point_0004"
   entity: "light_point_0004"
@@ -351,7 +350,6 @@ ta_light:
       resolution: 1024
       znear: 0x3DCCCCCD (0.100000)
       zfar: 0x42C80000 (100.000000)
-  enabled: true
 #-------------------------------------------------------------------------------
 # TYP_MODEL
 #-------------------------------------------------------------------------------
@@ -359,7 +357,7 @@ ta_model:
   name: "chamber_0001"
   entity: "chamber_0001"
   mesh: "chamber_0001"
-  materials: ["terrazzo", ]
+  materials: ["test_bone_1.material.green", ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -430,32 +428,38 @@ ta_model:
   name: "dude.node.dude"
   entity: "dude.node.dude"
   mesh: "dude.mesh.dude"
-  materials: ["dude.material.albedo", "dude.material.albedo", ]
+  materials: ["dude.material.albedo", "dude.material.albedo", "dude.material.albedo", "dude.material.albedo", "dude.material.albedo", "dude.material.albedo", "dude.material.albedo", ]
 ta_model:
   name: "skeleton_test.node.head"
   entity: "skeleton_test.node.head"
   mesh: "skeleton_test.mesh.head"
-  materials: ["skeleton_test.material.head", "skeleton_test.material.head", ]
+  materials: ["skeleton_test.material.head", "skeleton_test.material.head", "skeleton_test.material.head", "skeleton_test.material.head", "skeleton_test.material.head", "skeleton_test.material.head", "skeleton_test.material.head", ]
 ta_model:
   name: "skeleton_test.node.body"
   entity: "skeleton_test.node.body"
   mesh: "skeleton_test.mesh.body"
-  materials: ["skeleton_test.material.body", "skeleton_test.material.body", ]
+  materials: ["skeleton_test.material.body", "skeleton_test.material.body", "skeleton_test.material.body", "skeleton_test.material.body", "skeleton_test.material.body", "skeleton_test.material.body", "skeleton_test.material.body", ]
 ta_model:
   name: "test_bone_1.node.base"
   entity: "test_bone_1.node.base"
   mesh: "test_bone_1.mesh.base"
-  materials: ["test_bone_1.material.red", "test_bone_1.material.red", ]
+  materials: ["test_bone_1.material.red", "test_bone_1.material.red", "test_bone_1.material.red", "test_bone_1.material.red", "test_bone_1.material.red", "test_bone_1.material.red", "test_bone_1.material.red", ]
 ta_model:
   name: "test_bone_1.node.child"
   entity: "test_bone_1.node.child"
   mesh: "test_bone_1.mesh.child"
-  materials: ["test_bone_1.material.green", "test_bone_1.material.green", ]
+  materials: ["test_bone_1.material.green", "test_bone_1.material.green", "test_bone_1.material.green", "test_bone_1.material.green", "test_bone_1.material.green", "test_bone_1.material.green", "test_bone_1.material.green", ]
 ta_model:
   name: "skeleton_test_skin.node.body"
   entity: "skeleton_test_skin.node.body"
   mesh: "skeleton_test_skin.mesh.body"
-  materials: ["skeleton_test_skin.material.body", "skeleton_test_skin.material.head", "skeleton_test_skin.material.body", "skeleton_test_skin.material.head", ]
+  materials: ["skeleton_test_skin.material.body", "skeleton_test_skin.material.head", "skeleton_test_skin.material.body", "skeleton_test_skin.material.head", "skeleton_test_skin.material.body", "skeleton_test_skin.material.head", "skeleton_test_skin.material.body", "skeleton_test_skin.material.head", "skeleton_test_skin.material.body", "skeleton_test_skin.material.head", "skeleton_test_skin.material.body", "skeleton_test_skin.material.head", "skeleton_test_skin.material.body", "skeleton_test_skin.material.head", ]
+ta_model:
+  name: "button.node.button"
+  entity: "button.node.button"
+  mesh: "button.mesh.button"
+  materials: ["button.material.grid", "button.material.rainbow", "button.material.grid", "button.material.rainbow", "button.material.grid", "button.material.rainbow", "button.material.grid", "button.material.rainbow", "button.material.grid", "button.material.rainbow", ]
+  morph_target_weights: [0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), ]
 #-------------------------------------------------------------------------------
 # TYP_PLAYER
 #-------------------------------------------------------------------------------
@@ -472,14 +476,14 @@ ta_transform:
   entity: "light_sun"
   xform:
     position:
-      x: 0x411D14B0 (9.817551)
-      y: 0x418FF00E (17.992214)
-      z: 0xC19B45DF (-19.409117)
+      x: 0x00000000 (0.000000)
+      y: 0x412170AD (10.090009)
+      z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBE7E7FA2 (-0.248534)
-      y: 0x3ED529FF (0.416336)
-      z: 0x398ED556 (0.000272)
-      w: 0x3F5FE4AC (0.874583)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
 ta_transform:
   name: "light_point_0002"
   entity: "light_point_0002"
@@ -538,9 +542,9 @@ ta_transform:
   entity: "chamber_0001_collider_platform_south"
   xform:
     position:
-      x: 0x411FFFFB (9.999995)
-      y: 0x406B851F (3.680000)
-      z: 0x3EA882C4 (0.329123)
+      x: 0x00000000 (0.000000)
+      y: 0xBF800000 (-1.000000)
+      z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -604,35 +608,35 @@ ta_transform:
   entity: "freecam"
   xform:
     position:
-      x: 0x409C060C (4.875738)
-      y: 0x40D9175E (6.784102)
-      z: 0x41141E64 (9.257420)
+      x: 0x4002F4E6 (2.046197)
+      y: 0x412707A2 (10.439363)
+      z: 0x41460F44 (12.378727)
     orientation:
-      x: 0xBE839E78 (-0.257068)
-      y: 0x3E65BA84 (0.224344)
-      z: 0x00000000 (0.000000)
-      w: 0x3F70A356 (0.939992)
+      x: 0xBE9A9FF2 (-0.302002)
+      y: 0xBD4D12E5 (-0.050067)
+      z: 0x80000000 (-0.000000)
+      w: 0x3F73B5BC (0.951992)
 ta_transform:
   name: "player_one"
   entity: "player_one"
   xform:
     position:
-      x: 0x401EBAAE (2.480144)
-      y: 0x409FFF2F (4.999900)
-      z: 0xC0B0A485 (-5.520083)
+      x: 0x40EA2385 (7.316836)
+      y: 0x3F7FF972 (0.999900)
+      z: 0x3F7E50CC (0.993420)
     orientation:
-      x: 0xBB9933D1 (-0.004675)
-      y: 0x3F4CF70B (0.800645)
-      z: 0xBEB6266E (-0.355762)
-      w: 0xBEF6D04F (-0.482058)
+      x: 0xBE9C02A8 (-0.304708)
+      y: 0xBF218474 (-0.630927)
+      z: 0x3ECD42AF (0.400899)
+      w: 0x3F1718E1 (0.590223)
 ta_transform:
   name: "player_camera"
   entity: "player_camera"
   xform:
     position:
-      x: 0x401EBAAE (2.480144)
-      y: 0x40DFFF2E (6.999900)
-      z: 0xC0B0A484 (-5.520082)
+      x: 0x40EA23E4 (7.316881)
+      y: 0x403FFE5C (2.999900)
+      z: 0x3F7E639A (0.993707)
     orientation:
       x: 0xBD6431E4 (-0.055712)
       y: 0xBE28333A (-0.164258)
@@ -656,14 +660,14 @@ ta_transform:
   entity: "sphere2"
   xform:
     position:
-      x: 0x412D335C (10.825039)
-      y: 0x3F7EEFBD (0.995846)
-      z: 0xC189516C (-17.164757)
+      x: 0x411FB3E2 (9.981417)
+      y: 0x3F7FF972 (0.999900)
+      z: 0xC159D8BA (-13.615412)
     orientation:
-      x: 0x3DFD7BD2 (0.123771)
-      y: 0xBD5043A6 (-0.050846)
-      z: 0xBF237BD6 (-0.638608)
-      w: 0x3F41FFCA (0.757809)
+      x: 0x3EDFCD21 (0.437112)
+      y: 0xBD06B94A (-0.032892)
+      z: 0x3E17EC0B (0.148361)
+      w: 0xBF62F01C (-0.886476)
 ta_transform:
   name: "shadow_test_1"
   entity: "shadow_test_1"
@@ -683,7 +687,7 @@ ta_transform:
   xform:
     position:
       x: 0x41A900A0 (21.125305)
-      y: 0x407FFE5C (3.999900)
+      y: 0xC58117FB (-4130.997559)
       z: 0x403BB0C8 (2.932665)
     orientation:
       x: 0x00000000 (0.000000)
@@ -712,17 +716,17 @@ ta_transform:
       y: 0xBF401D9F (-0.750452)
       z: 0xC148DFE2 (-12.554659)
     orientation:
-      x: 0x3EDF7A94 (0.436482)
+      x: 0x3EDF7A96 (0.436482)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F665396 (0.899713)
+      w: 0x3F665398 (0.899713)
 ta_transform:
   name: "star_0001"
   entity: "star_0001"
   xform:
     position:
       x: 0x4181D402 (16.228519)
-      y: 0x3EFDDF7A (0.495846)
+      y: 0xC5481EB3 (-3201.918701)
       z: 0xC1B35CF3 (-22.420385)
     orientation:
       x: 0x3E41D8C1 (0.189303)
@@ -734,15 +738,15 @@ ta_transform:
   entity: "dude.node.armature"
   xform:
     position:
-      x: 0x4116DBF1 (9.428697)
-      y: 0xBBA93620 (-0.005164)
-      z: 0xC1A5E3E8 (-20.736282)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  children: ["dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", ]
+  children: ["dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", ]
 ta_transform:
   name: "dude.bone.lumbar"
   entity: "dude.bone.lumbar"
@@ -757,7 +761,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x00000000 (0.000000)
   parent: "dude.node.armature"
-  children: ["dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", ]
+  children: ["dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", ]
 ta_transform:
   name: "dude.bone.thoratic"
   entity: "dude.bone.thoratic"
@@ -772,7 +776,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F7FF378 (0.999809)
   parent: "dude.bone.lumbar"
-  children: ["dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", ]
+  children: ["dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", ]
 ta_transform:
   name: "dude.bone.cervical"
   entity: "dude.bone.cervical"
@@ -787,7 +791,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F7FE675 (0.999610)
   parent: "dude.bone.thoratic"
-  children: ["dude.bone.head", "dude.bone.head", ]
+  children: ["dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", ]
 ta_transform:
   name: "dude.bone.head"
   entity: "dude.bone.head"
@@ -802,7 +806,7 @@ ta_transform:
       z: 0x3D5D4C94 (0.054028)
       w: 0x368E4553 (0.000004)
   parent: "dude.bone.cervical"
-  children: ["dude.bone.hat", "dude.bone.hat", ]
+  children: ["dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", ]
 ta_transform:
   name: "dude.bone.hat"
   entity: "dude.bone.hat"
@@ -826,68 +830,68 @@ ta_transform:
       y: 0x3F22AC77 (0.635444)
       z: 0x3D1D2B19 (0.038371)
     orientation:
-      x: 0xBEEF9E5D (-0.468005)
-      y: 0x3E385A1E (0.180031)
-      z: 0x3F05F455 (0.523259)
-      w: 0x3F306423 (0.689028)
+      x: 0xBF208BEF (-0.627135)
+      y: 0x3E7E60D3 (0.248416)
+      z: 0x3F3312C9 (0.699505)
+      w: 0x3E71A2C1 (0.235972)
   parent: "dude.bone.thoratic"
-  children: ["dude.bone.forearm.l", "dude.bone.forearm.l", ]
+  children: ["dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", ]
 ta_transform:
   name: "dude.bone.forearm.l"
   entity: "dude.bone.forearm.l"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3F68AEA9 (0.908915)
+      y: 0x3F68AEA6 (0.908915)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EDDC8D0 (0.433173)
-      y: 0x3D6AE894 (0.057351)
-      z: 0xBEEAB4DF (-0.458411)
-      w: 0x3F461EBF (0.773907)
+      x: 0xBCC98A32 (-0.024602)
+      y: 0x3E357C8E (0.177233)
+      z: 0xBE1E609E (-0.154665)
+      w: 0x3F78BCA5 (0.971628)
   parent: "dude.bone.upper_arm.l"
-  children: ["dude.bone.hand.l", "dude.bone.hand.l", ]
+  children: ["dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", ]
 ta_transform:
   name: "dude.bone.hand.l"
   entity: "dude.bone.hand.l"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3F2B528E (0.669228)
+      y: 0x3F2B528A (0.669228)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBD350017 (-0.044190)
-      y: 0x3DA8F53C (0.082499)
-      z: 0xBD68C97B (-0.056833)
+      x: 0xBD35001A (-0.044190)
+      y: 0x3DA8F53A (0.082499)
+      z: 0xBD68C97D (-0.056833)
       w: 0x3F7E75F8 (0.993988)
   parent: "dude.bone.forearm.l"
-  children: ["dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", ]
+  children: ["dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", ]
 ta_transform:
   name: "dude.bone.fingers_proximal.l"
   entity: "dude.bone.fingers_proximal.l"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3E762B81 (0.240400)
+      y: 0x3E762B92 (0.240401)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBDDEE9BB (-0.108844)
-      y: 0x3EE9A758 (0.456355)
-      z: 0xBE57C499 (-0.210711)
-      w: 0x3F5B8C4D (0.857610)
+      x: 0xBDDEE9BC (-0.108844)
+      y: 0x3EE9A759 (0.456355)
+      z: 0xBE57C49A (-0.210711)
+      w: 0x3F5B8C4C (0.857610)
   parent: "dude.bone.hand.l"
-  children: ["dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", ]
+  children: ["dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", ]
 ta_transform:
   name: "dude.bone.fingers_distal.l"
   entity: "dude.bone.fingers_distal.l"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3DB03F08 (0.086058)
+      y: 0x3DB03EF2 (0.086058)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBC95900A (-0.018257)
-      y: 0x3D573719 (0.052543)
+      x: 0xBC959010 (-0.018257)
+      y: 0x3D573716 (0.052543)
       z: 0xBC7F0D06 (-0.015567)
       w: 0x3F7F9295 (0.998330)
   parent: "dude.bone.fingers_proximal.l"
@@ -897,27 +901,27 @@ ta_transform:
   xform:
     position:
       x: 0x3DAFA7AC (0.085769)
-      y: 0x3DF3B8F1 (0.119005)
-      z: 0x3BBCC9CA (0.005761)
+      y: 0x3DF3B910 (0.119005)
+      z: 0x3BBCCC39 (0.005762)
     orientation:
       x: 0x3EBC3B40 (0.367640)
-      y: 0x3E9F40CA (0.311041)
+      y: 0x3E9F40C9 (0.311041)
       z: 0xBF2BD4CC (-0.671216)
       w: 0x3F104362 (0.563528)
   parent: "dude.bone.hand.l"
-  children: ["dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", ]
+  children: ["dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", ]
 ta_transform:
   name: "dude.bone.thumb_distal.l"
   entity: "dude.bone.thumb_distal.l"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3D4022B0 (0.046908)
+      y: 0x3D4022D0 (0.046908)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBD07DB84 (-0.033168)
-      y: 0x3B36B508 (0.002788)
-      z: 0x3CCD1DC0 (0.025039)
+      x: 0xBD07DB86 (-0.033168)
+      y: 0x3B36B55E (0.002788)
+      z: 0x3CCD1DCB (0.025039)
       w: 0x3F7FC721 (0.999132)
   parent: "dude.bone.thumb_proximal.l"
 ta_transform:
@@ -934,7 +938,7 @@ ta_transform:
       z: 0xBF3593FC (-0.709289)
       w: 0x3E759BE9 (0.239853)
   parent: "dude.bone.thoratic"
-  children: ["dude.bone.forearm.r", "dude.bone.forearm.r", ]
+  children: ["dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", ]
 ta_transform:
   name: "dude.bone.forearm.r"
   entity: "dude.bone.forearm.r"
@@ -949,7 +953,7 @@ ta_transform:
       z: 0x3E1DF61B (0.154259)
       w: 0x3F77FDF6 (0.968719)
   parent: "dude.bone.upper_arm.r"
-  children: ["dude.bone.hand.r", "dude.bone.hand.r", ]
+  children: ["dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", ]
 ta_transform:
   name: "dude.bone.hand.r"
   entity: "dude.bone.hand.r"
@@ -964,7 +968,7 @@ ta_transform:
       z: 0x3D68C980 (0.056833)
       w: 0x3F7E75F8 (0.993988)
   parent: "dude.bone.forearm.r"
-  children: ["dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", ]
+  children: ["dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", ]
 ta_transform:
   name: "dude.bone.fingers_proximal.r"
   entity: "dude.bone.fingers_proximal.r"
@@ -979,7 +983,7 @@ ta_transform:
       z: 0x3E57C495 (0.210711)
       w: 0x3F5B8C4D (0.857610)
   parent: "dude.bone.hand.r"
-  children: ["dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", ]
+  children: ["dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", ]
 ta_transform:
   name: "dude.bone.fingers_distal.r"
   entity: "dude.bone.fingers_distal.r"
@@ -1008,7 +1012,7 @@ ta_transform:
       z: 0x3F2BD4CC (0.671216)
       w: 0x3F104366 (0.563528)
   parent: "dude.bone.hand.r"
-  children: ["dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", ]
+  children: ["dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", ]
 ta_transform:
   name: "dude.bone.thumb_distal.r"
   entity: "dude.bone.thumb_distal.r"
@@ -1037,7 +1041,7 @@ ta_transform:
       z: 0x39186918 (0.000145)
       w: 0x3CA888C0 (0.020573)
   parent: "dude.bone.lumbar"
-  children: ["dude.bone.leg.l", "dude.bone.leg.l", ]
+  children: ["dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", ]
 ta_transform:
   name: "dude.bone.leg.l"
   entity: "dude.bone.leg.l"
@@ -1066,7 +1070,7 @@ ta_transform:
       z: 0xB9170C21 (-0.000144)
       w: 0x3CA888C0 (0.020573)
   parent: "dude.bone.lumbar"
-  children: ["dude.bone.leg.r", "dude.bone.leg.r", ]
+  children: ["dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", ]
 ta_transform:
   name: "dude.bone.leg.r"
   entity: "dude.bone.leg.r"
@@ -1109,7 +1113,7 @@ ta_transform:
       z: 0x3F34FB4B (0.706959)
       w: 0x00000000 (0.000000)
   parent: "dude.node.armature"
-  children: ["dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", ]
+  children: ["dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", ]
 ta_transform:
   name: "dude.bone.foot.l"
   entity: "dude.bone.foot.l"
@@ -1124,7 +1128,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F6A6374 (0.915580)
   parent: "dude.bone.leg_control.l"
-  children: ["dude.bone.toes.l", "dude.bone.toes.l", ]
+  children: ["dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", ]
 ta_transform:
   name: "dude.bone.toes.l"
   entity: "dude.bone.toes.l"
@@ -1153,7 +1157,7 @@ ta_transform:
       z: 0x3F6A62B0 (0.915568)
       w: 0x00000000 (0.000000)
   parent: "dude.bone.leg_control.l"
-  children: ["dude.bone.leg_ik.l", "dude.bone.leg_ik.l", ]
+  children: ["dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", ]
 ta_transform:
   name: "dude.bone.leg_ik.l"
   entity: "dude.bone.leg_ik.l"
@@ -1210,7 +1214,7 @@ ta_transform:
       z: 0x3F34FB4B (0.706959)
       w: 0x00000000 (0.000000)
   parent: "dude.node.armature"
-  children: ["dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", ]
+  children: ["dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", ]
 ta_transform:
   name: "dude.bone.foot.r"
   entity: "dude.bone.foot.r"
@@ -1225,7 +1229,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F6A6374 (0.915580)
   parent: "dude.bone.leg_control.r"
-  children: ["dude.bone.toes.r", "dude.bone.toes.r", ]
+  children: ["dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", ]
 ta_transform:
   name: "dude.bone.toes.r"
   entity: "dude.bone.toes.r"
@@ -1254,7 +1258,7 @@ ta_transform:
       z: 0x3F6A62B0 (0.915568)
       w: 0x00000000 (0.000000)
   parent: "dude.bone.leg_control.r"
-  children: ["dude.bone.leg_ik.r", "dude.bone.leg_ik.r", ]
+  children: ["dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", ]
 ta_transform:
   name: "dude.bone.leg_ik.r"
   entity: "dude.bone.leg_ik.r"
@@ -1336,7 +1340,7 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  children: ["skeleton_test.bone.body", "skeleton_test.bone.body", ]
+  children: ["skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", ]
 ta_transform:
   name: "skeleton_test.bone.body"
   entity: "skeleton_test.bone.body"
@@ -1346,12 +1350,12 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EB65FFF (0.356201)
+      x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F6F3573 (0.934409)
+      w: 0x3F800000 (1.000000)
   parent: "skeleton_test.node.armature"
-  children: ["skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", ]
+  children: ["skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", ]
 ta_transform:
   name: "skeleton_test.bone.head"
   entity: "skeleton_test.bone.head"
@@ -1361,12 +1365,12 @@ ta_transform:
       y: 0x3F000000 (0.500000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EB66000 (0.356201)
+      x: 0xBBF7187B (-0.007541)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F6F3573 (0.934409)
+      w: 0x3F7FFE23 (0.999972)
   parent: "skeleton_test.bone.body"
-  children: ["skeleton_test.node.head", "skeleton_test.node.head", ]
+  children: ["skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", ]
 ta_transform:
   name: "skeleton_test.node.head"
   entity: "skeleton_test.node.head"
@@ -1408,14 +1412,14 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  children: ["test_bone_1.bone.base", "test_bone_1.bone.base", ]
+  children: ["test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", ]
 ta_transform:
   name: "test_bone_1.bone.base"
   entity: "test_bone_1.bone.base"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3FB684BE (1.425926)
+      y: 0x3F000000 (0.500000)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -1423,7 +1427,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
   parent: "test_bone_1.node.armature"
-  children: ["test_bone_1.node.base", "test_bone_1.node.base", ]
+  children: ["test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", ]
 ta_transform:
   name: "test_bone_1.node.base"
   entity: "test_bone_1.node.base"
@@ -1438,7 +1442,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
   parent: "test_bone_1.bone.base"
-  children: ["test_bone_1.node.child", "test_bone_1.node.child", ]
+  children: ["test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", ]
 ta_transform:
   name: "test_bone_1.node.child"
   entity: "test_bone_1.node.child"
@@ -1466,7 +1470,7 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  children: ["skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", ]
+  children: ["skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", ]
 ta_transform:
   name: "skeleton_test_skin.bone.body"
   entity: "skeleton_test_skin.bone.body"
@@ -1476,12 +1480,12 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3E24D0E8 (0.160953)
+      x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F7CA98C (0.986962)
+      w: 0x3F800000 (1.000000)
   parent: "skeleton_test_skin.node.armature"
-  children: ["skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", ]
+  children: ["skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", ]
 ta_transform:
   name: "skeleton_test_skin.bone.head"
   entity: "skeleton_test_skin.bone.head"
@@ -1491,10 +1495,10 @@ ta_transform:
       y: 0x3F000000 (0.500000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EA2D159 (0.318003)
+      x: 0xBB5FFB53 (-0.003418)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F72B601 (0.948090)
+      w: 0x3F7FFF9E (0.999994)
   parent: "skeleton_test_skin.bone.body"
 ta_transform:
   name: "skeleton_test_skin.node.body"
@@ -1510,6 +1514,19 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
   parent: "skeleton_test_skin.node.armature"
+ta_transform:
+  name: "button.node.button"
+  entity: "button.node.button"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
 #-------------------------------------------------------------------------------
 # TYP_RIGID_BODY
 #-------------------------------------------------------------------------------
@@ -1524,9 +1541,9 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       extents:
-        x: 0x4148000C (12.500011)
-        y: 0x3EA3D70D (0.320000)
-        z: 0x4108CCDD (8.550015)
+        x: 0x42C80000 (100.000000)
+        y: 0x3F800000 (1.000000)
+        z: 0x42C80000 (100.000000)
       orientation:
         x: 0x00000000 (0.000000)
         y: 0x00000000 (0.000000)
@@ -2004,6 +2021,34 @@ ta_material:
     g: 0x00000000 (0.000000)
     b: 0x00000000 (0.000000)
   roughness_factor: 0x3F4CCCCD (0.800000)
+ta_material:
+  name: "button.material.grid"
+  shader: "mesh"
+  albedo_texture: "button.texture.tex_grid"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  roughness_factor: 0x3F000000 (0.500000)
+ta_material:
+  name: "button.material.rainbow"
+  shader: "mesh"
+  albedo_texture: "button.texture.tex_rainbow"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  roughness_factor: 0x3F000000 (0.500000)
 #-------------------------------------------------------------------------------
 # TYP_MESH
 #-------------------------------------------------------------------------------
@@ -2046,6 +2091,8 @@ ta_mesh:
   name: "test_bone_1.mesh.child"
 ta_mesh:
   name: "skeleton_test_skin.mesh.body"
+ta_mesh:
+  name: "button.mesh.button"
 #-------------------------------------------------------------------------------
 # TYP_SHADER
 #-------------------------------------------------------------------------------
@@ -2138,6 +2185,38 @@ ta_shader:
     },
     {
       name: "u_textures[7]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[8]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[9]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[10]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[11]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[12]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[13]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[14]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[15]",
       type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
@@ -2270,6 +2349,38 @@ ta_shader:
     },
     {
       name: "u_textures[7]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[8]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[9]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[10]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[11]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[12]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[13]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[14]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[15]",
       type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
@@ -2825,6 +2936,38 @@ ta_shader:
       type: 12,  # TA_GLSL_SAMPLER2DARRAY
     },
     {
+      name: "u_textures[8]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[9]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[10]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[11]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[12]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[13]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[14]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
+      name: "u_textures[15]",
+      type: 12,  # TA_GLSL_SAMPLER2DARRAY
+    },
+    {
       name: "u_selected",
       type: 11,  # TA_GLSL_BOOL
     },
@@ -2922,8 +3065,8 @@ ta_texture:
   path: "data/texture/cobble_albedo.tga"
   width: 512
   height: 512
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -2934,8 +3077,8 @@ ta_texture:
   path: "data/texture/cobble_normal.tga"
   width: 512
   height: 512
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -2946,8 +3089,8 @@ ta_texture:
   path: "data/texture/cobble_occlusion.tga"
   width: 512
   height: 512
-  channels: 1
-  pixels_format: 6403
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -2958,8 +3101,8 @@ ta_texture:
   path: "data/texture/cobble_roughness.tga"
   width: 512
   height: 512
-  channels: 1
-  pixels_format: 6403
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -2971,7 +3114,7 @@ ta_texture:
   width: 64
   height: 64
   channels: 4
-  pixels_format: 32993
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -2982,8 +3125,8 @@ ta_texture:
   path: "data/texture/Terrazzo_Tiles_001_albedo.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -2994,8 +3137,8 @@ ta_texture:
   path: "data/texture/Terrazzo_Tiles_001_emission.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3006,8 +3149,8 @@ ta_texture:
   path: "data/texture/Terrazzo_Tiles_001_height.tga"
   width: 1024
   height: 1024
-  channels: 1
-  pixels_format: 6403
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3018,8 +3161,8 @@ ta_texture:
   path: "data/texture/Terrazzo_Tiles_001_normal.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3030,8 +3173,8 @@ ta_texture:
   path: "data/texture/Terrazzo_Tiles_001_occlusion.tga"
   width: 1024
   height: 1024
-  channels: 1
-  pixels_format: 6403
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3042,8 +3185,8 @@ ta_texture:
   path: "data/texture/Terrazzo_Tiles_001_roughness.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3054,8 +3197,8 @@ ta_texture:
   path: "data/texture/Metal_Plate_019_albedo.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3066,8 +3209,8 @@ ta_texture:
   path: "data/texture/Metal_Plate_019_height.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3078,8 +3221,8 @@ ta_texture:
   path: "data/texture/Metal_Plate_019_metallic.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3090,8 +3233,8 @@ ta_texture:
   path: "data/texture/Metal_Plate_019_normal.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3102,8 +3245,8 @@ ta_texture:
   path: "data/texture/Metal_Plate_019_occlusion.tga"
   width: 1024
   height: 1024
-  channels: 1
-  pixels_format: 6403
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3114,8 +3257,8 @@ ta_texture:
   path: "data/texture/Metal_Plate_019_roughness.tga"
   width: 1024
   height: 1024
-  channels: 1
-  pixels_format: 6403
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3126,8 +3269,8 @@ ta_texture:
   path: "data/texture/Acoustic_Foam_001_albedo.tga"
   width: 1024
   height: 1024
-  channels: 1
-  pixels_format: 6403
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3138,8 +3281,8 @@ ta_texture:
   path: "data/texture/Acoustic_Foam_001_height.tga"
   width: 1024
   height: 1024
-  channels: 1
-  pixels_format: 6403
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3150,8 +3293,8 @@ ta_texture:
   path: "data/texture/Acoustic_Foam_001_normal.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3162,8 +3305,8 @@ ta_texture:
   path: "data/texture/Acoustic_Foam_001_occlusion.tga"
   width: 1024
   height: 1024
-  channels: 1
-  pixels_format: 6403
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3174,8 +3317,8 @@ ta_texture:
   path: "data/texture/Acoustic_Foam_001_roughness.tga"
   width: 1024
   height: 1024
-  channels: 1
-  pixels_format: 6403
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3186,8 +3329,8 @@ ta_texture:
   path: "data/texture/star_albedo.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9987
@@ -3198,8 +3341,8 @@ ta_texture:
   path: "data/texture/miramar_rt.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9729
@@ -3210,8 +3353,8 @@ ta_texture:
   path: "data/texture/miramar_lf.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9729
@@ -3222,8 +3365,8 @@ ta_texture:
   path: "data/texture/miramar_dn.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9729
@@ -3234,8 +3377,8 @@ ta_texture:
   path: "data/texture/miramar_up.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9729
@@ -3246,8 +3389,8 @@ ta_texture:
   path: "data/texture/miramar_ft.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9729
@@ -3258,8 +3401,8 @@ ta_texture:
   path: "data/texture/miramar_bk.tga"
   width: 1024
   height: 1024
-  channels: 3
-  pixels_format: 32992
+  channels: 4
+  pixels_format: 6408
   pixels_type: 5121
   gl_internal_format: 6408
   gl_filter_min: 9729
@@ -3268,6 +3411,28 @@ ta_texture:
   name: "dude.texture.dude_albedo"
   type: 0  # TA_TEXTURE_2D_POOLED
   path: "data/texture/dude_albedo.tga"
+  width: 1024
+  height: 1024
+  channels: 4
+  pixels_format: 6408
+  pixels_type: 5121
+  gl_internal_format: 6408
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "button.texture.tex_grid"
+  type: 0  # TA_TEXTURE_2D_POOLED
+  width: 256
+  height: 256
+  channels: 3
+  pixels_format: 6407
+  pixels_type: 5121
+  gl_internal_format: 6408
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "button.texture.tex_rainbow"
+  type: 0  # TA_TEXTURE_2D_POOLED
   width: 1024
   height: 1024
   channels: 4

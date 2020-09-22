@@ -8,7 +8,7 @@ in vs_out {
 // Textures
 //------------------------------------------------------
 // NOTE: Needs to match the #define in ta_texture.h
-#define TA_TEXTURE_POOL_MAX 8
+#define TA_TEXTURE_POOL_MAX 16
 uniform sampler2DArray u_textures[TA_TEXTURE_POOL_MAX];
 
 uniform uint u_texture_pool_index;

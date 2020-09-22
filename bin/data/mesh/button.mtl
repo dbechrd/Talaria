@@ -1,0 +1,28 @@
+# Blender MTL File: 'button.blend'
+# Material Count: 2
+
+newmtl grid
+Ns 225.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.400000 0.004618 0.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd .
+map_Ns C:\\Users\\user\\Documents\\Development\\Talaria\\bin\\data\\texture\\Metal_Plate_019_roughness.png
+refl C:\\Users\\user\\Documents\\Development\\Talaria\\bin\\data\\texture\\Metal_Plate_019_metallic.png
+
+newmtl rainbow
+Ns 440.999985
+Ka 1.000000 1.000000 1.000000
+Kd 0.374371 0.446026 0.628325
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+map_Kd .
+map_Ns C:\\Users\\user\\Documents\\Development\\Talaria\\bin\\data\\texture\\Metal_Plate_019_roughness.png
+refl C:\\Users\\user\\Documents\\Development\\Talaria\\bin\\data\\texture\\Metal_Plate_019_metallic.png
