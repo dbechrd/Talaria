@@ -907,6 +907,11 @@ static void game_render_skybox()
 
         //ta_shader_set_sampler_cube(shader, SYM_U_TEX, skybox->gl_id);
 
+        // NOTE: Ensures that the texture binding point we use as a temp to change filter/wrap modes doesn't stomp one
+        // of the active texture pool bindings.
+        DLB_ASSERT(TA_TEXTURE_POOL_MAX < 32);
+        glActiveTexture(GL_TEXTURE31);
+
         ta_texture_pool *pool = ta_texture_texture_pool(first_tex);
         ta_texture_pool_bind(pool);
         glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, first_tex->gl_filter_min);
@@ -1381,7 +1386,7 @@ void ta_game_loop()
         }
         //----------------------------------------------------------------------
 
-        //game_render_skybox();
+        game_render_skybox();
 
         ta_primitive_render(true, false);
 
