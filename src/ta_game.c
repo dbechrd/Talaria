@@ -59,6 +59,7 @@ const char *tg_e_player_one;
 const char *tg_e_active_camera;
 
 ta_game tg_game;
+bool tg_game_deferred_select = false;
 
 const char *game_state_str(ta_game_state state)
 {
@@ -191,7 +192,7 @@ void ta_game_init()
     ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_COLLIDERS , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_NAMETAGS  , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_NORMALS   , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
-    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SELECT          ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SELECT          ,                                     TA_STATE_EDITOR, TA_KEYBIND_HOLD,   SDL_SCANCODE_MOUSE_LEFT);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SELECT_RELEASE  ,                                     TA_STATE_EDITOR, TA_KEYBIND_RELEASE, SDL_SCANCODE_MOUSE_LEFT);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_CANCEL          ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_ESCAPE);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_CLOSE           ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_GRAVE);
@@ -579,6 +580,7 @@ ta_camera *ta_game_camera()
 {
     return ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
 }
+// Shoot ray from camera directly forward (crosshair)
 ta_ray ta_game_camera_ray()
 {
     ta_camera *camera = ta_game_camera();
@@ -586,6 +588,31 @@ ta_ray ta_game_camera_ray()
     ta_ray ray = { 0 };
     ray.origin = cam_trans->xform_world.position;
     ray.direction = camera->front;
+    return ray;
+}
+// Shoot ray from mouse screen position
+ta_ray ta_game_mouse_ray()
+{
+    //ta_camera *camera = ta_game_component(INTERN("player_camera"), RES_COMP_CAMERA);
+    ta_camera *camera = ta_game_camera();
+    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+
+    // NOTE: Implementation based on this, but with I flipped some signs to make it more logical
+    // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
+
+    // Get center of pixel
+    float x = (float)ta_mouse_x() + 0.5f;
+    float y = (float)ta_mouse_y() + 0.5f;
+
+    ta_vec3 dir = { 0 };
+    dir.x = x * camera->right.x + -y * camera->up.x + camera->screen_to_world.x;
+    dir.y = x * camera->right.y + -y * camera->up.y + camera->screen_to_world.y;
+    dir.z = x * camera->right.z + -y * camera->up.z + camera->screen_to_world.z;
+    dir = vec3_normalize(dir);
+
+    ta_ray ray;
+    ray.origin = cam_trans->xform_world.position;
+    ray.direction = dir;
     return ray;
 }
 ta_player *ta_game_player()
@@ -1092,11 +1119,13 @@ void ta_game_loop()
     double ms_frame_delta = 0; // Total delta time (including v-sync)
     double ms_frame_time = 0;  // Actual frame time before v-sync
 
+
     while (ta_game_state_current() != TA_STATE_SHUTDOWN) {
         ms_frame_start = ta_timer_elapsed_ms();
         ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
 
+        ta_ui_flags_reset();
         game_hotload_textures();
 
         ta_camera *active_camera = ta_game_camera();
@@ -1387,7 +1416,6 @@ void ta_game_loop()
         //----------------------------------------------------------------------
 
         game_render_skybox();
-
         ta_primitive_render(true, false);
 
         if (tg_game.state == TA_STATE_EDITOR) {
@@ -1655,6 +1683,17 @@ void ta_game_loop()
         ta_ui_window_end();
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_ui_render();
+
+        //----------------------------------------------------------------------
+        // Post-editor events
+        //----------------------------------------------------------------------
+        if (tg_game_deferred_select) {
+            if (!ta_ui_flag_hovered()) {
+                editor_command_select();
+                ta_primitive_render(true, false);
+            }
+            tg_game_deferred_select = false;
+        }
 
         //----------------------------------------------------------------------
         // Audio

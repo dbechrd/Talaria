@@ -189,13 +189,22 @@ static void editor_gizmo_end(bool keep_changes)
 }
 static void editor_command_select()
 {
-    DLB_ASSERT(!editor.gizmo && "Wtf.. how did you select something *while* using a gizmo??");
+    //DLB_ASSERT(!editor.gizmo && "Wtf.. how did you select something *while* using a gizmo??");
+    if (editor.gizmo) return;
 
-    if (!ta_mouse_captured()) {
+    if (!ta_mouse_captured() && !tg_game_deferred_select) {
+        // NOTE: Defer selection to end of frame (after UI is drawn so it can take priority)
+        tg_game_deferred_select = true;
         return;
     }
 
-    ta_ray ray = ta_game_camera_ray();
+    ta_ray ray;
+    if (tg_game_deferred_select) {
+        ray = ta_game_mouse_ray();
+        tg_game_deferred_select = false;
+    } else {
+        ray = ta_game_camera_ray();
+    }
 
     const char *selected_entity = 0;
     ta_editor_selected_entity(&selected_entity);

@@ -106,6 +106,7 @@ typedef struct ui_frame {
 static ta_font *ui_font;
 static ta_ui_textbox_state **ui_textbox_editing;
 static ta_ui_textbox_state **ui_textbox_dragging;
+static bool ui_hovered = false;
 
 static ui_style ui_default_style[UI_COUNT] = { 0 };
 static ta_vec2i next_frame_pos_relative;
@@ -219,6 +220,14 @@ void ta_ui_set_font(ta_font *font)
 void ta_ui_set_cursor(ta_cursor_type cursor_type)
 {
     ta_window_request_cursor(tg_window, cursor_type);
+}
+void ta_ui_flags_reset()
+{
+    ui_hovered = false;
+}
+bool ta_ui_flag_hovered()
+{
+    return ui_hovered;
 }
 #if 1
 static ta_rgba ui_random_color(size_t frame_idx, ui_state_type state)
@@ -477,6 +486,7 @@ static ui_frame *ui_frame_end(ui_frame_type type)
     {
         frame->state_type = UI_STATE_HOVER;
         frame->state.hover = true;
+        ui_hovered = true;
         if (ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
             frame->state_type = UI_STATE_DOWN;
             frame->state.down = true;

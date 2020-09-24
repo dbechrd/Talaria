@@ -99,7 +99,8 @@ typedef struct ta_game {
     struct ta_manifold *manifolds;     // Array of most recent collision manifolds
 } ta_game;
 
-ta_game tg_game;
+extern ta_game tg_game;
+extern bool tg_game_deferred_select;
 
 const char *ta_command_str(ta_command cmd);
 
@@ -121,6 +122,7 @@ void *ta_game_resource_pool                 (enum ta_res_type type);
 void ta_game_load_gltf                      (const char *filename);
 struct ta_camera *ta_game_camera            ();
 struct ta_ray ta_game_camera_ray            ();
+struct ta_ray ta_game_mouse_ray             ();
 struct ta_player *ta_game_player            ();
 void ta_game_sim_pause                      ();
 void ta_game_sim_resume                     ();

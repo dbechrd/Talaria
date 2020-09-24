@@ -266,6 +266,8 @@ ta_vec3 vec3_rotate_quat        (ta_vec3 v, ta_vec4 q);
 ta_vec3 vec3_perp               (ta_vec3 v);
 
 // Vector4 & Quaternion
+extern const ta_vec4 VEC4_ZERO;
+
 extern const ta_vec4 QUAT_IDENT;
 
 void    vec4_print              (FILE *file, ta_vec4 v);
@@ -332,6 +334,7 @@ ta_mat4 mat4_rotate_quat        (ta_vec4 q);
 ta_vec3 mat4_to_location        (const ta_mat4 *m);
 ta_vec4 mat4_to_quaternion      (const ta_mat4 *m);
 ta_mat4 mat4_mul                (const ta_mat4 *a, const ta_mat4 *b);
+ta_vec4 mat4_mul_vec4           (const ta_mat4 *m, ta_vec4 v);
 float   mat4_det                (const ta_mat4 *mat);
 int     mat4_inverse            (const ta_mat4 *m, ta_mat4 *result);
 ta_mat4 mat4_perspective        (float fov_deg, float aspect, float znear, float zfar);

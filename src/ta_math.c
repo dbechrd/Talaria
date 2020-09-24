@@ -26,6 +26,8 @@ const ta_vec3 VEC3_MIN = { FLT_MIN, FLT_MIN, FLT_MIN };
 const ta_vec3 VEC3_MAX = { FLT_MAX, FLT_MAX, FLT_MAX };
 const ta_vec3 VEC3_EPSILON = { TA_EPSILON, TA_EPSILON, TA_EPSILON };
 
+const ta_vec4 VEC4_ZERO = { 0.0f, 0.0f, 0.0f, 0.0f };
+
 const ta_vec4 QUAT_IDENT = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 const ta_mat3 MAT3_IDENT = {
@@ -972,6 +974,37 @@ ta_mat4 mat4_mul(const ta_mat4 *a, const ta_mat4 *b)
             }
         }
     }
+    return result;
+}
+ta_vec4 mat4_mul_vec4(const ta_mat4 *m, ta_vec4 v)
+{
+    ta_vec4 result;
+    result.x =
+        m->data.f[0][0] * v.x +
+        m->data.f[0][1] * v.y +
+        m->data.f[0][2] * v.z +
+        m->data.f[0][3] * v.w;
+    result.y =
+        m->data.f[1][0] * v.x +
+        m->data.f[1][1] * v.y +
+        m->data.f[1][2] * v.z +
+        m->data.f[1][3] * v.w;
+    result.z =
+        m->data.f[2][0] * v.x +
+        m->data.f[2][1] * v.y +
+        m->data.f[2][2] * v.z +
+        m->data.f[2][3] * v.w;
+    result.z =
+        m->data.f[3][0] * v.x +
+        m->data.f[3][1] * v.y +
+        m->data.f[3][2] * v.z +
+        m->data.f[3][3] * v.w;
+
+    if (fabsf(result.x) < TA_EPSILON) result.x = 0.0f;
+    if (fabsf(result.y) < TA_EPSILON) result.y = 0.0f;
+    if (fabsf(result.z) < TA_EPSILON) result.z = 0.0f;
+    if (fabsf(result.w) < TA_EPSILON) result.w = 0.0f;
+
     return result;
 }
 float mat4_det(const ta_mat4 *mat)

@@ -60,8 +60,9 @@ typedef struct ta_camera {
     ta_vec3  up;                      // camera up vector    (world space)
     ta_vec3  front;                   // camera front vector (world space)
     ta_vec3  right;                   // camera right vector (world space)
-    ta_mat4  frustum;                 // look_at without the translation
+    ta_mat4  frustum;                 // look_at without the translation (for skybox)
     ta_mat4  look_at;                 // look_at matrix
+    ta_vec3  screen_to_world;         // used for converting screen coords to world coords
     ta_mat4  projection;              // projection matrix (e.g. ortho, perspective, perspective_inf)
     ta_vec3  move_buffer;             // translation net delta buffer for current frame
     bool     dirty;                   // true if view matrix (look_at) needs to be recalculated

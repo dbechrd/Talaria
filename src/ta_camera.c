@@ -209,6 +209,14 @@ void ta_camera_update(ta_camera *camera, float dt)
         camera->frustum = mat4_frustum(camera->front, camera->right, camera->up);
         camera->look_at = mat4_lookat_fru(transform->xform.position, camera->front, camera->right, camera->up);
         transform->xform.orientation = quat_from_vec_vec(VEC3_NZ, camera->front);
+
+        float half_w = WINDOW_W / 2.0f;
+        float half_h = WINDOW_H / 2.0f;
+        float half_h_tan = half_h / tanf(DEG_TO_RADF(camera->fov) * 0.5f);
+        camera->screen_to_world.x = -half_w * camera->right.x + half_h * camera->up.x + half_h_tan * camera->front.x;
+        camera->screen_to_world.y = -half_w * camera->right.y + half_h * camera->up.y + half_h_tan * camera->front.y;
+        camera->screen_to_world.z = -half_w * camera->right.z + half_h * camera->up.z + half_h_tan * camera->front.z;
+
         camera->dirty = false;
     }
 }

@@ -95,6 +95,8 @@ typedef struct ta_ui_textbox_vec4_state {
 void ta_ui_init                     (struct ta_font *font, ta_ui_textbox_state **textbox_editing, ta_ui_textbox_state **textbox_dragging);
 void ta_ui_set_font                 (struct ta_font *font);
 void ta_ui_set_cursor               (ta_cursor_type cursor_type);
+void ta_ui_flags_reset              ();  // call this at the beginning of every game frame
+bool ta_ui_flag_hovered             ();  // returns true if anything was hovered since last flag reset
 
 // Styles
 void ta_ui_next_margin_left         (int margin);
