@@ -187,24 +187,27 @@ static void editor_gizmo_end(bool keep_changes)
     editor.gizmo_start_xform.orientation = QUAT_IDENT;
 #endif
 }
+void ta_editor_select_ray(ta_ray *ray)
+{
+    DLB_ASSERT(ray);
+    if (ta_mouse_captured()) {
+        *ray = ta_game_camera_ray();
+    } else {
+        *ray = ta_game_mouse_ray();
+    }
+}
 static void editor_command_select()
 {
-    //DLB_ASSERT(!editor.gizmo && "Wtf.. how did you select something *while* using a gizmo??");
-    if (editor.gizmo) return;
+    DLB_ASSERT(!editor.gizmo && "Wtf.. how did you select something *while* using a gizmo??");
+    //if (editor.gizmo) return;
 
-    if (!ta_mouse_captured() && !tg_game_deferred_select) {
-        // NOTE: Defer selection to end of frame (after UI is drawn so it can take priority)
-        tg_game_deferred_select = true;
+    // Don't do selection while UI hovered
+    if (ta_ui_flag_hovered()) {
         return;
     }
 
-    ta_ray ray;
-    if (tg_game_deferred_select) {
-        ray = ta_game_mouse_ray();
-        tg_game_deferred_select = false;
-    } else {
-        ray = ta_game_camera_ray();
-    }
+    ta_ray ray = { 0 };
+    ta_editor_select_ray(&ray);
 
     const char *selected_entity = 0;
     ta_editor_selected_entity(&selected_entity);
@@ -506,7 +509,8 @@ void ta_editor_update_widgets()
             editor.gizmos.transform.hitbox3d.extents.z = radius;
 
             // TODO: Would ray_vs_line_closest() be a better way to check this?
-            ta_ray ray = ta_game_camera_ray();
+            ta_ray ray = { 0 };
+            ta_editor_select_ray(&ray);
             ta_plane plane = { 0 };
             plane.center = e_transform->xform_world.position;
 
@@ -656,157 +660,164 @@ void ta_editor_draw_world()
 {
     const char *selected_entity = 0;
     ta_editor_selected_entity(&selected_entity);
-    if (selected_entity) {
-        ta_camera *camera = ta_game_camera();
+    if (!selected_entity) {
+        return;
+    }
+
+    ta_camera *camera = ta_game_camera();
 
 #if 1
-        // Render selected entity as yellow wireframes
-        ta_model *e_model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
-        if (e_model) {
-            ta_shader *shader = ta_scene_find(&editor.scene, RES_SHADER, SYM(editor.shader_editor_select));
-            ta_rgba wire_color = TA_COLOR_YELLOW;
-            double seconds = ta_timer_elapsed_sec();
-            double sine = sin(seconds * 4.0) * 0.5 + 0.5;
-            wire_color.a = (float)(0.25 * (sine * sine) + 0.02);
-            if (camera->debug_no_mesh) {
-                wire_color.a = 0.05f;
-            }
-            ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
-
-            glClear(GL_DEPTH_BUFFER_BIT);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            ta_model_render_shader(e_model, camera, shader);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // Render selected entity as yellow wireframes
+    ta_model *e_model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
+    if (e_model) {
+        ta_shader *shader = ta_scene_find(&editor.scene, RES_SHADER, SYM(editor.shader_editor_select));
+        ta_rgba wire_color = TA_COLOR_YELLOW;
+        double seconds = ta_timer_elapsed_sec();
+        double sine = sin(seconds * 4.0) * 0.5 + 0.5;
+        wire_color.a = (float)(0.25 * (sine * sine) + 0.02);
+        if (camera->debug_no_mesh) {
+            wire_color.a = 0.05f;
         }
-#endif
-
-        // Render active widget's gizmos
-        ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
-        ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
-        float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
-        float scale = MAX(TA_EDITOR_WIDGET_MIN_SCALE, dist * 0.2f);
-
-        switch (editor.widget) {
-            case WIDGET_TRANSLATE: {
-                //--------------------------------------------------------
-                // Render passive gizmo details
-                //--------------------------------------------------------
-                static const ta_rgba gizmo_color[GIZMO_COUNT][2] = {
-                    // Passive gizmo colors
-                    [GIZMO_TRANSLATE_X]    [0] = { 0.7f, 0.0f, 0.0f, 1.0f },  // DARK_RED
-                    [GIZMO_TRANSLATE_Y]    [0] = { 0.0f, 0.7f, 0.0f, 1.0f },  // DARK_GREEN
-                    [GIZMO_TRANSLATE_Z]    [0] = { 0.0f, 0.0f, 0.7f, 1.0f },  // DARK_BLUE
-                    [GIZMO_TRANSLATE_YZ]   [0] = { 0.7f, 0.0f, 0.0f, 0.7f },  // DARK_RED_ALPHA
-                    [GIZMO_TRANSLATE_XZ]   [0] = { 0.0f, 0.7f, 0.0f, 0.7f },  // DARK_GREEN_ALPHA
-                    [GIZMO_TRANSLATE_XY]   [0] = { 0.0f, 0.0f, 0.7f, 0.7f },  // DARK_BLUE_ALPHA
-                    [GIZMO_TRANSLATE_VIEW] [0] = { 0.6f, 0.6f, 0.6f, 1.0f },  // TA_COLOR_GRAY6
-                    // Active gizmo colors (highlights)
-                    [GIZMO_TRANSLATE_X]    [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED,
-                    [GIZMO_TRANSLATE_Y]    [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN,
-                    [GIZMO_TRANSLATE_Z]    [1] = { 0.0f, 0.0f, 1.0f, 1.0f },  // TA_COLOR_BLUE,
-                    [GIZMO_TRANSLATE_YZ]   [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED,
-                    [GIZMO_TRANSLATE_XZ]   [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN,
-                    [GIZMO_TRANSLATE_XY]   [1] = { 0.0f, 0.0f, 1.0f, 1.0f },  // TA_COLOR_BLUE,
-                    [GIZMO_TRANSLATE_VIEW] [1] = { 1.0f, 1.0f, 1.0f, 1.0f },  // TA_COLOR_WHITE
-                };
-
-                // Highlight active gizmo, or nearest gizmo if none active
-#define GIZMO_COLOR(gzmo) (gizmo_color[gzmo][editor.gizmo == gzmo || (!editor.gizmo && nearest_gizmo == gzmo)])
-                {
-                    ta_ray fwd = ta_game_camera_ray();
-                    editor_gizmo nearest_gizmo = editor_gizmo_nearest(&fwd);
-
-                    // 1D handles
-                    ta_primitive_push_axes_arrow_color(0, e_transform->xform_world.position, QUAT_IDENT, scale,
-                        GIZMO_COLOR(GIZMO_TRANSLATE_X), GIZMO_COLOR(GIZMO_TRANSLATE_Y), GIZMO_COLOR(GIZMO_TRANSLATE_Z));
-
-                    // 2D handles
-                    ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[0], GIZMO_COLOR(GIZMO_TRANSLATE_YZ));
-                    ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[1], GIZMO_COLOR(GIZMO_TRANSLATE_XZ));
-                    ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[2], GIZMO_COLOR(GIZMO_TRANSLATE_XY));
-
-                    // 3D handle
-                    ta_primitive_push_aabb(0, editor.gizmos.transform.hitbox3d, GIZMO_COLOR(GIZMO_TRANSLATE_VIEW));
-                }
-#undef GIZMO_COLOR
-
-                // Starting xform
-                ta_primitive_push_axes_arrow(0, editor.gizmo_start_xform.position, editor.gizmo_start_xform.orientation, 0.5f);
-
-                //--------------------------------------------------------
-                // Render active gizmo details
-                //--------------------------------------------------------
-                ta_line_3d x_axis = { 0 };
-                x_axis.p0 = e_transform->xform_world.position;
-                x_axis.p1 = e_transform->xform_world.position;
-                x_axis.p0.x = cam_trans->xform_world.position.x - 10000.0f;
-                x_axis.p1.x = cam_trans->xform_world.position.x + 10000.0f;
-
-                ta_line_3d y_axis = { 0 };
-                y_axis.p0 = e_transform->xform_world.position;
-                y_axis.p1 = e_transform->xform_world.position;
-                y_axis.p0.y = cam_trans->xform_world.position.y - 10000.0f;
-                y_axis.p1.y = cam_trans->xform_world.position.y + 10000.0f;
-
-                ta_line_3d z_axis = { 0 };
-                z_axis.p0 = e_transform->xform_world.position;
-                z_axis.p1 = e_transform->xform_world.position;
-                z_axis.p0.z = cam_trans->xform_world.position.z - 10000.0f;
-                z_axis.p1.z = cam_trans->xform_world.position.z + 10000.0f;
-
-                switch (editor.gizmo) {
-                    case GIZMO_TRANSLATE_X: {
-                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
-                        break;
-                    } case GIZMO_TRANSLATE_Y: {
-                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
-                        break;
-                    } case GIZMO_TRANSLATE_Z: {
-                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                        ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
-                        break;
-                    } case GIZMO_TRANSLATE_YZ: {
-                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                        ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[0], TA_COLOR_RED);
-                        break;
-                    } case GIZMO_TRANSLATE_XZ: {
-                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                        ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[1], TA_COLOR_GREEN);
-                        break;
-                    } case GIZMO_TRANSLATE_XY: {
-                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                        ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[2], TA_COLOR_BLUE);
-                        break;
-                    } case GIZMO_TRANSLATE_VIEW: {
-                        ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
-                        ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
-                        ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
-                        break;
-                    } default: {
-                        break;
-                    }
-                }
-                break;
-            } case WIDGET_ROTATE: {
-                ta_sphere sphere = { 0 };
-                sphere.center = e_transform->xform_world.position;
-                sphere.radius = scale;
-                ta_primitive_push_rgb_sphere(0, sphere);
-                break;
-            } case WIDGET_SCALE: {
-                ta_primitive_push_axes_cube(0, e_transform->xform_world.position, scale);
-                break;
-            }
-        }
+        ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
 
         glClear(GL_DEPTH_BUFFER_BIT);
-        ta_primitive_render(true, false);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        ta_model_render_shader(e_model, camera, shader);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
+#endif
+
+    // Render active widget's gizmos
+    ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
+    float scale = MAX(TA_EDITOR_WIDGET_MIN_SCALE, dist * 0.2f);
+
+    switch (editor.widget) {
+        case WIDGET_TRANSLATE: {
+            //--------------------------------------------------------
+            // Render passive gizmo details
+            //--------------------------------------------------------
+            static const ta_rgba gizmo_color[GIZMO_COUNT][2] = {
+                // Passive gizmo colors
+                [GIZMO_TRANSLATE_X]    [0] = { 0.7f, 0.0f, 0.0f, 1.0f },  // DARK_RED
+                [GIZMO_TRANSLATE_Y]    [0] = { 0.0f, 0.7f, 0.0f, 1.0f },  // DARK_GREEN
+                [GIZMO_TRANSLATE_Z]    [0] = { 0.0f, 0.0f, 0.7f, 1.0f },  // DARK_BLUE
+                [GIZMO_TRANSLATE_YZ]   [0] = { 0.7f, 0.0f, 0.0f, 0.7f },  // DARK_RED_ALPHA
+                [GIZMO_TRANSLATE_XZ]   [0] = { 0.0f, 0.7f, 0.0f, 0.7f },  // DARK_GREEN_ALPHA
+                [GIZMO_TRANSLATE_XY]   [0] = { 0.0f, 0.0f, 0.7f, 0.7f },  // DARK_BLUE_ALPHA
+                [GIZMO_TRANSLATE_VIEW] [0] = { 0.6f, 0.6f, 0.6f, 1.0f },  // TA_COLOR_GRAY6
+                // Active gizmo colors (highlights)
+                [GIZMO_TRANSLATE_X]    [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED,
+                [GIZMO_TRANSLATE_Y]    [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN,
+                [GIZMO_TRANSLATE_Z]    [1] = { 0.0f, 0.0f, 1.0f, 1.0f },  // TA_COLOR_BLUE,
+                [GIZMO_TRANSLATE_YZ]   [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED,
+                [GIZMO_TRANSLATE_XZ]   [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN,
+                [GIZMO_TRANSLATE_XY]   [1] = { 0.0f, 0.0f, 1.0f, 1.0f },  // TA_COLOR_BLUE,
+                [GIZMO_TRANSLATE_VIEW] [1] = { 1.0f, 1.0f, 1.0f, 1.0f },  // TA_COLOR_WHITE
+            };
+
+            // Highlight active gizmo, or nearest gizmo if none active
+#define GIZMO_COLOR(gzmo) (gizmo_color[gzmo][editor.gizmo == gzmo || (!editor.gizmo && nearest_gizmo == gzmo)])
+            {
+                ta_ray ray = { 0 };
+                ta_editor_select_ray(&ray);
+                editor_gizmo nearest_gizmo = GIZMO_NONE;
+                if (!ta_ui_flag_hovered()) {
+                    // Don't hightlight gizmos while UI hovered
+                    nearest_gizmo = editor_gizmo_nearest(&ray);
+                }
+
+                // 1D handles
+                ta_primitive_push_axes_arrow_color(0, e_transform->xform_world.position, QUAT_IDENT, scale,
+                    GIZMO_COLOR(GIZMO_TRANSLATE_X), GIZMO_COLOR(GIZMO_TRANSLATE_Y), GIZMO_COLOR(GIZMO_TRANSLATE_Z));
+
+                // 2D handles
+                ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[0], GIZMO_COLOR(GIZMO_TRANSLATE_YZ));
+                ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[1], GIZMO_COLOR(GIZMO_TRANSLATE_XZ));
+                ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[2], GIZMO_COLOR(GIZMO_TRANSLATE_XY));
+
+                // 3D handle
+                ta_primitive_push_aabb(0, editor.gizmos.transform.hitbox3d, GIZMO_COLOR(GIZMO_TRANSLATE_VIEW));
+            }
+#undef GIZMO_COLOR
+
+            // Starting xform
+            ta_primitive_push_axes_arrow(0, editor.gizmo_start_xform.position, editor.gizmo_start_xform.orientation, 0.5f);
+
+            //--------------------------------------------------------
+            // Render active gizmo details
+            //--------------------------------------------------------
+            ta_line_3d x_axis = { 0 };
+            x_axis.p0 = e_transform->xform_world.position;
+            x_axis.p1 = e_transform->xform_world.position;
+            x_axis.p0.x = cam_trans->xform_world.position.x - 10000.0f;
+            x_axis.p1.x = cam_trans->xform_world.position.x + 10000.0f;
+
+            ta_line_3d y_axis = { 0 };
+            y_axis.p0 = e_transform->xform_world.position;
+            y_axis.p1 = e_transform->xform_world.position;
+            y_axis.p0.y = cam_trans->xform_world.position.y - 10000.0f;
+            y_axis.p1.y = cam_trans->xform_world.position.y + 10000.0f;
+
+            ta_line_3d z_axis = { 0 };
+            z_axis.p0 = e_transform->xform_world.position;
+            z_axis.p1 = e_transform->xform_world.position;
+            z_axis.p0.z = cam_trans->xform_world.position.z - 10000.0f;
+            z_axis.p1.z = cam_trans->xform_world.position.z + 10000.0f;
+
+            switch (editor.gizmo) {
+                case GIZMO_TRANSLATE_X: {
+                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_X, scale), TA_COLOR_RED);
+                    break;
+                } case GIZMO_TRANSLATE_Y: {
+                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Y, scale), TA_COLOR_GREEN);
+                    break;
+                } case GIZMO_TRANSLATE_Z: {
+                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                    ta_primitive_push_arrow(0, e_transform->xform_world.position, vec3_scalef(VEC3_Z, scale), TA_COLOR_BLUE);
+                    break;
+                } case GIZMO_TRANSLATE_YZ: {
+                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                    ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[0], TA_COLOR_RED);
+                    break;
+                } case GIZMO_TRANSLATE_XZ: {
+                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                    ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[1], TA_COLOR_GREEN);
+                    break;
+                } case GIZMO_TRANSLATE_XY: {
+                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                    ta_primitive_push_quad(0, editor.gizmos.transform.hitbox2d[2], TA_COLOR_BLUE);
+                    break;
+                } case GIZMO_TRANSLATE_VIEW: {
+                    ta_primitive_push_line_3d(0, x_axis, TA_COLOR_RED, TA_COLOR_RED);
+                    ta_primitive_push_line_3d(0, y_axis, TA_COLOR_GREEN, TA_COLOR_GREEN);
+                    ta_primitive_push_line_3d(0, z_axis, TA_COLOR_BLUE, TA_COLOR_BLUE);
+                    break;
+                } default: {
+                    break;
+                }
+            }
+            break;
+        } case WIDGET_ROTATE: {
+            ta_sphere sphere = { 0 };
+            sphere.center = e_transform->xform_world.position;
+            sphere.radius = scale;
+            ta_primitive_push_rgb_sphere(0, sphere);
+            break;
+        } case WIDGET_SCALE: {
+            ta_primitive_push_axes_cube(0, e_transform->xform_world.position, scale);
+            break;
+        }
+    }
+
+    glClear(GL_DEPTH_BUFFER_BIT);
+    ta_primitive_render(true, false);
 }
 
 static void ui_scene_panel()

@@ -59,7 +59,6 @@ const char *tg_e_player_one;
 const char *tg_e_active_camera;
 
 ta_game tg_game;
-bool tg_game_deferred_select = false;
 
 const char *game_state_str(ta_game_state state)
 {
@@ -192,7 +191,7 @@ void ta_game_init()
     ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_COLLIDERS , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_3);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_NAMETAGS  , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_4);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_DEBUG_TOGGLE_NORMALS   , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_5);
-    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SELECT          ,                                     TA_STATE_EDITOR, TA_KEYBIND_HOLD,   SDL_SCANCODE_MOUSE_LEFT);
+    ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SELECT          ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_MOUSE_LEFT);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SELECT_RELEASE  ,                                     TA_STATE_EDITOR, TA_KEYBIND_RELEASE, SDL_SCANCODE_MOUSE_LEFT);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_CANCEL          ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_ESCAPE);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_CLOSE           ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_GRAVE);
@@ -1125,7 +1124,6 @@ void ta_game_loop()
         ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
 
-        ta_ui_flags_reset();
         game_hotload_textures();
 
         ta_camera *active_camera = ta_game_camera();
@@ -1413,11 +1411,16 @@ void ta_game_loop()
         if (active_camera->debug_wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
-        //----------------------------------------------------------------------
 
+        //----------------------------------------------------------------------
+        // Render skybox
+        //----------------------------------------------------------------------
         game_render_skybox();
         ta_primitive_render(true, false);
 
+        //----------------------------------------------------------------------
+        // Render various debug things when editor is active
+        //----------------------------------------------------------------------
         if (tg_game.state == TA_STATE_EDITOR) {
             // Debug render cameras as RGB spheres
             dlb_vec_each(ta_camera *, camera, cameras) {
@@ -1475,71 +1478,153 @@ void ta_game_loop()
             ta_primitive_render(true, false);
         }
 
+        //----------------------------------------------------------------------
+        // Debug rendering
+        //----------------------------------------------------------------------
         if (active_camera->debug_colliders) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug colliders pass...\n");
             game_render_colliders_debug();
         }
-
-        //-----------------
-#if 0
-        static ta_ray ray = { 0 };
-        if (vec3_zero(ray.origin)) {
-            //ray.origin.x = 0.59f;
-            //ray.origin.y = 0.36f;
-            //ray.origin.z = 0.46f;
-            ray.origin.y = 2.0f;
-            ray.origin.z = 1.2f;
-            ray.direction.x = 0.2f;
-            ray.direction.y = 0.2f;
-            ray.direction.z = -1.0f;
-            ray.direction = vec3_normalize(ray.direction);
-        }
-        static ta_quad quad = { 0 };
-        if (vec4_zero(quad.orientation)) {
-            quad.center.y = 2.0f;
-            quad.extents = (ta_vec2){ 1.5f, 0.5f };
-            quad.orientation = QUAT_IDENT;
-        }
-        ta_primitive_push_arrow(0, ray.origin, ray.direction, TA_COLOR_RED);
-        float ray_t = 0.0f;
-        if (ta_ray_v_quad(&ray, &quad, &ray_t)) {
-            ta_primitive_push_quad(0, quad, TA_COLOR_DARK_RED);
-            ta_sphere contact = { 0 };
-            contact.center = vec3_add(ray.origin, vec3_scalef(ray.direction, ray_t));
-            contact.radius = 0.05f;
-            ta_primitive_push_sphere(0, contact, TA_COLOR_YELLOW);
-        } else {
-            ta_primitive_push_quad(0, quad, TA_COLOR_DARK_REDA);
-        }
-        ta_primitive_render(true, false);
-#endif
-        //-----------------
-
-        //----------------------------------------------------------------------
-        // Editor UI (world)
-        //----------------------------------------------------------------------
-        // Grid and world axes
-        //ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
-        ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.3f);
-        ta_primitive_render(true, false);
-
-        if (tg_game.state == TA_STATE_EDITOR) {
-            ta_log_write(&tg_debug_log, SRC_GAME, " Editor world UI pass...\n");
-            ta_editor_update_widgets();
-            ta_editor_draw_world();
-        }
-
         if (active_camera->debug_nametags) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug nametags pass...\n");
             game_render_nametags_debug(active_camera);
         }
 
         //----------------------------------------------------------------------
+        // Editor UI (world)
+        //----------------------------------------------------------------------
+        if (tg_game.state == TA_STATE_EDITOR) {
+            // Grid and world axes
+            //ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
+            ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.3f);
+
+            // Render cameras as OBBs with forward arrows
+            dlb_vec_each(ta_camera *, camera, cameras) {
+                if (camera->name != tg_e_active_camera) {
+                    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+                    ta_obb obb = { 0 };
+                    obb.center = cam_trans->xform_world.position;
+                    obb.extents = (ta_vec3){ 0.2f, 0.2f, 0.2f };
+                    obb.orientation = cam_trans->xform_world.orientation;
+                    ta_primitive_push_obb(0, obb, TA_COLOR_WHITE);
+                    ta_vec3 dir = vec3_rotate_quat(VEC3_NZ, obb.orientation);
+                    ta_primitive_push_arrow(0, obb.center, dir, TA_COLOR_WHITE);
+
+                    // TODO: Camera icon on billboarded quad in world space
+                    //ta_primitive_push_billboard();
+                }
+            }
+
+            // Render lights as colored spheres
+            dlb_vec_each(ta_light *, light, lights) {
+                ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
+
+                ta_sphere light_pos = { 0 };
+                light_pos.center = transform->xform_world.position;
+                light_pos.radius = 0.2f;
+                ta_rgba color = { 0 };
+                if (light->enabled) {
+                    color.r = light->color.r;
+                    color.g = light->color.g;
+                    color.b = light->color.b;
+                } else {
+                    color.r = 0.5f;
+                    color.g = 0.5f;
+                    color.b = 0.5f;
+                }
+                ta_primitive_push_sphere(0, light_pos, color);
+
+                if (active_camera->debug_colliders) {
+                    ta_sphere light_aoe = { 0 };
+                    light_aoe.center = transform->xform_world.position;
+                    light_aoe.radius = 1.0;
+                    switch (light->type) {
+                        case TA_LIGHT_DIRECTIONAL:
+                            light_aoe.radius = light->data.directional.shadow_properties.zfar;
+                            break;
+                        case TA_LIGHT_POINT:
+                            light_aoe.radius = light->data.point.shadow_properties.zfar;
+                            break;
+                        case TA_LIGHT_SPOT:
+                            light_aoe.radius = light->data.spot.shadow_properties.zfar;
+                            break;
+                    }
+                    ta_primitive_push_sphere(0, light_aoe, color);
+                }
+            }
+            ta_primitive_render(true, false);
+
+            ta_log_write(&tg_debug_log, SRC_GAME, " Editor world UI pass...\n");
+            ta_editor_update_widgets();
+            ta_editor_draw_world();
+        }
+
+        //----------------------------------------------------------------------
         // Crosshair
         //----------------------------------------------------------------------
         glClear(GL_DEPTH_BUFFER_BIT);
-        ta_primitive_push_crosshair(0, 10, 2);
-        ta_primitive_render(true, true);
+        if (ta_mouse_captured()) {
+            ta_primitive_push_crosshair(0, 10, 2);
+            ta_primitive_render(true, true);
+        }
+
+#if 1
+        //----------------------------------------------------------------------
+        // Crazy bone debug viz; temporary
+        //----------------------------------------------------------------------
+        if (!ta_ui_flag_hovered()) {
+            ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &active_camera->projection);
+            ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &active_camera->look_at);
+            ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &active_camera->projection);
+
+            static ta_ui_panel_state bone_labels = { 0 };
+            if (ta_mouse_captured()) {
+                ta_ui_next_offset(WINDOW_W / 2, WINDOW_H / 2);
+            } else {
+                ta_ui_next_offset(ta_mouse_x(), ta_mouse_y() + 20);
+            }
+            ta_ui_next_pad(0, 0, 0, 0);
+            ta_ui_panel_begin(&bone_labels, TA_UI_AUTOSIZE);
+
+            dlb_vec_each(ta_transform *, transform, transforms) {
+                if (ta_game_component_try(transform->entity, RES_COMP_CAMERA)) {
+                    continue;
+                }
+
+                ta_vec3 pos = transform->xform_world.position;
+                ta_vec4 rot = transform->xform_world.orientation;
+                float axes_scale = 0.1f;
+
+                ta_sphere sphere = { 0 };
+                sphere.center = pos;
+                sphere.radius = axes_scale;
+                //ta_primitive_push_sphere(0, sphere, node->type == OGX_BONE_NODE ? TA_COLOR_CYAN : TA_COLOR_WHITE);
+
+                ta_ray ray = { 0 };
+                ta_editor_select_ray(&ray);
+                if (ta_ray_v_sphere(&ray, &sphere, 0)) {
+                    ta_ui_row_begin();
+                    ta_ui_label(SYM(transform->name), 0);
+                    axes_scale *= 2.0f;
+                }
+
+                ta_primitive_push_axes_arrow(0, pos, rot, axes_scale);
+            }
+
+            ta_ui_panel_end();
+
+            ta_primitive_render(true, false);
+            ta_ui_render();
+        }
+#endif
+
+        //----------------------------------------------------------------------
+        // Transition boundary from world rendering to screen rendering
+        //----------------------------------------------------------------------
+        // NOTE: We have to do this after editor_draw_world because that method
+        // is using the last frame's hover flag to determine whether or not an
+        // uncaptured mouse can interact with the editor widgets.
+        ta_ui_flags_reset();
 
         //----------------------------------------------------------------------
         // Game HUD
@@ -1582,49 +1667,6 @@ void ta_game_loop()
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_ui_barchart_draw(&chart, 0, 0);
         ta_primitive_render(true, true);
-#endif
-
-#if 1
-        //----------------------------------------------------------------------
-        // Crazy bone debug viz; temporary
-        //----------------------------------------------------------------------
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &active_camera->projection);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &active_camera->look_at);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &active_camera->projection);
-
-        static ta_ui_panel_state bone_labels = { 0 };
-        ta_ui_next_offset(WINDOW_W / 2, WINDOW_H / 2);
-        ta_ui_next_pad(0, 0, 0, 0);
-        ta_ui_panel_begin(&bone_labels, TA_UI_AUTOSIZE);
-
-        dlb_vec_each(ta_transform *, transform, transforms) {
-            if (ta_game_component_try(transform->entity, RES_COMP_CAMERA)) {
-                continue;
-            }
-
-            ta_vec3 pos = transform->xform_world.position;
-            ta_vec4 rot = transform->xform_world.orientation;
-            float axes_scale = 0.1f;
-
-            ta_sphere sphere = { 0 };
-            sphere.center = pos;
-            sphere.radius = axes_scale;
-            //ta_primitive_push_sphere(0, sphere, node->type == OGX_BONE_NODE ? TA_COLOR_CYAN : TA_COLOR_WHITE);
-
-            ta_ray camera_ray = ta_game_camera_ray();
-            if (ta_ray_v_sphere(&camera_ray, &sphere, 0)) {
-                ta_ui_row_begin();
-                ta_ui_label(SYM(transform->name), 0);
-                axes_scale *= 2.0f;
-            }
-
-            ta_primitive_push_axes_arrow(0, pos, rot, axes_scale);
-        }
-
-        ta_ui_panel_end();
-
-        ta_primitive_render(true, false);
-        ta_ui_render();
 #endif
 
         //----------------------------------------------------------------------
@@ -1683,17 +1725,6 @@ void ta_game_loop()
         ta_ui_window_end();
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_ui_render();
-
-        //----------------------------------------------------------------------
-        // Post-editor events
-        //----------------------------------------------------------------------
-        if (tg_game_deferred_select) {
-            if (!ta_ui_flag_hovered()) {
-                editor_command_select();
-                ta_primitive_render(true, false);
-            }
-            tg_game_deferred_select = false;
-        }
 
         //----------------------------------------------------------------------
         // Audio

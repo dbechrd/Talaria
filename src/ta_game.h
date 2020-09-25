@@ -100,7 +100,6 @@ typedef struct ta_game {
 } ta_game;
 
 extern ta_game tg_game;
-extern bool tg_game_deferred_select;
 
 const char *ta_command_str(ta_command cmd);
 
