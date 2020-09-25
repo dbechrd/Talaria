@@ -29,6 +29,14 @@ void ta_mouse_init()
     //SDL_SetRelativeMouseMode(mouse.captured);
 }
 
+void ta_mouse_reset_frame()
+{
+    mouse.dx = 0;
+    mouse.dy = 0;
+    mouse.scroll_dx = 0;
+    mouse.scroll_dy = 0;
+}
+
 void ta_mouse_capture_set(bool capture)
 {
     if (mouse.dragging) return;
@@ -115,14 +123,6 @@ int ta_mouse_scroll_dy()
 void ta_mouse_move(int x, int y)
 {
     ta_window_set_cursor_pos(tg_window, x, y);
-}
-
-void ta_mouse_reset_relative()
-{
-    mouse.dx = 0;
-    mouse.dy = 0;
-    mouse.scroll_dx = 0;
-    mouse.scroll_dy = 0;
 }
 
 void ta_mouse_event(ta_event *event)

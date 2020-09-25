@@ -24,6 +24,9 @@ typedef enum ta_event_type {
     INPUT_EVENT_KEY_REPEAT,
     INPUT_EVENT_KEY_RELEASE,
     INPUT_EVENT_TEXT_INPUT,
+    INPUT_EVENT_DROP_BEGIN,
+    INPUT_EVENT_DROP_FILE,
+    INPUT_EVENT_DROP_END,
 
     // Game events
     GAME_EVENT_SHUTDOWN,
@@ -35,23 +38,23 @@ typedef enum ta_event_type {
     TA_EVENT_COUNT
 } ta_event_type;
 
-typedef struct ta_event_window_resize_event {
+typedef struct ta_event_window_resize {
     int width;
     int height;
-} ta_event_window_resize_event;
+} ta_event_window_resize;
 
-typedef struct ta_event_mouse_move_event {
+typedef struct ta_event_mouse_move {
     s32 x;
     s32 y;
     s32 dx;
     s32 dy;
-} ta_event_mouse_move_event;
+} ta_event_mouse_move;
 
-typedef struct ta_event_mouse_scroll_event {
+typedef struct ta_event_mouse_scroll {
     int x;
     int y;
     bool flipped;
-} ta_event_mouse_scroll_event;
+} ta_event_mouse_scroll;
 
 typedef struct ta_event_key_event {
     s32 key;
@@ -60,9 +63,13 @@ typedef struct ta_event_key_event {
     bool repeat;
 } ta_event_key_event;
 
-typedef struct ta_event_key_text_input_event {
+typedef struct ta_event_text_input {
     u32 codepoint;
-} ta_event_key_text_input_event;
+} ta_event_text_input;
+
+typedef struct ta_event_drop_file {
+    const char *path;  // NOTE: Could be a directory or a file, needs to be freed with SDL_free()
+} ta_event_drop_file;
 
 typedef struct ta_event_camera_rotate_event {
     float delta_pitch;
@@ -77,11 +84,12 @@ typedef struct ta_event {
     ta_event_type type;
     bool handled;
     union {
-        ta_event_window_resize_event  window_resize;
-        ta_event_mouse_move_event     mouse_move;
-        ta_event_mouse_scroll_event   mouse_scroll;
-        ta_event_key_event            key;
-        ta_event_key_text_input_event text_input;
+        ta_event_window_resize  window_resize;
+        ta_event_mouse_move     mouse_move;
+        ta_event_mouse_scroll   mouse_scroll;
+        ta_event_key_event      key_event;
+        ta_event_text_input     text_input;
+        ta_event_drop_file      drop_file;
 
         // TODO: Move game-specific events out of this struct?
         ta_event_camera_rotate_event  camera_rotate;

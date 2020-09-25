@@ -23,13 +23,13 @@ typedef struct ta_key_state {
     const struct ta_keybind *lock;  // pointer to keybind currently consuming this key, if any
 } ta_key_state;
 
+// Reset key state changed flags
+void ta_key_reset_frame   ();
+
 // Query key states
 bool ta_key_down          (ta_key key);
 bool ta_key_pressed       (ta_key key);
 bool ta_key_released      (ta_key key);
-
-// Reset key state changed flags
-void ta_key_reset_changed ();
 
 // Mutexes for keybind handling
 bool ta_key_available     (const struct ta_keybind *keybind, ta_key key);

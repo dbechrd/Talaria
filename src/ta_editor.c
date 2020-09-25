@@ -23,6 +23,7 @@
 #include "ta_timer.h"
 #include "ta_ui.h"
 #include "ta_window.h"
+#include "ta_math.h"
 #include "dlb/dlb_vector.h"
 #include <float.h>
 
@@ -76,6 +77,7 @@ typedef struct ta_editor {
     const char          *selected_entity;
     const char          *status_msg;
     ta_game_state       prev_state;
+    const char          **dropped_files;  // vector of files dropped onto window this frame; they need to be SDL_free()'d
 } ta_editor;
 ta_editor editor;
 
@@ -90,6 +92,13 @@ void ta_editor_init()
     ta_ui_init(font, &editor.textbox_editing, &editor.textbox_dragging);
 
     editor.widget = WIDGET_TRANSLATE;
+}
+void ta_editor_reset_frame()
+{
+    dlb_vec_each(const char **, file, editor.dropped_files) {
+        SDL_free((void *)*file);
+    }
+    dlb_vec_free(editor.dropped_files);
 }
 void ta_editor_select_entity(const char *entity)
 {
@@ -385,7 +394,7 @@ void ta_editor_textbox_event(ta_event *event)
             // TODO: Use this event, which has a repeat flag, to handle textbox keybinds like backspace/arrow keys to
             // ensure we're respecting the user's OS key delay/repeat settings.
             //event->data.key.repeat;
-            switch (event->data.key.scancode) {
+            switch (event->data.key_event.scancode) {
                 case SDL_SCANCODE_RIGHT: {
                     textbox_command_cursor_right();
                     break;
@@ -399,14 +408,14 @@ void ta_editor_textbox_event(ta_event *event)
                     textbox_command_cursor_up();
                     break;
                 } case SDL_SCANCODE_HOME: {
-                    if (event->data.key.mods & KMOD_SHIFT) {
+                    if (event->data.key_event.mods & KMOD_SHIFT) {
                         textbox_command_cursor_bof();
                     } else {
                         textbox_command_cursor_bol();
                     }
                     break;
                 } case SDL_SCANCODE_END: {
-                    if (event->data.key.mods & KMOD_SHIFT) {
+                    if (event->data.key_event.mods & KMOD_SHIFT) {
                         textbox_command_cursor_eof();
                     } else {
                         textbox_command_cursor_eol();
@@ -435,6 +444,13 @@ void ta_editor_textbox_event(ta_event *event)
             break;
         } case INPUT_EVENT_KEY_RELEASE: {
             // Consume all unhandled keystrokes when text editor is active
+            event->handled = true;
+            break;
+        } case INPUT_EVENT_DROP_FILE: {
+            size_t path_len = strlen(event->data.drop_file.path);
+            ta_ui_textbox_set_text(editor.textbox_editing, event->data.drop_file.path, path_len);
+            //dlb_vec_push(editor.dropped_files, event->data.drop_file.path);
+            SDL_free((void *)event->data.drop_file.path);
             event->handled = true;
             break;
         } default: {

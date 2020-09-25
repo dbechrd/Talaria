@@ -1477,6 +1477,12 @@ void ta_ui_textbox_cancel(ta_ui_textbox_state *textbox)
     DLB_ASSERT(textbox);
     textbox_cancel(textbox);
 }
+void ta_ui_textbox_set_text(ta_ui_textbox_state *textbox, const char *text, size_t text_len)
+{
+    DLB_ASSERT(textbox);
+    textbox_set_text(textbox, text, text_len);
+}
+
 void ta_ui_tooltip_begin(const char *name)
 {
     UNUSED(name);

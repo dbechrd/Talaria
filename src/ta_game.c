@@ -1568,54 +1568,52 @@ void ta_game_loop()
             ta_primitive_render(true, true);
         }
 
-#if 1
+#if 0
         //----------------------------------------------------------------------
         // Crazy bone debug viz; temporary
         //----------------------------------------------------------------------
-        if (!ta_ui_flag_hovered()) {
-            ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &active_camera->projection);
-            ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &active_camera->look_at);
-            ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &active_camera->projection);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &active_camera->projection);
+        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &active_camera->look_at);
+        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &active_camera->projection);
 
-            static ta_ui_panel_state bone_labels = { 0 };
-            if (ta_mouse_captured()) {
-                ta_ui_next_offset(WINDOW_W / 2, WINDOW_H / 2);
-            } else {
-                ta_ui_next_offset(ta_mouse_x(), ta_mouse_y() + 20);
-            }
-            ta_ui_next_pad(0, 0, 0, 0);
-            ta_ui_panel_begin(&bone_labels, TA_UI_AUTOSIZE);
-
-            dlb_vec_each(ta_transform *, transform, transforms) {
-                if (ta_game_component_try(transform->entity, RES_COMP_CAMERA)) {
-                    continue;
-                }
-
-                ta_vec3 pos = transform->xform_world.position;
-                ta_vec4 rot = transform->xform_world.orientation;
-                float axes_scale = 0.1f;
-
-                ta_sphere sphere = { 0 };
-                sphere.center = pos;
-                sphere.radius = axes_scale;
-                //ta_primitive_push_sphere(0, sphere, node->type == OGX_BONE_NODE ? TA_COLOR_CYAN : TA_COLOR_WHITE);
-
-                ta_ray ray = { 0 };
-                ta_editor_select_ray(&ray);
-                if (ta_ray_v_sphere(&ray, &sphere, 0)) {
-                    ta_ui_row_begin();
-                    ta_ui_label(SYM(transform->name), 0);
-                    axes_scale *= 2.0f;
-                }
-
-                ta_primitive_push_axes_arrow(0, pos, rot, axes_scale);
-            }
-
-            ta_ui_panel_end();
-
-            ta_primitive_render(true, false);
-            ta_ui_render();
+        static ta_ui_panel_state bone_labels = { 0 };
+        if (ta_mouse_captured()) {
+            ta_ui_next_offset(WINDOW_W / 2, WINDOW_H / 2);
+        } else {
+            ta_ui_next_offset(ta_mouse_x(), ta_mouse_y() + 20);
         }
+        ta_ui_next_pad(0, 0, 0, 0);
+        ta_ui_panel_begin(&bone_labels, TA_UI_AUTOSIZE);
+
+        dlb_vec_each(ta_transform *, transform, transforms) {
+            if (ta_game_component_try(transform->entity, RES_COMP_CAMERA)) {
+                continue;
+            }
+
+            ta_vec3 pos = transform->xform_world.position;
+            ta_vec4 rot = transform->xform_world.orientation;
+            float axes_scale = 0.1f;
+
+            ta_sphere sphere = { 0 };
+            sphere.center = pos;
+            sphere.radius = axes_scale;
+            //ta_primitive_push_sphere(0, sphere, node->type == OGX_BONE_NODE ? TA_COLOR_CYAN : TA_COLOR_WHITE);
+
+            ta_ray ray = { 0 };
+            ta_editor_select_ray(&ray);
+            if (!ta_ui_flag_hovered() && ta_ray_v_sphere(&ray, &sphere, 0)) {
+                ta_ui_row_begin();
+                ta_ui_label(SYM(transform->name), 0);
+                axes_scale *= 2.0f;
+            }
+
+            ta_primitive_push_axes_arrow(0, pos, rot, axes_scale);
+        }
+
+        ta_ui_panel_end();
+
+        ta_primitive_render(true, false);
+        ta_ui_render();
 #endif
 
         //----------------------------------------------------------------------
@@ -2086,13 +2084,12 @@ void ta_game_update_keybinds()
 }
 void ta_game_event(ta_event *event)
 {
-    bool handled = true;
-
     switch (event->type) {
         case WINDOW_EVENT_RESIZE: {
             // TODO: Handle this in ta_window_event
             ta_window_set_size(tg_window, event->data.window_resize.width, event->data.window_resize.height);
             ta_game_window_resize();
+            event->handled = true;
             break;
         } case INPUT_EVENT_MOUSE_MOVE: {
             if (ta_mouse_captured()) {
@@ -2107,10 +2104,17 @@ void ta_game_event(ta_event *event)
                         (float)-event->data.mouse_move.dy;
                 }
                 ta_event_push(&cam_rotate_evt);
+                event->handled = true;
             }
+            break;
+        } case INPUT_EVENT_DROP_FILE: {
+            printf("dropfile] file: %s\n", event->data.drop_file.path);
+            SDL_free((void *)event->data.drop_file.path);
+            event->handled = true;
             break;
         } case GAME_EVENT_SHUTDOWN: {
             game_command_shutdown();
+            event->handled = true;
             break;
         } case GAME_EVENT_CAMERA_ROTATE: {
             ta_camera *camera = ta_game_camera();
@@ -2121,6 +2125,7 @@ void ta_game_event(ta_event *event)
             if (event->data.camera_rotate.delta_pitch) {
                 ta_camera_pitch(camera, event->data.camera_rotate.delta_pitch * sensitity);
             }
+            event->handled = true;
             break;
         }
         case GAME_EVENT_BUTTON_ACTIVATED:
@@ -2166,13 +2171,10 @@ void ta_game_event(ta_event *event)
             } else {
                 ta_log_write(&tg_debug_log, SRC_GAME, "Entity '%s' has no audio source.\n", button->entity);
             }
+            event->handled = true;
             break;
-        } default: {
-            handled = false;
         }
     }
-
-    event->handled = handled;
 }
 void ta_game_save()
 {

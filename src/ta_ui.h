@@ -147,6 +147,7 @@ void textbox_command_delete         ();
 void textbox_command_backspace      ();
 void textbox_command_submit         ();
 void textbox_command_cancel         ();
+void ta_ui_textbox_set_text         (ta_ui_textbox_state *textbox, const char *text, size_t text_len);
 
 bool ta_ui_textbox                      (const char *text, size_t text_len, ta_ui_textbox_state *textbox, u32 flags);
 bool ta_ui_textbox_float                (float *value, ta_ui_textbox_state *textbox, u32 flags);

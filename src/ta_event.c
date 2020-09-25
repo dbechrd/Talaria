@@ -29,6 +29,9 @@ const char *event_type_str(ta_event_type type)
         case INPUT_EVENT_KEY_REPEAT:          return "INPUT_EVENT_KEY_REPEAT";
         case INPUT_EVENT_KEY_RELEASE:         return "INPUT_EVENT_KEY_RELEASE";
         case INPUT_EVENT_TEXT_INPUT:          return "INPUT_EVENT_TEXT_INPUT";
+        case INPUT_EVENT_DROP_BEGIN:          return "INPUT_EVENT_DROP_BEGIN";
+        case INPUT_EVENT_DROP_FILE:           return "INPUT_EVENT_DROP_FILE";
+        case INPUT_EVENT_DROP_END:            return "INPUT_EVENT_DROP_END";
         // Game events
         case GAME_EVENT_SHUTDOWN:             return "GAME_EVENT_SHUTDOWN";
         case GAME_EVENT_CAMERA_ROTATE:        return "GAME_EVENT_CAMERA_ROTATE";
@@ -100,11 +103,12 @@ static void event_sdl_poll()
     //while (TA_SDL_PollEvent(&sdl_event)) {
     while (SDL_PollEvent(&sdl_event)) {
         ta_log_write(&tg_debug_log, SRC_EVENT, "  SDL event type = %d\n", sdl_event.type);
-        bool handled = true;
+        bool handled = false;
         ta_event event = { 0 };
         switch (sdl_event.type) {
             case SDL_QUIT: {
                 event.type = GAME_EVENT_SHUTDOWN;
+                handled = true;
                 break;
             } case SDL_WINDOWEVENT: {
                 switch (sdl_event.window.event) {
@@ -112,6 +116,7 @@ static void event_sdl_poll()
                         event.type = WINDOW_EVENT_RESIZE;
                         event.data.window_resize.width = sdl_event.window.data1;
                         event.data.window_resize.height = sdl_event.window.data2;
+                        handled = true;
                         break;
                     } case SDL_WINDOWEVENT_SHOWN: {         /* Window has been shown */
                     } case SDL_WINDOWEVENT_MOVED: {         /* Window has been moved to data1, data2 */
@@ -126,27 +131,28 @@ static void event_sdl_poll()
                     } case SDL_WINDOWEVENT_CLOSE: {         /* The window manager requests that the window be closed */
                     } case SDL_WINDOWEVENT_TAKE_FOCUS: {    /* Window is being offered a focus (should SetWindowInputFocus() on itself or a subwindow, or ignore) */
                     } case SDL_WINDOWEVENT_HIT_TEST: {      /* Window had a hit test that wasn't SDL_HITTEST_NORMAL. */
-                    } default: {
-                        handled = false;
-                    }
+                    } default: { }
                 }
                 break;
             } case SDL_KEYDOWN: {
                 event.type = INPUT_EVENT_KEY_PRESS;
-                event.data.key.key = sdl_event.key.keysym.sym;
-                event.data.key.scancode = sdl_event.key.keysym.scancode;
-                event.data.key.mods = sdl_event.key.keysym.mod;
+                event.data.key_event.key = sdl_event.key.keysym.sym;
+                event.data.key_event.scancode = sdl_event.key.keysym.scancode;
+                event.data.key_event.mods = sdl_event.key.keysym.mod;
+                handled = true;
                 break;
             } case SDL_KEYUP: {
                 event.type = INPUT_EVENT_KEY_RELEASE;
-                event.data.key.key = sdl_event.key.keysym.sym;
-                event.data.key.scancode = sdl_event.key.keysym.scancode;
-                event.data.key.mods = sdl_event.key.keysym.mod;
+                event.data.key_event.key = sdl_event.key.keysym.sym;
+                event.data.key_event.scancode = sdl_event.key.keysym.scancode;
+                event.data.key_event.mods = sdl_event.key.keysym.mod;
+                handled = true;
                 break;
             } case SDL_TEXTINPUT: {
                 event.type = INPUT_EVENT_TEXT_INPUT;
                 event.data.text_input.codepoint = sdl_event.text.text[0];
                 DLB_ASSERT(!sdl_event.text.text[1]);  // Unicode?
+                handled = true;
                 break;
             } case SDL_MOUSEMOTION: {
                 event.type = INPUT_EVENT_MOUSE_MOVE;
@@ -154,23 +160,26 @@ static void event_sdl_poll()
                 event.data.mouse_move.y  = sdl_event.motion.y;
                 event.data.mouse_move.dx = sdl_event.motion.xrel;
                 event.data.mouse_move.dy = sdl_event.motion.yrel;
+                handled = true;
                 break;
             } case SDL_MOUSEBUTTONDOWN: {
                 if (sdl_event.button.button < ARRAY_SIZE(mouse_scancodes)) {
                     event.type = INPUT_EVENT_KEY_PRESS;
-                    event.data.key.key = 0;
-                    event.data.key.scancode = mouse_scancodes[sdl_event.button.button];
+                    event.data.key_event.key = 0;
+                    event.data.key_event.scancode = mouse_scancodes[sdl_event.button.button];
                     // TODO: Get modifier keys for mouse button events
                     //event.data.key.mods = ???
+                    handled = true;
                 }
                 break;
             } case SDL_MOUSEBUTTONUP: {
                 if (sdl_event.button.button < ARRAY_SIZE(mouse_scancodes)) {
                     event.type = INPUT_EVENT_KEY_RELEASE;
-                    event.data.key.key = 0;
-                    event.data.key.scancode = mouse_scancodes[sdl_event.button.button];
+                    event.data.key_event.key = 0;
+                    event.data.key_event.scancode = mouse_scancodes[sdl_event.button.button];
                     // TODO: Get modifier keys for mouse button events
                     //event.data.key.mods = ???
+                    handled = true;
                 }
                 break;
             } case SDL_MOUSEWHEEL: {
@@ -178,27 +187,27 @@ static void event_sdl_poll()
                 event.data.mouse_scroll.x = sdl_event.wheel.x;
                 event.data.mouse_scroll.y = sdl_event.wheel.y;
                 event.data.mouse_scroll.flipped = (u8)sdl_event.wheel.direction;
+                handled = true;
                 break;
             } case SDL_DROPBEGIN: {
-                printf("dropbegin] file: %s\n", sdl_event.drop.file);
-                handled = false;
+                event.type = INPUT_EVENT_DROP_BEGIN;
+                handled = true;
                 break;
             } case SDL_DROPFILE: {
-                // TODO: Something useful with dropped files (maybe check mouse
-                // position to see where it was dropped?)
-                printf("dropfile] file: %s\n", sdl_event.drop.file);
-                handled = false;
+                event.type = INPUT_EVENT_DROP_FILE;
+                event.data.drop_file.path = sdl_event.drop.file;
+                handled = true;
                 break;
             } case SDL_DROPTEXT: {
+                // TODO: Not clear what this does, or if it can generate memory leaks if you ignore it like SDL_DROPFILE
+                // Random forum post said it was only used on Linux; I should look at the SDL source..
                 printf("droptext] file: %s\n", sdl_event.drop.file);
-                handled = false;
+                DLB_ASSERT(!"SDL_DROPTEXT not handled; ensure there's no memory leak");
                 break;
             } case SDL_DROPCOMPLETE: {
-                printf("dropcomplete] file: %s\n", sdl_event.drop.file);
-                handled = false;
+                event.type = INPUT_EVENT_DROP_END;
+                handled = true;
                 break;
-            } default: {
-                handled = false;
             }
         }
         if (handled) {
@@ -211,8 +220,9 @@ static void event_sdl_poll()
 }
 void ta_event_events()
 {
-    ta_mouse_reset_relative();
-    ta_key_reset_changed();
+    ta_mouse_reset_frame();
+    ta_key_reset_frame();
+    ta_editor_reset_frame();
 
     ta_log_write(&tg_debug_log, SRC_EVENT, "  SDL poll...\n");
     event_sdl_poll();

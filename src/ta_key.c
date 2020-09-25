@@ -5,6 +5,13 @@
 
 static ta_key_state keys[TA_KEY_COUNT];
 
+void ta_key_reset_frame()
+{
+    for (int i = 0; i < TA_KEY_COUNT; ++i) {
+        keys[i].changed = false;
+    }
+}
+
 // NOTE: Empty key is never "down"
 bool ta_key_down(ta_key key)
 {
@@ -24,13 +31,6 @@ bool ta_key_released(ta_key key)
 {
     bool released = !keys[key].down && keys[key].changed;
     return released;
-}
-
-void ta_key_reset_changed()
-{
-    for (int i = 0; i < TA_KEY_COUNT; ++i) {
-        keys[i].changed = false;
-    }
 }
 
 // NOTE: Empty key is always "available"
@@ -70,9 +70,9 @@ void ta_key_event(ta_event *event)
         case INPUT_EVENT_KEY_PRESS:
         case INPUT_EVENT_KEY_RELEASE: {
             u8 down = (event->type == INPUT_EVENT_KEY_PRESS);
-            keys[event->data.key.scancode].down = down;
-            keys[event->data.key.scancode].changed = true;
-            keys[event->data.key.scancode].last_change_ms = ta_timer_elapsed_ms();
+            keys[event->data.key_event.scancode].down = down;
+            keys[event->data.key_event.scancode].changed = true;
+            keys[event->data.key_event.scancode].last_change_ms = ta_timer_elapsed_ms();
             break;
         } default: {
             break;
