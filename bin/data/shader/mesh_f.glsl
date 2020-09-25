@@ -248,7 +248,7 @@ void main()
 
                 if (lights[i].cast_shadows) {
                     shadow_bias = 0.0001;
-#if 1
+#if 0
                     shadow_map_depth = texture(u_textures[lights[i].shadowmap_texture_pool_index],
                         vec3(projCoords.st, lights[i].shadowmap_texture_array_layers[0])).r;
                     // TODO: Better bias based on direction of light? This code
@@ -259,14 +259,13 @@ void main()
 #else
                     // Soft shadows
                     // TODO: Clean this crap up!
-				    float ss_bias = shadow_bias;//0.004;
                     float ss_count = 0.0;
 				    for (float x = -1.0; x <= 1.0; x += 1.0) {
 					    for (float y = -1.0; y <= 1.0; y += 1.0) {
-							vec2 ss_offset = vec2(x, y) * 0.0001;
+							vec2 ss_offset = vec2(x, y) * 0.0005;
                             float ss_depth = texture(u_textures[lights[i].shadowmap_texture_pool_index],
                                 vec3(projCoords.st + ss_offset, lights[i].shadowmap_texture_array_layers[0])).r;
-			                shadow += step(ss_depth, dist - ss_bias);
+			                shadow += step(ss_depth, dist - shadow_bias);
                             ss_count += 1.0;
 					    }
 				    }

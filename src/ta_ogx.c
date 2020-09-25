@@ -225,6 +225,9 @@ static void ta_ogx_load_geometry_node(ogx_node *o_node)
     dlb_vec_each(float *, weight, o_geom->morph_weights) {
         dlb_vec_push(model->morph_target_weights, *weight);
     }
+
+    model->cast_shadows = true;
+    model->receive_shadows = true;
 }
 
 static void ta_ogx_load_light_node(ogx_node *o_node)
