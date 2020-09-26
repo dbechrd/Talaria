@@ -133,11 +133,10 @@ void ta_game_init()
     char buf[512] = { 0 };
     DWORD len = GetCurrentDirectoryA(sizeof(buf), buf);
     DLB_ASSERT(len < sizeof(buf) - 2);
-    for (DWORD i = 0; i < len; ++i) {
-        if (buf[i] == '\\') buf[i] = '/';
-    }
-    buf[len] = '/';
-    tg_game.base_path = ta_symbol_intern(buf, (size_t)len + 1);
+    buf[len] = '\\';
+    len++;
+    dlb_str_replace_char(buf, '\\', '/');
+    tg_game.base_path = ta_symbol_intern(buf, (size_t)len);
 #else
     char *buf = SDL_GetBasePath();
     size_t len = strlen(buf);

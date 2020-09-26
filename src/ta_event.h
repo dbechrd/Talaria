@@ -68,7 +68,7 @@ typedef struct ta_event_text_input {
 } ta_event_text_input;
 
 typedef struct ta_event_drop_file {
-    const char *path;  // NOTE: Could be a directory or a file, needs to be freed with SDL_free()
+    const char *path;
 } ta_event_drop_file;
 
 typedef struct ta_event_camera_rotate_event {

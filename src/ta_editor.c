@@ -25,6 +25,7 @@
 #include "ta_window.h"
 #include "ta_math.h"
 #include "dlb/dlb_vector.h"
+#include "dlb/dlb_string.h"
 #include <float.h>
 
 #define TA_EDITOR_WIDGET_MIN_SCALE 0.05f
@@ -447,10 +448,16 @@ void ta_editor_textbox_event(ta_event *event)
             event->handled = true;
             break;
         } case INPUT_EVENT_DROP_FILE: {
-            size_t path_len = strlen(event->data.drop_file.path);
-            ta_ui_textbox_set_text(editor.textbox_editing, event->data.drop_file.path, path_len);
-            //dlb_vec_push(editor.dropped_files, event->data.drop_file.path);
-            SDL_free((void *)event->data.drop_file.path);
+            const char *path = event->data.drop_file.path;
+            size_t path_len = dlb_symbol_len(path);
+            // If relative, only use the relative portion of the path
+            int relative = dlb_str_startswith(path, tg_game.base_path);
+            path += relative * dlb_symbol_len(tg_game.base_path);
+            path_len -= (relative * dlb_symbol_len(tg_game.base_path));
+            // TODO: If not relative, copy file to bin dir then get relative path?
+            if (path_len) {
+                ta_ui_textbox_set_text(editor.textbox_editing, path, path_len);
+            }
             event->handled = true;
             break;
         } default: {

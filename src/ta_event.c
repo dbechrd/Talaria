@@ -194,15 +194,17 @@ static void event_sdl_poll()
                 handled = true;
                 break;
             } case SDL_DROPFILE: {
+                const char *path = sdl_event.drop.file;
+                // TODO: Is this cast valid? Are SDL strings safe to modify?
+                dlb_str_replace_char((char *)path, '\\', '/');
                 event.type = INPUT_EVENT_DROP_FILE;
-                event.data.drop_file.path = sdl_event.drop.file;
+                event.data.drop_file.path = ta_symbol_intern(path, strlen(path));
+                SDL_free((void *)path);
                 handled = true;
                 break;
             } case SDL_DROPTEXT: {
-                // TODO: Not clear what this does, or if it can generate memory leaks if you ignore it like SDL_DROPFILE
-                // Random forum post said it was only used on Linux; I should look at the SDL source..
-                printf("droptext] file: %s\n", sdl_event.drop.file);
-                DLB_ASSERT(!"SDL_DROPTEXT not handled; ensure there's no memory leak");
+                ta_log_write(&tg_debug_log, SRC_EVENT, "droptext ignored] text: %s\n", sdl_event.drop.file);
+                SDL_free(sdl_event.drop.file);
                 break;
             } case SDL_DROPCOMPLETE: {
                 event.type = INPUT_EVENT_DROP_END;
