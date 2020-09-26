@@ -2108,7 +2108,6 @@ void ta_game_event(ta_event *event)
             break;
         } case INPUT_EVENT_DROP_FILE: {
             printf("dropfile] file: %s\n", event->data.drop_file.path);
-            SDL_free((void *)event->data.drop_file.path);
             event->handled = true;
             break;
         } case GAME_EVENT_SHUTDOWN: {

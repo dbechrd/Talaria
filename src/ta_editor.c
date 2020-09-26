@@ -76,6 +76,8 @@ typedef struct ta_editor {
     ta_ui_textbox_state *textbox_editing;
     ta_ui_textbox_state *textbox_dragging;
     const char          *selected_entity;
+    const char          *selected_material;
+    const char          *selected_material_prev;
     const char          *status_msg;
     ta_game_state       prev_state;
     const char          **dropped_files;  // vector of files dropped onto window this frame; they need to be SDL_free()'d
@@ -453,9 +455,9 @@ void ta_editor_textbox_event(ta_event *event)
             // If relative, only use the relative portion of the path
             int relative = dlb_str_startswith(path, tg_game.base_path);
             path += relative * dlb_symbol_len(tg_game.base_path);
-            path_len -= (relative * dlb_symbol_len(tg_game.base_path));
-            // TODO: If not relative, copy file to bin dir then get relative path?
-            if (path_len) {
+            path_len -= relative * dlb_symbol_len(tg_game.base_path);
+            // TODO: If not relative, copy file to bin dir then get relative path? For now, only support relative
+            if (relative && path_len) {
                 ta_ui_textbox_set_text(editor.textbox_editing, path, path_len);
             }
             event->handled = true;
@@ -1800,6 +1802,189 @@ static void ui_camera_panel()
 
     ta_ui_panel_end();
 }
+static void ui_material_details_panel(const char *material_name)
+{
+    // NOTE: If you add more textboxes, you must update Cancel button action below
+    static struct {
+        ta_ui_window_state window;
+        ta_ui_textbox_vec4_state albedo_factor_textbox;
+        ta_ui_textbox_state albedo_texture_textbox;
+        ta_ui_textbox_vec3_state emission_factor_textbox;
+        ta_ui_textbox_state emission_texture_textbox;
+        ta_ui_textbox_state height_texture_textbox;
+        ta_ui_textbox_state metallic_factor_textbox;
+        ta_ui_textbox_state metallic_texture_textbox;
+        ta_ui_textbox_state normal_texture_textbox;
+        ta_ui_textbox_state occlusion_texture_textbox;
+        ta_ui_textbox_state roughness_factor_textbox;
+        ta_ui_textbox_state roughness_texture_textbox;
+    } ui = { 0 };
+
+    if (editor.selected_material != editor.selected_material_prev) {
+        //ta_ui_textbox_cancel(&ui.albedo_factor_textbox.textbox_states[0]);
+        //ta_ui_textbox_cancel(&ui.albedo_factor_textbox.textbox_states[1]);
+        //ta_ui_textbox_cancel(&ui.albedo_factor_textbox.textbox_states[2]);
+        //ta_ui_textbox_cancel(&ui.albedo_factor_textbox.textbox_states[3]);
+        ta_ui_textbox_cancel(&ui.albedo_texture_textbox);
+        //ta_ui_textbox_cancel(&ui.emission_factor_textbox.textbox_states[0]);
+        //ta_ui_textbox_cancel(&ui.emission_factor_textbox.textbox_states[1]);
+        //ta_ui_textbox_cancel(&ui.emission_factor_textbox.textbox_states[2]);
+        ta_ui_textbox_cancel(&ui.emission_texture_textbox);
+        ta_ui_textbox_cancel(&ui.height_texture_textbox);
+        //ta_ui_textbox_cancel(&ui.metallic_factor_textbox);
+        ta_ui_textbox_cancel(&ui.metallic_texture_textbox);
+        ta_ui_textbox_cancel(&ui.normal_texture_textbox);
+        ta_ui_textbox_cancel(&ui.occlusion_texture_textbox);
+        //ta_ui_textbox_cancel(&ui.roughness_factor_textbox);
+        ta_ui_textbox_cancel(&ui.roughness_texture_textbox);
+        editor.selected_material_prev = editor.selected_material;
+    }
+
+    if (!editor.selected_material) {
+        return;
+    }
+
+    ta_material *material = ta_game_by_sym(RES_MATERIAL, material_name);
+
+    ta_ui_next_margin_top(50);
+    ta_ui_window_begin(&ui.window, TA_UI_AUTOSIZE);
+
+    const int name_column_width = 150;
+    const int default_textbox_width = 500;
+    const int default_textbox_height = 15;
+
+    static ta_ui_panel_state panel = { 0 };
+    ta_ui_panel_begin(&panel, TA_UI_AUTOSIZE);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("name"), 0);
+    ta_ui_label(SYM(material->name), 0);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("shader"), 0);
+    ta_ui_label(SYM(material->shader), 0);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("albedo_factor"), 0);
+    ta_ui_textbox_vec4((ta_vec4 *)&material->albedo_factor, &ui.albedo_factor_textbox, false, false);
+    material->albedo_factor.r = clampf(material->albedo_factor.r, 0.0f, 1.0f);
+    material->albedo_factor.g = clampf(material->albedo_factor.g, 0.0f, 1.0f);
+    material->albedo_factor.b = clampf(material->albedo_factor.b, 0.0f, 1.0f);
+    material->albedo_factor.a = clampf(material->albedo_factor.a, 0.1f, 1.0f);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("albedo_texture"), 0);
+    ta_ui_next_size(default_textbox_width, default_textbox_height);
+    ta_ui_textbox(SYM(material->albedo_texture), &ui.albedo_texture_textbox, 0);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("emission_factor"), 0);
+    ta_ui_textbox_vec3((ta_vec3 *)&material->emission_factor, &ui.emission_factor_textbox, false, false);
+    material->emission_factor.r = clampf(material->emission_factor.r, 0.0f, 1.0f);
+    material->emission_factor.g = clampf(material->emission_factor.g, 0.0f, 1.0f);
+    material->emission_factor.b = clampf(material->emission_factor.b, 0.0f, 1.0f);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("emission_texture"), 0);
+    ta_ui_next_size(default_textbox_width, default_textbox_height);
+    ta_ui_textbox(SYM(material->emission_texture), &ui.emission_texture_textbox, 0);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("height_texture"), 0);
+    ta_ui_next_size(default_textbox_width, default_textbox_height);
+    ta_ui_textbox(SYM(material->height_texture), &ui.height_texture_textbox, 0);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("metallic_factor"), 0);
+    ta_ui_textbox_float(&material->metallic_factor, &ui.metallic_factor_textbox, false);
+    material->metallic_factor = clampf(material->metallic_factor, 0.0f, 1.0f);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("metallic_texture"), 0);
+    ta_ui_next_size(default_textbox_width, default_textbox_height);
+    ta_ui_textbox(SYM(material->metallic_texture), &ui.metallic_texture_textbox, 0);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("normal_texture"), 0);
+    ta_ui_next_size(default_textbox_width, default_textbox_height);
+    ta_ui_textbox(SYM(material->normal_texture), &ui.normal_texture_textbox, 0);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("occlusion_texture"), 0);
+    ta_ui_next_size(default_textbox_width, default_textbox_height);
+    ta_ui_textbox(SYM(material->occlusion_texture), &ui.occlusion_texture_textbox, 0);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("roughness_factor"), 0);
+    ta_ui_textbox_float(&material->roughness_factor, &ui.roughness_factor_textbox, false);
+    material->roughness_factor = clampf(material->roughness_factor, 0.0f, 1.0f);
+
+    ta_ui_row_begin();
+    ta_ui_next_size(name_column_width, 0);
+    ta_ui_label(CSTR("roughness_texture"), 0);
+    ta_ui_next_size(default_textbox_width, default_textbox_height);
+    ta_ui_textbox(SYM(material->roughness_texture), &ui.roughness_texture_textbox, 0);
+
+    ta_ui_row_begin();
+
+    ta_ui_next_margin_top(4);
+    ta_ui_next_margin_left(290);
+    ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+    ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+    if (ta_ui_button(CSTR("Save"))) {
+        #define FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(textbox_buffer, material_property)                                       \
+            name = (dlb_vec_len(textbox_buffer) ? ta_symbol_intern(textbox_buffer, dlb_vec_len(textbox_buffer)) : 0);       \
+            if (name) {                                                                                                     \
+                /* TODO: This could be very dangerous for arbitrary user input, or just fail miserably. Let's only allow */ \
+                /* names that start with `data/texture/` for now. We could display an graceful error message to the user */ \
+                /* in other cases (or go farther and try to copy the file to data/texture/.. but that seems quite error  */ \
+                /* prone, hmm..)                                                                                         */ \
+                DLB_ASSERT(dlb_str_startswith(name, "data/texture/"));                                                      \
+                ta_texture *texture = ta_game_by_sym_try(RES_TEXTURE, name);                                                \
+                if (!texture) {                                                                                             \
+                    texture = ta_game_alloc(RES_TEXTURE, SYM(name));                                                        \
+                    texture->type = TA_TEXTURE_2D_ARRAY;                                                                    \
+                    texture->path = name;                                                                                   \
+                    ta_texture_init(texture);                                                                               \
+                }                                                                                                           \
+                material_property = texture->name;                                                                          \
+            }
+
+        const char *name = 0;
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.albedo_texture_textbox.buffer   , material->albedo_texture    );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.emission_texture_textbox.buffer , material->emission_texture  );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.height_texture_textbox.buffer   , material->height_texture    );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.metallic_texture_textbox.buffer , material->metallic_texture  );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.normal_texture_textbox.buffer   , material->normal_texture    );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.occlusion_texture_textbox.buffer, material->occlusion_texture );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.roughness_texture_textbox.buffer, material->roughness_texture );
+
+        #undef FIND_OR_CREATE_TEXTURE_THEN_ASSIGN
+    }
+    ta_ui_next_margin_top(4);
+    ta_ui_next_margin_left(5);
+    ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+    ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+    if (ta_ui_button(CSTR("Cancel"))) {
+        editor.selected_material = 0;
+    }
+
+    ta_ui_panel_end();
+
+    ta_ui_window_end();
+}
 static void ui_material_panel()
 {
     //ta_ui_next_margin(2, 2, 0, 0);
@@ -1811,15 +1996,16 @@ static void ui_material_panel()
         ta_ui_next_margin(0, 2, 0, 0);
         ta_ui_next_pad(4, 4, 4, 4);
         if (ta_ui_button(SYM(material->name))) {
-            const char *selected_entity = 0;
-            ta_editor_selected_entity(&selected_entity);
-            if (selected_entity) {
-                ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
-                if (model && model->materials) {
-                    // TODO: Set via material slots in node editor. For now, arbitrarily override material in slot 0.
-                    model->materials[0] = material->name;
-                }
-            }
+            editor.selected_material = material->name;
+            //const char *selected_entity = 0;
+            //ta_editor_selected_entity(&selected_entity);
+            //if (selected_entity) {
+            //    ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
+            //    if (model && model->materials) {
+            //        // TODO: Set via material slots in node editor. For now, arbitrarily override material in slot 0.
+            //        model->materials[0] = material->name;
+            //    }
+            //}
         }
         if (ta_ui_last_state().hover) {
             char tex_buf[2048] = { 0 };
@@ -1830,26 +2016,26 @@ static void ui_material_panel()
                 "albedo_texture   : %s\n"
                 "emission_factor  : %f %f %f\n"
                 "emission_texture : %s\n"
+                "height_texture   : %s\n"
                 "metallic_factor  : %f\n"
                 "metallic_texture : %s\n"
-                "roughness_factor : %f\n"
-                "roughness_texture: %s\n"
                 "normal_texture   : %s\n"
                 "occlusion_texture: %s\n"
-                "height_texture   : %s",
+                "roughness_factor : %f\n"
+                "roughness_texture: %s",
                 material->name,
                 material->shader,
                 material->albedo_factor.r, material->albedo_factor.g, material->albedo_factor.b, material->albedo_factor.a,
                 material->albedo_texture,
                 material->emission_factor.r, material->emission_factor.g, material->emission_factor.b,
                 material->emission_texture,
+                material->height_texture,
                 material->metallic_factor,
                 material->metallic_texture,
-                material->roughness_factor,
-                material->roughness_texture,
                 material->normal_texture,
                 material->occlusion_texture,
-                material->height_texture
+                material->roughness_factor,
+                material->roughness_texture
             );
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
@@ -1916,7 +2102,7 @@ static void ui_texture_panel()
     ta_ui_panel_begin(&texture_panel, TA_UI_AUTOSIZE_W);
     int count = 0;
     dlb_vec_each(ta_texture *, texture, ta_game_resource_pool(RES_TEXTURE)) {
-        if (count % 4 == 0) {
+        if (count % 5 == 0) {
             ta_ui_row_begin();
         }
         ta_ui_next_size(68, 68);
@@ -2058,7 +2244,11 @@ void ta_editor_draw_screen()
         ta_ui_set_cursor(TA_CURSOR_ARROW);
     }
 
-    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI layout begin\n");
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI editor main window layout begin\n");
+
+    // HACK: I want windows to be independent of each other, but currently UI_ROOT is doing flow. This lets the
+    // current details pane be side-by-side with the main editor window.
+    ta_ui_row_begin();
 
     ta_ui_spacer(0, 50);
     //ta_ui_next_size(400, 400);
@@ -2143,7 +2333,11 @@ void ta_editor_draw_screen()
 
     ta_ui_panel_end();
     ta_ui_window_end();
-    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI layout end\n");
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI editor main window layout end\n");
+
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI material_details layout begin\n");
+    ui_material_details_panel(editor.selected_material);
+    ta_log_write(&tg_debug_log, SRC_EDITOR, "UI material_details layout end\n");
 
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI render begin\n");
     ta_ui_render();

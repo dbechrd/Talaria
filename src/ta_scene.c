@@ -203,6 +203,7 @@ void *ta_scene_alloc(ta_scene *scene, ta_res_type type, const char *name, size_t
     u32 hash = dlb_murmur3(SYM32(res->name));
     dlb_index_insert(store, hash, res->index);
 
+    // NOTE: Uncommenting this is dangerous.. but I may want to refactor this to happen automatically, idk..
     //if (tg_schemas[schema_type].init) {
     //    tg_schemas[schema_type].init(res);
     //}

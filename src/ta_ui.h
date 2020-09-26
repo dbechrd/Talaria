@@ -58,8 +58,8 @@ typedef struct ta_ui_panel_state {
 typedef bool ta_textbox_filter(char c);
 ta_textbox_filter *ta_textbox_filter_default;
 typedef struct ta_ui_textbox_state {
-    char *buffer;  // vector
-    size_t cursor;    // index of next character, 0 = before first char, len = after last char
+    char *buffer;           // vector
+    size_t cursor;          // index of next character, 0 = before first char, len = after last char
     size_t selection_start;
     size_t selection_len;
     //bool multiline;
@@ -67,9 +67,9 @@ typedef struct ta_ui_textbox_state {
     bool double_clicked;
     ta_vec2i mouse_coords;
     double last_clicked_ms;
-    bool focus_changed;  // HACK: Don't render cursor first frame, wrong index
-    bool focused;   // has focus
-    bool submit;    // user requested save
+    bool focus_changed;     // HACK: Don't render cursor first frame, wrong index
+    bool focused;           // has focus
+    bool submit;            // user requested save
     ta_textbox_filter *filter;
     ta_ui_scroll_state scroll;
 } ta_ui_textbox_state;

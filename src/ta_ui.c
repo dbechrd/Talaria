@@ -323,13 +323,18 @@ static bool rect_intersects(ta_rect a, ta_rect b)
     }
     return result;
 }
-static bool rect_contains_mouse(ta_rect rect)
+static bool rect_contains_mouse(ta_rect rect, u32 flags)
 {
+    if (ta_mouse_captured() || ta_mouse_dragging()) {
+        return false;
+    }
+
     int x = ta_mouse_x();
     int y = ta_mouse_y();
-    if (!ta_mouse_captured() && !ta_mouse_dragging() &&
-        x >= rect.x && x < rect.x + rect.w &&
-        y >= rect.y && y < rect.y + rect.h)
+    if (x >= rect.x &&
+        (x < rect.x + rect.w || flags & TA_UI_AUTOSIZE_W) &&
+        y >= rect.y &&
+        (y < rect.y + rect.h || flags & TA_UI_AUTOSIZE_H))
     {
         return true;
     }
@@ -482,8 +487,23 @@ static ui_frame *ui_frame_end(ui_frame_type type)
     frame->state.down = false;
     frame->state.pressed = false;
     frame->state.released = false;
-    if (rect_contains_mouse(frame->rect))
-    {
+
+    bool contains_mouse = rect_contains_mouse(frame->rect, 0);
+
+    // HACK: Try to ensure mouse is in bounds of parent container, or at least parent is auto-sizing in the direction
+    // of the mouse. We can't know for certain since the size of auto-sizing parent containers are not finalized yet.
+    size_t container_idx = frame->container_idx;
+    while (contains_mouse && container_idx) {
+        DLB_ASSERT(container_idx < dlb_vec_len(ui_frames));
+        ui_frame *container = &ui_frames[container_idx];
+        // TODO: Check if mouse is outside of rect to the right for AUTOSIZE_W and to the bottom for AUTOSIZE_H
+        if (!rect_contains_mouse(container->rect, container->internal_flags)) {
+            contains_mouse = false;
+        }
+        container_idx = container->container_idx;
+    }
+
+    if (contains_mouse) {
         frame->state_type = UI_STATE_HOVER;
         frame->state.hover = true;
         ui_hovered = true;
@@ -1716,7 +1736,7 @@ static void ui_render_scrollbars(ui_frame *frame)
         scroll_v_widget.y = frame->rect.y + scroll_v;
         scroll_v_widget.h = widget_h;
 
-        bool widget_hover = rect_contains_mouse(scroll_v_widget);
+        bool widget_hover = rect_contains_mouse(scroll_v_widget, 0);
         ta_rgba widget_color = (ta_rgba){ 0.6f, 0.0f, 0.0f, 1.0f };
         if (widget_hover && !dragging_v) {
             widget_color = (ta_rgba){ 0.8f, 0.0f, 0.0f, 1.0f };
@@ -1730,13 +1750,12 @@ static void ui_render_scrollbars(ui_frame *frame)
         if (!ta_mouse_captured()) {
             int delta_y = 0;
 
-            if (widget_hover && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT))
-            {
+            if (widget_hover && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
                 // Mouse drag
                 //scrollbar_y_frame_idx = frame->index;
                 dragging_v = true;
                 ta_mouse_drag_begin();
-            } else if (!dragging_v && rect_contains_mouse(frame->rect)) {
+            } else if (!dragging_v && rect_contains_mouse(frame->rect, 0)) {
                 // Scroll wheel
                 delta_y = ta_mouse_scroll_dy() * SCROLL_WHEEL_SPEED;
             } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
@@ -1792,19 +1811,24 @@ static void ta_ui_render_statusbar()
     }
 }
 #endif
+void ui_render_frame(ui_frame *frame)
+{
+    switch (frame->type) {
+        case UI_ROOT         :                                   break;
+        case UI_WINDOW       :  ui_render_window        (frame); break;
+        case UI_PANEL        :  ui_render_panel         (frame); break;
+        case UI_BUTTON       :  ui_render_button        (frame); break;
+        case UI_TOGGLE_BUTTON:  ui_render_toggle_button (frame); break;
+        case UI_IMAGE        :  ui_render_image         (frame); break;
+        case UI_LABEL        :  ui_render_label         (frame); break;
+        case UI_TEXTBOX      :  ui_render_textbox       (frame); break;
+        default:
+            DLB_ASSERT(!"I can't let you do that, Dave!");
+            break;
+    }
+}
 void ta_ui_render()
 {
-    static void (*ui_renderers[])(ui_frame *frame) = {
-        [UI_ROOT]           = 0,
-        [UI_WINDOW]         = ui_render_window,
-        [UI_PANEL]          = ui_render_panel,
-        [UI_BUTTON]         = ui_render_button,
-        [UI_TOGGLE_BUTTON]  = ui_render_toggle_button,
-        [UI_IMAGE]          = ui_render_image,
-        [UI_LABEL]          = ui_render_label,
-        [UI_TEXTBOX]        = ui_render_textbox,
-    };
-
     glClear(GL_DEPTH_BUFFER_BIT);
     glEnable(GL_SCISSOR_TEST);
 
@@ -1815,7 +1839,7 @@ void ta_ui_render()
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
 
     dlb_vec_each(ui_frame *, frame, ui_frames) {
-        if (!(frame->internal_flags & TA_UI_INVISIBLE) && ui_renderers[frame->type]) {
+        if (!(frame->internal_flags & TA_UI_INVISIBLE)) {
             frame->clip_rect = TA_RECT_ZERO;
             frame->clip_rect.w = WINDOW_W;
             frame->clip_rect.h = WINDOW_H;
@@ -1838,7 +1862,7 @@ void ta_ui_render()
                 DLB_ASSERT(frame->clip_rect.h >= 0);
                 glScissor(frame->clip_rect.x, inv_y, frame->clip_rect.w, frame->clip_rect.h);
 
-                ui_renderers[frame->type](frame);
+                ui_render_frame(frame);
                 ui_render_scrollbars(frame);
             }
         }

@@ -11,6 +11,7 @@
 #define STBI_REALLOC dlb_realloc
 #define STBI_FREE dlb_free
 #define STBI_ONLY_PNG
+#define STBI_ONLY_JPEG
 #define STBI_ONLY_TGA
 #define STB_IMAGE_IMPLEMENTATION
 #include "misc/stb_image.h"
@@ -231,8 +232,8 @@ static void ta_texturing_add_texture(ta_texturing *texturing, ta_texture *tex)
 const char *ta_texture_type_str(int type)
 {
     switch (type) {
-        case TA_TEXTURE_2D_ARRAY:   return "TA_TEXTURE_2D_POOLED";
-        default: DLB_ASSERT(0);     return "TA_TEXTURE_???    ";
+        case TA_TEXTURE_2D_ARRAY:   return "TA_TEXTURE_2D_ARRAY";
+        default: DLB_ASSERT(0);     return "TA_TEXTURE_???     ";
     }
 }
 
@@ -613,6 +614,7 @@ void ta_texture_load(ta_texture *tex)
 
 void ta_texture_delete(ta_texture *tex)
 {
+    // TODO: Need to fix this for texture pools.. hmm :(
     DLB_ASSERT(tex->gl_id);
     GLuint id = tex->gl_id;
     tex->gl_id = 0;
