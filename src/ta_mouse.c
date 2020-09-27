@@ -66,20 +66,20 @@ bool ta_mouse_captured()
     return mouse.captured;
 }
 
-void ta_mouse_drag_begin()
+void ta_mouse_drag_begin(int rel_x, int rel_y)
 {
     DLB_ASSERT(!mouse.dragging);
     mouse.dragging = true;
-    mouse.drag_x = mouse.x;
-    mouse.drag_y = mouse.y;
+    mouse.drag_x = mouse.x - rel_x;
+    mouse.drag_y = mouse.y - rel_y;
     ta_window_set_mouse_captured(tg_window, true);
 }
 
-void ta_mouse_drag_end()
+void ta_mouse_drag_end(int rel_x, int rel_y)
 {
     DLB_ASSERT(mouse.dragging);
     ta_window_set_mouse_captured(tg_window, mouse.captured);
-    ta_mouse_move(mouse.drag_x, mouse.drag_y);
+    ta_mouse_move(rel_x + mouse.drag_x, rel_y + mouse.drag_y);
     mouse.dragging = false;
     mouse.drag_x = 0;
     mouse.drag_y = 0;

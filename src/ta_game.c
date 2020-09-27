@@ -325,7 +325,7 @@ void ta_game_init()
         ta_audio_source_play_loop(bg_music_src);
     }
 
-    //ta_audio_listener_set_volume(&tg_audio_listener, 0.2f);
+    ta_audio_listener_set_volume(&tg_audio_listener, 0.2f);
     //ta_audio_listener_mute(&tg_audio_listener);
 
     //--------------------------------------------------------------------------
@@ -1717,8 +1717,8 @@ void ta_game_loop()
         u32 flags = TA_UI_AUTOSIZE;
         ta_ui_window_begin(&window, flags);
         ta_ui_row_begin();
-        ta_ui_label(CSTR("animation_time_sec: "), 0);
-        ta_ui_label_float(animation_time_sec, 0);
+        ta_ui_label(CSTR("animation_time_sec: "));
+        ta_ui_label_float(animation_time_sec);
         ta_ui_window_end();
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_ui_render();

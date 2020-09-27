@@ -114,7 +114,9 @@ void ta_ui_next_offset              (int x, int y);
 void ta_ui_next_size                (int w, int h);
 void ta_ui_next_invisible           ();
 void ta_ui_next_bg_color            (ui_state_type state, float r, float g, float b, float a);
+void ta_ui_next_bg_color_rgba       (ui_state_type state, ta_rgba rgba);
 void ta_ui_next_fg_color            (ui_state_type state, float r, float g, float b, float a);
+void ta_ui_next_fg_color_rgba       (ui_state_type state, ta_rgba rgba);
 ta_ui_state ta_ui_last_state        ();
 
 // Controls

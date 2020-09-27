@@ -853,11 +853,11 @@ static void ui_scene_panel()
     ta_ui_row_begin();
     static ta_ui_panel_state label_panel = { 0 };
     ta_ui_panel_begin(&label_panel, TA_UI_AUTOSIZE);
-    ta_ui_label(CSTR("Scene"), 0);
-    ta_ui_label(CSTR("Simulation"), 0);
-    ta_ui_label(CSTR("V-Sync"), 0);
-    ta_ui_label(CSTR("Audio"), 0);
-    ta_ui_label(CSTR("Volume"), 0);
+    ta_ui_label(CSTR("Scene"));
+    ta_ui_label(CSTR("Simulation"));
+    ta_ui_label(CSTR("V-Sync"));
+    ta_ui_label(CSTR("Audio"));
+    ta_ui_label(CSTR("Volume"));
     ta_ui_panel_end();
 
     static ta_ui_panel_state button_panel = { 0 };
@@ -1030,15 +1030,15 @@ static void ui_node_panel()
     }
 
     const int header_width = 300;
-    const int label_width = 150;
+    const int label_width = 180;
     const char *selected_entity = 0;
     ta_editor_selected_entity(&selected_entity);
     if (!selected_entity) {
         //ta_ui_spacer(0, 2);
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(CSTR("name:"), 0);
-        ta_ui_label(CSTR("< nothing selected >"), 0);
+        ta_ui_label(CSTR("name:"));
+        ta_ui_label(CSTR("< nothing selected >"));
         ta_ui_panel_end();
         return;
     }
@@ -1101,8 +1101,8 @@ static void ui_node_panel()
     ta_transform *transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
     ta_ui_row_begin();
     ta_ui_next_size(label_width, 0);
-    ta_ui_label(CSTR("Entity:"), 0);
-    ta_ui_label(SYM(transform->entity), 0);
+    ta_ui_label(CSTR("Entity:"));
+    ta_ui_label(SYM(transform->entity));
 
     ta_ui_row_end();
     ta_ui_next_size(header_width, 0);
@@ -1113,13 +1113,13 @@ static void ui_node_panel()
     if (transform_expanded) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(CSTR("position:"), 0);
+        ta_ui_label(CSTR("position:"));
         static ta_ui_textbox_vec3_state textbox = { 0 };
         ta_ui_textbox_vec3(&transform->xform.position, &textbox, false, true);
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(CSTR("orientation:"), 0);
+        ta_ui_label(CSTR("orientation:"));
         // TODO: Can't hand edit quaternions.. they need to be normalized and
         // the components need to be in the range [0.0, 1.0]. Let's create a
         // ta_ui_label_vec4, then figure out how to edit rotations (Euler XYZ).
@@ -1130,18 +1130,18 @@ static void ui_node_panel()
         size_t text_len = 0;
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(CSTR("position_world:"), 0);
+        ta_ui_label(CSTR("position_world:"));
         text_len = snprintf(CSTR(text),
             "%.3f, %.3f, %.3f",
             transform->xform_world.position.x,
             transform->xform_world.position.y,
             transform->xform_world.position.z);
         DLB_ASSERT(text_len < sizeof(text));
-        ta_ui_label(text, text_len, 0);
+        ta_ui_label(text, text_len);
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(CSTR("orientation_world:"), 0);
+        ta_ui_label(CSTR("orientation_world:"));
         text_len = snprintf(CSTR(text),
             "%.3f, %.3f, %.3f, %.3f",
             transform->xform_world.orientation.x,
@@ -1149,13 +1149,13 @@ static void ui_node_panel()
             transform->xform_world.orientation.z,
             transform->xform_world.orientation.w);
         DLB_ASSERT(text_len < sizeof(text));
-        ta_ui_label(text, text_len, 0);
+        ta_ui_label(text, text_len);
 
         // TODO: Everything has parent of "root" except root itself? Each sub-scene has the scene name as parent? Hmm..
         if (transform->parent) {
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("parent:"), 0);
+            ta_ui_label(CSTR("parent:"));
             if (ta_ui_button(SYM(transform->parent))) {
                 ta_editor_select_entity(transform->parent);
             }
@@ -1163,14 +1163,23 @@ static void ui_node_panel()
         if (transform->children) {
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("children:"), 0);
+            ta_ui_label(CSTR("children:"));
+            ta_ui_next_size(0, 200);
+            ta_ui_next_bg_color_rgba(UI_STATE_NONE, TA_COLOR_GRAY5);
+            static ta_ui_panel_state children_panel = { 0 };
+            ta_ui_panel_begin(&children_panel, TA_UI_AUTOSIZE_W);
             dlb_vec_each(const char **, child, transform->children) {
                 ta_ui_row_begin();
-                ta_ui_next_margin_left(32);
                 if (ta_ui_button(SYM(*child))) {
                     ta_editor_select_entity(*child);
                 }
             }
+            ta_ui_panel_end();
+        }
+
+        for (int i = 0; i < 50; ++i) {
+            ta_ui_row_begin();
+            ta_ui_label(CSTR("stuff"));
         }
     }
 
@@ -1185,27 +1194,27 @@ static void ui_node_panel()
         if (model) {
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("name:"), 0);
-            ta_ui_label(SYM(model->name), 0);
+            ta_ui_label(CSTR("name:"));
+            ta_ui_label(SYM(model->name));
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("mesh:"), 0);
-            ta_ui_label(SYM(model->mesh), 0);
+            ta_ui_label(CSTR("mesh:"));
+            ta_ui_label(SYM(model->mesh));
 
             ta_ui_row_begin();
-            ta_ui_label(CSTR("materials:"), 0);
+            ta_ui_label(CSTR("materials:"));
             dlb_vec_each(const char **, material, model->materials) {
                 ta_ui_row_begin();
                 ta_ui_next_margin_left(16);
                 ta_ui_next_size(label_width, 0);
-                ta_ui_label(SYM(*material), 0);
+                ta_ui_label(SYM(*material));
             }
 
             if (model->morph_target_weights) {
                 ta_ui_row_begin();
                 ta_ui_next_size(label_width, 0);
-                ta_ui_label(CSTR("morph_target_weights:"), 0);
+                ta_ui_label(CSTR("morph_target_weights:"));
 
                 static ta_ui_textbox_state *morph_target_weight_textboxes = 0;
                 if (!morph_target_weight_textboxes) {
@@ -1225,25 +1234,25 @@ static void ui_node_panel()
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("visible:"), 0);
+            ta_ui_label(CSTR("visible:"));
             ta_ui_next_pad(0, 0, 0, 0);
             ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
             if (!model->invisible) {
                 ta_ui_next_margin(0, 0, 0, 0);
                 ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-                ta_ui_label(CSTR("True"), 0);
+                ta_ui_label(CSTR("True"));
             } else {
                 ta_ui_next_margin(0, 0, 0, 0);
                 ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-                ta_ui_label(CSTR("False"), 0);
+                ta_ui_label(CSTR("False"));
             }
             ta_ui_toggle_button_end(&model->invisible);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("cast shadows:"), 0);
+            ta_ui_label(CSTR("cast shadows:"));
             if (!model->invisible) {
                 ta_ui_next_pad(0, 0, 0, 0);
                 ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
@@ -1251,17 +1260,17 @@ static void ui_node_panel()
                     ta_ui_next_margin(0, 0, 0, 0);
                     ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
                     ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-                    ta_ui_label(CSTR("True"), 0);
+                    ta_ui_label(CSTR("True"));
                 } else {
                     ta_ui_next_margin(0, 0, 0, 0);
                     ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
                     ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-                    ta_ui_label(CSTR("False"), 0);
+                    ta_ui_label(CSTR("False"));
                 }
                 ta_ui_toggle_button_end(&model->cast_shadows);
             } else {
-                ta_ui_label(CSTR("n/a"), 0);
-                ta_ui_label(CSTR("[?]"), 0);
+                ta_ui_label(CSTR("n/a"));
+                ta_ui_label(CSTR("[?]"));
                 if (ta_ui_last_state().hover) {
                     ta_ui_tooltip(CSTR("Model must be visible to cast shadows"));
                 }
@@ -1284,14 +1293,14 @@ static void ui_node_panel()
         if (rigid_body) {
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("mass:"), 0);
+            ta_ui_label(CSTR("mass:"));
             static ta_ui_textbox_state mass_editor = { 0 };
             ta_ui_textbox_float(&rigid_body->mass, &mass_editor, 0);
             rigid_body->mass = MAX(0.0f, rigid_body->mass);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("density:"), 0);
+            ta_ui_label(CSTR("density:"));
             static ta_ui_textbox_state density_editor = { 0 };
             ta_ui_textbox_float(&rigid_body->density, &density_editor, 0);
 
@@ -1300,13 +1309,13 @@ static void ui_node_panel()
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("velocity:"), 0);
+            ta_ui_label(CSTR("velocity:"));
             text_len = snprintf(CSTR(text), "%9.6f, %9.6f, %9.6f",
                 rigid_body->velocity.x,
                 rigid_body->velocity.y,
                 rigid_body->velocity.z);
             DLB_ASSERT(text_len < sizeof(text));
-            ta_ui_label(text, text_len, 0);
+            ta_ui_label(text, text_len);
             ta_ui_next_margin(6, 1, 0, 1);
             if (ta_ui_reset_button()) {
                 rigid_body->velocity = VEC3_ZERO;
@@ -1315,63 +1324,63 @@ static void ui_node_panel()
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("ang. velocity:"), 0);
+            ta_ui_label(CSTR("ang. velocity:"));
             text_len = snprintf(CSTR(text), "%9.6f, %9.6f, %9.6f",
                 rigid_body->ang_velocity.x,
                 rigid_body->ang_velocity.y,
                 rigid_body->ang_velocity.z);
             DLB_ASSERT(text_len < sizeof(text));
-            ta_ui_label(text, text_len, 0);
+            ta_ui_label(text, text_len);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("apply gravity:"), 0);
+            ta_ui_label(CSTR("apply gravity:"));
             ta_ui_next_pad(0, 0, 0, 0);
             ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
             if (!rigid_body->no_gravity) {
                 ta_ui_next_margin(0, 0, 0, 0);
                 ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
-                ta_ui_label(CSTR("True"), 0);
+                ta_ui_label(CSTR("True"));
             } else {
                 ta_ui_next_margin(0, 0, 0, 0);
                 ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
-                ta_ui_label(CSTR("False"), 0);
+                ta_ui_label(CSTR("False"));
             }
             ta_ui_toggle_button_end(&rigid_body->no_gravity);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("broadphase collide:"), 0);
-            rigid_body->dbg_broadphase ? ta_ui_label(CSTR("True"), 0) : ta_ui_label(CSTR("False"), 0);
+            ta_ui_label(CSTR("broadphase collide:"));
+            rigid_body->dbg_broadphase ? ta_ui_label(CSTR("True")) : ta_ui_label(CSTR("False"));
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("broad aabb center:"), 0);
+            ta_ui_label(CSTR("broad aabb center:"));
             static ta_ui_textbox_vec3_state broad_center_editor = { 0 };
             ta_ui_textbox_vec3(&rigid_body->aabb.center, &broad_center_editor, false, true);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("broad aabb extents:"), 0);
+            ta_ui_label(CSTR("broad aabb extents:"));
             static ta_ui_textbox_vec3_state broad_extents_editor = { 0 };
             ta_ui_textbox_vec3(&rigid_body->aabb.extents, &broad_extents_editor, false, false);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("narrowphase collide:"), 0);
-            rigid_body->dbg_narrowphase ? ta_ui_label(CSTR("True"), 0) : ta_ui_label(CSTR("False"), 0);
+            ta_ui_label(CSTR("narrowphase collide:"));
+            rigid_body->dbg_narrowphase ? ta_ui_label(CSTR("True")) : ta_ui_label(CSTR("False"));
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("centroid local:"), 0);
+            ta_ui_label(CSTR("centroid local:"));
             static ta_ui_textbox_vec3_state centroid_local_editor = { 0 };
             ta_ui_textbox_vec3(&rigid_body->centroid_local, &centroid_local_editor, false, false);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("centroid global:"), 0);
+            ta_ui_label(CSTR("centroid global:"));
             static ta_ui_textbox_vec3_state centroid_global_editor = { 0 };
             ta_ui_textbox_vec3(&rigid_body->centroid_global, &centroid_global_editor, false, false);
 
@@ -1379,41 +1388,41 @@ static void ui_node_panel()
             ta_ui_next_margin(2, 12, 0, 4);
             ta_ui_next_size(header_width, 0);
             ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
-            ta_ui_label(CSTR("Collider"), 0);
+            ta_ui_label(CSTR("Collider"));
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("type:"), 0);
+            ta_ui_label(CSTR("type:"));
             const char *collider_type = ta_collider_type_str(rigid_body->collider.type);
-            ta_ui_label(collider_type, strlen(collider_type), 0);
+            ta_ui_label(collider_type, strlen(collider_type));
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("center:"), 0);
+            ta_ui_label(CSTR("center:"));
             static ta_ui_textbox_vec3_state center_editor = { 0 };
             ta_ui_textbox_vec3(&rigid_body->collider.data.center, &center_editor, false, true);
 
             switch (rigid_body->collider.type) {
                 case TA_COLLIDER_PLANE: {
                     ta_ui_row_begin();
-                    ta_ui_label(CSTR("normal:"), 0);
+                    ta_ui_label(CSTR("normal:"));
                     static ta_ui_textbox_vec3_state normal_editor = { 0 };
                     ta_ui_textbox_vec3(&rigid_body->collider.data.plane.normal, &normal_editor, true, false);
                     break;
                 } case TA_COLLIDER_SPHERE: {
                     ta_ui_row_begin();
                     ta_ui_next_size(label_width, 0);
-                    ta_ui_label(CSTR("radius:"), 0);
+                    ta_ui_label(CSTR("radius:"));
                     static ta_ui_textbox_state radius_editor = { 0 };
                     ta_ui_textbox_float(&rigid_body->collider.data.sphere.radius, &radius_editor, 0);
                     break;
                 } case TA_COLLIDER_OBB: {
                     ta_ui_row_begin();
-                    ta_ui_label(CSTR("extents:"), 0);
+                    ta_ui_label(CSTR("extents:"));
                     static ta_ui_textbox_vec3_state extents_editor = { 0 };
                     ta_ui_textbox_vec3(&rigid_body->collider.data.obb.extents, &extents_editor, false, false);
                     ta_ui_row_begin();
-                    ta_ui_label(CSTR("orientation:"), 0);
+                    ta_ui_label(CSTR("orientation:"));
                     static ta_ui_textbox_vec4_state orientation_editor = { 0 };
                     ta_ui_textbox_vec4(&rigid_body->collider.data.obb.orientation, &orientation_editor, true, true);
                     break;
@@ -1439,19 +1448,19 @@ static void ui_node_panel()
         if (light) {
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("enabled:"), 0);
+            ta_ui_label(CSTR("enabled:"));
             ta_ui_toggle_button(CSTR("False"), CSTR("True"), &light->enabled);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("intensity:"), 0);
+            ta_ui_label(CSTR("intensity:"));
             static ta_ui_textbox_state intensity_editor = { 0 };
             ta_ui_textbox_float(&light->intensity, &intensity_editor, 0);
             light->intensity = MAX(0.0f, light->intensity);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("color:"), 0);
+            ta_ui_label(CSTR("color:"));
             static ta_ui_textbox_vec3_state color_editor = { 0 };
             ta_ui_textbox_vec3((ta_vec3 *)&light->color, &color_editor, false, false);
             light->color.r = clampf(light->color.r, 0.0f, 1.0f);
@@ -1465,7 +1474,7 @@ static void ui_node_panel()
                 case TA_LIGHT_DIRECTIONAL: {
                     ta_ui_row_begin();
                     ta_ui_next_size(label_width, 0);
-                    ta_ui_label(CSTR("cast shadows:"), 0);
+                    ta_ui_label(CSTR("cast shadows:"));
                     ta_ui_toggle_button(CSTR("False"), CSTR("True"), &light->data.directional.cast_shadows);
 
                     ta_ui_row_begin();
@@ -1486,7 +1495,7 @@ static void ui_node_panel()
                 } case TA_LIGHT_POINT: {
                     ta_ui_row_begin();
                     ta_ui_next_size(label_width, 0);
-                    ta_ui_label(CSTR("cast shadows:"), 0);
+                    ta_ui_label(CSTR("cast shadows:"));
                     ta_ui_toggle_button(CSTR("False"), CSTR("True"), &light->data.point.cast_shadows);
 
                     ta_ui_row_begin();
@@ -1619,7 +1628,7 @@ static void ui_camera_panel()
         ta_ui_next_size(120, 0);
         bool selected = camera->name == selected_camera;
         ta_ui_toggle_button_begin(TA_UI_AUTOSIZE_H);
-        ta_ui_label(SYM(camera->name), 0);
+        ta_ui_label(SYM(camera->name));
         if (ta_ui_toggle_button_end(&selected)) {
             if (selected) {
                 selected_camera = camera->name;
@@ -1640,36 +1649,36 @@ static void ui_camera_panel()
         ta_ui_row_begin();
         static ta_ui_panel_state label_panel = { 0 };
         ta_ui_panel_begin(&label_panel, TA_UI_AUTOSIZE);
-        ta_ui_label(CSTR("Name"), 0);
-        ta_ui_label(CSTR("Entity name"), 0);
-        ta_ui_label(CSTR("Target position"), 0);
-        ta_ui_label(CSTR("xform position"), 0);
-        ta_ui_label(CSTR("Target orientation"), 0);
-        ta_ui_label(CSTR("xform orientation"), 0);
-        ta_ui_label(CSTR("Target follow distance"), 0);
-        ta_ui_label(CSTR("Position smooth"), 0);
-        ta_ui_label(CSTR("Position target vel"), 0);
-        ta_ui_label(CSTR("Yaw"), 0);
-        ta_ui_label(CSTR("Yaw min"), 0);
-        ta_ui_label(CSTR("Yaw max"), 0);
-        ta_ui_label(CSTR("Yaw smooth"), 0);
-        ta_ui_label(CSTR("Yaw target"), 0);
-        ta_ui_label(CSTR("Pitch"), 0);
-        ta_ui_label(CSTR("Pitch min"), 0);
-        ta_ui_label(CSTR("Pitch max"), 0);
-        ta_ui_label(CSTR("Pitch smooth"), 0);
-        ta_ui_label(CSTR("Pitch target"), 0);
-        ta_ui_label(CSTR("FOV"), 0);
-        ta_ui_label(CSTR("Z near"), 0);
-        ta_ui_label(CSTR("Ortho"), 0);
-        ta_ui_label(CSTR("Debug channel"), 0);
+        ta_ui_label(CSTR("Name"));
+        ta_ui_label(CSTR("Entity name"));
+        ta_ui_label(CSTR("Target position"));
+        ta_ui_label(CSTR("xform position"));
+        ta_ui_label(CSTR("Target orientation"));
+        ta_ui_label(CSTR("xform orientation"));
+        ta_ui_label(CSTR("Target follow distance"));
+        ta_ui_label(CSTR("Position smooth"));
+        ta_ui_label(CSTR("Position target vel"));
+        ta_ui_label(CSTR("Yaw"));
+        ta_ui_label(CSTR("Yaw min"));
+        ta_ui_label(CSTR("Yaw max"));
+        ta_ui_label(CSTR("Yaw smooth"));
+        ta_ui_label(CSTR("Yaw target"));
+        ta_ui_label(CSTR("Pitch"));
+        ta_ui_label(CSTR("Pitch min"));
+        ta_ui_label(CSTR("Pitch max"));
+        ta_ui_label(CSTR("Pitch smooth"));
+        ta_ui_label(CSTR("Pitch target"));
+        ta_ui_label(CSTR("FOV"));
+        ta_ui_label(CSTR("Z near"));
+        ta_ui_label(CSTR("Ortho"));
+        ta_ui_label(CSTR("Debug channel"));
         ta_ui_panel_end();
 
         static ta_ui_panel_state button_panel = { 0 };
         ta_ui_panel_begin(&button_panel, TA_UI_AUTOSIZE);
 
-        ta_ui_label(SYM(camera->name), 0);
-        ta_ui_label(SYM(camera->entity), 0);
+        ta_ui_label(SYM(camera->name));
+        ta_ui_label(SYM(camera->entity));
 
         static ta_ui_textbox_vec3_state tpos_textbox = { 0 };
         ta_ui_textbox_vec3(&camera->target_xform.position, &tpos_textbox, false, true);
@@ -1707,7 +1716,7 @@ static void ui_camera_panel()
         static ta_ui_textbox_state follow_distance_textbox = { 0 };
         ta_ui_textbox_float(&camera->follow_distance, &follow_distance_textbox, 0);
 
-        ta_ui_label_float(camera->yaw, 0);
+        ta_ui_label_float(camera->yaw);
 
         static ta_ui_textbox_state yaw_min_textbox = { 0 };
         ta_ui_textbox_float_reset(&camera->yaw_min, &yaw_min_textbox, 0, CAMERA_YAW_MIN);
@@ -1725,7 +1734,7 @@ static void ui_camera_panel()
         ta_ui_textbox_float_reset(&camera->yaw_target, &yaw_target_textbox, 0, CAMERA_YAW_DEFAULT);
         camera->yaw_target = clampf(camera->yaw_target, camera->yaw_min, camera->yaw_max);
 
-        ta_ui_label_float(camera->pitch, 0);
+        ta_ui_label_float(camera->pitch);
 
         static ta_ui_textbox_state pitch_min_textbox = { 0 };
         ta_ui_textbox_float_reset(&camera->pitch_min, &pitch_min_textbox, 0, CAMERA_PITCH_MIN);
@@ -1790,7 +1799,7 @@ static void ui_camera_panel()
             if (mode && mode % 2 == 0) ta_ui_row_begin();
             ta_ui_next_size(120, 0);
             ta_ui_toggle_button_begin(TA_UI_AUTOSIZE_H);
-            ta_ui_label(dbg_modes[mode].text, dbg_modes[mode].len, 0);
+            ta_ui_label(dbg_modes[mode].text, dbg_modes[mode].len);
             bool checked = mode == (size_t)camera->dbg_channel;
             if (ta_ui_toggle_button_end(&checked)) {
                 camera->dbg_channel = mode;
@@ -1858,17 +1867,17 @@ static void ui_material_details_panel(const char *material_name)
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("name"), 0);
-    ta_ui_label(SYM(material->name), 0);
+    ta_ui_label(CSTR("name"));
+    ta_ui_label(SYM(material->name));
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("shader"), 0);
-    ta_ui_label(SYM(material->shader), 0);
+    ta_ui_label(CSTR("shader"));
+    ta_ui_label(SYM(material->shader));
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("albedo_factor"), 0);
+    ta_ui_label(CSTR("albedo_factor"));
     ta_ui_textbox_vec4((ta_vec4 *)&material->albedo_factor, &ui.albedo_factor_textbox, false, false);
     material->albedo_factor.r = clampf(material->albedo_factor.r, 0.0f, 1.0f);
     material->albedo_factor.g = clampf(material->albedo_factor.g, 0.0f, 1.0f);
@@ -1877,13 +1886,13 @@ static void ui_material_details_panel(const char *material_name)
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("albedo_texture"), 0);
+    ta_ui_label(CSTR("albedo_texture"));
     ta_ui_next_size(default_textbox_width, default_textbox_height);
     ta_ui_textbox(SYM(material->albedo_texture), &ui.albedo_texture_textbox, 0);
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("emission_factor"), 0);
+    ta_ui_label(CSTR("emission_factor"));
     ta_ui_textbox_vec3((ta_vec3 *)&material->emission_factor, &ui.emission_factor_textbox, false, false);
     material->emission_factor.r = clampf(material->emission_factor.r, 0.0f, 1.0f);
     material->emission_factor.g = clampf(material->emission_factor.g, 0.0f, 1.0f);
@@ -1891,49 +1900,49 @@ static void ui_material_details_panel(const char *material_name)
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("emission_texture"), 0);
+    ta_ui_label(CSTR("emission_texture"));
     ta_ui_next_size(default_textbox_width, default_textbox_height);
     ta_ui_textbox(SYM(material->emission_texture), &ui.emission_texture_textbox, 0);
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("height_texture"), 0);
+    ta_ui_label(CSTR("height_texture"));
     ta_ui_next_size(default_textbox_width, default_textbox_height);
     ta_ui_textbox(SYM(material->height_texture), &ui.height_texture_textbox, 0);
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("metallic_factor"), 0);
+    ta_ui_label(CSTR("metallic_factor"));
     ta_ui_textbox_float(&material->metallic_factor, &ui.metallic_factor_textbox, false);
     material->metallic_factor = clampf(material->metallic_factor, 0.0f, 1.0f);
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("metallic_texture"), 0);
+    ta_ui_label(CSTR("metallic_texture"));
     ta_ui_next_size(default_textbox_width, default_textbox_height);
     ta_ui_textbox(SYM(material->metallic_texture), &ui.metallic_texture_textbox, 0);
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("normal_texture"), 0);
+    ta_ui_label(CSTR("normal_texture"));
     ta_ui_next_size(default_textbox_width, default_textbox_height);
     ta_ui_textbox(SYM(material->normal_texture), &ui.normal_texture_textbox, 0);
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("occlusion_texture"), 0);
+    ta_ui_label(CSTR("occlusion_texture"));
     ta_ui_next_size(default_textbox_width, default_textbox_height);
     ta_ui_textbox(SYM(material->occlusion_texture), &ui.occlusion_texture_textbox, 0);
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("roughness_factor"), 0);
+    ta_ui_label(CSTR("roughness_factor"));
     ta_ui_textbox_float(&material->roughness_factor, &ui.roughness_factor_textbox, false);
     material->roughness_factor = clampf(material->roughness_factor, 0.0f, 1.0f);
 
     ta_ui_row_begin();
     ta_ui_next_size(name_column_width, 0);
-    ta_ui_label(CSTR("roughness_texture"), 0);
+    ta_ui_label(CSTR("roughness_texture"));
     ta_ui_next_size(default_textbox_width, default_textbox_height);
     ta_ui_textbox(SYM(material->roughness_texture), &ui.roughness_texture_textbox, 0);
 
@@ -1979,6 +1988,11 @@ static void ui_material_details_panel(const char *material_name)
     ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
     if (ta_ui_button(CSTR("Cancel"))) {
         editor.selected_material = 0;
+    }
+
+    for (int i = 0; i < 50; ++i) {
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("stuff"));
     }
 
     ta_ui_panel_end();
@@ -2182,7 +2196,7 @@ static void ui_textbox_panel()
     ta_ui_panel_begin(&textbox_panel, TA_UI_AUTOSIZE);
 
     ta_ui_row_begin();
-    ta_ui_label(CSTR("Text:"), 0);
+    ta_ui_label(CSTR("Text:"));
     ta_ui_next_size(300, 0);
     //ta_ui_next_margin(4, 0, 0, 2);
     static ta_ui_textbox_state textbox = { 0 };
@@ -2197,12 +2211,12 @@ static void ui_textbox_panel()
     char tb_buffer[20] = { 0 };
     size_t tb_buffer_len = snprintf(CSTR(tb_buffer), "Length: %zu", dlb_vec_len(textbox.buffer));
     DLB_ASSERT(tb_buffer_len < sizeof(tb_buffer));
-    ta_ui_label(tb_buffer, tb_buffer_len, 0);
+    ta_ui_label(tb_buffer, tb_buffer_len);
 
     char tb_cursor[20] = { 0 };
     size_t tb_cursor_len = snprintf(CSTR(tb_cursor), "Cursor: %zu", textbox.cursor);
     DLB_ASSERT(tb_cursor_len < sizeof(tb_cursor));
-    ta_ui_label(tb_cursor, tb_cursor_len, 0);
+    ta_ui_label(tb_cursor, tb_cursor_len);
 
     ta_ui_panel_end();
 }
@@ -2238,7 +2252,7 @@ static void ui_editor_sidebar()
         ta_ui_next_size(100, 0);
         ta_ui_next_pad(0, 0, 0, 0);
         ta_ui_toggle_button_begin(TA_UI_AUTOSIZE_H);
-        ta_ui_label(categories[i].name, categories[i].len, 0);
+        ta_ui_label(categories[i].name, categories[i].len);
         bool active = (i == category_selected);
         ta_ui_toggle_button_end(&active);
         if (active && category_selected != i) {

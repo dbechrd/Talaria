@@ -29,9 +29,11 @@
 #define SCROLL_WHEEL_SPEED      17
 
 // internal flags
-#define TA_UI_INVISIBLE         0x20000000  // takes up space but doesn't render (display: hidden)
-#define TA_UI_CONTAINER         0x40000000  // [internal] will always be set on containers
-#define TA_UI_CONTAINER_ENDED   0x80000000  // [internal] will be set when container ends
+#define TA_UI_INVISIBLE                   0x80000000  // takes up space but doesn't render (display: hidden)
+#define TA_UI_CONTAINER                   0x40000000  // [internal] will always be set on containers
+#define TA_UI_CONTAINER_ENDED             0x20000000  // [internal] will be set when container ends
+#define TA_UI_CONTAINER_SCROLLING_CHILD_V 0x10000000  // [internal] will be set when container has vertical scrolling child
+#define TA_UI_CONTAINER_SCROLLING_CHILD_H 0x08000000  // [internal] will be set when container has horizontal scrolling child
 
 #define UI_TEXTBOX_MIN_BUFFER_LEN 128  // minimum buffer to reserve for text editing (to avoid frequent resizes)
 
@@ -444,6 +446,9 @@ static ui_frame *ui_frame_end(ui_frame_type type)
     }
     DLB_ASSERT(frame);  // If someone calls _end before _begin this will assert
 
+    bool scrolling_v = false;
+    bool scrolling_h = false;
+
     // Finalize containers
     if (frame->internal_flags & TA_UI_CONTAINER) {
         ui_row_end(frame);
@@ -460,9 +465,19 @@ static ui_frame *ui_frame_end(ui_frame_type type)
         // for now. Fix if it's ever actually a problem.
         if (frame->content_size.h > frame->rect.h) {
             frame->rect.w += SCROLL_THICKNESS;
+            scrolling_v = true;
         }
         if (frame->content_size.w > frame->rect.w) {
             frame->rect.h += SCROLL_THICKNESS;
+            scrolling_h = true;
+        }
+
+        // Parent container should always inherit this container's scrolling child flags
+        if (frame->container_idx) {
+            DLB_ASSERT(frame->container_idx < dlb_vec_len(ui_frames));
+            ui_frame *container = &ui_frames[frame->container_idx];
+            container->internal_flags |= (frame->internal_flags & TA_UI_CONTAINER_SCROLLING_CHILD_V);
+            container->internal_flags |= (frame->internal_flags & TA_UI_CONTAINER_SCROLLING_CHILD_H);
         }
 
         if (frame->type == UI_WINDOW) {
@@ -519,6 +534,15 @@ static ui_frame *ui_frame_end(ui_frame_type type)
             frame->state.released = ta_key_released(SDL_SCANCODE_MOUSE_LEFT);
         }
     }
+
+    // Parent container has a scrolling child if this container scrolls
+    if (frame->container_idx && (frame->internal_flags & TA_UI_CONTAINER) && frame->state.hover) {
+        DLB_ASSERT(frame->container_idx < dlb_vec_len(ui_frames));
+        ui_frame *container = &ui_frames[frame->container_idx];
+        container->internal_flags |= (scrolling_v == true) * TA_UI_CONTAINER_SCROLLING_CHILD_V;
+        container->internal_flags |= (scrolling_h == true) * TA_UI_CONTAINER_SCROLLING_CHILD_H;
+    }
+
     last_frame_state = &frame->state;
 
 #if UI_DEBUG_RANDOM_COLORS
@@ -633,6 +657,10 @@ void ta_ui_next_bg_color(ui_state_type state, float r, float g, float b, float a
         }
     }
 }
+void ta_ui_next_bg_color_rgba(ui_state_type state, ta_rgba rgba)
+{
+    ta_ui_next_bg_color(state, rgba.r, rgba.g, rgba.b, rgba.a);
+}
 void ta_ui_next_fg_color(ui_state_type state, float r, float g, float b, float a)
 {
     for (int i = 0; i < UI_STATE_COUNT; i++) {
@@ -647,6 +675,10 @@ void ta_ui_next_fg_color(ui_state_type state, float r, float g, float b, float a
             next_frame_dirty.fg_color[i] = true;
         }
     }
+}
+void ta_ui_next_fg_color_rgba(ui_state_type state, ta_rgba rgba)
+{
+    ta_ui_next_fg_color(state, rgba.r, rgba.g, rgba.b, rgba.a);
 }
 
 ta_ui_state ta_ui_last_state()
@@ -749,7 +781,7 @@ bool ta_ui_button(const char *text, size_t text_len)
     ta_ui_button_begin(TA_UI_AUTOSIZE);
     if (text) {
         ta_ui_next_margin(0, 0, 0, 0);
-        ta_ui_label(text, text_len, 0);
+        ta_ui_label(text, text_len);
     }
     return ta_ui_button_end();
 }
@@ -787,9 +819,9 @@ bool ta_ui_toggle_button(const char *false_text, size_t false_text_len, const ch
     ta_ui_next_pad(0, 0, 0, 0);
     // NOTE: 1 frame delay because label size is required to do "pressed" hit test
     if (*checked) {
-        ta_ui_label(true_text, true_text_len, 0);
+        ta_ui_label(true_text, true_text_len);
     } else {
-        ta_ui_label(false_text, false_text_len, 0);
+        ta_ui_label(false_text, false_text_len);
     }
     return ta_ui_toggle_button_end(checked);
 }
@@ -1152,13 +1184,13 @@ typedef struct drag_float_state {
 } drag_float_state;
 static drag_float_state drag_float;
 
-static void drag_float_begin(ta_ui_textbox_state *textbox, float *f)
+static void drag_float_begin(int rel_x, int rel_y, ta_ui_textbox_state *textbox, float *f)
 {
     drag_float.value = f;
     drag_float.value_orig = *f;
     drag_float.changed = false;
     *ui_textbox_dragging = textbox;
-    ta_mouse_drag_begin();
+    ta_mouse_drag_begin(rel_x, rel_y);
 }
 static void drag_float_update(float delta)
 {
@@ -1170,21 +1202,21 @@ static void drag_float_update(float delta)
         drag_float.changed = true;
     }
 }
-static bool drag_float_end()
+static bool drag_float_end(int rel_x, int rel_y)
 {
     DLB_ASSERT(drag_float.value);
     bool changed = drag_float.changed;
     drag_float.value = 0;
     drag_float.changed = false;
     *ui_textbox_dragging = 0;
-    ta_mouse_drag_end();
+    ta_mouse_drag_end(rel_x, rel_y);
     return changed;
 }
-static void drag_float_cancel()
+static void drag_float_cancel(int rel_x, int rel_y)
 {
     DLB_ASSERT(drag_float.value);
     *drag_float.value = drag_float.value_orig;
-    drag_float_end();
+    drag_float_end(rel_x, rel_y);
 }
 
 bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
@@ -1250,12 +1282,12 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
     } else {
         // Do drag float things
         if (frame->state.pressed) {
-            drag_float_begin(textbox, value);
+            drag_float_begin(frame->rect.x, frame->rect.y, textbox, value);
         } else if (drag_float.value == value) {
             drag_float_update(0.01f);
             if (ta_key_released(SDL_SCANCODE_MOUSE_LEFT)) {
                 // If drag ended and value didn't change, start edit mode
-                if (!drag_float_end()) {
+                if (!drag_float_end(frame->rect.x, frame->rect.y)) {
                     char text[16] = { 0 };
                     size_t text_len = snprintf(CSTR(text), "%.3f", *value);
                     DLB_ASSERT(text_len < sizeof(text));
@@ -1323,7 +1355,7 @@ void ta_ui_textbox_vec2(ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state)
     float *components = (float *)vec;
     for (int i = 0; i < 2; ++i) {
         ta_ui_next_margin(0, 1, 0, 1);
-        ta_ui_label(labels[i], 1, 0);
+        ta_ui_label(labels[i], 1);
         ta_ui_next_bg_color(UI_STATE_NONE,
             0.3f * (i == 0) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].r * (i == 3),
             0.3f * (i == 1) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].g * (i == 3),
@@ -1371,7 +1403,7 @@ void ta_ui_textbox_vec3(ta_vec3 *vec, ta_ui_textbox_vec3_state* vec_state, bool 
     float *components = (float *)vec;
     for (int i = 0; i < 3; ++i) {
         ta_ui_next_margin(0, 1, 0, 1);
-        ta_ui_label(labels[i], 1, 0);
+        ta_ui_label(labels[i], 1);
         ta_ui_next_bg_color(UI_STATE_NONE,
             0.3f * (i == 0) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].r * (i == 3),
             0.3f * (i == 1) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].g * (i == 3),
@@ -1406,7 +1438,7 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state, bool 
     float *components = (float *)vec;
     for (int i = 0; i < 4; ++i) {
         ta_ui_next_margin(0, 1, 0, 1);
-        ta_ui_label(labels[i], 1, 0);
+        ta_ui_label(labels[i], 1);
         ta_ui_next_bg_color(UI_STATE_NONE,
             0.3f * (i == 0) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].r * (i == 3),
             0.3f * (i == 1) + ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_NONE].g * (i == 3),
@@ -1695,7 +1727,7 @@ static void ui_render_textbox(ui_frame *frame)
 }
 static void ui_render_scrollbars(ui_frame *frame)
 {
-    static bool dragging_v = false;
+    static ta_ui_scroll_state *dragging_scroll_v = 0;
 
     DLB_ASSERT(frame);
 
@@ -1703,6 +1735,8 @@ static void ui_render_scrollbars(ui_frame *frame)
     if (!scroll) {
         return;
     }
+
+    bool dragging_me_v = scroll == dragging_scroll_v;
 
     int overflow_x = frame->content_size.w - frame->rect.w;
     int overflow_y = frame->content_size.h - frame->rect.h;
@@ -1733,10 +1767,14 @@ static void ui_render_scrollbars(ui_frame *frame)
         scroll_v_widget.y = frame->rect.y + scroll_v;
         scroll_v_widget.h = widget_h;
 
-        bool widget_hover = rect_contains_mouse(scroll_v_widget, 0);
         ta_rgba widget_color = (ta_rgba){ 0.6f, 0.0f, 0.0f, 1.0f };
-        if (widget_hover && !dragging_v) {
+        bool widget_hover = rect_contains_mouse(scroll_v_widget, 0);
+        if (widget_hover && !dragging_scroll_v) {
             widget_color = (ta_rgba){ 0.8f, 0.0f, 0.0f, 1.0f };
+        } else if (dragging_me_v) {
+            widget_color = (ta_rgba){ 0.8f, 0.6f, 0.0f, 1.0f };
+        } else if (dragging_scroll_v || frame->internal_flags & TA_UI_CONTAINER_SCROLLING_CHILD_V) {
+            widget_color = (ta_rgba){ 0.0f, 0.6f, 0.8f, 1.0f };
         }
 
         ta_primitive_push_rect(0, scroll_v_rect, TA_COLOR_GRAY4, UI_LAYER_EDIT_1);
@@ -1750,20 +1788,21 @@ static void ui_render_scrollbars(ui_frame *frame)
             if (widget_hover && ta_key_pressed(SDL_SCANCODE_MOUSE_LEFT)) {
                 // Mouse drag
                 //scrollbar_y_frame_idx = frame->index;
-                dragging_v = true;
-                ta_mouse_drag_begin();
-            } else if (!dragging_v && rect_contains_mouse(frame->rect, 0)) {
+                dragging_scroll_v = scroll;
+                ta_mouse_drag_begin(scroll_v_widget.x, scroll_v_widget.y);
+            } else if (frame->state.hover && !dragging_scroll_v &&
+                !(frame->internal_flags & TA_UI_CONTAINER_SCROLLING_CHILD_V)) {
                 // Scroll wheel
+                //   If frame is hovered, and a scrollbar isn't already being dragged, and there's no child container
+                //   with a scrollbar that's also hovered, then handle scroll whell delta.
                 delta_y = ta_mouse_scroll_dy() * SCROLL_WHEEL_SPEED;
-            } else if (!ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
+            } else if (dragging_me_v && !ta_key_down(SDL_SCANCODE_MOUSE_LEFT)) {
                 // Not dragging
-                if (dragging_v) {
-                    dragging_v = false;
-                    ta_mouse_drag_end();
-                }
+                ta_mouse_drag_end(scroll_v_widget.x, scroll_v_widget.y);
+                dragging_scroll_v = 0;
             }
 
-            if (dragging_v) {
+            if (dragging_me_v) {
                 delta_y = ta_mouse_dy();
             }
             scroll->percent.y += (float)delta_y / scroll_space_v;
