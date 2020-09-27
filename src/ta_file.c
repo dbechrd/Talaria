@@ -258,6 +258,7 @@ int ta_file_allow_char(ta_file *f, const char *chars, int times) {
     return count;
 }
 
+// read file as binary, but append \0 to the end of the buffer
 char *ta_file_read_all(const char *filename)
 {
     // Open file

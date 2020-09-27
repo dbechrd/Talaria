@@ -512,8 +512,7 @@ ta_vec4 quat_nlerp(ta_vec4 a, ta_vec4 b, float w)
 {
     float dot = quat_dot(a, b);
     float inv_w = 1.0f - w;
-    if(dot < 0.0f)
-    {
+    if (dot < 0.0f) {
         b = quat_negate(b);
     }
 

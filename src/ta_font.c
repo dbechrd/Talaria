@@ -195,7 +195,7 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
 {
     DLB_ASSERT(rects);
     if (text_len) {
-        dlb_vec_reserve(*rects, text_len);
+        dlb_vec_reserve(*rects, dlb_vec_len(*rects) + text_len);
     }
 
     ta_rect bounds = { 0 };
@@ -203,6 +203,8 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
         DLB_ASSERT(0);
         return bounds;
     }
+
+    size_t orig_rects_len = dlb_vec_len(*rects);
 
     ta_vec2i position = { 0 };
     position.x = 0;
@@ -273,7 +275,7 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
     }
     bounds.h += font->line_height;
 
-    size_t rects_len = dlb_vec_len(*rects);
+    size_t rects_len = dlb_vec_len(*rects) - orig_rects_len;
     DLB_ASSERT(rects_len + newlines == text_len);
 
     if (cursor_offset) {

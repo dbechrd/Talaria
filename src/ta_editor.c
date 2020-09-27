@@ -1963,13 +1963,13 @@ static void ui_material_details_panel(const char *material_name)
             }
 
         const char *name = 0;
-        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.albedo_texture_textbox.buffer   , material->albedo_texture    );
-        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.emission_texture_textbox.buffer , material->emission_texture  );
-        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.height_texture_textbox.buffer   , material->height_texture    );
-        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.metallic_texture_textbox.buffer , material->metallic_texture  );
-        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.normal_texture_textbox.buffer   , material->normal_texture    );
-        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.occlusion_texture_textbox.buffer, material->occlusion_texture );
-        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.roughness_texture_textbox.buffer, material->roughness_texture );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.albedo_texture_textbox.buffer   , material->albedo_texture   );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.emission_texture_textbox.buffer , material->emission_texture );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.height_texture_textbox.buffer   , material->height_texture   );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.metallic_texture_textbox.buffer , material->metallic_texture );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.normal_texture_textbox.buffer   , material->normal_texture   );
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.occlusion_texture_textbox.buffer, material->occlusion_texture);
+        FIND_OR_CREATE_TEXTURE_THEN_ASSIGN(ui.roughness_texture_textbox.buffer, material->roughness_texture);
 
         #undef FIND_OR_CREATE_TEXTURE_THEN_ASSIGN
     }
@@ -2039,6 +2039,23 @@ static void ui_material_panel()
             );
             DLB_ASSERT(len < sizeof(tex_buf));
             ta_ui_tooltip(tex_buf, len);
+        }
+        const char *selected_entity = 0;
+        ta_editor_selected_entity(&selected_entity);
+        if (selected_entity) {
+            char apply_buf[256] = { 0 };
+            size_t apply_buf_len = snprintf(CSTR(apply_buf), "Apply to %s", selected_entity);
+            DLB_ASSERT(apply_buf_len < sizeof(apply_buf));
+            if (ta_ui_button(apply_buf, apply_buf_len)) {
+                ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
+                if (model) {
+                    if (!model->materials) {
+                        dlb_vec_alloc(model->materials);
+                    }
+                    // TODO: Set via material slots in node editor. For now, arbitrarily override material in slot 0.
+                    model->materials[0] = material->name;
+                }
+            }
         }
     }
     ta_ui_panel_end();

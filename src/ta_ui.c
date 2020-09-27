@@ -82,8 +82,6 @@ typedef struct ui_frame {
     ta_size content_size;      // dynamic content size (-margin, +pad)
     ta_rect clip_rect;
 
-    ta_rect_uv *text_rects;    // vector
-    bool text_rects_internal;  // if true, text_rects wasn't passed in and must be freed
     const char *texture;
     ta_vec2i cursor;           // cursor location for textboxes
 
@@ -99,6 +97,11 @@ typedef struct ui_frame {
         ta_ui_window_state *window;
         ta_ui_panel_state *panel;
         ta_ui_textbox_state *textbox;
+        // TODO: ta_ui_label_state, or combine these all into one big temp buffer?
+        struct {
+            size_t text_rects_start; // offset into shared ui_label_rects (do not use dlb_vec_* methods!)
+            size_t text_rects_count; // count
+        } label;
     } data;
 } ui_frame;
 
@@ -115,6 +118,7 @@ static ui_style next_frame_style;
 static ta_ui_state *last_frame_state;
 
 static ui_frame *ui_frames;
+static ta_rect_uv *ui_label_rects;  // globally shared temp buffer for label rect data (zeroed at end of every frame)
 
 static void ui_row_end(ui_frame *container);
 
@@ -807,16 +811,12 @@ bool ta_ui_image(const char *texture)
     frame->texture = texture;
     return frame->state.pressed;
 }
-void ta_ui_label(const char *text, size_t text_len, ta_rect_uv **text_rects)
+void ta_ui_label(const char *text, size_t text_len)
 {
     if (!text || !text_len) return;
 
-    ta_rect_uv *text_rects_internal = 0;
-    if (text_rects) {
-        text_rects_internal = *text_rects;
-    }
-
-    ta_rect text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects_internal);
+    size_t rects_start_count = dlb_vec_len(ui_label_rects);
+    ta_rect text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &ui_label_rects);
 
     // Auto-expand frame based on contents
     ta_ui_next_size(MAX(next_frame_size.w, (int)text_rect.w),
@@ -824,19 +824,18 @@ void ta_ui_label(const char *text, size_t text_len, ta_rect_uv **text_rects)
 
     ui_frame_begin(UI_LABEL, 0, false);
     ui_frame *frame = ui_frame_end(UI_LABEL);
-    frame->text_rects = text_rects_internal;
-    frame->text_rects_internal = !text_rects;
+    frame->data.label.text_rects_start = rects_start_count;
+    frame->data.label.text_rects_count = dlb_vec_len(ui_label_rects) - rects_start_count;
 
-    if (text_rects) {
-        *text_rects = text_rects_internal;
-    }
+    // This will probably be false due to whitespace characters.. if so, just delete the check
+    DLB_ASSERT(frame->data.label.text_rects_count == text_len);
 }
-void ta_ui_label_float(float value, ta_rect_uv **text_rects)
+void ta_ui_label_float(float value)
 {
     char text[16] = { 0 };
     size_t text_len = snprintf(CSTR(text), "%.3f", value);
     DLB_ASSERT(text_len < sizeof(text));
-    ta_ui_label(text, text_len, text_rects);
+    ta_ui_label(text, text_len);
 }
 
 // TODO: Move this to the keybind and support it more generally
@@ -1085,7 +1084,6 @@ bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textb
     //DLB_ASSERT(text_len);
     DLB_ASSERT(textbox);
 
-    ta_rect_uv *text_rects = 0;
     ta_vec2i cursor = { 0 };
     ta_rect text_rect = { 0 };
 
@@ -1099,10 +1097,10 @@ bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textb
         // If still editing, render buffer
         size_t buffer_len = dlb_vec_len(textbox->buffer);
         text_rect = ta_font_push_text(ui_font, textbox->buffer, buffer_len, true, &textbox->cursor, &cursor,
-            mouse_coords, &text_rects);
+            mouse_coords, &textbox->text_rects);
     } else if (text) {
         // If not editing (or just canceled), render text
-        text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects);
+        text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &textbox->text_rects);
     }
 
     // Auto-expand frame based on contents
@@ -1143,7 +1141,6 @@ bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textb
         }
     }
 
-    frame->text_rects = text_rects;
     frame->cursor = cursor;
     return frame->data.textbox->submit;
 }
@@ -1204,7 +1201,6 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
     //    ta_ui_textbox_clear(textbox);
     //}
 
-    ta_rect_uv *text_rects = 0;
     ta_vec2i cursor = { 0 };
     ta_rect text_rect = { 0 };
 
@@ -1218,13 +1214,13 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
         // If still editing, render buffer
         size_t buffer_len = dlb_vec_len(textbox->buffer);
         text_rect = ta_font_push_text(ui_font, textbox->buffer, buffer_len, true, &textbox->cursor, &cursor,
-            mouse_coords, &text_rects);
+            mouse_coords, &textbox->text_rects);
     } else {
         // If not editing (or just canceled), render text
         char text[16] = { 0 };
         size_t text_len = snprintf(CSTR(text), "%.3f", *value);
         DLB_ASSERT(text_len < sizeof(text));
-        text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects);
+        text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &textbox->text_rects);
     }
 
     // Auto-expand frame based on contents
@@ -1294,7 +1290,6 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
         ta_ui_set_cursor(TA_CURSOR_HRESIZE);
     }
 
-    frame->text_rects = text_rects;
     frame->cursor = cursor;
     return frame->data.textbox->submit;
 }
@@ -1517,7 +1512,7 @@ void ta_ui_tooltip_end(const char *name)
 }
 void ta_ui_tooltip(const char *text, size_t text_len)
 {
-    ta_rect_uv *text_rects = 0;
+    static ta_rect_uv *text_rects = 0;
     ta_rect text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects);
 
     int x = ta_mouse_x();
@@ -1595,15 +1590,14 @@ static void ui_render_image(ui_frame *frame)
         ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_ARRAY_LAYER, 0);
     }
 }
-static void ui_render_text(int x, int y, ta_rect_uv *text_rects, ta_rect clip_rect)
+static void ui_render_text(int x, int y, ta_rect_uv *text_rects, size_t text_rects_count, ta_rect clip_rect)
 {
 #if 1
-    size_t rect_count = dlb_vec_len(text_rects);
-    if (rect_count) {
+    if (text_rects_count) {
         // Binary search to find overlapping y values (ignore everything before and after)
         size_t first_in_bounds;
         size_t left = 0;
-        size_t right = rect_count - 1;
+        size_t right = text_rects_count - 1;
         size_t mid = left;  // NOTE: Start at beginning for O(1) when scrollbar is at top
         while (left < right) {
             if (y + text_rects[mid].rect.y + text_rects[mid].rect.h < clip_rect.y) {
@@ -1617,7 +1611,7 @@ static void ui_render_text(int x, int y, ta_rect_uv *text_rects, ta_rect clip_re
 
         size_t last_in_bounds;
         left = 0;
-        right = rect_count - 1;
+        right = text_rects_count - 1;
         mid = right;  // NOTE: Start at end for O(1) when scrollbar is at bottom
         while (left < right) {
             if (y + text_rects[mid].rect.y > clip_rect.y + clip_rect.h) {
@@ -1631,12 +1625,12 @@ static void ui_render_text(int x, int y, ta_rect_uv *text_rects, ta_rect clip_re
 
 #if 0
         // CLEANUP(dlb): Chop off the first and last letters for easy verification that the correct bounds were found
-        //first_in_bounds = MIN(rect_count - 1, first_in_bounds + 1);
+        //first_in_bounds = MIN(text_rects_count - 1, first_in_bounds + 1);
         //last_in_bounds = (last_in_bounds >= 1) ? last_in_bounds - 1 : 0;
 #endif
 
-        DLB_ASSERT(first_in_bounds < rect_count);
-        DLB_ASSERT(last_in_bounds < rect_count);
+        DLB_ASSERT(first_in_bounds < text_rects_count);
+        DLB_ASSERT(last_in_bounds < text_rects_count);
 
         size_t push_count = (last_in_bounds - first_in_bounds) + 1;
         dlb_vec_reserve(primitive_quads.positions, push_count);
@@ -1651,8 +1645,7 @@ static void ui_render_text(int x, int y, ta_rect_uv *text_rects, ta_rect clip_re
     }
 #else
     // Slow code (no culling), for reference
-    dlb_vec_each(ta_rect_uv *, text_rect, text_rects)
-    {
+    dlb_vec_each(ta_rect_uv *, text_rect, text_rects) {
         ta_primitive_push_rect_uv(&primitive_quads, *text_rect, TA_COLOR_WHITE, 0, true, false);
     }
 
@@ -1671,7 +1664,8 @@ static void ui_render_label(ui_frame *frame)
     // Render text
     int x = frame->rect.x + frame->pad.x;
     int y = frame->rect.y + frame->pad.y;
-    ui_render_text(x, y, frame->text_rects, frame->clip_rect);
+    ui_render_text(x, y, ui_label_rects + frame->data.label.text_rects_start, frame->data.label.text_rects_count,
+        frame->clip_rect);
 }
 static void ui_render_textbox(ui_frame *frame)
 {
@@ -1683,7 +1677,10 @@ static void ui_render_textbox(ui_frame *frame)
     // Render text
     int x = frame->rect.x + frame->pad.x;
     int y = frame->rect.y + frame->pad.y;
-    ui_render_text(x, y, frame->text_rects, frame->clip_rect);
+    ui_render_text(x, y, frame->data.textbox->text_rects, dlb_vec_len(frame->data.textbox->text_rects), frame->clip_rect);
+
+    // Clear frame buffer
+    dlb_vec_zero(frame->data.textbox->text_rects);
 
     // If active, render cursor
     if (frame->data.textbox->focused && !frame->data.textbox->focus_changed) {
@@ -1844,7 +1841,7 @@ void ta_ui_render()
             frame->clip_rect.w = WINDOW_W;
             frame->clip_rect.h = WINDOW_H;
             size_t container_idx = frame->container_idx;
-            while(container_idx) {
+            while (container_idx) {
                 DLB_ASSERT(container_idx < dlb_vec_len(ui_frames));
                 ui_frame *container = &ui_frames[container_idx];
                 frame->clip_rect = rect_intersection(frame->clip_rect, container->rect);
@@ -1866,13 +1863,6 @@ void ta_ui_render()
                 ui_render_scrollbars(frame);
             }
         }
-
-        // Clear any per-frame memory
-        if (frame->text_rects_internal) {
-            dlb_vec_free(frame->text_rects);
-        } else {
-            dlb_vec_zero(frame->text_rects);
-        }
     }
 
     glDisable(GL_SCISSOR_TEST);
@@ -1882,4 +1872,5 @@ void ta_ui_render()
     last_frame_state = 0;
     dlb_vec_zero(ui_frames);
     dlb_vec_alloc(ui_frames);  // reserve UI_ROOT
+    dlb_vec_zero(ui_label_rects);
 }

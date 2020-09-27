@@ -78,6 +78,7 @@ FMOD_RESULT F_CALLBACK audio_fmod_callback(FMOD_SYSTEM *system, FMOD_SYSTEM_CALL
 
 void ta_audio_init()
 {
+#if 0
     HRESULT com_result = CoInitializeEx(0, COINIT_APARTMENTTHREADED);
     if (com_result != S_OK) {
         ta_log_write(&tg_debug_log, SRC_AUDIO, "CoInitializeEx returned unexpected code %d\n", com_result);
@@ -106,6 +107,7 @@ void ta_audio_init()
     FMOD_Sound_SetMode(*sound1, FMOD_LOOP_OFF);
     FMOD_System_CreateSound(audio_state.fmod_system, "data/sfx/jaguar.wav", FMOD_DEFAULT, 0, sound2);
     FMOD_System_CreateSound(audio_state.fmod_system, "data/sfx/swish.wav", FMOD_DEFAULT, 0, sound3);
+#endif
 
 #if 0
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD playing sounds...\n");
@@ -131,8 +133,7 @@ void ta_audio_init()
     // TODO: Allow user to set which device they want to use
     ta_log_write(&tg_debug_log, SRC_AUDIO, "alcOpenDevice...\n");
     audio_openal_device = alcOpenDevice(desired_device);
-    if (!audio_openal_device)
-    {
+    if (!audio_openal_device) {
         DLB_ASSERT(!"Failed to open listener context");
         return;
     }
@@ -145,16 +146,14 @@ void ta_audio_init()
         0
     };
     audio_openal_context = alcCreateContext(audio_openal_device, attrlist);
-    if (!audio_openal_context)
-    {
+    if (!audio_openal_context) {
         DLB_ASSERT(!"Failed to create listener context");
         return;
     }
 
     // TODO: Can I have more than one context, is that useful?
     ta_log_write(&tg_debug_log, SRC_AUDIO, "alcMakeContextCurrent...\n");
-    if (!alcMakeContextCurrent(audio_openal_context))
-    {
+    if (!alcMakeContextCurrent(audio_openal_context)) {
         DLB_ASSERT(!"Failed to activate listener context");
         return;
     }
@@ -177,6 +176,7 @@ void ta_audio_init()
 }
 void ta_audio_update()
 {
+#if 0
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Update...\n");
     FMOD_System_Update(audio_state.fmod_system);
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD_System_Update done.\n");
@@ -209,9 +209,11 @@ void ta_audio_update()
     int channelsplaying = 0;
     FMOD_System_GetChannelsPlaying(audio_state.fmod_system, &channelsplaying, 0);
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD channels playing: %d\n", channelsplaying);
+#endif
 }
 void ta_audio_free()
 {
+#if 0
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD cleanup...\n");
     dlb_vec_each(FMOD_SOUND **, sound, audio_state.fmod_sounds) {
         FMOD_Sound_Release(*sound);
@@ -220,6 +222,7 @@ void ta_audio_free()
     FMOD_System_Release(audio_state.fmod_system);
     CoUninitialize();
     ta_log_write(&tg_debug_log, SRC_AUDIO, "FMOD cleanup done.\n");
+#endif
 }
 
 void ta_audio_listener_init(ta_audio_listener *listener)
@@ -275,7 +278,7 @@ void ta_audio_buffer_init(ta_audio_buffer *buffer)
 {
     if (buffer->path) {
         ta_audio_buffer_load_path(buffer, buffer->path);
-    } else if(buffer->samples) {
+    } else if (buffer->samples) {
         ta_audio_buffer_load(buffer);
     }
 }
@@ -289,18 +292,29 @@ void ta_audio_buffer_load_path(ta_audio_buffer *buffer, const char *path)
 
     // Load sample data from file
     char *samples = ta_file_read_all(buffer->path);
-    ta_audio_buffer_set_samples(buffer, samples);
+    // NOTE: Ignore nil character that ta_file_read_all() appends
+    size_t samples_len = dlb_vec_len(samples) - 1;
+    // Ensure samples_len can fit in an ALsizei (int)
+    DLB_ASSERT(samples_len <= INT_MAX);
+    ALsizei samples_bytes = (ALsizei)samples_len;
+    ta_audio_buffer_set_samples(buffer, samples, samples_bytes);
     ta_audio_buffer_load(buffer);
 }
-void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, char *samples)
+void ta_audio_buffer_set_samples(ta_audio_buffer *buffer, char *samples, ALsizei samples_bytes)
 {
     buffer->samples = samples;
+    buffer->samples_bytes = samples_bytes;
 }
 void ta_audio_buffer_load(ta_audio_buffer *buffer)
 {
     DLB_ASSERT(buffer->samples);
+    DLB_ASSERT(buffer->samples_bytes);
+
+    ALenum err = AL_NO_ERROR;
 
     alGenBuffers(1, &buffer->al_buffer_id);
+    err = alGetError();
+    DLB_ASSERT(err == AL_NO_ERROR);
 #if 0
     const u32 AMPLITUDE = 2000;
     s16 buf[TA_AUDIO_SAMPLE_RATE];
@@ -311,8 +325,7 @@ void ta_audio_buffer_load(ta_audio_buffer *buffer)
     double x1 = 0;
     double x2 = 0;
 
-    for (unsigned i = 0; i < ARRAY_SIZE(buf); ++i)
-    {
+    for (unsigned i = 0; i < ARRAY_SIZE(buf); ++i) {
         buf[i] = (s16)(AMPLITUDE / 2 * (sin(x1 * 6.28) + sin(x2 * 6.28)));
         x1 += ring1;
         x2 += ring2;
@@ -323,12 +336,14 @@ void ta_audio_buffer_load(ta_audio_buffer *buffer)
     // TODO: Allow caller to specify format (and maybe sample rate, but that's
     //       specified in the context attributes as well so I'm not sure if
     //       we can set a different value here).
-    alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, buffer->samples,
-        (ALsizei)(dlb_vec_len(buffer->samples)), TA_AUDIO_SAMPLE_RATE);
+    alBufferData(buffer->al_buffer_id, AL_FORMAT_MONO16, buffer->samples, buffer->samples_bytes, TA_AUDIO_SAMPLE_RATE);
+    err = alGetError();
+    DLB_ASSERT(err == AL_NO_ERROR);
 #endif
 }
 double ta_audio_buffer_duration_ms(ta_audio_buffer *buffer)
 {
+    // TODO: This is wrong for formats where sample size > 8-bit (e.g. AL_FORMAT_MONO16)
     double duration_ms = dlb_vec_len(buffer->samples) / TA_AUDIO_SAMPLES_PER_MS;
     return duration_ms;
 }

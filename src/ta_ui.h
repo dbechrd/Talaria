@@ -58,7 +58,8 @@ typedef struct ta_ui_panel_state {
 typedef bool ta_textbox_filter(char c);
 ta_textbox_filter *ta_textbox_filter_default;
 typedef struct ta_ui_textbox_state {
-    char *buffer;           // vector
+    char *buffer;           // vector of text data
+    ta_rect_uv *text_rects; // vector of calculated text rect/uvs
     size_t cursor;          // index of next character, 0 = before first char, len = after last char
     size_t selection_start;
     size_t selection_len;
@@ -132,8 +133,8 @@ void ta_ui_toggle_button_begin      (u32 flags);
 bool ta_ui_toggle_button_end        (bool *checked);
 bool ta_ui_toggle_button            (const char *false_text, size_t false_text_len, const char *true_text, size_t true_text_len, bool *checked);
 bool ta_ui_image                    (const char *texture);
-void ta_ui_label                    (const char *text, size_t text_len, ta_rect_uv **text_rects);
-void ta_ui_label_float              (float value, ta_rect_uv **text_rects);
+void ta_ui_label                    (const char *text, size_t text_len);
+void ta_ui_label_float              (float value);
 
 void textbox_command_cursor_right   ();
 void textbox_command_cursor_left    ();

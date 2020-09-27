@@ -322,10 +322,10 @@ void ta_game_init()
 
     ta_audio_source *bg_music_src = ta_game_component_try(tg_e_background_music, RES_COMP_AUDIO_SOURCE);
     if (bg_music_src) {
-        //ta_audio_source_play_loop(bg_music_src);
+        ta_audio_source_play_loop(bg_music_src);
     }
 
-    ta_audio_listener_set_volume(&tg_audio_listener, 0.2f);
+    //ta_audio_listener_set_volume(&tg_audio_listener, 0.2f);
     //ta_audio_listener_mute(&tg_audio_listener);
 
     //--------------------------------------------------------------------------
