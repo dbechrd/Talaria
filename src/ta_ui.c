@@ -858,9 +858,6 @@ void ta_ui_label(const char *text, size_t text_len)
     ui_frame *frame = ui_frame_end(UI_LABEL);
     frame->data.label.text_rects_start = rects_start_count;
     frame->data.label.text_rects_count = dlb_vec_len(ui_label_rects) - rects_start_count;
-
-    // This will probably be false due to whitespace characters.. if so, just delete the check
-    DLB_ASSERT(frame->data.label.text_rects_count == text_len);
 }
 void ta_ui_label_float(float value)
 {
@@ -1727,6 +1724,8 @@ static void ui_render_textbox(ui_frame *frame)
 }
 static void ui_render_scrollbars(ui_frame *frame)
 {
+    // NOTE: This *requires* that all scrollable controls store their scroll states as static variables to prevent
+    // this pointer from pointing to invalid stack or heap memory.
     static ta_ui_scroll_state *dragging_scroll_v = 0;
 
     DLB_ASSERT(frame);

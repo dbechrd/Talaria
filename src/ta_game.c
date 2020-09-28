@@ -1397,12 +1397,6 @@ void ta_game_loop()
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
 
-        // TODO: Group by shader / material to minimize redundant uniform calls
-        ta_shader *mesh_shader = ta_game_by_name(RES_SHADER, CSTR("mesh"));
-        // TODO: This doesn't have to be called every frame.. it never changes. Right?
-        //for (int i = 0; i < TA_TEXTURE_POOL_MAX; ++i) {
-        //    ta_shader_set_sampler_2d_array(mesh_shader, SYM_U_TEXTURES[i], tg_game.texturing.texture_pools[i].gl_id);
-        //}
         dlb_vec_each(ta_model *, model, models) {
             ta_model_render(model, active_camera);
         }

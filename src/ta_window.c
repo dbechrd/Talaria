@@ -204,6 +204,9 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     }
 
     // Log default VSync state
+#if !defined(_DEBUG)
+    ta_window_set_vsync(window, false);
+#endif
     window->vsync = SDL_GL_GetSwapInterval();
     ta_log_write(&tg_debug_log, SRC_WINDOW, "w: %d, h: %d, vsync: %s\n", window->width, window->height,
         window->vsync ? "on" : "off");

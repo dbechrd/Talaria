@@ -179,6 +179,7 @@ static void ta_ogx_load_texture(ogx_texture *o_tex)
 static void ta_ogx_load_bone_node(ogx_node *o_node, ogx_scene *o_scene)
 {
     ogx_bone_node *o_bone = &o_node->properties.bone;
+    UNUSED(o_bone);
 
     // HACK: Let OGX node override DML node
     // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping

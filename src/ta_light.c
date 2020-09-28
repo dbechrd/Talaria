@@ -388,9 +388,14 @@ static void shadowpass_render_directional(ta_light *light, ta_model *models)
         light->data.directional.shadow_properties.resolution);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light->data.directional.framebuffer);
 
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE) {
-        DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
+    // NOTE: This is extremely expensive, only do a sanity check on the first frame
+    static int fb_check = 0;
+    if (!fb_check) {
+        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (status != GL_FRAMEBUFFER_COMPLETE) {
+            DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
+        }
+        fb_check = 1;
     }
 
     glClear(GL_DEPTH_BUFFER_BIT);
@@ -447,14 +452,18 @@ static void shadowpass_render_point(ta_light *light, ta_model *models)
     glViewport(0, 0, light->data.point.shadow_properties.resolution, light->data.point.shadow_properties.resolution);
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, light->data.point.framebuffer);
 
+    static int fb_check = 0;
     for (int face = 0; face < 6; ++face) {
         ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[face]);
         ta_texture_pool *tex_pool = ta_texture_texture_pool(tex);
         glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex_pool->gl_id, 0, tex->gl_texture_pool_layer);
 
-        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (status != GL_FRAMEBUFFER_COMPLETE) {
-            DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
+        // NOTE: This is extremely expensive, only do a sanity check on the first frame
+        if (!fb_check) {
+            GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+            if (status != GL_FRAMEBUFFER_COMPLETE) {
+                DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
+            }
         }
 
         glClear(GL_DEPTH_BUFFER_BIT);
@@ -464,6 +473,7 @@ static void shadowpass_render_point(ta_light *light, ta_model *models)
             ta_model_shadow_pass(model, shader, &light_pv);
         }
     }
+    fb_check = 1;
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ta_shader_unbind();
@@ -594,9 +604,14 @@ void ta_framebuffer_postfx()
     GLenum draw_buffers[] = { GL_COLOR_ATTACHMENT0 };
     glDrawBuffers(1, draw_buffers);
 
-    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-    if (status != GL_FRAMEBUFFER_COMPLETE) {
-        DLB_ASSERT("Failed to set up framebuffer for some reason.");
+    // NOTE: This is extremely expensive, only do a sanity check on the first frame
+    static int fb_check = 0;
+    if (!fb_check) {
+        GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        if (status != GL_FRAMEBUFFER_COMPLETE) {
+            DLB_ASSERT("Failed to set up framebuffer for some reason.");
+        }
+        fb_check = 1;
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

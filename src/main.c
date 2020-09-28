@@ -1,4 +1,3 @@
-#define _CRT_SECURE_NO_WARNINGS
 #define TA_FLAG_DISABLE_MIPMAPS 0
 
 #include "ta_audio.h"

@@ -154,7 +154,6 @@ void ta_texturing_init(ta_texturing *texturing)
     const size_t depth_max_height = 4096;
     float *depth_pixels = 0;
     size_t depth_elements = depth_max_width * depth_max_height;
-    size_t depth_bytes = depth_elements * sizeof(*depth_pixels);
     dlb_vec_alloc_count(depth_pixels, depth_elements);
     for (size_t i = 0; i < depth_elements; ++i) {
         // NOTE: Magic number for easy graphics debugging

@@ -294,8 +294,7 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
 // z postiive for screen, negative for world
 void ta_font_render(ta_font *font, float x, float y, float z, bool clear_buffers, bool reset_uniforms, ta_mesh *mesh)
 {
-    //glDisable(GL_CULL_FACE);
-    glDisable(GL_DEPTH_TEST);
+    //glDisable(GL_DEPTH_TEST);
 
     ta_shader *shader = ta_font_shader(font);
     if (x || y || z) {
@@ -310,5 +309,5 @@ void ta_font_render(ta_font *font, float x, float y, float z, bool clear_buffers
     ta_primitive_render_mesh(mesh, shader, TA_TRIANGLES, clear_buffers, reset_uniforms);
     ta_shader_set_sampler_2d(shader, SYM_U_TEX, 0);
 
-    glEnable(GL_DEPTH_TEST);
+    //glEnable(GL_DEPTH_TEST);
 }

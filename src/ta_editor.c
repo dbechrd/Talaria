@@ -1176,11 +1176,6 @@ static void ui_node_panel()
             }
             ta_ui_panel_end();
         }
-
-        for (int i = 0; i < 50; ++i) {
-            ta_ui_row_begin();
-            ta_ui_label(CSTR("stuff"));
-        }
     }
 
     ta_ui_row_end();
@@ -1988,11 +1983,6 @@ static void ui_material_details_panel(const char *material_name)
     ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
     if (ta_ui_button(CSTR("Cancel"))) {
         editor.selected_material = 0;
-    }
-
-    for (int i = 0; i < 50; ++i) {
-        ta_ui_row_begin();
-        ta_ui_label(CSTR("stuff"));
     }
 
     ta_ui_panel_end();

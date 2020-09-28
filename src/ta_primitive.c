@@ -721,11 +721,10 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
     //ta_mesh_render(mesh, shader);
     size_t positions_count = dlb_vec_len(mesh->positions);
     if (positions_count) {
-        GLboolean cull_face = 0;
-        glGetBooleanv(GL_CULL_FACE, &cull_face);
-        if (cull_face) glDisable(GL_CULL_FACE);
-
         ta_mesh_update_buffers(mesh);
+
+        // HACK: Some quads are backwards (probably because the texture is flipped), so we have to disable CULLING -_-
+        glDisable(GL_CULL_FACE);
 
         // Draw the primitives
         ta_shader_bind(shader);
@@ -734,7 +733,7 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
         glBindVertexArray(0);
         ta_shader_unbind();
 
-        if (cull_face) glEnable(GL_CULL_FACE);
+        glEnable(GL_CULL_FACE);
     }
 
     // TODO: Move this out into its own explicit call, it's more confusing here
