@@ -938,6 +938,9 @@ static void ui_scene_panel()
 }
 static void ui_node_panel()
 {
+    const int header_width = 300;
+    const int label_width = 180;
+
     //ta_ui_next_margin(2, 2, 0, 0);
     static ta_ui_panel_state node_panel = { 0 };
     ta_ui_panel_begin(&node_panel, TA_UI_AUTOSIZE);
@@ -1022,25 +1025,12 @@ static void ui_node_panel()
 
         dlb_vec_each(const char **, result, search_results) {
             ta_ui_row_begin();
-            ta_ui_next_size(200, 0);
+            ta_ui_next_size(header_width, 0);
+            ta_ui_next_bg_color_rgba(UI_STATE_NONE, TA_COLOR_GRAY3);
             if (ta_ui_button(SYM(*result))) {
                 ta_editor_select_entity(*result);
             }
         }
-    }
-
-    const int header_width = 300;
-    const int label_width = 180;
-    const char *selected_entity = 0;
-    ta_editor_selected_entity(&selected_entity);
-    if (!selected_entity) {
-        //ta_ui_spacer(0, 2);
-        ta_ui_row_begin();
-        ta_ui_next_size(label_width, 0);
-        ta_ui_label(CSTR("name:"));
-        ta_ui_label(CSTR("< nothing selected >"));
-        ta_ui_panel_end();
-        return;
     }
 
 #if 0
@@ -1098,11 +1088,14 @@ static void ui_node_panel()
     }
 #endif
 
+    const char *selected_entity = 0;
+    ta_editor_selected_entity(&selected_entity);
+    if (!selected_entity) {
+        ta_ui_panel_end();
+        return;
+    }
+
     ta_transform *transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
-    ta_ui_row_begin();
-    ta_ui_next_size(label_width, 0);
-    ta_ui_label(CSTR("Entity:"));
-    ta_ui_label(SYM(transform->entity));
 
     ta_ui_row_end();
     ta_ui_next_size(header_width, 0);
@@ -1332,18 +1325,34 @@ static void ui_node_panel()
             ta_ui_label(CSTR("apply gravity:"));
             ta_ui_next_pad(0, 0, 0, 0);
             ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
+            ta_ui_next_margin(0, 0, 0, 0);
             if (!rigid_body->no_gravity) {
-                ta_ui_next_margin(0, 0, 0, 0);
                 ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
                 ta_ui_label(CSTR("True"));
             } else {
-                ta_ui_next_margin(0, 0, 0, 0);
                 ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
                 ta_ui_label(CSTR("False"));
             }
             ta_ui_toggle_button_end(&rigid_body->no_gravity);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("allow rotate:"));
+            ta_ui_next_pad(0, 0, 0, 0);
+            ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
+            ta_ui_next_margin(0, 0, 0, 0);
+            if (!rigid_body->no_rotation) {
+                ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+                ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+                ta_ui_label(CSTR("True"));
+            } else {
+                ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+                ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+                ta_ui_label(CSTR("False"));
+            }
+            ta_ui_toggle_button_end(&rigid_body->no_rotation);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1413,10 +1422,12 @@ static void ui_node_panel()
                     break;
                 } case TA_COLLIDER_OBB: {
                     ta_ui_row_begin();
+                    ta_ui_next_size(label_width, 0);
                     ta_ui_label(CSTR("extents:"));
                     static ta_ui_textbox_vec3_state extents_editor = { 0 };
                     ta_ui_textbox_vec3(&rigid_body->collider.data.obb.extents, &extents_editor, false, false);
                     ta_ui_row_begin();
+                    ta_ui_next_size(label_width, 0);
                     ta_ui_label(CSTR("orientation:"));
                     static ta_ui_textbox_vec4_state orientation_editor = { 0 };
                     ta_ui_textbox_vec4(&rigid_body->collider.data.obb.orientation, &orientation_editor, true, true);
@@ -1996,20 +2007,9 @@ static void ui_material_panel()
     ta_ui_panel_begin(&material_panel, TA_UI_AUTOSIZE);
     dlb_vec_each(ta_material *, material, ta_game_resource_pool(RES_MATERIAL)) {
         ta_ui_row_begin();
-        ta_ui_next_size(200, 0);
-        ta_ui_next_margin(0, 2, 0, 0);
-        ta_ui_next_pad(4, 4, 4, 4);
+        ta_ui_next_size(300, 0);
         if (ta_ui_button(SYM(material->name))) {
             editor.selected_material = material->name;
-            //const char *selected_entity = 0;
-            //ta_editor_selected_entity(&selected_entity);
-            //if (selected_entity) {
-            //    ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
-            //    if (model && model->materials) {
-            //        // TODO: Set via material slots in node editor. For now, arbitrarily override material in slot 0.
-            //        model->materials[0] = material->name;
-            //    }
-            //}
         }
         if (ta_ui_last_state().hover) {
             char tex_buf[2048] = { 0 };
@@ -2047,10 +2047,9 @@ static void ui_material_panel()
         const char *selected_entity = 0;
         ta_editor_selected_entity(&selected_entity);
         if (selected_entity) {
-            char apply_buf[256] = { 0 };
-            size_t apply_buf_len = snprintf(CSTR(apply_buf), "Apply to %s", selected_entity);
-            DLB_ASSERT(apply_buf_len < sizeof(apply_buf));
-            if (ta_ui_button(apply_buf, apply_buf_len)) {
+            ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+            if (ta_ui_button(CSTR("Apply"))) {
                 ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
                 if (model) {
                     if (!model->materials) {
@@ -2254,6 +2253,19 @@ static void ui_editor_sidebar()
     }
     ta_ui_panel_end();
 
+    const char *selected_entity = 0;
+    ta_editor_selected_entity(&selected_entity);
+
+    ta_ui_row_begin();
+    ta_ui_label(CSTR("Selected:"));
+    if (selected_entity) {
+        ta_ui_label(SYM(selected_entity));
+    } else {
+        // TODO: Pass tint color to text shader
+        //ta_ui_next_fg_color_rgba(UI_STATE_ALL, TA_COLOR_GRAY4);
+        ta_ui_label(CSTR("- empty -"));
+    }
+
     ta_ui_row_begin();
     categories[category_selected].panel_method();
 }
@@ -2290,6 +2302,7 @@ void ta_editor_draw_screen()
     } else {
         ta_ui_panel_state hotbar_panel = { 0 };
         ta_ui_panel_begin(&hotbar_panel, TA_UI_AUTOSIZE);
+
         ta_ui_row_begin();
         if (ta_ui_button(CSTR("<"))) {
             if (editor.textbox_editing) {
@@ -2306,10 +2319,12 @@ void ta_editor_draw_screen()
         if (ta_ui_button(CSTR("Scale"))) {
             editor.widget = WIDGET_SCALE;
         }
+
         //ta_ui_row_begin();
         //static ta_ui_textbox_state hard_morph_state = { 0 };
         //ta_ui_textbox_float(&tg_hard_morph, &hard_morph_state, 0);
         //tg_hard_morph = clampf(tg_hard_morph, 0.0f, 1.0f);
+
         ta_ui_panel_end();
 
         ui_editor_sidebar();

@@ -1266,8 +1266,7 @@ ta_mat4 mat4_frustum(ta_vec3 front, ta_vec3 right, ta_vec3 up)
     transform.data.v[3].w = 1.0f;
     return transform;
 }
-ta_mat4 mat4_lookat_fru(ta_vec3 position, ta_vec3 front, ta_vec3 right,
-    ta_vec3 up)
+ta_mat4 mat4_lookat_fru(ta_vec3 position, ta_vec3 front, ta_vec3 right, ta_vec3 up)
 {
     // [ rx, ry, rz, 0 ]
     // [ ux, uy, uz, 0 ]

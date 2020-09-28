@@ -326,7 +326,7 @@ void ta_game_init()
     }
 
     ta_audio_listener_set_volume(&tg_audio_listener, 0.2f);
-    //ta_audio_listener_mute(&tg_audio_listener);
+    ta_audio_listener_mute(&tg_audio_listener);
 
     //--------------------------------------------------------------------------
     // Textures
@@ -495,6 +495,7 @@ void ta_game_state_set(ta_game_state state)
             tg_e_active_camera = tg_e_freecam;
             break;
         } case TA_STATE_EDITOR: {
+            tg_e_active_camera = tg_e_freecam;
             break;
         } default: {
             break;
@@ -842,9 +843,6 @@ static void game_simulate(ta_camera *active_camera, float dt)
     ta_camera *player_cam = ta_game_component(tg_e_player_camera, RES_COMP_CAMERA);
     ta_transform *active_cam_trans = ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
 
-    // Target player camera
-    ta_camera_set_target_pos_absolute(player_cam, vec3_add(player_transform->xform_world.position, (ta_vec3) { 0.0f, 2.0f, 0.0f }));
-
     // Target minimap camera
     ta_vec3 minimap_target_pos = active_cam_trans->xform_world.position;
     minimap_target_pos.y += 50.0f;
@@ -1117,7 +1115,6 @@ void ta_game_loop()
     double ms_frame_delta = 0; // Total delta time (including v-sync)
     double ms_frame_time = 0;  // Actual frame time before v-sync
 
-
     while (ta_game_state_current() != TA_STATE_SHUTDOWN) {
         ms_frame_start = ta_timer_elapsed_ms();
         ms_frame_delta = ms_frame_start - ms_frame_prev;
@@ -1194,13 +1191,13 @@ void ta_game_loop()
         animation_time_sec += (float)(ms_frame_delta / 1000.0);
         while (animation_time_sec > 2.0f) {
             animation_time_sec -= 2.0f;
-            if (*dlb_vec_last(animation_names) == dude_wave) {
-                dlb_vec_pop(animation_names);
-                dlb_vec_push(animation_names, dude_squat);
-            } else if (*dlb_vec_last(animation_names) == dude_squat) {
-                dlb_vec_pop(animation_names);
-                dlb_vec_push(animation_names, dude_wave);
-            }
+            //if (*dlb_vec_last(animation_names) == dude_wave) {
+            //    dlb_vec_pop(animation_names);
+            //    dlb_vec_push(animation_names, dude_squat);
+            //} else if (*dlb_vec_last(animation_names) == dude_squat) {
+            //    dlb_vec_pop(animation_names);
+            //    dlb_vec_push(animation_names, dude_wave);
+            //}
         }
 
         // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
@@ -1294,8 +1291,37 @@ void ta_game_loop()
         // Post-simulation updates (e.g. recalculate cached transform matrices)
         //----------------------------------------------------------------------
 
+        // HACK: Hacky stuff for player movement
+        {
+            // Rotate player to match player camera, camera is parented to player object
+            // Calculate camera rotation in X/Z plane
+            ta_transform *camera_transform = ta_game_component(tg_e_player_camera, RES_COMP_TRANSFORM);
+            ta_vec3 camera_rot_vec = vec3_rotate_quat(VEC3_NZ, camera_transform->xform.orientation);
+            camera_rot_vec.y = 0.0f;
+            // NOTE: We are negating because player mesh faces +Z in Blender
+            camera_rot_vec = vec3_neg(vec3_normalize(camera_rot_vec));
+            ta_vec4 camera_rot_quat = quat_from_vec_vec(VEC3_NZ, camera_rot_vec);
+
+            ta_transform *player_transform = ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
+            player_transform->xform.orientation = camera_rot_quat;
+
+            ta_vec3 player_cam_offset = { 0.0f, 4.0f, 0.7f };
+            player_cam_offset = vec3_rotate_quat(player_cam_offset, camera_rot_quat);
+            camera_transform->xform.position = vec3_add(player_transform->xform.position, player_cam_offset);
+
+            // HACK: Bring guy back into the world!
+            if (player_transform->xform.position.y < -10.0f) {
+                player_transform->xform.position.y = 1.0f;
+            }
+        }
+
         // Update transforms (model matrix and lerp)
         ta_transform_update_all(transforms, sim_alpha);
+
+        // Update camera cached stuff
+        dlb_vec_each(ta_camera *, camera, ta_game_resource_pool(RES_COMP_CAMERA)) {
+            ta_camera_update_world_view(camera);
+        }
 
         // Update light data UBO
         ta_lighting_bind_lights(&tg_game.lighting);
@@ -1710,9 +1736,11 @@ void ta_game_loop()
         static ta_ui_window_state window = { 0 };
         u32 flags = TA_UI_AUTOSIZE;
         ta_ui_window_begin(&window, flags);
+
         ta_ui_row_begin();
         ta_ui_label(CSTR("animation_time_sec: "));
         ta_ui_label_float(animation_time_sec);
+
         ta_ui_window_end();
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_ui_render();
@@ -1808,8 +1836,7 @@ void game_command_player_move_forward()
     dir.z = camera->front.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, 0.1f);
-    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
-        RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_move_backward()
@@ -1820,8 +1847,7 @@ void game_command_player_move_backward()
     dir.z = -camera->front.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, 0.1f);
-    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
-        RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_move_right()
@@ -1832,8 +1858,7 @@ void game_command_player_move_right()
     dir.z = camera->right.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, 0.1f);
-    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
-        RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_move_left()
@@ -1844,16 +1869,13 @@ void game_command_player_move_left()
     dir.z = -camera->right.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, 0.1f);
-    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
-        RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_jump()
 {
-    ta_vec3 dir = VEC3_Y;
-    dir = vec3_scalef(dir, 5.0f);
-    ta_rigid_body *player_body = ta_game_component(tg_e_player_one,
-        RES_COMP_RIGID_BODY);
+    ta_vec3 dir = vec3_scalef(VEC3_Y, 5.0f);
+    ta_rigid_body *player_body = ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 static void spawn_bullet(ta_vec3 position)
@@ -2109,13 +2131,13 @@ void ta_game_event(ta_event *event)
             event->handled = true;
             break;
         } case GAME_EVENT_CAMERA_ROTATE: {
+            static float sensitivity = 0.1f;
             ta_camera *camera = ta_game_camera();
-            static float sensitity = 0.1f;
             if (event->data.camera_rotate.delta_yaw) {
-                ta_camera_yaw(camera, event->data.camera_rotate.delta_yaw * sensitity);
+                ta_camera_yaw(camera, event->data.camera_rotate.delta_yaw * sensitivity);
             }
             if (event->data.camera_rotate.delta_pitch) {
-                ta_camera_pitch(camera, event->data.camera_rotate.delta_pitch * sensitity);
+                ta_camera_pitch(camera, event->data.camera_rotate.delta_pitch * sensitivity);
             }
             event->handled = true;
             break;

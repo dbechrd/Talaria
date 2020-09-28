@@ -86,6 +86,18 @@ void ta_camera_set_target_pos_relative(ta_camera *camera, ta_vec3 delta)
     camera->dirty = true;
 }
 
+void ta_camera_set_target_rotation(ta_camera *camera, float yaw, float pitch)
+{
+    camera->yaw_target = yaw;
+    while (camera->yaw_target < 0.0f)    { camera->yaw_target += 360.0f; }
+    while (camera->yaw_target >= 360.0f) { camera->yaw_target -= 360.0f; }
+    camera->yaw_target = clampf(camera->yaw_target, camera->yaw_min, camera->yaw_max);
+
+    camera->pitch_target = pitch;
+    camera->pitch_target = clampf(camera->pitch_target, camera->pitch_min, camera->pitch_max);
+    camera->dirty = true;
+}
+
 void ta_camera_yaw(ta_camera *camera, float delta)
 {
     camera->yaw_target += delta;
@@ -150,7 +162,7 @@ void ta_camera_update(ta_camera *camera, float dt)
 
     ta_transform *transform = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
 
-    // Update position
+    // Update local position
     ta_vec3 pos_delta = vec3_sub(camera->target_xform.position, transform->xform.position);
     if (vec3_len(pos_delta) > camera->follow_distance) {
         transform->xform.position = vec3_add(transform->xform.position, vec3_scalef(pos_delta, camera->position_smooth));
@@ -194,29 +206,38 @@ void ta_camera_update(ta_camera *camera, float dt)
             camera->dirty = true;
         }
 
+        // Update local orientation
         if (camera->dirty) {
-            camera->front = camera_fps_target(camera);
+            ta_vec3 local_front = camera_fps_target(camera);
+            transform->xform.orientation = quat_from_vec_vec(VEC3_NZ, local_front);
         }
     } else {
+        // Update local orientation
         if (camera->dirty) {
-            camera->front = vec3_normalize(vec3_sub(camera->focal_point, transform->xform.position));
+            ta_vec3 local_front = vec3_normalize(vec3_sub(camera->focal_point, transform->xform.position));
+            transform->xform.orientation = quat_from_vec_vec(VEC3_NZ, local_front);
         }
     }
+}
 
-    if (camera->dirty) {
-        camera->right = vec3_normalize(vec3_cross(camera->front, VEC3_Y));
-        camera->up = vec3_cross(camera->right, camera->front);
-        camera->frustum = mat4_frustum(camera->front, camera->right, camera->up);
-        camera->look_at = mat4_lookat_fru(transform->xform.position, camera->front, camera->right, camera->up);
-        transform->xform.orientation = quat_from_vec_vec(VEC3_NZ, camera->front);
+void ta_camera_update_world_view(ta_camera *camera)
+{
+    ta_transform *transform = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
 
-        float half_w = WINDOW_W / 2.0f;
-        float half_h = WINDOW_H / 2.0f;
-        float half_h_tan = half_h / tanf(DEG_TO_RADF(camera->fov) * 0.5f);
-        camera->screen_to_world.x = -half_w * camera->right.x + half_h * camera->up.x + half_h_tan * camera->front.x;
-        camera->screen_to_world.y = -half_w * camera->right.y + half_h * camera->up.y + half_h_tan * camera->front.y;
-        camera->screen_to_world.z = -half_w * camera->right.z + half_h * camera->up.z + half_h_tan * camera->front.z;
+    camera->front = vec3_rotate_quat(VEC3_NZ, transform->xform_world.orientation);
+    camera->right = vec3_normalize(vec3_cross(camera->front, VEC3_Y));
+    camera->up = vec3_cross(camera->right, camera->front);
 
-        camera->dirty = false;
-    }
+    // TODO: If above works, we don't need to call this, we can just insert values directly into frustum (with w = 1.0)
+    camera->frustum = mat4_frustum(camera->front, camera->right, camera->up);
+    camera->look_at = mat4_lookat_fru(transform->xform_world.position, camera->front, camera->right, camera->up);
+
+    float half_w = WINDOW_W / 2.0f;
+    float half_h = WINDOW_H / 2.0f;
+    float half_h_tan = half_h / tanf(DEG_TO_RADF(camera->fov) * 0.5f);
+    camera->screen_to_world.x = -half_w * camera->right.x + half_h * camera->up.x + half_h_tan * camera->front.x;
+    camera->screen_to_world.y = -half_w * camera->right.y + half_h * camera->up.y + half_h_tan * camera->front.y;
+    camera->screen_to_world.z = -half_w * camera->right.z + half_h * camera->up.z + half_h_tan * camera->front.z;
+
+    camera->dirty = false;
 }

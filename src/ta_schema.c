@@ -519,12 +519,13 @@ void ta_schema_register()
     TYPE_END    (ta_transform);
 
     TYPE_START  (ta_rigid_body, TYP_RIGID_BODY, ta_rigid_body_init_void, ta_rigid_body_free_void);
-    TYPE_FIELD  (ta_rigid_body, name,       ATOM_STRING);
-    TYPE_FIELD  (ta_rigid_body, entity,     ATOM_STRING);
-    TYPE_FIELD  (ta_rigid_body, collider,   TYP_COLLIDER);
-    TYPE_FIELD  (ta_rigid_body, mass,       ATOM_FLOAT);
-    TYPE_FIELD  (ta_rigid_body, trigger,    ATOM_BOOL);
-    TYPE_FIELD  (ta_rigid_body, no_gravity, ATOM_BOOL);
+    TYPE_FIELD  (ta_rigid_body, name,        ATOM_STRING);
+    TYPE_FIELD  (ta_rigid_body, entity,      ATOM_STRING);
+    TYPE_FIELD  (ta_rigid_body, collider,    TYP_COLLIDER);
+    TYPE_FIELD  (ta_rigid_body, mass,        ATOM_FLOAT);
+    TYPE_FIELD  (ta_rigid_body, trigger,     ATOM_BOOL);
+    TYPE_FIELD  (ta_rigid_body, no_gravity,  ATOM_BOOL);
+    TYPE_FIELD  (ta_rigid_body, no_rotation, ATOM_BOOL);
     TYPE_END    (ta_rigid_body);
 
     //--------------------------------------------------------------------------

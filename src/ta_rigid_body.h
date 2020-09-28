@@ -77,8 +77,9 @@ typedef struct ta_rigid_body {
 
     bool resting;
 
-    bool trigger;     // If true, don't resolve positions
-    bool no_gravity;  // If true, gravity will not affect this body
+    bool trigger;            // If true, don't resolve positions
+    bool no_gravity;         // If true, gravity will not affect this body
+    bool no_rotation;        // If true, this rigid body will not rotate due to physics
     //float gravity_scale;   // Is this useful?
     //u32 collision_groups;  // Bit flags; "layers"
 
