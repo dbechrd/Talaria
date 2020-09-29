@@ -217,7 +217,7 @@ static void ta_ogx_load_geometry_node(ogx_node *o_node)
         model = ta_game_component_add(o_node->name, RES_COMP_MODEL, SYM(o_node->name));
     } else {
         ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting model for %s\n", o_node->name);
-        dlb_vec_zero(model->materials);
+        dlb_vec_zero((void *)model->materials);
     }
 
     model->mesh = o_geom->mesh;

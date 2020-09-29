@@ -38,7 +38,7 @@ typedef struct ta_audio_source {
     ALuint      al_source_id;   // [OpenAL] ALSource id
 } ta_audio_source;
 
-struct ta_buffer;
+struct ta_vec3;
 
 extern ta_audio_listener tg_audio_listener;
 
@@ -68,6 +68,8 @@ void ta_audio_source_free           (ta_audio_source *source);
 void ta_audio_source_free_void      (void *source);
 void ta_audio_source_set_pitch      (ta_audio_source *source, float pitch);
 void ta_audio_source_set_gain       (ta_audio_source *source, float gain);
+void ta_audio_source_set_position   (ta_audio_source *source, struct ta_vec3 position);
+void ta_audio_source_set_velocity   (ta_audio_source *source, struct ta_vec3 velocity);
 ta_result ta_audio_source_set_buffer(ta_audio_source *source, const char *audio_buffer);
 void ta_audio_source_get_state      (ta_audio_source *source, ta_audio_source_state *state);
 void ta_audio_source_play           (ta_audio_source *source);

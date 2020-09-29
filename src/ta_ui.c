@@ -202,10 +202,10 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing, ta_ui_text
     ui_default_style[UI_LABEL].bg_color[UI_STATE_HOVER]     = TA_COLOR_INVIS; //TA_COLOR_BLUE5;
     ui_default_style[UI_LABEL].bg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS; //TA_COLOR_BLUE5;
     ui_default_style[UI_LABEL].bg_color[UI_STATE_ACTIVE]    = TA_COLOR_INVIS; //TA_COLOR_BLUE5;
-    //ui_default_style[UI_LABEL].fg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
-    //ui_default_style[UI_LABEL].fg_color[UI_STATE_HOVER]     = TA_COLOR_INVIS;
-    //ui_default_style[UI_LABEL].fg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS;
-    //ui_default_style[UI_LABEL].fg_color[UI_STATE_ACTIVE]    = TA_COLOR_INVIS;
+    ui_default_style[UI_LABEL].fg_color[UI_STATE_NONE]      = TA_COLOR_WHITE;
+    ui_default_style[UI_LABEL].fg_color[UI_STATE_HOVER]     = TA_COLOR_WHITE;
+    ui_default_style[UI_LABEL].fg_color[UI_STATE_DOWN]      = TA_COLOR_WHITE;
+    ui_default_style[UI_LABEL].fg_color[UI_STATE_ACTIVE]    = TA_COLOR_WHITE;
 
     ui_default_style[UI_TEXTBOX].margin                     = TA_RECT(2, 1, 0, 1);
     ui_default_style[UI_TEXTBOX].pad                        = TA_RECT(4, 1, 4, 1);
@@ -213,10 +213,10 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing, ta_ui_text
     ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_HOVER]   = TA_COLOR_ORANGE;
     ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_DOWN]    = TA_COLOR_ORANGE;
     ui_default_style[UI_TEXTBOX].bg_color[UI_STATE_ACTIVE]  = TA_RGBA(0.0f, 0.5f, 0.45f, 0.9f);
-    //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_NONE]    = TA_COLOR_INVIS;
-    //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_HOVER]   = TA_COLOR_INVIS;
-    //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_DOWN]    = TA_COLOR_INVIS;
-    //ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_ACTIVE]  = TA_COLOR_INVIS;
+    ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_NONE]    = TA_COLOR_WHITE;
+    ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_HOVER]   = TA_COLOR_WHITE;
+    ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_DOWN]    = TA_COLOR_WHITE;
+    ui_default_style[UI_TEXTBOX].fg_color[UI_STATE_ACTIVE]  = TA_COLOR_WHITE;
 }
 void ta_ui_set_font(ta_font *font)
 {
@@ -1582,26 +1582,33 @@ void ta_ui_statusbar()
 
 static void ui_render_window(ui_frame *frame)
 {
-    // Window background
-    ta_rect bg_rect = frame->rect;
-    bg_rect.w = frame->rect.w;
-    ta_primitive_push_rect(0, bg_rect, frame->bg_color[frame->state_type], UI_LAYER_EDIT_WINDOW_BG);
+    ta_rgba bg_color = frame->bg_color[frame->state_type];
+    if (bg_color.a == 0.0f) return;
+
+    ta_primitive_push_rect(0, frame->rect, bg_color, UI_LAYER_EDIT_WINDOW_BG);
     ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
 }
 static void ui_render_panel(ui_frame *frame)
 {
-    // Panel background
-    ta_primitive_push_rect(0, frame->rect, frame->bg_color[frame->state_type], UI_LAYER_EDIT_1_BG);
+    ta_rgba bg_color = frame->bg_color[frame->state_type];
+    if (bg_color.a == 0.0f) return;
+
+    ta_primitive_push_rect(0, frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
 }
 static void ui_render_button(ui_frame *frame)
 {
-    ta_primitive_push_rect(0, frame->rect, frame->bg_color[frame->state_type], UI_LAYER_EDIT_1_BG);
+    ta_rgba bg_color = frame->bg_color[frame->state_type];
+    if (bg_color.a == 0.0f) return;
+
+    ta_primitive_push_rect(0, frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
 }
 static void ui_render_toggle_button(ui_frame *frame)
 {
     ta_rgba bg_color = frame->bg_color[frame->state_type];
+    if (bg_color.a == 0.0f) return;
+
     ta_primitive_push_rect(0, frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
     ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
 }
@@ -1619,59 +1626,61 @@ static void ui_render_image(ui_frame *frame)
         ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_ARRAY_LAYER, 0);
     }
 }
-static void ui_render_text(int x, int y, ta_rect_uv *text_rects, size_t text_rects_count, ta_rect clip_rect)
+static void ui_render_text(int x, int y, ta_rect_uv *text_rects, size_t text_rects_count, ta_rect clip_rect,
+    ta_rgba color)
 {
+    if (!text_rects_count || color.a == 0.0f) {
+        return;
+    }
 #if 1
-    if (text_rects_count) {
-        // Binary search to find overlapping y values (ignore everything before and after)
-        size_t first_in_bounds;
-        size_t left = 0;
-        size_t right = text_rects_count - 1;
-        size_t mid = left;  // NOTE: Start at beginning for O(1) when scrollbar is at top
-        while (left < right) {
-            if (y + text_rects[mid].rect.y + text_rects[mid].rect.h < clip_rect.y) {
-                left = MIN(SIZE_MAX - 1, mid) + 1;
-            } else {
-                right = MAX(1, mid) - 1;
-            }
-            mid = (left + right) / 2;
+    // Binary search to find overlapping y values (ignore everything before and after)
+    size_t first_in_bounds;
+    size_t left = 0;
+    size_t right = text_rects_count - 1;
+    size_t mid = left;  // NOTE: Start at beginning for O(1) when scrollbar is at top
+    while (left < right) {
+        if (y + text_rects[mid].rect.y + text_rects[mid].rect.h < clip_rect.y) {
+            left = MIN(SIZE_MAX - 1, mid) + 1;
+        } else {
+            right = MAX(1, mid) - 1;
         }
-        first_in_bounds = left;
+        mid = (left + right) / 2;
+    }
+    first_in_bounds = left;
 
-        size_t last_in_bounds;
-        left = 0;
-        right = text_rects_count - 1;
-        mid = right;  // NOTE: Start at end for O(1) when scrollbar is at bottom
-        while (left < right) {
-            if (y + text_rects[mid].rect.y > clip_rect.y + clip_rect.h) {
-                right = MAX(1, mid) - 1;
-            } else {
-                left = MIN(SIZE_MAX - 1, mid) + 1;
-            }
-            mid = (left + right) / 2;
+    size_t last_in_bounds;
+    left = 0;
+    right = text_rects_count - 1;
+    mid = right;  // NOTE: Start at end for O(1) when scrollbar is at bottom
+    while (left < right) {
+        if (y + text_rects[mid].rect.y > clip_rect.y + clip_rect.h) {
+            right = MAX(1, mid) - 1;
+        } else {
+            left = MIN(SIZE_MAX - 1, mid) + 1;
         }
-        last_in_bounds = right;
+        mid = (left + right) / 2;
+    }
+    last_in_bounds = right;
 
 #if 0
-        // CLEANUP(dlb): Chop off the first and last letters for easy verification that the correct bounds were found
-        //first_in_bounds = MIN(text_rects_count - 1, first_in_bounds + 1);
-        //last_in_bounds = (last_in_bounds >= 1) ? last_in_bounds - 1 : 0;
+    // CLEANUP(dlb): Chop off the first and last letters for easy verification that the correct bounds were found
+    //first_in_bounds = MIN(text_rects_count - 1, first_in_bounds + 1);
+    //last_in_bounds = (last_in_bounds >= 1) ? last_in_bounds - 1 : 0;
 #endif
 
-        DLB_ASSERT(first_in_bounds < text_rects_count);
-        DLB_ASSERT(last_in_bounds < text_rects_count);
+    DLB_ASSERT(first_in_bounds < text_rects_count);
+    DLB_ASSERT(last_in_bounds < text_rects_count);
 
-        size_t push_count = (last_in_bounds - first_in_bounds) + 1;
-        dlb_vec_reserve(primitive_quads.positions, push_count);
-        dlb_vec_reserve(primitive_quads.uvs, push_count);
-        dlb_vec_reserve(primitive_quads.colors, push_count);
+    size_t push_count = (last_in_bounds - first_in_bounds) + 1;
+    dlb_vec_reserve(primitive_quads.positions, push_count);
+    dlb_vec_reserve(primitive_quads.uvs, push_count);
+    dlb_vec_reserve(primitive_quads.colors, push_count);
 
-        for (size_t i = first_in_bounds; i <= last_in_bounds; ++i) {
-            ta_primitive_push_rect_uv(&primitive_quads, text_rects[i], TA_COLOR_WHITE, 0, true, false);
-        }
-
-        ta_font_render(ui_font, (float)x, (float)y, UI_LAYER_EDIT_1, true, false, &primitive_quads);
+    for (size_t i = first_in_bounds; i <= last_in_bounds; ++i) {
+        ta_primitive_push_rect_uv(&primitive_quads, text_rects[i], color, 0, true, false);
     }
+
+    ta_font_render(ui_font, (float)x, (float)y, UI_LAYER_EDIT_1, true, false, &primitive_quads);
 #else
     // Slow code (no culling), for reference
     dlb_vec_each(ta_rect_uv *, text_rect, text_rects) {
@@ -1684,29 +1693,32 @@ static void ui_render_text(int x, int y, ta_rect_uv *text_rects, size_t text_rec
 static void ui_render_label(ui_frame *frame)
 {
     // Render background
-    if (frame->bg_color[frame->state_type].a == 0.0f) {
-        frame->bg_color[frame->state_type].a = TA_EPSILON;
+    ta_rgba bg_color = frame->bg_color[frame->state_type];
+    if (bg_color.a != 0.0f) {
+        ta_primitive_push_rect(0, frame->rect, frame->bg_color[frame->state_type], UI_LAYER_EDIT_1_BG);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
     }
-    ta_primitive_push_rect(0, frame->rect, frame->bg_color[frame->state_type], UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
 
     // Render text
     int x = frame->rect.x + frame->pad.x;
     int y = frame->rect.y + frame->pad.y;
     ui_render_text(x, y, ui_label_rects + frame->data.label.text_rects_start, frame->data.label.text_rects_count,
-        frame->clip_rect);
+        frame->clip_rect, frame->fg_color[frame->state_type]);
 }
 static void ui_render_textbox(ui_frame *frame)
 {
     // Render background
     ta_rgba bg_color = frame->bg_color[frame->state_type];
-    ta_primitive_push_rect(0, frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
-    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
+    if (bg_color.a != 0.0f) {
+        ta_primitive_push_rect(0, frame->rect, bg_color, UI_LAYER_EDIT_1_BG);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
+    }
 
     // Render text
     int x = frame->rect.x + frame->pad.x;
     int y = frame->rect.y + frame->pad.y;
-    ui_render_text(x, y, frame->data.textbox->text_rects, dlb_vec_len(frame->data.textbox->text_rects), frame->clip_rect);
+    ui_render_text(x, y, frame->data.textbox->text_rects, dlb_vec_len(frame->data.textbox->text_rects), frame->clip_rect,
+        frame->fg_color[frame->state_type]);
 
     // Clear frame buffer
     dlb_vec_zero(frame->data.textbox->text_rects);

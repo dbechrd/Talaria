@@ -2261,8 +2261,7 @@ static void ui_editor_sidebar()
     if (selected_entity) {
         ta_ui_label(SYM(selected_entity));
     } else {
-        // TODO: Pass tint color to text shader
-        //ta_ui_next_fg_color_rgba(UI_STATE_ALL, TA_COLOR_GRAY4);
+        ta_ui_next_fg_color_rgba(UI_STATE_ALL, TA_COLOR_GRAY5);
         ta_ui_label(CSTR("- empty -"));
     }
 

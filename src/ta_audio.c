@@ -407,6 +407,14 @@ void ta_audio_source_set_gain(ta_audio_source *source, float gain)
     source->gain = gain;
     alSourcef(source->al_source_id, AL_GAIN, source->gain);
 }
+void ta_audio_source_set_position(ta_audio_source *source, ta_vec3 position)
+{
+    alSourcefv(source->al_source_id, AL_POSITION, (float *)&position);
+}
+void ta_audio_source_set_velocity(ta_audio_source *source, ta_vec3 velocity)
+{
+    alSourcefv(source->al_source_id, AL_VELOCITY, (float *)&velocity);
+}
 ta_result ta_audio_source_set_buffer(ta_audio_source *source, const char *audio_buffer)
 {
     ta_audio_source_state state = 0;

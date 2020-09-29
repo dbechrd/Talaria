@@ -64,6 +64,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <AdditionalOptions>
       </AdditionalOptions>
+      <DiagnosticsFormat>Caret</DiagnosticsFormat>
     </ClCompile>
     <Link>
       <AdditionalDependencies>Shell32.lib;SDL2main.lib;SDL2.lib;opengl32.lib;openal32.lib;ole32.lib;fmodL_vc.lib</AdditionalDependencies>
@@ -86,6 +87,7 @@
       <AdditionalOptions>
       </AdditionalOptions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <DiagnosticsFormat>Caret</DiagnosticsFormat>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>

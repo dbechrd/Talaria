@@ -38,8 +38,8 @@
 
 // TODO: Ewwww globals
 const char *tg_font;
-const char *tg_tex_orange;
-const char *tg_tex_red;
+const char *tg_tex_bullet_icon;
+const char *tg_tex_bullet_icon_gray;
 const char *tg_tex_audio_icon;
 
 // Default textures
@@ -331,10 +331,10 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // Textures
     //--------------------------------------------------------------------------
-    tg_font            = INTERN("data/font/UbuntuMono-Regular.ttf");
-    tg_tex_orange      = INTERN("test_diff");
-    tg_tex_red         = INTERN("test_mrao");
-    tg_tex_audio_icon  = INTERN("data/texture/audio_icon.tga");
+    tg_font                 = INTERN("data/font/UbuntuMono-Regular.ttf");
+    tg_tex_audio_icon       = INTERN("data/texture/audio_icon.tga");
+    tg_tex_bullet_icon      = INTERN("data/texture/bullet_icon.tga");
+    tg_tex_bullet_icon_gray = INTERN("data/texture/bullet_icon_gray.tga");
 
     tg_tex_invalid_albedo    = INTERN("#invalid_albedo");
     tg_tex_default_albedo    = INTERN("#default_albedo");
@@ -366,8 +366,8 @@ void ta_game_init()
     // TODO(cleanup): This isn't used anywhere. Not sure if we need it.
     // Generate magenta/white grid pattern
     tex_invalid_albedo->type = TA_TEXTURE_2D_ARRAY;
-    tex_invalid_albedo->width = 64;
-    tex_invalid_albedo->height = 64;
+    tex_invalid_albedo->width = 32;
+    tex_invalid_albedo->height = 32;
     tex_invalid_albedo->channels = 4;
     u32 bytes = tex_invalid_albedo->width * tex_invalid_albedo->height * tex_invalid_albedo->channels;
     dlb_vec_reserve(tex_invalid_albedo->pixels, bytes);
@@ -745,27 +745,28 @@ static void game_draw_hud()
     ta_player *player = ta_game_player();
     ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
 
+    ta_ui_next_bg_color_rgba(UI_STATE_ALL, TA_COLOR_INVIS);
     static ta_ui_window_state window = { 0 };
     ta_ui_window_begin(&window, TA_UI_AUTOSIZE);
     ta_ui_row_begin();
     for (u32 i = 0; i < gun->carrying_ammo_max; i++) {
-        ta_ui_next_size(20, 20);
+        ta_ui_next_bg_color_rgba(UI_STATE_ALL, TA_COLOR_INVIS);
         ta_ui_next_pad(2, 2, 2, 2);
         if (i < gun->carrying_ammo) {
-            ta_ui_image(tg_tex_orange);
+            ta_ui_image(tg_tex_bullet_icon);
         } else {
-            ta_ui_image(tg_tex_red);
+            ta_ui_image(tg_tex_bullet_icon_gray);
         }
     }
     //ta_ui_pad(0, 4);
     ta_ui_row_begin();
     for (u32 i = 0; i < gun->loaded_ammo_max; i++) {
-        ta_ui_next_size(20, 20);
+        ta_ui_next_bg_color_rgba(UI_STATE_ALL, TA_COLOR_INVIS);
         ta_ui_next_pad(2, 2, 2, 2);
         if (i < gun->loaded_ammo) {
-            ta_ui_image(tg_tex_orange);
+            ta_ui_image(tg_tex_bullet_icon);
         } else {
-            ta_ui_image(tg_tex_red);
+            ta_ui_image(tg_tex_bullet_icon_gray);
         }
     }
     ta_ui_window_end();
@@ -1650,7 +1651,7 @@ void ta_game_loop()
         //       Use texture atlas; batch everything into one draw call; stop
         //       using stupid RGB placeholders.
         ta_log_write(&tg_debug_log, SRC_GAME, " HUD pass...\n");
-        //game_draw_hud();
+        game_draw_hud();
 
 #if 0
         //----------------------------------------------------------------------
@@ -1916,9 +1917,11 @@ void game_command_player_shoot()
     static double last_empty_ms = 0;
 
     ta_player *player = ta_game_player();
+    ta_transform *player_xform = ta_game_component(player->entity, RES_COMP_TRANSFORM);
     ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
-    ta_audio_source *src_gun = ta_game_component(player->e_gun,
-        RES_COMP_AUDIO_SOURCE);
+    ta_audio_source *src_gun = ta_game_component(player->e_gun, RES_COMP_AUDIO_SOURCE);
+
+    ta_audio_source_set_position(src_gun, player_xform->xform_world.position);
 
     double now_ms = ta_timer_elapsed_ms();
 

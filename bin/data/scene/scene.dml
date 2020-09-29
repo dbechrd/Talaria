@@ -3132,8 +3132,32 @@ ta_texture:
   name: "data/texture/audio_icon.tga"
   type: 0  # TA_TEXTURE_2D_ARRAY
   path: "data/texture/audio_icon.tga"
-  width: 64
-  height: 64
+  width: 32
+  height: 32
+  channels: 4
+  pixels_format: 6408
+  pixels_type: 5121
+  gl_internal_format: 6408
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/bullet_icon.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/bullet_icon.tga"
+  width: 16
+  height: 32
+  channels: 4
+  pixels_format: 6408
+  pixels_type: 5121
+  gl_internal_format: 6408
+  gl_filter_min: 9987
+  gl_filter_mag: 9728
+ta_texture:
+  name: "data/texture/bullet_icon_gray.tga"
+  type: 0  # TA_TEXTURE_2D_ARRAY
+  path: "data/texture/bullet_icon_gray.tga"
+  width: 16
+  height: 32
   channels: 4
   pixels_format: 6408
   pixels_type: 5121
