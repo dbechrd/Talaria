@@ -1322,6 +1322,23 @@ static void ui_node_panel()
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("is trigger:"));
+            ta_ui_next_pad(0, 0, 0, 0);
+            ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
+            ta_ui_next_margin(0, 0, 0, 0);
+            if (rigid_body->trigger) {
+                ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+                ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+                ta_ui_label(CSTR("True"));
+            } else {
+                ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+                ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+                ta_ui_label(CSTR("False"));
+            }
+            ta_ui_toggle_button_end(&rigid_body->trigger);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("apply gravity:"));
             ta_ui_next_pad(0, 0, 0, 0);
             ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
@@ -1393,6 +1410,23 @@ static void ui_node_panel()
             ta_ui_next_size(header_width, 0);
             ta_ui_next_bg_color(UI_STATE_ALL, 0.0f, 0.5f, 0.7f, 1.0f);
             ta_ui_label(CSTR("Collider"));
+
+            ta_ui_row_begin();
+            for (int i = 0; i < TA_COLLIDER_COUNT; ++i) {
+                const char *type = "unknown";
+                switch (rigid_body->collider.type) {
+                    case TA_COLLIDER_PLANE:  type = "Plane";  break;
+                    case TA_COLLIDER_SPHERE: type = "Sphere"; break;
+                    case TA_COLLIDER_OBB:    type = "OBB";    break;
+                }
+                if (ta_ui_button(type, strlen(type))) {
+                    size_t variable_data_offset = sizeof(rigid_body->collider.data.center);
+                    memset((u8 *)&rigid_body->collider.data + variable_data_offset, 0,
+                        sizeof(rigid_body->collider.data) - variable_data_offset);
+                    rigid_body->collider.type = i;
+                    ta_collider_init(&rigid_body->collider);
+                }
+            }
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);

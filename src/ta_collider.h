@@ -22,6 +22,8 @@ typedef struct ta_collider {
     } data;
 } ta_collider;
 
+const char *ta_collider_type_str    (int type);
+
 void ta_collider_init               (ta_collider *collider);
 ta_mat3 ta_collider_inv_tensor      (ta_collider *collider, float mass);
 ta_aabb ta_collider_world_bounds    (ta_collider *collider, ta_xform *xform);

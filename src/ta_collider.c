@@ -3,34 +3,44 @@
 #include "ta_transform.h"
 #include <math.h>
 
+const char *ta_collider_type_str(int type)
+{
+    switch(type) {
+        case TA_COLLIDER_PLANE:  return "TA_COLLIDER_PLANE";
+        case TA_COLLIDER_SPHERE: return "TA_COLLIDER_SPHERE";
+        case TA_COLLIDER_OBB:    return "TA_COLLIDER_OBB";
+        default: DLB_ASSERT(0);  return "TA_COLLIDER_???";
+    }
+}
+
 void ta_collider_init(ta_collider *collider)
 {
     switch (collider->type) {
         case TA_COLLIDER_PLANE: {
-            if (vec3_len(collider->data.plane.normal)) {
+            if (vec3_zero(collider->data.plane.normal)) {
+                collider->data.plane.normal = VEC3_Y;
+            } else {
                 collider->data.plane.normal = vec3_normalize(collider->data.plane.normal);
             }
             break;
         } case TA_COLLIDER_SPHERE: {
-            if (!collider->data.sphere.radius) {
+            if (collider->data.sphere.radius == 0.0f) {
                 collider->data.sphere.radius = 1.0f;
-            } else {
-                DLB_ASSERT(collider->data.sphere.radius > TA_EPSILON);
             }
+            collider->data.sphere.radius = MAX(TA_EPSILON, collider->data.sphere.radius);
             break;
         } case TA_COLLIDER_OBB: {
             if (vec3_zero(collider->data.obb.extents)) {
                 collider->data.obb.extents = VEC3_ONE;
-            } else {
-                DLB_ASSERT(collider->data.obb.extents.x > TA_EPSILON);
-                DLB_ASSERT(collider->data.obb.extents.y > TA_EPSILON);
-                DLB_ASSERT(collider->data.obb.extents.z > TA_EPSILON);
             }
+            collider->data.obb.extents.x = MAX(TA_EPSILON, collider->data.obb.extents.x);
+            collider->data.obb.extents.y = MAX(TA_EPSILON, collider->data.obb.extents.y);
+            collider->data.obb.extents.z = MAX(TA_EPSILON, collider->data.obb.extents.z);
+
             if (vec4_zero(collider->data.obb.orientation)) {
                 collider->data.obb.orientation = QUAT_IDENT;
             } else {
-                collider->data.obb.orientation =
-                    quat_normalize(collider->data.obb.orientation);
+                collider->data.obb.orientation = quat_normalize(collider->data.obb.orientation);
             }
             break;
         } default: {

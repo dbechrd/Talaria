@@ -95,7 +95,6 @@ typedef struct ta_rigid_body_pair {
     ta_rigid_body *b;
 } ta_rigid_body_pair;
 
-const char *ta_collider_type_str        (int type);
 void ta_rigid_body_init                 (ta_rigid_body *body);
 void ta_rigid_body_init_void            (void *body);
 void ta_rigid_body_free                 (ta_rigid_body *body);

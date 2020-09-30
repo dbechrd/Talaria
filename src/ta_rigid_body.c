@@ -18,16 +18,6 @@
 #define DV_EPSILON 0.001f     // minimum velocity required to affect position
 #define DTHETA_EPSILON 0.04f  // minimum magnitude required to affect orientation
 
-const char *ta_collider_type_str(int type)
-{
-    switch(type) {
-        case TA_COLLIDER_PLANE:  return "TA_COLLIDER_PLANE";
-        case TA_COLLIDER_SPHERE: return "TA_COLLIDER_SPHERE";
-        case TA_COLLIDER_OBB:    return "TA_COLLIDER_OBB";
-        default: DLB_ASSERT(0);  return "TA_COLLIDER_???";
-    }
-}
-
 void ta_rigid_body_init(ta_rigid_body *body)
 {
     ta_collider_init(&body->collider);
@@ -256,9 +246,11 @@ static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a,
     ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
     ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
+    // TODO: OBB v. OBB collision detection
     UNUSED(manifold);
     UNUSED(atrans);
     UNUSED(btrans);
+
     return false;
 }
 bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b)
