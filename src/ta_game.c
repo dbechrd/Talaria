@@ -1930,6 +1930,8 @@ void game_command_player_shoot()
             return;
         }
 
+        float rand_pitch = 1.0f + dlb_rand_variance(0.1f);
+        ta_audio_source_set_pitch(src_gun, rand_pitch);
         ta_audio_source_play_name(src_gun, gun->sfx_bang);
         last_bang_ms = ta_timer_elapsed_ms();
         gun->loaded_ammo--;
@@ -2175,9 +2177,7 @@ void ta_game_event(ta_event *event)
             //       or should the button queue the play request itself?
             ta_audio_source *source = ta_game_by_sym_try(RES_COMP_AUDIO_SOURCE, button->entity);
             if (source) {
-                float randf = (float)dlb_rand_u32() / (float)UINT32_MAX;
-                float vary_by = 0.1f;
-                float rand_pitch = 1.0f + (randf * 2 * vary_by - vary_by);  // vary pitch by +/- vary_by
+                float rand_pitch = 1.0f + dlb_rand_variance(0.5f);
                 ta_audio_source_set_pitch(source, rand_pitch);
                 if (ta_audio_source_set_buffer(source, sfx_name) == TA_OK) {
                     ta_audio_source_play(source);
