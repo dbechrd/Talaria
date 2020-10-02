@@ -57,6 +57,7 @@ const char *tg_e_freecam;
 const char *tg_e_player_camera;
 const char *tg_e_player_one;
 const char *tg_e_active_camera;
+const char *tg_e_can;
 
 ta_game tg_game;
 
@@ -154,7 +155,7 @@ void ta_game_init()
     //dlb_vec_reserve(tg_keybinds, 16);
 
     // TODO: None of these are going to respect the user's OS key repeat settings. Maybe we should check if keybinds
-    // are active via switch in event handlers for _everything_. We can still have remappable keys and undoable command
+    // are active via switch in event handlers for _everything_. We can_body still have remappable keys and undoable command
     // indirection and don't have to worry about handling repeat anymore.
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
     //                               Command                          Game States                                          Triggers            Keys
@@ -307,6 +308,7 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     tg_e_freecam = SYM_ENTITY_FREECAM;
     DLB_ASSERT(tg_e_freecam);
+    tg_e_active_camera = tg_e_freecam;
 
     tg_game.minimap_camera.fov = 90.0f;
     tg_game.minimap_camera.up = VEC3_NZ;
@@ -446,6 +448,11 @@ void ta_game_init()
     ta_texture_init(tex_default_roughness);
 
     //--------------------------------------------------------------------------
+    // Random David shit
+    //--------------------------------------------------------------------------
+    tg_e_can = INTERN("can");
+
+    //--------------------------------------------------------------------------
     // Shaders
     //--------------------------------------------------------------------------
     // TODO: Move these to shaders.dml, they're not scene-specific
@@ -488,13 +495,19 @@ void ta_game_state_set(ta_game_state state)
             // HACK: Set freecam position instantly to player cam location. This will *not* work correctly if freecam
             // has a parent. Needs to somehow use xform_world instead.
             if (vec3_zero(trans->xform.position)) {
-                ta_camera *active_cam = ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
-                freecam->target_xform.position = active_cam->target_xform.position;
+                ta_transform *active_cam = ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
+                freecam->target_xform.position = active_cam->xform.position;
                 trans->xform.position = freecam->target_xform.position;
             }
             tg_e_active_camera = tg_e_freecam;
             break;
         } case TA_STATE_EDITOR: {
+            ta_camera *freecam = ta_game_component(tg_e_freecam, RES_COMP_CAMERA);
+            ta_transform *trans = ta_game_component(tg_e_freecam, RES_COMP_TRANSFORM);
+            ta_transform *active_cam = ta_game_component(tg_e_active_camera, RES_COMP_TRANSFORM);
+            freecam->target_xform.position = active_cam->xform.position;
+            trans->xform.position = freecam->target_xform.position;
+            //}
             tg_e_active_camera = tg_e_freecam;
             break;
         } default: {
@@ -776,13 +789,13 @@ static void game_draw_hud()
 }
 static void collision_broadphase(ta_rigid_body_pair **pairs, ta_rigid_body *rigid_bodies, double dt)
 {
-    // Box2D supports 16 collision categories. For each fixture you can
+    // Box2D supports 16 collision categories. For each fixture you can_body
     // specify which category it belongs to. You also specify what other
-    // categories this fixture can collide with.
+    // categories this fixture can_body collide with.
     //
     //   if ((categoryA & maskB) != 0 && (categoryB & maskA) != 0)
     //
-    // Collision groups let you specify an integral group index. You can
+    // Collision groups let you specify an integral group index. You can_body
     // have all fixtures with the same group index always collide
     // (positive index) or never collide (negative index). Group indices
     // are usually used for things that are somehow related, like the
@@ -792,12 +805,12 @@ static void collision_broadphase(ta_rigid_body_pair **pairs, ta_rigid_body *rigi
     // filtered according the category and mask bits. In other words,
     // group filtering has higher precedence than category filtering.
     //
-    // - A fixture on a static body can only collide with a dynamic
+    // - A fixture on a static body can_body only collide with a dynamic
     //   body.
-    // - A fixture on a kinematic body can only collide with a dynamic
+    // - A fixture on a kinematic body can_body only collide with a dynamic
     //   body.
     // - Fixtures on the same body never collide with each other.
-    // - You can optionally enable/disable collision between fixtures on
+    // - You can_body optionally enable/disable collision between fixtures on
     //   bodies connected by a joint.
     //
     // Sensor: Fixture which only detects collision, no response. a.ka. trigger
@@ -1311,6 +1324,16 @@ void ta_game_loop()
             if (player_transform->xform.position.y < -10.0f) {
                 player_transform->xform.position.y = 1.0f;
             }
+
+            // HACK: Bring can back into the world!
+            ta_transform *can_xform = ta_game_component_try(tg_e_can, RES_COMP_TRANSFORM);
+            ta_rigid_body *can_body = ta_game_component_try(tg_e_can, RES_COMP_RIGID_BODY);
+            if (can_xform->xform.position.y < -10.0f) {
+                can_xform->xform.position = vec3_init(0.0f, 3.2f, -5.0f);
+                can_xform->xform.orientation = QUAT_IDENT;
+                can_body->velocity = VEC3_ZERO;
+                can_body->ang_velocity = VEC3_ZERO;
+            }
         }
 
         // Update transforms (model matrix and lerp)
@@ -1638,7 +1661,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // NOTE: We have to do this after editor_draw_world because that method
         // is using the last frame's hover flag to determine whether or not an
-        // uncaptured mouse can interact with the editor widgets.
+        // uncaptured mouse can_body interact with the editor widgets.
         ta_ui_flags_reset();
 
         //----------------------------------------------------------------------
@@ -1922,8 +1945,10 @@ void game_command_player_shoot()
 
     double now_ms = ta_timer_elapsed_ms();
 
+    bool fired = false;
+
     if (gun->loaded_ammo > 0) {
-        static double after_bang_delay_ms = 150;
+        static double after_bang_delay_ms = 50;
         static double after_reload_delay_ms = 1000;
         if (now_ms < last_bang_ms + after_bang_delay_ms ||
             now_ms < last_reload_ms + after_reload_delay_ms) {
@@ -1935,9 +1960,10 @@ void game_command_player_shoot()
         ta_audio_source_play_name(src_gun, gun->sfx_bang);
         last_bang_ms = ta_timer_elapsed_ms();
         gun->loaded_ammo--;
+        fired = true;
     } else {
         if (gun->carrying_ammo) {
-            static double after_bang_delay_ms = 750;
+            static double after_bang_delay_ms = 500;
             if (now_ms < last_bang_ms + after_bang_delay_ms) {
                 return;
             }
@@ -1949,7 +1975,7 @@ void game_command_player_shoot()
             gun->carrying_ammo -= gun->loaded_ammo;
         } else {
             static double after_bang_delay_ms = 750;
-            static double after_empty_delay_ms = 2000;
+            static double after_empty_delay_ms = 300;
             if (now_ms < last_bang_ms + after_bang_delay_ms ||
                 now_ms < last_empty_ms + after_empty_delay_ms) {
                 return;
@@ -1957,6 +1983,27 @@ void game_command_player_shoot()
 
             ta_audio_source_play_name(src_gun, gun->sfx_empty);
             last_empty_ms = ta_timer_elapsed_ms();
+        }
+    }
+
+    if (fired) {
+        ta_transform *can_xform = ta_game_component_try(tg_e_can, RES_COMP_TRANSFORM);
+        ta_rigid_body *can_body = ta_game_component_try(tg_e_can, RES_COMP_RIGID_BODY);
+        DLB_ASSERT(can_xform && can_body);
+        DLB_ASSERT(can_body->collider.type == TA_COLLIDER_OBB);
+        ta_ray bullet = ta_game_camera_ray();
+        float t_intersect = 0.0f;
+
+        ta_obb obb = can_body->collider.data.obb;
+        obb.center = vec3_rotate_quat(obb.center, can_xform->xform_world.orientation);
+        obb.center = vec3_add(obb.center, can_xform->xform_world.position);
+        obb.orientation = quat_normalize(quat_mul(can_xform->xform_world.orientation, obb.orientation));
+
+        if (ta_ray_v_obb(&bullet, &obb, &t_intersect)) {
+            ta_vec3 impulse = vec3_scalef(bullet.direction, 0.01f);;
+            ta_vec3 contact_world = vec3_add(bullet.origin, vec3_scalef(bullet.direction, t_intersect));
+            ta_vec3 contact_local = vec3_sub(contact_world, can_body->centroid_global);
+            ta_rigid_body_apply_impulse(can_body, impulse, contact_local);
         }
     }
 }
@@ -2154,7 +2201,6 @@ void ta_game_event(ta_event *event)
             if (event->type == GAME_EVENT_BUTTON_ACTIVATED) {
                 ta_player *player = ta_game_player();
                 ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
-                //if (gun->carrying_ammo == 0 && gun->loaded_ammo == 0) {
                 gun->carrying_ammo = gun->carrying_ammo_max;
                 pressed_weight = 1.0f;
                 sfx_name = button->sfx_activated;
@@ -2177,7 +2223,7 @@ void ta_game_event(ta_event *event)
             //       or should the button queue the play request itself?
             ta_audio_source *source = ta_game_by_sym_try(RES_COMP_AUDIO_SOURCE, button->entity);
             if (source) {
-                float rand_pitch = 1.0f + dlb_rand_variance(0.5f);
+                float rand_pitch = 1.0f + dlb_rand_variance(0.1f);
                 ta_audio_source_set_pitch(source, rand_pitch);
                 if (ta_audio_source_set_buffer(source, sfx_name) == TA_OK) {
                     ta_audio_source_play(source);

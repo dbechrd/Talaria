@@ -60,7 +60,7 @@ void ta_rigid_body_apply_force_at(ta_rigid_body *body, ta_vec3 force, ta_vec3 at
     body->force_accum = vec3_add(body->force_accum, force);
     body->torque_accum = vec3_add(body->torque_accum, vec3_cross(vec3_sub(at, body->centroid_global), force));
 }
-void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact)
+void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact_local)
 {
     if (body->inv_mass) {
         ta_vec3 dv = vec3_scalef(impulse, body->inv_mass);
@@ -68,7 +68,7 @@ void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 c
 
         if (!body->no_rotation) {
             //DLB_ASSERT(!mat3_equal(&body->inv_tensor_global, &MAT3_ZERO));
-            ta_vec3 moment = vec3_cross(contact, impulse);
+            ta_vec3 moment = vec3_cross(contact_local, impulse);
             ta_vec3 dw = mat3_mul_vec3(&body->inv_tensor_global, moment);
             body->ang_velocity = vec3_add(body->ang_velocity, dw);
         }
