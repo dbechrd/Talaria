@@ -82,12 +82,19 @@ static void ta_texture_pool_init_and_bind(ta_texture_pool *texture_pool, int wid
 
 void ta_texture_pool_bind(ta_texture_pool *texture_pool)
 {
+    DLB_ASSERT(texture_pool);
     DLB_ASSERT(texture_pool->gl_id);
+
+    // NOTE: Ensures that the texture binding point we use as a temp to change filter/wrap modes doesn't stomp one
+    // of the active texture pool bindings.
+    DLB_ASSERT(TA_TEXTURE_POOL_MAX < 32);
+    glActiveTexture(GL_TEXTURE31);
     glBindTexture(GL_TEXTURE_2D_ARRAY, texture_pool->gl_id);
 }
 
 void ta_texture_pool_unbind()
 {
+    glActiveTexture(GL_TEXTURE31);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
 }
 
@@ -275,6 +282,7 @@ ta_texture_pool *ta_texture_texture_pool(ta_texture *tex)
     return &tg_game.texturing.texture_pools[tex->gl_texture_pool_index];
 }
 
+#if 0
 void ta_texture_bind(ta_texture *tex)
 {
     GLenum target = ta_texture_target(tex);
@@ -292,7 +300,6 @@ void ta_texture_unbind(ta_texture *tex)
     glBindTexture(target, 0);
 }
 
-#if 0
 void ta_texture_create_and_bind(ta_texture *tex)
 {
     ta_log_write(&tg_debug_log, SRC_TEXTURE,
@@ -566,7 +573,8 @@ void ta_texture_load(ta_texture *tex)
         tex->gl_internal_format += !tex->gl_internal_format * GL_RGBA;
 
         ta_texturing_add_texture(&tg_game.texturing, tex);
-        ta_texture_bind(tex);
+        ta_texture_pool *pool = ta_texture_texture_pool(tex);
+        ta_texture_pool_bind(pool);
         ta_texture_upload(tex, pixels);
 
         if (use_stb) {
@@ -600,15 +608,16 @@ void ta_texture_load(ta_texture *tex)
         ////////////////////////////////////////////////////////////////////////////////////////
 
         ta_texturing_add_texture(&tg_game.texturing, tex);
-        ta_texture_bind(tex);
+        ta_texture_pool *pool = ta_texture_texture_pool(tex);
+        ta_texture_pool_bind(pool);
         if (tex->pixels) {
             ta_texture_upload(tex, tex->pixels);
         }
     }
 
+    // TODO: Don't generate mipmaps for textures that don't need them (e.g. UI textures?)
     texture_generate_mipmap(tex);
-    ta_texture_unbind(tex);
-
+    ta_texture_pool_unbind();
     ta_log_timed_region_end(&tg_debug_log, CSTR("ta_texture_load"));
 }
 
@@ -625,7 +634,7 @@ void ta_texture_delete(ta_texture *tex)
 
 void ta_texture_reload(ta_texture *tex)
 {
-    ta_texture_delete(tex);
+    //ta_texture_delete(tex);
     ta_texture_load(tex);
 }
 

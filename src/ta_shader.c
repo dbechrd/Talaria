@@ -605,7 +605,7 @@ static void shader_store_uniforms(ta_shader_uniform *store,
 static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
 {
     dlb_vec_each(ta_shader_uniform *, u, uniforms) {
-        if (!u->dirty || (u->location < 0 && u->type != TA_GLSL_STRUCT)) {
+        if ((u->location < 0 && u->type != TA_GLSL_STRUCT)) {
             continue;
         }
 

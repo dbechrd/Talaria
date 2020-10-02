@@ -73,8 +73,8 @@ static ta_watcher_result ta_asset_watcher_wait_changes(ta_asset_watcher *watcher
             // NOTE: If not empty slot is found, we simply discard the change notification. I don't know how to resize
             // the buffer in a thread-safe way, and this isn't a vital thing to detect.
             bool found_slot = false;
-            for (size_t i = 0; i < ARRAY_SIZE(watcher->changed_files); ++i) {
-                if (watcher->changed_files[i] == 0) {
+            for (size_t i = 0; i < ARRAY_SIZE(watcher->changes); ++i) {
+                if (watcher->changes[i].path == 0) {
                     found_slot = true;
 
                     bool is_file = false;
@@ -99,7 +99,8 @@ static ta_watcher_result ta_asset_watcher_wait_changes(ta_asset_watcher *watcher
                     //watcher->changed_files[i] = path;
 
                     if (is_file) {
-                        watcher->changed_files[i] = file;
+                        watcher->changes[i].path = file;
+                        watcher->changes[i].frame_num = tg_game.frame_num;
                     }
                     break;
                 }

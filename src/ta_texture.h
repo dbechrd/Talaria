@@ -100,8 +100,8 @@ void ta_texture_init                (ta_texture *tex);
 void ta_texture_init_void           (void *tex);
 GLenum ta_texture_target            (ta_texture *tex);
 ta_texture_pool *ta_texture_texture_pool(ta_texture *tex);
-void ta_texture_bind                (ta_texture *tex);
-void ta_texture_unbind              (ta_texture *tex);
+//void ta_texture_bind                (ta_texture *tex);
+//void ta_texture_unbind              (ta_texture *tex);
 // Load data from memory into VRAM
 //void ta_texture_create_and_bind     (ta_texture *tex);
 // Load data from disk (if `path` instead of `pixels`) then create VRAM textures

@@ -216,7 +216,7 @@ static void shadowmap_directional_create(ta_light *light)
     GLenum target = ta_texture_target(tex);
     ta_texture_pool *pool = ta_texture_texture_pool(tex);
 
-    ta_texture_bind(tex);
+    ta_texture_pool_bind(pool);
 
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
@@ -249,7 +249,7 @@ static void shadowmap_directional_create(ta_light *light)
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "unbind buffer and texture\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    ta_texture_unbind(tex);
+    ta_texture_pool_unbind(pool);
 }
 
 static void shadowmap_point_create(ta_light *light)
@@ -282,9 +282,9 @@ static void shadowmap_point_create(ta_light *light)
 
     ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
     GLenum target = ta_texture_target(tex);
-    ta_texture_pool *pool = ta_texture_texture_pool(tex);
 
-    ta_texture_bind(tex);
+    ta_texture_pool *pool = ta_texture_texture_pool(tex);
+    ta_texture_pool_bind(pool);
 
     glTexParameteri(target, GL_TEXTURE_MIN_FILTER, tex->gl_filter_min);
     glTexParameteri(target, GL_TEXTURE_MAG_FILTER, tex->gl_filter_mag);
@@ -314,7 +314,7 @@ static void shadowmap_point_create(ta_light *light)
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "unbind buffer and texture\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    ta_texture_unbind(tex);
+    ta_texture_pool_unbind(pool);
 }
 
 ta_vec3 ta_light_position(ta_light *light)

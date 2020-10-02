@@ -731,15 +731,23 @@ void ta_editor_draw_world()
                 [GIZMO_TRANSLATE_YZ]   [0] = { 0.7f, 0.0f, 0.0f, 0.7f },  // DARK_RED_ALPHA
                 [GIZMO_TRANSLATE_XZ]   [0] = { 0.0f, 0.7f, 0.0f, 0.7f },  // DARK_GREEN_ALPHA
                 [GIZMO_TRANSLATE_XY]   [0] = { 0.0f, 0.0f, 0.7f, 0.7f },  // DARK_BLUE_ALPHA
-                [GIZMO_TRANSLATE_VIEW] [0] = { 0.6f, 0.6f, 0.6f, 1.0f },  // TA_COLOR_GRAY6
+                //[GIZMO_TRANSLATE_VIEW] [0] = { 0.6f, 0.6f, 0.6f, 1.0f },  // TA_COLOR_GRAY6
+                [GIZMO_TRANSLATE_VIEW] [0] = { 1.0f, 1.0f, 1.0f, 1.0f },  // TA_COLOR_WHITE
                 // Active gizmo colors (highlights)
-                [GIZMO_TRANSLATE_X]    [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED,
-                [GIZMO_TRANSLATE_Y]    [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN,
-                [GIZMO_TRANSLATE_Z]    [1] = { 0.0f, 0.0f, 1.0f, 1.0f },  // TA_COLOR_BLUE,
-                [GIZMO_TRANSLATE_YZ]   [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED,
-                [GIZMO_TRANSLATE_XZ]   [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN,
-                [GIZMO_TRANSLATE_XY]   [1] = { 0.0f, 0.0f, 1.0f, 1.0f },  // TA_COLOR_BLUE,
-                [GIZMO_TRANSLATE_VIEW] [1] = { 1.0f, 1.0f, 1.0f, 1.0f },  // TA_COLOR_WHITE
+                //[GIZMO_TRANSLATE_X]    [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED
+                //[GIZMO_TRANSLATE_Y]    [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN
+                //[GIZMO_TRANSLATE_Z]    [1] = { 0.0f, 0.0f, 1.0f, 1.0f },  // TA_COLOR_BLUE
+                //[GIZMO_TRANSLATE_YZ]   [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED
+                //[GIZMO_TRANSLATE_XZ]   [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN
+                //[GIZMO_TRANSLATE_XY]   [1] = { 0.0f, 0.0f, 1.0f, 1.0f },  // TA_COLOR_BLUE
+                //[GIZMO_TRANSLATE_VIEW] [1] = { 1.0f, 1.0f, 1.0f, 1.0f },  // TA_COLOR_WHITE
+                [GIZMO_TRANSLATE_X]    [1] = { 1.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_YELLOW
+                [GIZMO_TRANSLATE_Y]    [1] = { 1.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_YELLOW
+                [GIZMO_TRANSLATE_Z]    [1] = { 1.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_YELLOW
+                [GIZMO_TRANSLATE_YZ]   [1] = { 1.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_YELLOW
+                [GIZMO_TRANSLATE_XZ]   [1] = { 1.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_YELLOW
+                [GIZMO_TRANSLATE_XY]   [1] = { 1.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_YELLOW
+                [GIZMO_TRANSLATE_VIEW] [1] = { 1.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_YELLOW
             };
 
             // Highlight active gizmo, or nearest gizmo if none active

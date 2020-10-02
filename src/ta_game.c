@@ -658,18 +658,20 @@ void ta_game_window_resize()
 }
 static void game_hotload_textures()
 {
-    for (size_t i = 0; i < ARRAY_SIZE(tg_game.texture_watcher.changed_files); ++i) {
-        char *filename = tg_game.texture_watcher.changed_files[i];
-        if (filename) {
-            ta_texture *tex = ta_game_by_name_try(RES_TEXTURE, filename, strlen(filename));
+    for (size_t i = 0; i < ARRAY_SIZE(tg_game.texture_watcher.changes); ++i) {
+        ta_asset_change_record *change = &tg_game.texture_watcher.changes[i];
+        // NOTE: Delay change handling 60 frames
+        if (change->path && (tg_game.frame_num - change->frame_num) > 60) {
+            ta_texture *tex = ta_game_by_name_try(RES_TEXTURE, change->path, strlen(change->path));
             if (tex) {
-                printf("[GAME] hot-loading: %s\n", filename);
+                printf("[GAME] hot-loading: %s\n", change->path);
                 ta_texture_reload(tex);
             } else {
                 //printf("[GAME] not found: %s\n", filename);
             }
-            dlb_free(filename);
-            tg_game.texture_watcher.changed_files[i] = 0;
+            dlb_free(change->path);
+            change->path = 0;
+            change->frame_num = 0;
         }
     }
 }
@@ -930,11 +932,6 @@ static void game_render_skybox()
         ta_shader_set_uint_array(shader, SYM_U_TEXTURE_ARRAY_LAYERS, layers);
 
         //ta_shader_set_sampler_cube(shader, SYM_U_TEX, skybox->gl_id);
-
-        // NOTE: Ensures that the texture binding point we use as a temp to change filter/wrap modes doesn't stomp one
-        // of the active texture pool bindings.
-        DLB_ASSERT(TA_TEXTURE_POOL_MAX < 32);
-        glActiveTexture(GL_TEXTURE31);
 
         ta_texture_pool *pool = ta_texture_texture_pool(first_tex);
         ta_texture_pool_bind(pool);

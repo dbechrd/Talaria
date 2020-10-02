@@ -465,8 +465,7 @@ void ta_primitive_push_cone(ta_mesh *mesh, ta_cone cone, ta_rgba color)
 #undef CONE_SEG_RAD
 #undef CONE_SEGMENTS
 
-void ta_primitive_push_arrow(ta_mesh *mesh, ta_vec3 origin, ta_vec3 direction,
-    ta_rgba color)
+void ta_primitive_push_arrow(ta_mesh *mesh, ta_vec3 origin, ta_vec3 direction, ta_rgba color)
 {
     ta_vec3 tip = vec3_add(origin, direction);
 
