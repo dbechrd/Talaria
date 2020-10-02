@@ -1048,8 +1048,7 @@ void textbox_command_submit()
 }
 static void textbox_cancel(ta_ui_textbox_state *textbox)
 {
-    textbox->submit = false;
-    dlb_vec_free(textbox->buffer);
+    textbox_clear(textbox);
     textbox_unfocus(textbox);
 }
 void textbox_command_cancel()

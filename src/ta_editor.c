@@ -956,12 +956,10 @@ static void ui_node_panel()
     ta_ui_row_begin();
     ta_ui_next_size(200, 15);
     static ta_ui_textbox_state search_box = { 0 };
+    bool search_box_submitted = false;
     if (ta_ui_textbox(0, 0, &search_box, 0)) {
-
-    }
-    ta_ui_next_margin(4, 1, 0, 0);
-    if (ta_ui_button(CSTR("Clear"))) {
-        ta_ui_textbox_clear(&search_box);
+        search_box_submitted = true;
+        search_box.submit = false;
     }
 
     static const char *res_type_lookup[RES_COUNT] = {
@@ -1031,6 +1029,31 @@ static void ui_node_panel()
             }
         }
 
+        // Allow user to create new entity if name (in search box) is available
+        size_t len = strlen(search_box.buffer);
+        ta_transform *exists = ta_game_by_name_try(RES_COMP_TRANSFORM, search_box.buffer, len);
+        if (exists) {
+            ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
+            ta_ui_button(CSTR("Create"));
+            if (ta_ui_last_state().hover) {
+                ta_ui_tooltip(CSTR("An entity with this name already exists!"));
+            }
+        } else {
+            ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
+            ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
+            if (ta_ui_button(CSTR("Create")) || search_box_submitted) {
+                const char *entity = ta_symbol_intern(search_box.buffer, len);
+                ta_transform *new_transform = ta_game_component_add(entity, RES_COMP_TRANSFORM, search_box.buffer, len);
+                ta_transform_init(new_transform);
+            }
+        }
+
+        if (ta_ui_button(CSTR("Clear"))) {
+            ta_ui_textbox_clear(&search_box);
+        }
+
+        // Render search results
         dlb_vec_each(const char **, result, search_results) {
             ta_ui_row_begin();
             ta_ui_next_size(header_width, 0);
@@ -1040,6 +1063,8 @@ static void ui_node_panel()
             }
         }
     }
+
+
 
 #if 0
     static ta_text_entry *uid_editor = 0;
@@ -1315,7 +1340,6 @@ static void ui_node_panel()
             ta_ui_next_margin(6, 1, 0, 1);
             if (ta_ui_reset_button()) {
                 rigid_body->velocity = VEC3_ZERO;
-                rigid_body->ang_velocity = VEC3_ZERO;
             }
 
             ta_ui_row_begin();
@@ -1327,6 +1351,10 @@ static void ui_node_panel()
                 rigid_body->ang_velocity.z);
             DLB_ASSERT(text_len < sizeof(text));
             ta_ui_label(text, text_len);
+            ta_ui_next_margin(6, 1, 0, 1);
+            if (ta_ui_reset_button()) {
+                rigid_body->ang_velocity = VEC3_ZERO;
+            }
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1388,7 +1416,7 @@ static void ui_node_panel()
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("broad aabb center:"));
             static ta_ui_textbox_vec3_state broad_center_editor = { 0 };
-            ta_ui_textbox_vec3(&rigid_body->aabb.center, &broad_center_editor, false, true);
+            ta_ui_textbox_vec3(&rigid_body->aabb.center, &broad_center_editor, false, false);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1422,7 +1450,7 @@ static void ui_node_panel()
             ta_ui_row_begin();
             for (int i = 0; i < TA_COLLIDER_COUNT; ++i) {
                 const char *type = "unknown";
-                switch (rigid_body->collider.type) {
+                switch (i) {
                     case TA_COLLIDER_PLANE:  type = "Plane";  break;
                     case TA_COLLIDER_SPHERE: type = "Sphere"; break;
                     case TA_COLLIDER_OBB:    type = "OBB";    break;
@@ -1451,9 +1479,13 @@ static void ui_node_panel()
             switch (rigid_body->collider.type) {
                 case TA_COLLIDER_PLANE: {
                     ta_ui_row_begin();
+                    ta_ui_next_size(label_width, 0);
                     ta_ui_label(CSTR("normal:"));
                     static ta_ui_textbox_vec3_state normal_editor = { 0 };
-                    ta_ui_textbox_vec3(&rigid_body->collider.data.plane.normal, &normal_editor, true, false);
+                    ta_ui_textbox_vec3(&rigid_body->collider.data.plane.normal, &normal_editor, true, true);
+                    if (vec3_tiny(rigid_body->collider.data.plane.normal)) {
+                        rigid_body->collider.data.plane.normal = VEC3_Y;
+                    }
                     break;
                 } case TA_COLLIDER_SPHERE: {
                     ta_ui_row_begin();
@@ -1461,6 +1493,7 @@ static void ui_node_panel()
                     ta_ui_label(CSTR("radius:"));
                     static ta_ui_textbox_state radius_editor = { 0 };
                     ta_ui_textbox_float(&rigid_body->collider.data.sphere.radius, &radius_editor, 0);
+                    rigid_body->collider.data.sphere.radius = MAX(TA_EPSILON, rigid_body->collider.data.sphere.radius);
                     break;
                 } case TA_COLLIDER_OBB: {
                     ta_ui_row_begin();
@@ -1468,6 +1501,10 @@ static void ui_node_panel()
                     ta_ui_label(CSTR("extents:"));
                     static ta_ui_textbox_vec3_state extents_editor = { 0 };
                     ta_ui_textbox_vec3(&rigid_body->collider.data.obb.extents, &extents_editor, false, false);
+                    rigid_body->collider.data.obb.extents.x = MAX(TA_EPSILON, rigid_body->collider.data.obb.extents.x);
+                    rigid_body->collider.data.obb.extents.y = MAX(TA_EPSILON, rigid_body->collider.data.obb.extents.y);
+                    rigid_body->collider.data.obb.extents.z = MAX(TA_EPSILON, rigid_body->collider.data.obb.extents.z);
+
                     ta_ui_row_begin();
                     ta_ui_next_size(label_width, 0);
                     ta_ui_label(CSTR("orientation:"));
@@ -1480,7 +1517,8 @@ static void ui_node_panel()
             }
         } else {
             if (ta_ui_button(CSTR("Add rigid body"))) {
-                // TODO: add rigidy body
+                ta_rigid_body *new_body = ta_game_component_add(selected_entity, RES_COMP_RIGID_BODY, SYM(selected_entity));
+                ta_rigid_body_init(new_body);
             }
         }
     }

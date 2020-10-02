@@ -122,7 +122,7 @@ static ta_aabb plane_world_bounds(ta_plane *plane, ta_xform *xform)
 
 static ta_aabb sphere_world_bounds(ta_sphere *sphere, ta_xform *xform)
 {
-    DLB_ASSERT(sphere->radius > TA_EPSILON);
+    DLB_ASSERT(sphere->radius >= TA_EPSILON);
 
     ta_aabb result = { 0 };
     result.center = vec3_rotate_quat(sphere->center, xform->orientation);
