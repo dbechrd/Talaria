@@ -1024,14 +1024,25 @@ static void ui_node_panel()
                 match_res_neg = ta_game_component_try(transform->entity, res_filter_neg) == 0;
             }
             if (match_all || match_res_pos || match_res_neg || strstr(transform->entity, search_box.buffer)) {
-                // TODO: Insertion sort?
+                // TODO: Binary search if the list becomes large (paging? lul)
                 dlb_vec_push(search_results, transform->entity);
+                int len = (int)dlb_vec_len(search_results);
+                if (len > 1) {
+                    for (int i = len - 2; i >= 0; --i) {
+                        if (strcmp(search_results[i], search_results[i + 1]) <= 0) {
+                            break;
+                        }
+                        const char *tmp = search_results[i];
+                        search_results[i] = search_results[i + 1];
+                        search_results[i + 1] = tmp;
+                    }
+                }
             }
         }
 
         // Allow user to create new entity if name (in search box) is available
-        size_t len = strlen(search_box.buffer);
-        ta_transform *exists = ta_game_by_name_try(RES_COMP_TRANSFORM, search_box.buffer, len);
+        size_t search_buf_len = dlb_vec_len(search_box.buffer);
+        ta_transform *exists = ta_game_by_name_try(RES_COMP_TRANSFORM, search_box.buffer, search_buf_len);
         if (exists) {
             ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
@@ -1043,8 +1054,9 @@ static void ui_node_panel()
             ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
             if (ta_ui_button(CSTR("Create")) || search_box_submitted) {
-                const char *entity = ta_symbol_intern(search_box.buffer, len);
-                ta_transform *new_transform = ta_game_component_add(entity, RES_COMP_TRANSFORM, search_box.buffer, len);
+                const char *entity = ta_symbol_intern(search_box.buffer, search_buf_len);
+                ta_transform *new_transform = ta_game_component_add(entity, RES_COMP_TRANSFORM, search_box.buffer,
+                    search_buf_len);
                 ta_transform_init(new_transform);
             }
         }
@@ -1052,6 +1064,12 @@ static void ui_node_panel()
         if (ta_ui_button(CSTR("Clear"))) {
             ta_ui_textbox_clear(&search_box);
         }
+
+        ta_ui_row_begin();
+        char count_buf[32] = { 0 };
+        size_t count_buf_len = snprintf(count_buf, sizeof(count_buf), "Found %zu matches", dlb_vec_len(search_results));
+        DLB_ASSERT(count_buf_len < sizeof(count_buf));
+        ta_ui_label(count_buf, count_buf_len);
 
         // Render search results
         dlb_vec_each(const char **, result, search_results) {
@@ -2272,7 +2290,7 @@ static void ui_textbox_panel()
     static char buf[] = "The quick brown fox jumps over the lazy dog. 1234567890 |||";
     if (ta_ui_textbox(CSTR(buf), &textbox, 0)) {
         //size_t text_len = dlb_vec_len(textbox.buffer);
-        //dlb_memcpy(buf, textbox.buffer, MAX(sizeof(buf) - 1, text_len));
+        //dlb_memcpy(count_buf, textbox.buffer, MAX(sizeof(count_buf) - 1, text_len));
         ta_ui_textbox_clear(&textbox);
     }
     ta_ui_row_end();
