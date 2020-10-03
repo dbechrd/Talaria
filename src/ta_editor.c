@@ -1195,23 +1195,36 @@ static void ui_node_panel()
         DLB_ASSERT(text_len < sizeof(text));
         ta_ui_label(text, text_len);
 
-        // TODO: Everything has parent of "root" except root itself? Each sub-scene has the scene name as parent? Hmm..
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(CSTR("parent:"));
         if (transform->parent) {
-            ta_ui_row_begin();
-            ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("parent:"));
             if (ta_ui_button(SYM(transform->parent))) {
                 ta_editor_select_entity(transform->parent);
             }
+        } else {
+            ta_ui_next_fg_color_rgba(UI_STATE_ALL, TA_COLOR_GRAY5);
+            ta_ui_label(CSTR("- empty -"));
         }
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(CSTR("current:"));
+        ta_ui_label(SYM(selected_entity));
+
+        ta_ui_row_begin();
+        ta_ui_next_size(label_width, 0);
+        ta_ui_label(CSTR("children:"));
         if (transform->children) {
-            ta_ui_row_begin();
-            ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("children:"));
-            ta_ui_next_size(0, 200);
-            ta_ui_next_bg_color_rgba(UI_STATE_NONE, TA_COLOR_GRAY5);
+            ta_ui_next_margin(0, 0, 0, 0);
+            ta_ui_next_pad(0, 0, 0, 0);
             static ta_ui_panel_state children_panel = { 0 };
-            ta_ui_panel_begin(&children_panel, TA_UI_AUTOSIZE_W);
+            if (dlb_vec_len(transform->children) > 10) {
+                ta_ui_next_size(0, 200);
+                ta_ui_panel_begin(&children_panel, TA_UI_AUTOSIZE_W);
+            } else {
+                ta_ui_panel_begin(&children_panel, TA_UI_AUTOSIZE);
+            }
             dlb_vec_each(const char **, child, transform->children) {
                 ta_ui_row_begin();
                 if (ta_ui_button(SYM(*child))) {
@@ -1219,6 +1232,9 @@ static void ui_node_panel()
                 }
             }
             ta_ui_panel_end();
+        } else {
+            ta_ui_next_fg_color_rgba(UI_STATE_ALL, TA_COLOR_GRAY5);
+            ta_ui_label(CSTR("- empty -"));
         }
     }
 

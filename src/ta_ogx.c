@@ -244,17 +244,23 @@ static void ta_ogx_load_node(ogx_node *o_node, ogx_scene *o_scene)
     if (!transform) {
         transform = ta_game_component_add(o_node->name, RES_COMP_TRANSFORM, SYM(o_node->name));
         ta_transform_init(transform);
+        transform->xform.position = o_node->transform.position;
+        transform->xform.orientation = quat_normalize(o_node->transform.orientation);
     } else {
-        ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting transform for %s\n", o_node->name);
+        if (!vec3_equal(o_node->transform.position, transform->xform.position)) {
+            ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Transform already exists; ignoring non-zero position for %s\n", o_node->name);
+        }
+        if (!quat_equal(o_node->transform.orientation, transform->xform.orientation)) {
+            ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Transform already exists; ignoring non-identify orientation for %s\n", o_node->name);
+        }
     }
-    transform->xform.position = o_node->transform.position;
-    transform->xform.orientation = quat_normalize(o_node->transform.orientation);
 
     if (o_node->parent != OGX_INDEX_NULL) {
         transform->parent = o_scene->nodes[o_node->parent].name;
     }
     size_t children_count = dlb_vec_len(o_node->children);
     if (children_count) {
+        dlb_vec_zero((void *)transform->children);
         dlb_vec_reserve(transform->children, children_count);
         dlb_vec_each(s32 *, node_idx, o_node->children) {
             dlb_vec_push(transform->children, o_scene->nodes[*node_idx].name);
