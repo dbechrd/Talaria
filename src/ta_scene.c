@@ -179,6 +179,7 @@ void ta_scene_print_json(ta_scene *scene, FILE *f)
     fprintf(f, "}\n");
     fflush(f);
 }
+// *DO NOT* use this for components, use the ta_scene_component_add() wrapper
 void *ta_scene_alloc(ta_scene *scene, ta_res_type type, const char *name, size_t name_len)
 {
     DLB_ASSERT(scene);
@@ -210,35 +211,59 @@ void *ta_scene_alloc(ta_scene *scene, ta_res_type type, const char *name, size_t
 
     return res;
 }
+// =====================================
+//  TODO: THIS CODE IS NOT TESTED !!!!!
+// =====================================
+// *DO NOT* use this for components, use the ta_scene_component_remove() wrapper
 void ta_scene_destroy(ta_scene *scene, ta_res_type type, const char *name, size_t name_len)
 {
     DLB_ASSERT(scene);
-    // TODO: if type is a component type, find and update parent entity:
-    // entity->components[type] = 0
+
+    // TODO: Don't allow deleting components for now.. until we have ta_scene_component_remove() wrapper that properly
+    // handles updating all parent/child relationships, and anything else component-specific. E.g. if someone tries to
+    // delete RES_COMP_TRANSFORM, we have to ensure all other components are deleted (which we should probably make more
+    // explicit by having ta_scene_delete_entity() or something, and disallowing component_remove() from removing
+    // RES_COMP_COMPONENT resources.
     DLB_ASSERT(type >= RES_COMP_COUNT && type < RES_COUNT);
 
     ta_schema_field_type schema_type = res_to_typ(type);
-    //size_t size = tg_schemas[schema_type].size;
+    size_t schema_size = tg_schemas[schema_type].size;
 
-    // TODO: Find resource
-    DLB_ASSERT(0);
-    ta_resource *res = 0000000;
+    dlb_index *index = &scene->index_by_name[type];
+    u32 name_hash = dlb_murmur3(name, (u32)name_len);
+
+    ta_resource *res = ta_scene_find_try(scene, type, name, name_len);
+    DLB_ASSERT(res);  // NOTE: Could allow idempotent destroy calls, but this finds double-free errors faster
+    dlb_index_delete(index, name_hash, res->index);
+
+    // Free any data owned by the resource
     if (tg_schemas[schema_type].free) {
         tg_schemas[schema_type].free(res);
     }
 
-    // Remove name from index
-    dlb_index *store = &scene->index_by_name[type];
-    u32 hash = dlb_murmur3(name, (u32)name_len);
-    // TODO: Find index
-    DLB_ASSERT(0);
-    u32 index = 0000000;
-    dlb_index_delete(store, hash, index);
+    void *records = scene->resource_data[type];
+    size_t record_count = dlb_vec_len(records);
+    DLB_ASSERT(record_count);
 
-    // TODO: Remove data from pool (swap last element into empty slot, then
-    // update index for the moved element)
-    DLB_ASSERT(0);
-    //dlb_vec_delete(scene->resource_data[type], index);
+    if (res->index == record_count - 1) {
+        dlb_vec_popz_size(records, schema_size);
+    } else {
+        // Get last record in dense array, calculate hash and store old index
+        size_t old_index = record_count - 1;
+        size_t new_index = res->index;
+
+        ta_resource *moving_res = dlb_vec_index_size(records, old_index, schema_size);
+        u32 moving_hash = dlb_murmur3(SYM(moving_res->name));
+
+        // Move last record into newly empty slot, pop last record from dense array
+        dlb_memcpy(res, moving_res, schema_size);
+        moving_res->index = new_index;
+        dlb_vec_popz_size(records, schema_size);
+
+        // Update index for the moved record
+        dlb_index_delete(index, moving_hash, old_index);
+        dlb_index_insert(index, moving_hash, new_index);
+    }
 }
 void *ta_scene_find_at(ta_scene *scene, ta_res_type type, u32 index)
 {
