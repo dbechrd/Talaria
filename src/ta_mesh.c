@@ -444,6 +444,15 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
         glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, tg_mesh_gl_default_bone_xforms);
     }
 
+    if (mesh->skin.gl_ubo_bone_normal_xforms) {
+        glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_NORMAL_XFORMS, mesh->skin.gl_ubo_bone_normal_xforms);
+        if (mesh->skin.bone_normal_xforms_dirty) {
+            glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh->skin.bone_normal_xforms), mesh->skin.bone_normal_xforms, GL_DYNAMIC_DRAW);
+        }
+    } else {
+        glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_NORMAL_XFORMS, tg_mesh_gl_default_bone_xforms);
+    }
+
     if (!mesh->gl_vao) {
         mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
     }

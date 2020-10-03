@@ -54,6 +54,7 @@ typedef struct ta_skin {
     GLuint gl_ubo_bone_xforms;
     GLuint gl_ubo_bone_normal_xforms;
     bool bone_xforms_dirty;
+    bool bone_normal_xforms_dirty;
 } ta_skin;
 
 #pragma warning(push)

@@ -64,20 +64,19 @@ void ta_model_set_morph_target_weight(ta_model *model, const char *morph_target_
     }
 }
 
-static void model_set_shader_morph_targets(ta_model *model, ta_shader *shader)
+static void model_set_shader_morph_weights(ta_model *model, ta_shader *shader)
 {
-    const size_t max_morph_targets = ARRAY_SIZE(SYM_U_MORPH_WEIGHTS);
     if (model->morph_target_weights) {
         size_t morph_idx = 0;
         dlb_vec_each(float *, morph_target_weight, model->morph_target_weights) {
             ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[morph_idx], *morph_target_weight);
             morph_idx++;
-            if (morph_idx == max_morph_targets) {
+            if (morph_idx == TA_MODEL_MAX_MORPHS) {
                 break;
             }
         }
     } else {
-        for (size_t i = 0; i < max_morph_targets; ++i) {
+        for (size_t i = 0; i < TA_MODEL_MAX_MORPHS; ++i) {
             ta_shader_set_float(shader, SYM_U_MORPH_WEIGHTS[i], 0.0f);
         }
     }
@@ -103,9 +102,12 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
         mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
     }
 
-    ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
+    // Only used for point lights
+    if (find_uniform_by_name_try(shader->uniforms, SYM_U_MODEL)) {
+        ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
+    }
+    model_set_shader_morph_weights(model, shader);
 
-    model_set_shader_morph_targets(model, shader);
     ta_shader_bind(shader);
     ta_mesh_render(mesh, shader);
 }
@@ -178,7 +180,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
         ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
 
-        model_set_shader_morph_targets(model, shader);
+        model_set_shader_morph_weights(model, shader);
         ta_shader_bind(shader);
         ta_mesh_render(mesh, shader);
         ta_shader_unbind();
@@ -216,7 +218,7 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
     }
 
     // TODO: Fix this for editor_select (either make it a set_try or don't do it at all in this function)
-    //model_set_shader_morph_targets(model, piece, shader);
+    //model_set_shader_morph_weights(model, piece, shader);
     ta_shader_bind(shader);
     ta_mesh_render(mesh, shader);
     ta_shader_unbind();

@@ -149,7 +149,7 @@ static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
     }
     return location;
 }
-static ta_shader_attribute *find_attribute_by_name(ta_shader *shader, const char *name, ta_glsl_type type)
+ta_shader_attribute *find_attribute_by_name(ta_shader *shader, const char *name, ta_glsl_type type)
 {
     ta_shader_attribute *result = 0;
     dlb_vec_each(ta_shader_attribute *, attr, shader->attributes) {
@@ -161,7 +161,7 @@ static ta_shader_attribute *find_attribute_by_name(ta_shader *shader, const char
     DLB_ASSERT(!result || result->type == type);
     return result;
 }
-static ta_shader_uniform *find_uniform_by_name_try(ta_shader_uniform *uniforms, const char *name)
+ta_shader_uniform *find_uniform_by_name_try(ta_shader_uniform *uniforms, const char *name)
 {
     ta_shader_uniform *result = 0;
     dlb_vec_each(ta_shader_uniform *, uniform, uniforms) {
@@ -172,7 +172,7 @@ static ta_shader_uniform *find_uniform_by_name_try(ta_shader_uniform *uniforms, 
     }
     return result;
 }
-static ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, const char *name, ta_glsl_type type)
+ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, const char *name, ta_glsl_type type)
 {
     ta_shader_uniform *result = find_uniform_by_name_try(uniforms, name);
     DLB_ASSERT(result && result->type == type);
@@ -203,25 +203,6 @@ static void shader_init_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
             uniform->location = ta_shader_uniform_location(shader, uniform->name);
         }
         uniform->dirty = true;
-    }
-
-    // HACK: Test every shader for Lights UBO, and bind to point 0 if present
-    // TODO: This is bad if it fails for a shader that actually needs the Lights UBO :/
-    GLuint ubo_lights_index = glGetUniformBlockIndex(shader->program_id, "ubo_lights");
-    if (ubo_lights_index != GL_INVALID_INDEX) {
-        glUniformBlockBinding(shader->program_id, ubo_lights_index, TA_GLSL_UBO_LIGHTS);
-    }
-
-    GLuint ubo_bone_xforms_index = glGetUniformBlockIndex(shader->program_id, "ubo_bone_xforms");
-    if (ubo_bone_xforms_index != GL_INVALID_INDEX) {
-        glUniformBlockBinding(shader->program_id, ubo_bone_xforms_index, TA_GLSL_UBO_BONE_XFORMS);
-    }
-
-    if (find_uniform_by_name_try(uniforms, SYM_U_TEXTURES[0])) {
-        size_t texture_pool_count = dlb_vec_len(tg_game.texturing.texture_pools);
-        for (size_t i = 0; i < texture_pool_count; ++i) {
-            ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[i], tg_game.texturing.texture_pools[i].gl_id);
-        }
     }
 }
 void ta_shader_load(ta_shader *shader)
@@ -291,6 +272,30 @@ void ta_shader_load(ta_shader *shader)
     DLB_ASSERT(!attr_weights     || attr_weights->location     < 0 || attr_weights->location     == TA_VERTEX_ATTR_BONE_WEIGHTS);
 
     shader_init_uniforms(shader, shader->uniforms);
+
+    // HACK: Test every shader for Lights UBO, and bind to point 0 if present
+    // TODO: This is bad if it fails for a shader that actually needs the Lights UBO :/
+    GLuint ubo_lights_index = glGetUniformBlockIndex(shader->program_id, "ubo_lights");
+    if (ubo_lights_index != GL_INVALID_INDEX) {
+        glUniformBlockBinding(shader->program_id, ubo_lights_index, TA_GLSL_UBO_LIGHTS);
+    }
+
+    GLuint ubo_bone_xforms_index = glGetUniformBlockIndex(shader->program_id, "ubo_bone_xforms");
+    if (ubo_bone_xforms_index != GL_INVALID_INDEX) {
+        glUniformBlockBinding(shader->program_id, ubo_bone_xforms_index, TA_GLSL_UBO_BONE_XFORMS);
+    }
+
+    GLuint ubo_bone_normal_xforms_index = glGetUniformBlockIndex(shader->program_id, "ubo_bone_normal_xforms");
+    if (ubo_bone_normal_xforms_index != GL_INVALID_INDEX) {
+        glUniformBlockBinding(shader->program_id, ubo_bone_normal_xforms_index, TA_GLSL_UBO_BONE_NORMAL_XFORMS);
+    }
+
+    if (find_uniform_by_name_try(shader->uniforms, SYM_U_TEXTURES[0])) {
+        size_t texture_pool_count = dlb_vec_len(tg_game.texturing.texture_pools);
+        for (size_t i = 0; i < texture_pool_count; ++i) {
+            ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[i], tg_game.texturing.texture_pools[i].gl_id);
+        }
+    }
 
 #if _DEBUG
     shader_print_uniforms(shader);

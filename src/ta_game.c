@@ -1392,6 +1392,8 @@ void ta_game_loop()
                 skinned = mat4_mul(&armature_inv, &skinned);
                 mesh->skin.bone_xforms[bone_idx] = skinned;
 
+                // TODO: Update mesh->skin.bone_normal_xforms[bone_idx]... but how?
+
                 bone_idx++;
             }
 

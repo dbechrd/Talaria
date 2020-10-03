@@ -71,7 +71,7 @@ const char *SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_INDEX;
 const char *SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_LAYER;
 const char *SYM_U_MATERIAL_SLOT;
 const char *SYM_U_MODEL;
-const char *SYM_U_MORPH_WEIGHTS[1];
+const char *SYM_U_MORPH_WEIGHTS[TA_MODEL_MAX_MORPHS];
 const char *SYM_U_PROJ;
 const char *SYM_U_SELECTED;
 const char *SYM_U_TEX;
@@ -182,10 +182,10 @@ void ta_symbol_init() {
     SYM_U_TEXTURE_ARRAY_LAYER  = INTERN("u_texture_array_layer");
     SYM_U_TEXTURE_ARRAY_LAYERS = INTERN("u_texture_array_layers");
 
-    SYMBOL_GEN_ARRAY(SYM_U_TEXTURES, "u_textures[%d]");
+    SYMBOL_GEN_ARRAY(SYM_U_TEXTURES,      "u_textures[%d]");
+    SYMBOL_GEN_ARRAY(SYM_U_MORPH_WEIGHTS, "u_morph_weights[%d]");
 
     SYM_U_MODEL            = INTERN("u_model");
-    SYM_U_MORPH_WEIGHTS[0] = INTERN("u_morph_weights[0]");
     SYM_U_PROJ             = INTERN("u_proj");
     SYM_U_SELECTED         = INTERN("u_selected");
     SYM_U_TEX              = INTERN("u_tex");

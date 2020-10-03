@@ -22,7 +22,8 @@ typedef enum ta_glsl_type {
 
 typedef enum ta_glsl_ubo_type {
     TA_GLSL_UBO_LIGHTS = 0,
-    TA_GLSL_UBO_BONE_XFORMS = 1
+    TA_GLSL_UBO_BONE_XFORMS = 1,
+    TA_GLSL_UBO_BONE_NORMAL_XFORMS = 2
 } ta_glsl_ubo_type;
 
 typedef struct ta_shader_attribute {
@@ -74,30 +75,33 @@ extern ta_shader *tg_shader_cubemap;
 struct ta_light;
 struct ta_material;
 
-const char *ta_glsl_type_str    (int type);     // NOTE: Has to be int because it's used by ta_schema with other types
-void ta_shader_init             (ta_shader *shader);
-void ta_shader_init_void        (void *shader);
-void ta_shader_load             (ta_shader *shader);
-void ta_shader_delete           (ta_shader *shader);
-void ta_shader_free             (ta_shader *shader);
-void ta_shader_free_void        (void *shader);
-void ta_shader_set_bool         (ta_shader *shader, const char *name, GLboolean value);
-void ta_shader_set_int          (ta_shader *shader, const char *name, GLint value);
-void ta_shader_set_uint         (ta_shader *shader, const char *name, GLuint value);
-void ta_shader_set_uint_array   (ta_shader *shader, const char *name, GLuint *values);
-void ta_shader_set_float        (ta_shader *shader, const char *name, GLfloat value);
-void ta_shader_set_sampler_2d   (ta_shader *shader, const char *name, GLuint tex_id);
-void ta_shader_set_sampler_2d_array(ta_shader *shader, const char *name, GLuint tex_id);
-void ta_shader_set_sampler_cube (ta_shader *shader, const char *name, GLuint tex_id);
-void ta_shader_set_vec2         (ta_shader *shader, const char *name, const ta_vec2 *v);
-void ta_shader_set_vec3         (ta_shader *shader, const char *name, const ta_vec3 *v);
-void ta_shader_set_vec4         (ta_shader *shader, const char *name, const ta_vec4 *v);
-void ta_shader_set_mat3         (ta_shader *shader, const char *name, const ta_mat3 *m);
-void ta_shader_set_mat4         (ta_shader *shader, const char *name, const ta_mat4 *m);
-void ta_shader_set_light        (ta_shader *shader, const char *name, int index, struct ta_light *light);
-void ta_shader_set_material     (ta_shader *shader, const char *name, struct ta_material *material);
-void ta_shader_reset_pvm        (ta_shader *shader);
-void ta_shader_state_save       (ta_shader *shader, ta_shader_uniform *store);
-void ta_shader_state_load       (ta_shader_uniform *uniforms);
-void ta_shader_bind             (ta_shader *shader);
-void ta_shader_unbind           ();
+const char *ta_glsl_type_str                (int type);     // NOTE: Has to be int because it's used by ta_schema with other types
+void ta_shader_init                         (ta_shader *shader);
+void ta_shader_init_void                    (void *shader);
+void ta_shader_load                         (ta_shader *shader);
+void ta_shader_delete                       (ta_shader *shader);
+void ta_shader_free                         (ta_shader *shader);
+void ta_shader_free_void                    (void *shader);
+ta_shader_attribute *find_attribute_by_name (ta_shader *shader, const char *name, ta_glsl_type type);
+ta_shader_uniform *find_uniform_by_name_try (ta_shader_uniform *uniforms, const char *name);
+ta_shader_uniform *find_uniform_by_name     (ta_shader_uniform *uniforms, const char *name, ta_glsl_type type);
+void ta_shader_set_bool                     (ta_shader *shader, const char *name, GLboolean value);
+void ta_shader_set_int                      (ta_shader *shader, const char *name, GLint value);
+void ta_shader_set_uint                     (ta_shader *shader, const char *name, GLuint value);
+void ta_shader_set_uint_array               (ta_shader *shader, const char *name, GLuint *values);
+void ta_shader_set_float                    (ta_shader *shader, const char *name, GLfloat value);
+void ta_shader_set_sampler_2d               (ta_shader *shader, const char *name, GLuint tex_id);
+void ta_shader_set_sampler_2d_array         (ta_shader *shader, const char *name, GLuint tex_id);
+void ta_shader_set_sampler_cube             (ta_shader *shader, const char *name, GLuint tex_id);
+void ta_shader_set_vec2                     (ta_shader *shader, const char *name, const ta_vec2 *v);
+void ta_shader_set_vec3                     (ta_shader *shader, const char *name, const ta_vec3 *v);
+void ta_shader_set_vec4                     (ta_shader *shader, const char *name, const ta_vec4 *v);
+void ta_shader_set_mat3                     (ta_shader *shader, const char *name, const ta_mat3 *m);
+void ta_shader_set_mat4                     (ta_shader *shader, const char *name, const ta_mat4 *m);
+void ta_shader_set_light                    (ta_shader *shader, const char *name, int index, struct ta_light *light);
+void ta_shader_set_material                 (ta_shader *shader, const char *name, struct ta_material *material);
+void ta_shader_reset_pvm                    (ta_shader *shader);
+void ta_shader_state_save                   (ta_shader *shader, ta_shader_uniform *store);
+void ta_shader_state_load                   (ta_shader_uniform *uniforms);
+void ta_shader_bind                         (ta_shader *shader);
+void ta_shader_unbind                       ();

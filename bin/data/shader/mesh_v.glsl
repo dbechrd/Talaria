@@ -11,7 +11,7 @@ layout(location = 4) in vec3 attr_tangent;
 layout(location = 5) in vec3 attr_morph1_position;
 layout(location = 6) in vec3 attr_morph1_normal;
 layout(location = 7) in vec3 attr_morph1_tangent;
-layout(location = 8) in vec4 attr_bone_indices;  // TODO: attr_bones (up to 4 bone indices that influence this vertex
+layout(location = 8) in vec4 attr_bone_indices;  // up to 4 bone indices that influence this vertex; packed
 layout(location = 9) in vec4 attr_bone_weights;  // TODO: respective weights for each of the influencing bones
 
 //------------------------------------------------------
@@ -19,17 +19,19 @@ layout(location = 9) in vec4 attr_bone_weights;  // TODO: respective weights for
 //------------------------------------------------------
 // TODO: Uniform block(s) grouped by update frequency
 // https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL
-//--------
 uniform mat4 u_proj;
 uniform mat4 u_view;
 uniform vec3 u_camera_pos;
-//--------
+
 uniform mat4 u_model;
-uniform float u_morph_weights[2];
 
 //------------------------------------------------------
 // Animations
 //------------------------------------------------------
+#define TA_MODEL_MAX_MORPHS 1
+
+uniform float u_morph_weights[TA_MODEL_MAX_MORPHS];
+
 #define TA_SKIN_MAX_BONES 64
 
 // NOTE: Max array size is determined by GL_MAX_VERTEX_UNIFORM_COMPONENTS / 4
@@ -126,41 +128,46 @@ void main()
 #if 0
     // http://antongerdelan.net/opengl/blend_shapes.html
     // if other weights add up to less than 1, use neutral target
-    float neutral_w = 1.0 - u_morph_weights[1];  // - u_morph_weights[2]
+    float neutral_w = 1.0 - u_morph_weights[0];  // - u_morph_weights[1]
     clamp(neutral_w, 0.0, 1.0);
 
     // get a sum of weights and work out factors for each target
-    float sum_w = neutral_w + u_morph_weights[1];
+    float sum_w = neutral_w + u_morph_weights[0];
     float neutral_f = neutral_w / sum_w;
-    float morph1_f = u_morph_weights[1] / sum_w;
+    float morph1_f = u_morph_weights[0] / sum_w;
 
     // interpolate targets to give us current pose
-    vec3 morphed_pos =
+    vec3 morphed_position =
         neutral_f * attr_position +
         morph1_f * attr_morph1_position;
+
+    vec3 morphed_normal =
+        neutral_f * attr_normal +
+        morph1_f * attr_morph1_normal;
 #else
     // add weighted morph targets to give us current pose
-    vec3 morphed_pos = attr_position + u_morph_weights[1] * attr_morph1_position;
+    vec3 morphed_position = attr_position;// + u_morph_weights[0] * attr_morph1_position;
+    vec3 morphed_normal = attr_normal;// + u_morph_weights[0] * attr_morph1_normal;
 #endif
 
     //----------------------------------
     // Skinning
     // TODO: Should this happen before or after morph target blending? Should we even mix those?
     //----------------------------------
-    mat4 armature_inv = inverse(u_model);
-    vec4 vertex_skinned = (attr_bone_weights.x * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.x)]) +
-                          (attr_bone_weights.y * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.y)]) +
-                          (attr_bone_weights.z * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.z)]) +
-                          (attr_bone_weights.w * vec4(morphed_pos, 1.0) * bone_xforms[int(attr_bone_indices.w)]) +
-                          (float(attr_bone_weights.x == 0.0) * vec4(morphed_pos, 1.0));
+    vec4 position_skinned = (attr_bone_weights.x * vec4(morphed_position, 1.0) * bone_xforms[int(attr_bone_indices.x)]) +
+                            (attr_bone_weights.y * vec4(morphed_position, 1.0) * bone_xforms[int(attr_bone_indices.y)]) +
+                            (attr_bone_weights.z * vec4(morphed_position, 1.0) * bone_xforms[int(attr_bone_indices.z)]) +
+                            (attr_bone_weights.w * vec4(morphed_position, 1.0) * bone_xforms[int(attr_bone_indices.w)]) +
+                            (float(attr_bone_weights.x == 0.0) * vec4(morphed_position, 1.0));
 
-    //vec4 normal_skinned = (attr_weights[0] * vec4(attr_normal, 0.0) * bone_normal_xforms[int(attr_bones.x)]) +
-    //                      (attr_weights[1] * vec4(attr_normal, 0.0) * bone_normal_xforms[int(attr_bones.y)]) +
-    //                      (attr_weights[2] * vec4(attr_normal, 0.0) * bone_normal_xforms[int(attr_bones.z)]) +
-    //                      (attr_weights[3] * vec4(attr_normal, 0.0) * bone_normal_xforms[int(attr_bones.w)]);
+    vec4 normal_skinned = (attr_bone_weights[0] * vec4(morphed_normal, 0.0) * bone_normal_xforms[int(attr_bone_indices.x)]) +
+                          (attr_bone_weights[1] * vec4(morphed_normal, 0.0) * bone_normal_xforms[int(attr_bone_indices.y)]) +
+                          (attr_bone_weights[2] * vec4(morphed_normal, 0.0) * bone_normal_xforms[int(attr_bone_indices.z)]) +
+                          (attr_bone_weights[3] * vec4(morphed_normal, 0.0) * bone_normal_xforms[int(attr_bone_indices.w)]) +
+                          (float(attr_bone_weights.x == 0.0) * vec4(morphed_normal, 1.0));
 
-    vec4 position = u_model * vec4(vertex_skinned);
-    vec4 normal = u_model * vec4(attr_normal, 0.0);
+    vec4 position = u_model * vec4(position_skinned);
+    vec4 normal = u_model * vec4(normal_skinned);
 
     vertex.position = vec3(position);
 	vertex.color = attr_color;

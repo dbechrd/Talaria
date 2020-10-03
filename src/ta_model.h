@@ -2,6 +2,9 @@
 #include "ta_schema.h"
 #include "ta_math.h"
 
+// NOTE: Needs to match the GLSL #define
+#define TA_MODEL_MAX_MORPHS 1
+
 // TODO: This could be named ta_geometry_instance, this comes from geometry_node in OGX file
 typedef struct ta_model {
     TA_COMPONENT_HEADER

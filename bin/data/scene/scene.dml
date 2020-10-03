@@ -2528,10 +2528,6 @@ ta_shader:
   ]
   uniforms: [
     {
-      name: "u_morph_weights[0]",
-      type: 2,  # TA_GLSL_FLOAT
-    },
-    {
       name: "u_proj",
       type: 8,  # TA_GLSL_MAT4
     },
@@ -2540,12 +2536,16 @@ ta_shader:
       type: 8,  # TA_GLSL_MAT4
     },
     {
+      name: "u_camera_pos",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
       name: "u_model",
       type: 8,  # TA_GLSL_MAT4
     },
     {
-      name: "u_camera_pos",
-      type: 5,  # TA_GLSL_VEC3
+      name: "u_morph_weights[0]",
+      type: 2,  # TA_GLSL_FLOAT
     },
     {
       name: "u_lights_count",
@@ -3073,19 +3073,27 @@ ta_shader:
       name: "attr_position",
       type: 5,  # TA_GLSL_VEC3
     },
+    {
+      name: "attr_morph1_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_bone_indices",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_bone_weights",
+      type: 6,  # TA_GLSL_VEC4
+    },
   ]
   uniforms: [
     {
-      name: "u_morph_weights[0]",
-      type: 2,  # TA_GLSL_FLOAT
-    },
-    {
-      name: "u_model",
-      type: 8,  # TA_GLSL_MAT4
-    },
-    {
       name: "u_light_pvm",
       type: 8,  # TA_GLSL_MAT4
+    },
+    {
+      name: "u_morph_weights[0]",
+      type: 2,  # TA_GLSL_FLOAT
     },
   ]
 ta_shader:
@@ -3097,19 +3105,31 @@ ta_shader:
       name: "attr_position",
       type: 5,  # TA_GLSL_VEC3
     },
+    {
+      name: "attr_morph1_position",
+      type: 5,  # TA_GLSL_VEC3
+    },
+    {
+      name: "attr_bone_indices",
+      type: 6,  # TA_GLSL_VEC4
+    },
+    {
+      name: "attr_bone_weights",
+      type: 6,  # TA_GLSL_VEC4
+    },
   ]
   uniforms: [
     {
-      name: "u_morph_weights[0]",
-      type: 2,  # TA_GLSL_FLOAT
+      name: "u_light_pvm",
+      type: 8,  # TA_GLSL_MAT4
     },
     {
       name: "u_model",
       type: 8,  # TA_GLSL_MAT4
     },
     {
-      name: "u_light_pvm",
-      type: 8,  # TA_GLSL_MAT4
+      name: "u_morph_weights[0]",
+      type: 2,  # TA_GLSL_FLOAT
     },
     {
       name: "u_light_pos",
