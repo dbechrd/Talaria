@@ -193,8 +193,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         if (!mesh) {
             mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
         }
-        ta_mesh_push_normals(mesh);
-        ta_primitive_render(true, false);
+        ta_mesh_render_debug_lines(mesh);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
     }
 }

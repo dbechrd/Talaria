@@ -202,6 +202,11 @@ void ta_game_init()
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
     //--------------------------------------------------------------------------
+    // Random David shit
+    //--------------------------------------------------------------------------
+    tg_e_can = INTERN("can");
+
+    //--------------------------------------------------------------------------
     // Texturing
     //--------------------------------------------------------------------------
     ta_texturing_init(&tg_game.texturing);
@@ -293,7 +298,7 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // Simulation
     //--------------------------------------------------------------------------
-    tg_game.simulate = -1;
+    tg_game.simulate = 0; //-1;
 
     //--------------------------------------------------------------------------
     // Player
@@ -446,11 +451,6 @@ void ta_game_init()
     ta_texture_init(tex_default_normal);
     ta_texture_init(tex_default_occlusion);
     ta_texture_init(tex_default_roughness);
-
-    //--------------------------------------------------------------------------
-    // Random David shit
-    //--------------------------------------------------------------------------
-    tg_e_can = INTERN("can");
 
     //--------------------------------------------------------------------------
     // Shaders
@@ -1525,7 +1525,9 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         if (active_camera->debug_colliders) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug colliders pass...\n");
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             game_render_colliders_debug();
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
         if (active_camera->debug_nametags) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug nametags pass...\n");
@@ -2062,12 +2064,6 @@ void game_command_debug_mouse_unlock()
 void game_command_debug_mouse_lock_toggle()
 {
     ta_mouse_capture_toggle();
-
-    // TODO(cleanup): You're stoopid.
-    // HACK: Too lazy to make a proper keybind for this
-    for (int i = 0; i < TA_VERTEX_ATTR_COUNT; ++i) {
-        dlb_vec_clear(primitive_lines_perma.buffers[i]);
-    }
 }
 void game_command_debug_toggle_wireframe()
 {

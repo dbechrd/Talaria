@@ -1307,8 +1307,8 @@ void ta_gltf_load(ta_gltf *gltf)
 
             ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_create\n");
             ta_mesh_create(mesh);
-            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_init_normals\n");
-            ta_mesh_init_normals(mesh, 0.1f);
+            ta_log_write(&tg_debug_log, SRC_GLTF, "ta_mesh_update_debug_lines\n");
+            ta_mesh_update_debug_lines(mesh, 0.1f);
 
             prim_idx++;
         }

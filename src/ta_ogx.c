@@ -82,7 +82,7 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
     ta_mesh_create(mesh);
     ta_mesh_calculate_joints_and_weights(mesh);
     ta_mesh_update_buffers(mesh);
-    ta_mesh_init_normals(mesh, 0.1f);
+    ta_mesh_update_debug_lines(mesh, 0.1f);
 
     // TODO: Calculate mesh AABB (or better, precalculate it and store it in the file)
 

@@ -97,9 +97,7 @@ ta_mat3 ta_collider_inv_tensor(ta_collider *collider, float mass)
             inv_tensor = sphere_inverse_tensor(&collider->data.sphere, mass);
             break;
         } case TA_COLLIDER_OBB: {
-            // HACK: Use sphere tensor temporarily
-            inv_tensor = sphere_inverse_tensor(&collider->data.sphere, mass);
-            //inv_tensor = obb_inverse_tensor(&collider->data.obb, mass);
+            inv_tensor = obb_inverse_tensor(&collider->data.obb, mass);
             break;
         } default: {
             //DLB_ASSERT(!"You can't do that for this shape");
@@ -209,7 +207,7 @@ void ta_collider_push(ta_collider *collider, ta_rgba color)
         case TA_COLLIDER_PLANE: {
             // TODO: When would we ever actually need an infinite plane collider?
             // These should probably be OBBs or quads (mesh colliders) instead.
-            ta_primitive_push_plane(0, collider->data.plane, 30.0f, color);
+            ta_primitive_push_plane(0, collider->data.plane, 5.0f, color);
             break;
         } case TA_COLLIDER_SPHERE: {
             ta_primitive_push_sphere(0, collider->data.sphere, color);

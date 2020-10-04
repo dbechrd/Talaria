@@ -15,8 +15,8 @@
 // HACK: These are closely related, and must be tuned to ensure velocity and
 //       orientation stop changing at the same time. Not sure if there's a way
 //       to calculate these analytically.
-#define DV_EPSILON 0.001f     // minimum velocity required to affect position
-#define DTHETA_EPSILON 0.04f  // minimum magnitude required to affect orientation
+#define DV_EPSILON      0.001f  // minimum velocity required to affect position
+#define DTHETA_EPSILON  0.04f   // minimum magnitude required to affect orientation
 
 void ta_rigid_body_init(ta_rigid_body *body)
 {
@@ -91,7 +91,7 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
 
     // TODO: Calculate this based on torque_accum and dt
     //body.m_angularVelocity +=  body.m_globalInverseInertiaTensor * (body.m_torqueAccumulator * dt);
-    float dtheta_mag = vec3_len(body->ang_velocity);
+    float dtheta_mag = vec3_len(body->ang_velocity) * dt;
     if (dtheta_mag > DTHETA_EPSILON) {
         ta_vec4 delta_orient = quat_from_axis_angle(
             vec3_normalize(body->ang_velocity),
@@ -326,6 +326,10 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
     ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
+    if (a->name == tg_e_can || b->name == tg_e_can) {
+        DLB_ASSERT(1);
+    }
+
     // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should consider
     // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
     DLB_ASSERT(!atrans->parent);
@@ -337,23 +341,43 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     }
 
     // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
-    if (a->inv_mass == 0.0f && b->inv_mass == 0.0f)
-    {
-        ta_log_write(&tg_debug_log, SRC_RIGID_BODY,
-            "WARNING: Detected movement of infinite mass body\n");
+    if (a->inv_mass == 0.0f && b->inv_mass == 0.0f) {
+        ta_log_write(&tg_debug_log, SRC_RIGID_BODY, "WARNING: Detected movement of infinite mass body\n");
         a->velocity = VEC3_ZERO;
         b->velocity = VEC3_ZERO;
         return;
     }
 
-    for (u32 i = 0; i < manifold->contact_count; i++) {
-        // Radii
-        ta_vec3 ra = vec3_sub(manifold->contacts[i], a->centroid_global);
-        ta_vec3 rb = vec3_sub(manifold->contacts[i], b->centroid_global);
+    // TODO: Use mesh instancing for primitives (need scale :/)
+    // TODO: Use circular buffer for perma lines instead of dumping everything at arbitrary threshold
+    if (dlb_vec_len(primitive_lines_perma.buffers[0]) > 100000) {
+        ta_mesh_clear_buffers(&primitive_lines_perma);
+    }
 
-        if (a->collider.type == TA_COLLIDER_SPHERE && b->collider.type == TA_COLLIDER_SPHERE) {
-            DLB_ASSERT(1);
+    for (u32 i = 0; i < manifold->contact_count; i++) {
+        ta_vec3 a_center_world = a->centroid_global;
+        ta_vec3 b_center_world = b->centroid_global;
+
+        // Radii (world space)
+        ta_vec3 ra = vec3_sub(manifold->contacts[i], a_center_world);
+        ta_vec3 rb = vec3_sub(manifold->contacts[i], b_center_world);
+
+        // HACK: Planes don't have a valid centroid for the purposes of collision resolution
+        if (a->collider.type == TA_COLLIDER_PLANE) {
+            ra = vec3_neg(rb);
+            a_center_world = vec3_sub(manifold->contacts[i], ra);
+            // Can't handle plane vs. plane rigid body interactions, makes no sense
+            DLB_ASSERT(b->collider.type != TA_COLLIDER_PLANE);
+        } else if (b->collider.type == TA_COLLIDER_PLANE) {
+            rb = vec3_neg(ra);
+            b_center_world = vec3_sub(manifold->contacts[i], rb);
         }
+
+#if 1
+        // Debug rendering (resolution impulse)
+        ta_primitive_push_arrow(&primitive_lines_perma, a_center_world, ra, TA_COLOR_PINK);
+        ta_primitive_push_arrow(&primitive_lines_perma, b_center_world, rb, TA_COLOR_CYAN);
+#endif
 
         // Relative velocity
         ta_vec3 rv_a = vec3_sub(a->velocity, vec3_cross(a->ang_velocity, ra));
@@ -362,35 +386,31 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
 
         // Separating velocity along normal
         float v_separate = vec3_dot(rv, manifold->normal);
-        if (v_separate >= 0) {
-            // If bodies moving apart, let it happen
-            continue;
-        }
+        float v_separate_new = -v_separate;
 
-        float restitution = manifold->e;
-#if 1
-        // "Box2D also uses inelastic collisions when the collision velocity is
-        // small. This is done to prevent jitter." -Box2D manual
-        //if (fabs(rv_normal) < 0.01f) {
-        //    restitution = 0.0f;
-        //}
-#endif
-        float v_separate_new = -v_separate * restitution;
-
-#if 1
         // Calculate separating velocity coming from acceleration this frame
         ta_vec3 v_acc = vec3_sub(b->acceleration, a->acceleration);
         float v_acc_separate = vec3_dot(v_acc, manifold->normal) * dt;
 
         if (v_acc_separate < 0) {
-            v_separate_new += v_acc_separate * restitution;
+            v_separate_new += v_acc_separate;
             v_separate_new = MAX(0, v_separate_new);
         }
 
         float delta_v = v_separate_new - v_separate;
-#else
-        float delta_v = v_separate_new;
-#endif
+        float restitution = manifold->e;
+
+        // "Box2D also uses inelastic collisions when the collision velocity is
+        // small. This is done to prevent jitter." -Box2D manual
+        if (fabs(v_separate) < 0.01f) {
+            restitution = 0.0f;
+        }
+
+        delta_v *= restitution;
+        if (delta_v <= 0) {
+            // If bodies moving apart, let it happen
+            continue;
+        }
 
 #if 1
         // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-oriented-rigid-bodies--gamedev-8032
@@ -473,7 +493,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         }
     }
 
-    // Positional correction
+    // Positional correction (original PBD)
     const float slop = TA_EPSILON;
     const float percent = 1.0f;
     float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) * percent;

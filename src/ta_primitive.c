@@ -116,8 +116,7 @@ void ta_primitive_push_line_2d(ta_mesh *mesh, ta_line_2d line2d, ta_rgba color0,
     dlb_vec_push(mesh->colors, color1);
 }
 // TODO: Take p0 and p1
-void ta_primitive_push_line_3d(ta_mesh *mesh, ta_line_3d line3d,
-    ta_rgba color0, ta_rgba color1)
+void ta_primitive_push_line_3d(ta_mesh *mesh, ta_line_3d line3d, ta_rgba color0, ta_rgba color1)
 {
     if (!mesh) mesh = &primitive_lines;
     dlb_vec_push(mesh->positions, line3d.p0);

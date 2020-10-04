@@ -166,7 +166,7 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
         group_max.z = MAX(group_max.z, mesh_max.z);
         group_radius = MAX(group_radius, mesh_radius);
 
-        ta_mesh_init_normals(mesh, 0.1f);
+        ta_mesh_update_debug_lines(mesh, 0.1f);
     }
 
     tinyobj_attrib_free(&attrib);
@@ -178,15 +178,37 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
 void ta_mesh_create(ta_mesh *mesh)
 {
     glGenVertexArrays(1, &mesh->gl_vao);
-
-    // Create/fill vertex attribute buffer
     glGenBuffers(1, &mesh->gl_vertex_buffer);
-
-    // Create/fill index buffer
     if (mesh->index_arrays) {
         glGenBuffers(1, &mesh->gl_index_buffer);
     }
+
+    // Debug lines VAO/buffer
+    glGenVertexArrays(1, &mesh->debug_lines.gl_vao);
+    glGenBuffers(1, &mesh->debug_lines.gl_vertex_buffer);
 }
+
+#if 0
+ta_aabb ta_mesh_aabb(ta_mesh *mesh)
+{
+    ta_vec3 min = VEC3_MAX;
+    ta_vec3 max = VEC3_MIN;
+
+    dlb_vec_each(ta_vec3 *, pos, mesh->positions) {
+        min.x = MIN(min.x, pos->x);
+        min.y = MIN(min.y, pos->y);
+        min.z = MIN(min.z, pos->z);
+        max.x = MAX(max.x, pos->x);
+        max.y = MAX(max.y, pos->y);
+        max.z = MAX(max.z, pos->z);
+    }
+
+    ta_aabb aabb = { 0 };
+    aabb.extents = vec3_scalef(vec3_sub(max, min), 0.5f);
+    aabb.center = vec3_add(min, aabb.extents);
+    return aabb;
+}
+#endif
 
 void ta_mesh_calculate_joints_and_weights(ta_mesh *mesh)
 {
@@ -323,13 +345,26 @@ void ta_mesh_update_buffers(ta_mesh *mesh)
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 }
-
-// NOTE: Leave this separate from mesh_group load because it's only useful in
-// debug mode
-void ta_mesh_init_normals(ta_mesh *mesh, float scale)
+void ta_mesh_clear_buffers(ta_mesh *mesh)
 {
-    // TODO: Iterate all mesh->vertex_arrays and calculate normals for all of them? Is this that useful.. idk.. too lazy
-    DLB_ASSERT(!mesh->vertex_normals);
+    for (int i = 0; i < TA_VERTEX_ATTR_COUNT; ++i) {
+        dlb_vec_clear(mesh->buffers[i]);
+    }
+}
+
+// NOTE: Leave this separate from mesh_group load because it's only useful in debug mode
+void ta_mesh_update_debug_lines(ta_mesh *mesh, float scale)
+{
+    dlb_vec_clear(mesh->debug_lines.positions);
+    dlb_vec_clear(mesh->debug_lines.colors);
+
+    //=========================================================================
+    // Generate debug lines on CPU
+    //=========================================================================
+    // NOTE: These roughly match Blender 2.8 colors
+    ta_vec4 face_normal_color = vec4_init(0.13f, 0.87f, 0.87f, 1.0f);
+    ta_vec4 face_tangent_color = vec4_init(0.98f, 0.87f, 0.13f, 1.0f);
+    ta_vec4 vertex_normal_color = vec4_init(0.13f, 0.38f, 0.98f, 1.0f);
 
     size_t normals_count = dlb_vec_len(mesh->normals);
     DLB_ASSERT(normals_count > 0);  // Did you forget to export normals?
@@ -338,21 +373,15 @@ void ta_mesh_init_normals(ta_mesh *mesh, float scale)
     DLB_ASSERT(tangents_count > 0);  // Did you forget to export tangents (or triangulate faces before gltf export)?
     DLB_ASSERT(tangents_count == dlb_vec_len(mesh->positions));
 
-    dlb_vec_reserve(mesh->vertex_normals, normals_count);
-
     size_t face_count = normals_count / 3;
-    dlb_vec_reserve(mesh->face_normals, face_count);
-    dlb_vec_reserve(mesh->tangent_lines, face_count);
 
-    ta_line_3d *line;
+    size_t debug_lines_count = normals_count + face_count * 2;
+    dlb_vec_reserve(mesh->debug_lines.positions, debug_lines_count);
+    dlb_vec_reserve(mesh->debug_lines.colors, debug_lines_count);
+
+    ta_line_3d line;
     size_t i = 0;
     for (; i < face_count; i++) {
-        line = dlb_vec_alloc(mesh->vertex_normals);
-        ta_vec3 vertex_normal = vec3_scalef(mesh->normals[i], scale);
-        line->p0 = mesh->positions[i];
-        line->p1 = vec3_add(mesh->positions[i], vertex_normal);
-
-        line = dlb_vec_alloc(mesh->face_normals);
         ta_vec3 v0 = mesh->positions[i * 3];
         ta_vec3 v1 = mesh->positions[i * 3 + 1];
         ta_vec3 v2 = mesh->positions[i * 3 + 2];
@@ -360,77 +389,91 @@ void ta_mesh_init_normals(ta_mesh *mesh, float scale)
         ta_vec3 edge1 = vec3_sub(v2, v1);
         ta_vec3 face_normal = vec3_scalef(vec3_normalize(vec3_cross(edge0, edge1)), scale);
         ta_vec3 face_center = vec3_scalef(vec3_add(vec3_add(v0, v1), v2), 1.0f / 3.0f);
-        line->p0 = face_center;
-        line->p1 = vec3_add(face_center, face_normal);
+        line.p0 = face_center;
+        line.p1 = vec3_add(face_center, face_normal);
+        dlb_vec_push(mesh->debug_lines.positions, line.p0);
+        dlb_vec_push(mesh->debug_lines.positions, line.p1);
+        dlb_vec_push(mesh->debug_lines.colors, *(ta_rgba *)&face_normal_color);
+        dlb_vec_push(mesh->debug_lines.colors, *(ta_rgba *)&face_normal_color);
 
-        line = dlb_vec_alloc(mesh->tangent_lines);
+#if 0
         ta_vec3 tangent = mesh->tangents[i * 3];
         tangent = vec3_scalef(tangent, scale);
-        line->p0 = face_center;
-        line->p1 = vec3_add(face_center, tangent);
+        line.p0 = face_center;
+        line.p1 = vec3_add(face_center, tangent);
+        dlb_vec_push(mesh->debug_lines.positions, line.p0);
+        dlb_vec_push(mesh->debug_lines.positions, line.p1);
+        dlb_vec_push(mesh->debug_lines.colors, *(ta_rgba *)&face_tangent_color);
+        dlb_vec_push(mesh->debug_lines.colors, *(ta_rgba *)&face_tangent_color);
+#endif
     }
     for (; i < normals_count; i++) {
-        line = dlb_vec_alloc(mesh->vertex_normals);
         ta_vec3 vertex_normal = vec3_scalef(mesh->normals[i], scale);
-        line->p0 = mesh->positions[i];
-        line->p1 = vec3_add(mesh->positions[i], vertex_normal);
-    }
-}
-
-#if 0
-ta_aabb ta_mesh_aabb(ta_mesh *mesh)
-{
-    ta_vec3 min = VEC3_MAX;
-    ta_vec3 max = VEC3_MIN;
-
-    dlb_vec_each(ta_vec3 *, pos, mesh->positions) {
-        min.x = MIN(min.x, pos->x);
-        min.y = MIN(min.y, pos->y);
-        min.z = MIN(min.z, pos->z);
-        max.x = MAX(max.x, pos->x);
-        max.y = MAX(max.y, pos->y);
-        max.z = MAX(max.z, pos->z);
-    }
-
-    ta_aabb aabb = { 0 };
-    aabb.extents = vec3_scalef(vec3_sub(max, min), 0.5f);
-    aabb.center = vec3_add(min, aabb.extents);
-    return aabb;
-}
-#endif
-
-void ta_mesh_push_normals(ta_mesh *mesh)
-{
-    DLB_ASSERT(mesh->vertex_normals);
-    DLB_ASSERT(mesh->face_normals);
-    DLB_ASSERT(mesh->tangent_lines);
-
-    dlb_vec_each(ta_line_3d *, line, mesh->vertex_normals) {
-        ta_primitive_push_line_3d(0, *line, TA_COLOR_MAGENTA, TA_COLOR_MAGENTA);
-    }
-    dlb_vec_each(ta_line_3d *, line, mesh->face_normals) {
-        ta_primitive_push_line_3d(0, *line, TA_COLOR_CYAN, TA_COLOR_CYAN);
-    }
-    dlb_vec_each(ta_line_3d *, line, mesh->tangent_lines) {
-        ta_primitive_push_line_3d(0, *line, TA_COLOR_RED, TA_COLOR_GREEN);
-    }
-}
-
-#if 0
-void ta_mesh_log_normals_dbg(ta_mesh *mesh)
-{
-    ta_log_write(&tg_debug_log, "Normals:\n");
-    DLB_ASSERT(mesh->normals_count == mesh->positions_count);
-    for (u32 i = 0; i < mesh->normals_count; i++) {
-        ta_line_3d line = { 0 };
         line.p0 = mesh->positions[i];
-        line.p1 = vec3_add(mesh->positions[i], mesh->normals[i]);
-        ta_log_write(&tg_debug_log, "[%d] { %f, %f, %f } -> { %f, %f, %f }\n", i,
-            line.p0.x, line.p0.y, line.p0.z, line.p1.x, line.p1.y, line.p1.z);
+        line.p1 = vec3_add(mesh->positions[i], vertex_normal);
+        dlb_vec_push(mesh->debug_lines.positions, line.p0);
+        dlb_vec_push(mesh->debug_lines.positions, line.p1);
+        dlb_vec_push(mesh->debug_lines.colors, *(ta_rgba *)&vertex_normal_color);
+        dlb_vec_push(mesh->debug_lines.colors, *(ta_rgba *)&vertex_normal_color);
     }
-}
-#endif
+    mesh->debug_lines.vertex_count = dlb_vec_len(mesh->debug_lines.positions);
 
+    //=========================================================================
+    // Update GL buffers
+    //=========================================================================
+    DLB_ASSERT(mesh->debug_lines.gl_vao);
+    glBindVertexArray(mesh->debug_lines.gl_vao);
+
+    // Calculate size of all vertex attribute data
+    size_t vertex_size_total = 0;
+    vertex_size_total += dlb_vec_size(mesh->debug_lines.colors);
+    vertex_size_total += dlb_vec_size(mesh->debug_lines.positions);
+    DLB_ASSERT(vertex_size_total);
+
+    // Create/fill vertex attribute buffer
+    DLB_ASSERT(mesh->debug_lines.gl_vertex_buffer);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->debug_lines.gl_vertex_buffer);
+    glBufferData(GL_ARRAY_BUFFER, vertex_size_total, 0, GL_STATIC_DRAW);
+
+#define FILL_BUFFER(shader_attr, data, c_type, gl_type)                                       \
+    if (data) {                                                                               \
+        size_t vertex_size = dlb_vec_size(data);                                              \
+        glEnableVertexAttribArray(shader_attr);                                               \
+        glVertexAttribPointer(shader_attr, sizeof(*data) / sizeof(c_type), gl_type, false, 0, \
+            (void *)vertex_offset);                                                           \
+        glBufferSubData(GL_ARRAY_BUFFER, vertex_offset, vertex_size, data);                   \
+        vertex_offset += vertex_size;                                                         \
+    }
+
+    size_t vertex_offset = 0;
+    FILL_BUFFER(TA_VERTEX_ATTR_COLOR,    mesh->debug_lines.colors,    GLfloat, GL_FLOAT);
+    FILL_BUFFER(TA_VERTEX_ATTR_POSITION, mesh->debug_lines.positions, GLfloat, GL_FLOAT);
+
+#undef FILL_BUFFER
+
+    DLB_ASSERT(vertex_offset == vertex_size_total);
+
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    //=========================================================================
+    // Free CPU buffers
+    //=========================================================================
+    dlb_vec_free(mesh->debug_lines.positions);
+    dlb_vec_free(mesh->debug_lines.colors);
+}
+void ta_mesh_render_debug_lines(ta_mesh *mesh)
+{
+    DLB_ASSERT(mesh->debug_lines.gl_vao);
+    DLB_ASSERT(mesh->debug_lines.gl_vertex_buffer);
+    DLB_ASSERT(mesh->debug_lines.vertex_count);
+
+    ta_shader_bind(tg_shader_lines);
+    glBindVertexArray(mesh->debug_lines.gl_vao);
+    glDrawArrays(GL_LINES, 0, (GLsizei)mesh->debug_lines.vertex_count);
+    glBindVertexArray(0);
+    ta_shader_unbind();
+}
 void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
 {
     // TODO: If we want to use binding point 1 for other things in other shaders, then this mapping needs to be a
@@ -456,6 +499,7 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
     if (!mesh->gl_vao) {
         mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
     }
+
     glBindVertexArray(mesh->gl_vao);
     if (mesh->index_arrays) {
         dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
@@ -473,23 +517,27 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
         size_t positions_count = dlb_vec_len(mesh->positions);
         glDrawArrays(GL_TRIANGLES, 0, (GLsizei)positions_count);
     }
-    glBindVertexArray(0);
 
+    glBindVertexArray(0);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void ta_mesh_free(ta_mesh *mesh)
 {
-    //dlb_hash_delete(&mesh->group->meshes_by_name, SYM(mesh->name));
     for (int i = 0; i < TA_VERTEX_ATTR_COUNT; ++i) {
         dlb_vec_free(mesh->buffers[i]);
     }
     dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
         dlb_vec_free(index_array->values);
     }
+    dlb_vec_free(mesh->debug_lines.colors);
+    dlb_vec_free(mesh->debug_lines.positions);
+
     glDeleteVertexArrays(1, &mesh->gl_vao);
+    glDeleteVertexArrays(1, &mesh->debug_lines.gl_vao);
     glDeleteBuffers(1, &mesh->gl_vertex_buffer);
     glDeleteBuffers(1, &mesh->gl_index_buffer);
+    glDeleteBuffers(1, &mesh->debug_lines.gl_vertex_buffer);
 }
 void ta_mesh_free_void(void *mesh)
 {

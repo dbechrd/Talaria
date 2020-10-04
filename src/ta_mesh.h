@@ -80,30 +80,38 @@ typedef struct ta_mesh {
         void *buffers[TA_VERTEX_ATTR_COUNT];
     };
     ta_index_array *index_arrays;
-    ta_line_3d *vertex_normals;
-    ta_line_3d *face_normals;
-    ta_line_3d *tangent_lines;
+    //ta_line_3d *vertex_normals;
+    //ta_line_3d *face_normals;
+    //ta_line_3d *tangent_lines;
     ta_skin skin;
     ta_aabb aabb;
     GLuint gl_vao;
     //GLuint gl_buffers[TA_VERTEX_ATTRIB_COUNT];
     GLuint gl_vertex_buffer;
     GLuint gl_index_buffer;
+    struct {
+        ta_rgba *colors;
+        ta_vec3 *positions;
+        size_t vertex_count;
+        GLuint gl_vao;
+        GLuint gl_vertex_buffer;
+    } debug_lines;
 } ta_mesh;
 #pragma warning(pop)
 
 extern const char *tg_mesh_default;
 extern GLuint tg_mesh_gl_default_bone_xforms;
 
-const char *ta_vertex_attrib_type_str(int type);
+const char *ta_vertex_attrib_type_str       (int type);
 void ta_mesh_init                           (ta_mesh *mesh);
 void ta_mesh_init_void                      (void *mesh);
 void ta_mesh_load_file                      (ta_mesh *mesh, const char *filename);
 void ta_mesh_create                         (ta_mesh *mesh);
 void ta_mesh_calculate_joints_and_weights   (ta_mesh *mesh);
 void ta_mesh_update_buffers                 (ta_mesh *mesh);
-void ta_mesh_init_normals                   (ta_mesh *mesh, float scale);
-void ta_mesh_push_normals                   (ta_mesh *mesh);
+void ta_mesh_clear_buffers                  (ta_mesh *mesh);
+void ta_mesh_update_debug_lines             (ta_mesh *mesh, float scale);
+void ta_mesh_render_debug_lines             (ta_mesh *mesh);
 void ta_mesh_render                         (ta_mesh *mesh, struct ta_shader *shader);
 void ta_mesh_free                           (ta_mesh *mesh);
 void ta_mesh_free_void                      (void *mesh);

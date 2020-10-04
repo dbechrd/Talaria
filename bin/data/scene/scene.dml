@@ -215,17 +215,17 @@ ta_camera:
   position_target_vel: 0x3E19999A (0.150000)
   target_xform:
     position:
-      x: 0x400D577A (2.208464)
-      y: 0x40CF7E30 (6.484154)
-      z: 0x410F8512 (8.969988)
+      x: 0x3F9F9BCC (1.246942)
+      y: 0x3F42D37A (0.761039)
+      z: 0xC055CA3E (-3.340469)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  yaw: 0x42CD696C (102.705902)
+  yaw: 0x431634C9 (150.206192)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC1A71EDD (-20.890070)
+  pitch: 0xC147D718 (-12.490013)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B3FAE1 (-89.989998)
   pitch_max: 0x42B3FAE1 (89.989998)
@@ -236,9 +236,9 @@ ta_camera:
     y: 0x00800000 (0.000000)
     z: 0x00800000 (0.000000)
   up:
-    x: 0xBDA09EC2 (-0.078428)
-    y: 0x3F6F2C14 (0.934266)
-    z: 0xBEB218A4 (-0.347844)
+    x: 0xBE402FE9 (-0.187683)
+    y: 0x3F79F101 (0.976334)
+    z: 0xBDDC13FC (-0.107460)
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -473,7 +473,7 @@ ta_model:
   entity: "button.node.button"
   mesh: "button.mesh.button"
   materials: ["button.material.grid", "button.material.rainbow", ]
-  morph_target_weights: [0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), ]
+  morph_target_weights: [0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -630,21 +630,21 @@ ta_transform:
   entity: "freecam"
   xform:
     position:
-      x: 0x400D577E (2.208465)
-      y: 0x40CF7E34 (6.484156)
-      z: 0x410F8516 (8.969992)
+      x: 0x3F9F9BD0 (1.246943)
+      y: 0x3F42D37E (0.761040)
+      z: 0xC055CA3A (-3.340468)
     orientation:
-      x: 0xBE3AC03D (-0.182374)
-      y: 0x3DD73E32 (0.105099)
+      x: 0xBE007FB4 (-0.125487)
+      y: 0x3EFBB5EF (0.491622)
       z: 0x00000000 (0.000000)
-      w: 0x3F7A43BB (0.977596)
+      w: 0x3F5C99A5 (0.861719)
 ta_transform:
   name: "player_one"
   entity: "player_one"
   xform:
     position:
       x: 0x40878D0E (4.235969)
-      y: 0xB8D1AC00 (-0.000100)
+      y: 0xB8D1C280 (-0.000100)
       z: 0xC03DCA32 (-2.965466)
     orientation:
       x: 0x00000000 (0.000000)
@@ -657,7 +657,7 @@ ta_transform:
   xform:
     position:
       x: 0x406906E4 (3.641046)
-      y: 0x407FFE5D (3.999900)
+      y: 0x407FFE5C (3.999900)
       z: 0xC05565CC (-3.334338)
     orientation:
       x: 0xBDB9C087 (-0.090699)
@@ -709,7 +709,7 @@ ta_transform:
   xform:
     position:
       x: 0x41A900A0 (21.125305)
-      y: 0xB8D1AF00 (-0.000100)
+      y: 0xB8D19C80 (-0.000100)
       z: 0x403BB0C8 (2.932665)
     orientation:
       x: 0x00000000 (0.000000)
@@ -748,7 +748,7 @@ ta_transform:
   xform:
     position:
       x: 0x4181D402 (16.228519)
-      y: 0x3EFFF2E5 (0.499900)
+      y: 0x3EFFF2E6 (0.499900)
       z: 0xC1B35CF3 (-22.420385)
     orientation:
       x: 0x3E41D8C1 (0.189303)
@@ -768,7 +768,7 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  children: ["dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", "dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", ]
+  children: ["dude.bone.lumbar", "dude.bone.leg_pole_target.l", "dude.bone.leg_control.l", "dude.bone.leg_pole_target.r", "dude.bone.leg_control.r", "dude.node.dude", ]
 ta_transform:
   name: "dude.bone.lumbar"
   entity: "dude.bone.lumbar"
@@ -783,7 +783,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x00000000 (0.000000)
   parent: "dude.node.armature"
-  children: ["dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", "dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", ]
+  children: ["dude.bone.thoratic", "dude.bone.thigh.l", "dude.bone.thigh.r", ]
 ta_transform:
   name: "dude.bone.thoratic"
   entity: "dude.bone.thoratic"
@@ -798,7 +798,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F7FF378 (0.999809)
   parent: "dude.bone.lumbar"
-  children: ["dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", "dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", ]
+  children: ["dude.bone.cervical", "dude.bone.upper_arm.l", "dude.bone.upper_arm.r", ]
 ta_transform:
   name: "dude.bone.cervical"
   entity: "dude.bone.cervical"
@@ -813,7 +813,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F7FE675 (0.999610)
   parent: "dude.bone.thoratic"
-  children: ["dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", "dude.bone.head", ]
+  children: ["dude.bone.head", ]
 ta_transform:
   name: "dude.bone.head"
   entity: "dude.bone.head"
@@ -828,7 +828,7 @@ ta_transform:
       z: 0x3D5D4C94 (0.054028)
       w: 0x368E4553 (0.000004)
   parent: "dude.bone.cervical"
-  children: ["dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", "dude.bone.hat", ]
+  children: ["dude.bone.hat", ]
 ta_transform:
   name: "dude.bone.hat"
   entity: "dude.bone.hat"
@@ -852,98 +852,98 @@ ta_transform:
       y: 0x3F22AC77 (0.635444)
       z: 0x3D1D2B19 (0.038371)
     orientation:
-      x: 0xBF208BEF (-0.627135)
-      y: 0x3E7E60D3 (0.248416)
-      z: 0x3F3312C9 (0.699505)
-      w: 0x3E71A2C1 (0.235972)
+      x: 0xBF054C4C (-0.520695)
+      y: 0x3E4EFB04 (0.202129)
+      z: 0x3F14ED30 (0.581744)
+      w: 0x3F175D1C (0.591264)
   parent: "dude.bone.thoratic"
-  children: ["dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", "dude.bone.forearm.l", ]
+  children: ["dude.bone.forearm.l", ]
 ta_transform:
   name: "dude.bone.forearm.l"
   entity: "dude.bone.forearm.l"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3F68AEA6 (0.908915)
+      y: 0x3F68AEA7 (0.908915)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBCC98A32 (-0.024602)
-      y: 0x3E357C8E (0.177233)
-      z: 0xBE1E609E (-0.154665)
-      w: 0x3F78BCA5 (0.971628)
+      x: 0x3EA92F95 (0.330441)
+      y: 0x3DB8C70D (0.090223)
+      z: 0xBECADDA3 (-0.396222)
+      w: 0x3F5A13EB (0.851866)
   parent: "dude.bone.upper_arm.l"
-  children: ["dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", "dude.bone.hand.l", ]
+  children: ["dude.bone.hand.l", ]
 ta_transform:
   name: "dude.bone.hand.l"
   entity: "dude.bone.hand.l"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3F2B528A (0.669228)
+      y: 0x3F2B5286 (0.669228)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBD35001A (-0.044190)
-      y: 0x3DA8F53A (0.082499)
+      x: 0xBD350017 (-0.044190)
+      y: 0x3DA8F53B (0.082499)
       z: 0xBD68C97D (-0.056833)
       w: 0x3F7E75F8 (0.993988)
   parent: "dude.bone.forearm.l"
-  children: ["dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", "dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", ]
+  children: ["dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", ]
 ta_transform:
   name: "dude.bone.fingers_proximal.l"
   entity: "dude.bone.fingers_proximal.l"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3E762B92 (0.240401)
+      y: 0x3E762B88 (0.240400)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBDDEE9BC (-0.108844)
-      y: 0x3EE9A759 (0.456355)
+      x: 0xBDDEE9B9 (-0.108844)
+      y: 0x3EE9A757 (0.456355)
       z: 0xBE57C49A (-0.210711)
-      w: 0x3F5B8C4C (0.857610)
+      w: 0x3F5B8C4D (0.857610)
   parent: "dude.bone.hand.l"
-  children: ["dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", "dude.bone.fingers_distal.l", ]
+  children: ["dude.bone.fingers_distal.l", ]
 ta_transform:
   name: "dude.bone.fingers_distal.l"
   entity: "dude.bone.fingers_distal.l"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3DB03EF2 (0.086058)
+      y: 0x3DB03EE7 (0.086057)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBC959010 (-0.018257)
+      x: 0xBC95900A (-0.018257)
       y: 0x3D573716 (0.052543)
       z: 0xBC7F0D06 (-0.015567)
-      w: 0x3F7F9295 (0.998330)
+      w: 0x3F7F9296 (0.998330)
   parent: "dude.bone.fingers_proximal.l"
 ta_transform:
   name: "dude.bone.thumb_proximal.l"
   entity: "dude.bone.thumb_proximal.l"
   xform:
     position:
-      x: 0x3DAFA7AC (0.085769)
-      y: 0x3DF3B910 (0.119005)
-      z: 0x3BBCCC39 (0.005762)
+      x: 0x3DAFA7A8 (0.085769)
+      y: 0x3DF3B908 (0.119005)
+      z: 0x3BBCCCFA (0.005762)
     orientation:
       x: 0x3EBC3B40 (0.367640)
-      y: 0x3E9F40C9 (0.311041)
+      y: 0x3E9F40CB (0.311041)
       z: 0xBF2BD4CC (-0.671216)
       w: 0x3F104362 (0.563528)
   parent: "dude.bone.hand.l"
-  children: ["dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", "dude.bone.thumb_distal.l", ]
+  children: ["dude.bone.thumb_distal.l", ]
 ta_transform:
   name: "dude.bone.thumb_distal.l"
   entity: "dude.bone.thumb_distal.l"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3D4022D0 (0.046908)
+      y: 0x3D4022D8 (0.046908)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0xBD07DB86 (-0.033168)
-      y: 0x3B36B55E (0.002788)
-      z: 0x3CCD1DCB (0.025039)
+      y: 0x3B36B533 (0.002788)
+      z: 0x3CCD1DC5 (0.025039)
       w: 0x3F7FC721 (0.999132)
   parent: "dude.bone.thumb_proximal.l"
 ta_transform:
@@ -960,7 +960,7 @@ ta_transform:
       z: 0xBF3593FC (-0.709289)
       w: 0x3E759BE9 (0.239853)
   parent: "dude.bone.thoratic"
-  children: ["dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", "dude.bone.forearm.r", ]
+  children: ["dude.bone.forearm.r", ]
 ta_transform:
   name: "dude.bone.forearm.r"
   entity: "dude.bone.forearm.r"
@@ -975,7 +975,7 @@ ta_transform:
       z: 0x3E1DF61B (0.154259)
       w: 0x3F77FDF6 (0.968719)
   parent: "dude.bone.upper_arm.r"
-  children: ["dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", "dude.bone.hand.r", ]
+  children: ["dude.bone.hand.r", ]
 ta_transform:
   name: "dude.bone.hand.r"
   entity: "dude.bone.hand.r"
@@ -990,7 +990,7 @@ ta_transform:
       z: 0x3D68C980 (0.056833)
       w: 0x3F7E75F8 (0.993988)
   parent: "dude.bone.forearm.r"
-  children: ["dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", "dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", ]
+  children: ["dude.bone.fingers_proximal.r", "dude.bone.thumb_proximal.r", ]
 ta_transform:
   name: "dude.bone.fingers_proximal.r"
   entity: "dude.bone.fingers_proximal.r"
@@ -1005,7 +1005,7 @@ ta_transform:
       z: 0x3E57C495 (0.210711)
       w: 0x3F5B8C4D (0.857610)
   parent: "dude.bone.hand.r"
-  children: ["dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", "dude.bone.fingers_distal.r", ]
+  children: ["dude.bone.fingers_distal.r", ]
 ta_transform:
   name: "dude.bone.fingers_distal.r"
   entity: "dude.bone.fingers_distal.r"
@@ -1034,7 +1034,7 @@ ta_transform:
       z: 0x3F2BD4CC (0.671216)
       w: 0x3F104366 (0.563528)
   parent: "dude.bone.hand.r"
-  children: ["dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", "dude.bone.thumb_distal.r", ]
+  children: ["dude.bone.thumb_distal.r", ]
 ta_transform:
   name: "dude.bone.thumb_distal.r"
   entity: "dude.bone.thumb_distal.r"
@@ -1063,7 +1063,7 @@ ta_transform:
       z: 0x39186918 (0.000145)
       w: 0x3CA888C0 (0.020573)
   parent: "dude.bone.lumbar"
-  children: ["dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", "dude.bone.leg.l", ]
+  children: ["dude.bone.leg.l", ]
 ta_transform:
   name: "dude.bone.leg.l"
   entity: "dude.bone.leg.l"
@@ -1092,7 +1092,7 @@ ta_transform:
       z: 0xB9170C21 (-0.000144)
       w: 0x3CA888C0 (0.020573)
   parent: "dude.bone.lumbar"
-  children: ["dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", "dude.bone.leg.r", ]
+  children: ["dude.bone.leg.r", ]
 ta_transform:
   name: "dude.bone.leg.r"
   entity: "dude.bone.leg.r"
@@ -1135,7 +1135,7 @@ ta_transform:
       z: 0x3F34FB4B (0.706959)
       w: 0x00000000 (0.000000)
   parent: "dude.node.armature"
-  children: ["dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", "dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", ]
+  children: ["dude.bone.foot.l", "dude.bone.foot_roll.l", "dude.bone.toes_control.l", ]
 ta_transform:
   name: "dude.bone.foot.l"
   entity: "dude.bone.foot.l"
@@ -1150,7 +1150,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F6A6374 (0.915580)
   parent: "dude.bone.leg_control.l"
-  children: ["dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", "dude.bone.toes.l", ]
+  children: ["dude.bone.toes.l", ]
 ta_transform:
   name: "dude.bone.toes.l"
   entity: "dude.bone.toes.l"
@@ -1179,7 +1179,7 @@ ta_transform:
       z: 0x3F6A62B0 (0.915568)
       w: 0x00000000 (0.000000)
   parent: "dude.bone.leg_control.l"
-  children: ["dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", "dude.bone.leg_ik.l", ]
+  children: ["dude.bone.leg_ik.l", ]
 ta_transform:
   name: "dude.bone.leg_ik.l"
   entity: "dude.bone.leg_ik.l"
@@ -1236,7 +1236,7 @@ ta_transform:
       z: 0x3F34FB4B (0.706959)
       w: 0x00000000 (0.000000)
   parent: "dude.node.armature"
-  children: ["dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", "dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", ]
+  children: ["dude.bone.foot.r", "dude.bone.foot_roll.r", "dude.bone.toes_control.r", ]
 ta_transform:
   name: "dude.bone.foot.r"
   entity: "dude.bone.foot.r"
@@ -1251,7 +1251,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F6A6374 (0.915580)
   parent: "dude.bone.leg_control.r"
-  children: ["dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", "dude.bone.toes.r", ]
+  children: ["dude.bone.toes.r", ]
 ta_transform:
   name: "dude.bone.toes.r"
   entity: "dude.bone.toes.r"
@@ -1280,7 +1280,7 @@ ta_transform:
       z: 0x3F6A62B0 (0.915568)
       w: 0x00000000 (0.000000)
   parent: "dude.bone.leg_control.r"
-  children: ["dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", "dude.bone.leg_ik.r", ]
+  children: ["dude.bone.leg_ik.r", ]
 ta_transform:
   name: "dude.bone.leg_ik.r"
   entity: "dude.bone.leg_ik.r"
@@ -1362,7 +1362,7 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  children: ["skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", "skeleton_test.bone.body", ]
+  children: ["skeleton_test.bone.body", ]
 ta_transform:
   name: "skeleton_test.bone.body"
   entity: "skeleton_test.bone.body"
@@ -1372,12 +1372,12 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x00000000 (0.000000)
+      x: 0x3DCE3A58 (0.100697)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
+      w: 0x3F7EB2E5 (0.994917)
   parent: "skeleton_test.node.armature"
-  children: ["skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", "skeleton_test.bone.head", "skeleton_test.node.body", ]
+  children: ["skeleton_test.bone.head", "skeleton_test.node.body", ]
 ta_transform:
   name: "skeleton_test.bone.head"
   entity: "skeleton_test.bone.head"
@@ -1387,12 +1387,12 @@ ta_transform:
       y: 0x3F000000 (0.500000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBBF7187B (-0.007541)
+      x: 0x3DCE3A57 (0.100697)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F7FFE23 (0.999972)
+      w: 0x3F7EB2E5 (0.994917)
   parent: "skeleton_test.bone.body"
-  children: ["skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", "skeleton_test.node.head", ]
+  children: ["skeleton_test.node.head", ]
 ta_transform:
   name: "skeleton_test.node.head"
   entity: "skeleton_test.node.head"
@@ -1434,14 +1434,14 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  children: ["test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", "test_bone_1.bone.base", ]
+  children: ["test_bone_1.bone.base", ]
 ta_transform:
   name: "test_bone_1.bone.base"
   entity: "test_bone_1.bone.base"
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3F000000 (0.500000)
+      y: 0x3F425ECF (0.759259)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -1449,7 +1449,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
   parent: "test_bone_1.node.armature"
-  children: ["test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", "test_bone_1.node.base", ]
+  children: ["test_bone_1.node.base", ]
 ta_transform:
   name: "test_bone_1.node.base"
   entity: "test_bone_1.node.base"
@@ -1464,7 +1464,7 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
   parent: "test_bone_1.bone.base"
-  children: ["test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", "test_bone_1.node.child", ]
+  children: ["test_bone_1.node.child", ]
 ta_transform:
   name: "test_bone_1.node.child"
   entity: "test_bone_1.node.child"
@@ -1492,7 +1492,7 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  children: ["skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", "skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", ]
+  children: ["skeleton_test_skin.bone.body", "skeleton_test_skin.node.body", ]
 ta_transform:
   name: "skeleton_test_skin.bone.body"
   entity: "skeleton_test_skin.bone.body"
@@ -1502,12 +1502,12 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x00000000 (0.000000)
+      x: 0x3D38F120 (0.045152)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
+      w: 0x3F7FBD2B (0.998980)
   parent: "skeleton_test_skin.node.armature"
-  children: ["skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", "skeleton_test_skin.bone.head", ]
+  children: ["skeleton_test_skin.bone.head", ]
 ta_transform:
   name: "skeleton_test_skin.bone.head"
   entity: "skeleton_test_skin.bone.head"
@@ -1517,10 +1517,10 @@ ta_transform:
       y: 0x3F000000 (0.500000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBB5FFB53 (-0.003418)
+      x: 0x3DB7BD93 (0.089717)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F7FFF9E (0.999994)
+      w: 0x3F7EF7B7 (0.995967)
   parent: "skeleton_test_skin.bone.body"
 ta_transform:
   name: "skeleton_test_skin.node.body"
@@ -1568,8 +1568,21 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x404D6F02 (3.209900)
-      z: 0xC0A00000 (-5.000000)
+      y: 0x3E8BF5EE (0.273361)
+      z: 0xC081E9C0 (-4.059784)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "ground"
+  entity: "ground"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0xBC23D70A (-0.010000)
+      z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -1798,6 +1811,20 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
   mass: 0x3CA3D70A (0.020000)
+ta_rigid_body:
+  name: "ground"
+  entity: "ground"
+  collider:
+    type: 0  # TA_COLLIDER_PLANE
+    plane:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      normal:
+        x: 0x00000000 (0.000000)
+        y: 0x3F800000 (1.000000)
+        z: 0x00000000 (0.000000)
 #-------------------------------------------------------------------------------
 # TYP_ANIMATION
 #-------------------------------------------------------------------------------
