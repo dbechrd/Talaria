@@ -1,4 +1,4 @@
-#include "ta_asset_watcher.h"
+﻿#include "ta_asset_watcher.h"
 #include "ta_audio.h"
 #include "ta_button.h"
 #include "ta_camera.h"
@@ -592,7 +592,7 @@ ta_camera *ta_game_camera()
 {
     return ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
 }
-// Shoot ray from camera directly forward (crosshair)
+// Cast ray from camera directly forward (crosshair)
 ta_ray ta_game_camera_ray()
 {
     ta_camera *camera = ta_game_camera();
@@ -602,7 +602,7 @@ ta_ray ta_game_camera_ray()
     ray.direction = camera->front;
     return ray;
 }
-// Shoot ray from mouse screen position
+// Cast ray from mouse screen position
 ta_ray ta_game_mouse_ray()
 {
     //ta_camera *camera = ta_game_component(INTERN("player_camera"), RES_COMP_CAMERA);
@@ -813,7 +813,7 @@ static void collision_broadphase(ta_rigid_body_pair **pairs, ta_rigid_body *rigi
     // - You can_body optionally enable/disable collision between fixtures on
     //   bodies connected by a joint.
     //
-    // Sensor: Fixture which only detects collision, no response. a.ka. trigger
+    // Sensor: Fixture which only detects collision, no response. a.k.a. trigger
     // -----------------------------------------------------------------
     // Depth-first traversal of AABB tree to find islands. Put islands
     // to sleep when all objects in island are resting. Wake up when
@@ -827,8 +827,8 @@ static void collision_broadphase(ta_rigid_body_pair **pairs, ta_rigid_body *rigi
             if (a->entity == b->entity)
                 continue;
 
-            // HACK: Skip AABB broadphase for planes, makes no sense (always
-            //       collect them as potential pairs)
+            // HACK: Skip AABB broadphase for planes, (always collect them as potential pairs)
+            // TODO: Plane vs. AABB test; collect planes where vec3_dot(closest AABB point, plane.normal) <= 0
             if (a->collider.type == TA_COLLIDER_PLANE ||
                 b->collider.type == TA_COLLIDER_PLANE ||
                 ta_aabb_v_aabb(&a->aabb, &b->aabb))
@@ -851,77 +851,322 @@ static void collision_narrowphase(ta_manifold **manifolds, ta_rigid_body_pair *p
         }
     }
 }
-static void game_simulate(ta_camera *active_camera, float dt)
+static void game_simulate(float dt)
 {
+    static const float GRAVITY = -9.81f;
+
     ta_log_write(&tg_debug_log, SRC_GAME, " Sim step...\n");
 
-    ta_transform *player_transform = ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
-    ta_camera *player_cam = ta_game_component(tg_e_player_camera, RES_COMP_CAMERA);
-    ta_transform *active_cam_trans = ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
+#if 0
+    // TODO: Use mesh instancing for primitives (need scale :/)
+    // TODO: Use circular buffer for perma lines instead of dumping everything at arbitrary threshold
+    if (dlb_vec_len(primitive_lines_perma.buffers[0]) > 100000) {
+        ta_mesh_clear_buffers(&primitive_lines_perma);
+    }
+#endif
 
-    // Target minimap camera
-    ta_vec3 minimap_target_pos = active_cam_trans->xform_world.position;
-    minimap_target_pos.y += 50.0f;
-    tg_game.minimap_camera.focal_point = active_cam_trans->xform_world.position;
-    ta_camera_set_target_pos_absolute(&tg_game.minimap_camera, minimap_target_pos);
+    dlb_vec_zero(tg_game.pairs);
+    dlb_vec_zero(tg_game.manifolds);
 
-    if (tg_game.simulate) {
-        if (tg_game.simulate > 0) {
-            tg_game.simulate--;
+    ta_rigid_body *rigid_bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
+
+    // for n particles do
+    //     x_prev = x;
+    //     v = v + h * f_ext / m;
+    //     x = x + h * v;
+    // end
+    dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
+        if (body->name == tg_e_can) {
+            DLB_ASSERT(1);
         }
 
-        ta_rigid_body *rigid_bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
+        ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+        // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should consider
+        // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
+        DLB_ASSERT(!transform->parent);
 
-        // Simulate rigid bodies
-        dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
-            ta_rigid_body_update(body, dt);
+        // Clear per-body collision list
+        // HACK: Cast const away to prevent MSVC warnings about nonsensical const incompatibility
+        dlb_vec_zero((char **)body->colliding_with);
+
+        // TODO: Move some of these things into the editor code and only update when a change is detected
+        {
+            // Update inverse mass when mass changes (via editor)
+            body->inv_mass = body->mass ? 1.0f / body->mass : 0.0f;
+
+            // Update centroids (collider.data.center can be changed via editor)
+            body->centroid_local = body->collider.data.center;
+            body->centroid_global = vec3_add(transform->xform.position, quat_mul_vec3(transform->xform.orientation, body->centroid_local));
+
+            // Update AABB (collider size can change via editor)
+            body->aabb = ta_collider_world_bounds(&body->collider, &transform->xform);
         }
 
-        dlb_vec_zero(tg_game.pairs);
-        dlb_vec_zero(tg_game.manifolds);
+        // Apply external forces
+        if (!body->no_gravity) {
+            ta_vec3 gravity = { 0.0f, GRAVITY, 0.0f };
+            //gravity = vec3_scalef(gravity, body->mass);
+            ta_rigid_body_apply_force(body, gravity);
+        }
 
-        // Broad phase
-        collision_broadphase(&tg_game.pairs, rigid_bodies, dt);
-        if (tg_game.pairs) {
-            // Narrow phase
-            collision_narrowphase(&tg_game.manifolds, tg_game.pairs, dt);
-            dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
-                // Resolution
-                ta_rigid_body_resolve_collision(manifold, dt);
+        // Store starting transform
+        transform->xform_prev_physics = transform->xform;
 
-                // Update colliding_with lists
-                dlb_vec_push(manifold->a->colliding_with, manifold->b->entity);
-                dlb_vec_push(manifold->b->colliding_with, manifold->a->entity);
+        // Update position
+        body->acceleration = vec3_scalef(body->force_accum, body->inv_mass);
+        ta_vec3 da = vec3_scalef(body->acceleration, dt);
+        body->velocity = vec3_add(body->velocity, da);
+        ta_vec3 dv = vec3_scalef(body->velocity, dt);
+        transform->xform.position = vec3_add(transform->xform.position, dv);
+
+#if 0
+        // Update global tensor when orientation changes
+        // TODO(cleanup): If I do everything in local/rest space, I don't need to have inv_tensor_global, right?
+        if (!quat_equal(body->tensor_orientation, transform->xform.orientation)) {
+            // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf p. D14
+            // I_global = R * I_body * R^T
+            ta_mat3 rot = mat3_rotate_quat(transform->xform.orientation);
+            ta_mat3 rot_t = mat3_transpose(&rot);
+            ta_mat3 inv_t_global = mat3_mul(&body->inv_tensor_local, &rot_t);
+            inv_t_global = mat3_mul(&rot, &inv_t_global);
+            body->inv_tensor_global = inv_t_global;
+            body->tensor_orientation = transform->xform.orientation;
+        }
+#endif
+
+        // Reset accumulators
+        body->force_accum = VEC3_ZERO;
+        body->torque_accum = VEC3_ZERO;
+        body->dbg_broadphase = false;
+        body->dbg_narrowphase = false;
+    }
+
+    // Broad phase
+    //
+    // for iterations = 1 do
+    //     SolvePositions(x1, ... xn, q1, ... qn);
+    // end
+    //
+    // TODO: AABB tree and expand search distance based on body's velocity:
+    // > To save computational cost we collect potential collision pairs once per time step instead of once per
+    // > sub-step using a tree of axis aligned bounding boxes. We expand the boxes by a distance (k * dt * velocity),
+    // > where k >= 1 is a safety multiplier accounting for potential accelerations during the time step. We use k = 2
+    // > in our examples.  - PBDBodies.pdf, section 3.5
+    collision_broadphase(&tg_game.pairs, rigid_bodies, dt);
+    if (tg_game.pairs) {
+        // Narrow phase
+        collision_narrowphase(&tg_game.manifolds, tg_game.pairs, dt);
+        dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
+            DLB_ASSERT(manifold->a != manifold->b);
+
+            // Update colliding_with lists
+            dlb_vec_push(manifold->a->colliding_with, manifold->b->entity);
+            dlb_vec_push(manifold->b->colliding_with, manifold->a->entity);
+
+            ta_rigid_body *a = manifold->a;
+            ta_rigid_body *b = manifold->b;
+
+            // Sensors don't need any resolution
+            if (a->sensor || b->sensor) {
+                continue;
+            }
+
+            ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
+            ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
+
+            // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should
+            // consider all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
+            DLB_ASSERT(!atrans->parent);
+            DLB_ASSERT(!btrans->parent);
+
+            // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
+            if (a->inv_mass == 0.0f && b->inv_mass == 0.0f) {
+                ta_log_write(&tg_debug_log, SRC_RIGID_BODY, "WARNING: Detected movement of infinite mass body\n");
+                a->velocity = VEC3_ZERO;
+                b->velocity = VEC3_ZERO;
+                continue;
+            }
+
+            if (a->name == tg_e_can || b->name == tg_e_can) {
+                DLB_ASSERT(1);
+            }
+
+            for (u32 i = 0; i < manifold->contact_count; i++) {
+                // TODO: May want to store these in local space instead, especially if iterations update centroid_global
+                // radii (local space)
+                ta_vec3 ra = vec3_sub(manifold->contacts[i], a->centroid_global);
+                ta_vec3 rb = vec3_sub(manifold->contacts[i], b->centroid_global);
+
+                // TODO: lamda_normal, lambda_tangent
+
+                // contact points (world space)
+                ta_vec3 contact_a = vec3_add(atrans->xform.position, quat_mul_vec3(atrans->xform.orientation, ra));
+                ta_vec3 contact_b = vec3_add(btrans->xform.position, quat_mul_vec3(btrans->xform.orientation, rb));
+                float d = vec3_dot(vec3_sub(contact_a, contact_b), manifold->normal);
+                if (d <= 0) {
+                    continue;
+                }
+
+                // TODO: Apply Dx = dn with a = 0 and lambda_normal
+#if 1
+                // generalized inverse masses
+                // NOTE: I don't understand equation 43 in PBDBodies.pdf as there's no dot product and it seems as if
+                // it's adding a vec3 to a scalar?? Using equation 42 instead, which matches my old code.
+                float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra), manifold->normal);
+                float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb), manifold->normal);
+#else
+                //ta_vec3 impulse_ang_a = vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra);
+                //ta_vec3 impulse_ang_b = vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb);
+                //float impulse_ang = vec3_dot(vec3_add(impulse_ang_a, impulse_ang_b), manifold->normal);
+#endif
+
+#if 0
+                // TODO: Reincorporate lambda and alpha to allow non-infinitely stiff constraints (though not for
+                // contact resolution, which should use a = 0)
+                const float alpha = 0.0f;
+                const float alpha_wavy = alpha / (dt * dt);
+                const float lambda = manifold->lambdas[i];
+
+                float delta_lambda = (-d - alpha_wavy * lambda) / (wa + wb + alpha_wavy);
+                manifold->lambdas[i] += delta_lambda;
+#else
+                // NOTE: Simplification for alpha = 0, which removes the need to store lambda between constraint solves
+                float delta_lambda = -d / (wa + wb);
+#endif
+
+                // contact penetration impulse
+                ta_vec3 impulse = vec3_scalef(manifold->normal, delta_lambda);
+                atrans->xform.position = vec3_add(atrans->xform.position, vec3_scalef(impulse, a->inv_mass));
+                btrans->xform.position = vec3_sub(btrans->xform.position, vec3_scalef(impulse, b->inv_mass));
+
+                // equation 8 & 9 in PBDBodies.pdf, not sure what [stuff, 0] means, or what "q1 + stuff" is.. quat_add??
+                // q = q + 1/2[I^-1(r x p), 0]q
+                // q = q - 1/2[I^-1(r x p), 0]q
+                atrans->xform.orientation = quat_add(atrans->xform.orientation, quat_scale(quat_mul(vec4_init_vw(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, impulse)), 0), atrans->xform.orientation), 0.5f));
+                btrans->xform.orientation = quat_sub(btrans->xform.orientation, quat_scale(quat_mul(vec4_init_vw(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, impulse)), 0), btrans->xform.orientation), 0.5f));
+                atrans->xform.orientation = quat_normalize(atrans->xform.orientation);
+                btrans->xform.orientation = quat_normalize(btrans->xform.orientation);
+
+                // static friction impulse
+                ta_vec3 contact_a_prev = vec3_add(atrans->xform_prev_physics.position, quat_mul_vec3(atrans->xform_prev_physics.orientation, ra));
+                ta_vec3 contact_b_prev = vec3_add(btrans->xform_prev_physics.position, quat_mul_vec3(btrans->xform_prev_physics.orientation, rb));
+                // relative velocity
+                ta_vec3 delta_p = vec3_sub(vec3_sub(contact_a, contact_a_prev), vec3_sub(contact_b, contact_b_prev));
+                // tangential component of relative velocity
+                ta_vec3 delta_p_tangent = vec3_sub(delta_p, vec3_scalef(manifold->normal, vec3_dot(delta_p, manifold->normal)));
+
+                // TODO: Apply Dx = Dp_t with a = 0 if lambda_tangent < manifold->sf * lambda_normal
+
+#if 0
+                // Debug rendering (resolution impulse)
+                ta_primitive_push_arrow(&primitive_lines_perma, a->centroid_global, ra, TA_COLOR_PINK);
+                ta_primitive_push_arrow(&primitive_lines_perma, b->centroid_global, rb, TA_COLOR_CYAN);
+#endif
             }
         }
-
-        tg_game.sim_step++;
     }
 
-    // Update cameras
-    dlb_vec_each(ta_camera *, cam, ta_game_resource_pool(RES_COMP_CAMERA)) {
-        ta_camera_update(cam, dt);
+    // for n particles do
+    //     v = (x − x_prev)/h;
+    // end
+    dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
+        ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+        body->velocity_prev_physics = body->velocity;
+        body->velocity = vec3_scalef(vec3_sub(transform->xform.position, transform->xform_prev_physics.position), 1.0f/dt);
+
+        ta_vec4 delta_q = quat_mul(transform->xform.orientation, quat_inverse(transform->xform_prev_physics.orientation));
+        body->ang_velocity_prev_physics = body->ang_velocity;
+        body->ang_velocity = vec3_scalef(vec3_init(delta_q.x, delta_q.y, delta_q.z), ((delta_q.w < 0.0f) * -1.0f) * 2.0f/dt);
     }
 
-    // TODO: dlb_vec_each(ta_audio_source_update)
+    dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
+        DLB_ASSERT(manifold->a != manifold->b);
 
-    //ta_mat3 rotate_sun = mat3_rotate_z(1.0f);
-    //tg_game.sun->data.sun.direction =
-    //    mat3_mul_vec3(&rotate_sun, tg_game.sun->data.sun.direction);
+        ta_rigid_body *a = manifold->a;
+        ta_rigid_body *b = manifold->b;
 
-    //// HACK: Make point light rotate in a circle
-    //static float light_deg = 0.0f;
-    //light_deg += 0.005f;
-    //if (light_deg >= 360.0f) light_deg = 0.0f;
+        // Sensors don't need any resolution
+        if (a->sensor || b->sensor) {
+            continue;
+        }
 
-    //ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
-    //lights[1].position.x = cosf(light_deg) * 16.0f;
-    //lights[1].position.z = sinf(light_deg) * 16.0f;
+        ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
+        ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
-    // Update buttons
-    dlb_vec_each(ta_e_button *, button, ta_game_resource_pool(RES_COMP_BUTTON)) {
-        e_button_update(button);
+        // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should
+        // consider all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
+        DLB_ASSERT(!atrans->parent);
+        DLB_ASSERT(!btrans->parent);
+
+        // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
+        if (a->inv_mass == 0.0f && b->inv_mass == 0.0f) {
+            ta_log_write(&tg_debug_log, SRC_RIGID_BODY, "WARNING: Detected movement of infinite mass body\n");
+            a->velocity = VEC3_ZERO;
+            b->velocity = VEC3_ZERO;
+            continue;
+        }
+
+        if (a->name == tg_e_can || b->name == tg_e_can) {
+            DLB_ASSERT(1);
+        }
+
+        for (u32 i = 0; i < manifold->contact_count; i++) {
+            // TODO: May want to store these in local space instead, especially if iterations update centroid_global
+            // radii (local space)
+            ta_vec3 ra = vec3_sub(manifold->contacts[i], a->centroid_global);
+            ta_vec3 rb = vec3_sub(manifold->contacts[i], b->centroid_global);
+
+            // relative velocity
+            ta_vec3 va = vec3_add(a->velocity, vec3_cross(a->ang_velocity, ra));
+            ta_vec3 vb = vec3_add(a->velocity, vec3_cross(a->ang_velocity, rb));
+            ta_vec3 v = vec3_sub(va, vb);
+
+            // normal/tangential velocity
+            float vn = vec3_dot(manifold->normal, v);
+            ta_vec3 vt = vec3_sub(v, vec3_scalef(manifold->normal, vn));
+
+            // dynamic friction
+            float vt_mag = vec3_len(vt);
+            float fn = manifold->lambda_normal[i] / dt;
+            ta_vec3 dv_dynamic_friction = vec3_scalef(vt, -MIN((manifold->df * fn) / vt_mag, 1.0f));
+
+            // TODO: Joint damping (eq. 32 & 33 in PBDBodies)
+            ta_vec3 dv_damping = { 0 };
+
+            // restitution
+            // previous relative velocity (before velocity integration)
+            ta_vec3 va_prev = vec3_add(a->velocity_prev_physics, vec3_cross(a->ang_velocity_prev_physics, ra));
+            ta_vec3 vb_prev = vec3_add(b->velocity_prev_physics, vec3_cross(b->ang_velocity_prev_physics, rb));
+            ta_vec3 v_prev = vec3_sub(va_prev, vb_prev);
+            // previous normal velocity
+            float vn_prev = vec3_dot(manifold->normal, v_prev);
+            float e = manifold->e * (float)(fabs(vn) <= (2.0f * fabs(GRAVITY) * dt));
+            ta_vec3 dv_restitution = vec3_scalef(manifold->normal, -vn + MAX(-e * vn_prev, 0));
+
+            // TODO: Cache generalized inverse masses (wa/wb) in the positional solver
+            float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra), manifold->normal);
+            float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb), manifold->normal);
+
+            ta_vec3 dv_total = vec3_add3(dv_dynamic_friction, dv_damping, dv_restitution);
+            ta_vec3 impulse = vec3_scalef(dv_total, wa + wb);
+            a->velocity = vec3_add(a->velocity, vec3_scalef(impulse, a->inv_mass));
+            b->velocity = vec3_add(b->velocity, vec3_scalef(impulse, b->inv_mass));
+            a->ang_velocity = vec3_add(a->ang_velocity, mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, impulse)));
+            b->ang_velocity = vec3_add(b->ang_velocity, mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, impulse)));
+
+#if 0
+            // Debug rendering (resolution impulse)
+            ta_primitive_push_arrow(&primitive_lines_perma, a->centroid_global, ra, TA_COLOR_PINK);
+            ta_primitive_push_arrow(&primitive_lines_perma, b->centroid_global, rb, TA_COLOR_CYAN);
+#endif
+        }
     }
+
+#if 0
+    // TODO: Implement damping in a way that doesn't vary with different timesteps
+    body->velocity = vec3_scalef(body->velocity, 0.99f);
+    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.99f);
+#endif
 }
 static void game_render_skybox()
 {
@@ -1110,7 +1355,7 @@ void ta_game_loop()
     // Eric Catto - Soft Constraints (GDC 2011)
     // Semi-implicit Euler will eventually blow up if you take big time steps. A
     // general rule is to take at least 4 time steps per period of oscillation.
-    // For example, if the oscillation frequency is 60Hz, then you shouldn�t
+    // For example, if the oscillation frequency is 60Hz, then you shouldn’t
     // take time steps slower than 15Hz.
     //
     // Randy Gaul
@@ -1118,6 +1363,7 @@ void ta_game_loop()
     const float ms_sim_dt = 20;             // fixed dt milliseconds
     const float sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
     const int sim_max_steps = 0;            // max simulation steps per frame
+    const int sim_substeps = 1;             // number of substeps to perform for each step
     double ms_sim_t = 0;                    // current simulation time
     double ms_frame_accum = 0;
 
@@ -1167,10 +1413,19 @@ void ta_game_loop()
         }
 
         if (ms_frame_accum >= ms_sim_dt) {
-            while (ms_frame_accum >= ms_sim_dt) {
-                game_simulate(active_camera, (float)sim_dt);
+            while (ms_frame_accum >= ms_sim_dt && tg_game.simulate) {
+                if (tg_game.simulate > 0) {
+                    tg_game.simulate--;
+                }
+
+                float h = sim_dt / sim_substeps;
+                for (int i = 0; i < sim_substeps; ++i) {
+                    game_simulate(h);
+                }
                 ms_sim_t += ms_sim_dt;
                 ms_frame_accum -= ms_sim_dt;
+
+                tg_game.sim_step++;
             }
         }
 
@@ -1302,12 +1557,20 @@ void ta_game_loop()
         // Post-simulation updates (e.g. recalculate cached transform matrices)
         //----------------------------------------------------------------------
 
+        // Update cameras
+        // TODO: This might belong in game_simulate. It definitely needs to handle dt properly. Maybe
+        // cameras should just have rigid_body components? Hmm..
+        dlb_vec_each(ta_camera *, cam, ta_game_resource_pool(RES_COMP_CAMERA)) {
+            const float dt = 0.0f;
+            ta_camera_update(cam, dt);
+        }
+
         // HACK: Hacky stuff for player movement
         {
             // Rotate player to match player camera, camera is parented to player object
             // Calculate camera rotation in X/Z plane
             ta_transform *camera_transform = ta_game_component(tg_e_player_camera, RES_COMP_TRANSFORM);
-            ta_vec3 camera_rot_vec = vec3_rotate_quat(VEC3_NZ, camera_transform->xform.orientation);
+            ta_vec3 camera_rot_vec = quat_mul_vec3(camera_transform->xform.orientation, VEC3_NZ);
             camera_rot_vec.y = 0.0f;
             // NOTE: We are negating because player mesh faces +Z in Blender
             camera_rot_vec = vec3_neg(vec3_normalize(camera_rot_vec));
@@ -1317,7 +1580,7 @@ void ta_game_loop()
             player_transform->xform.orientation = camera_rot_quat;
 
             ta_vec3 player_cam_offset = { 0.0f, 4.0f, 0.7f };
-            player_cam_offset = vec3_rotate_quat(player_cam_offset, camera_rot_quat);
+            player_cam_offset = quat_mul_vec3(camera_rot_quat, player_cam_offset);
             camera_transform->xform.position = vec3_add(player_transform->xform.position, player_cam_offset);
 
             // HACK: Bring guy back into the world!
@@ -1338,6 +1601,11 @@ void ta_game_loop()
 
         // Update transforms (model matrix and lerp)
         ta_transform_update_all(transforms, sim_alpha);
+
+        // Update buttons
+        dlb_vec_each(ta_e_button *, button, ta_game_resource_pool(RES_COMP_BUTTON)) {
+            e_button_update(button);
+        }
 
         // Update camera cached stuff
         dlb_vec_each(ta_camera *, camera, ta_game_resource_pool(RES_COMP_CAMERA)) {
@@ -1473,7 +1741,7 @@ void ta_game_loop()
                     obb.extents = (ta_vec3){ 0.2f, 0.2f, 0.2f };
                     obb.orientation = cam_trans->xform_world.orientation;
                     ta_primitive_push_obb(0, obb, TA_COLOR_WHITE);
-                    ta_vec3 dir = vec3_rotate_quat(VEC3_NZ, obb.orientation);
+                    ta_vec3 dir = quat_mul_vec3(obb.orientation, VEC3_NZ);
                     ta_primitive_push_arrow(0, obb.center, dir, TA_COLOR_WHITE);
 
                     // TODO: Camera icon on billboarded quad in world space
@@ -1551,7 +1819,7 @@ void ta_game_loop()
                     obb.extents = (ta_vec3){ 0.2f, 0.2f, 0.2f };
                     obb.orientation = cam_trans->xform_world.orientation;
                     ta_primitive_push_obb(0, obb, TA_COLOR_WHITE);
-                    ta_vec3 dir = vec3_rotate_quat(VEC3_NZ, obb.orientation);
+                    ta_vec3 dir = quat_mul_vec3(obb.orientation, VEC3_NZ);
                     ta_primitive_push_arrow(0, obb.center, dir, TA_COLOR_WHITE);
 
                     // TODO: Camera icon on billboarded quad in world space
@@ -1681,21 +1949,31 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Minimap
         //----------------------------------------------------------------------
-        ta_rect map_rect = { 10, 50, 200, 200 };
-        ta_viewport_bind(map_rect, TA_COLOR_GRAY7, true);
-        ta_scene_render(&tg_game.scene, &minimap_camera, sim_alpha);
-        ta_viewport_unbind();
-        ta_primitive_render(true, true);
+        {
+            // Target minimap camera
+            ta_transform *active_cam_trans = ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
+            ta_vec3 minimap_target_pos = active_cam_trans->xform_world.position;
+            minimap_target_pos.y += 50.0f;
+            tg_game.minimap_camera.focal_point = active_cam_trans->xform_world.position;
+            ta_camera_set_target_pos_absolute(&tg_game.minimap_camera, minimap_target_pos);
 
-        // Red dot on map
-        int dot_radius = 2;
-        ta_rect dot_rect = { 0 };
-        dot_rect.x = map_rect.x + map_rect.w / 2 - dot_radius;
-        dot_rect.y = map_rect.y + map_rect.h / 2 - dot_radius;
-        dot_rect.w = dot_radius * 2;
-        dot_rect.h = dot_radius * 2;
-        ta_primitive_push_rect(dot_rect, TA_COLOR_RED, UI_LAYER_HUD);
-        ta_primitive_render(true, true);
+            // Render minimap
+            ta_rect map_rect = { 10, 50, 200, 200 };
+            ta_viewport_bind(map_rect, TA_COLOR_GRAY7, true);
+            ta_scene_render(&tg_game.scene, &minimap_camera, sim_alpha);
+            ta_viewport_unbind();
+            ta_primitive_render(true, true);
+
+            // Red dot on map
+            int dot_radius = 2;
+            ta_rect dot_rect = { 0 };
+            dot_rect.x = map_rect.x + map_rect.w / 2 - dot_radius;
+            dot_rect.y = map_rect.y + map_rect.h / 2 - dot_radius;
+            dot_rect.w = dot_radius * 2;
+            dot_rect.h = dot_radius * 2;
+            ta_primitive_push_rect(dot_rect, TA_COLOR_RED, UI_LAYER_HUD);
+            ta_primitive_render(true, true);
+        }
 #endif
 
 #if 0
@@ -1999,12 +2277,12 @@ void game_command_player_shoot()
         float t_intersect = 0.0f;
 
         ta_obb obb = can_body->collider.data.obb;
-        obb.center = vec3_rotate_quat(obb.center, can_xform->xform_world.orientation);
+        obb.center = quat_mul_vec3(can_xform->xform_world.orientation, obb.center);
         obb.center = vec3_add(obb.center, can_xform->xform_world.position);
         obb.orientation = quat_normalize(quat_mul(can_xform->xform_world.orientation, obb.orientation));
 
         if (ta_ray_v_obb(&bullet, &obb, &t_intersect)) {
-            ta_vec3 impulse = vec3_scalef(bullet.direction, 0.01f);;
+            ta_vec3 impulse = vec3_scalef(bullet.direction, 0.1f);;
             ta_vec3 contact_world = vec3_add(bullet.origin, vec3_scalef(bullet.direction, t_intersect));
             ta_vec3 contact_local = vec3_sub(contact_world, can_body->centroid_global);
             ta_rigid_body_apply_impulse(can_body, impulse, contact_local);

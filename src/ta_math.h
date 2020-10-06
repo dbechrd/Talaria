@@ -254,6 +254,7 @@ int     vec3_equal              (ta_vec3 a, ta_vec3 b);
 ta_vec3 vec3_init               (float x, float y, float z);
 ta_vec3 vec3_neg                (ta_vec3 v);
 ta_vec3 vec3_add                (ta_vec3 a, ta_vec3 b);
+ta_vec3 vec3_add3               (ta_vec3 a, ta_vec3 b, ta_vec3 c);
 ta_vec3 vec3_sub                (ta_vec3 a, ta_vec3 b);
 ta_vec3 vec3_scalef             (ta_vec3 a, float s);
 float   vec3_len                (ta_vec3 v);
@@ -262,7 +263,6 @@ ta_vec3 vec3_normalize          (ta_vec3 v);
 float   vec3_dot                (ta_vec3 a, ta_vec3 b);
 ta_vec3 vec3_cross              (ta_vec3 a, ta_vec3 b);
 ta_vec3 vec3_lerp               (ta_vec3 a, ta_vec3 b, float w);
-ta_vec3 vec3_rotate_quat        (ta_vec3 v, ta_vec4 q);
 ta_vec3 vec3_perp               (ta_vec3 v);
 
 // Vector4 & Quaternion
@@ -275,6 +275,7 @@ int     vec4_zero               (ta_vec4 v);
 int     vec4_tiny               (ta_vec4 v);
 int     vec4_equal              (ta_vec4 a, ta_vec4 b);
 ta_vec4 vec4_init               (float x, float y, float z, float w);
+ta_vec4 vec4_init_vw            (ta_vec3 v, float w);
 
 void    quat_print              (FILE *file, ta_vec4 q);
 int     quat_zero               (ta_vec4 v);
@@ -290,9 +291,12 @@ ta_vec4 quat_conjugate          (ta_vec4 q);
 ta_vec4 quat_inverse            (ta_vec4 q);
 ta_vec4 quat_scale              (ta_vec4 a, float s);
 ta_vec4 quat_mul                (ta_vec4 a, ta_vec4 b);
+ta_vec4 quat_add                (ta_vec4 a, ta_vec4 b);
+ta_vec4 quat_sub                (ta_vec4 a, ta_vec4 b);
 float   quat_dot                (ta_vec4 a, ta_vec4 b);
 ta_vec4 quat_nlerp              (ta_vec4 a, ta_vec4 b, float w);
 ta_vec4 quat_slerp              (ta_vec4 a, ta_vec4 b, float w);
+ta_vec3 quat_mul_vec3           (ta_vec4 q, ta_vec3 v);
 
 // Matrix3
 extern const ta_mat3 MAT3_IDENT;
@@ -310,6 +314,7 @@ ta_mat3 mat3_rotate_z           (float deg);
 ta_mat3 mat3_rotate_quat        (ta_vec4 q);
 ta_mat3 mat3_mul                (const ta_mat3 *a, const ta_mat3 *b);
 ta_vec3 mat3_mul_vec3           (const ta_mat3 *m, ta_vec3 v);
+//ta_vec3 vec3_mul_mat3           (ta_vec3 v, const ta_mat3 *m);
 ta_rgb  mat3_mul_rgb            (const ta_mat3 *m, ta_rgb v);
 ta_mat3 mat3_hue_rotation       (float degrees);
 float   mat3_deter              (const ta_mat3 *m);

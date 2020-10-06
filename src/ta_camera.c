@@ -224,7 +224,7 @@ void ta_camera_update_world_view(ta_camera *camera)
 {
     ta_transform *transform = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
 
-    camera->front = vec3_rotate_quat(VEC3_NZ, transform->xform_world.orientation);
+    camera->front = quat_mul_vec3(transform->xform_world.orientation, VEC3_NZ);
     camera->right = vec3_normalize(vec3_cross(camera->front, VEC3_Y));
     camera->up = vec3_cross(camera->right, camera->front);
 

@@ -332,7 +332,7 @@ ta_vec3 ta_light_direction(ta_light *light)
         transform->xform_world.orientation = quat_normalize(transform->xform_world.orientation);
     }
     // Default light direction is directly down
-    ta_vec3 direction = vec3_rotate_quat(VEC3_NY, transform->xform_world.orientation);
+    ta_vec3 direction = quat_mul_vec3(transform->xform_world.orientation, VEC3_NY);
     direction = vec3_normalize(direction);
     return direction;
 }

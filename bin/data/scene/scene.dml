@@ -1671,7 +1671,7 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
   mass: 0x3F800000 (1.000000)
-  trigger: true
+  sensor: true
   no_gravity: true
 ta_rigid_body:
   name: "player_one"

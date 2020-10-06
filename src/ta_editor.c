@@ -275,7 +275,7 @@ static void editor_command_select()
                 } case TA_COLLIDER_OBB: {
                     ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
                     ta_obb obb = body->collider.data.obb;
-                    obb.center = vec3_rotate_quat(obb.center, transform->xform_world.orientation);
+                    obb.center = quat_mul_vec3(transform->xform_world.orientation, obb.center);
                     obb.center = vec3_add(obb.center, transform->xform_world.position);
                     obb.orientation = quat_normalize(quat_mul(transform->xform_world.orientation, obb.orientation));
                     if (ta_ray_v_obb(&ray, &obb, &t)) {
@@ -1392,11 +1392,11 @@ static void ui_node_panel()
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
-            ta_ui_label(CSTR("is trigger:"));
+            ta_ui_label(CSTR("is sensor:"));
             ta_ui_next_pad(0, 0, 0, 0);
             ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
             ta_ui_next_margin(0, 0, 0, 0);
-            if (rigid_body->trigger) {
+            if (rigid_body->sensor) {
                 ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
                 ta_ui_label(CSTR("True"));
@@ -1405,7 +1405,7 @@ static void ui_node_panel()
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
                 ta_ui_label(CSTR("False"));
             }
-            ta_ui_toggle_button_end(&rigid_body->trigger);
+            ta_ui_toggle_button_end(&rigid_body->sensor);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);

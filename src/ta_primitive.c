@@ -136,9 +136,9 @@ void ta_primitive_push_quad(ta_mesh *mesh, ta_quad quad, ta_rgba color)
     // {v0, v1, v2}, {v0, v2, v3}
 
     // u,v are +x,+y in quad space
-    ta_vec3 u = vec3_rotate_quat(VEC3_X, quad.orientation);
+    ta_vec3 u = quat_mul_vec3(quad.orientation, VEC3_X);
     u = vec3_normalize(u);
-    ta_vec3 v = vec3_rotate_quat(VEC3_Y, quad.orientation);
+    ta_vec3 v = quat_mul_vec3(quad.orientation, VEC3_Y);
     //ta_vec3 v = vec3_cross(vec3_normalize(quad.normal), u);
     v = vec3_normalize(v);
 
@@ -551,7 +551,7 @@ void ta_primitive_push_obb(ta_mesh *mesh, ta_obb obb, ta_rgba color)
     p[7].z = +obb.extents.z;
 
     for (int i = 0; i < 8; ++i) {
-        p[i] = vec3_rotate_quat(p[i], obb.orientation);
+        p[i] = quat_mul_vec3(obb.orientation, p[i]);
         p[i] = vec3_add(p[i], obb.center);
     }
 
@@ -670,9 +670,9 @@ void ta_primitive_push_axes_arrow_color(ta_mesh *mesh, ta_vec3 position, ta_vec4
     ta_vec3 y = VEC3_Y;
     ta_vec3 z = VEC3_Z;
     if (!quat_ident(orientation)) {
-        x = vec3_rotate_quat(x, orientation);
-        y = vec3_rotate_quat(y, orientation);
-        z = vec3_rotate_quat(z, orientation);
+        x = quat_mul_vec3(orientation, x);
+        y = quat_mul_vec3(orientation, y);
+        z = quat_mul_vec3(orientation, z);
     }
     ta_primitive_push_arrow(mesh, position, vec3_scalef(x, scale), cx);
     ta_primitive_push_arrow(mesh, position, vec3_scalef(y, scale), cy);

@@ -56,7 +56,9 @@ typedef struct ta_rigid_body {
     //ta_vec3 ang_acceleration;  // Dunno if we need this
 
     ta_vec3 velocity;
+    ta_vec3 velocity_prev_physics;
     ta_vec3 ang_velocity;
+    ta_vec3 ang_velocity_prev_physics;
 
     ta_vec3 force_accum;
     ta_vec3 torque_accum;
@@ -77,7 +79,7 @@ typedef struct ta_rigid_body {
 
     bool resting;
 
-    bool trigger;            // If true, don't resolve positions
+    bool sensor;             // If true, don't resolve positions
     bool no_gravity;         // If true, gravity will not affect this body
     bool no_rotation;        // If true, this rigid body will not rotate due to physics
     //float gravity_scale;   // Is this useful?
@@ -102,6 +104,5 @@ void ta_rigid_body_free_void            (void *body);
 void ta_rigid_body_apply_force          (ta_rigid_body *body, ta_vec3 force);
 void ta_rigid_body_apply_force_at       (ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
 void ta_rigid_body_apply_impulse        (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact_local);
-void ta_rigid_body_update               (ta_rigid_body *body, float dt);
 bool ta_rigid_body_intersect            (struct ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
 void ta_rigid_body_resolve_collision    (struct ta_manifold *manifold, float dt);

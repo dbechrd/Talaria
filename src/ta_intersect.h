@@ -13,6 +13,9 @@ typedef struct ta_manifold {
     ta_vec3 normal;       // normal from a to b
     float depth;          // distance along normal
     ta_vec3 contacts[8];  // in world coordinates
+    float lambdas[8];     // constraint multiplier
+    float lambda_normal[8];
+    float lambda_tangent[8];
     u32 contact_count;
     float e;   // Mixed restitution (0.0 = inelastic, 1.0 = perfectly elastic)
     float df;  // Mixed dynamic friction

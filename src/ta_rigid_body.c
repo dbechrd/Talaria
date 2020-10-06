@@ -1,4 +1,4 @@
-#include "ta_rigid_body.h"
+﻿#include "ta_rigid_body.h"
 #include "ta_game.h"
 #include "ta_intersect.h"
 #include "ta_log.h"
@@ -9,8 +9,6 @@
 #include "dlb/dlb_vector.h"
 #include <math.h>
 #include <float.h>
-
-#define GRAVITY -9.81f
 
 // HACK: These are closely related, and must be tuned to ensure velocity and
 //       orientation stop changing at the same time. Not sure if there's a way
@@ -78,100 +76,6 @@ void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 c
     }
 }
 
-void ta_rigid_body_update(ta_rigid_body *body, float dt)
-{
-    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
-
-    // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should consider
-    // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
-    DLB_ASSERT(!transform->parent);
-
-    if (body->name == tg_e_can) {
-        DLB_ASSERT(1);
-    }
-
-    // Update inverse mass when mass changes (editor UI)
-    body->inv_mass = body->mass ? 1.0f / body->mass : 0.0f;
-
-    // TODO: Calculate this based on torque_accum and dt
-    //body.m_angularVelocity +=  body.m_globalInverseInertiaTensor * (body.m_torqueAccumulator * dt);
-    float dtheta_mag = vec3_len(body->ang_velocity) * dt;
-    if (dtheta_mag > DTHETA_EPSILON) {
-        ta_vec4 delta_orient = quat_from_axis_angle(
-            vec3_normalize(body->ang_velocity),
-            dtheta_mag // * dt  // TODO: angular dt??
-        );
-        transform->xform.orientation = quat_normalize(quat_mul(delta_orient, transform->xform.orientation));
-
-#if 1
-        //DLB_ASSERT(vec3_zero(body->centroid_local));
-#else
-        // NOTE: This almost works.. but i think soemething is still borked.
-        // Maybe the tensor calculation below? I have no clue.
-        ta_vec3 rot = vec3_rotate_quat(body->centroid_local, delta_orient);
-        ta_vec3 rot_neg = vec3_neg(rot);
-        ta_vec3 offset = vec3_add(body->centroid_local, rot_neg);
-        ta_vec3 offset_world = vec3_rotate_quat(offset, transform->xform.orientation);
-
-        ta_line_3d line;
-        line.p0 = transform->xform.position;
-        line.p1 = vec3_add(transform->xform.position, offset_world);
-        ta_primitive_push_line_3d_q(&primitive_lines_perma, line, TA_COLOR_GRAY5, TA_COLOR_CYAN);
-        transform->xform.position = vec3_add(transform->xform.position, offset_world);
-#endif
-    }
-
-    // Update global tensor when orientation changes
-    if (!quat_equal(body->tensor_orientation, transform->xform.orientation)) {
-        // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf p. D14
-        // I_global = R * I_body * R^T
-        ta_mat3 rot = mat3_rotate_quat(transform->xform.orientation);
-        ta_mat3 rot_t = mat3_transpose(&rot);
-        ta_mat3 inv_t_global = mat3_mul(&body->inv_tensor_local, &rot_t);
-        inv_t_global = mat3_mul(&rot, &inv_t_global);
-        body->inv_tensor_global = inv_t_global;
-        body->tensor_orientation = transform->xform.orientation;
-    }
-
-    if (!body->no_gravity) {
-        ta_vec3 gravity = { 0.0f, GRAVITY, 0.0f };
-        gravity = vec3_scalef(gravity, body->mass);
-        ta_rigid_body_apply_force(body, gravity);
-    }
-
-    // a = Fdt / m
-    body->acceleration = vec3_scalef(body->force_accum, body->inv_mass);
-    ta_vec3 da = vec3_scalef(body->acceleration, dt);
-    body->velocity = vec3_add(body->velocity, da);
-    ta_vec3 dv = vec3_scalef(body->velocity, dt);
-    float dv_mag = vec3_len(dv);
-    if (dv_mag > DV_EPSILON) {
-        transform->xform.position = vec3_add(transform->xform.position, dv);
-    }
-
-    body->centroid_local = body->collider.data.center;
-    body->centroid_global = vec3_rotate_quat(body->centroid_local, transform->xform.orientation);
-    body->centroid_global = vec3_add(body->centroid_global, transform->xform.position);
-    body->aabb = ta_collider_world_bounds(&body->collider, &transform->xform);
-
-#if 1
-    // TODO: Implement drag in a way that doesn't vary with different timesteps
-    //       The "compound interest" problem.
-    body->velocity = vec3_scalef(body->velocity, 0.99f);
-    body->ang_velocity = vec3_scalef(body->ang_velocity, 0.99f);
-#endif
-
-    // Reset accumulators
-    body->force_accum = VEC3_ZERO;
-    body->torque_accum = VEC3_ZERO;
-
-    body->dbg_broadphase = false;
-    body->dbg_narrowphase = false;
-
-    // HACK: Cast const away to prevent MSVC warnings about nonsensical const incompatibility
-    dlb_vec_zero((char **)body->colliding_with);
-}
-
 static bool intersector_plane_v_sphere(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
 {
     DLB_ASSERT(a->collider.type == TA_COLLIDER_PLANE);
@@ -181,10 +85,10 @@ static bool intersector_plane_v_sphere(ta_manifold *manifold, const ta_rigid_bod
     ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
     ta_plane plane_a = a->collider.data.plane;
-    plane_a.center = vec3_rotate_quat(plane_a.center, atrans->xform.orientation);
+    plane_a.center = quat_mul_vec3(atrans->xform.orientation, plane_a.center);
     plane_a.center = vec3_add(plane_a.center, atrans->xform.position);
     ta_sphere sphere_b = b->collider.data.sphere;
-    sphere_b.center = vec3_rotate_quat(sphere_b.center, btrans->xform.orientation);
+    sphere_b.center = quat_mul_vec3(btrans->xform.orientation, sphere_b.center);
     sphere_b.center = vec3_add(sphere_b.center, btrans->xform.position);
     bool collided = ta_plane_v_sphere(manifold, &plane_a, &sphere_b);
     return collided;
@@ -198,10 +102,10 @@ static bool intersector_plane_v_obb(ta_manifold *manifold, const ta_rigid_body *
     ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
     ta_plane plane_a = a->collider.data.plane;
-    plane_a.center = vec3_rotate_quat(plane_a.center, atrans->xform.orientation);
+    plane_a.center = quat_mul_vec3(atrans->xform.orientation, plane_a.center);
     plane_a.center = vec3_add(plane_a.center, atrans->xform.position);
     ta_obb obb_b = b->collider.data.obb;
-    obb_b.center = vec3_rotate_quat(obb_b.center, btrans->xform.orientation);
+    obb_b.center = quat_mul_vec3(btrans->xform.orientation, obb_b.center);
     obb_b.center = vec3_add(obb_b.center, btrans->xform.position);
     obb_b.orientation = quat_normalize(quat_mul(btrans->xform.orientation, obb_b.orientation));
     bool collided = ta_plane_v_obb(manifold, &plane_a, &obb_b);
@@ -216,10 +120,10 @@ static bool intersector_sphere_v_sphere(ta_manifold *manifold, const ta_rigid_bo
     ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
     ta_sphere sphere_a = a->collider.data.sphere;
-    sphere_a.center = vec3_rotate_quat(sphere_a.center, atrans->xform.orientation);
+    sphere_a.center = quat_mul_vec3(atrans->xform.orientation, sphere_a.center);
     sphere_a.center = vec3_add(sphere_a.center, atrans->xform.position);
     ta_sphere sphere_b = b->collider.data.sphere;
-    sphere_b.center = vec3_rotate_quat(sphere_b.center, btrans->xform.orientation);
+    sphere_b.center = quat_mul_vec3(btrans->xform.orientation, sphere_b.center);
     sphere_b.center = vec3_add(sphere_b.center, btrans->xform.position);
     bool collided = ta_sphere_v_sphere(manifold, &sphere_a, &sphere_b);
     return collided;
@@ -233,10 +137,10 @@ static bool intersector_sphere_v_obb(ta_manifold *manifold, const ta_rigid_body 
     ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
     ta_sphere sphere_a = a->collider.data.sphere;
-    sphere_a.center = vec3_rotate_quat(sphere_a.center, atrans->xform.orientation);
+    sphere_a.center = quat_mul_vec3(atrans->xform.orientation, sphere_a.center);
     sphere_a.center = vec3_add(sphere_a.center, atrans->xform.position);
     ta_obb obb_b = b->collider.data.obb;
-    obb_b.center = vec3_rotate_quat(obb_b.center, btrans->xform.orientation);
+    obb_b.center = quat_mul_vec3(btrans->xform.orientation, obb_b.center);
     obb_b.center = vec3_add(obb_b.center, btrans->xform.position);
     obb_b.orientation = quat_normalize(quat_mul(btrans->xform.orientation, obb_b.orientation));
     bool collided = ta_sphere_v_obb(manifold, &sphere_a, &obb_b);
@@ -327,6 +231,12 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
 
     ta_rigid_body *a = manifold->a;
     ta_rigid_body *b = manifold->b;
+
+    // Sensor colliders don't need any resolution
+    if (a->sensor || b->sensor) {
+        return;
+    }
+
     ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
     ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
@@ -334,11 +244,6 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
     DLB_ASSERT(!atrans->parent);
     DLB_ASSERT(!btrans->parent);
-
-    // Trigger colliders don't need any resolution
-    if (a->trigger || b->trigger) {
-        return;
-    }
 
     // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
     if (a->inv_mass == 0.0f && b->inv_mass == 0.0f) {
@@ -362,7 +267,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         ta_vec3 a_center_world = a->centroid_global;
         ta_vec3 b_center_world = b->centroid_global;
 
-        // Radii (world space)
+        // Radii (to local space)
         ta_vec3 ra = vec3_sub(manifold->contacts[i], a_center_world);
         ta_vec3 rb = vec3_sub(manifold->contacts[i], b_center_world);
 
@@ -420,7 +325,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
             continue;
         }
 
-#if 1
+#if 0
         // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-oriented-rigid-bodies--gamedev-8032
         // TODO: Equation6 from the above the proper equation for 3D?
         // http://chrishecker.com/images/b/bb/Gdmphys4.pdf p. 24, Figure 4
@@ -455,6 +360,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         }
 #endif
 
+#if 0
         // Randy's Coloumb friction
         // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-friction-scene-and-jump-table--gamedev-7756
 
@@ -505,6 +411,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
             //-----------------------------
 #endif
         }
+#endif
     }
 
     // Positional correction (original PBD)
@@ -518,9 +425,9 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     atrans->xform.position = vec3_sub(atrans->xform.position, vec3_scalef(correction, a->inv_mass));
     btrans->xform.position = vec3_add(btrans->xform.position, vec3_scalef(correction, b->inv_mass));
 
-    a->centroid_global = vec3_rotate_quat(a->centroid_local, atrans->xform.orientation);
+    a->centroid_global = quat_mul_vec3(atrans->xform.orientation, a->centroid_local);
     a->centroid_global = vec3_add(a->centroid_global, atrans->xform.position);
-    b->centroid_global = vec3_rotate_quat(b->centroid_local, btrans->xform.orientation);
+    b->centroid_global = quat_mul_vec3(btrans->xform.orientation, b->centroid_local);
     b->centroid_global = vec3_add(b->centroid_global, btrans->xform.position);
     a->aabb = ta_collider_world_bounds(&a->collider, &atrans->xform);
     b->aabb = ta_collider_world_bounds(&b->collider, &btrans->xform);

@@ -233,6 +233,14 @@ ta_vec3 vec3_add(ta_vec3 a, ta_vec3 b)
     result.z = a.z + b.z;
     return result;
 }
+ta_vec3 vec3_add3(ta_vec3 a, ta_vec3 b, ta_vec3 c)
+{
+    ta_vec3 result;
+    result.x = a.x + b.x + c.x;
+    result.y = a.y + b.y + c.y;
+    result.z = a.z + b.z + c.z;
+    return result;
+}
 ta_vec3 vec3_sub(ta_vec3 a, ta_vec3 b)
 {
     ta_vec3 result;
@@ -301,23 +309,6 @@ ta_vec3 vec3_lerp(ta_vec3 a, ta_vec3 b, float w)
     result.z = a.z + w * (b.z - a.z);
     return result;
 }
-ta_vec3 vec3_rotate_quat(ta_vec3 v, ta_vec4 q)
-{
-    // http://physicsforgames.blogspot.com/2010/03/quaternion-tricks.html
-    float x1 = q.y*v.z - q.z*v.y;
-    float y1 = q.z*v.x - q.x*v.z;
-    float z1 = q.x*v.y - q.y*v.x;
-
-    float x2 = q.w*x1 + q.y*z1 - q.z*y1;
-    float y2 = q.w*y1 + q.z*x1 - q.x*z1;
-    float z2 = q.w*z1 + q.x*y1 - q.y*x1;
-
-    ta_vec3 result;
-    result.x = v.x + 2.0f*x2;
-    result.y = v.y + 2.0f*y2;
-    result.z = v.z + 2.0f*z2;
-    return result;
-}
 ta_vec3 vec3_perp(ta_vec3 v)
 {
     // Finds an abitrary, reasonable perpendicular vector to v, if possible
@@ -363,6 +354,15 @@ ta_vec4 vec4_init(float x, float y, float z, float w)
     v.z = z;
     v.w = w;
     return v;
+}
+ta_vec4 vec4_init_vw(ta_vec3 v, float w)
+{
+    ta_vec4 result;
+    result.x = v.x;
+    result.y = v.y;
+    result.z = v.z;
+    result.w = w;
+    return result;
 }
 
 void quat_print(FILE *file, ta_vec4 q)
@@ -466,7 +466,7 @@ ta_vec4 quat_inverse(ta_vec4 q)
     float norm_sq = quat_norm_sq(result);
 
     // Inverse == conjugate for normalized ("unit-norm") quaternions
-    if (norm_sq == 1.0f)
+    if (fabs(norm_sq - 1.0f) < TA_EPSILON)
         return result;
 
     assert(norm_sq != 0.0f);
@@ -493,6 +493,24 @@ ta_vec4 quat_mul(ta_vec4 a, ta_vec4 b)
     result.x = a.w*b.x + a.x*b.w + a.y*b.z - a.z*b.y;
     result.y = a.w*b.y - a.x*b.z + a.y*b.w + a.z*b.x;
     result.z = a.w*b.z + a.x*b.y - a.y*b.x + a.z*b.w;
+    return result;
+}
+ta_vec4 quat_add(ta_vec4 a, ta_vec4 b)
+{
+    ta_vec4 result;
+    result.x = a.x + b.x;
+    result.y = a.y + b.y;
+    result.z = a.z + b.z;
+    result.w = a.w + b.w;
+    return result;
+}
+ta_vec4 quat_sub(ta_vec4 a, ta_vec4 b)
+{
+    ta_vec4 result;
+    result.x = a.x - b.x;
+    result.y = a.y - b.y;
+    result.z = a.z - b.z;
+    result.w = a.w - b.w;
     return result;
 }
 float quat_dot(ta_vec4 a, ta_vec4 b)
@@ -533,6 +551,24 @@ ta_vec4 quat_slerp(ta_vec4 a, ta_vec4 b, float w)
     UNUSED(b);
     UNUSED(w);
     return QUAT_IDENT;
+}
+// NOTE: This is the same as vec3_rotate_quat, use this version
+ta_vec3 quat_mul_vec3(ta_vec4 q, ta_vec3 v)
+{
+    // http://physicsforgames.blogspot.com/2010/03/quaternion-tricks.html
+    float x1 = q.y*v.z - q.z*v.y;
+    float y1 = q.z*v.x - q.x*v.z;
+    float z1 = q.x*v.y - q.y*v.x;
+
+    float x2 = q.w*x1 + q.y*z1 - q.z*y1;
+    float y2 = q.w*y1 + q.z*x1 - q.x*z1;
+    float z2 = q.w*z1 + q.x*y1 - q.y*x1;
+
+    ta_vec3 result;
+    result.x = v.x + 2.0f*x2;
+    result.y = v.y + 2.0f*y2;
+    result.z = v.z + 2.0f*z2;
+    return result;
 }
 
 void mat3_print(FILE *file, const ta_mat3 *m)
@@ -654,6 +690,7 @@ ta_mat3 mat3_mul(const ta_mat3 *a, const ta_mat3 *b)
     }
     return result;
 }
+// matrix3 * column vector
 ta_vec3 mat3_mul_vec3(const ta_mat3 *m, ta_vec3 v)
 {
     ta_vec3 result;
@@ -676,6 +713,29 @@ ta_vec3 mat3_mul_vec3(const ta_mat3 *m, ta_vec3 v)
 
     return result;
 }
+//// row vector * matrix3
+//ta_vec3 vec3_mul_mat3(ta_vec3 v, const ta_mat3 *m)
+//{
+//    ta_vec3 result;
+//    result.x =
+//        v.x * m->data.f[0][0] +
+//        v.y * m->data.f[1][0] +
+//        v.z * m->data.f[2][0];
+//    result.y =
+//        v.x * m->data.f[0][1] +
+//        v.y * m->data.f[1][1] +
+//        v.z * m->data.f[2][1];
+//    result.z =
+//        v.x * m->data.f[0][2] +
+//        v.y * m->data.f[1][2] +
+//        v.z * m->data.f[2][2];
+//
+//    if (fabsf(result.x) < TA_EPSILON) result.x = 0.0f;
+//    if (fabsf(result.y) < TA_EPSILON) result.y = 0.0f;
+//    if (fabsf(result.z) < TA_EPSILON) result.z = 0.0f;
+//
+//    return result;
+//}
 ta_rgb mat3_mul_rgb(const ta_mat3 *m, ta_rgb v)
 {
     ta_rgb result;

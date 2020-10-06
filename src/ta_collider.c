@@ -112,7 +112,7 @@ static ta_aabb plane_world_bounds(ta_plane *plane, ta_xform *xform)
     // TODO: Calculate AABB for plane (add TA_EPSILON depth)
     // or .. infinite AABB??
     ta_aabb result = { 0 };
-    result.center = vec3_rotate_quat(plane->center, xform->orientation);
+    result.center = quat_mul_vec3(xform->orientation, plane->center);
     result.center = vec3_add(result.center, xform->position);
     result.extents = VEC3_ONE;
     return result;
@@ -123,7 +123,7 @@ static ta_aabb sphere_world_bounds(ta_sphere *sphere, ta_xform *xform)
     DLB_ASSERT(sphere->radius >= TA_EPSILON);
 
     ta_aabb result = { 0 };
-    result.center = vec3_rotate_quat(sphere->center, xform->orientation);
+    result.center = quat_mul_vec3(xform->orientation, sphere->center);
     result.center = vec3_add(result.center, xform->position);
     result.extents.x = sphere->radius;
     result.extents.y = sphere->radius;
@@ -138,7 +138,7 @@ static ta_aabb obb_world_bounds(ta_obb *obb, ta_xform *xform)
     obb->extents.z = MAX(obb->extents.z, TA_EPSILON);
 
     ta_aabb result = { 0 };
-    result.center = vec3_rotate_quat(obb->center, xform->orientation);
+    result.center = quat_mul_vec3(xform->orientation, obb->center);
     result.center = vec3_add(result.center, xform->position);
 
     ta_vec3 p[8] = { 0 };
@@ -168,8 +168,8 @@ static ta_aabb obb_world_bounds(ta_obb *obb, ta_xform *xform)
     p[7].z = +obb->extents.z;
 
     for (int i = 0; i < 8; ++i) {
-        p[i] = vec3_rotate_quat(p[i], obb->orientation);
-        p[i] = vec3_rotate_quat(p[i], xform->orientation);
+        p[i] = quat_mul_vec3(obb->orientation, p[i]);
+        p[i] = quat_mul_vec3(xform->orientation, p[i]);
         //p[i] = vec3_add(p[i], obb->center);
 
         result.extents.x = (float)MAX(result.extents.x, fabs(p[i].x));

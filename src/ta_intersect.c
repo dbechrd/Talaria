@@ -96,8 +96,8 @@ bool ta_ray_v_quad(const ta_ray *ray, const ta_quad *quad, float *t_intersect)
     // Ray in quad local space
     ta_vec4 orient_inv = quat_inverse(quad->orientation);
     ta_ray ray_local = { 0 };
-    ray_local.origin = vec3_rotate_quat(vec3_sub(ray->origin, quad->center), orient_inv);
-    ray_local.direction = vec3_rotate_quat(ray->direction, orient_inv);
+    ray_local.origin = quat_mul_vec3(orient_inv, vec3_sub(ray->origin, quad->center));
+    ray_local.direction = quat_mul_vec3(orient_inv, ray->direction);
 
 #if 0
     // TODO: Cleanup debug code
@@ -139,8 +139,8 @@ bool ta_ray_v_obb(const ta_ray *ray, const ta_obb *obb, float *t_intersect)
     // Ray in obb local space
     ta_vec4 orient_inv = quat_inverse(obb->orientation);
     ta_ray ray_local = { 0 };
-    ray_local.origin = vec3_rotate_quat(vec3_sub(ray->origin, obb->center), orient_inv);
-    ray_local.direction = vec3_rotate_quat(ray->direction, orient_inv);
+    ray_local.origin = quat_mul_vec3(orient_inv, vec3_sub(ray->origin, obb->center));
+    ray_local.direction = quat_mul_vec3(orient_inv, ray->direction);
 
     // Calculate plane for each face of OBB
     ta_plane planes[6] = { 0 };
@@ -277,7 +277,7 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane,
     p[6].x = +obb->extents.x; p[6].y = +obb->extents.y; p[6].z = -obb->extents.z;
     p[7].x = +obb->extents.x; p[7].y = +obb->extents.y; p[7].z = +obb->extents.z;
     for (int i = 0; i < 8; ++i) {
-        p[i] = vec3_rotate_quat(p[i], obb->orientation);
+        p[i] = quat_mul_vec3(obb->orientation, p[i]);
         p[i] = vec3_add(p[i], obb->center);
     }
 
@@ -371,14 +371,14 @@ bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere,
     p[6].x = +obb->extents.x; p[6].y = +obb->extents.y; p[6].z = -obb->extents.z;
     p[7].x = +obb->extents.x; p[7].y = +obb->extents.y; p[7].z = +obb->extents.z;
     for (int i = 0; i < 8; ++i) {
-        p[i] = vec3_rotate_quat(p[i], obb->orientation);
+        p[i] = quat_mul_vec3(obb->orientation, p[i]);
         p[i] = vec3_add(p[i], obb->center);
     }
 
     // Sphere center in OBB local space
     ta_vec3 sphere_center_obb = vec3_sub(sphere->center, obb->center);
     ta_vec4 obb_orient_inv = quat_inverse(obb->orientation);
-    sphere_center_obb = vec3_rotate_quat(sphere_center_obb, obb_orient_inv);
+    sphere_center_obb = quat_mul_vec3(obb_orient_inv, sphere_center_obb);
 
     // Check easy separating axes (early out)
     if (fabs(sphere_center_obb.x) - sphere->radius > obb->extents.x ||
@@ -402,7 +402,7 @@ bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere,
 
     // COLLISION!
     if (manifold) {
-        ta_vec3 closest = vec3_rotate_quat(closest_obb, obb->orientation);
+        ta_vec3 closest = quat_mul_vec3(obb->orientation, closest_obb);
         closest = vec3_add(closest, obb->center);
         ta_vec3 normal = vec3_sub(closest, sphere->center);
         // Edge case: Objects at same position, arbitrarily point normal up
