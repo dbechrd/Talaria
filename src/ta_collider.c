@@ -74,7 +74,7 @@ static ta_mat3 obb_inverse_tensor(ta_obb *obb, float mass)
 
     // HACK: Cube moment of inertia: 1/6 ms^2 (where s = side length)
     float side = obb->extents.x;
-    float moment = 1.0f/12.0f * mass * (side * side + side * side);
+    float moment = 1.0f/6.0f * mass * (side * side);
     float inv_moment = 1.0f / moment;
     inv_tensor = mat3_init(
         inv_moment, 0.0f,       0.0f,

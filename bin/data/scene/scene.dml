@@ -1810,7 +1810,7 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
-  mass: 0x3CA3D70A (0.020000)
+  mass: 0x3F800000 (1.000000)
 ta_rigid_body:
   name: "ground"
   entity: "ground"

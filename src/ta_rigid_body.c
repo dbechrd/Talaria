@@ -86,6 +86,10 @@ void ta_rigid_body_update(ta_rigid_body *body, float dt)
     // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
     DLB_ASSERT(!transform->parent);
 
+    if (body->name == tg_e_can) {
+        DLB_ASSERT(1);
+    }
+
     // Update inverse mass when mass changes (editor UI)
     body->inv_mass = body->mass ? 1.0f / body->mass : 0.0f;
 
@@ -326,10 +330,6 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
     ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
-    if (a->name == tg_e_can || b->name == tg_e_can) {
-        DLB_ASSERT(1);
-    }
-
     // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should consider
     // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
     DLB_ASSERT(!atrans->parent);
@@ -354,6 +354,10 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         ta_mesh_clear_buffers(&primitive_lines_perma);
     }
 
+    if (a->name == tg_e_can || b->name == tg_e_can) {
+        DLB_ASSERT(1);
+    }
+
     for (u32 i = 0; i < manifold->contact_count; i++) {
         ta_vec3 a_center_world = a->centroid_global;
         ta_vec3 b_center_world = b->centroid_global;
@@ -362,6 +366,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         ta_vec3 ra = vec3_sub(manifold->contacts[i], a_center_world);
         ta_vec3 rb = vec3_sub(manifold->contacts[i], b_center_world);
 
+#if 0
         // HACK: Planes don't have a valid centroid for the purposes of collision resolution
         if (a->collider.type == TA_COLLIDER_PLANE) {
             ra = vec3_neg(rb);
@@ -372,42 +377,45 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
             rb = vec3_neg(ra);
             b_center_world = vec3_sub(manifold->contacts[i], rb);
         }
-
+#endif
 #if 1
         // Debug rendering (resolution impulse)
         ta_primitive_push_arrow(&primitive_lines_perma, a_center_world, ra, TA_COLOR_PINK);
         ta_primitive_push_arrow(&primitive_lines_perma, b_center_world, rb, TA_COLOR_CYAN);
 #endif
 
-        // Relative velocity
-        ta_vec3 rv_a = vec3_sub(a->velocity, vec3_cross(a->ang_velocity, ra));
-        ta_vec3 rv_b = vec3_add(b->velocity, vec3_cross(b->ang_velocity, rb));
-        ta_vec3 rv = vec3_sub(rv_b, rv_a);
+        // Angular velocity
+        ta_vec3 va_a = vec3_cross(a->ang_velocity, ra);
+        ta_vec3 va_b = vec3_cross(b->ang_velocity, rb);
+        // Linear velocity
+        ta_vec3 v_a = vec3_sub(a->velocity, va_a);
+        ta_vec3 v_b = vec3_add(b->velocity, va_b);
+        // Relative velocity from A to B
+        ta_vec3 rv = vec3_sub(v_b, v_a);
+        // Closing velocity from A to B
+        float v_closing = vec3_dot(rv, manifold->normal);
 
-        // Separating velocity along normal
-        float v_separate = vec3_dot(rv, manifold->normal);
-        float v_separate_new = -v_separate;
-
-        // Calculate separating velocity coming from acceleration this frame
+        // Relative acceleration from A to B
         ta_vec3 v_acc = vec3_sub(b->acceleration, a->acceleration);
-        float v_acc_separate = vec3_dot(v_acc, manifold->normal) * dt;
+        // Closing acceleration from A to B this frame (i.e. delta velocity)
+        float v_acc_closing = vec3_dot(v_acc, manifold->normal) * dt;
 
-        if (v_acc_separate < 0) {
-            v_separate_new += v_acc_separate;
-            v_separate_new = MAX(0, v_separate_new);
+        if (fabs(v_acc_closing) > 0) {
+            v_closing -= v_acc_closing;
+            v_closing = MIN(0, v_closing);  // Prevent over-correction from flipping the sign
         }
 
-        float delta_v = v_separate_new - v_separate;
         float restitution = manifold->e;
-
+#if 0
         // "Box2D also uses inelastic collisions when the collision velocity is
         // small. This is done to prevent jitter." -Box2D manual
-        if (fabs(v_separate) < 0.01f) {
+        if (fabs(v_closing) < 0.01f) {
             restitution = 0.0f;
         }
-
-        delta_v *= restitution;
-        if (delta_v <= 0) {
+#endif
+        // Separating velocity (with respect to A)
+        v_closing *= restitution;
+        if (v_closing < 0) {
             // If bodies moving apart, let it happen
             continue;
         }
@@ -427,7 +435,7 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         float j_denom = a->inv_mass + b->inv_mass + impulse_ang;
 
         // Calculate impulse
-        float jn = delta_v / j_denom;
+        float jn = v_closing / j_denom;
         ta_vec3 a_resolve = vec3_scalef(manifold->normal, -jn);
         ta_vec3 b_resolve = vec3_neg(a_resolve);
 
@@ -451,13 +459,19 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         // https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-friction-scene-and-jump-table--gamedev-7756
 
         // Recalculate relative velocity after impulses are applied
-        rv_a = vec3_sub(a->velocity, vec3_cross(a->ang_velocity, ra));
-        rv_b = vec3_add(b->velocity, vec3_cross(b->ang_velocity, rb));
-        rv = vec3_sub(rv_b, rv_a);
-        v_separate = vec3_dot(rv, manifold->normal);
+        // Angular velocity
+        va_a = vec3_cross(a->ang_velocity, ra);
+        va_b = vec3_cross(b->ang_velocity, rb);
+        // Linear velocity
+        v_a = vec3_sub(a->velocity, va_a);
+        v_b = vec3_add(b->velocity, va_b);
+        // Relative velocity from A to B
+        rv = vec3_sub(v_b, v_a);
+        // Closing velocity from A to B
+        v_closing = vec3_dot(rv, manifold->normal);
 
         // Tangent vector
-        ta_vec3 t = vec3_sub(rv, vec3_scalef(manifold->normal, v_separate));
+        ta_vec3 t = vec3_sub(rv, vec3_scalef(manifold->normal, v_closing));
         if (!vec3_tiny(t)) {
             t = vec3_normalize(t);
 
