@@ -863,6 +863,8 @@ static void game_simulate(float dt)
     if (dlb_vec_len(primitive_lines_perma.buffers[0]) > 100000) {
         ta_mesh_clear_buffers(&primitive_lines_perma);
     }
+#else
+    ta_mesh_clear_buffers(&primitive_lines_perma);
 #endif
 
     dlb_vec_zero(tg_game.pairs);
@@ -894,11 +896,9 @@ static void game_simulate(float dt)
             // Update inverse mass when mass changes (via editor)
             body->inv_mass = body->mass ? 1.0f / body->mass : 0.0f;
 
-            // Update centroids (collider.data.center can be changed via editor)
+            // Update centroids and AABB (can be affected via editor)
             body->centroid_local = body->collider.data.center;
             body->centroid_global = vec3_add(transform->xform.position, quat_mul_vec3(transform->xform.orientation, body->centroid_local));
-
-            // Update AABB (collider size can change via editor)
             body->aabb = ta_collider_world_bounds(&body->collider, &transform->xform);
         }
 
@@ -971,6 +971,13 @@ static void game_simulate(float dt)
                 continue;
             }
 
+            // All of this code currently assumes body->xform == collider position/rotation, we would need to be
+            // more clever to get this to work with arbitrary offsets. "More clever" probably means making the rigid
+            // body be the parent of the mesh and letting transform_update handle the offset
+            DLB_ASSERT(vec3_zero(a->centroid_local));
+            DLB_ASSERT(vec3_zero(b->centroid_local));
+
+            // TODO: Could cache this in the manifold as a pointer if we implement resource pool locks
             ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
             ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
@@ -992,34 +999,21 @@ static void game_simulate(float dt)
             }
 
             for (u32 i = 0; i < manifold->contact_count; i++) {
-                // TODO: May want to store these in local space instead, especially if iterations update centroid_global
+                // TODO: We may need to convert manifold->normal into local space for each body?
+                // TODO: We may need to convert the various impulse vectors into local space for each body?
+
                 // radii (local space)
-                ta_vec3 ra = vec3_sub(manifold->contacts[i], a->centroid_global);
-                ta_vec3 rb = vec3_sub(manifold->contacts[i], b->centroid_global);
+                const ta_vec3 ra = manifold->contacts[i].ra;
+                const ta_vec3 rb = manifold->contacts[i].rb;
 
-                // TODO: lamda_normal, lambda_tangent
-
-                // contact points (world space)
-                ta_vec3 contact_a = vec3_add(atrans->xform.position, quat_mul_vec3(atrans->xform.orientation, ra));
-                ta_vec3 contact_b = vec3_add(btrans->xform.position, quat_mul_vec3(btrans->xform.orientation, rb));
-                float d = vec3_dot(vec3_sub(contact_a, contact_b), manifold->normal);
-                if (d <= 0) {
-                    continue;
-                }
-
-                // TODO: Apply Dx = dn with a = 0 and lambda_normal
-#if 1
                 // generalized inverse masses
-                // NOTE: I don't understand equation 43 in PBDBodies.pdf as there's no dot product and it seems as if
-                // it's adding a vec3 to a scalar?? Using equation 42 instead, which matches my old code.
-                float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra), manifold->normal);
-                float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb), manifold->normal);
-#else
-                //ta_vec3 impulse_ang_a = vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra);
-                //ta_vec3 impulse_ang_b = vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb);
-                //float impulse_ang = vec3_dot(vec3_add(impulse_ang_a, impulse_ang_b), manifold->normal);
-#endif
+                //const float wa = manifold->contacts[i].wa;
+                //const float wb = manifold->contacts[i].wb;
 
+                // generalized inverse masses
+                // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
+                const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra), manifold->normal);
+                const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb), manifold->normal);
 #if 0
                 // TODO: Reincorporate lambda and alpha to allow non-infinitely stiff constraints (though not for
                 // contact resolution, which should use a = 0)
@@ -1028,40 +1022,54 @@ static void game_simulate(float dt)
                 const float lambda = manifold->lambdas[i];
 
                 float delta_lambda = (-d - alpha_wavy * lambda) / (wa + wb + alpha_wavy);
-                manifold->lambdas[i] += delta_lambda;
+                manifold->contacts[i].lambda += delta_lambda;
 #else
                 // NOTE: Simplification for alpha = 0, which removes the need to store lambda between constraint solves
-                float delta_lambda = -d / (wa + wb);
+                float delta_lambda = -manifold->depth / (wa + wb);
 #endif
-
                 // contact penetration impulse
-                ta_vec3 impulse = vec3_scalef(manifold->normal, delta_lambda);
-                atrans->xform.position = vec3_add(atrans->xform.position, vec3_scalef(impulse, a->inv_mass));
-                btrans->xform.position = vec3_sub(btrans->xform.position, vec3_scalef(impulse, b->inv_mass));
-
-                // equation 8 & 9 in PBDBodies.pdf, not sure what [stuff, 0] means, or what "q1 + stuff" is.. quat_add??
-                // q = q + 1/2[I^-1(r x p), 0]q
-                // q = q - 1/2[I^-1(r x p), 0]q
-                atrans->xform.orientation = quat_add(atrans->xform.orientation, quat_scale(quat_mul(vec4_init_vw(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, impulse)), 0), atrans->xform.orientation), 0.5f));
-                btrans->xform.orientation = quat_sub(btrans->xform.orientation, quat_scale(quat_mul(vec4_init_vw(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, impulse)), 0), btrans->xform.orientation), 0.5f));
-                atrans->xform.orientation = quat_normalize(atrans->xform.orientation);
-                btrans->xform.orientation = quat_normalize(btrans->xform.orientation);
+                // Apply Dx = dn with a = 0 and lambda_normal
+                ta_vec3 dx_penetration_a = vec3_scalef(manifold->normal, delta_lambda);
+                ta_vec3 dx_penetration_b = vec3_scalef(manifold->normal, -delta_lambda);
+                ta_rigid_body_apply_positional_correction(a, &atrans->xform, dx_penetration_a, ra);
+                ta_rigid_body_apply_positional_correction(b, &btrans->xform, dx_penetration_b, rb);
+#if 1
+                // DEBUG: Render penetration impulse vectors
+                ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dx_penetration_a, TA_COLOR_PINK);
+                ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(b->centroid_global, rb), dx_penetration_b, TA_COLOR_CYAN);
+#endif
+                ta_vec3 ra_world = vec3_add(atrans->xform.position, quat_mul_vec3(atrans->xform.orientation, ra));
+                ta_vec3 rb_world = vec3_add(btrans->xform.position, quat_mul_vec3(btrans->xform.orientation, rb));
 
                 // static friction impulse
-                ta_vec3 contact_a_prev = vec3_add(atrans->xform_prev_physics.position, quat_mul_vec3(atrans->xform_prev_physics.orientation, ra));
-                ta_vec3 contact_b_prev = vec3_add(btrans->xform_prev_physics.position, quat_mul_vec3(btrans->xform_prev_physics.orientation, rb));
-                // relative velocity
-                ta_vec3 delta_p = vec3_sub(vec3_sub(contact_a, contact_a_prev), vec3_sub(contact_b, contact_b_prev));
-                // tangential component of relative velocity
-                ta_vec3 delta_p_tangent = vec3_sub(delta_p, vec3_scalef(manifold->normal, vec3_dot(delta_p, manifold->normal)));
+                ta_vec3 ra_world_prev = vec3_add(atrans->xform_prev_physics.position, quat_mul_vec3(atrans->xform_prev_physics.orientation, ra));
+                ta_vec3 rb_world_prev = vec3_add(btrans->xform_prev_physics.position, quat_mul_vec3(btrans->xform_prev_physics.orientation, rb));
+                // relative motion of contacts
+                ta_vec3 dp = vec3_sub(vec3_sub(ra_world, ra_world_prev), vec3_sub(rb_world, rb_world_prev));
+                // tangential component of relative motion
+                ta_vec3 dp_tangent = vec3_sub(dp, vec3_scalef(manifold->normal, vec3_dot(dp, manifold->normal)));
+                ta_vec3 dx_static_friction = { 0 };
 
-                // TODO: Apply Dx = Dp_t with a = 0 if lambda_tangent < manifold->sf * lambda_normal
-
+                // if lambda_tangent < manifold->sf * lambda_normal
+                const float lambda_n2 = vec3_len2(dp);
+                const float lambda_t2 = vec3_len2(dp_tangent);
+                const float mu_s2 = manifold->coef_static * manifold->coef_static;
+                if (lambda_t2 < mu_s2 * lambda_n2) {
+                    // Apply Dx = Dp_t with a = 0
+                    ta_vec3 dx_static_friction_a = dp_tangent;
+                    ta_vec3 dx_static_friction_b = vec3_neg(dp_tangent);
+                    //ta_rigid_body_apply_positional_correction(a, &atrans->xform, dx_static_friction_a, ra);
+                    //ta_rigid_body_apply_positional_correction(b, &btrans->xform, dx_static_friction_b, rb);
 #if 0
-                // Debug rendering (resolution impulse)
-                ta_primitive_push_arrow(&primitive_lines_perma, a->centroid_global, ra, TA_COLOR_PINK);
-                ta_primitive_push_arrow(&primitive_lines_perma, b->centroid_global, rb, TA_COLOR_CYAN);
+                    // DEBUG: Render static friction impulse vectors
+                    ta_primitive_push_arrow(&primitive_lines_perma, a->centroid_global, ra, TA_COLOR_PINK);
+                    ta_primitive_push_arrow(&primitive_lines_perma, b->centroid_global, rb, TA_COLOR_CYAN);
 #endif
+                    // NOTE: We may need to update world space radii if we want to apply any more positional corrections
+                    // that depend on them, but it's commented as an optimization since this is currently the last one
+                    //ra_world = vec3_add(atrans->xform.position, quat_mul_vec3(atrans->xform.orientation, ra));
+                    //rb_world = vec3_add(btrans->xform.position, quat_mul_vec3(btrans->xform.orientation, rb));
+                }
             }
         }
     }
@@ -1071,12 +1079,23 @@ static void game_simulate(float dt)
     // end
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
         ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
-        body->velocity_prev_physics = body->velocity;
-        body->velocity = vec3_scalef(vec3_sub(transform->xform.position, transform->xform_prev_physics.position), 1.0f/dt);
 
-        ta_vec4 delta_q = quat_mul(transform->xform.orientation, quat_inverse(transform->xform_prev_physics.orientation));
+        body->velocity_prev_physics = body->velocity;
         body->ang_velocity_prev_physics = body->ang_velocity;
-        body->ang_velocity = vec3_scalef(vec3_init(delta_q.x, delta_q.y, delta_q.z), ((delta_q.w < 0.0f) * -1.0f) * 2.0f/dt);
+
+        ta_vec3 dp = vec3_sub(transform->xform.position, transform->xform_prev_physics.position);
+        body->velocity = vec3_scalef(dp, 1.0f/dt);
+
+        ta_vec4 dq = quat_mul(transform->xform.orientation, quat_inverse(transform->xform_prev_physics.orientation));
+        body->ang_velocity = vec3_scalef(vec3_init(dq.x, dq.y, dq.z), ((dq.w < 0.0f) * -1.0f) * 2.0f/dt);
+
+        // check for NaN and infinity
+        DLB_ASSERT(vec3_good(body->velocity));
+        DLB_ASSERT(vec3_good(body->ang_velocity));
+
+        if (body->name == tg_e_can && dlb_vec_len(body->colliding_with)) {
+            DLB_ASSERT(1);
+        }
     }
 
     dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
@@ -1090,6 +1109,7 @@ static void game_simulate(float dt)
             continue;
         }
 
+        // TODO: Could cache this in the manifold as a pointer if we implement resource pool locks
         ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
         ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
 
@@ -1111,27 +1131,44 @@ static void game_simulate(float dt)
         }
 
         for (u32 i = 0; i < manifold->contact_count; i++) {
-            // TODO: May want to store these in local space instead, especially if iterations update centroid_global
             // radii (local space)
-            ta_vec3 ra = vec3_sub(manifold->contacts[i], a->centroid_global);
-            ta_vec3 rb = vec3_sub(manifold->contacts[i], b->centroid_global);
+            const ta_vec3 ra = manifold->contacts[i].ra;
+            const ta_vec3 rb = manifold->contacts[i].rb;
 
             // relative velocity
             ta_vec3 va = vec3_add(a->velocity, vec3_cross(a->ang_velocity, ra));
-            ta_vec3 vb = vec3_add(a->velocity, vec3_cross(a->ang_velocity, rb));
+            ta_vec3 vb = vec3_add(b->velocity, vec3_cross(b->ang_velocity, rb));
             ta_vec3 v = vec3_sub(va, vb);
 
             // normal/tangential velocity
-            float vn = vec3_dot(manifold->normal, v);
+            float vn = vec3_dot(v, manifold->normal);
             ta_vec3 vt = vec3_sub(v, vec3_scalef(manifold->normal, vn));
+            float vt_mag = vec3_len(vt);
 
             // dynamic friction
-            float vt_mag = vec3_len(vt);
-            float fn = manifold->lambda_normal[i] / dt;
-            ta_vec3 dv_dynamic_friction = vec3_scalef(vt, -MIN((manifold->df * fn) / vt_mag, 1.0f));
+            ta_vec3 dv_dynamic_friction = { 0 };
+            if (true || vt_mag > TA_EPSILON) {
+                //float term_a = (manifold->coef_dynamic * vn / dt);
+                //float term_b = term_a / vt_mag;
+                //dv_dynamic_friction = vec3_scalef(vt, -MIN(term_b, 1.0f));
+
+                ta_vec3 vtn = vec3_normalize(vt);
+                // PBDBodies eq. 31 says to do this.. but it explodes. Why?
+                //float fn = vn / (dt * dt);
+                //dv_dynamic_friction = vec3_scalef(vtn, -MIN(dt * manifold->coef_dynamic * fn, vt_mag));
+                dv_dynamic_friction = vec3_scalef(vtn, -MIN(manifold->coef_dynamic * vn, vt_mag));
+#if 1
+                ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dv_dynamic_friction, TA_COLOR_ORANGE);
+#endif
+                if (a->name == tg_e_can || b->name == tg_e_can) {
+                    DLB_ASSERT(1);
+                }
+            }
 
             // TODO: Joint damping (eq. 32 & 33 in PBDBodies)
             ta_vec3 dv_damping = { 0 };
+            //float coef_linear_damping = 0.9f;
+            //dv_damping = vec3_scalef(vec3_sub(b->velocity, a->velocity), MIN(coef_linear_damping * dt, 1.0f));
 
             // restitution
             // previous relative velocity (before velocity integration)
@@ -1140,25 +1177,24 @@ static void game_simulate(float dt)
             ta_vec3 v_prev = vec3_sub(va_prev, vb_prev);
             // previous normal velocity
             float vn_prev = vec3_dot(manifold->normal, v_prev);
-            float e = manifold->e * (float)(fabs(vn) <= (2.0f * fabs(GRAVITY) * dt));
+            // for small vn, |vn| <= 2|g|h, set restitution to 0 to avoid jittering
+            float e = manifold->e * (float)(fabs(vn) > (2.0f * fabs(GRAVITY) * dt));
+            // dv = n(-vn + MAX(-e * vn_prev, 0))
             ta_vec3 dv_restitution = vec3_scalef(manifold->normal, -vn + MAX(-e * vn_prev, 0));
 
-            // TODO: Cache generalized inverse masses (wa/wb) in the positional solver
-            float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra), manifold->normal);
-            float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb), manifold->normal);
+#if 1
+            // DEBUG: Render restitution impulse
+            ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dv_damping,     TA_COLOR_YELLOW);
+            ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dv_restitution, TA_COLOR_RED);
+#endif
 
             ta_vec3 dv_total = vec3_add3(dv_dynamic_friction, dv_damping, dv_restitution);
-            ta_vec3 impulse = vec3_scalef(dv_total, wa + wb);
-            a->velocity = vec3_add(a->velocity, vec3_scalef(impulse, a->inv_mass));
-            b->velocity = vec3_add(b->velocity, vec3_scalef(impulse, b->inv_mass));
-            a->ang_velocity = vec3_add(a->ang_velocity, mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, impulse)));
-            b->ang_velocity = vec3_add(b->ang_velocity, mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, impulse)));
-
-#if 0
-            // Debug rendering (resolution impulse)
-            ta_primitive_push_arrow(&primitive_lines_perma, a->centroid_global, ra, TA_COLOR_PINK);
-            ta_primitive_push_arrow(&primitive_lines_perma, b->centroid_global, rb, TA_COLOR_CYAN);
-#endif
+            const float wa = manifold->contacts[i].wa;
+            const float wb = manifold->contacts[i].wb;
+            ta_vec3 dv_total_a = vec3_scalef(dv_total, 1.0f/(wa + wb));
+            ta_vec3 dv_total_b = vec3_neg(dv_total_a);
+            ta_rigid_body_apply_velocity_correction(a, dv_total_a, ra);
+            ta_rigid_body_apply_velocity_correction(b, dv_total_b, rb);
         }
     }
 
@@ -1217,16 +1253,16 @@ static void game_render_skybox()
 }
 static void game_render_manifolds_debug()
 {
-    const float radius = 0.05f;
+    const float radius = 0.025f;
     dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
         for (u32 i = 0; i < manifold->contact_count; ++i) {
             ta_sphere dbg_contact_world = { 0 };
-            dbg_contact_world.center = manifold->contacts[i];
+            dbg_contact_world.center = manifold->contacts[i].world;
             dbg_contact_world.radius = radius;
             ta_primitive_push_sphere(0, dbg_contact_world, TA_COLOR_DARK_RED);
             ta_line_3d dbg_contact_normal = { 0 };
-            dbg_contact_normal.p0 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, radius));
-            dbg_contact_normal.p1 = vec3_add(manifold->contacts[i], vec3_scalef(manifold->normal, 1.0f - radius));
+            dbg_contact_normal.p0 = vec3_add(manifold->contacts[i].world, vec3_scalef(manifold->normal, radius));
+            dbg_contact_normal.p1 = vec3_add(manifold->contacts[i].world, vec3_scalef(manifold->normal, 1.0f - radius));
             ta_primitive_push_line_3d(0, dbg_contact_normal, TA_COLOR_DARK_RED, TA_COLOR_DARK_RED);
         }
     }

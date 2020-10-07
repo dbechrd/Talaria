@@ -27,12 +27,10 @@ void ta_rigid_body_init(ta_rigid_body *body)
     }
     // TODO: Why is ks < kd? Am I supposed to 1.0 - kd? Hmm..
     if (!body->ks) {
-        //body->ks = 0.20f;
-        body->ks = 0.05f;
+        body->ks = 0.5f;
     }
     if (!body->kd) {
-        //body->kd = 0.10f;
-        body->kd = 0.15f;
+        body->kd = 0.3f;
     }
     body->inv_tensor_local = ta_collider_inv_tensor(&body->collider, body->mass);
 }
@@ -74,6 +72,38 @@ void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 c
         body->velocity = VEC3_ZERO;
         body->ang_velocity = VEC3_ZERO;
     }
+}
+void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_xform *xform, ta_vec3 impulse, ta_vec3 at)
+{
+    // contact penetration impulse
+    xform->position = vec3_add(xform->position, vec3_scalef(impulse, body->inv_mass));
+
+    // equation 8 & 9 in PBDBodies.pdf, not sure what [stuff, 0] means, or what "q1 + stuff" is.. quat_add??
+    // q = q + 1/2[I^-1(r x p), 0]q
+    // q = q - 1/2[I^-1(r x p), 0]q
+    xform->orientation = quat_add(
+        xform->orientation,
+        quat_scale(
+            quat_mul(
+                vec4_init_vw(mat3_mul_vec3(&body->inv_tensor_local, vec3_cross(at, impulse)), 0),
+                xform->orientation
+            ),
+        0.5f)
+    );
+    xform->orientation = quat_normalize(xform->orientation);
+
+    // Update centroids and AABB
+    body->centroid_local = body->collider.data.center;
+    body->centroid_global = vec3_add(xform->position, quat_mul_vec3(xform->orientation, body->centroid_local));
+    body->aabb = ta_collider_world_bounds(&body->collider, xform);
+}
+void ta_rigid_body_apply_velocity_correction(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at)
+{
+    body->velocity = vec3_add(body->velocity, vec3_scalef(impulse, body->inv_mass));
+    body->ang_velocity = vec3_add(body->ang_velocity, mat3_mul_vec3(&body->inv_tensor_local, vec3_cross(at, impulse)));
+
+    DLB_ASSERT(vec3_good(body->velocity));
+    DLB_ASSERT(vec3_good(body->ang_velocity));
 }
 
 static bool intersector_plane_v_sphere(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
@@ -213,8 +243,25 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
             // https://graphics.stanford.edu/projects/bouncemap/assets/restitution_lowres.pdf
             manifold->e = (a->e + b->e) / 2.0f;
             // Randy likes Pythagorean, but wasteful if not noticeably different
-            manifold->sf = (a->ks + b->ks) / 2.0f; // sqrtf(a->ks * a->ks + b->ks * b->ks);
-            manifold->df = (a->kd + b->kd) / 2.0f; // sqrtf(a->kd * a->kd + b->kd * b->kd);
+            manifold->coef_static = (a->ks + b->ks) / 2.0f; // sqrtf(a->ks * a->ks + b->ks * b->ks);
+            manifold->coef_dynamic = (a->kd + b->kd) / 2.0f; // sqrtf(a->kd * a->kd + b->kd * b->kd);
+
+            for (size_t i = 0; i < manifold->contact_count; ++i) {
+                // radii (local space)
+                const ta_vec3 ra = vec3_sub(manifold->contacts[i].world, a->centroid_global);
+                const ta_vec3 rb = vec3_sub(manifold->contacts[i].world, b->centroid_global);
+
+                // generalized inverse masses
+                // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
+                const ta_vec3 n = manifold->normal;
+                const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, n)), ra), n);
+                const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, n)), rb), n);
+
+                manifold->contacts[i].ra = ra;
+                manifold->contacts[i].rb = rb;
+                manifold->contacts[i].wa = wa;
+                manifold->contacts[i].wb = wb;
+            }
         }
 
         // Set some handy flags for debug rendering
@@ -268,8 +315,8 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
         ta_vec3 b_center_world = b->centroid_global;
 
         // Radii (to local space)
-        ta_vec3 ra = vec3_sub(manifold->contacts[i], a_center_world);
-        ta_vec3 rb = vec3_sub(manifold->contacts[i], b_center_world);
+        ta_vec3 ra = vec3_sub(manifold->contacts[i].world, a_center_world);
+        ta_vec3 rb = vec3_sub(manifold->contacts[i].world, b_center_world);
 
 #if 0
         // HACK: Planes don't have a valid centroid for the purposes of collision resolution

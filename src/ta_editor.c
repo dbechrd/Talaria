@@ -1359,6 +1359,24 @@ static void ui_node_panel()
             static ta_ui_textbox_state density_editor = { 0 };
             ta_ui_textbox_float(&rigid_body->density, &density_editor, 0);
 
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("restitution:"));
+            static ta_ui_textbox_state restitution_editor = { 0 };
+            ta_ui_textbox_float(&rigid_body->e, &restitution_editor, 0);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("coef. static friction:"));
+            static ta_ui_textbox_state coef_static_editor = { 0 };
+            ta_ui_textbox_float(&rigid_body->ks, &coef_static_editor, 0);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("coef. dynamic friction:"));
+            static ta_ui_textbox_state coef_dynamic_editor = { 0 };
+            ta_ui_textbox_float(&rigid_body->kd, &coef_dynamic_editor, 0);
+
             char text[64] = { 0 };
             size_t text_len = 0;
 

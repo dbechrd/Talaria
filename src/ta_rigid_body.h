@@ -97,12 +97,14 @@ typedef struct ta_rigid_body_pair {
     ta_rigid_body *b;
 } ta_rigid_body_pair;
 
-void ta_rigid_body_init                 (ta_rigid_body *body);
-void ta_rigid_body_init_void            (void *body);
-void ta_rigid_body_free                 (ta_rigid_body *body);
-void ta_rigid_body_free_void            (void *body);
-void ta_rigid_body_apply_force          (ta_rigid_body *body, ta_vec3 force);
-void ta_rigid_body_apply_force_at       (ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
-void ta_rigid_body_apply_impulse        (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact_local);
-bool ta_rigid_body_intersect            (struct ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
-void ta_rigid_body_resolve_collision    (struct ta_manifold *manifold, float dt);
+void ta_rigid_body_init                         (ta_rigid_body *body);
+void ta_rigid_body_init_void                    (void *body);
+void ta_rigid_body_free                         (ta_rigid_body *body);
+void ta_rigid_body_free_void                    (void *body);
+void ta_rigid_body_apply_force                  (ta_rigid_body *body, ta_vec3 force);
+void ta_rigid_body_apply_force_at               (ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
+void ta_rigid_body_apply_impulse                (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact_local);
+void ta_rigid_body_apply_positional_correction  (ta_rigid_body *body, ta_xform *xform, ta_vec3 impulse, ta_vec3 at);
+void ta_rigid_body_apply_velocity_correction    (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
+bool ta_rigid_body_intersect                    (struct ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
+void ta_rigid_body_resolve_collision            (struct ta_manifold *manifold, float dt);

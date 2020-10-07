@@ -253,8 +253,7 @@ bool ta_plane_v_sphere(ta_manifold *manifold, const ta_plane *plane,
         manifold->depth = r - d;
         manifold->normal = plane->normal;
         manifold->contact_count = 1;
-        manifold->contacts[0] = vec3_add(sphere->center,
-            vec3_scalef(manifold->normal, -d));
+        manifold->contacts[0].world = vec3_add(sphere->center, vec3_scalef(manifold->normal, -d));
     }
 
     return true;
@@ -302,8 +301,7 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane,
     for (int i = 0; i < 8; ++i) {
         if (fabs(dists[i] - d_min) <= tolerance) {
             if (manifold) {
-                manifold->contacts[contact_count] =
-                    vec3_add(p[i], vec3_scalef(manifold->normal, -dists[i]));
+                manifold->contacts[contact_count].world = vec3_add(p[i], vec3_scalef(manifold->normal, -dists[i]));
             }
             contact_count++;
         }
@@ -348,7 +346,7 @@ bool ta_sphere_v_sphere(ta_manifold *manifold, const ta_sphere *a,
         manifold->contact_count = 1;
         //manifold->contacts[0] = vec3_add(a->center,
         //    vec3_scalef(manifold->normal, manifold->depth));
-        manifold->contacts[0] = vec3_add(a->center, vec3_scalef(n, 0.5f));
+        manifold->contacts[0].world = vec3_add(a->center, vec3_scalef(n, 0.5f));
     }
 
     return true;
@@ -412,7 +410,7 @@ bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere,
         manifold->depth = sphere->radius - sqrtf(d2);
         manifold->normal = vec3_normalize(normal);
         manifold->contact_count = 1;
-        manifold->contacts[0] = closest;
+        manifold->contacts[0].world = closest;
     }
 
     return true;

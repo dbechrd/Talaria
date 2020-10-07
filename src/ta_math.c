@@ -209,6 +209,18 @@ int vec3_equal(ta_vec3 a, ta_vec3 b)
            fabs((double)a.y - b.y) < TA_EPSILON &&
            fabs((double)a.z - b.z) < TA_EPSILON;
 }
+int vec3_bad(ta_vec3 v)
+{
+    return (v.x && !isnormal(v.x)) &&
+           (v.y && !isnormal(v.y)) &&
+           (v.z && !isnormal(v.z));
+}
+int vec3_good(ta_vec3 v)
+{
+    return (!v.x || isnormal(v.x)) &&
+           (!v.y || isnormal(v.y)) &&
+           (!v.z || isnormal(v.z));
+}
 ta_vec3 vec3_init(float x, float y, float z)
 {
     ta_vec3 v;

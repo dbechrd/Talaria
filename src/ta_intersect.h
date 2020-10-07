@@ -7,19 +7,33 @@ struct ta_aabb;
 struct ta_sphere;
 struct ta_plane;
 
+typedef struct ta_contact {
+    ta_vec3 world;  // contact point in world space
+    float lambda;   // Lagrangian multiplier (must zero at start of every substep)
+
+    // contact radii (each in object's local space, i.e., relative to centroid_global)
+    ta_vec3 ra;
+    ta_vec3 rb;
+
+    // generalized inverse masses
+    float wa;
+    float wb;
+} ta_contact;
+
 typedef struct ta_manifold {
-    struct ta_rigid_body *a;
-    struct ta_rigid_body *b;
-    ta_vec3 normal;       // normal from a to b
-    float depth;          // distance along normal
-    ta_vec3 contacts[8];  // in world coordinates
-    float lambdas[8];     // constraint multiplier
-    float lambda_normal[8];
-    float lambda_tangent[8];
+    // TODO: Create a resource pool "lock" flag for known scopes where pointers are held for efficiency reasons
+    // e.g. at beginning of game_simulate lock the rigid body pool, which allows manifolds to hold pointers, and
+    // assert if anything tries to create or destroy something in that pool. Unlock after game_simulate destroys
+    // the manifolds list.
+    struct ta_rigid_body *a;  // TODO(DANGER): Storing a pointer, must guarantee no rigid bodies are created/destroyed!
+    struct ta_rigid_body *b;  // TODO(DANGER): Storing a pointer, must guarantee no rigid bodies are created/destroyed!
+    ta_vec3 normal;         // contact normal from a to b
+    float depth;            // contact magnitude in direction of normal
     u32 contact_count;
-    float e;   // Mixed restitution (0.0 = inelastic, 1.0 = perfectly elastic)
-    float df;  // Mixed dynamic friction
-    float sf;  // Mixed static friction
+    ta_contact contacts[8]; // contact information
+    float e;                // Mixed restitution (0.0 = inelastic, 1.0 = perfectly elastic)
+    float coef_dynamic;     // Mixed dynamic friction
+    float coef_static;      // Mixed static friction
 } ta_manifold;
 
 // NOTE: All of these shapes should be in world space, manifold is currently
