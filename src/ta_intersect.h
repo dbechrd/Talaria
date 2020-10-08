@@ -10,14 +10,6 @@ struct ta_plane;
 typedef struct ta_contact {
     ta_vec3 world;  // contact point in world space
     float lambda;   // Lagrangian multiplier (must zero at start of every substep)
-
-    // contact radii (each in object's local space, i.e., relative to centroid_global)
-    ta_vec3 ra;
-    ta_vec3 rb;
-
-    // generalized inverse masses
-    float wa;
-    float wb;
 } ta_contact;
 
 typedef struct ta_manifold {

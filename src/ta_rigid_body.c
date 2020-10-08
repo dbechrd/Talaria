@@ -245,23 +245,6 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
             // Randy likes Pythagorean, but wasteful if not noticeably different
             manifold->coef_static = (a->ks + b->ks) / 2.0f; // sqrtf(a->ks * a->ks + b->ks * b->ks);
             manifold->coef_dynamic = (a->kd + b->kd) / 2.0f; // sqrtf(a->kd * a->kd + b->kd * b->kd);
-
-            for (size_t i = 0; i < manifold->contact_count; ++i) {
-                // radii (local space)
-                const ta_vec3 ra = vec3_sub(manifold->contacts[i].world, a->centroid_global);
-                const ta_vec3 rb = vec3_sub(manifold->contacts[i].world, b->centroid_global);
-
-                // generalized inverse masses
-                // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
-                const ta_vec3 n = manifold->normal;
-                const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, n)), ra), n);
-                const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, n)), rb), n);
-
-                manifold->contacts[i].ra = ra;
-                manifold->contacts[i].rb = rb;
-                manifold->contacts[i].wa = wa;
-                manifold->contacts[i].wb = wb;
-            }
         }
 
         // Set some handy flags for debug rendering

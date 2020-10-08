@@ -130,6 +130,21 @@ static void ui_texture(const char *texture, int resolution)
     ta_ui_next_pad(0, 0, 0, 0);
     ta_ui_image(texture);
 }
+static bool ui_color_rgba(ta_rgba color)
+{
+    ta_ui_next_size(17, 17);
+    ta_ui_next_bg_color(UI_STATE_ALL, color.r, color.g, color.b, color.a);
+    return ta_ui_button(0, 0);
+}
+static bool ui_color_rgb(ta_rgb color)
+{
+    ta_rgba color4;
+    color4.r = color.r;
+    color4.g = color.g;
+    color4.b = color.b;
+    color4.a = 1.0f;
+    return ui_color_rgba(color4);
+}
 
 static editor_gizmo editor_gizmo_nearest(ta_ray *ray)
 {
@@ -700,7 +715,7 @@ void ta_editor_draw_world()
         double seconds = ta_timer_elapsed_sec();
         double sine = sin(seconds * 4.0) * 0.5 + 0.5;
         wire_color.a = (float)(0.25 * (sine * sine) + 0.02);
-        if (camera->debug_no_mesh) {
+        if (tg_game.debug_no_mesh) {
             wire_color.a = 0.05f;
         }
         ta_shader_set_vec4(shader, SYM_U_COLOR, (ta_vec4 *)&wire_color);
@@ -1604,9 +1619,7 @@ static void ui_node_panel()
             light->color.r = clampf(light->color.r, 0.0f, 1.0f);
             light->color.g = clampf(light->color.g, 0.0f, 1.0f);
             light->color.b = clampf(light->color.b, 0.0f, 1.0f);
-            ta_ui_next_size(17, 17);
-            ta_ui_next_bg_color(UI_STATE_ALL, light->color.r, light->color.g, light->color.b, 1.0f);
-            ta_ui_button(0, 0);
+            ui_color_rgb(light->color);
 
             switch (light->type) {
                 case TA_LIGHT_DIRECTIONAL: {
@@ -2246,6 +2259,53 @@ static void ui_mesh_panel()
     }
     ta_ui_panel_end();
 }
+static void ui_physics_panel()
+{
+    static ta_ui_panel_state physics_panel = { 0 };
+    ta_ui_panel_begin(&physics_panel, TA_UI_AUTOSIZE);
+
+    ta_ui_row_begin();
+    static ta_ui_panel_state label_panel = { 0 };
+    ta_ui_panel_begin(&label_panel, TA_UI_AUTOSIZE);
+    ta_ui_label(CSTR("Draw penetration vectors"));
+    ta_ui_label(CSTR("Draw static friction vectors"));
+    ta_ui_label(CSTR("Draw dynamic friction vectors"));
+    ta_ui_label(CSTR("Draw damping vectors"));
+    ta_ui_label(CSTR("Draw restitution vectors"));
+    ta_ui_panel_end();
+
+    bool debug_physics_render_penetration_vectors;
+    bool debug_physics_render_static_friction_vectors;
+    bool debug_physics_render_dynamic_friction_vectors;
+    bool debug_physics_render_damping_vectors;
+    bool debug_physics_render_restitution_vectors;
+
+    static ta_ui_panel_state button_panel = { 0 };
+    ta_ui_panel_begin(&button_panel, TA_UI_AUTOSIZE);
+
+    ta_ui_row_begin();
+    ta_ui_toggle_button(CSTR("Off"), CSTR("On"), &tg_game.debug_physics_render_penetration_vectors);
+    ui_color_rgba(tg_game.debug_physics_color_penetration_vectors);
+
+    ta_ui_row_begin();
+    ta_ui_toggle_button(CSTR("Off"), CSTR("On"), &tg_game.debug_physics_render_static_friction_vectors);
+    ui_color_rgba(tg_game.debug_physics_color_static_friction_vectors);
+
+    ta_ui_row_begin();
+    ta_ui_toggle_button(CSTR("Off"), CSTR("On"), &tg_game.debug_physics_render_dynamic_friction_vectors);
+    ui_color_rgba(tg_game.debug_physics_color_dynamic_friction_vectors);
+
+    ta_ui_row_begin();
+    ta_ui_toggle_button(CSTR("Off"), CSTR("On"), &tg_game.debug_physics_render_damping_vectors);
+    ui_color_rgba(tg_game.debug_physics_color_damping_vectors);
+
+    ta_ui_row_begin();
+    ta_ui_toggle_button(CSTR("Off"), CSTR("On"), &tg_game.debug_physics_render_restitution_vectors);
+    ui_color_rgba(tg_game.debug_physics_color_restitution_vectors);
+
+    ta_ui_panel_end();
+    ta_ui_panel_end();
+}
 static void ui_texture_panel()
 {
     //ta_ui_next_margin(2, 2, 0, 0);
@@ -2354,8 +2414,9 @@ static void ui_editor_sidebar()
         { CSTR("Cameras"),   ui_camera_panel },
         { CSTR("Materials"), ui_material_panel },
         { CSTR("Meshes"),    ui_mesh_panel },
+        { CSTR("Physics"),   ui_physics_panel },
         { CSTR("Textures"),  ui_texture_panel },
-        { CSTR("Textbox"),   ui_textbox_panel },
+        //{ CSTR("Textbox"),   ui_textbox_panel },
     };
     static size_t category_selected = 1;
 

@@ -421,7 +421,7 @@ void ta_primitive_push_rgb_sphere(ta_mesh *mesh, ta_sphere sphere)
 #undef SPHERE_SEG_RAD
 #undef SPHERE_SEGMENTS
 
-#define CONE_SEGMENTS 32
+#define CONE_SEGMENTS 8
 #define CONE_SEG_RAD (DEG_TO_RADF(360.f / CONE_SEGMENTS))
 void ta_primitive_push_cone(ta_mesh *mesh, ta_cone cone, ta_rgba color)
 {

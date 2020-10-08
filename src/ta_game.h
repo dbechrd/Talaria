@@ -93,6 +93,24 @@ typedef struct ta_game {
     const char *base_path;      // symbol (working dir in debug mode, otherwise the .exe directory)
     ta_asset_watcher texture_watcher;
 
+    bool debug_wireframe;       // [DEBUG] render everything from as wireframe when using this camera
+    bool debug_normals;         // [DEBUG] render normals for every mesh in the world
+    bool debug_colliders;       // [DEBUG] render colliders for every rigid_body in the world
+    bool debug_nametags;        // [DEBUG] render name tags for every transform in the world
+    bool debug_no_mesh;         // [DEBUG] disable mesh rendering for every mesh in the world
+
+    bool debug_physics_render_penetration_vectors;
+    bool debug_physics_render_static_friction_vectors;
+    bool debug_physics_render_dynamic_friction_vectors;
+    bool debug_physics_render_damping_vectors;
+    bool debug_physics_render_restitution_vectors;
+
+    ta_rgba debug_physics_color_penetration_vectors;
+    ta_rgba debug_physics_color_static_friction_vectors;
+    ta_rgba debug_physics_color_dynamic_friction_vectors;
+    ta_rgba debug_physics_color_damping_vectors;
+    ta_rgba debug_physics_color_restitution_vectors;
+
     // HACK: Temp data, need to persist between frames for debug rendering to work when sim is paused
     // TODO(cleanup): Holding pointers across frames is a _BAD IDEA_. At the very least, hold names instead.
     struct ta_rigid_body_pair *pairs;  // Array of most recent broadphase pairs

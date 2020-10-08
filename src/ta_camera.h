@@ -66,11 +66,6 @@ typedef struct ta_camera {
     ta_mat4  projection;              // projection matrix (e.g. ortho, perspective, perspective_inf)
     ta_vec3  move_buffer;             // translation net delta buffer for current frame
     bool     dirty;                   // true if view matrix (look_at) needs to be recalculated
-    bool     debug_wireframe;         // [DEBUG] render everything from as wireframe when using this camera
-    bool     debug_normals;           // [DEBUG] render normals for every mesh in the world
-    bool     debug_colliders;         // [DEBUG] render colliders for every rigid_body in the world
-    bool     debug_nametags;          // [DEBUG] render name tags for every transform in the world
-    bool     debug_no_mesh;           // [DEBUG] disable mesh rendering for every mesh in the world
     ta_glsl_dbg_channel dbg_channel;  // [DEBUG] render only the specified debug channel (see: mesh_f.glsl)
 } ta_camera;
 

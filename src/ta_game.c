@@ -300,6 +300,18 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     tg_game.simulate = 0; //-1;
 
+    tg_game.debug_physics_render_penetration_vectors      = true;
+    tg_game.debug_physics_render_static_friction_vectors  = true;
+    tg_game.debug_physics_render_dynamic_friction_vectors = true;
+    tg_game.debug_physics_render_damping_vectors          = true;
+    tg_game.debug_physics_render_restitution_vectors      = true;
+
+    tg_game.debug_physics_color_penetration_vectors      = TA_COLOR_RED;
+    tg_game.debug_physics_color_static_friction_vectors  = TA_COLOR_PINK;
+    tg_game.debug_physics_color_dynamic_friction_vectors = TA_COLOR_CYAN;
+    tg_game.debug_physics_color_damping_vectors          = TA_COLOR_YELLOW;
+    tg_game.debug_physics_color_restitution_vectors      = TA_COLOR_ORANGE;
+
     //--------------------------------------------------------------------------
     // Player
     //--------------------------------------------------------------------------
@@ -1002,13 +1014,9 @@ static void game_simulate(float dt)
                 // TODO: We may need to convert manifold->normal into local space for each body?
                 // TODO: We may need to convert the various impulse vectors into local space for each body?
 
-                // radii (local space)
-                const ta_vec3 ra = manifold->contacts[i].ra;
-                const ta_vec3 rb = manifold->contacts[i].rb;
-
-                // generalized inverse masses
-                //const float wa = manifold->contacts[i].wa;
-                //const float wb = manifold->contacts[i].wb;
+                // radii (world space)
+                const ta_vec3 ra = vec3_sub(manifold->contacts[i].world, a->centroid_global);
+                const ta_vec3 rb = vec3_sub(manifold->contacts[i].world, b->centroid_global);
 
                 // generalized inverse masses
                 // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
@@ -1033,42 +1041,39 @@ static void game_simulate(float dt)
                 ta_vec3 dx_penetration_b = vec3_scalef(manifold->normal, -delta_lambda);
                 ta_rigid_body_apply_positional_correction(a, &atrans->xform, dx_penetration_a, ra);
                 ta_rigid_body_apply_positional_correction(b, &btrans->xform, dx_penetration_b, rb);
-#if 1
-                // DEBUG: Render penetration impulse vectors
-                ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dx_penetration_a, TA_COLOR_PINK);
-                ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(b->centroid_global, rb), dx_penetration_b, TA_COLOR_CYAN);
-#endif
-                ta_vec3 ra_world = vec3_add(atrans->xform.position, quat_mul_vec3(atrans->xform.orientation, ra));
-                ta_vec3 rb_world = vec3_add(btrans->xform.position, quat_mul_vec3(btrans->xform.orientation, rb));
+                if (tg_game.debug_physics_render_penetration_vectors) {
+                    ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(manifold->contacts[i].world, ra), dx_penetration_a, tg_game.debug_physics_color_penetration_vectors);
+                    //ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(manifold->contacts[i].world, rb), dx_penetration_b, tg_game.debug_physics_color_penetration_vectors);
+                }
 
                 // static friction impulse
-                ta_vec3 ra_world_prev = vec3_add(atrans->xform_prev_physics.position, quat_mul_vec3(atrans->xform_prev_physics.orientation, ra));
-                ta_vec3 rb_world_prev = vec3_add(btrans->xform_prev_physics.position, quat_mul_vec3(btrans->xform_prev_physics.orientation, rb));
+                ta_vec3 ra_prev = vec3_add(atrans->xform_prev_physics.position, quat_mul_vec3(atrans->xform_prev_physics.orientation, ra));
+                ta_vec3 rb_prev = vec3_add(btrans->xform_prev_physics.position, quat_mul_vec3(btrans->xform_prev_physics.orientation, rb));
                 // relative motion of contacts
-                ta_vec3 dp = vec3_sub(vec3_sub(ra_world, ra_world_prev), vec3_sub(rb_world, rb_world_prev));
+                ta_vec3 v = vec3_sub(vec3_sub(ra, ra_prev), vec3_sub(rb, rb_prev));
+                // normal component of relative motion
+                ta_vec3 dp_normal = vec3_scalef(manifold->normal, vec3_dot(v, manifold->normal));
                 // tangential component of relative motion
-                ta_vec3 dp_tangent = vec3_sub(dp, vec3_scalef(manifold->normal, vec3_dot(dp, manifold->normal)));
-                ta_vec3 dx_static_friction = { 0 };
+                ta_vec3 dp_tangent = vec3_sub(v, dp_normal);
 
                 // if lambda_tangent < manifold->sf * lambda_normal
-                const float lambda_n2 = vec3_len2(dp);
+                const float lambda_n2 = vec3_len2(v);
                 const float lambda_t2 = vec3_len2(dp_tangent);
                 const float mu_s2 = manifold->coef_static * manifold->coef_static;
-                if (lambda_t2 < mu_s2 * lambda_n2) {
+                if (lambda_t2 > TA_EPSILON2 && lambda_t2 < mu_s2 * lambda_n2) {
                     // Apply Dx = Dp_t with a = 0
                     ta_vec3 dx_static_friction_a = dp_tangent;
                     ta_vec3 dx_static_friction_b = vec3_neg(dp_tangent);
                     //ta_rigid_body_apply_positional_correction(a, &atrans->xform, dx_static_friction_a, ra);
                     //ta_rigid_body_apply_positional_correction(b, &btrans->xform, dx_static_friction_b, rb);
-#if 0
-                    // DEBUG: Render static friction impulse vectors
-                    ta_primitive_push_arrow(&primitive_lines_perma, a->centroid_global, ra, TA_COLOR_PINK);
-                    ta_primitive_push_arrow(&primitive_lines_perma, b->centroid_global, rb, TA_COLOR_CYAN);
-#endif
                     // NOTE: We may need to update world space radii if we want to apply any more positional corrections
                     // that depend on them, but it's commented as an optimization since this is currently the last one
                     //ra_world = vec3_add(atrans->xform.position, quat_mul_vec3(atrans->xform.orientation, ra));
                     //rb_world = vec3_add(btrans->xform.position, quat_mul_vec3(btrans->xform.orientation, rb));
+                    if (tg_game.debug_physics_render_static_friction_vectors) {
+                        ta_primitive_push_arrow(&primitive_lines_perma, manifold->contacts[i].world, dx_static_friction_a, tg_game.debug_physics_color_static_friction_vectors);
+                        //ta_primitive_push_arrow(&primitive_lines_perma, manifold->contacts[i].world, dx_static_friction_b, tg_game.debug_physics_color_static_friction_vectors);
+                    }
                 }
             }
         }
@@ -1079,6 +1084,11 @@ static void game_simulate(float dt)
     // end
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
         ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+
+        // Update centroids and AABB
+        body->centroid_local = body->collider.data.center;
+        body->centroid_global = vec3_add(transform->xform.position, quat_mul_vec3(transform->xform.orientation, body->centroid_local));
+        body->aabb = ta_collider_world_bounds(&body->collider, &transform->xform);
 
         body->velocity_prev_physics = body->velocity;
         body->ang_velocity_prev_physics = body->ang_velocity;
@@ -1132,8 +1142,13 @@ static void game_simulate(float dt)
 
         for (u32 i = 0; i < manifold->contact_count; i++) {
             // radii (local space)
-            const ta_vec3 ra = manifold->contacts[i].ra;
-            const ta_vec3 rb = manifold->contacts[i].rb;
+            const ta_vec3 ra = vec3_sub(manifold->contacts[i].world, a->centroid_global);
+            const ta_vec3 rb = vec3_sub(manifold->contacts[i].world, b->centroid_global);
+
+            // generalized inverse masses
+            // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
+            const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra), manifold->normal);
+            const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb), manifold->normal);
 
             // relative velocity
             ta_vec3 va = vec3_add(a->velocity, vec3_cross(a->ang_velocity, ra));
@@ -1147,7 +1162,7 @@ static void game_simulate(float dt)
 
             // dynamic friction
             ta_vec3 dv_dynamic_friction = { 0 };
-            if (true || vt_mag > TA_EPSILON) {
+            if (vt_mag > TA_EPSILON) {
                 //float term_a = (manifold->coef_dynamic * vn / dt);
                 //float term_b = term_a / vt_mag;
                 //dv_dynamic_friction = vec3_scalef(vt, -MIN(term_b, 1.0f));
@@ -1157,9 +1172,10 @@ static void game_simulate(float dt)
                 //float fn = vn / (dt * dt);
                 //dv_dynamic_friction = vec3_scalef(vtn, -MIN(dt * manifold->coef_dynamic * fn, vt_mag));
                 dv_dynamic_friction = vec3_scalef(vtn, -MIN(manifold->coef_dynamic * vn, vt_mag));
-#if 1
-                ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dv_dynamic_friction, TA_COLOR_ORANGE);
-#endif
+
+                if (tg_game.debug_physics_render_dynamic_friction_vectors) {
+                    ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dv_dynamic_friction, tg_game.debug_physics_color_dynamic_friction_vectors);
+                }
                 if (a->name == tg_e_can || b->name == tg_e_can) {
                     DLB_ASSERT(1);
                 }
@@ -1182,15 +1198,15 @@ static void game_simulate(float dt)
             // dv = n(-vn + MAX(-e * vn_prev, 0))
             ta_vec3 dv_restitution = vec3_scalef(manifold->normal, -vn + MAX(-e * vn_prev, 0));
 
-#if 1
             // DEBUG: Render restitution impulse
-            ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dv_damping,     TA_COLOR_YELLOW);
-            ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dv_restitution, TA_COLOR_RED);
-#endif
+            if (tg_game.debug_physics_render_damping_vectors) {
+                ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dv_damping, tg_game.debug_physics_color_damping_vectors);
+            }
+            if (tg_game.debug_physics_render_restitution_vectors) {
+                ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_global, ra), dv_restitution, tg_game.debug_physics_color_restitution_vectors);
+            }
 
             ta_vec3 dv_total = vec3_add3(dv_dynamic_friction, dv_damping, dv_restitution);
-            const float wa = manifold->contacts[i].wa;
-            const float wb = manifold->contacts[i].wb;
             ta_vec3 dv_total_a = vec3_scalef(dv_total, 1.0f/(wa + wb));
             ta_vec3 dv_total_b = vec3_neg(dv_total_a);
             ta_rigid_body_apply_velocity_correction(a, dv_total_a, ra);
@@ -1256,14 +1272,14 @@ static void game_render_manifolds_debug()
     const float radius = 0.025f;
     dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
         for (u32 i = 0; i < manifold->contact_count; ++i) {
-            ta_sphere dbg_contact_world = { 0 };
-            dbg_contact_world.center = manifold->contacts[i].world;
-            dbg_contact_world.radius = radius;
-            ta_primitive_push_sphere(0, dbg_contact_world, TA_COLOR_DARK_RED);
-            ta_line_3d dbg_contact_normal = { 0 };
-            dbg_contact_normal.p0 = vec3_add(manifold->contacts[i].world, vec3_scalef(manifold->normal, radius));
-            dbg_contact_normal.p1 = vec3_add(manifold->contacts[i].world, vec3_scalef(manifold->normal, 1.0f - radius));
-            ta_primitive_push_line_3d(0, dbg_contact_normal, TA_COLOR_DARK_RED, TA_COLOR_DARK_RED);
+            ta_sphere sphere = { 0 };
+            sphere.center = manifold->contacts[i].world;
+            sphere.radius = radius;
+            ta_primitive_push_sphere(0, sphere, TA_COLOR_WHITE);
+
+            ta_vec3 origin    = manifold->contacts[i].world;
+            ta_vec3 direction = vec3_scalef(manifold->normal, manifold->depth);
+            ta_primitive_push_arrow(0, origin, direction, TA_COLOR_WHITE);
         }
     }
 }
@@ -1293,15 +1309,15 @@ static void game_render_colliders_debug()
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
         ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
 
-        ta_sphere local_origin = { 0 };
-        local_origin.center = transform->xform_world.position;
-        local_origin.radius = 0.04f;
-        ta_primitive_push_sphere(0, local_origin, TA_COLOR_PINK);
-
-        ta_sphere centroid_global = { 0 };
-        centroid_global.center = body->centroid_global;
-        centroid_global.radius = 0.08f;
-        ta_primitive_push_sphere(0, centroid_global, TA_COLOR_BLUE);
+        //ta_sphere local_origin = { 0 };
+        //local_origin.center = transform->xform_world.position;
+        //local_origin.radius = 0.04f;
+        //ta_primitive_push_sphere(0, local_origin, TA_COLOR_PINK);
+        //
+        //ta_sphere centroid_global = { 0 };
+        //centroid_global.center = body->centroid_global;
+        //centroid_global.radius = 0.08f;
+        //ta_primitive_push_sphere(0, centroid_global, TA_COLOR_BLUE);
 
         ta_rgba broadphase_color = body->dbg_broadphase ? TA_COLOR_RED : TA_COLOR_GRAY4;
         ta_primitive_push_aabb(0, body->aabb, broadphase_color);
@@ -1746,7 +1762,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Render models
         //----------------------------------------------------------------------
-        if (active_camera->debug_wireframe) {
+        if (tg_game.debug_wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
 
@@ -1754,7 +1770,7 @@ void ta_game_loop()
             ta_model_render(model, active_camera);
         }
 
-        if (active_camera->debug_wireframe) {
+        if (tg_game.debug_wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
@@ -1803,7 +1819,7 @@ void ta_game_loop()
                 }
                 ta_primitive_push_sphere(0, light_pos, color);
 
-                if (active_camera->debug_colliders) {
+                if (tg_game.debug_colliders) {
                     ta_sphere light_aoe = { 0 };
                     light_aoe.center = transform->xform_world.position;
                     light_aoe.radius = 1.0;
@@ -1827,13 +1843,13 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Debug rendering
         //----------------------------------------------------------------------
-        if (active_camera->debug_colliders) {
+        if (tg_game.debug_colliders) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug colliders pass...\n");
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             game_render_colliders_debug();
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
-        if (active_camera->debug_nametags) {
+        if (tg_game.debug_nametags) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug nametags pass...\n");
             game_render_nametags_debug(active_camera);
         }
@@ -1882,7 +1898,7 @@ void ta_game_loop()
                 }
                 ta_primitive_push_sphere(0, light_pos, color);
 
-                if (active_camera->debug_colliders) {
+                if (tg_game.debug_colliders) {
                     ta_sphere light_aoe = { 0 };
                     light_aoe.center = transform->xform_world.position;
                     light_aoe.radius = 1.0;
@@ -2381,28 +2397,23 @@ void game_command_debug_mouse_lock_toggle()
 }
 void game_command_debug_toggle_wireframe()
 {
-    ta_camera *camera = ta_game_camera();
-    camera->debug_wireframe = !camera->debug_wireframe;
+    tg_game.debug_wireframe = !tg_game.debug_wireframe;
 }
 void game_command_debug_toggle_mesh()
 {
-    ta_camera *camera = ta_game_camera();
-    camera->debug_no_mesh = !camera->debug_no_mesh;
+    tg_game.debug_no_mesh = !tg_game.debug_no_mesh;
 }
 void game_command_debug_toggle_colliders()
 {
-    ta_camera *camera = ta_game_camera();
-    camera->debug_colliders = !camera->debug_colliders;
+    tg_game.debug_colliders = !tg_game.debug_colliders;
 }
 void game_command_debug_toggle_nametags()
 {
-    ta_camera *camera = ta_game_camera();
-    camera->debug_nametags = !camera->debug_nametags;
+    tg_game.debug_nametags = !tg_game.debug_nametags;
 }
 void game_command_debug_toggle_normals()
 {
-    ta_camera *camera = ta_game_camera();
-    camera->debug_normals = !camera->debug_normals;
+    tg_game.debug_normals = !tg_game.debug_normals;
 }
 
 void ta_game_update_keybinds()

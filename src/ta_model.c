@@ -121,7 +121,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         return;
     }
     // If debug flags set such that there's nothing to render
-    if (camera->debug_no_mesh && !camera->debug_normals) {
+    if (tg_game.debug_no_mesh && !tg_game.debug_normals) {
         return;
     }
 
@@ -136,7 +136,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         DLB_ASSERT(1);
     }
 
-    if (!camera->debug_no_mesh) {
+    if (!tg_game.debug_no_mesh) {
         const char *selected_entity = 0;
         ta_editor_selected_entity(&selected_entity);
         bool selected = model->entity == selected_entity;
@@ -187,7 +187,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     }
 
     // TODO: Do this in a separate pass, after all models are rendered. One big buffer, single render call.
-    if (camera->debug_normals) {
+    if (tg_game.debug_normals) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->world);
         ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
         if (!mesh) {
