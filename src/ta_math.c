@@ -325,6 +325,7 @@ ta_vec3 vec3_perp(ta_vec3 v)
 {
     // Finds an abitrary, reasonable perpendicular vector to v, if possible
     ta_vec3 result = { 0 };
+#if 1
     if (fabs(v.x) >= TA_EPSILON || fabs(v.y) >= TA_EPSILON) {
         result.x = v.y;
         result.y = -v.x;
@@ -333,6 +334,18 @@ ta_vec3 vec3_perp(ta_vec3 v)
         result.y = -v.z;
         result.z = v.y;
     }
+#else
+    // NOTE: This seemed to break the translate x-axis gizmo's cone (it wasn't rendering)
+    // https://box2d.org/posts/2014/02/computing-a-basis/
+    if (fabs(v.x) >= 0.57735f) {
+        result.x = v.y;
+        result.y = -v.x;
+    } else {
+        result.y = -v.z;
+        result.z = v.y;
+    }
+#endif
+    result = vec3_normalize(result);
     return result;
 }
 

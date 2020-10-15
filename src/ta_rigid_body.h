@@ -40,29 +40,6 @@ typedef struct ta_rigid_body {
     float mass;
     float inv_mass;
 
-    //ta_mat3 tensor;
-    ta_mat3 inv_tensor_global;
-    ta_mat3 inv_tensor_local;
-    ta_vec4 tensor_orientation;
-
-    ta_vec3 centroid_global;
-    ta_vec3 centroid_local;
-
-    // TODO: Relative offset (position/orientation) from transform component
-    // for asymmetric collider types.
-    //ta_xform offset;
-
-    ta_vec3 acceleration;      // Don't ever change this directly, use force/impulse
-    //ta_vec3 ang_acceleration;  // Dunno if we need this
-
-    ta_vec3 velocity;
-    ta_vec3 velocity_prev_physics;
-    ta_vec3 ang_velocity;
-    ta_vec3 ang_velocity_prev_physics;
-
-    ta_vec3 force_accum;
-    ta_vec3 torque_accum;
-
     // Material data
     //   Rock       Density : 0.6  Restitution : 0.1
     //   Wood       Density : 0.3  Restitution : 0.2
@@ -76,6 +53,26 @@ typedef struct ta_rigid_body {
 
     float ks;  // Coefficient of static friction
     float kd;  // Coefficient of dynamic friction
+
+    //ta_mat3 tensor;
+    ta_mat3 inv_tensor_world;
+    ta_mat3 inv_tensor_local;
+    ta_vec4 tensor_orientation;
+
+    ta_vec3 centroid_world;
+    ta_vec3 centroid_local;
+
+    ta_xform xform;       // world space
+    ta_xform xform_prev;  // world space
+
+    ta_vec3 velocity;
+    ta_vec3 velocity_prev;
+    ta_vec3 ang_velocity;
+    ta_vec3 ang_velocity_prev;
+
+    //ta_vec3 acceleration;      // Don't ever change this directly, use force/impulse
+    ta_vec3 force_accum;
+    ta_vec3 torque_accum;
 
     bool resting;
 
@@ -104,7 +101,7 @@ void ta_rigid_body_free_void                    (void *body);
 void ta_rigid_body_apply_force                  (ta_rigid_body *body, ta_vec3 force);
 void ta_rigid_body_apply_force_at               (ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
 void ta_rigid_body_apply_impulse                (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact_local);
-void ta_rigid_body_apply_positional_correction  (ta_rigid_body *body, ta_xform *xform, ta_vec3 impulse, ta_vec3 at);
+void ta_rigid_body_apply_positional_correction  (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
 void ta_rigid_body_apply_velocity_correction    (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
 bool ta_rigid_body_intersect                    (struct ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
 void ta_rigid_body_resolve_collision            (struct ta_manifold *manifold, float dt);

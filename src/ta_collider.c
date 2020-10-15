@@ -107,7 +107,7 @@ ta_mat3 ta_collider_inv_tensor(ta_collider *collider, float mass)
     return inv_tensor;
 }
 
-static ta_aabb plane_world_bounds(ta_plane *plane, ta_xform *xform)
+static ta_aabb plane_world_bounds(ta_plane *plane, const ta_xform *xform)
 {
     // TODO: Calculate AABB for plane (add TA_EPSILON depth)
     // or .. infinite AABB??
@@ -118,7 +118,7 @@ static ta_aabb plane_world_bounds(ta_plane *plane, ta_xform *xform)
     return result;
 }
 
-static ta_aabb sphere_world_bounds(ta_sphere *sphere, ta_xform *xform)
+static ta_aabb sphere_world_bounds(ta_sphere *sphere, const ta_xform *xform)
 {
     DLB_ASSERT(sphere->radius >= TA_EPSILON);
 
@@ -131,7 +131,7 @@ static ta_aabb sphere_world_bounds(ta_sphere *sphere, ta_xform *xform)
     return result;
 }
 
-static ta_aabb obb_world_bounds(ta_obb *obb, ta_xform *xform)
+static ta_aabb obb_world_bounds(ta_obb *obb, const ta_xform *xform)
 {
     obb->extents.x = MAX(obb->extents.x, TA_EPSILON);
     obb->extents.y = MAX(obb->extents.y, TA_EPSILON);
@@ -180,7 +180,7 @@ static ta_aabb obb_world_bounds(ta_obb *obb, ta_xform *xform)
     return result;
 }
 
-ta_aabb ta_collider_world_bounds(ta_collider *collider, ta_xform *xform)
+ta_aabb ta_collider_world_bounds(ta_collider *collider, const ta_xform *xform)
 {
     ta_aabb result = { 0 };
     switch (collider->type) {

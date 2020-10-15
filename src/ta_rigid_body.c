@@ -23,16 +23,20 @@ void ta_rigid_body_init(ta_rigid_body *body)
         body->inv_mass = 1.0f / body->mass;
     }
     if (!body->e) {
-        body->e = 0.5f;
+        body->e = 0.02f;
     }
-    // TODO: Why is ks < kd? Am I supposed to 1.0 - kd? Hmm..
     if (!body->ks) {
-        body->ks = 0.5f;
+        body->ks = 0.98f;
     }
     if (!body->kd) {
-        body->kd = 0.3f;
+        body->kd = 0.95f;
     }
     body->inv_tensor_local = ta_collider_inv_tensor(&body->collider, body->mass);
+    if (quat_zero(body->xform.orientation)) {
+        body->xform.orientation = QUAT_IDENT;
+    } else {
+        body->xform.orientation = quat_normalize(body->xform.orientation);
+    }
 }
 void ta_rigid_body_init_void(void *body)
 {
@@ -54,7 +58,7 @@ void ta_rigid_body_apply_force_at(ta_rigid_body *body, ta_vec3 force, ta_vec3 at
 {
     // http://allenchou.net/2013/12/game-physics-motion-dynamics-implementations/
     body->force_accum = vec3_add(body->force_accum, force);
-    body->torque_accum = vec3_add(body->torque_accum, vec3_cross(vec3_sub(at, body->centroid_global), force));
+    body->torque_accum = vec3_add(body->torque_accum, vec3_cross(vec3_sub(at, body->centroid_world), force));
 }
 void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact_local)
 {
@@ -63,9 +67,9 @@ void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 c
         body->velocity = vec3_add(body->velocity, dv);
 
         if (!body->no_rotation) {
-            //DLB_ASSERT(!mat3_equal(&body->inv_tensor_global, &MAT3_ZERO));
+            //DLB_ASSERT(!mat3_equal(&body->inv_tensor_world, &MAT3_ZERO));
             ta_vec3 moment = vec3_cross(contact_local, impulse);
-            ta_vec3 dw = mat3_mul_vec3(&body->inv_tensor_global, moment);
+            ta_vec3 dw = mat3_mul_vec3(&body->inv_tensor_world, moment);
             body->ang_velocity = vec3_add(body->ang_velocity, dw);
         }
     } else {
@@ -73,32 +77,32 @@ void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 c
         body->ang_velocity = VEC3_ZERO;
     }
 }
-void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_xform *xform, ta_vec3 impulse, ta_vec3 at)
+void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at)
 {
-    // contact penetration impulse
-    xform->position = vec3_add(xform->position, vec3_scalef(impulse, body->inv_mass));
+    if (body->inv_mass == 0.0f) return;
 
+    // contact penetration impulse
+    body->centroid_world = vec3_add(body->centroid_world, vec3_scalef(impulse, body->inv_mass));
+    body->xform.position = vec3_sub(body->centroid_world, quat_mul_vec3(body->xform.orientation, body->centroid_local));
     // equation 8 & 9 in PBDBodies.pdf, not sure what [stuff, 0] means, or what "q1 + stuff" is.. quat_add??
     // q = q + 1/2[I^-1(r x p), 0]q
     // q = q - 1/2[I^-1(r x p), 0]q
-    xform->orientation = quat_add(
-        xform->orientation,
+    body->xform.orientation = quat_add(
+        body->xform.orientation,
         quat_scale(
             quat_mul(
                 vec4_init_vw(mat3_mul_vec3(&body->inv_tensor_local, vec3_cross(at, impulse)), 0),
-                xform->orientation
+                body->xform.orientation
             ),
         0.5f)
     );
-    xform->orientation = quat_normalize(xform->orientation);
-
-    // Update centroids and AABB
-    body->centroid_local = body->collider.data.center;
-    body->centroid_global = vec3_add(xform->position, quat_mul_vec3(xform->orientation, body->centroid_local));
-    body->aabb = ta_collider_world_bounds(&body->collider, xform);
+    body->xform.orientation = quat_normalize(body->xform.orientation);
+    body->aabb = ta_collider_world_bounds(&body->collider, &body->xform);
 }
 void ta_rigid_body_apply_velocity_correction(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at)
 {
+    if (body->inv_mass == 0.0f) return;
+
     body->velocity = vec3_add(body->velocity, vec3_scalef(impulse, body->inv_mass));
     body->ang_velocity = vec3_add(body->ang_velocity, mat3_mul_vec3(&body->inv_tensor_local, vec3_cross(at, impulse)));
 
@@ -254,7 +258,7 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
 
     return collided;
 }
-
+#if 0
 void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
 {
     DLB_ASSERT(manifold->a != manifold->b);
@@ -294,8 +298,8 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     }
 
     for (u32 i = 0; i < manifold->contact_count; i++) {
-        ta_vec3 a_center_world = a->centroid_global;
-        ta_vec3 b_center_world = b->centroid_global;
+        ta_vec3 a_center_world = a->centroid_world;
+        ta_vec3 b_center_world = b->centroid_world;
 
         // Radii (to local space)
         ta_vec3 ra = vec3_sub(manifold->contacts[i].world, a_center_world);
@@ -455,10 +459,11 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     atrans->xform.position = vec3_sub(atrans->xform.position, vec3_scalef(correction, a->inv_mass));
     btrans->xform.position = vec3_add(btrans->xform.position, vec3_scalef(correction, b->inv_mass));
 
-    a->centroid_global = quat_mul_vec3(atrans->xform.orientation, a->centroid_local);
-    a->centroid_global = vec3_add(a->centroid_global, atrans->xform.position);
-    b->centroid_global = quat_mul_vec3(btrans->xform.orientation, b->centroid_local);
-    b->centroid_global = vec3_add(b->centroid_global, btrans->xform.position);
+    a->centroid_world = quat_mul_vec3(atrans->xform.orientation, a->centroid_local);
+    a->centroid_world = vec3_add(a->centroid_world, atrans->xform.position);
+    b->centroid_world = quat_mul_vec3(btrans->xform.orientation, b->centroid_local);
+    b->centroid_world = vec3_add(b->centroid_world, btrans->xform.position);
     a->aabb = ta_collider_world_bounds(&a->collider, &atrans->xform);
     b->aabb = ta_collider_world_bounds(&b->collider, &btrans->xform);
 }
+#endif

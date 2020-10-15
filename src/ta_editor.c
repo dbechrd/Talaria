@@ -1367,30 +1367,35 @@ static void ui_node_panel()
             static ta_ui_textbox_state mass_editor = { 0 };
             ta_ui_textbox_float(&rigid_body->mass, &mass_editor, 0);
             rigid_body->mass = MAX(0.0f, rigid_body->mass);
+            rigid_body->inv_mass = rigid_body->mass ? 1.0f / rigid_body->mass : 0.0f;
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("density:"));
             static ta_ui_textbox_state density_editor = { 0 };
             ta_ui_textbox_float(&rigid_body->density, &density_editor, 0);
+            rigid_body->density = MAX(0.0f, rigid_body->density);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("restitution:"));
             static ta_ui_textbox_state restitution_editor = { 0 };
             ta_ui_textbox_float(&rigid_body->e, &restitution_editor, 0);
+            rigid_body->e = clampf(rigid_body->e, 0.0f, 1.0f);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("coef. static friction:"));
             static ta_ui_textbox_state coef_static_editor = { 0 };
             ta_ui_textbox_float(&rigid_body->ks, &coef_static_editor, 0);
+            rigid_body->ks = clampf(rigid_body->ks, 0.0f, 1.0f);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("coef. dynamic friction:"));
             static ta_ui_textbox_state coef_dynamic_editor = { 0 };
             ta_ui_textbox_float(&rigid_body->kd, &coef_dynamic_editor, 0);
+            rigid_body->kd = clampf(rigid_body->kd, 0.0f, 1.0f);
 
             char text[64] = { 0 };
             size_t text_len = 0;
@@ -1506,7 +1511,7 @@ static void ui_node_panel()
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("centroid global:"));
             static ta_ui_textbox_vec3_state centroid_global_editor = { 0 };
-            ta_ui_textbox_vec3(&rigid_body->centroid_global, &centroid_global_editor, false, false);
+            ta_ui_textbox_vec3(&rigid_body->centroid_world, &centroid_global_editor, false, false);
 
             ta_ui_row_begin();
             ta_ui_next_margin(2, 12, 0, 4);

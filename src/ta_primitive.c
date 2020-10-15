@@ -249,15 +249,13 @@ void ta_primitive_push_rect_uv(ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color,
         dlb_vec_push(mesh->colors, color);
     }
 }
-void ta_primitive_push_plane(ta_mesh *mesh, ta_plane plane, float radius,
-    ta_rgba color)
+void ta_primitive_push_plane(ta_mesh *mesh, ta_plane plane, float radius, ta_rgba color)
 {
     if (!mesh) mesh = &primitive_quads;
 #if 1
     // u,v are +x,+y in plane space
     ta_vec3 u = vec3_perp(plane.normal);
-    u = vec3_normalize(u);
-    ta_vec3 v = vec3_cross(vec3_normalize(plane.normal), u);
+    ta_vec3 v = vec3_cross(plane.normal, u);
     v = vec3_normalize(v);
 #else
     // TODO: This seems like a hack that could be replaced with vec3_perp
