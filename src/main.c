@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
     ta_schema_register();
 
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing window...\n");
-    ta_window_init(tg_window, 1600, 900, false);
+    ta_window_init(tg_window, 1920, 1017, false);
     //ta_window_init(tg_window, 1920, 1080, true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running ndc_tests...\n");
     ndc_tests();

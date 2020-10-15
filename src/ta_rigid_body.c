@@ -115,15 +115,12 @@ static bool intersector_plane_v_sphere(ta_manifold *manifold, const ta_rigid_bod
     DLB_ASSERT(a->collider.type == TA_COLLIDER_PLANE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
 
-    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
-
     ta_plane plane_a = a->collider.data.plane;
-    plane_a.center = quat_mul_vec3(atrans->xform.orientation, plane_a.center);
-    plane_a.center = vec3_add(plane_a.center, atrans->xform.position);
+    plane_a.center = quat_mul_vec3(a->xform.orientation, plane_a.center);
+    plane_a.center = vec3_add(plane_a.center, a->xform.position);
     ta_sphere sphere_b = b->collider.data.sphere;
-    sphere_b.center = quat_mul_vec3(btrans->xform.orientation, sphere_b.center);
-    sphere_b.center = vec3_add(sphere_b.center, btrans->xform.position);
+    sphere_b.center = quat_mul_vec3(b->xform.orientation, sphere_b.center);
+    sphere_b.center = vec3_add(sphere_b.center, b->xform.position);
     bool collided = ta_plane_v_sphere(manifold, &plane_a, &sphere_b);
     return collided;
 }
@@ -132,16 +129,13 @@ static bool intersector_plane_v_obb(ta_manifold *manifold, const ta_rigid_body *
     DLB_ASSERT(a->collider.type == TA_COLLIDER_PLANE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
 
-    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
-
     ta_plane plane_a = a->collider.data.plane;
-    plane_a.center = quat_mul_vec3(atrans->xform.orientation, plane_a.center);
-    plane_a.center = vec3_add(plane_a.center, atrans->xform.position);
+    plane_a.center = quat_mul_vec3(a->xform.orientation, plane_a.center);
+    plane_a.center = vec3_add(plane_a.center, a->xform.position);
     ta_obb obb_b = b->collider.data.obb;
-    obb_b.center = quat_mul_vec3(btrans->xform.orientation, obb_b.center);
-    obb_b.center = vec3_add(obb_b.center, btrans->xform.position);
-    obb_b.orientation = quat_normalize(quat_mul(btrans->xform.orientation, obb_b.orientation));
+    obb_b.center = quat_mul_vec3(b->xform.orientation, obb_b.center);
+    obb_b.center = vec3_add(obb_b.center, b->xform.position);
+    obb_b.orientation = quat_normalize(quat_mul(b->xform.orientation, obb_b.orientation));
     bool collided = ta_plane_v_obb(manifold, &plane_a, &obb_b);
     return collided;
 }
@@ -150,15 +144,12 @@ static bool intersector_sphere_v_sphere(ta_manifold *manifold, const ta_rigid_bo
     DLB_ASSERT(a->collider.type == TA_COLLIDER_SPHERE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
 
-    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
-
     ta_sphere sphere_a = a->collider.data.sphere;
-    sphere_a.center = quat_mul_vec3(atrans->xform.orientation, sphere_a.center);
-    sphere_a.center = vec3_add(sphere_a.center, atrans->xform.position);
+    sphere_a.center = quat_mul_vec3(a->xform.orientation, sphere_a.center);
+    sphere_a.center = vec3_add(sphere_a.center, a->xform.position);
     ta_sphere sphere_b = b->collider.data.sphere;
-    sphere_b.center = quat_mul_vec3(btrans->xform.orientation, sphere_b.center);
-    sphere_b.center = vec3_add(sphere_b.center, btrans->xform.position);
+    sphere_b.center = quat_mul_vec3(b->xform.orientation, sphere_b.center);
+    sphere_b.center = vec3_add(sphere_b.center, b->xform.position);
     bool collided = ta_sphere_v_sphere(manifold, &sphere_a, &sphere_b);
     return collided;
 }
@@ -167,16 +158,13 @@ static bool intersector_sphere_v_obb(ta_manifold *manifold, const ta_rigid_body 
     DLB_ASSERT(a->collider.type == TA_COLLIDER_SPHERE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
 
-    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
-
     ta_sphere sphere_a = a->collider.data.sphere;
-    sphere_a.center = quat_mul_vec3(atrans->xform.orientation, sphere_a.center);
-    sphere_a.center = vec3_add(sphere_a.center, atrans->xform.position);
+    sphere_a.center = quat_mul_vec3(a->xform.orientation, sphere_a.center);
+    sphere_a.center = vec3_add(sphere_a.center, a->xform.position);
     ta_obb obb_b = b->collider.data.obb;
-    obb_b.center = quat_mul_vec3(btrans->xform.orientation, obb_b.center);
-    obb_b.center = vec3_add(obb_b.center, btrans->xform.position);
-    obb_b.orientation = quat_normalize(quat_mul(btrans->xform.orientation, obb_b.orientation));
+    obb_b.center = quat_mul_vec3(b->xform.orientation, obb_b.center);
+    obb_b.center = vec3_add(obb_b.center, b->xform.position);
+    obb_b.orientation = quat_normalize(quat_mul(b->xform.orientation, obb_b.orientation));
     bool collided = ta_sphere_v_obb(manifold, &sphere_a, &obb_b);
     return collided;
 }
@@ -185,13 +173,8 @@ static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a,
     DLB_ASSERT(a->collider.type == TA_COLLIDER_OBB);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
 
-    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
-
     // TODO: OBB v. OBB collision detection
     UNUSED(manifold);
-    UNUSED(atrans);
-    UNUSED(btrans);
 
     return false;
 }
@@ -270,14 +253,6 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     if (a->sensor || b->sensor) {
         return;
     }
-
-    ta_transform *atrans = ta_game_component(a->entity, RES_COMP_TRANSFORM);
-    ta_transform *btrans = ta_game_component(b->entity, RES_COMP_TRANSFORM);
-
-    // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should consider
-    // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
-    DLB_ASSERT(!atrans->parent);
-    DLB_ASSERT(!btrans->parent);
 
     // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
     if (a->inv_mass == 0.0f && b->inv_mass == 0.0f) {
@@ -454,16 +429,14 @@ void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
     float c = MAX(manifold->depth - slop, 0.0f) / (a->inv_mass + b->inv_mass) * percent;
     ta_vec3 correction = vec3_scalef(manifold->normal, c);
 
-    //ta_transform *atrans = ta_game_component(RES_COMP_TRANSFORM, a->entity);
-    //ta_transform *btrans = ta_game_component(RES_COMP_TRANSFORM, b->entity);
-    atrans->xform.position = vec3_sub(atrans->xform.position, vec3_scalef(correction, a->inv_mass));
-    btrans->xform.position = vec3_add(btrans->xform.position, vec3_scalef(correction, b->inv_mass));
+    a->xform.position = vec3_sub(a->xform.position, vec3_scalef(correction, a->inv_mass));
+    b->xform.position = vec3_add(b->xform.position, vec3_scalef(correction, b->inv_mass));
 
-    a->centroid_world = quat_mul_vec3(atrans->xform.orientation, a->centroid_local);
-    a->centroid_world = vec3_add(a->centroid_world, atrans->xform.position);
-    b->centroid_world = quat_mul_vec3(btrans->xform.orientation, b->centroid_local);
-    b->centroid_world = vec3_add(b->centroid_world, btrans->xform.position);
-    a->aabb = ta_collider_world_bounds(&a->collider, &atrans->xform);
-    b->aabb = ta_collider_world_bounds(&b->collider, &btrans->xform);
+    a->centroid_world = quat_mul_vec3(a->xform.orientation, a->centroid_local);
+    a->centroid_world = vec3_add(a->centroid_world, a->xform.position);
+    b->centroid_world = quat_mul_vec3(b->xform.orientation, b->centroid_local);
+    b->centroid_world = vec3_add(b->centroid_world, b->xform.position);
+    a->aabb = ta_collider_world_bounds(&a->collider, &a->xform);
+    b->aabb = ta_collider_world_bounds(&b->collider, &b->xform);
 }
 #endif

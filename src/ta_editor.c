@@ -1849,6 +1849,9 @@ static void ui_camera_panel()
         static ta_ui_textbox_vec4_state rot_textbox = { 0 };
         ta_ui_textbox_vec4(&cam_trans->xform.orientation, &rot_textbox, false, false);
 
+        static ta_ui_textbox_state follow_distance_textbox = { 0 };
+        ta_ui_textbox_float(&camera->follow_distance, &follow_distance_textbox, 0);
+
         static ta_ui_textbox_state pos_smooth_textbox = { 0 };
         ta_ui_textbox_float(&camera->position_smooth, &pos_smooth_textbox, 0);
 
@@ -1868,9 +1871,6 @@ static void ui_camera_panel()
             camera->position_target_vel = 1.0f;
         }
         ta_ui_row_end();
-
-        static ta_ui_textbox_state follow_distance_textbox = { 0 };
-        ta_ui_textbox_float(&camera->follow_distance, &follow_distance_textbox, 0);
 
         ta_ui_label_float(camera->yaw);
 
