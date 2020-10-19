@@ -523,7 +523,10 @@ void ta_schema_register()
     TYPE_FIELD  (ta_rigid_body, entity,      ATOM_STRING);
     TYPE_FIELD  (ta_rigid_body, collider,    TYP_COLLIDER);
     TYPE_FIELD  (ta_rigid_body, mass,        ATOM_FLOAT);
-    TYPE_FIELD  (ta_rigid_body, sensor,     ATOM_BOOL);
+    TYPE_FIELD  (ta_rigid_body, e,           ATOM_FLOAT);
+    TYPE_FIELD  (ta_rigid_body, ks,          ATOM_FLOAT);
+    TYPE_FIELD  (ta_rigid_body, kd,          ATOM_FLOAT);
+    TYPE_FIELD  (ta_rigid_body, sensor,      ATOM_BOOL);
     TYPE_FIELD  (ta_rigid_body, no_gravity,  ATOM_BOOL);
     TYPE_FIELD  (ta_rigid_body, no_rotation, ATOM_BOOL);
     TYPE_END    (ta_rigid_body);

@@ -1331,11 +1331,11 @@ static void game_render_colliders_debug()
         ta_collider_push(&body->collider, narrowphase_color);
         ta_primitive_render(true, false);
     }
+    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
 
 #if 0
     // World space
-    ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
         ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
 
@@ -1366,6 +1366,7 @@ static void game_render_nametags_debug(ta_camera *camera)
     //ta_mat4 projection = mat4_ortho(-10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 20.0f);
 
     ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    ta_shader *font_shader = ta_game_by_sym(RES_SHADER, font->shader);
 
     ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
     dlb_vec_each(ta_transform *, transform, transforms) {
@@ -1409,7 +1410,6 @@ static void game_render_nametags_debug(ta_camera *camera)
         //ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
 
         // Name tag text
-        ta_shader *font_shader = ta_game_by_sym(RES_SHADER, font->shader);
         ta_shader_set_mat4(font_shader, SYM_U_PROJ, &projection);
         ta_shader_set_mat4(font_shader, SYM_U_VIEW, &camera->look_at);
         ta_shader_set_mat4(font_shader, SYM_U_MODEL, &tag_xform_fg);
@@ -1424,6 +1424,14 @@ static void game_render_nametags_debug(ta_camera *camera)
         ta_font_render(font, 0, 0, 0, true, false, &primitive_quads);
         ta_shader_reset_pvm(font_shader);
     }
+
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
+
+    ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
+    ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
+    ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
 }
 void ta_game_loop()
 {
@@ -1446,7 +1454,7 @@ void ta_game_loop()
     const float ms_sim_dt = 20;             // fixed dt milliseconds
     const float sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
     const int sim_max_steps = 0;            // max simulation steps per frame
-    const int sim_substeps = 1;             // number of substeps to perform for each step
+    const int sim_substeps = 20;            // number of substeps to perform for each step
     double ms_sim_t = 0;                    // current simulation time
     double ms_frame_accum = 0;
 

@@ -215,17 +215,17 @@ ta_camera:
   position_target_vel: 0x3E19999A (0.150000)
   target_xform:
     position:
-      x: 0x3F4D27E3 (0.801390)
-      y: 0x3F53A9D4 (0.826810)
-      z: 0x4052515A (3.286215)
+      x: 0x41373A66 (11.451757)
+      y: 0x4118CB1E (9.549589)
+      z: 0x40AD5D5A (5.417645)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  yaw: 0x42B0690E (88.205185)
+  yaw: 0x431D0116 (157.004242)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC08C7E7E (-4.390441)
+  pitch: 0xC1827ACC (-16.309959)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B3FAE1 (-89.989998)
   pitch_max: 0x42B3FAE1 (89.989998)
@@ -236,9 +236,9 @@ ta_camera:
     y: 0x00800000 (0.000000)
     z: 0x00800000 (0.000000)
   up:
-    x: 0x3B1D21F1 (0.002398)
-    y: 0x3F7F3FAE (0.997065)
-    z: 0xBD9CB3F7 (-0.076515)
+    x: 0xBE845C52 (-0.258517)
+    y: 0x3F75B29A (0.959756)
+    z: 0xBDE0B042 (-0.109711)
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -473,7 +473,7 @@ ta_model:
   entity: "button.node.button"
   mesh: "button.mesh.button"
   materials: ["button.material.grid", "button.material.rainbow", ]
-  morph_target_weights: [0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), ]
+  morph_target_weights: [0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), ]
   cast_shadows: true
   receive_shadows: true
 ta_model:
@@ -565,7 +565,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x00000000 (0.000000)
+      y: 0xC111EB86 (-9.120001)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -618,7 +618,7 @@ ta_transform:
     position:
       x: 0xC02FFC4A (-2.749774)
       y: 0x00000000 (0.000000)
-      z: 0xC0C81484 (-6.252504)
+      z: 0xC0F8B874 (-7.772516)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -630,21 +630,21 @@ ta_transform:
   entity: "freecam"
   xform:
     position:
-      x: 0x3F4D27DE (0.801390)
-      y: 0x3F53A9D8 (0.826810)
-      z: 0x4052515E (3.286216)
+      x: 0x41373A66 (11.451757)
+      y: 0x4118CB1E (9.549589)
+      z: 0x40AD5D5A (5.417645)
     orientation:
-      x: 0xBD1CEA0E (-0.038309)
-      y: 0xBC800567 (-0.015628)
-      z: 0x80000000 (-0.000000)
-      w: 0x3F7FC7E3 (0.999144)
+      x: 0xBE2D6AC8 (-0.169353)
+      y: 0x3F0863F0 (0.532775)
+      z: 0x00000000 (0.000000)
+      w: 0x3F54426D (0.829139)
 ta_transform:
   name: "player_one"
   entity: "player_one"
   xform:
     position:
-      x: 0x3F800000 (1.000000)
-      y: 0x3F000000 (0.500000)
+      x: 0x00000000 (0.000000)
+      y: 0x41000000 (8.000000)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -656,8 +656,8 @@ ta_transform:
   entity: "player_camera"
   xform:
     position:
-      x: 0x3F800000 (1.000000)
-      y: 0x40900000 (4.500000)
+      x: 0x00000000 (0.000000)
+      y: 0x41400000 (12.000000)
       z: 0xBF333333 (-0.700000)
     orientation:
       x: 0xB4FBBFAF (-0.000000)
@@ -682,14 +682,14 @@ ta_transform:
   entity: "sphere2"
   xform:
     position:
-      x: 0x414325B3 (12.196704)
-      y: 0xC738F7DB (-47351.855469)
-      z: 0xC189CD86 (-17.225353)
+      x: 0x40400000 (3.000000)
+      y: 0x3F800000 (1.000000)
+      z: 0x40000000 (2.000000)
     orientation:
-      x: 0xBEAE308D (-0.340214)
-      y: 0xBEA0B1EF (-0.313858)
-      z: 0xBE7D7E9E (-0.247553)
-      w: 0xBF59E54E (-0.851155)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
 ta_transform:
   name: "shadow_test_1"
   entity: "shadow_test_1"
@@ -708,14 +708,14 @@ ta_transform:
   entity: "column_0001"
   xform:
     position:
-      x: 0x41A900A0 (21.125305)
-      y: 0xC73AB3A6 (-47795.648438)
-      z: 0x403BB0C8 (2.932665)
+      x: 0xC0000000 (-2.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x40000000 (2.000000)
     orientation:
-      x: 0xBB019C3A (-0.001978)
-      y: 0xB269BC10 (-0.000000)
-      z: 0x3C6968F0 (0.014246)
-      w: 0xBF7FF939 (-0.999897)
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
 ta_transform:
   name: "column_0002"
   entity: "column_0002"
@@ -747,9 +747,9 @@ ta_transform:
   entity: "star_0001"
   xform:
     position:
-      x: 0x4181D402 (16.228519)
-      y: 0x4E9B9929 (1305252992.000000)
-      z: 0xC1B35CF3 (-22.420385)
+      x: 0x40400000 (3.000000)
+      y: 0x3F000000 (0.500000)
+      z: 0xC0400000 (-3.000000)
     orientation:
       x: 0x3E41D8C1 (0.189303)
       y: 0x00000000 (0.000000)
@@ -852,10 +852,10 @@ ta_transform:
       y: 0x3F22AC77 (0.635444)
       z: 0x3D1D2B19 (0.038371)
     orientation:
-      x: 0xBEEDEF50 (-0.464716)
-      y: 0x3E36F2AF (0.178660)
-      z: 0x3F0504FD (0.519607)
-      w: 0x3F31C12E (0.694354)
+      x: 0xBF208BEF (-0.627135)
+      y: 0x3E7E60D3 (0.248416)
+      z: 0x3F3312C9 (0.699505)
+      w: 0x3E71A2C1 (0.235972)
   parent: "dude.bone.thoratic"
   children: ["dude.bone.forearm.l", ]
 ta_transform:
@@ -864,13 +864,13 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3F68AEA8 (0.908915)
+      y: 0x3F68AEA6 (0.908915)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EE0A933 (0.438791)
-      y: 0x3D6304DA (0.055425)
-      z: 0xBEEC61CB (-0.461684)
-      w: 0x3F44D7FC (0.768921)
+      x: 0xBCC98A32 (-0.024602)
+      y: 0x3E357C8E (0.177233)
+      z: 0xBE1E609E (-0.154665)
+      w: 0x3F78BCA5 (0.971628)
   parent: "dude.bone.upper_arm.l"
   children: ["dude.bone.hand.l", ]
 ta_transform:
@@ -879,12 +879,12 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3F2B5284 (0.669228)
+      y: 0x3F2B528A (0.669228)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBD350015 (-0.044190)
-      y: 0x3DA8F53B (0.082499)
-      z: 0xBD68C97B (-0.056833)
+      x: 0xBD35001A (-0.044190)
+      y: 0x3DA8F53A (0.082499)
+      z: 0xBD68C97D (-0.056833)
       w: 0x3F7E75F8 (0.993988)
   parent: "dude.bone.forearm.l"
   children: ["dude.bone.fingers_proximal.l", "dude.bone.thumb_proximal.l", ]
@@ -894,12 +894,12 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3E762B90 (0.240401)
+      y: 0x3E762B92 (0.240401)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBDDEE9BB (-0.108844)
+      x: 0xBDDEE9BC (-0.108844)
       y: 0x3EE9A759 (0.456355)
-      z: 0xBE57C498 (-0.210711)
+      z: 0xBE57C49A (-0.210711)
       w: 0x3F5B8C4C (0.857610)
   parent: "dude.bone.hand.l"
   children: ["dude.bone.fingers_distal.l", ]
@@ -909,25 +909,25 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3DB03F33 (0.086058)
+      y: 0x3DB03EF2 (0.086058)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBC95900A (-0.018257)
-      y: 0x3D573719 (0.052543)
-      z: 0xBC7F0D11 (-0.015567)
-      w: 0x3F7F9296 (0.998330)
+      x: 0xBC959010 (-0.018257)
+      y: 0x3D573716 (0.052543)
+      z: 0xBC7F0D06 (-0.015567)
+      w: 0x3F7F9295 (0.998330)
   parent: "dude.bone.fingers_proximal.l"
 ta_transform:
   name: "dude.bone.thumb_proximal.l"
   entity: "dude.bone.thumb_proximal.l"
   xform:
     position:
-      x: 0x3DAFA790 (0.085769)
-      y: 0x3DF3B90E (0.119005)
-      z: 0x3BBCCB37 (0.005762)
+      x: 0x3DAFA7AC (0.085769)
+      y: 0x3DF3B910 (0.119005)
+      z: 0x3BBCCC39 (0.005762)
     orientation:
       x: 0x3EBC3B40 (0.367640)
-      y: 0x3E9F40CB (0.311041)
+      y: 0x3E9F40C9 (0.311041)
       z: 0xBF2BD4CC (-0.671216)
       w: 0x3F104362 (0.563528)
   parent: "dude.bone.hand.l"
@@ -938,12 +938,12 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3D4022D8 (0.046908)
+      y: 0x3D4022D0 (0.046908)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBD07DB84 (-0.033168)
-      y: 0x3B36B533 (0.002788)
-      z: 0x3CCD1DC5 (0.025039)
+      x: 0xBD07DB86 (-0.033168)
+      y: 0x3B36B55E (0.002788)
+      z: 0x3CCD1DCB (0.025039)
       w: 0x3F7FC721 (0.999132)
   parent: "dude.bone.thumb_proximal.l"
 ta_transform:
@@ -1354,9 +1354,9 @@ ta_transform:
   entity: "skeleton_test.node.armature"
   xform:
     position:
-      x: 0xC035C28A (-2.839999)
+      x: 0xC0F52247 (-7.660434)
       y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
+      z: 0x40400000 (3.000000)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -1372,10 +1372,10 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EA700F4 (0.326179)
+      x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F71FFB4 (0.945308)
+      w: 0x3F800000 (1.000000)
   parent: "skeleton_test.node.armature"
   children: ["skeleton_test.bone.head", "skeleton_test.node.body", ]
 ta_transform:
@@ -1387,10 +1387,10 @@ ta_transform:
       y: 0x3F000000 (0.500000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EA700F5 (0.326179)
+      x: 0xBBF7187B (-0.007541)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F71FFB4 (0.945308)
+      w: 0x3F7FFE23 (0.999972)
   parent: "skeleton_test.bone.body"
   children: ["skeleton_test.node.head", ]
 ta_transform:
@@ -1441,7 +1441,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3FAC0000 (1.343750)
+      y: 0x3F000000 (0.500000)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -1484,9 +1484,9 @@ ta_transform:
   entity: "skeleton_test_skin.node.armature"
   xform:
     position:
-      x: 0xC086BFBC (-4.210905)
+      x: 0xC0D9B4E3 (-6.803331)
       y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
+      z: 0x40400000 (3.000000)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -1502,10 +1502,10 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3E165559 (0.146810)
+      x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F7D39E6 (0.989165)
+      w: 0x3F800000 (1.000000)
   parent: "skeleton_test_skin.node.armature"
   children: ["skeleton_test_skin.bone.head", ]
 ta_transform:
@@ -1517,10 +1517,10 @@ ta_transform:
       y: 0x3F000000 (0.500000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3E94F10F (0.290902)
+      x: 0xBB5FFB53 (-0.003418)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F74EDC3 (0.956753)
+      w: 0x3F7FFF9E (0.999994)
   parent: "skeleton_test_skin.bone.body"
 ta_transform:
   name: "skeleton_test_skin.node.body"
@@ -1554,9 +1554,9 @@ ta_transform:
   entity: "table"
   xform:
     position:
-      x: 0x00000000 (0.000000)
-      y: 0x40000000 (2.000000)
-      z: 0xC0A00000 (-5.000000)
+      x: 0xBF9962AC (-1.198324)
+      y: 0x40404964 (3.004479)
+      z: 0xBFFBEFDE (-1.968258)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -1568,7 +1568,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x407DD7CA (3.966296)
+      y: 0xBC903F38 (-0.017608)
       z: 0xC0A00000 (-5.000000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -1582,6 +1582,110 @@ ta_transform:
     position:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "ball1"
+  entity: "ball1"
+  xform:
+    position:
+      x: 0x3A83126F (0.001000)
+      y: 0x3F800000 (1.000000)
+      z: 0x3C23D70A (0.010000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "ball2"
+  entity: "ball2"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x40400000 (3.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "ball3"
+  entity: "ball3"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x40A00000 (5.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "ball4"
+  entity: "ball4"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x40E00000 (7.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "plane_wall_north"
+  entity: "plane_wall_north"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x40A00000 (5.000000)
+      z: 0xC0A00000 (-5.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "plane_wall_south"
+  entity: "plane_wall_south"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x40A00000 (5.000000)
+      z: 0x40A00000 (5.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "plane_wall_east"
+  entity: "plane_wall_east"
+  xform:
+    position:
+      x: 0x40A00000 (5.000000)
+      y: 0x40A00000 (5.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "plane_wall_west"
+  entity: "plane_wall_west"
+  xform:
+    position:
+      x: 0xC0A00000 (-5.000000)
+      y: 0x40A00000 (5.000000)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -1610,6 +1714,9 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
   no_gravity: true
 ta_rigid_body:
   name: "chamber_0001_collider_platform_north"
@@ -1630,6 +1737,9 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
   no_gravity: true
 ta_rigid_body:
   name: "chamber_0001_collider_lava_pit_floor"
@@ -1650,6 +1760,9 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
   no_gravity: true
 ta_rigid_body:
   name: "button_0001"
@@ -1671,6 +1784,9 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
   mass: 0x3F800000 (1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
   sensor: true
   no_gravity: true
 ta_rigid_body:
@@ -1681,10 +1797,13 @@ ta_rigid_body:
     sphere:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x00000000 (0.000000)
+        y: 0x3F000000 (0.500000)
         z: 0x00000000 (0.000000)
       radius: 0x3F000000 (0.500000)
   mass: 0x3F800000 (1.000000)
+  e: 0x3F4CCCCD (0.800000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
   no_rotation: true
 ta_rigid_body:
   name: "rock_0001"
@@ -1705,6 +1824,9 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
   no_gravity: true
 ta_rigid_body:
   name: "sphere2"
@@ -1718,6 +1840,9 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
   mass: 0x3F800000 (1.000000)
+  e: 0x3F4CCCCD (0.800000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
 ta_rigid_body:
   name: "column_0001"
   entity: "column_0001"
@@ -1726,10 +1851,14 @@ ta_rigid_body:
     sphere:
       center:
         x: 0x00000000 (0.000000)
-        y: 0x00000000 (0.000000)
+        y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
-  mass: 0x3F800000 (1.000000)
+  e: 0x3F4CCCCD (0.800000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
+  no_gravity: true
+  no_rotation: true
 ta_rigid_body:
   name: "column_0002"
   entity: "column_0002"
@@ -1749,6 +1878,9 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
 ta_rigid_body:
   name: "column_0003"
   entity: "column_0003"
@@ -1768,6 +1900,9 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
 ta_rigid_body:
   name: "star_0001"
   entity: "star_0001"
@@ -1779,7 +1914,10 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F000000 (0.500000)
-  mass: 0x3E4CCCCD (0.200000)
+  mass: 0x3F800000 (1.000000)
+  e: 0x3F4CCCCD (0.800000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
 ta_rigid_body:
   name: "table"
   entity: "table"
@@ -1791,6 +1929,9 @@ ta_rigid_body:
         y: 0x00000000 (0.000000)
         z: 0x00000000 (0.000000)
       radius: 0x3F800000 (1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
 ta_rigid_body:
   name: "can"
   entity: "can"
@@ -1811,6 +1952,9 @@ ta_rigid_body:
         z: 0x00000000 (0.000000)
         w: 0x3F800000 (1.000000)
   mass: 0x3F800000 (1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
 ta_rigid_body:
   name: "ground"
   entity: "ground"
@@ -1825,6 +1969,137 @@ ta_rigid_body:
         x: 0x00000000 (0.000000)
         y: 0x3F800000 (1.000000)
         z: 0x00000000 (0.000000)
+  e: 0x3F4CCCCD (0.800000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
+ta_rigid_body:
+  name: "ball1"
+  entity: "ball1"
+  collider:
+    type: 1  # TA_COLLIDER_SPHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  mass: 0x3F800000 (1.000000)
+  e: 0x3F4CCCCD (0.800000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
+ta_rigid_body:
+  name: "ball2"
+  entity: "ball2"
+  collider:
+    type: 1  # TA_COLLIDER_SPHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  mass: 0x3F800000 (1.000000)
+  e: 0x3F4CCCCD (0.800000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
+ta_rigid_body:
+  name: "ball3"
+  entity: "ball3"
+  collider:
+    type: 1  # TA_COLLIDER_SPHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  mass: 0x3F800000 (1.000000)
+  e: 0x3F4CCCCD (0.800000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
+ta_rigid_body:
+  name: "ball4"
+  entity: "ball4"
+  collider:
+    type: 1  # TA_COLLIDER_SPHERE
+    sphere:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      radius: 0x3F800000 (1.000000)
+  mass: 0x3F800000 (1.000000)
+  e: 0x3F4CCCCD (0.800000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
+ta_rigid_body:
+  name: "plane_wall_north"
+  entity: "plane_wall_north"
+  collider:
+    type: 0  # TA_COLLIDER_PLANE
+    plane:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      normal:
+        x: 0x00000000 (0.000000)
+        y: 0x27041777 (0.000000)
+        z: 0x3F800000 (1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
+ta_rigid_body:
+  name: "plane_wall_south"
+  entity: "plane_wall_south"
+  collider:
+    type: 0  # TA_COLLIDER_PLANE
+    plane:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      normal:
+        x: 0x00000000 (0.000000)
+        y: 0x341D1171 (0.000000)
+        z: 0xBF800000 (-1.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
+ta_rigid_body:
+  name: "plane_wall_east"
+  entity: "plane_wall_east"
+  collider:
+    type: 0  # TA_COLLIDER_PLANE
+    plane:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      normal:
+        x: 0xBF800000 (-1.000000)
+        y: 0x33A887AA (0.000000)
+        z: 0x00000000 (0.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
+ta_rigid_body:
+  name: "plane_wall_west"
+  entity: "plane_wall_west"
+  collider:
+    type: 0  # TA_COLLIDER_PLANE
+    plane:
+      center:
+        x: 0x00000000 (0.000000)
+        y: 0x00000000 (0.000000)
+        z: 0x00000000 (0.000000)
+      normal:
+        x: 0x3F800000 (1.000000)
+        y: 0x2D8F64A0 (0.000000)
+        z: 0x00000000 (0.000000)
+  e: 0x3CA3D70A (0.020000)
+  ks: 0x3F7AE148 (0.980000)
+  kd: 0x3F733333 (0.950000)
 #-------------------------------------------------------------------------------
 # TYP_ANIMATION
 #-------------------------------------------------------------------------------
