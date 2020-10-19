@@ -55,12 +55,12 @@ typedef struct ta_rigid_body {
     float kd;  // Coefficient of dynamic friction
 
     //ta_mat3 tensor;
-    ta_mat3 inv_tensor_world;
-    ta_mat3 inv_tensor_local;
-    ta_vec4 tensor_orientation;
+    ta_mat3 inv_tensor_local;         // TODO(perf): Define as diagonal matrix w.r.t. rest pose such that we can use vec3
+    ta_mat3 priv__inv_tensor_world;   // NOTE: Don't access this directly, use rigid_body_inv_tensor_world()
+    ta_vec4 priv__tensor_orientation; // NOTE: Don't access this; internal state
 
-    ta_vec3 centroid_world;
     ta_vec3 centroid_local;
+    //ta_vec3 centroid_world;     // TODO(perf): Could cache this, but let's calculate it every time to avoid bugs.
 
     ta_xform xform;       // world space
     ta_xform xform_prev;  // world space
@@ -98,6 +98,27 @@ void ta_rigid_body_init                         (ta_rigid_body *body);
 void ta_rigid_body_init_void                    (void *body);
 void ta_rigid_body_free                         (ta_rigid_body *body);
 void ta_rigid_body_free_void                    (void *body);
+
+ta_vec3 rigid_body_local_to_world               (const ta_rigid_body *body, ta_vec3 p_body);
+ta_vec3 rigid_body_local_to_world_prev          (const ta_rigid_body *body, ta_vec3 p_body);
+ta_vec3 rigid_body_world_to_local               (const ta_rigid_body *body, ta_vec3 p_world);
+
+ta_vec3 rigid_body_oriented_vector              (const ta_rigid_body *body, ta_vec3 v_rest);
+ta_vec3 rigid_body_rest_vector                  (const ta_rigid_body *body, ta_vec3 v_world);
+ta_vec4 rigid_body_oriented_quaternion          (const ta_rigid_body *body, ta_vec4 q_rest);
+ta_vec4 rigid_body_rest_quaternion              (const ta_rigid_body *body, ta_vec4 q_world);
+
+ta_vec3 rigid_body_centroid_to_body             (const ta_rigid_body *body, ta_vec3 p_centroid);
+ta_vec3 rigid_body_body_to_centroid             (const ta_rigid_body *body, ta_vec3 p_body);
+
+ta_vec3 rigid_body_centroid_to_world            (const ta_rigid_body *body, ta_vec3 p_centroid);
+ta_vec3 rigid_body_centroid_to_world_prev       (const ta_rigid_body *body, ta_vec3 p_centroid);
+ta_vec3 rigid_body_world_to_centroid            (const ta_rigid_body *body, ta_vec3 p_world);
+
+ta_vec3 rigid_body_centroid_world               (const ta_rigid_body *body);
+ta_vec3 rigid_body_centroid_oriented            (const ta_rigid_body *body);
+const ta_mat3 *rigid_body_inv_tensor_world      (ta_rigid_body *body);
+
 void ta_rigid_body_apply_force                  (ta_rigid_body *body, ta_vec3 force);
 void ta_rigid_body_apply_force_at               (ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
 void ta_rigid_body_apply_impulse                (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact_local);

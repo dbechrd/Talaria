@@ -5,7 +5,6 @@
 #include "ta_primitive.h"
 #include "ta_schema.h"
 #include "ta_symbol.h"
-#include "ta_transform.h"
 #include "dlb/dlb_vector.h"
 #include <math.h>
 #include <float.h>
@@ -50,6 +49,106 @@ void ta_rigid_body_free_void(void *body)
 {
     ta_rigid_body_free(body);
 }
+// Convert a point from body local space to world space
+ta_vec3 rigid_body_local_to_world(const ta_rigid_body *body, ta_vec3 p_body)
+{
+    ta_vec3 p_world = vec3_add(body->xform.position, quat_mul_vec3(body->xform.orientation, p_body));
+    return p_world;
+}
+// Convert a point from body local space to world space
+ta_vec3 rigid_body_local_to_world_prev(const ta_rigid_body *body, ta_vec3 p_body)
+{
+    ta_vec3 p_world_prev = vec3_add(body->xform_prev.position, quat_mul_vec3(body->xform_prev.orientation, p_body));
+    return p_world_prev;
+}
+// Convert a point from world space to body local space
+ta_vec3 rigid_body_world_to_local(const ta_rigid_body *body, ta_vec3 p_world)
+{
+    ta_vec3 p_body = quat_mul_vec3(quat_conjugate(body->xform.orientation), vec3_sub(p_world, body->xform.position));
+    return p_body;
+}
+// Convert a vector from body rest orientation to body world orientation
+ta_vec3 rigid_body_oriented_vector(const ta_rigid_body *body, ta_vec3 v_rest)
+{
+    ta_vec3 v_world = quat_mul_vec3(body->xform.orientation, v_rest);
+    return v_world;
+}
+// Convert a vector from world orientation to body rest orientation
+ta_vec3 rigid_body_rest_vector(const ta_rigid_body *body, ta_vec3 v_world)
+{
+    ta_vec3 v_rest = quat_mul_vec3(quat_conjugate(body->xform.orientation), v_world);
+    return v_rest;
+}
+// Convert a vector from body rest orientation to body world orientation
+ta_vec4 rigid_body_oriented_quaternion(const ta_rigid_body *body, ta_vec4 q_rest)
+{
+    ta_vec4 q_world = quat_normalize(quat_mul(body->xform.orientation, q_rest));
+    return q_world;
+}
+// Convert a vector from world orientation to body rest orientation
+ta_vec4 rigid_body_rest_quaternion(const ta_rigid_body *body, ta_vec4 q_world)
+{
+    ta_vec4 q_rest = quat_normalize(quat_mul(quat_conjugate(body->xform.orientation), q_world));
+    return q_rest;
+}
+// Convert a point from centroid space to body space
+ta_vec3 rigid_body_centroid_to_body(const ta_rigid_body *body, ta_vec3 p_centroid)
+{
+    ta_vec3 p_body = vec3_add(body->centroid_local, p_centroid);
+    return p_body;
+}
+// Convert a point from body space to centroid space
+ta_vec3 rigid_body_body_to_centroid(const ta_rigid_body *body, ta_vec3 p_body)
+{
+    ta_vec3 p_centroid = vec3_sub(p_body, body->centroid_local);
+    return p_centroid;
+}
+// Convert a point from centroid space to world space
+ta_vec3 rigid_body_centroid_to_world(const ta_rigid_body *body, ta_vec3 p_centroid)
+{
+    ta_vec3 p_world = rigid_body_local_to_world(body, rigid_body_centroid_to_body(body, p_centroid));
+    return p_world;
+}
+// Convert a point from centroid space to world space using this body's previous xform
+ta_vec3 rigid_body_centroid_to_world_prev(const ta_rigid_body *body, ta_vec3 p_centroid)
+{
+    ta_vec3 p_world_prev = rigid_body_local_to_world_prev(body, rigid_body_centroid_to_body(body, p_centroid));
+    return p_world_prev;
+}
+// Convert a point from world space to centroid space
+ta_vec3 rigid_body_world_to_centroid(const ta_rigid_body *body, ta_vec3 p_world)
+{
+    ta_vec3 p_centroid = rigid_body_body_to_centroid(body, rigid_body_world_to_local(body, p_world));
+    return p_centroid;
+}
+// Return centroid in world space
+ta_vec3 rigid_body_centroid_world(const ta_rigid_body *body)
+{
+    ta_vec3 centroid_world = rigid_body_local_to_world(body, body->centroid_local);
+    return centroid_world;
+}
+// Return centroid taking body's current orientation into account (body local space, but with world orientation)
+ta_vec3 rigid_body_centroid_oriented(const ta_rigid_body *body)
+{
+    ta_vec3 centroid_oriented = rigid_body_oriented_vector(body, body->centroid_local);
+    return centroid_oriented;
+}
+// Return inverse tensor in world space (will update stale internal state on demand)
+const ta_mat3 *rigid_body_inv_tensor_world(ta_rigid_body *body)
+{
+    // TODO(cleanup): If I do everything in local/rest space, I don't need inv_tensor_world, right?
+    if (!quat_equal(body->priv__tensor_orientation, body->xform.orientation)) {
+        // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf p. D14
+        // I_global = R * I_body * R^T
+        ta_mat3 rot = mat3_rotate_quat(body->xform.orientation);
+        ta_mat3 rot_t = mat3_transpose(&rot);
+        ta_mat3 inv_t_global = mat3_mul(&body->inv_tensor_local, &rot_t);
+        inv_t_global = mat3_mul(&rot, &inv_t_global);
+        body->priv__inv_tensor_world = inv_t_global;
+        body->priv__tensor_orientation = body->xform.orientation;
+    }
+    return &body->priv__inv_tensor_world;
+}
 void ta_rigid_body_apply_force(ta_rigid_body *body, ta_vec3 force)
 {
     body->force_accum = vec3_add(body->force_accum, force);
@@ -58,7 +157,7 @@ void ta_rigid_body_apply_force_at(ta_rigid_body *body, ta_vec3 force, ta_vec3 at
 {
     // http://allenchou.net/2013/12/game-physics-motion-dynamics-implementations/
     body->force_accum = vec3_add(body->force_accum, force);
-    body->torque_accum = vec3_add(body->torque_accum, vec3_cross(vec3_sub(at, body->centroid_world), force));
+    body->torque_accum = vec3_add(body->torque_accum, vec3_cross(vec3_sub(at, rigid_body_centroid_world(body)), force));
 }
 void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact_local)
 {
@@ -69,7 +168,7 @@ void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 c
         if (!body->no_rotation) {
             //DLB_ASSERT(!mat3_equal(&body->inv_tensor_world, &MAT3_ZERO));
             ta_vec3 moment = vec3_cross(contact_local, impulse);
-            ta_vec3 dw = mat3_mul_vec3(&body->inv_tensor_world, moment);
+            ta_vec3 dw = mat3_mul_vec3(rigid_body_inv_tensor_world(body), moment);
             body->ang_velocity = vec3_add(body->ang_velocity, dw);
         }
     } else {
@@ -82,8 +181,10 @@ void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_vec3 impu
     if (body->inv_mass == 0.0f) return;
 
     // contact penetration impulse
-    body->centroid_world = vec3_add(body->centroid_world, vec3_scalef(impulse, body->inv_mass));
-    body->xform.position = vec3_sub(body->centroid_world, quat_mul_vec3(body->xform.orientation, body->centroid_local));
+    ta_vec3 centroid_world = rigid_body_centroid_world(body);
+    centroid_world = vec3_add(centroid_world, vec3_scalef(impulse, body->inv_mass));
+    body->xform.position = vec3_sub(centroid_world, rigid_body_centroid_oriented(body));
+
     // equation 8 & 9 in PBDBodies.pdf, not sure what [stuff, 0] means, or what "q1 + stuff" is.. quat_add??
     // q = q + 1/2[I^-1(r x p), 0]q
     // q = q - 1/2[I^-1(r x p), 0]q
@@ -115,13 +216,24 @@ static bool intersector_plane_v_sphere(ta_manifold *manifold, const ta_rigid_bod
     DLB_ASSERT(a->collider.type == TA_COLLIDER_PLANE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
 
+    if (b->name == tg_e_player_one) {
+        DLB_ASSERT(1);
+    }
+
     ta_plane plane_a = a->collider.data.plane;
-    plane_a.center = quat_mul_vec3(a->xform.orientation, plane_a.center);
-    plane_a.center = vec3_add(plane_a.center, a->xform.position);
+    plane_a.center = rigid_body_local_to_world(a, plane_a.center);
+
     ta_sphere sphere_b = b->collider.data.sphere;
-    sphere_b.center = quat_mul_vec3(b->xform.orientation, sphere_b.center);
-    sphere_b.center = vec3_add(sphere_b.center, b->xform.position);
+    sphere_b.center = rigid_body_local_to_world(b, sphere_b.center);
+
     bool collided = ta_plane_v_sphere(manifold, &plane_a, &sphere_b);
+    if (collided && manifold) {
+        // Calculate contact radii in centroid space
+        for (u32 i = 0; i < manifold->contact_count; i++) {
+            manifold->contacts[i].ra = rigid_body_world_to_centroid(a, manifold->contacts[i].priv__ca_world);
+            manifold->contacts[i].rb = rigid_body_world_to_centroid(b, manifold->contacts[i].priv__cb_world);
+        }
+    }
     return collided;
 }
 static bool intersector_plane_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
@@ -130,13 +242,20 @@ static bool intersector_plane_v_obb(ta_manifold *manifold, const ta_rigid_body *
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
 
     ta_plane plane_a = a->collider.data.plane;
-    plane_a.center = quat_mul_vec3(a->xform.orientation, plane_a.center);
-    plane_a.center = vec3_add(plane_a.center, a->xform.position);
+    plane_a.center = rigid_body_local_to_world(a, plane_a.center);
+
     ta_obb obb_b = b->collider.data.obb;
-    obb_b.center = quat_mul_vec3(b->xform.orientation, obb_b.center);
-    obb_b.center = vec3_add(obb_b.center, b->xform.position);
-    obb_b.orientation = quat_normalize(quat_mul(b->xform.orientation, obb_b.orientation));
+    obb_b.center = rigid_body_local_to_world(b, obb_b.center);
+    obb_b.orientation = rigid_body_oriented_quaternion(b, obb_b.orientation);
+
     bool collided = ta_plane_v_obb(manifold, &plane_a, &obb_b);
+    if (collided && manifold) {
+        // Calculate contact radii in centroid space
+        for (u32 i = 0; i < manifold->contact_count; i++) {
+            manifold->contacts[i].ra = rigid_body_world_to_centroid(a, manifold->contacts[i].priv__ca_world);
+            manifold->contacts[i].rb = rigid_body_world_to_centroid(b, manifold->contacts[i].priv__cb_world);
+        }
+    }
     return collided;
 }
 static bool intersector_sphere_v_sphere(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
@@ -144,13 +263,21 @@ static bool intersector_sphere_v_sphere(ta_manifold *manifold, const ta_rigid_bo
     DLB_ASSERT(a->collider.type == TA_COLLIDER_SPHERE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_SPHERE);
 
+    // Check sphere v. sphere in world space
     ta_sphere sphere_a = a->collider.data.sphere;
-    sphere_a.center = quat_mul_vec3(a->xform.orientation, sphere_a.center);
-    sphere_a.center = vec3_add(sphere_a.center, a->xform.position);
+    sphere_a.center = rigid_body_local_to_world(a, sphere_a.center);
+
     ta_sphere sphere_b = b->collider.data.sphere;
-    sphere_b.center = quat_mul_vec3(b->xform.orientation, sphere_b.center);
-    sphere_b.center = vec3_add(sphere_b.center, b->xform.position);
+    sphere_b.center = rigid_body_local_to_world(b, sphere_b.center);
+
     bool collided = ta_sphere_v_sphere(manifold, &sphere_a, &sphere_b);
+    if (collided && manifold) {
+        // Calculate contact radii in centroid space
+        for (u32 i = 0; i < manifold->contact_count; i++) {
+            manifold->contacts[i].ra = rigid_body_world_to_centroid(a, manifold->contacts[i].priv__ca_world);
+            manifold->contacts[i].rb = rigid_body_world_to_centroid(b, manifold->contacts[i].priv__cb_world);
+        }
+    }
     return collided;
 }
 static bool intersector_sphere_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
@@ -159,13 +286,20 @@ static bool intersector_sphere_v_obb(ta_manifold *manifold, const ta_rigid_body 
     DLB_ASSERT(b->collider.type == TA_COLLIDER_OBB);
 
     ta_sphere sphere_a = a->collider.data.sphere;
-    sphere_a.center = quat_mul_vec3(a->xform.orientation, sphere_a.center);
-    sphere_a.center = vec3_add(sphere_a.center, a->xform.position);
+    sphere_a.center = rigid_body_local_to_world(a, sphere_a.center);
+
     ta_obb obb_b = b->collider.data.obb;
-    obb_b.center = quat_mul_vec3(b->xform.orientation, obb_b.center);
-    obb_b.center = vec3_add(obb_b.center, b->xform.position);
-    obb_b.orientation = quat_normalize(quat_mul(b->xform.orientation, obb_b.orientation));
+    obb_b.center = rigid_body_local_to_world(b, obb_b.center);
+    obb_b.orientation = rigid_body_oriented_quaternion(b, obb_b.orientation);
+
     bool collided = ta_sphere_v_obb(manifold, &sphere_a, &obb_b);
+    if (collided && manifold) {
+        // Calculate contact radii in centroid space
+        for (u32 i = 0; i < manifold->contact_count; i++) {
+            manifold->contacts[i].ra = rigid_body_world_to_centroid(a, manifold->contacts[i].priv__ca_world);
+            manifold->contacts[i].rb = rigid_body_world_to_centroid(b, manifold->contacts[i].priv__cb_world);
+        }
+    }
     return collided;
 }
 static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
@@ -223,15 +357,24 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
             manifold->a = a;
             manifold->b = b;
             if (swap_ab) {
-                manifold->normal = vec3_neg(manifold->normal);
+                manifold->normal_world = vec3_neg(manifold->normal_world);
+                ta_vec3 tmp = { 0 };
+                for (u32 i = 0; i < manifold->contact_count; i++) {
+                    tmp = manifold->contacts[i].ra;
+                    manifold->contacts[i].ra = manifold->contacts[i].rb;
+                    manifold->contacts[i].rb = tmp;
+
+                    tmp = manifold->contacts[i].priv__ca_world;
+                    manifold->contacts[i].priv__ca_world = manifold->contacts[i].priv__cb_world;
+                    manifold->contacts[i].priv__cb_world = tmp;
+                }
             }
 
             // Arithmetic mean (page 7)
             // https://graphics.stanford.edu/projects/bouncemap/assets/restitution_lowres.pdf
             manifold->e = (a->e + b->e) / 2.0f;
-            // Randy likes Pythagorean, but wasteful if not noticeably different
-            manifold->coef_static = (a->ks + b->ks) / 2.0f; // sqrtf(a->ks * a->ks + b->ks * b->ks);
-            manifold->coef_dynamic = (a->kd + b->kd) / 2.0f; // sqrtf(a->kd * a->kd + b->kd * b->kd);
+            manifold->coef_static = (a->ks + b->ks) / 2.0f;
+            manifold->coef_dynamic = (a->kd + b->kd) / 2.0f;
         }
 
         // Set some handy flags for debug rendering

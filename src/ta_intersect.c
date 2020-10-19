@@ -235,36 +235,34 @@ bool ta_aabb_v_aabb(const ta_aabb *a, const ta_aabb *b)
     return collided;
 }
 
-bool ta_plane_v_sphere(ta_manifold *manifold, const ta_plane *plane,
-    const ta_sphere *sphere)
+bool ta_plane_v_sphere(ta_manifold *manifold, const ta_plane *plane, const ta_sphere *sphere)
 {
     DLB_ASSERT(plane);
     DLB_ASSERT(sphere);
 
     float r = sphere->radius;
-    ta_vec3 n = vec3_sub(sphere->center, plane->center);
-
-    float d = vec3_dot(n, plane->normal);
+    float d = vec3_dot(vec3_sub(sphere->center, plane->center), plane->normal);
     if (d > r) {
         return false;
     }
 
     if (manifold) {
-        manifold->depth = r - d;
-        manifold->normal = plane->normal;
+        manifold->normal_world = plane->normal;
+        ta_vec3 sphere_contact = vec3_sub(sphere->center, vec3_scalef(manifold->normal_world, r));
+        manifold->contacts[0].priv__ca_world = vec3_add(sphere_contact, vec3_scalef(manifold->normal_world, r - d));
+        manifold->contacts[0].priv__cb_world = sphere_contact;
         manifold->contact_count = 1;
-        manifold->contacts[0].world = vec3_add(sphere->center, vec3_scalef(manifold->normal, -d));
     }
 
     return true;
 }
 
-bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane,
-    const ta_obb *obb)
+bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *obb)
 {
     DLB_ASSERT(plane);
     DLB_ASSERT(obb);
 
+#if 0
     // Calculate the 8 corners of the OBB
     ta_vec3 p[8] = { 0 };
     p[0].x = -obb->extents.x; p[0].y = -obb->extents.y; p[0].z = -obb->extents.z;
@@ -317,47 +315,55 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane,
     }
 
     return true;
+#else
+    UNUSED(manifold);
+    return false;
+#endif
 }
 
-bool ta_sphere_v_sphere(ta_manifold *manifold, const ta_sphere *a,
-    const ta_sphere *b)
+bool ta_sphere_v_sphere(ta_manifold *manifold, const ta_sphere *a, const ta_sphere *b)
 {
     DLB_ASSERT(a);
     DLB_ASSERT(b);
 
-    float r = a->radius + b->radius;
-    ta_vec3 n = vec3_sub(b->center, a->center);
+    // http://media.steampowered.com/apps/valve/2015/DirkGregorius_Contacts.pdf
 
-    float d2 = vec3_len2(n);
-    if (d2 > r * r) {
+    float r = a->radius + b->radius;
+    ta_vec3 dp = vec3_sub(b->center, a->center);
+
+    // delta position > sum of radii
+    float dp_len_sq = vec3_len2(dp);
+    if (dp_len_sq > r * r) {
         return false;
     }
 
     if (manifold) {
-        float d = sqrtf(d2);
-        if (d != 0) {
-            manifold->depth = r - d;
-            manifold->normal = vec3_scalef(n, 1.0f / d);
+        float dp_len = sqrtf(dp_len_sq);
+        if (dp_len) {
+            // normalize delta position
+            manifold->normal_world = vec3_scalef(dp, 1.0f / dp_len);
         } else {
             // Edge case: Circles at same position, arbitrarily point normal up
-            manifold->depth = a->radius;
-            manifold->normal = VEC3_Y;
+            manifold->normal_world = VEC3_Y;
         }
+        // penetation distance
+        float d = dp_len - r;
+
+        // calculate contact points
+        manifold->contacts[0].priv__ca_world = vec3_add(a->center, vec3_scalef(manifold->normal_world,  a->radius));
+        manifold->contacts[0].priv__cb_world = vec3_add(b->center, vec3_scalef(manifold->normal_world, -b->radius));
         manifold->contact_count = 1;
-        //manifold->contacts[0] = vec3_add(a->center,
-        //    vec3_scalef(manifold->normal, manifold->depth));
-        manifold->contacts[0].world = vec3_add(a->center, vec3_scalef(n, 0.5f));
     }
 
     return true;
 }
 
-bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere,
-    const ta_obb *obb)
+bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere, const ta_obb *obb)
 {
     DLB_ASSERT(sphere);
     DLB_ASSERT(obb);
 
+#if 0
     // Calculate the 8 corners of the OBB (world space)
     ta_vec3 p[8] = { 0 };
     p[0].x = -obb->extents.x; p[0].y = -obb->extents.y; p[0].z = -obb->extents.z;
@@ -414,4 +420,8 @@ bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere,
     }
 
     return true;
+#else
+    UNUSED(manifold);
+    return false;
+#endif
 }

@@ -60,7 +60,7 @@ typedef struct ta_mat4 {
 
 typedef struct ta_xform {
     ta_vec3 position;
-    ta_vec4 orientation;
+    ta_vec4 orientation;  // KEEP THIS NORMALIZED!!
     //ta_vec3 scale;
 } ta_xform;
 

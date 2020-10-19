@@ -926,25 +926,9 @@ static void game_simulate(float dt)
         body->velocity = vec3_add(body->velocity, vec3_scalef(acceleration, dt));
         body->xform.position = vec3_add(body->xform.position, vec3_scalef(body->velocity, dt));
 
-        // Update centroids and AABB (can be affected via editor)
-        body->centroid_local = body->collider.data.center;
-        body->centroid_world = vec3_add(body->xform.position, quat_mul_vec3(body->xform.orientation, body->centroid_local));
+        // TODO: This will also need to update the AABB tree
+        // Recalculate AABB
         body->aabb = ta_collider_world_bounds(&body->collider, &body->xform);
-
-#if 0
-        // Update global tensor when orientation changes
-        // TODO(cleanup): If I do everything in local/rest space, I don't need to have inv_tensor_world, right?
-        if (!quat_equal(body->tensor_orientation, transform->xform.orientation)) {
-            // http://www.cs.cmu.edu/~baraff/sigcourse/notesd1.pdf p. D14
-            // I_global = R * I_body * R^T
-            ta_mat3 rot = mat3_rotate_quat(transform->xform.orientation);
-            ta_mat3 rot_t = mat3_transpose(&rot);
-            ta_mat3 inv_t_global = mat3_mul(&body->inv_tensor_local, &rot_t);
-            inv_t_global = mat3_mul(&rot, &inv_t_global);
-            body->inv_tensor_world = inv_t_global;
-            body->tensor_orientation = transform->xform.orientation;
-        }
-#endif
 
         if (body->name == tg_e_can) {
             DLB_ASSERT(1);
@@ -990,8 +974,8 @@ static void game_simulate(float dt)
             // All of this code currently assumes body->xform == collider position/rotation, we would need to be
             // more clever to get this to work with arbitrary offsets. "More clever" probably means making the rigid
             // body be the parent of the mesh and letting transform_update handle the offset
-            DLB_ASSERT(vec3_zero(a->centroid_local));
-            DLB_ASSERT(vec3_zero(b->centroid_local));
+            //DLB_ASSERT(vec3_zero(a->centroid_local));
+            //DLB_ASSERT(vec3_zero(b->centroid_local));
 
             // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
             if (a->inv_mass == 0.0f && b->inv_mass == 0.0f) {
@@ -1004,19 +988,35 @@ static void game_simulate(float dt)
             if (a->name == tg_e_can || b->name == tg_e_can) {
                 DLB_ASSERT(1);
             }
+            if (a->name == tg_e_player_one || b->name == tg_e_player_one) {
+                DLB_ASSERT(1);
+            }
 
             for (u32 i = 0; i < manifold->contact_count; i++) {
                 // TODO: We may need to convert manifold->normal into local space for each body?
                 // TODO: We may need to convert the various impulse vectors into local space for each body?
 
-                // radii (world space)
-                const ta_vec3 ra = vec3_sub(manifold->contacts[i].world, a->centroid_world);
-                const ta_vec3 rb = vec3_sub(manifold->contacts[i].world, b->centroid_world);
+                // calculate world space contact points
+                const ta_vec3 ra = manifold->contacts[i].ra;
+                const ta_vec3 rb = manifold->contacts[i].rb;
+                ta_vec3 pa = rigid_body_centroid_to_world(a, ra);
+                ta_vec3 pb = rigid_body_centroid_to_world(b, rb);
+                ta_vec3 pa_prev = rigid_body_centroid_to_world_prev(a, ra);
+                ta_vec3 pb_prev = rigid_body_centroid_to_world_prev(b, rb);
 
+                // penetration depth
+                float d = vec3_dot(vec3_sub(pa, pb), manifold->normal_world);
+                if (d <= 0.0f) {
+                    continue;
+                }
+
+                // TODO: This should probably be moved into a rigid_body_* method
                 // generalized inverse masses
+                ta_vec3 a_normal_rest = rigid_body_rest_vector(a, manifold->normal_world);
+                ta_vec3 b_normal_rest = rigid_body_rest_vector(b, manifold->normal_world);
                 // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
-                const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra), manifold->normal);
-                const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb), manifold->normal);
+                const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, a_normal_rest)), ra), a_normal_rest);
+                const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, b_normal_rest)), rb), b_normal_rest);
 #if 1
                 // TODO: Reincorporate lambda and alpha to allow non-infinitely stiff constraints (though not for
                 // contact resolution, which should use a = 0)
@@ -1024,43 +1024,36 @@ static void game_simulate(float dt)
                 const float alpha_wavy = alpha / (dt * dt);
                 const float lambda = manifold->contacts[i].lambda;
 
-                float delta_lambda = (-manifold->depth - alpha_wavy * lambda) / (wa + wb + alpha_wavy);
+                float delta_lambda = (-d - alpha_wavy * lambda) / (wa + wb + alpha_wavy);
                 manifold->contacts[i].lambda += delta_lambda;
 #else
                 // NOTE: Simplification for alpha = 0, which removes the need to store lambda between constraint solves
                 float delta_lambda = -manifold->depth / (wa + wb);
 #endif
+                // TODO(perf): Maybe we could use rest position normals here instead of doing the conversion in apply_positional_correction
                 // contact penetration impulse
                 // Apply Dx = dn with a = 0 and lambda_normal
-                ta_vec3 dx_penetration_a = vec3_scalef(manifold->normal, delta_lambda * a->inv_mass);
-                ta_vec3 dx_penetration_b = vec3_scalef(manifold->normal, -delta_lambda * b->inv_mass);
+                ta_vec3 dx_penetration_a = vec3_scalef(manifold->normal_world, delta_lambda * a->inv_mass);
+                ta_vec3 dx_penetration_b = vec3_scalef(manifold->normal_world, -delta_lambda * b->inv_mass);
                 ta_rigid_body_apply_positional_correction(a, dx_penetration_a, ra);
                 ta_rigid_body_apply_positional_correction(b, dx_penetration_b, rb);
                 if (tg_game.debug_physics_render_penetration_vectors) {
-                    ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_world, ra), dx_penetration_a, tg_game.debug_physics_color_penetration_vectors);
-                    //ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(b->centroid_world, rb), dx_penetration_b, tg_game.debug_physics_color_penetration_vectors);
+                    ta_primitive_push_arrow(&primitive_lines_perma, pa, dx_penetration_a, tg_game.debug_physics_color_penetration_vectors);
+                    //ta_primitive_push_arrow(&primitive_lines_perma, pb, dx_penetration_b, tg_game.debug_physics_color_penetration_vectors);
                 }
 
                 // static friction impulse
-                ta_vec3 ra_prev = vec3_sub(vec3_add(a->xform_prev.position, quat_mul_vec3(a->xform_prev.orientation, ra)), a->centroid_world);
-                ta_vec3 rb_prev = vec3_sub(vec3_add(b->xform_prev.position, quat_mul_vec3(b->xform_prev.orientation, rb)), b->centroid_world);
 
                 // relative motion of contacts
-                ta_vec3 v = vec3_sub(vec3_sub(ra, ra_prev), vec3_sub(rb, rb_prev));
-                // TODO: This may need to be reversed:
-                //ta_vec3 v = vec3_sub(vec3_sub(rb, rb_prev), vec3_sub(ra, ra_prev));
-
-                // normal component of relative motion
-                ta_vec3 dp_normal = vec3_scalef(manifold->normal, vec3_dot(v, manifold->normal));
-
-                // tangential component of relative motion
-                ta_vec3 dp_tangent = vec3_sub(v, dp_normal);
+                ta_vec3 dp = vec3_sub(vec3_sub(pa, pa_prev), vec3_sub(pb, pb_prev));
+                ta_vec3 dp_normal = vec3_scalef(manifold->normal_world, vec3_dot(dp, manifold->normal_world));
+                ta_vec3 dp_tangent = vec3_sub(dp, dp_normal);
 
                 // if lambda_tangent < manifold->sf * lambda_normal
-                const float lambda_n2 = vec3_len2(v);
-                const float lambda_t2 = vec3_len2(dp_tangent);
-                const float mu_s2 = manifold->coef_static * manifold->coef_static;
-                if (lambda_t2 > TA_EPSILON2 && lambda_t2 < mu_s2 * lambda_n2) {
+                const float lambda_n_sq = vec3_len2(dp);
+                const float lambda_t_sq = vec3_len2(dp_tangent);
+                const float mu_static_sq = manifold->coef_static * manifold->coef_static;
+                if (lambda_t_sq > TA_EPSILON2 && lambda_t_sq < mu_static_sq * lambda_n_sq) {
                     // Apply Dx = Dp_t with a = 0
                     ta_vec3 dx_static_friction_a = vec3_scalef(dp_tangent, dt);
                     ta_vec3 dx_static_friction_b = vec3_neg(dx_static_friction_a);
@@ -1071,8 +1064,8 @@ static void game_simulate(float dt)
                     //ra_world = vec3_add(atrans->xform.position, quat_mul_vec3(atrans->xform.orientation, ra));
                     //rb_world = vec3_add(btrans->xform.position, quat_mul_vec3(btrans->xform.orientation, rb));
                     if (tg_game.debug_physics_render_static_friction_vectors) {
-                        ta_primitive_push_arrow(&primitive_lines_perma, manifold->contacts[i].world, dx_static_friction_a, tg_game.debug_physics_color_static_friction_vectors);
-                        //ta_primitive_push_arrow(&primitive_lines_perma, manifold->contacts[i].world, dx_static_friction_b, tg_game.debug_physics_color_static_friction_vectors);
+                        ta_primitive_push_arrow(&primitive_lines_perma, pa, dx_static_friction_a, tg_game.debug_physics_color_static_friction_vectors);
+                        //ta_primitive_push_arrow(&primitive_lines_perma, pb, dx_static_friction_b, tg_game.debug_physics_color_static_friction_vectors);
                     }
                 }
             }
@@ -1140,14 +1133,21 @@ static void game_simulate(float dt)
         }
 
         for (u32 i = 0; i < manifold->contact_count; i++) {
-            // radii (local space)
-            const ta_vec3 ra = vec3_sub(manifold->contacts[i].world, a->centroid_world);
-            const ta_vec3 rb = vec3_sub(manifold->contacts[i].world, b->centroid_world);
+            // calculate world space contact points
+            const ta_vec3 ra = manifold->contacts[i].ra;
+            const ta_vec3 rb = manifold->contacts[i].rb;
+            ta_vec3 pa = rigid_body_centroid_to_world(a, ra);
+            ta_vec3 pb = rigid_body_centroid_to_world(b, rb);
+            ta_vec3 pa_prev = rigid_body_centroid_to_world_prev(a, ra);
+            ta_vec3 pb_prev = rigid_body_centroid_to_world_prev(b, rb);
 
+            // TODO: This should probably be moved into a rigid_body_* method
             // generalized inverse masses
+            ta_vec3 a_normal_rest = rigid_body_rest_vector(a, manifold->normal_world);
+            ta_vec3 b_normal_rest = rigid_body_rest_vector(b, manifold->normal_world);
             // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
-            const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, manifold->normal)), ra), manifold->normal);
-            const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, manifold->normal)), rb), manifold->normal);
+            const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&a->inv_tensor_local, vec3_cross(ra, a_normal_rest)), ra), a_normal_rest);
+            const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(&b->inv_tensor_local, vec3_cross(rb, b_normal_rest)), rb), b_normal_rest);
 
             // relative velocity
             ta_vec3 va = vec3_add(a->velocity, vec3_cross(a->ang_velocity, ra));
@@ -1155,8 +1155,8 @@ static void game_simulate(float dt)
             ta_vec3 v = vec3_sub(va, vb);
 
             // normal/tangential velocity
-            float vn_mag = vec3_dot(v, manifold->normal);
-            ta_vec3 vn = vec3_scalef(manifold->normal, vn_mag);
+            float vn_mag = vec3_dot(v, manifold->normal_world);
+            ta_vec3 vn = vec3_scalef(manifold->normal_world, vn_mag);
             ta_vec3 vt = vec3_sub(v, vn);
             float vt_mag = vec3_len(vt);
 
@@ -1180,7 +1180,7 @@ static void game_simulate(float dt)
                 ta_rigid_body_apply_velocity_correction(b, vec3_neg(impulse), rb);
 
                 if (tg_game.debug_physics_render_dynamic_friction_vectors) {
-                    ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_world, ra), dv_dynamic_friction, tg_game.debug_physics_color_dynamic_friction_vectors);
+                    ta_primitive_push_arrow(&primitive_lines_perma, pa, dv_dynamic_friction, tg_game.debug_physics_color_dynamic_friction_vectors);
                 }
             }
 
@@ -1196,7 +1196,7 @@ static void game_simulate(float dt)
                 ta_rigid_body_apply_velocity_correction(b, vec3_neg(impulse), rb);
 
                 if (tg_game.debug_physics_render_damping_vectors) {
-                    ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_world, ra), dv_damping, tg_game.debug_physics_color_damping_vectors);
+                    ta_primitive_push_arrow(&primitive_lines_perma, pa, dv_damping, tg_game.debug_physics_color_damping_vectors);
                 }
             }
 
@@ -1207,15 +1207,15 @@ static void game_simulate(float dt)
                 ta_vec3 vb_prev = vec3_add(b->velocity_prev, vec3_cross(b->ang_velocity_prev, rb));
                 ta_vec3 v_prev = vec3_sub(va_prev, vb_prev);
                 // previous normal velocity
-                float vn_prev = vec3_dot(manifold->normal, v_prev);
+                float vn_prev = vec3_dot(manifold->normal_world, v_prev);
                 // TODO: for small vn_mag, |vn_mag| <= 2|g|h, set restitution to 0 to avoid jittering
                 float e = manifold->e; // * (float)(fabs(vn_mag) > (1.0f * fabs(GRAVITY) * dt));
                 // NOTE: Using MIN instead of MAX here because my signs are reversed (opposite normal I think) vs.
                 // PBDBodies Eq. 35.
-                ta_vec3 dv_restitution = vec3_scalef(manifold->normal, -vn_mag + MIN(-e * vn_prev, 0));
+                ta_vec3 dv_restitution = vec3_scalef(manifold->normal_world, -vn_mag + MIN(-e * vn_prev, 0));
 
                 if (tg_game.debug_physics_render_restitution_vectors) {
-                    ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_world, ra), dv_restitution, tg_game.debug_physics_color_restitution_vectors);
+                    ta_primitive_push_arrow(&primitive_lines_perma, pa, dv_restitution, tg_game.debug_physics_color_restitution_vectors);
                 }
 
                 ta_vec3 impulse = vec3_scalef(dv_restitution, 1.0f/(wa + wb));
@@ -1290,14 +1290,25 @@ static void game_render_manifolds_debug()
     const float radius = 0.025f;
     dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
         for (u32 i = 0; i < manifold->contact_count; ++i) {
+            const ta_vec3 contact_a = rigid_body_centroid_to_world(manifold->a, manifold->contacts[i].ra);
+            const ta_vec3 contact_b = rigid_body_centroid_to_world(manifold->b, manifold->contacts[i].rb);
+
             ta_sphere sphere = { 0 };
-            sphere.center = manifold->contacts[i].world;
+            sphere.center = contact_a;
             sphere.radius = radius;
             ta_primitive_push_sphere(0, sphere, TA_COLOR_WHITE);
 
-            ta_vec3 origin    = manifold->contacts[i].world;
-            ta_vec3 direction = vec3_scalef(manifold->normal, manifold->depth);
-            ta_primitive_push_arrow(0, origin, direction, TA_COLOR_WHITE);
+            ta_vec3 origin    = contact_a;
+            ta_vec3 direction = vec3_scalef(manifold->normal_world, 0.05f);
+            ta_primitive_push_arrow(0, origin, direction, TA_COLOR_RED);
+
+            //sphere.center = contact_b;
+            //sphere.radius = radius;
+            //ta_primitive_push_sphere(0, sphere, TA_COLOR_WHITE);
+            //
+            //origin    = contact_b;
+            //direction = vec3_scalef(manifold->normal_world, 0.05f);
+            //ta_primitive_push_arrow(0, origin, direction, TA_COLOR_GREEN);
         }
     }
 }
@@ -1321,6 +1332,7 @@ static void game_render_colliders_debug()
         ta_primitive_render(true, false);
     }
 
+#if 0
     // World space
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
@@ -1341,6 +1353,7 @@ static void game_render_colliders_debug()
         ta_primitive_push_aabb(0, body->aabb, broadphase_color);
     }
     ta_primitive_render(true, false);
+#endif
 }
 static void game_render_nametags_debug(ta_camera *camera)
 {
@@ -1799,66 +1812,6 @@ void ta_game_loop()
         ta_primitive_render(true, false);
 
         //----------------------------------------------------------------------
-        // Render various debug things when editor is active
-        //----------------------------------------------------------------------
-        if (tg_game.state == TA_STATE_EDITOR) {
-            // Debug render cameras as RGB spheres
-            dlb_vec_each(ta_camera *, camera, cameras) {
-                if (camera->name != tg_e_active_camera) {
-                    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
-                    ta_obb obb = { 0 };
-                    obb.center = cam_trans->xform_world.position;
-                    obb.extents = (ta_vec3){ 0.2f, 0.2f, 0.2f };
-                    obb.orientation = cam_trans->xform_world.orientation;
-                    ta_primitive_push_obb(0, obb, TA_COLOR_WHITE);
-                    ta_vec3 dir = quat_mul_vec3(obb.orientation, VEC3_NZ);
-                    ta_primitive_push_arrow(0, obb.center, dir, TA_COLOR_WHITE);
-
-                    // TODO: Camera icon on billboarded quad in world space
-                    //ta_primitive_push_billboard();
-                }
-            }
-            // Debug render light as spheres of the light's color
-            dlb_vec_each(ta_light *, light, lights) {
-                ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
-
-                ta_sphere light_pos = { 0 };
-                light_pos.center = transform->xform_world.position;
-                light_pos.radius = 0.2f;
-                ta_rgba color = { 0 };
-                if (light->enabled) {
-                    color.r = light->color.r;
-                    color.g = light->color.g;
-                    color.b = light->color.b;
-                } else {
-                    color.r = 0.5f;
-                    color.g = 0.5f;
-                    color.b = 0.5f;
-                }
-                ta_primitive_push_sphere(0, light_pos, color);
-
-                if (tg_game.debug_colliders) {
-                    ta_sphere light_aoe = { 0 };
-                    light_aoe.center = transform->xform_world.position;
-                    light_aoe.radius = 1.0;
-                    switch (light->type) {
-                        case TA_LIGHT_DIRECTIONAL:
-                            light_aoe.radius = light->data.directional.shadow_properties.zfar;
-                            break;
-                        case TA_LIGHT_POINT:
-                            light_aoe.radius = light->data.point.shadow_properties.zfar;
-                            break;
-                        case TA_LIGHT_SPOT:
-                            light_aoe.radius = light->data.spot.shadow_properties.zfar;
-                            break;
-                    }
-                    ta_primitive_push_sphere(0, light_aoe, color);
-                }
-            }
-            ta_primitive_render(true, false);
-        }
-
-        //----------------------------------------------------------------------
         // Debug rendering
         //----------------------------------------------------------------------
         if (tg_game.debug_colliders) {
@@ -1916,7 +1869,7 @@ void ta_game_loop()
                 }
                 ta_primitive_push_sphere(0, light_pos, color);
 
-                if (tg_game.debug_colliders) {
+                if (tg_game.debug_light_radii) {
                     ta_sphere light_aoe = { 0 };
                     light_aoe.center = transform->xform_world.position;
                     light_aoe.radius = 1.0;
@@ -2354,7 +2307,7 @@ void game_command_player_shoot()
         if (ta_ray_v_obb(&bullet, &obb, &t_intersect)) {
             ta_vec3 impulse = vec3_scalef(bullet.direction, 0.1f);;
             ta_vec3 contact_world = vec3_add(bullet.origin, vec3_scalef(bullet.direction, t_intersect));
-            ta_vec3 contact_local = vec3_sub(contact_world, can_body->centroid_world);
+            ta_vec3 contact_local = rigid_body_world_to_centroid(can_body, contact_world);
             ta_rigid_body_apply_impulse(can_body, impulse, contact_local);
         }
     }

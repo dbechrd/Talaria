@@ -1172,24 +1172,22 @@ static void ui_node_panel()
     if (transform_expanded) {
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(CSTR("position:"));
-        static ta_ui_textbox_vec3_state textbox = { 0 };
-        ta_ui_textbox_vec3(&transform->xform.position, &textbox, false, true);
+        ta_ui_label(CSTR("xform.position:"));
+        static ta_ui_textbox_vec3_state xform_pos_editor = { 0 };
+        ta_ui_textbox_vec3(&transform->xform.position, &xform_pos_editor, false, true);
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(CSTR("orientation:"));
-        // TODO: Can't hand edit quaternions.. they need to be normalized and
-        // the components need to be in the range [0.0, 1.0]. Let's create a
-        // ta_ui_label_vec4, then figure out how to edit rotations (Euler XYZ).
-        static ta_ui_textbox_vec4_state orient_editors = { 0 };
-        ta_ui_textbox_vec4(&transform->xform.orientation, &orient_editors, true, true);
+        ta_ui_label(CSTR("xform.orientation:"));
+        // TODO: Allow editing rotations as Euler XYZ.
+        static ta_ui_textbox_vec4_state xform_orient_editor = { 0 };
+        ta_ui_textbox_vec4(&transform->xform.orientation, &xform_orient_editor, true, true);
 
         char text[256] = { 0 };
         size_t text_len = 0;
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(CSTR("position_world:"));
+        ta_ui_label(CSTR("xform_world.position:"));
         text_len = snprintf(CSTR(text),
             "%.3f, %.3f, %.3f",
             transform->xform_world.position.x,
@@ -1200,7 +1198,7 @@ static void ui_node_panel()
 
         ta_ui_row_begin();
         ta_ui_next_size(label_width, 0);
-        ta_ui_label(CSTR("orientation_world:"));
+        ta_ui_label(CSTR("xform_world.orientation:"));
         text_len = snprintf(CSTR(text),
             "%.3f, %.3f, %.3f, %.3f",
             transform->xform_world.orientation.x,
@@ -1397,6 +1395,19 @@ static void ui_node_panel()
             ta_ui_textbox_float(&rigid_body->kd, &coef_dynamic_editor, 0);
             rigid_body->kd = clampf(rigid_body->kd, 0.0f, 1.0f);
 
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("xform.position:"));
+            static ta_ui_textbox_vec3_state rb_pos_editor = { 0 };
+            ta_ui_textbox_vec3(&rigid_body->xform.position, &rb_pos_editor, false, true);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("xform.orientation:"));
+            // TODO: Allow editing rotations as Euler XYZ.
+            static ta_ui_textbox_vec4_state rb_orient_editor = { 0 };
+            ta_ui_textbox_vec4(&rigid_body->xform.orientation, &rb_orient_editor, true, true);
+
             char text[64] = { 0 };
             size_t text_len = 0;
 
@@ -1511,7 +1522,9 @@ static void ui_node_panel()
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("centroid global:"));
             static ta_ui_textbox_vec3_state centroid_global_editor = { 0 };
-            ta_ui_textbox_vec3(&rigid_body->centroid_world, &centroid_global_editor, false, false);
+            // TODO: Make this a read-only textbox or create a ta_ui_label_vec3 helper
+            ta_vec3 centroid_world = rigid_body_centroid_world(rigid_body);
+            ta_ui_textbox_vec3(&centroid_world, &centroid_global_editor, false, false);
 
             ta_ui_row_begin();
             ta_ui_next_margin(2, 12, 0, 4);
@@ -1547,6 +1560,10 @@ static void ui_node_panel()
             ta_ui_label(CSTR("center:"));
             static ta_ui_textbox_vec3_state center_editor = { 0 };
             ta_ui_textbox_vec3(&rigid_body->collider.data.center, &center_editor, false, true);
+
+            // HACK: Assume bodies only have a single collider and that its center is always its centroid.
+            // NOTE: Also assumes nothing else needs to be updated when the centroid changes.. beware of cached state.
+            rigid_body->centroid_local = rigid_body->collider.data.center;
 
             switch (rigid_body->collider.type) {
                 case TA_COLLIDER_PLANE: {
