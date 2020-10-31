@@ -60,7 +60,7 @@ static void ta_transform_update(ta_transform *transform, float alpha, bool dirty
     }
 
     transform->xform_world.position = mat4_to_location(&transform->world);
-    transform->xform_world.orientation = mat4_to_quaternion(&transform->world);
+    transform->xform_world.orientation = quat_normalize(mat4_to_quaternion(&transform->world));
 
     transform->dirty_flag = !dirty_flag;
 }

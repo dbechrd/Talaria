@@ -838,12 +838,27 @@ static void collision_broadphase(ta_rigid_body_pair **pairs, ta_rigid_body *rigi
 
     dlb_vec_each(ta_rigid_body *, a, rigid_bodies) {
         dlb_vec_range(ta_rigid_body *, b, a + 1, dlb_vec_end(rigid_bodies)) {
-            // Don't let entities collide with themselves
-            if (a->entity == b->entity)
+            // Skip self collision checks
+            // NOTE: This isn't currently possible due to the loop starting at a + 1 and the fact that entites can only
+            // have a single rigid body, but that might change in the future.
+            if (a->entity == b->entity) {
+                DLB_ASSERT(!"Entity has multiple rigid bodies?");
                 continue;
+            }
+            // Ignore collisions between two immovable objects
+            if (a->inv_mass == 0.0f && b->inv_mass == 0.0f) {
+                continue;
+            }
+            // Ignore collisions between two sensors
+            if (a->sensor && b->sensor) {
+                continue;
+            }
+            // Ignore collisions between infinite planes
+            if (a->collider.type == TA_COLLIDER_PLANE && b->collider.type == TA_COLLIDER_PLANE) {
+                continue;
+            }
 
-            // HACK: Skip AABB broadphase for planes, (always collect them as potential pairs)
-            // TODO: Plane vs. AABB test; collect planes where vec3_dot(closest AABB point, plane.normal) <= 0
+            // NOTE: Skip broadphase for infinite planes (always collect them as potential pairs)
             if (a->collider.type == TA_COLLIDER_PLANE ||
                 b->collider.type == TA_COLLIDER_PLANE ||
                 ta_aabb_v_aabb(&a->aabb, &b->aabb))
@@ -904,7 +919,7 @@ static void game_simulate(float dt)
             DLB_ASSERT(!transform->parent);
 
             body->xform.position = transform->xform.position;
-            body->xform.orientation = transform->xform.orientation;
+            body->xform.orientation = quat_normalize(transform->xform.orientation);
         }
 
         // Clear per-body collision list
@@ -925,6 +940,15 @@ static void game_simulate(float dt)
         ta_vec3 acceleration = vec3_scalef(body->force_accum, body->inv_mass);
         body->velocity = vec3_add(body->velocity, vec3_scalef(acceleration, dt));
         body->xform.position = vec3_add(body->xform.position, vec3_scalef(body->velocity, dt));
+
+#if 1
+        // TODO: Update orientation
+        float dtheta_mag = vec3_len(body->ang_velocity);
+        if (dtheta_mag > TA_EPSILON) {
+            ta_vec4 delta_orient = quat_from_axis_angle(vec3_normalize(body->ang_velocity), dtheta_mag * dt);
+            body->xform.orientation = quat_normalize(quat_mul(delta_orient, body->xform.orientation));
+        }
+#endif
 
         // TODO: This will also need to update the AABB tree
         // Recalculate AABB
@@ -1085,7 +1109,7 @@ static void game_simulate(float dt)
         ta_vec3 dp = vec3_sub(body->xform.position, body->xform_prev.position);
         body->velocity = vec3_scalef(dp, 1.0f/dt);
 
-        ta_vec4 dq = quat_mul(body->xform.orientation, quat_inverse(body->xform_prev.orientation));
+        ta_vec4 dq = quat_normalize(quat_mul(body->xform.orientation, quat_inverse(body->xform_prev.orientation)));
         body->ang_velocity = vec3_scalef(vec3_init(dq.x, dq.y, dq.z), ((dq.w < 0.0f) * -1.0f) * 2.0f/dt);
 
         // check for NaN and infinity
@@ -1152,10 +1176,10 @@ static void game_simulate(float dt)
             // relative velocity
             ta_vec3 va = vec3_add(a->velocity, vec3_cross(a->ang_velocity, ra));
             ta_vec3 vb = vec3_add(b->velocity, vec3_cross(b->ang_velocity, rb));
-            ta_vec3 v = vec3_sub(va, vb);
+            ta_vec3 v = vec3_sub(vb, va);
 
             // normal/tangential velocity
-            float vn_mag = vec3_dot(v, manifold->normal_world);
+            float vn_mag = vec3_dot(manifold->normal_world, v);
             ta_vec3 vn = vec3_scalef(manifold->normal_world, vn_mag);
             ta_vec3 vt = vec3_sub(v, vn);
             float vt_mag = vec3_len(vt);
@@ -1205,22 +1229,33 @@ static void game_simulate(float dt)
                 // previous relative velocity (before velocity integration)
                 ta_vec3 va_prev = vec3_add(a->velocity_prev, vec3_cross(a->ang_velocity_prev, ra));
                 ta_vec3 vb_prev = vec3_add(b->velocity_prev, vec3_cross(b->ang_velocity_prev, rb));
-                ta_vec3 v_prev = vec3_sub(va_prev, vb_prev);
+                ta_vec3 v_prev = vec3_sub(vb_prev, va_prev);
                 // previous normal velocity
-                float vn_prev = vec3_dot(manifold->normal_world, v_prev);
+                float vn_mag_prev = vec3_dot(manifold->normal_world, v_prev);
                 // TODO: for small vn_mag, |vn_mag| <= 2|g|h, set restitution to 0 to avoid jittering
                 float e = manifold->e; // * (float)(fabs(vn_mag) > (1.0f * fabs(GRAVITY) * dt));
                 // NOTE: Using MIN instead of MAX here because my signs are reversed (opposite normal I think) vs.
                 // PBDBodies Eq. 35.
-                ta_vec3 dv_restitution = vec3_scalef(manifold->normal_world, -vn_mag + MIN(-e * vn_prev, 0));
+                float impulse_mag = -vn_mag + MIN(e * -vn_mag_prev, 0);
+                ta_vec3 dv_restitution = vec3_scalef(manifold->normal_world, -impulse_mag);
+                //ta_vec3 impulse = dv_restitution;
+                ta_vec3 impulse = vec3_scalef(dv_restitution, 1.0f/(wa + wb));
 
                 if (tg_game.debug_physics_render_restitution_vectors) {
-                    ta_primitive_push_arrow(&primitive_lines_perma, pa, dv_restitution, tg_game.debug_physics_color_restitution_vectors);
+                    ta_primitive_push_arrow(&primitive_lines_perma, pa, impulse, tg_game.debug_physics_color_restitution_vectors);
+                    ta_primitive_push_arrow(&primitive_lines_perma, pb, vec3_neg(impulse), tg_game.debug_physics_color_restitution_vectors);
                 }
 
-                ta_vec3 impulse = vec3_scalef(dv_restitution, 1.0f/(wa + wb));
+                if (a->name == tg_e_can || b->name == tg_e_can) {
+                    DLB_ASSERT(1);
+                }
+
+                //a->velocity = vec3_add(a->velocity, impulse);
+                //b->velocity = vec3_add(a->velocity, vec3_neg(impulse));
                 ta_rigid_body_apply_velocity_correction(a, impulse, ra);
                 ta_rigid_body_apply_velocity_correction(b, vec3_neg(impulse), rb);
+
+                DLB_ASSERT(1);
             }
 
             //ta_vec3 dv_total = vec3_add3(dv_dynamic_friction, dv_damping, dv_restitution);
@@ -1290,8 +1325,8 @@ static void game_render_manifolds_debug()
     const float radius = 0.025f;
     dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
         for (u32 i = 0; i < manifold->contact_count; ++i) {
-            const ta_vec3 contact_a = rigid_body_centroid_to_world(manifold->a, manifold->contacts[i].ra);
-            const ta_vec3 contact_b = rigid_body_centroid_to_world(manifold->b, manifold->contacts[i].rb);
+            const ta_vec3 contact_a = manifold->contacts[i].priv__ca_world; // rigid_body_centroid_to_world(manifold->a, manifold->contacts[i].ra);
+            const ta_vec3 contact_b = manifold->contacts[i].priv__cb_world; // rigid_body_centroid_to_world(manifold->b, manifold->contacts[i].rb);
 
             ta_sphere sphere = { 0 };
             sphere.center = contact_a;
@@ -1300,15 +1335,15 @@ static void game_render_manifolds_debug()
 
             ta_vec3 origin    = contact_a;
             ta_vec3 direction = vec3_scalef(manifold->normal_world, 0.05f);
-            ta_primitive_push_arrow(0, origin, direction, TA_COLOR_RED);
+            ta_primitive_push_arrow(0, origin, direction, TA_COLOR_GREEN);
 
-            //sphere.center = contact_b;
-            //sphere.radius = radius;
-            //ta_primitive_push_sphere(0, sphere, TA_COLOR_WHITE);
-            //
-            //origin    = contact_b;
-            //direction = vec3_scalef(manifold->normal_world, 0.05f);
-            //ta_primitive_push_arrow(0, origin, direction, TA_COLOR_GREEN);
+            sphere.center = contact_b;
+            sphere.radius = radius;
+            ta_primitive_push_sphere(0, sphere, TA_COLOR_WHITE);
+
+            origin    = contact_b;
+            direction = vec3_scalef(manifold->normal_world, 0.05f);
+            ta_primitive_push_arrow(0, origin, direction, TA_COLOR_BLUE);
         }
     }
 }
@@ -1451,10 +1486,10 @@ void ta_game_loop()
     //
     // Randy Gaul
     // https://gamedevelopment.tutsplus.com/series/how-to-create-a-custom-physics-engine--gamedev-12715
-    const float ms_sim_dt = 20;             // fixed dt milliseconds
+    const float ms_sim_dt = 10;             // fixed dt milliseconds
     const float sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
-    const int sim_max_steps = 0;            // max simulation steps per frame
-    const int sim_substeps = 20;            // number of substeps to perform for each step
+    const int sim_max_steps = 3;            // max simulation steps per frame (0 = unlimited; may cause spiral of death)
+    const int sim_substeps = 10;            // number of substeps to perform for each step
     double ms_sim_t = 0;                    // current simulation time
     double ms_frame_accum = 0;
 
@@ -1462,6 +1497,12 @@ void ta_game_loop()
     double ms_frame_start = 0; // This frame started
     double ms_frame_delta = 0; // Total delta time (including v-sync)
     double ms_frame_time = 0;  // Actual frame time before v-sync
+
+    ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
+    ta_mesh *meshes = ta_game_resource_pool(RES_MESH);
+    ta_model *models = ta_game_resource_pool(RES_COMP_MODEL);
+    ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+    ta_camera *cameras = ta_game_resource_pool(RES_COMP_CAMERA);
 
     while (ta_game_state_current() != TA_STATE_SHUTDOWN) {
         ms_frame_start = ta_timer_elapsed_ms();
@@ -1471,11 +1512,6 @@ void ta_game_loop()
         game_hotload_textures();
 
         ta_camera *active_camera = ta_game_camera();
-        ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
-        ta_mesh *meshes = ta_game_resource_pool(RES_MESH);
-        ta_model *models = ta_game_resource_pool(RES_COMP_MODEL);
-        ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
-        ta_camera *cameras = ta_game_resource_pool(RES_COMP_CAMERA);
 
         //----------------------------------------------------------------------
         // Handle events
@@ -1487,37 +1523,32 @@ void ta_game_loop()
         // Simulation
         //----------------------------------------------------------------------
         ta_log_write(&tg_debug_log, SRC_GAME, " Accumulating...\n");
-        if (sim_max_steps == 0) {
-            // TODO: This is a bad idea if vsync != 60hz
-            // If sim_max_steps == 0, assume we want lockstep physics
-            ms_frame_accum = ms_sim_dt;
-        } else {
-            ms_frame_accum += ms_frame_delta;
-            // Prevent spiral of death
-            // NOTE: This breaks determinism when simulation is under duress
-            if (ms_frame_accum > ms_sim_dt * sim_max_steps) {
+        ms_frame_accum += ms_frame_delta;
+        // Prevent spiral of death
+        // NOTE: This breaks determinism when simulation is under duress
+        if (sim_max_steps) {
+            float sim_max_ms = ms_sim_dt * sim_max_steps;
+            if (ms_frame_accum > sim_max_ms) {
                 ta_log_write(&tg_debug_log, SRC_GAME,
                     "WARNING: Physics accumulator spiraling; truncating %f to %f\n",
-                    ms_frame_accum, ms_sim_dt * sim_max_steps);
-                ms_frame_accum = ms_sim_dt * sim_max_steps;
+                    ms_frame_accum, sim_max_ms);
+                ms_frame_accum = sim_max_ms;
             }
         }
 
-        if (ms_frame_accum >= ms_sim_dt) {
-            while (ms_frame_accum >= ms_sim_dt && tg_game.simulate) {
-                if (tg_game.simulate > 0) {
-                    tg_game.simulate--;
-                }
-
-                float h = sim_dt / sim_substeps;
-                for (int i = 0; i < sim_substeps; ++i) {
-                    game_simulate(h);
-                }
-                ms_sim_t += ms_sim_dt;
-                ms_frame_accum -= ms_sim_dt;
-
-                tg_game.sim_step++;
+        while (ms_frame_accum >= ms_sim_dt && tg_game.simulate) {
+            if (tg_game.simulate > 0) {
+                tg_game.simulate--;
             }
+
+            float h = sim_dt / sim_substeps;
+            for (int i = 0; i < sim_substeps; ++i) {
+                game_simulate(h);
+            }
+            ms_sim_t += ms_sim_dt;
+            ms_frame_accum -= ms_sim_dt;
+
+            tg_game.sim_step++;
         }
 
         float sim_alpha = (float)(ms_frame_accum / ms_sim_dt);
@@ -1633,7 +1664,7 @@ void ta_game_loop()
                                 // HACK: No interpolation for now
                                 lerp = track->value.key.values.as_vec4[right];
                             }
-                            transform->xform.orientation = lerp;
+                            transform->xform.orientation = quat_normalize(lerp);
                             break;
                         } default: {
                             DLB_ASSERT(!"That target_path is not currently handled");

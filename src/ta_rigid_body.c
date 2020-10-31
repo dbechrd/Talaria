@@ -64,7 +64,7 @@ ta_vec3 rigid_body_local_to_world_prev(const ta_rigid_body *body, ta_vec3 p_body
 // Convert a point from world space to body local space
 ta_vec3 rigid_body_world_to_local(const ta_rigid_body *body, ta_vec3 p_world)
 {
-    ta_vec3 p_body = quat_mul_vec3(quat_conjugate(body->xform.orientation), vec3_sub(p_world, body->xform.position));
+    ta_vec3 p_body = quat_mul_vec3(quat_inverse(body->xform.orientation), vec3_sub(p_world, body->xform.position));
     return p_body;
 }
 // Convert a vector from body rest orientation to body world orientation
@@ -76,7 +76,7 @@ ta_vec3 rigid_body_oriented_vector(const ta_rigid_body *body, ta_vec3 v_rest)
 // Convert a vector from world orientation to body rest orientation
 ta_vec3 rigid_body_rest_vector(const ta_rigid_body *body, ta_vec3 v_world)
 {
-    ta_vec3 v_rest = quat_mul_vec3(quat_conjugate(body->xform.orientation), v_world);
+    ta_vec3 v_rest = quat_mul_vec3(quat_inverse(body->xform.orientation), v_world);
     return v_rest;
 }
 // Convert a vector from body rest orientation to body world orientation
@@ -88,7 +88,7 @@ ta_vec4 rigid_body_oriented_quaternion(const ta_rigid_body *body, ta_vec4 q_rest
 // Convert a vector from world orientation to body rest orientation
 ta_vec4 rigid_body_rest_quaternion(const ta_rigid_body *body, ta_vec4 q_world)
 {
-    ta_vec4 q_rest = quat_normalize(quat_mul(quat_conjugate(body->xform.orientation), q_world));
+    ta_vec4 q_rest = quat_normalize(quat_mul(quat_inverse(body->xform.orientation), q_world));
     return q_rest;
 }
 // Convert a point from centroid space to body space
@@ -314,7 +314,7 @@ static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a,
 }
 bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b)
 {
-    typedef bool (intersector)(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b);
+    typedef bool (intersector)(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
 
     static intersector *intersectors[TA_COLLIDER_COUNT][TA_COLLIDER_COUNT] = {
         [TA_COLLIDER_PLANE][TA_COLLIDER_SPHERE] = intersector_plane_v_sphere,
@@ -326,27 +326,27 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
 
     DLB_ASSERT(a);
     DLB_ASSERT(b);
-
-    // If this gets called at all, these two bodies are broadphase intersecting.
-    a->dbg_broadphase = true;
-    b->dbg_broadphase = true;
-
-    bool collided = false;
-    bool swap_ab = (a->collider.type > b->collider.type);
-
     // HACK: These asserts are just to make Visual Studio shut up. There's no
     // code path that would allow collider type to fall outside the valid range.
     DLB_ASSERT(a->collider.type >= 0);
     DLB_ASSERT(b->collider.type >= 0);
 
-    intersector *intersect_method = swap_ab
-        ? intersectors[b->collider.type][a->collider.type]
-        : intersectors[a->collider.type][b->collider.type];
+    ta_rigid_body *body_a = a;
+    ta_rigid_body *body_b = b;
+    if (body_a->collider.type > body_b->collider.type) {
+        body_a = b;
+        body_b = a;
+    }
 
+    // If this gets called at all, these two bodies are broadphase intersecting.
+    body_a->dbg_broadphase = true;
+    body_b->dbg_broadphase = true;
+
+    bool collided = false;
+
+    intersector *intersect_method = intersectors[body_a->collider.type][body_b->collider.type];
     if (intersect_method) {
-        collided = swap_ab
-            ? (*intersect_method)(manifold, b, a)
-            : (*intersect_method)(manifold, a, b);
+        collided = (*intersect_method)(manifold, body_a, body_b);
     } else {
         // TODO: Log this. For now, just return false.
         //ta_log_write(&tg_debug_log, "[Rigid Body] Unhandled collision pair.\n");
@@ -354,8 +354,9 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
 
     if (collided) {
         if (manifold) {
-            manifold->a = a;
-            manifold->b = b;
+            manifold->a = body_a;
+            manifold->b = body_b;
+#if 0
             if (swap_ab) {
                 manifold->normal_world = vec3_neg(manifold->normal_world);
                 ta_vec3 tmp = { 0 };
@@ -369,17 +370,18 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
                     manifold->contacts[i].priv__cb_world = tmp;
                 }
             }
+#endif
 
             // Arithmetic mean (page 7)
             // https://graphics.stanford.edu/projects/bouncemap/assets/restitution_lowres.pdf
-            manifold->e = (a->e + b->e) / 2.0f;
-            manifold->coef_static = (a->ks + b->ks) / 2.0f;
-            manifold->coef_dynamic = (a->kd + b->kd) / 2.0f;
+            manifold->e = (body_a->e + body_b->e) / 2.0f;
+            manifold->coef_static  = (body_a->ks + body_b->ks) / 2.0f;
+            manifold->coef_dynamic = (body_a->kd + body_b->kd) / 2.0f;
         }
 
         // Set some handy flags for debug rendering
-        a->dbg_narrowphase = true;
-        b->dbg_narrowphase = true;
+        body_a->dbg_narrowphase = true;
+        body_b->dbg_narrowphase = true;
     }
 
     return collided;
