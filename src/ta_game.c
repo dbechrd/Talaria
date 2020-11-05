@@ -1236,7 +1236,7 @@ static void game_simulate(float dt)
                 float e = manifold->e; // * (float)(fabs(vn_mag) > (1.0f * fabs(GRAVITY) * dt));
                 // NOTE: Using MIN instead of MAX here because my signs are reversed (opposite normal I think) vs.
                 // PBDBodies Eq. 35.
-                float impulse_mag = -vn_mag + MIN(e * -vn_mag_prev, 0);
+                float impulse_mag = -vn_mag + MAX(e * -vn_mag_prev, 0);
                 ta_vec3 dv_restitution = vec3_scalef(manifold->normal_world, -impulse_mag);
                 //ta_vec3 impulse = dv_restitution;
                 ta_vec3 impulse = vec3_scalef(dv_restitution, 1.0f/(wa + wb));
@@ -1247,6 +1247,11 @@ static void game_simulate(float dt)
                 }
 
                 if (a->name == tg_e_can || b->name == tg_e_can) {
+                    DLB_ASSERT(1);
+                }
+                const char *e_selected = 0;
+                ta_editor_selected_entity(&e_selected);
+                if (a->name == e_selected || b->name == e_selected) {
                     DLB_ASSERT(1);
                 }
 

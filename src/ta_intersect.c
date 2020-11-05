@@ -339,7 +339,7 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
 
     // TODO: This doesn't settle anything with > 1kg of mass.. so we need to do
     // a bit more work to handle sliding due to friction on heavier objects.
-    const float tolerance = 0.02f;
+    const float tolerance = 0.002f;
 
     float dists[8];
     float d_min = FLT_MAX / 2.0f;
