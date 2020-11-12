@@ -111,7 +111,7 @@ static void ta_ogx_load_material(ogx_material *o_mat)
     mat->albedo_factor.b    = o_mat->albedo_factor.z;
     mat->albedo_factor.a    = o_mat->alpha_factor;
     // NOTE: ta_material doesn't support alpha_texture, so ensure we're not discarding anything
-    DLB_ASSERT(!o_mat->alpha_texture);
+    //DLB_ASSERT(!o_mat->alpha_texture);
     mat->emission_texture   = o_mat->emissive_texture;
     mat->emission_factor.r  = o_mat->emissive_factor.x;
     mat->emission_factor.g  = o_mat->emissive_factor.y;
@@ -120,15 +120,15 @@ static void ta_ogx_load_material(ogx_material *o_mat)
     mat->metallic_factor    = o_mat->metallic_factor;
     mat->normal_texture     = o_mat->normal_texture;
     // NOTE: ta_material doesn't support normal_factor for now, so ensure we're not discarding anything
-    if (o_mat->normal_texture) {
-        DLB_ASSERT(o_mat->normal_factor.x == 1.0f);
-        DLB_ASSERT(o_mat->normal_factor.y == 1.0f);
-        DLB_ASSERT(o_mat->normal_factor.z == 1.0f);
-    } else {
-        DLB_ASSERT(o_mat->normal_factor.x == 0.0f);
-        DLB_ASSERT(o_mat->normal_factor.y == 0.0f);
-        DLB_ASSERT(o_mat->normal_factor.z == 0.0f);
-    }
+    //if (o_mat->normal_texture) {
+    //    DLB_ASSERT(o_mat->normal_factor.x == 1.0f);
+    //    DLB_ASSERT(o_mat->normal_factor.y == 1.0f);
+    //    DLB_ASSERT(o_mat->normal_factor.z == 1.0f);
+    //} else {
+    //    DLB_ASSERT(o_mat->normal_factor.x == 0.0f);
+    //    DLB_ASSERT(o_mat->normal_factor.y == 0.0f);
+    //    DLB_ASSERT(o_mat->normal_factor.z == 0.0f);
+    //}
     mat->normal_texture     = o_mat->normal_texture;
     mat->roughness_texture  = o_mat->roughness_texture;
     mat->roughness_factor   = o_mat->roughness_factor;
@@ -153,6 +153,14 @@ static void ta_ogx_load_texture(ogx_texture *o_tex)
     int channels = 0;  // components/channels
     u8 *pixels = stbi_load(filepath, &w, &h, &channels, 0);
     //u8 *pixels = stbi_load_from_memory(buffer, (int)buffer_len, &w, &h, &channels, 0);
+
+    // HACK: sponza has 16-bit alpha textures according to stb_image; reload them padded to 32-bits
+    if (channels == 2) {
+        stbi_image_free(pixels);
+        pixels = stbi_load(filepath, &w, &h, &channels, 4);
+        channels = 4;
+    }
+
     if (!pixels) {
         const char *reason = stbi_failure_reason();
         ta_log_write(&tg_debug_log, SRC_OGX, "Failed to load tex: %s\nSTBI Reason: %s\n", o_tex->name, reason);

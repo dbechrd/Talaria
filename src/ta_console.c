@@ -18,43 +18,41 @@ typedef enum console_cmd_type {
     CONSOLE_CMD_COUNT
 } console_cmd_type;
 
-static struct {
+typedef struct ta_console {
     const char *prompt;
     size_t prompt_len;
     char *buffer;
-} console;
+} ta_console;
+static ta_console tg_console;
 
 void ta_console_init()
 {
-    console.prompt = "root@talaria.dev:~# ";
-    console.prompt_len = strlen(console.prompt);
+    tg_console.prompt = "root@talaria.dev:~# ";
+    tg_console.prompt_len = strlen(tg_console.prompt);
 }
 
 // len is without nil
-static void console_history_push(char **history, const char *str, size_t len)
+static void console_history_push(ta_console *console, const char *str, size_t len)
 {
-    size_t old_len = dlb_vec_len(*history);
-    dlb_vec_reserve(*history, old_len + len + 1);  // one extra for nil
-    dlb_memcpy(*history + old_len, str, len);
-    dlb_vec_hdr(*history)->len += len;
-}
-void ta_console_print(const char *str, size_t len)
-{
-    console_history_push(&console.buffer, str, len);
+    char *old_buffer = console->buffer;
+    size_t old_len = dlb_vec_len(console->buffer);
+    dlb_vec_reserve(console->buffer, old_len + len + 1);  // one extra for nil
+    dlb_memcpy(console->buffer + old_len, str, len);
+    dlb_vec_hdr(console->buffer)->len += len;
 }
 
-static void console_prompt_push(char **history)
+static void console_prompt_push(ta_console *console)
 {
-    console_history_push(history, console.prompt, console.prompt_len);
+    console_history_push(console, console->prompt, console->prompt_len);
 }
 
-static void console_cmd_clear(char **history)
+static void console_cmd_clear(ta_console *console)
 {
-    dlb_vec_free(*history);
+    dlb_vec_free(console->buffer);
 }
-static void console_cmd_motd(char **history)
+static void console_cmd_motd(ta_console *console)
 {
-    console_history_push(history, CSTR(
+    console_history_push(console, CSTR(
         "MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD\n"
         "MOTD                                                                       MOTD\n"
         "MOTD                            Talaria OS v0.1                            MOTD\n"
@@ -62,40 +60,40 @@ static void console_cmd_motd(char **history)
         "MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD MOTD\n"
     ));
 }
-static void console_cmd_42(char **history)
+static void console_cmd_42(ta_console *console)
 {
-    console_history_push(history, CSTR("The answer to life, the universe, and everything."));
+    console_history_push(console, CSTR("The answer to life, the universe, and everything."));
 }
-static void console_cmd_ping(char **history)
+static void console_cmd_ping(ta_console *console)
 {
-    console_history_push(history, CSTR("pong"));
+    console_history_push(console, CSTR("pong"));
 }
-static void console_cmd_cat(char **history)
+static void console_cmd_cat(ta_console *console)
 {
-    console_history_push(history, CSTR("=^_^=  *meow*"));
+    console_history_push(console, CSTR("=^_^=  *meow*"));
 }
-static void console_cmd_log(char **history)
+static void console_cmd_log(ta_console *console)
 {
-    UNUSED(history);
+    UNUSED(console);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Log command says: '%s'.\n", "It Works!");
 }
-static void console_cmd_jesza(char **history)
+static void console_cmd_jesza(ta_console *console)
 {
-    console_history_push(history, CSTR("$$$ CASH MONEY $$$\n"));
-    console_history_push(history, CSTR("$$$ CASH MONEY $$$\n"));
-    console_history_push(history, CSTR("$$$ CASH MONEY $$$"));
+    console_history_push(console, CSTR("$$$ CASH MONEY $$$\n"));
+    console_history_push(console, CSTR("$$$ CASH MONEY $$$\n"));
+    console_history_push(console, CSTR("$$$ CASH MONEY $$$"));
 }
-static void console_cmd_unknown(char **history)
+static void console_cmd_unknown(ta_console *console)
 {
-    console_history_push(history, CSTR("Unknown command"));
+    console_history_push(console, CSTR("Unknown command"));
 }
 
-static console_cmd_type console_exec(char **history, char *command)
+static console_cmd_type console_exec(ta_console *console, char *command)
 {
     static struct {
         const char *cmd;
         size_t len;
-        void (*handler)(char **history);
+        void (*handler)(ta_console *console);
         bool newline;
     } commands[CONSOLE_CMD_COUNT] = {
         [CONSOLE_CMD_EXIT]    = { CSTR0("exit"),        console_cmd_clear,   false },
@@ -109,9 +107,9 @@ static console_cmd_type console_exec(char **history, char *command)
         [CONSOLE_CMD_UNKNOWN] = { 0, 0,                 console_cmd_unknown, true }
     };
 
-    console_history_push(history, CSTR("\n"));
-    console_prompt_push(history);
-    console_history_push(history, command, dlb_vec_len(command));
+    console_history_push(console, CSTR("\n"));
+    console_prompt_push(console);
+    console_history_push(console, command, dlb_vec_len(command));
 
     console_cmd_type cmd_type = CONSOLE_CMD_UNKNOWN;
     if (!dlb_vec_len(command)) {
@@ -124,10 +122,10 @@ static console_cmd_type console_exec(char **history, char *command)
         // except CONSOLE_CMD_UNKNOWN.
         if (!strncmp(command, commands[cmd_type].cmd, commands[cmd_type].len)) {
             if (commands[cmd_type].newline) {
-                console_history_push(history, CSTR("\n"));
+                console_history_push(console, CSTR("\n"));
             }
             if (commands[cmd_type].handler) {
-                commands[cmd_type].handler(history);
+                commands[cmd_type].handler(console);
             }
             break;
         }
@@ -136,6 +134,14 @@ static console_cmd_type console_exec(char **history, char *command)
     return cmd_type;
 }
 
+void ta_console_print(const char *str, size_t len)
+{
+    console_history_push(&tg_console, str, len);
+}
+void ta_console_clear()
+{
+    console_cmd_clear(&tg_console);
+}
 void ta_console_draw_screen()
 {
     ta_log_write(&tg_debug_log, SRC_CONSOLE, "UI layout end\n");
@@ -149,7 +155,7 @@ void ta_console_draw_screen()
     ta_ui_window_begin(&console_window, 0);
 
     char buflen[10] = { 0 };
-    size_t buflen_len = snprintf(buflen, sizeof(buflen), "%zu", dlb_vec_len(console.buffer));
+    size_t buflen_len = snprintf(buflen, sizeof(buflen), "%zu", dlb_vec_len(tg_console.buffer));
     ta_ui_label(buflen, buflen_len);
 
 #if 1
@@ -183,19 +189,17 @@ void ta_console_draw_screen()
     }
 #endif
 
-    if (!console.buffer) {
-        console_cmd_motd(&console.buffer);
+    if (!tg_console.buffer) {
+        console_cmd_motd(&tg_console);
     }
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_pad(0, 0, 0, 0);
-    //static ta_rect_uv *buffer_rects = 0;
-    //ta_ui_label(console.buffer, dlb_vec_len(console.buffer), &buffer_rects);
-    ta_ui_label(console.buffer, dlb_vec_len(console.buffer));
+    ta_ui_label(tg_console.buffer, dlb_vec_len(tg_console.buffer));
 
     ta_ui_row_begin();
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_label(console.prompt, console.prompt_len);
+    ta_ui_label(tg_console.prompt, tg_console.prompt_len);
 
     ta_ui_next_size(window_w - 40, 15);
     ta_ui_next_margin(0, 0, 0, 0);
@@ -203,7 +207,7 @@ void ta_console_draw_screen()
     ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);
     static ta_ui_textbox_state console_textbox = { 0 };
     if (ta_ui_textbox(0, 0, &console_textbox, TA_UI_AUTOSIZE)) {
-        console_cmd_type cmd_type = console_exec(&console.buffer, console_textbox.buffer);
+        console_cmd_type cmd_type = console_exec(&tg_console, console_textbox.buffer);
         if (cmd_type == CONSOLE_CMD_EXIT) {
             ta_ui_textbox_cancel(&console_textbox);
             // TODO: Hide console window

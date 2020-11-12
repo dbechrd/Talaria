@@ -296,6 +296,10 @@ void ta_game_init()
     if (ogx_scene_from_file(scene, "data/mesh/skeleton_test_skin.ogex") == OGX_SUCCESS) {
         ta_ogx_load(scene);
     }
+    scene = dlb_vec_alloc(scenes);
+    if (ogx_scene_from_file(scene, "data/mesh/sponza.ogex") == OGX_SUCCESS) {
+        ta_ogx_load(scene);
+    }
     // TODO: Free the ogx scene if it's not needed after being loaded
 
     //--------------------------------------------------------------------------
@@ -947,6 +951,11 @@ static void game_simulate(float dt)
         if (dtheta_mag > TA_EPSILON) {
             ta_vec4 delta_orient = quat_from_axis_angle(vec3_normalize(body->ang_velocity), dtheta_mag * dt);
             body->xform.orientation = quat_normalize(quat_mul(delta_orient, body->xform.orientation));
+            if (body->name == tg_e_can) {
+                printf("    body update: %s ang_vel: %f %f %f orient: %f %f %f %f\n",
+                    body->name, body->ang_velocity.x, body->ang_velocity.y, body->ang_velocity.z,
+                    body->xform.orientation.x, body->xform.orientation.y, body->xform.orientation.z, body->xform.orientation.w);
+            }
         }
 #endif
 
@@ -1057,8 +1066,8 @@ static void game_simulate(float dt)
                 // TODO(perf): Maybe we could use rest position normals here instead of doing the conversion in apply_positional_correction
                 // contact penetration impulse
                 // Apply Dx = dn with a = 0 and lambda_normal
-                ta_vec3 dx_penetration_a = vec3_scalef(manifold->normal_world, delta_lambda * a->inv_mass);
-                ta_vec3 dx_penetration_b = vec3_scalef(manifold->normal_world, -delta_lambda * b->inv_mass);
+                ta_vec3 dx_penetration_a = vec3_scalef(a_normal_rest, delta_lambda * a->inv_mass);
+                ta_vec3 dx_penetration_b = vec3_scalef(b_normal_rest, -delta_lambda * b->inv_mass);
                 ta_rigid_body_apply_positional_correction(a, dx_penetration_a, ra);
                 ta_rigid_body_apply_positional_correction(b, dx_penetration_b, rb);
                 if (tg_game.debug_physics_render_penetration_vectors) {
@@ -1110,11 +1119,33 @@ static void game_simulate(float dt)
         body->velocity = vec3_scalef(dp, 1.0f/dt);
 
         ta_vec4 dq = quat_normalize(quat_mul(body->xform.orientation, quat_inverse(body->xform_prev.orientation)));
-        body->ang_velocity = vec3_scalef(vec3_init(dq.x, dq.y, dq.z), ((dq.w < 0.0f) * -1.0f) * 2.0f/dt);
+        //float scale = 2.0f/dt;
+        //if (dq.w < 0.0f) {
+        //    scale *= -1.0f;
+        //}
+        //body->ang_velocity = vec3_scalef(vec3_init(dq.x, dq.y, dq.z), scale);
+        if (dq.w == 1.0f) {
+            body->ang_velocity = VEC3_ZERO;
+        } else {
+            double angle = 2.0/dt * acos(dq.w);
+            double s = sqrt(1.0 - dq.w * dq.w);
+            if (dq.w < 0.0) {
+                s *= -1;
+            }
+            body->ang_velocity.x = (float)(dq.x / s);
+            body->ang_velocity.y = (float)(dq.y / s);
+            body->ang_velocity.z = (float)(dq.z / s);
+        }
 
         // check for NaN and infinity
         DLB_ASSERT(vec3_good(body->velocity));
         DLB_ASSERT(vec3_good(body->ang_velocity));
+
+        if (body->name == tg_e_can) { // && dlb_vec_len(body->colliding_with)) {
+            printf("velocity update: %s ang_vel: %f %f %f orient: %f %f %f %f\n",
+                body->name, body->ang_velocity.x, body->ang_velocity.y, body->ang_velocity.z,
+                dq.x, dq.y, dq.z, dq.w);
+        }
 
         // TODO: Allow transform to be offset from rigid body position/orientation? Or just make rigidbody the parent..
         ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
@@ -1146,6 +1177,8 @@ static void game_simulate(float dt)
             ta_log_write(&tg_debug_log, SRC_RIGID_BODY, "WARNING: Detected movement of infinite mass body\n");
             a->velocity = VEC3_ZERO;
             b->velocity = VEC3_ZERO;
+            a->ang_velocity = VEC3_ZERO;
+            b->ang_velocity = VEC3_ZERO;
             continue;
         }
 
@@ -1162,8 +1195,13 @@ static void game_simulate(float dt)
             const ta_vec3 rb = manifold->contacts[i].rb;
             ta_vec3 pa = rigid_body_centroid_to_world(a, ra);
             ta_vec3 pb = rigid_body_centroid_to_world(b, rb);
-            ta_vec3 pa_prev = rigid_body_centroid_to_world_prev(a, ra);
-            ta_vec3 pb_prev = rigid_body_centroid_to_world_prev(b, rb);
+            //ta_vec3 pa_prev = rigid_body_centroid_to_world_prev(a, ra);
+            //ta_vec3 pb_prev = rigid_body_centroid_to_world_prev(b, rb);
+
+            ta_vec3 ca = rigid_body_centroid_world(a);
+            ta_vec3 cb = rigid_body_centroid_world(b);
+            ta_primitive_push_arrow(&primitive_lines_perma, ca, vec3_sub(pa, ca), TA_COLOR_GRAY6);
+            ta_primitive_push_arrow(&primitive_lines_perma, cb, vec3_sub(pb, cb), TA_COLOR_GRAY6);
 
             // TODO: This should probably be moved into a rigid_body_* method
             // generalized inverse masses
@@ -1237,13 +1275,15 @@ static void game_simulate(float dt)
                 // NOTE: Using MIN instead of MAX here because my signs are reversed (opposite normal I think) vs.
                 // PBDBodies Eq. 35.
                 float impulse_mag = -vn_mag + MAX(e * -vn_mag_prev, 0);
-                ta_vec3 dv_restitution = vec3_scalef(manifold->normal_world, -impulse_mag);
+                ta_vec3 dv_restitution_a = vec3_scalef(a_normal_rest, -impulse_mag);
+                ta_vec3 dv_restitution_b = vec3_scalef(b_normal_rest, impulse_mag);
                 //ta_vec3 impulse = dv_restitution;
-                ta_vec3 impulse = vec3_scalef(dv_restitution, 1.0f/(wa + wb));
+                ta_vec3 impulse_a = vec3_scalef(dv_restitution_a, 1.0f/(wa + wb));
+                ta_vec3 impulse_b = vec3_scalef(dv_restitution_b, 1.0f/(wa + wb));
 
                 if (tg_game.debug_physics_render_restitution_vectors) {
-                    ta_primitive_push_arrow(&primitive_lines_perma, pa, impulse, tg_game.debug_physics_color_restitution_vectors);
-                    ta_primitive_push_arrow(&primitive_lines_perma, pb, vec3_neg(impulse), tg_game.debug_physics_color_restitution_vectors);
+                    ta_primitive_push_arrow(&primitive_lines_perma, pa, impulse_a, tg_game.debug_physics_color_restitution_vectors);
+                    ta_primitive_push_arrow(&primitive_lines_perma, pb, impulse_b, tg_game.debug_physics_color_restitution_vectors);
                 }
 
                 if (a->name == tg_e_can || b->name == tg_e_can) {
@@ -1257,8 +1297,8 @@ static void game_simulate(float dt)
 
                 //a->velocity = vec3_add(a->velocity, impulse);
                 //b->velocity = vec3_add(a->velocity, vec3_neg(impulse));
-                ta_rigid_body_apply_velocity_correction(a, impulse, ra);
-                ta_rigid_body_apply_velocity_correction(b, vec3_neg(impulse), rb);
+                ta_rigid_body_apply_velocity_correction(a, impulse_a, ra);
+                ta_rigid_body_apply_velocity_correction(b, impulse_b, rb);
 
                 DLB_ASSERT(1);
             }
@@ -1268,6 +1308,13 @@ static void game_simulate(float dt)
             //ta_vec3 dv_total_b = vec3_neg(dv_total_a);
             //ta_rigid_body_apply_velocity_correction(a, dv_total_a, ra);
             //ta_rigid_body_apply_velocity_correction(b, dv_total_b, rb);
+        }
+
+        ta_rigid_body *body = (a->name == tg_e_can) ? a : ((b->name == tg_e_can) ? b : 0);
+        if (body) {
+            printf("vel. correction: %s ang_vel: %f %f %f orient: %f %f %f %f\n",
+                body->name, body->ang_velocity.x, body->ang_velocity.y, body->ang_velocity.z,
+                body->xform.orientation.x, body->xform.orientation.y, body->xform.orientation.z, body->xform.orientation.w);
         }
     }
 
@@ -1494,7 +1541,7 @@ void ta_game_loop()
     const float ms_sim_dt = 10;             // fixed dt milliseconds
     const float sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
     const int sim_max_steps = 3;            // max simulation steps per frame (0 = unlimited; may cause spiral of death)
-    const int sim_substeps = 10;            // number of substeps to perform for each step
+    const int sim_substeps = 1;             // number of substeps to perform for each step
     double ms_sim_t = 0;                    // current simulation time
     double ms_frame_accum = 0;
 

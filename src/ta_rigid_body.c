@@ -182,7 +182,8 @@ void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_vec3 impu
 
     // contact penetration impulse
     ta_vec3 centroid_world = rigid_body_centroid_world(body);
-    centroid_world = vec3_add(centroid_world, vec3_scalef(impulse, body->inv_mass));
+    ta_vec3 impulse_world = rigid_body_oriented_vector(body, impulse);
+    centroid_world = vec3_add(centroid_world, vec3_scalef(impulse_world, body->inv_mass));
     body->xform.position = vec3_sub(centroid_world, rigid_body_centroid_oriented(body));
 
     // equation 8 & 9 in PBDBodies.pdf, not sure what [stuff, 0] means, or what "q1 + stuff" is.. quat_add??
@@ -356,21 +357,6 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
         if (manifold) {
             manifold->a = body_a;
             manifold->b = body_b;
-#if 0
-            if (swap_ab) {
-                manifold->normal_world = vec3_neg(manifold->normal_world);
-                ta_vec3 tmp = { 0 };
-                for (u32 i = 0; i < manifold->contact_count; i++) {
-                    tmp = manifold->contacts[i].ra;
-                    manifold->contacts[i].ra = manifold->contacts[i].rb;
-                    manifold->contacts[i].rb = tmp;
-
-                    tmp = manifold->contacts[i].priv__ca_world;
-                    manifold->contacts[i].priv__ca_world = manifold->contacts[i].priv__cb_world;
-                    manifold->contacts[i].priv__cb_world = tmp;
-                }
-            }
-#endif
 
             // Arithmetic mean (page 7)
             // https://graphics.stanford.edu/projects/bouncemap/assets/restitution_lowres.pdf

@@ -446,29 +446,29 @@ ta_vec4 quat_from_vec_vec(ta_vec3 from, ta_vec3 to)
     result = quat_normalize(result);
     return result;
 }
-float quat_norm_sq(ta_vec4 q)
+double quat_norm_sq(ta_vec4 q)
 {
-    return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+    return (float)((double)q.x * q.x + (double)q.y * q.y + (double)q.z * q.z + (double)q.w * q.w);
 }
-float quat_norm(ta_vec4 q)
+double quat_norm(ta_vec4 q)
 {
-    return sqrtf(quat_norm_sq(q));
+    return sqrt(quat_norm_sq(q));
 }
 ta_vec4 quat_normalize(ta_vec4 q)
 {
-    float norm = quat_norm(q);
+    double norm = quat_norm(q);
 
     // Quaternions of norm 1.0f are already normalized
-    if (norm == 1.0f)
+    if (norm == 1.0)
         return q;
 
     ta_vec4 result = { 0 };
     if (norm > TA_EPSILON) {
-        float inv_norm = 1.0f / norm;
-        result.x = q.x * inv_norm;
-        result.y = q.y * inv_norm;
-        result.z = q.z * inv_norm;
-        result.w = q.w * inv_norm;
+        double inv_norm = 1.0 / norm;
+        result.x = (float)(q.x * inv_norm);
+        result.y = (float)(q.y * inv_norm);
+        result.z = (float)(q.z * inv_norm);
+        result.w = (float)(q.w * inv_norm);
     } else {
         //DLB_ASSERT(!"WARNING: Normalizing bad quaternion\n");
         result = QUAT_IDENT;
@@ -488,18 +488,18 @@ ta_vec4 quat_conjugate(ta_vec4 q)
 ta_vec4 quat_inverse(ta_vec4 q)
 {
     ta_vec4 result = quat_conjugate(q);
-    float norm_sq = quat_norm_sq(result);
+    double norm_sq = quat_norm_sq(result);
 
     // Inverse == conjugate for normalized ("unit-norm") quaternions
-    if (fabs(norm_sq - 1.0f) < TA_EPSILON)
+    if (fabs(norm_sq - 1.0) < TA_EPSILON)
         return result;
 
-    assert(norm_sq != 0.0f);
-    float inv_norm_sq = 1.0f / norm_sq;
-    result.w *= inv_norm_sq;
-    result.x *= inv_norm_sq;
-    result.y *= inv_norm_sq;
-    result.z *= inv_norm_sq;
+    assert(norm_sq != 0.0);
+    double inv_norm_sq = 1.0 / norm_sq;
+    result.w = (float)(result.w *inv_norm_sq);
+    result.x = (float)(result.x *inv_norm_sq);
+    result.y = (float)(result.y *inv_norm_sq);
+    result.z = (float)(result.z *inv_norm_sq);
     return result;
 }
 ta_vec4 quat_scale(ta_vec4 q, float s)

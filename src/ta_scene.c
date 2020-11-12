@@ -18,8 +18,8 @@ void ta_scene_init(ta_scene *scene)
     // TODO(perf): Fine-tune reservations (e.g. scene header)
     // TODO(perf): This is a lot of back-to-back allocations, can we avoid?
     for (ta_res_type type = 0; type < RES_COUNT; type++) {
-        dlb_index_init(&scene->index_by_name[type], 128, 128);
-        dlb_index_init(&scene->index_by_entity[type], 128, 128);
+        dlb_index_init(&scene->index_by_name[type], 512, 512);
+        dlb_index_init(&scene->index_by_entity[type], 512, 512);
     }
 }
 // TODO: This should take a ta_buffer pointer. Load entire file into memory

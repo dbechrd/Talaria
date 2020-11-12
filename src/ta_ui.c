@@ -1543,22 +1543,36 @@ void ta_ui_tooltip(const char *text, size_t text_len)
     static ta_rect_uv *text_rects = 0;
     ta_rect text_rect = ta_font_push_text(ui_font, text, text_len, true, 0, 0, 0, &text_rects);
 
-    int x = ta_mouse_x();
-    int y = ta_mouse_y();
-    int offset_x = x + 10;
-    int offset_y = y + 20;
+    int x = ta_mouse_x() + 10;
+    int y = ta_mouse_y() + 20;
+
+    // horiz/vert padding
+    int h_pad = 4;
+    int v_pad = 2;
 
     ta_rect_uv tooltip_bg = { 0 };
-    tooltip_bg.rect.x = offset_x - 4;
-    tooltip_bg.rect.y = offset_y - 2;
+    tooltip_bg.rect.x = x - h_pad;
+    tooltip_bg.rect.y = y - v_pad;
     tooltip_bg.rect.w = text_rect.w + 8;
     tooltip_bg.rect.h = text_rect.h + 3;
+
+    int right = tooltip_bg.rect.x + tooltip_bg.rect.w;
+    if (right > WINDOW_W) {
+        tooltip_bg.rect.x = MAX(0, WINDOW_W - tooltip_bg.rect.w);
+        x = tooltip_bg.rect.x + h_pad;
+    }
+    int bottom = tooltip_bg.rect.y + tooltip_bg.rect.h;
+    if (bottom > WINDOW_H) {
+        tooltip_bg.rect.y = MAX(0, WINDOW_H - tooltip_bg.rect.h);
+        y = tooltip_bg.rect.y + v_pad;
+    }
+
     ta_primitive_push_rect_uv(&primitive_quads_tooltip_bg, tooltip_bg, TA_COLOR_GRAY3A, UI_LAYER_TIP_BG, true, false);
 
     dlb_vec_each(ta_rect_uv *, rect, text_rects) {
         ta_rect_uv offset_rect = *rect;
-        offset_rect.rect.x += offset_x;
-        offset_rect.rect.y += offset_y;
+        offset_rect.rect.x += x;
+        offset_rect.rect.y += y;
         ta_primitive_push_rect_uv(&primitive_quads_tooltip_fg, offset_rect, TA_COLOR_WHITE, UI_LAYER_TIP, true, false);
     }
     dlb_vec_zero(text_rects);

@@ -32,9 +32,9 @@ typedef enum ta_log_source {
     SRC_WINDOW     = 0x01000000,
 
     //...
-    //SRC_LAST              = 0x7fffffff
 
-    SRC_ALL = 0x7fffffff
+    SRC_DEBUG      = 0x40000000,
+    SRC_ALL        = 0x7fffffff
     //SRC_ALL = SRC_ASSERT | SRC_AUDIO | SRC_CONSOLE | SRC_DML | SRC_EDITOR | SRC_EVENT | SRC_FILE | SRC_FONT | SRC_GAME
     //        | SRC_GLTF | SRC_JSON | SRC_KEYBIND | SRC_LIGHT| SRC_MATH | SRC_OGX | SRC_OPENGL | SRC_PRIMITIVE
     //        | SRC_RENDER | SRC_RIGID_BODY | SRC_SCENE | SRC_SHADER | SRC_SYSTEM | SRC_TEXTURE | SRC_WINDOW

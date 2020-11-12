@@ -41,6 +41,7 @@ const char *ta_log_source_str(ta_log_source src) {
         case SRC_SYSTEM:        return "SYSTEM";
         case SRC_TEXTURE:       return "TEXTURE";
         case SRC_WINDOW:        return "WINDOW";
+        case SRC_DEBUG:         return "DEBUG";
         default:                return "UNKNOWN";
     }
 }

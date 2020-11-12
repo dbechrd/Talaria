@@ -111,7 +111,7 @@ void symbol_gen_array(const char **array, size_t array_len, const char *format)
 #define SYMBOL_GEN_ARRAY(array, format) symbol_gen_array(array, ARRAY_SIZE(array), format);
 
 void ta_symbol_init() {
-    dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 1024);
+    dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 2048);
 
     SYM_GLINT     = INTERN("glint");
     SYM_GLUINT    = INTERN("gluint");
