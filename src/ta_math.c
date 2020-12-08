@@ -56,9 +56,27 @@ const ta_rgba TA_COLOR_BLACK       = { 0.0f, 0.0f, 0.0f, 1.0f };
 const ta_rgba TA_COLOR_RED         = { 1.0f, 0.1f, 0.1f, 1.0f };
 const ta_rgba TA_COLOR_DARK_RED    = { 0.7f, 0.0f, 0.0f, 1.0f };
 const ta_rgba TA_COLOR_DARK_REDA   = { 0.7f, 0.0f, 0.0f, 0.7f };
+const ta_rgba TA_COLOR_RED1        = { 1.0f, 0.1f, 0.1f, 1.0f };
+const ta_rgba TA_COLOR_RED2        = { 1.0f, 0.2f, 0.2f, 1.0f };
+const ta_rgba TA_COLOR_RED3        = { 1.0f, 0.3f, 0.3f, 1.0f };
+const ta_rgba TA_COLOR_RED4        = { 1.0f, 0.4f, 0.4f, 1.0f };
+const ta_rgba TA_COLOR_RED5        = { 1.0f, 0.5f, 0.5f, 1.0f };
+const ta_rgba TA_COLOR_RED6        = { 1.0f, 0.6f, 0.6f, 1.0f };
+const ta_rgba TA_COLOR_RED7        = { 1.0f, 0.7f, 0.7f, 1.0f };
+const ta_rgba TA_COLOR_RED8        = { 1.0f, 0.8f, 0.8f, 1.0f };
+const ta_rgba TA_COLOR_RED9        = { 1.0f, 0.9f, 0.9f, 1.0f };
 const ta_rgba TA_COLOR_GREEN       = { 0.1f, 1.0f, 0.1f, 1.0f };
 const ta_rgba TA_COLOR_DARK_GREEN  = { 0.0f, 0.7f, 0.0f, 1.0f };
 const ta_rgba TA_COLOR_DARK_GREENA = { 0.0f, 0.7f, 0.0f, 0.7f };
+const ta_rgba TA_COLOR_GREEN1      = { 0.1f, 1.0f, 0.1f, 1.0f };
+const ta_rgba TA_COLOR_GREEN2      = { 0.2f, 1.0f, 0.2f, 1.0f };
+const ta_rgba TA_COLOR_GREEN3      = { 0.3f, 1.0f, 0.3f, 1.0f };
+const ta_rgba TA_COLOR_GREEN4      = { 0.4f, 1.0f, 0.4f, 1.0f };
+const ta_rgba TA_COLOR_GREEN5      = { 0.5f, 1.0f, 0.5f, 1.0f };
+const ta_rgba TA_COLOR_GREEN6      = { 0.6f, 1.0f, 0.6f, 1.0f };
+const ta_rgba TA_COLOR_GREEN7      = { 0.7f, 1.0f, 0.7f, 1.0f };
+const ta_rgba TA_COLOR_GREEN8      = { 0.8f, 1.0f, 0.8f, 1.0f };
+const ta_rgba TA_COLOR_GREEN9      = { 0.9f, 1.0f, 0.9f, 1.0f };
 const ta_rgba TA_COLOR_BLUE        = { 0.1f, 0.1f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_DARK_BLUE   = { 0.0f, 0.0f, 0.7f, 1.0f };
 const ta_rgba TA_COLOR_DARK_BLUEA  = { 0.0f, 0.0f, 0.7f, 0.7f };
@@ -359,17 +377,17 @@ int vec4_zero(ta_vec4 v)
 }
 int vec4_tiny(ta_vec4 v)
 {
-    return fabs(v.x) < TA_EPSILON &&
-           fabs(v.y) < TA_EPSILON &&
-           fabs(v.z) < TA_EPSILON &&
-           fabs(v.w) < TA_EPSILON;
+    return fabsf(v.x) < TA_EPSILON &&
+           fabsf(v.y) < TA_EPSILON &&
+           fabsf(v.z) < TA_EPSILON &&
+           fabsf(v.w) < TA_EPSILON;
 }
 int vec4_equal(ta_vec4 a, ta_vec4 b)
 {
-    return fabs((double)a.x - b.x) < TA_EPSILON &&
-           fabs((double)a.y - b.y) < TA_EPSILON &&
-           fabs((double)a.z - b.z) < TA_EPSILON &&
-           fabs((double)a.w - b.w) < TA_EPSILON;
+    return fabsf(a.x - b.x) < TA_EPSILON &&
+           fabsf(a.y - b.y) < TA_EPSILON &&
+           fabsf(a.z - b.z) < TA_EPSILON &&
+           fabsf(a.w - b.w) < TA_EPSILON;
 }
 ta_vec4 vec4_init(float x, float y, float z, float w)
 {
@@ -448,22 +466,40 @@ ta_vec4 quat_from_vec_vec(ta_vec3 from, ta_vec3 to)
 }
 double quat_norm_sq(ta_vec4 q)
 {
-    return (float)((double)q.x * q.x + (double)q.y * q.y + (double)q.z * q.z + (double)q.w * q.w);
+    double norm_sq = (double)q.x * q.x + (double)q.y * q.y + (double)q.z * q.z + (double)q.w * q.w;
+    return norm_sq;
 }
 double quat_norm(ta_vec4 q)
 {
-    return sqrt(quat_norm_sq(q));
+    double norm = sqrt(quat_norm_sq(q));
+    return norm;
 }
 ta_vec4 quat_normalize(ta_vec4 q)
 {
+#if 0
+    // NOTE: quat_norm squares these values, so they need to big enough to remain relevant in a float.
+    // Add epsilon to each component that is non-zero
+    q.x += (q.x > 0.0f) * TA_EPSILON + (q.x < 0.0f) * -TA_EPSILON;
+    q.y += (q.y > 0.0f) * TA_EPSILON + (q.y < 0.0f) * -TA_EPSILON;
+    q.z += (q.z > 0.0f) * TA_EPSILON + (q.z < 0.0f) * -TA_EPSILON;
+    q.w += (q.w > 0.0f) * TA_EPSILON + (q.w < 0.0f) * -TA_EPSILON;
+#elif 0
+    // NOTE: quat_norm squares these values, so they need to big enough to remain relevant in a float.
+    // Zero each component that is less than epsilon
+    q.x *= fabsf(q.x) > TA_EPSILON;
+    q.y *= fabsf(q.y) > TA_EPSILON;
+    q.z *= fabsf(q.z) > TA_EPSILON;
+    q.w *= fabsf(q.w) > TA_EPSILON;
+#endif
+
     double norm = quat_norm(q);
 
     // Quaternions of norm 1.0f are already normalized
-    if (norm == 1.0)
-        return q;
+    //if (norm == 1.0)
+    //    return q;
 
     ta_vec4 result = { 0 };
-    if (norm > TA_EPSILON) {
+    if (norm != 0.0) {
         double inv_norm = 1.0 / norm;
         result.x = (float)(q.x * inv_norm);
         result.y = (float)(q.y * inv_norm);
@@ -491,15 +527,15 @@ ta_vec4 quat_inverse(ta_vec4 q)
     double norm_sq = quat_norm_sq(result);
 
     // Inverse == conjugate for normalized ("unit-norm") quaternions
-    if (fabs(norm_sq - 1.0) < TA_EPSILON)
-        return result;
+    //if (fabs(norm_sq - 1.0) < TA_EPSILON)
+    //    return result;
 
     assert(norm_sq != 0.0);
     double inv_norm_sq = 1.0 / norm_sq;
-    result.w = (float)(result.w *inv_norm_sq);
-    result.x = (float)(result.x *inv_norm_sq);
-    result.y = (float)(result.y *inv_norm_sq);
-    result.z = (float)(result.z *inv_norm_sq);
+    result.w = (float)(result.w * inv_norm_sq);
+    result.x = (float)(result.x * inv_norm_sq);
+    result.y = (float)(result.y * inv_norm_sq);
+    result.z = (float)(result.z * inv_norm_sq);
     return result;
 }
 ta_vec4 quat_scale(ta_vec4 q, float s)

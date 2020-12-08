@@ -1438,6 +1438,9 @@ static void ui_node_panel()
             if (ta_ui_reset_button()) {
                 rigid_body->ang_velocity = VEC3_ZERO;
             }
+            if (ta_ui_button(CSTR("DEBUG: Rotate X"))) {
+                rigid_body->ang_velocity = VEC3_X;
+            }
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);

@@ -102,6 +102,7 @@ void ta_rigid_body_free_void                    (void *body);
 ta_vec3 rigid_body_local_to_world               (const ta_rigid_body *body, ta_vec3 p_body);
 ta_vec3 rigid_body_local_to_world_prev          (const ta_rigid_body *body, ta_vec3 p_body);
 ta_vec3 rigid_body_world_to_local               (const ta_rigid_body *body, ta_vec3 p_world);
+ta_vec3 rigid_body_world_to_local_prev          (const ta_rigid_body *body, ta_vec3 p_world);
 
 ta_vec3 rigid_body_oriented_vector              (const ta_rigid_body *body, ta_vec3 v_rest);
 ta_vec3 rigid_body_rest_vector                  (const ta_rigid_body *body, ta_vec3 v_world);
@@ -114,6 +115,7 @@ ta_vec3 rigid_body_body_to_centroid             (const ta_rigid_body *body, ta_v
 ta_vec3 rigid_body_centroid_to_world            (const ta_rigid_body *body, ta_vec3 p_centroid);
 ta_vec3 rigid_body_centroid_to_world_prev       (const ta_rigid_body *body, ta_vec3 p_centroid);
 ta_vec3 rigid_body_world_to_centroid            (const ta_rigid_body *body, ta_vec3 p_world);
+ta_vec3 rigid_body_world_to_centroid_prev       (const ta_rigid_body *body, ta_vec3 p_world);
 
 ta_vec3 rigid_body_centroid_world               (const ta_rigid_body *body);
 ta_vec3 rigid_body_centroid_oriented            (const ta_rigid_body *body);
@@ -122,7 +124,7 @@ const ta_mat3 *rigid_body_inv_tensor_world      (ta_rigid_body *body);
 void ta_rigid_body_apply_force                  (ta_rigid_body *body, ta_vec3 force);
 void ta_rigid_body_apply_force_at               (ta_rigid_body *body, ta_vec3 force, ta_vec3 at);
 void ta_rigid_body_apply_impulse                (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 contact_local);
-void ta_rigid_body_apply_positional_correction  (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
-void ta_rigid_body_apply_velocity_correction    (ta_rigid_body *body, ta_vec3 impulse, ta_vec3 at);
+void ta_rigid_body_apply_positional_correction  (ta_rigid_body *body, ta_vec3 impulse_world, ta_vec3 at_world);
+void ta_rigid_body_apply_velocity_correction    (ta_rigid_body *body, ta_vec3 impulse_world, ta_vec3 at_world);
 bool ta_rigid_body_intersect                    (struct ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
 void ta_rigid_body_resolve_collision            (struct ta_manifold *manifold, float dt);

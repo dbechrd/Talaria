@@ -8,11 +8,11 @@ struct ta_sphere;
 struct ta_plane;
 
 typedef struct ta_contact {
-    ta_vec3 priv__ca_world;  // contact point on A in world space
-    ta_vec3 priv__cb_world;  // contact point on B in world space
-    ta_vec3 ra;     // contact point radius in centroid space of A
-    ta_vec3 rb;     // contact point radius in centroid space of B
-    float lambda;   // Lagrangian multiplier (must zero at start of every substep)
+    ta_vec3 ca_world;  // contact point on A in world space
+    ta_vec3 cb_world;  // contact point on B in world space
+    ta_vec3 ra_world;  // contact radii for A in world space
+    ta_vec3 rb_world;  // contact radii for B in world space
+    float lambda;      // Lagrangian multiplier (must zero at start of every substep)
 } ta_contact;
 
 typedef struct ta_manifold {

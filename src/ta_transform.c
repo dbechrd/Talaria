@@ -68,7 +68,7 @@ static void ta_transform_update(ta_transform *transform, float alpha, bool dirty
 void ta_transform_update_all(ta_transform *transforms, float alpha)
 {
     // Represents the value that means "dirty" this frame. Flip-flops between true and false to prevent having to clear
-    // every transform's world_flag.
+    // every transform's dirty_flag.
     static bool dirty_flag = false;
 
     dlb_vec_each(ta_transform *, transform, transforms) {
