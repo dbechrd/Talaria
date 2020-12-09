@@ -242,18 +242,18 @@ bool ta_plane_v_sphere(ta_manifold *manifold, const ta_plane *plane, const ta_sp
 
     float r = sphere->radius;
     float d = vec3_dot(vec3_sub(sphere->center, plane->center), plane->normal);
-    if (d > r) {
+    if (d > sphere->radius) {
         return false;
     }
 
     if (manifold) {
-        manifold->normal_world = plane->normal;
-        ta_vec3 sphere_contact = vec3_sub(sphere->center, vec3_scalef(manifold->normal_world, r));
-        manifold->contacts[0].ca_world = vec3_add(sphere_contact, vec3_scalef(manifold->normal_world, r - d));
-        manifold->contacts[0].cb_world = sphere_contact;
-        manifold->contacts[0].rb_world = vec3_sub(manifold->contacts[0].cb_world, sphere->center);
-        manifold->contacts[0].ra_world = vec3_neg(manifold->contacts[0].rb_world);
+        ta_vec3 sphere_contact = vec3_sub(sphere->center, vec3_scalef(plane->normal, r));
+        manifold->contacts[0].normal_world = plane->normal;
+        manifold->contacts[0].rb_local = vec3_sub(sphere_contact, sphere->center);
+        manifold->contacts[0].ra_local = VEC3_ZERO;
         manifold->contact_count = 1;
+
+        DLB_ASSERT(vec3_len(manifold->contacts[0].rb_local) < sphere->radius + TA_EPSILON);
     }
 
     return true;
@@ -264,6 +264,7 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
     DLB_ASSERT(plane);
     DLB_ASSERT(obb);
 
+#if 0
     // Calculate the 8 corners of the OBB
     ta_vec3 p[8] = { 0 };
     p[0].x = -obb->extents.x; p[0].y = -obb->extents.y; p[0].z = -obb->extents.z;
@@ -316,6 +317,10 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
     }
 
     return collided;
+#else
+    UNUSED(manifold);
+    return false;
+#endif
 }
 
 bool ta_sphere_v_sphere(ta_manifold *manifold, const ta_sphere *a, const ta_sphere *b)
@@ -329,29 +334,30 @@ bool ta_sphere_v_sphere(ta_manifold *manifold, const ta_sphere *a, const ta_sphe
     ta_vec3 dp = vec3_sub(b->center, a->center);
 
     // delta position > sum of radii
-    float dp_len_sq = vec3_len2(dp);
-    if (dp_len_sq > r * r) {
+    float dist_sq = vec3_len2(dp);
+    if (dist_sq > r * r) {
         return false;
     }
 
     if (manifold) {
-        float dp_len = sqrtf(dp_len_sq);
-        if (dp_len) {
+        float dist = sqrtf(dist_sq);
+        if (dist) {
             // normalize delta position
-            manifold->normal_world = vec3_scalef(dp, 1.0f / dp_len);
+            manifold->contacts[0].normal_world = vec3_scalef(dp, 1.0f / dist);
         } else {
             // Edge case: Circles at same position, arbitrarily point normal up
-            manifold->normal_world = VEC3_Y;
+            manifold->contacts[0].normal_world = VEC3_Y;
         }
-        // penetation distance
-        float d = dp_len - r;
+        // penetation depth
+        float d = r - dist;
 
         // calculate contact points
-        manifold->contacts[0].ca_world = vec3_add(a->center, vec3_scalef(manifold->normal_world,  a->radius));
-        manifold->contacts[0].cb_world = vec3_add(b->center, vec3_scalef(manifold->normal_world, -b->radius));
-        manifold->contacts[0].ra_world = vec3_sub(manifold->contacts[0].ca_world, a->center);
-        manifold->contacts[0].rb_world = vec3_sub(manifold->contacts[0].cb_world, b->center);
+        manifold->contacts[0].ra_local = vec3_scalef(manifold->contacts[0].normal_world, a->radius);
+        manifold->contacts[0].rb_local = vec3_scalef(manifold->contacts[0].normal_world, -b->radius);
         manifold->contact_count = 1;
+
+        DLB_ASSERT(vec3_len(manifold->contacts[0].ra_local) < a->radius + TA_EPSILON);
+        DLB_ASSERT(vec3_len(manifold->contacts[0].rb_local) < b->radius + TA_EPSILON);
     }
 
     return true;

@@ -187,9 +187,12 @@ void ta_rigid_body_apply_impulse(ta_rigid_body *body, ta_vec3 impulse, ta_vec3 c
         body->ang_velocity = VEC3_ZERO;
     }
 }
-void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_vec3 impulse_world, ta_vec3 at_world)
+void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_vec3 impulse_world, ta_vec3 r_world)
 {
     if (body->inv_mass == 0.0f) return;
+
+    // NOTE: All planes are mathematical and should have infinite mass, they have no "center" and can't translate
+    DLB_ASSERT(body->collider.type != TA_COLLIDER_PLANE);
 
     // contact penetration impulse
     ta_vec3 centroid_world = rigid_body_centroid_world(body);
@@ -203,7 +206,7 @@ void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_vec3 impu
         body->xform.orientation,
         quat_scale(
             quat_mul(
-                vec4_init_vw(mat3_mul_vec3(rigid_body_inv_tensor_world(body), vec3_cross(at_world, impulse_world)), 0),
+                vec4_init_vw(mat3_mul_vec3(rigid_body_inv_tensor_world(body), vec3_cross(r_world, impulse_world)), 0),
                 body->xform.orientation
             ),
         0.5f)
@@ -211,15 +214,20 @@ void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_vec3 impu
     body->xform.orientation = quat_normalize(new_orientation_world);
     body->aabb = ta_collider_world_bounds(&body->collider, &body->xform);
 }
-void ta_rigid_body_apply_velocity_correction(ta_rigid_body *body, ta_vec3 impulse_world, ta_vec3 at_world)
+void ta_rigid_body_apply_velocity_correction(ta_rigid_body *body, ta_vec3 impulse_world, ta_vec3 r_world)
 {
+    if (body->inv_mass == 0.0f) return;
+
+    // NOTE: All planes are mathematical and should have infinite mass, they have no "center" and can't rotate
+    DLB_ASSERT(body->collider.type != TA_COLLIDER_PLANE);
+
     DLB_ASSERT(!vec3_zero(impulse_world));
-    DLB_ASSERT(!vec3_zero(at_world));
 
     if (body->inv_mass == 0.0f) return;
 
     body->velocity = vec3_add(body->velocity, vec3_scalef(impulse_world, body->inv_mass));
-    body->ang_velocity = vec3_add(body->ang_velocity, mat3_mul_vec3(rigid_body_inv_tensor_world(body), vec3_cross(at_world, impulse_world)));
+    body->ang_velocity = vec3_add(body->ang_velocity, mat3_mul_vec3(rigid_body_inv_tensor_world(body),
+        vec3_cross(r_world, impulse_world)));
 
     //body->velocity.x *= fabsf(body->velocity.x) > TA_EPSILON;
     //body->velocity.y *= fabsf(body->velocity.y) > TA_EPSILON;
@@ -243,12 +251,16 @@ static bool intersector_plane_v_sphere(ta_manifold *manifold, const ta_rigid_bod
     }
 
     ta_plane plane_a = a->collider.data.plane;
-    plane_a.center = rigid_body_local_to_world(a, plane_a.center);
-
     ta_sphere sphere_b = b->collider.data.sphere;
+
+    plane_a.center = rigid_body_local_to_world(a, plane_a.center);
     sphere_b.center = rigid_body_local_to_world(b, sphere_b.center);
 
     bool collided = ta_plane_v_sphere(manifold, &plane_a, &sphere_b);
+    for (u32 i = 0; i < manifold->contact_count; ++i) {
+        manifold->contacts[i].ra_local = rigid_body_rest_vector(a, manifold->contacts[i].ra_local);
+        manifold->contacts[i].rb_local = rigid_body_rest_vector(b, manifold->contacts[i].rb_local);
+    }
     return collided;
 }
 static bool intersector_plane_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
@@ -261,6 +273,7 @@ static bool intersector_plane_v_obb(ta_manifold *manifold, const ta_rigid_body *
 
     ta_obb obb_b = b->collider.data.obb;
     obb_b.center = rigid_body_local_to_world(b, obb_b.center);
+    // TODO: Do we need to do this explicitly or is it included in local_to_world.. hurts my slightly below avg sized brain
     obb_b.orientation = rigid_body_oriented_quaternion(b, obb_b.orientation);
 
     bool collided = ta_plane_v_obb(manifold, &plane_a, &obb_b);
@@ -279,6 +292,19 @@ static bool intersector_sphere_v_sphere(ta_manifold *manifold, const ta_rigid_bo
     sphere_b.center = rigid_body_local_to_world(b, sphere_b.center);
 
     bool collided = ta_sphere_v_sphere(manifold, &sphere_a, &sphere_b);
+
+    if (collided) {
+        const char *e_selected = 0;
+        ta_editor_selected_entity(&e_selected);
+        if (a->name == e_selected || b->name == e_selected) {
+            DLB_ASSERT(1);
+        }
+    }
+
+    for (u32 i = 0; i < manifold->contact_count; ++i) {
+        manifold->contacts[i].ra_local = rigid_body_rest_vector(a, manifold->contacts[i].ra_local);
+        manifold->contacts[i].rb_local = rigid_body_rest_vector(b, manifold->contacts[i].rb_local);
+    }
     return collided;
 }
 static bool intersector_sphere_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
@@ -358,10 +384,11 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
             manifold->coef_dynamic = (body_a->kd + body_b->kd) / 2.0f;
 
             DLB_ASSERT(manifold->contact_count);
-            //DLB_ASSERT(!vec3_zero(manifold->contacts[0].ca_world));
-            //DLB_ASSERT(!vec3_zero(manifold->contacts[0].cb_world));
-            DLB_ASSERT(!vec3_zero(manifold->contacts[0].ra_world));
-            DLB_ASSERT(!vec3_zero(manifold->contacts[0].rb_world));
+            for (u32 i = 0; i < manifold->contact_count; ++i) {
+                DLB_ASSERT(!vec3_zero(manifold->contacts[i].normal_world));
+                //DLB_ASSERT(!vec3_zero(manifold->contacts[i].ra_local));
+                //DLB_ASSERT(!vec3_zero(manifold->contacts[i].rb_local));
+            }
         }
 
         // Set some handy flags for debug rendering

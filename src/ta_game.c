@@ -1028,32 +1028,31 @@ static void game_simulate(float dt)
 
             for (u32 i = 0; i < manifold->contact_count; i++) {
                 // world space contact points
-                const ta_vec3 ca_world = manifold->contacts[i].ca_world;
-                const ta_vec3 cb_world = manifold->contacts[i].cb_world;
-                // world space contact radii
-                //const ta_vec3 ra_world = vec3_sub(ca_world, rigid_body_centroid_world(a));
-                //const ta_vec3 rb_world = vec3_sub(cb_world, rigid_body_centroid_world(b));
-                const ta_vec3 ra_world = manifold->contacts[i].ra_world;
-                const ta_vec3 rb_world = manifold->contacts[i].rb_world;
+                const ta_vec3 normal_world = manifold->contacts[i].normal_world;
+                const ta_vec3 ca_world = rigid_body_local_to_world(a, manifold->contacts[i].ra_local);
+                const ta_vec3 cb_world = rigid_body_local_to_world(b, manifold->contacts[i].rb_local);
+                const ta_vec3 ra_world = rigid_body_oriented_vector(a, manifold->contacts[i].ra_local);
+                const ta_vec3 rb_world = rigid_body_oriented_vector(b, manifold->contacts[i].rb_local);
 
-                // distance between contacts
-                float d = vec3_dot(vec3_sub(cb_world, ca_world), manifold->normal_world);
-                if (d >= 0.0f) {
+                // penetration distance
+                float d = vec3_dot(vec3_sub(ca_world, cb_world), normal_world);
+                if (d <= 0.0f) {
                     continue;
                 }
 
+                //ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(a), ra_local, TA_COLOR_BLUE);
+                //ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(b), rb_local, TA_COLOR_BLUE7);
                 ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(a), ra_world, TA_COLOR_BLUE);
                 ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(b), rb_world, TA_COLOR_BLUE7);
-                //ta_primitive_push_arrow(&primitive_lines_perma, ca_world, manifold->contacts[i].ra_world, TA_COLOR_BLUE);
-                //ta_primitive_push_arrow(&primitive_lines_perma, cb_world, manifold->contacts[i].rb_world, TA_COLOR_BLUE7);
 
                 // TODO: This should probably be moved into a rigid_body_* method
                 // generalized inverse masses
                 // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
                 const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(a),
-                    vec3_cross(ra_world, manifold->normal_world)), ra_world), manifold->normal_world);
+                    vec3_cross(ra_world, normal_world)), ra_world), normal_world);
                 const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(b),
-                    vec3_cross(rb_world, manifold->normal_world)), rb_world), manifold->normal_world);
+                    vec3_cross(rb_world, normal_world)), rb_world), normal_world);
+
 #if 1
                 // TODO: Reincorporate lambda and alpha to allow non-infinitely stiff constraints (though not for
                 // contact resolution, which should use a = 0)
@@ -1061,15 +1060,15 @@ static void game_simulate(float dt)
                 const float alpha_wavy = alpha / (dt * dt);
                 const float lambda = manifold->contacts[i].lambda;
 
-                float delta_lambda = (d - alpha_wavy * lambda) / (wa + wb + alpha_wavy);
+                float delta_lambda = (-d - alpha_wavy * lambda) / (wa + wb + alpha_wavy);
                 manifold->contacts[i].lambda += delta_lambda;
 #else
                 // NOTE: Simplification for alpha = 0, which removes the need to store lambda between constraint solves
-                float delta_lambda = -manifold->depth / (wa_world + wb_world);
+                float delta_lambda = -manifold->depth / (wa + wb);
 #endif
                 // Apply Dx = dn with a = 0 and lambda_normal
-                ta_vec3 dx_penetration_a = vec3_scalef(manifold->normal_world, delta_lambda);
-                ta_vec3 dx_penetration_b = vec3_scalef(manifold->normal_world, -delta_lambda);
+                ta_vec3 dx_penetration_a = vec3_scalef(normal_world, delta_lambda);
+                ta_vec3 dx_penetration_b = vec3_scalef(normal_world, -delta_lambda);
                 ta_rigid_body_apply_positional_correction(a, dx_penetration_a, ra_world);
                 ta_rigid_body_apply_positional_correction(b, dx_penetration_b, rb_world);
                 if (tg_game.debug_physics_render_penetration_vectors) {
@@ -1085,7 +1084,7 @@ static void game_simulate(float dt)
                 const ta_vec3 ca_world_prev = rigid_body_centroid_to_world_prev(a, ca_local);
                 const ta_vec3 cb_world_prev = rigid_body_centroid_to_world_prev(b, cb_local);
                 ta_vec3 dp = vec3_sub(vec3_sub(ca_world, ca_world_prev), vec3_sub(cb_world, cb_world_prev));
-                ta_vec3 dp_normal = vec3_scalef(manifold->normal_world, vec3_dot(dp, manifold->normal_world));
+                ta_vec3 dp_normal = vec3_scalef(normal_world, vec3_dot(dp, normal_world));
                 ta_vec3 dp_tangent = vec3_sub(dp, dp_normal);
 
                 // if lambda_tangent < manifold->sf * lambda_normal
@@ -1211,17 +1210,19 @@ static void game_simulate(float dt)
 
         for (u32 i = 0; i < manifold->contact_count; i++) {
             // world space contact points
-            const ta_vec3 ca_world = manifold->contacts[i].ca_world;
-            const ta_vec3 cb_world = manifold->contacts[i].cb_world;
-            // world space contact radii
-            const ta_vec3 ra_world = manifold->contacts[i].ra_world;
-            const ta_vec3 rb_world = manifold->contacts[i].rb_world;
+            const ta_vec3 normal_world = manifold->contacts[i].normal_world;
+            const ta_vec3 ca_world = rigid_body_local_to_world(a, manifold->contacts[i].ra_local);
+            const ta_vec3 cb_world = rigid_body_local_to_world(b, manifold->contacts[i].rb_local);
+            const ta_vec3 ra_world = rigid_body_oriented_vector(a, manifold->contacts[i].ra_local);
+            const ta_vec3 rb_world = rigid_body_oriented_vector(b, manifold->contacts[i].rb_local);
 
             // TODO: This should probably be moved into a rigid_body_* method
             // generalized inverse masses
             // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
-            const float wa_world = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(a), vec3_cross(ra_world, manifold->normal_world)), ra_world), manifold->normal_world);
-            const float wb_world = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(b), vec3_cross(rb_world, manifold->normal_world)), rb_world), manifold->normal_world);
+            const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(a),
+                vec3_cross(ra_world, normal_world)), ra_world), normal_world);
+            const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(b),
+                vec3_cross(rb_world, normal_world)), rb_world), normal_world);
 
             // relative velocity
             ta_vec3 va = vec3_add(a->velocity, vec3_cross(a->ang_velocity, ra_world));
@@ -1229,8 +1230,8 @@ static void game_simulate(float dt)
             ta_vec3 v = vec3_sub(va, vb);
 
             // normal/tangential velocity
-            float vn_mag = vec3_dot(manifold->normal_world, v);
-            ta_vec3 vn = vec3_scalef(manifold->normal_world, vn_mag);
+            float vn_mag = vec3_dot(normal_world, v);
+            ta_vec3 vn = vec3_scalef(normal_world, vn_mag);
             ta_vec3 vt = vec3_sub(v, vn);
             float vt_mag = vec3_len(vt);
 
@@ -1238,10 +1239,10 @@ static void game_simulate(float dt)
             //ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_world, ra), vt, TA_COLOR_GREEN);
 
             // dynamic friction
-            if (false && vt_mag > 0.0f) {
+            if (false && vt_mag > TA_EPSILON) {
                 ta_vec3 vt_dir = vec3_scalef(vt, 1.0f/vt_mag);
 
-#if 0
+#if 1
                 // PBDBodies eq. 31 says to do this.. but the normal force calculate here is wayy too small and causes
                 // almost no friction to be applied. What is "lambda_n" if not vn_mag?
                 float fn = vn_mag / (dt * dt);
@@ -1250,9 +1251,9 @@ static void game_simulate(float dt)
                 //float impulse_mag = -MIN(dt * manifold->coef_dynamic * vt_mag, vt_mag);
                 float impulse_mag = -MIN(dt * manifold->coef_dynamic * (vn_mag / dt), vt_mag);
 #endif
-                if (fabsf(impulse_mag) > 0.0f) {
-                    ta_vec3 dv_dynamic_friction = vec3_scalef(vt_dir, impulse_mag);
-                    ta_vec3 impulse_world = vec3_scalef(dv_dynamic_friction, 1.0f/(wa_world + wb_world));
+                if (fabsf(impulse_mag) > TA_EPSILON) {
+                    ta_vec3 dv_dynamic_friction = vec3_scalef(vt_dir, -impulse_mag);
+                    ta_vec3 impulse_world = vec3_scalef(dv_dynamic_friction, 1.0f/(wa + wb));
 
                     ta_vec3 impulse_world_a = impulse_world;
                     ta_vec3 impulse_world_b = vec3_neg(impulse_world);
@@ -1274,7 +1275,7 @@ static void game_simulate(float dt)
                 float coef_linear_damping = 0.99f;
                 dv_damping = vec3_scalef(vec3_sub(b->velocity, a->velocity), MIN(coef_linear_damping * dt, 1.0f));
 
-                ta_vec3 impulse_world = vec3_scalef(dv_damping, 1.0f/(wa_world + wb_world));
+                ta_vec3 impulse_world = vec3_scalef(dv_damping, 1.0f/(wa + wb));
                 ta_rigid_body_apply_velocity_correction(a, impulse_world, ra_world);
                 ta_rigid_body_apply_velocity_correction(b, vec3_neg(impulse_world), rb_world);
 
@@ -1291,15 +1292,16 @@ static void game_simulate(float dt)
                 ta_vec3 vb_prev = vec3_add(b->velocity_prev, vec3_cross(b->ang_velocity_prev, rb_world));
                 ta_vec3 v_prev = vec3_sub(va_prev, vb_prev);
                 // previous normal velocity
-                float vn_mag_prev = vec3_dot(manifold->normal_world, v_prev);
+                float vn_mag_prev = vec3_dot(normal_world, v_prev);
                 // TODO: for small vn_mag, |vn_mag| <= 2|g|h, set restitution to 0 to avoid jittering
                 float e = manifold->e * (float)(fabs(vn_mag) > (2.0f * fabs(GRAVITY) * dt));
                 // NOTE: Using MIN instead of MAX here because my signs are reversed (opposite normal I think) vs.
                 // PBDBodies Eq. 35.
-                float impulse_mag = -vn_mag + MIN(-e * vn_mag_prev, 0);
+                //float impulse_mag = -vn_mag + MIN(-e * vn_mag_prev, 0);
+                float impulse_mag = -vn_mag + MAX(-e * vn_mag_prev, 0);
                 if (fabsf(impulse_mag) > 0.0f) {
-                    ta_vec3 dv_restitution = vec3_scalef(manifold->normal_world, impulse_mag);
-                    ta_vec3 impulse_world = vec3_scalef(dv_restitution, 1.0f/(wa_world + wb_world));
+                    ta_vec3 dv_restitution = vec3_scalef(normal_world, impulse_mag);
+                    ta_vec3 impulse_world = vec3_scalef(dv_restitution, 1.0f/(wa + wb));
 
                     ta_vec3 impulse_world_a = impulse_world;
                     ta_vec3 impulse_world_b = vec3_neg(impulse_world);
@@ -1394,23 +1396,25 @@ static void game_render_manifolds_debug()
     const float radius = 0.025f;
     dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
         for (u32 i = 0; i < manifold->contact_count; ++i) {
-            const ta_vec3 contact_a = manifold->contacts[i].ca_world; // rigid_body_centroid_to_world(manifold->a, manifold->contacts[i].ra);
-            const ta_vec3 contact_b = manifold->contacts[i].cb_world; // rigid_body_centroid_to_world(manifold->b, manifold->contacts[i].rb);
+            // world space contact points
+            const ta_vec3 normal_world = manifold->contacts[i].normal_world;
+            const ta_vec3 ca_world = rigid_body_local_to_world(manifold->a, manifold->contacts[i].ra_local);
+            const ta_vec3 cb_world = rigid_body_local_to_world(manifold->b, manifold->contacts[i].rb_local);
 
             ta_sphere sphere = { 0 };
-            sphere.center = contact_a;
+            sphere.center = ca_world;
             sphere.radius = radius;
             ta_primitive_push_sphere(0, sphere, TA_COLOR_WHITE);
 
-            ta_vec3 origin    = contact_a;
-            ta_vec3 direction = vec3_scalef(manifold->normal_world, 0.05f);
+            ta_vec3 origin    = ca_world;
+            ta_vec3 direction = vec3_scalef(normal_world, 0.05f);
             ta_primitive_push_arrow(0, origin, direction, TA_COLOR_WHITE);
 
-            sphere.center = contact_b;
+            sphere.center = cb_world;
             sphere.radius = radius;
             ta_primitive_push_sphere(0, sphere, TA_COLOR_GRAY6);
 
-            //origin    = contact_b;
+            //origin    = cb_world;
             //direction = vec3_scalef(manifold->normal_world, 0.05f);
             //ta_primitive_push_arrow(0, origin, direction, TA_COLOR_GRAY8);
         }
