@@ -1247,26 +1247,26 @@ static void game_simulate(float dt)
                 ta_vec3 vt_dir = vec3_scalef(vt, 1.0f/vt_mag);
 
                 float kd = manifold->coef_dynamic;
-                kd = 0.95f;
+                kd = 0.55f;
 
-                // PBDBodies eq. 31 says to do this.. but the normal force calculate here is wayy too small and causes
-                // almost no friction to be applied. What is "lambda_n" if not vn_mag?
-                float fn = vn_mag / (dt * dt);
+                //// PBDBodies eq. 31 says to do this.. but the normal force calculate here is wayy too small and causes
+                //// almost no friction to be applied. What is "lambda_n" if not vn_mag?
+                //float fn = vn_mag / (dt * dt);
+                //
+                ////float impulse_mag = -MIN(dt * kd * fn, vt_mag);
+                //float impulse_mag = MIN(fn * kd * dt, vt_mag);
 
-                //float impulse_mag = -MIN(dt * kd * fn, vt_mag);
-                float impulse_mag = fn * kd * dt;
+                float impulse_mag = MIN(vn_mag * (kd * dt), vt_mag);
 
-                if (impulse_mag) {
+                if (fabsf(impulse_mag) > TA_EPSILON) {
                     ta_vec3 dv_dynamic_friction = vec3_scalef(vt_dir, -impulse_mag);
                     ta_vec3 impulse_world = vec3_scalef(dv_dynamic_friction, 1.0f/(wa + wb));
 
                     ta_vec3 impulse_world_a = impulse_world;
                     ta_vec3 impulse_world_b = vec3_neg(impulse_world);
 
-                    if (0) {
-                        ta_rigid_body_apply_velocity_correction(a, impulse_world_a, ra_world);
-                        ta_rigid_body_apply_velocity_correction(b, impulse_world_b, rb_world);
-                    }
+                    ta_rigid_body_apply_velocity_correction(a, impulse_world_a, ra_world);
+                    ta_rigid_body_apply_velocity_correction(b, impulse_world_b, rb_world);
 
                     if (tg_game.debug_physics_render_dynamic_friction_vectors) {
                         //ta_primitive_push_arrow(&primitive_lines_perma, ca_world, dv_dynamic_friction,
@@ -1324,17 +1324,17 @@ static void game_simulate(float dt)
                     ta_vec3 impulse_world_a = impulse_world;
                     ta_vec3 impulse_world_b = vec3_neg(impulse_world);
 
-                    if (tg_game.debug_physics_render_restitution_vectors) {
-                        ta_primitive_push_arrow(&primitive_lines_perma, ca_world, impulse_world_a, TA_COLOR_RED); //tg_game.debug_physics_color_restitution_vectors);
-                        ta_primitive_push_arrow(&primitive_lines_perma, cb_world, impulse_world_b, TA_COLOR_RED7); //tg_game.debug_physics_color_restitution_vectors);
-                    }
-
                     if (a->name == e_selected || b->name == e_selected) {
                         DLB_ASSERT(1);
                     }
 
                     ta_rigid_body_apply_velocity_correction(a, impulse_world_a, ra_world);
                     ta_rigid_body_apply_velocity_correction(b, impulse_world_b, rb_world);
+
+                    if (tg_game.debug_physics_render_restitution_vectors) {
+                        ta_primitive_push_arrow(&primitive_lines_perma, ca_world, impulse_world_a, TA_COLOR_RED); //tg_game.debug_physics_color_restitution_vectors);
+                        ta_primitive_push_arrow(&primitive_lines_perma, cb_world, impulse_world_b, TA_COLOR_RED7); //tg_game.debug_physics_color_restitution_vectors);
+                    }
                 }
             }
 
