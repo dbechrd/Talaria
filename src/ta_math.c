@@ -91,6 +91,7 @@ const ta_rgba TA_COLOR_BLUE7       = { 0.7f, 0.7f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_BLUE8       = { 0.8f, 0.8f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_BLUE9       = { 0.9f, 0.9f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_CYAN        = { 0.1f, 1.0f, 1.0f, 1.0f };
+const ta_rgba TA_COLOR_CYAN7       = { 0.7f, 1.0f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_MAGENTA     = { 1.0f, 0.1f, 1.0f, 1.0f };
 const ta_rgba TA_COLOR_YELLOW      = { 1.0f, 1.0f, 0.1f, 1.0f };
 const ta_rgba TA_COLOR_ORANGE      = { 1.0f, 0.7f, 0.1f, 1.0f };
