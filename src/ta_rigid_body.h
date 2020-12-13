@@ -65,9 +65,9 @@ typedef struct ta_rigid_body {
     ta_xform xform;       // world space
     ta_xform xform_prev;  // world space
 
-    ta_vec3 velocity;
+    ta_vec3 velocity;           // Meters per second
     ta_vec3 velocity_prev;
-    ta_vec3 ang_velocity;
+    ta_vec3 ang_velocity;       // Radians per second
     ta_vec3 ang_velocity_prev;
 
     //ta_vec3 acceleration;      // Don't ever change this directly, use force/impulse

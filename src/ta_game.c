@@ -940,34 +940,27 @@ static void game_simulate(float dt)
         // Store starting transform
         body->xform_prev = body->xform;
 
+        // DEBUG: Cleanup
+        const char *e_selected = 0;
+        ta_editor_selected_entity(&e_selected);
+        if (body->name == e_selected) {
+            DLB_ASSERT(1);
+        }
+
         // Update position
         ta_vec3 acceleration = vec3_scalef(body->force_accum, body->inv_mass);
         body->velocity = vec3_add(body->velocity, vec3_scalef(acceleration, dt));
         body->xform.position = vec3_add(body->xform.position, vec3_scalef(body->velocity, dt));
 
-        const char *e_selected = 0;
-        ta_editor_selected_entity(&e_selected);
-
         float dtheta_mag = vec3_len(body->ang_velocity);
-        if (dtheta_mag > TA_EPSILON) {
+        if (dtheta_mag) {
             ta_vec4 delta_orient = quat_from_axis_angle(vec3_normalize(body->ang_velocity), dtheta_mag * dt);
-            // TODO: This should definitely incorporate dt.. but I'm trying to figure out why dafuq nothing is rotating
-            //ta_vec4 delta_orient = quat_from_axis_angle(vec3_normalize(body->ang_velocity), dtheta_mag);
             body->xform.orientation = quat_normalize(quat_mul(delta_orient, body->xform.orientation));
-            if (body->name == e_selected) {
-                printf("    body update: %s ang_vel: %f %f %f orient: %f %f %f %f\n",
-                    body->name, body->ang_velocity.x, body->ang_velocity.y, body->ang_velocity.z,
-                    body->xform.orientation.x, body->xform.orientation.y, body->xform.orientation.z, body->xform.orientation.w);
-            }
         }
 
         // TODO: This will also need to update the AABB tree
         // Recalculate AABB
         body->aabb = ta_collider_world_bounds(&body->collider, &body->xform);
-
-        if (body->name == e_selected) {
-            DLB_ASSERT(1);
-        }
 
         // Reset accumulators
         body->force_accum = VEC3_ZERO;
@@ -1040,8 +1033,8 @@ static void game_simulate(float dt)
                     continue;
                 }
 
-                //ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(a), ra_local, TA_COLOR_BLUE);
-                //ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(b), rb_local, TA_COLOR_BLUE7);
+                //ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(a), manifold->contacts[i].ra_local, TA_COLOR_BLUE);
+                //ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(b), manifold->contacts[i].rb_local, TA_COLOR_BLUE7);
                 ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(a), ra_world, TA_COLOR_BLUE);
                 ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(b), rb_world, TA_COLOR_BLUE7);
 
@@ -1095,8 +1088,8 @@ static void game_simulate(float dt)
                     // Apply Dx = Dp_t with a = 0
                     ta_vec3 dx_static_friction_a = vec3_scalef(dp_tangent, dt);
                     ta_vec3 dx_static_friction_b = vec3_neg(dx_static_friction_a);
-                    //ta_rigid_body_apply_positional_correction(a, dx_static_friction_a, ra);
-                    //ta_rigid_body_apply_positional_correction(b, dx_static_friction_b, rb);
+                    //ta_rigid_body_apply_positional_correction(a, dx_static_friction_a, ra_world);
+                    //ta_rigid_body_apply_positional_correction(b, dx_static_friction_b, rb_world);
                     // NOTE: We may need to update world space radii if we want to apply any more positional corrections
                     // that depend on them, but it's commented as an optimization since this is currently the last one
                     //ra_world = vec3_add(atrans->xform.position, quat_mul_vec3(atrans->xform.orientation, ra));
@@ -1117,70 +1110,32 @@ static void game_simulate(float dt)
         // Update world space AABB
         body->aabb = ta_collider_world_bounds(&body->collider, &body->xform);
 
-        const char *e_selected = 0;
-        ta_editor_selected_entity(&e_selected);
-        bool has_vel = !vec3_zero(body->ang_velocity);
-        if (has_vel && body->name == e_selected) { // && dlb_vec_len(body->colliding_with)) {
-            printf("velocity update: %s ang_vel: %f %f %f [BEFORE]\n",
-                body->name, body->ang_velocity.x, body->ang_velocity.y, body->ang_velocity.z);
-        }
-
         body->velocity_prev = body->velocity;
         body->ang_velocity_prev = body->ang_velocity;
+
+        // DEBUG: Cleanup
+        const char *e_selected = 0;
+        ta_editor_selected_entity(&e_selected);
+        if (body->name == e_selected) {
+            DLB_ASSERT(1);
+        }
 
         ta_vec3 dp = vec3_sub(body->xform.position, body->xform_prev.position);
         body->velocity = vec3_scalef(dp, 1.0f/dt);
 
         ta_vec4 dq = quat_mul(body->xform.orientation, quat_inverse(body->xform_prev.orientation));
         dq = quat_normalize(dq);
-
-        // If body has velocity but delta orientation w is 1.0, then presumably the other components were too small
-        // and got lost by normalize(). This means the angular velocity was lost. If this happens because angular
-        // velocity is legitimately small, that's fine, but if it happens because dt is too small, then objects will
-        // never rotate! In that case, I believe the only solution is to either switch to double precision everywhere,
-        // or increase the timestep.
-        //DLB_ASSERT(!has_vel || fabsf(dq.w) < 1.0f);
-#if 1
-        float scale = 2.0f/dt;
-        if (dq.w < 0.0f) {
-            scale *= -1.0f;
-        }
-        body->ang_velocity.x = dq.x * scale;
-        body->ang_velocity.y = dq.y * scale;
-        body->ang_velocity.z = dq.z * scale;
-#else
-        if (dq.w == 1.0f) {
-            body->ang_velocity = VEC3_ZERO;
-        } else {
-            double angle = 2.0/dt * acos(dq.w);
-            double s = sqrt(1.0 - dq.w * dq.w);
-            if (dq.w < 0.0) {
-                s *= -1;
-            }
-            body->ang_velocity.x = (float)(dq.x / s);
-            body->ang_velocity.y = (float)(dq.y / s);
-            body->ang_velocity.z = (float)(dq.z / s);
-        }
-#endif
+        body->ang_velocity = axis_angle_from_quat(dq);
+        body->ang_velocity = vec3_scalef(body->ang_velocity, 1.0f/dt);
 
         // check for NaN and infinity
         DLB_ASSERT(vec3_good(body->velocity));
         DLB_ASSERT(vec3_good(body->ang_velocity));
 
-        if (has_vel && body->name == e_selected) { // && dlb_vec_len(body->colliding_with)) {
-            printf("velocity update: %s ang_vel: %f %f %f orient: %f %f %f %f\n",
-                body->name, body->ang_velocity.x, body->ang_velocity.y, body->ang_velocity.z,
-                dq.x, dq.y, dq.z, dq.w);
-        }
-
         // TODO: Allow transform to be offset from rigid body position/orientation? Or just make rigidbody the parent..
         ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
         transform->xform.position = body->xform.position;
         transform->xform.orientation = body->xform.orientation;
-
-        if (body->name == e_selected) {
-            DLB_ASSERT(1);
-        }
     }
 
     // Velocity corrections
@@ -1234,12 +1189,12 @@ static void game_simulate(float dt)
             ta_vec3 v = vec3_sub(vb, va);
 
             // normal/tangential velocity
-            float vn_mag = vec3_dot(normal_world, v);
-            ta_vec3 vn = vec3_scalef(normal_world, vn_mag);
-            ta_vec3 vt = vec3_sub(v, vn);
+            float vn = vec3_dot(normal_world, v);
+            ta_vec3 n_vn = vec3_scalef(normal_world, vn);
+            ta_vec3 vt = vec3_sub(v, n_vn);
             float vt_mag = vec3_len(vt);
 
-            //ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_world, ra), vn, TA_COLOR_RED);
+            //ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_world, ra), n_vn, TA_COLOR_RED);
             //ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_world, ra), vt, TA_COLOR_GREEN);
 
             // dynamic friction
@@ -1247,27 +1202,28 @@ static void game_simulate(float dt)
                 ta_vec3 vt_dir = vec3_scalef(vt, 1.0f/vt_mag);
 
                 float kd = manifold->coef_dynamic;
-                kd = 0.55f;
+                kd = 0.05f;
 
                 //// PBDBodies eq. 31 says to do this.. but the normal force calculate here is wayy too small and causes
-                //// almost no friction to be applied. What is "lambda_n" if not vn_mag?
-                //float fn = vn_mag / (dt * dt);
+                //// almost no friction to be applied. What is "lambda_n" if not vn?
+                //float fn = vn / (dt * dt);
                 //
                 ////float impulse_mag = -MIN(dt * kd * fn, vt_mag);
                 //float impulse_mag = MIN(fn * kd * dt, vt_mag);
 
-                float impulse_mag = MIN(vn_mag * (kd * dt), vt_mag);
+                //float impulse_mag = MIN(vn * (kd * dt), vt_mag);
+                float impulse_mag = -MIN(vn * kd, vt_mag);
 
                 if (fabsf(impulse_mag) > TA_EPSILON) {
-                    ta_vec3 dv_dynamic_friction = vec3_scalef(vt_dir, -impulse_mag);
+                    ta_vec3 dv_dynamic_friction = vec3_scalef(vt_dir, impulse_mag);
                     ta_vec3 impulse_world = vec3_scalef(dv_dynamic_friction, 1.0f/(wa + wb));
 
                     ta_vec3 impulse_world_a = impulse_world;
                     ta_vec3 impulse_world_b = vec3_neg(impulse_world);
-
+#if 1
                     ta_rigid_body_apply_velocity_correction(a, impulse_world_a, ra_world);
                     ta_rigid_body_apply_velocity_correction(b, impulse_world_b, rb_world);
-
+#endif
                     if (tg_game.debug_physics_render_dynamic_friction_vectors) {
                         //ta_primitive_push_arrow(&primitive_lines_perma, ca_world, dv_dynamic_friction,
                         //    tg_game.debug_physics_color_dynamic_friction_vectors);
@@ -1281,7 +1237,7 @@ static void game_simulate(float dt)
             // TODO: Angular damping
             {
                 float coef_linear_damping = 0.99f;
-                float damping_mag = MIN(coef_linear_damping * dt, 1.0f);
+                float damping_mag = MIN(coef_linear_damping, 1.0f);
 
                 ta_vec3 dv_damping = vec3_scalef(vec3_sub(b->velocity, a->velocity), damping_mag);
 
@@ -1290,10 +1246,10 @@ static void game_simulate(float dt)
 
                     ta_vec3 impulse_world_a = impulse_world;
                     ta_vec3 impulse_world_b = vec3_neg(impulse_world);
-
+#if 0
                     ta_rigid_body_apply_velocity_correction(a, impulse_world_a, ra_world);
                     ta_rigid_body_apply_velocity_correction(b, impulse_world_b, rb_world);
-
+#endif
                     if (tg_game.debug_physics_render_damping_vectors) {
                         ta_primitive_push_arrow(&primitive_lines_perma, ca_world, dv_damping,
                             tg_game.debug_physics_color_damping_vectors);
@@ -1309,14 +1265,14 @@ static void game_simulate(float dt)
                 ta_vec3 v_prev = vec3_sub(vb_prev, va_prev);
                 // previous normal velocity
                 float vn_mag_prev = vec3_dot(normal_world, v_prev);
-                // TODO: for small vn_mag, |vn_mag| <= 2|g|h, set restitution to 0 to avoid jittering
-                float e = manifold->e; // * (float)(fabs(vn_mag) > (2.0f * fabs(GRAVITY) * dt));
-                //e = 0.1f;
+                // TODO: for small vn, |vn| <= 2|g|h, set restitution to 0 to avoid jittering
+                float e = manifold->e; // * (float)(fabs(vn) > (2.0f * fabs(GRAVITY) * dt));
+                e = 0.9f;
                 // NOTE: Using MIN instead of MAX here because my signs are reversed (opposite normal I think) vs.
                 // PBDBodies Eq. 35.
-                //float impulse_mag = -vn_mag + MIN(-e * vn_mag_prev, 0);
-                //float impulse_mag = -vn_mag + MAX(-e * vn_mag_prev, 0);
-                float impulse_mag = vn_mag + e * vn_mag_prev;
+                //float impulse_mag = -vn + MIN(-e * vn_mag_prev, 0);
+                //float impulse_mag = -vn + MAX(-e * vn_mag_prev, 0);
+                float impulse_mag = vn + e * vn_mag_prev;
                 if (fabsf(impulse_mag) > 0.0f) {
                     ta_vec3 dv_restitution = vec3_scalef(normal_world, impulse_mag);
                     ta_vec3 impulse_world = vec3_scalef(dv_restitution, 1.0f/(wa + wb));
@@ -1343,13 +1299,6 @@ static void game_simulate(float dt)
             //ta_vec3 dv_total_b = vec3_neg(dv_total_a);
             //ta_rigid_body_apply_velocity_correction(a, dv_total_a, ra);
             //ta_rigid_body_apply_velocity_correction(b, dv_total_b, rb);
-        }
-
-        ta_rigid_body *body = (a->name == e_selected) ? a : ((b->name == e_selected) ? b : 0);
-        if (body && !vec3_zero(body->ang_velocity)) {
-            printf("vel. correction: %s ang_vel: %f %f %f orient: %f %f %f %f\n",
-                body->name, body->ang_velocity.x, body->ang_velocity.y, body->ang_velocity.z,
-                body->xform.orientation.x, body->xform.orientation.y, body->xform.orientation.z, body->xform.orientation.w);
         }
     }
 

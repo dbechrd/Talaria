@@ -304,6 +304,7 @@ int     quat_zero               (ta_vec4 v);
 int     quat_ident              (ta_vec4 q);
 int     quat_equal              (ta_vec4 a, ta_vec4 b);
 ta_vec4 quat_init               (float x, float y, float z, float w);
+ta_vec3 axis_angle_from_quat    (ta_vec4 q);
 ta_vec4 quat_from_axis_angle    (ta_vec3 axis, float deg);
 ta_vec4 quat_from_vec_vec       (ta_vec3 from, ta_vec3 to);
 double  quat_norm_sq            (ta_vec4 q);

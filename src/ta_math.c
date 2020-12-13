@@ -438,16 +438,52 @@ ta_vec4 quat_init(float x, float y, float z, float w)
     q.w = w;
     return q;
 }
-ta_vec4 quat_from_axis_angle(ta_vec3 axis, float deg)
+ta_vec3 axis_angle_from_quat(ta_vec4 q)
+{
+    ta_vec3 result = { 0 };
+    // If body has velocity but delta orientation w is 1.0, then presumably the other components were too small
+    // and got lost by normalize(). This means the angular velocity was lost. If this happens because angular
+    // velocity is legitimately small, that's fine, but if it happens because dt is too small, then objects will
+    // never rotate! In that case, I believe the only solution is to either switch to double precision everywhere,
+    // or increase the timestep.
+    //DLB_ASSERT(!has_vel || fabsf(q.w) < 1.0f);
+#if 0
+    // PBDBodies.pdf Section 3.2: "To update the quaternions based on the
+    // angular velocity and to derive the angular velocity from the change
+    // of the quaternions we use linearized formulas. They are fast and
+    // robust and well suited for the small time steps used in substepping."
+    float scale = 2.0f;
+    if (q.w < 0.0f) {
+        scale *= -1.0f;
+    }
+    result.x = q.x * scale;
+    result.y = q.y * scale;
+    result.z = q.z * scale;
+#else
+    // https://www.euclideanspace.com/maths/geometry/rotations/conversions/quaternionToAngle/
+    double s = sqrt(1.0 - q.w * q.w);
+    if (s) {
+        if (q.w < 0.0) {
+            s *= -1;
+        }
+        double angle_rad = 2.0 * acos(q.w);
+        result.x = (float)(q.x / s * angle_rad);
+        result.y = (float)(q.y / s * angle_rad);
+        result.z = (float)(q.z / s * angle_rad);
+    }
+#endif
+    return result;
+}
+ta_vec4 quat_from_axis_angle(ta_vec3 axis, float radians)
 {
     DLB_ASSERT(vec3_equal(axis, vec3_normalize(axis)));
 
     ta_vec4 result;
-    float s = sinf(DEG_TO_RADF(deg) / 2.0f);
-    result.w = cosf(DEG_TO_RADF(deg) / 2.0f);
+    float s = sinf(radians / 2.0f);
     result.x = axis.x * s;
     result.y = axis.y * s;
     result.z = axis.z * s;
+    result.w = cosf(radians / 2.0f);
     quat_normalize(result);
     return result;
 }
@@ -1533,6 +1569,29 @@ void ta_math_test()
 
         DLB_ASSERT(vec3_equal(loc, orig_loc));
         DLB_ASSERT(quat_equal(quat, orig_quat));
+    }
+
+    {
+        ta_vec3 axis = vec3_normalize(vec3_init(1.0f, 2.0f, 3.0f));
+        float radians = DEG_TO_RADF(42.0f);
+        ta_vec3 ang_vel = vec3_scalef(axis, radians);
+
+        float len = vec3_len(ang_vel);
+        DLB_ASSERT(fabsf(len - radians) < TA_EPSILON);
+        ta_vec3 dir = vec3_scalef(ang_vel, 1.0f/len);
+        DLB_ASSERT(vec3_equal(dir, axis));
+
+        ta_vec4 quat = quat_from_axis_angle(axis, radians);
+        // Expected quaternion calculated here: https://www.andre-gaschler.com/rotationconverter/
+        ta_vec4 quat_expect = quat_init(0.0957779f, 0.1915557f, 0.2873336f, 0.9335804f);
+        DLB_ASSERT(vec4_equal(quat, quat_expect));
+
+        ta_vec3 ang_vel_after = axis_angle_from_quat(quat);
+        float len_after = vec3_len(ang_vel_after);
+        DLB_ASSERT(fabsf(len_after - radians) < TA_EPSILON);
+        ta_vec3 dir_after = vec3_scalef(ang_vel_after, 1.0f/len);
+        DLB_ASSERT(vec3_equal(dir_after, axis));
+        DLB_ASSERT(vec3_equal(ang_vel_after, ang_vel));
     }
 
     //quat_print(stdout, q);

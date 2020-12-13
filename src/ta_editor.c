@@ -526,14 +526,14 @@ void ta_editor_update_widgets()
             editor.gizmos.transform.hitbox2d[0].center.z += midpoint2d;
             editor.gizmos.transform.hitbox2d[0].extents.x = radius_quad;
             editor.gizmos.transform.hitbox2d[0].extents.y = radius_quad;
-            editor.gizmos.transform.hitbox2d[0].orientation = quat_from_axis_angle(VEC3_Y, 90.0f);
+            editor.gizmos.transform.hitbox2d[0].orientation = quat_from_axis_angle(VEC3_Y, DEG_TO_RADF(90.0f));
 
             editor.gizmos.transform.hitbox2d[1].center = e_transform->xform_world.position;
             editor.gizmos.transform.hitbox2d[1].center.x += midpoint2d;
             editor.gizmos.transform.hitbox2d[1].center.z += midpoint2d;
             editor.gizmos.transform.hitbox2d[1].extents.x = radius_quad;
             editor.gizmos.transform.hitbox2d[1].extents.y = radius_quad;
-            editor.gizmos.transform.hitbox2d[1].orientation = quat_from_axis_angle(VEC3_X, -90.0f);
+            editor.gizmos.transform.hitbox2d[1].orientation = quat_from_axis_angle(VEC3_X, -DEG_TO_RADF(90.0f));
 
             editor.gizmos.transform.hitbox2d[2].center = e_transform->xform_world.position;
             editor.gizmos.transform.hitbox2d[2].center.x += midpoint2d;
@@ -1438,8 +1438,19 @@ static void ui_node_panel()
             if (ta_ui_reset_button()) {
                 rigid_body->ang_velocity = VEC3_ZERO;
             }
-            if (ta_ui_button(CSTR("DEBUG: Rotate X"))) {
-                rigid_body->ang_velocity = VEC3_X;
+
+            if (rigid_body->collider.type == TA_COLLIDER_SPHERE) {
+                ta_ui_row_begin();
+                ta_ui_next_size(label_width, 0);
+                ta_ui_label(CSTR("debug impulse:"));
+                static ta_vec3 impulse_world = { 0.0f, 0.0f, 1.0f };
+                static ta_ui_textbox_vec3_state debug_impulse_textbox = { 0 };
+                ta_ui_textbox_vec3(&impulse_world, &debug_impulse_textbox, false, true);
+                ta_vec3 r_world = vec3_scalef(VEC3_Y, rigid_body->collider.data.sphere.radius);
+                if (ta_ui_button(CSTR("Apply"))) {
+                    ta_rigid_body_apply_velocity_correction(rigid_body, impulse_world, r_world);
+                }
+                ta_primitive_push_arrow(0, vec3_add(rigid_body->xform.position, r_world), impulse_world, TA_COLOR_YELLOW);
             }
 
             ta_ui_row_begin();

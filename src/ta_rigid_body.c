@@ -220,10 +220,7 @@ void ta_rigid_body_apply_velocity_correction(ta_rigid_body *body, ta_vec3 impuls
 
     // NOTE: All planes are mathematical and should have infinite mass, they have no "center" and can't rotate
     DLB_ASSERT(body->collider.type != TA_COLLIDER_PLANE);
-
     DLB_ASSERT(!vec3_zero(impulse_world));
-
-    if (body->inv_mass == 0.0f) return;
 
     const char *e_selected = 0;
     ta_editor_selected_entity(&e_selected);
@@ -232,15 +229,15 @@ void ta_rigid_body_apply_velocity_correction(ta_rigid_body *body, ta_vec3 impuls
     }
 
     body->velocity = vec3_add(body->velocity, vec3_scalef(impulse_world, body->inv_mass));
-    //body->ang_velocity = vec3_add(body->ang_velocity, mat3_mul_vec3(rigid_body_inv_tensor_world(body),
-    //    vec3_cross(r_world, impulse_world)));
+    body->ang_velocity = vec3_add(body->ang_velocity, mat3_mul_vec3(rigid_body_inv_tensor_world(body),
+        vec3_cross(r_world, impulse_world)));
 
-    ta_vec3 i_body = rigid_body_rest_vector(body, impulse_world);
-    ta_vec3 r_body = rigid_body_rest_vector(body, r_world);
-    ta_vec3 cross_body = vec3_cross(r_body, i_body);
-    ta_vec3 delta_body = mat3_mul_vec3(&body->inv_tensor_local, cross_body);
-    ta_vec3 delta_world = rigid_body_oriented_vector(body, delta_body);
-    body->ang_velocity = vec3_add(body->ang_velocity, delta_world);
+    //ta_vec3 i_body = rigid_body_rest_vector(body, impulse_world);
+    //ta_vec3 r_body = rigid_body_rest_vector(body, r_world);
+    //ta_vec3 cross_body = vec3_cross(r_body, i_body);
+    //ta_vec3 delta_body = mat3_mul_vec3(&body->inv_tensor_local, cross_body);
+    //ta_vec3 delta_world = rigid_body_oriented_vector(body, delta_body);
+    //body->ang_velocity = vec3_add(body->ang_velocity, delta_world);
 
     //body->velocity.x *= fabsf(body->velocity.x) > TA_EPSILON;
     //body->velocity.y *= fabsf(body->velocity.y) > TA_EPSILON;
