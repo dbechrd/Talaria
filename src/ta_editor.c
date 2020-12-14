@@ -1446,7 +1446,8 @@ static void ui_node_panel()
                 static ta_vec3 impulse_world = { 0.0f, 0.0f, 1.0f };
                 static ta_ui_textbox_vec3_state debug_impulse_textbox = { 0 };
                 ta_ui_textbox_vec3(&impulse_world, &debug_impulse_textbox, false, true);
-                ta_vec3 r_world = vec3_scalef(VEC3_Y, rigid_body->collider.data.sphere.radius);
+                //ta_vec3 r_world = vec3_scalef(VEC3_Y, rigid_body->collider.data.sphere.radius);
+                ta_vec3 r_world = VEC3_ZERO;
                 if (ta_ui_button(CSTR("Apply"))) {
                     ta_rigid_body_apply_velocity_correction(rigid_body, impulse_world, r_world);
                 }

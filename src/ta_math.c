@@ -399,13 +399,22 @@ ta_vec4 vec4_init(float x, float y, float z, float w)
     v.w = w;
     return v;
 }
-ta_vec4 vec4_init_vw(ta_vec3 v, float w)
+ta_vec4 vec4_init_vec3_w(ta_vec3 v, float w)
 {
     ta_vec4 result;
     result.x = v.x;
     result.y = v.y;
     result.z = v.z;
     result.w = w;
+    return result;
+}
+ta_rgba rgba_init_vec3_alpha(ta_vec3 v, float a)
+{
+    ta_rgba result;
+    result.r = v.x;
+    result.g = v.y;
+    result.b = v.z;
+    result.a = a;
     return result;
 }
 

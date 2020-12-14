@@ -11,7 +11,8 @@ typedef struct ta_contact {
     ta_vec3 normal_world;  // contact normal in world space
     ta_vec3 ra_local;      // contact radii for A in local space
     ta_vec3 rb_local;      // contact radii for B in local space
-    float lambda;          // Lagrangian multiplier (must zero at start of every substep)
+    float lambda_n;        // Lagrangian multiplier, normal  (must zero at start of every substep)
+    float lambda_t;        // Lagrangian multiplier, tangent (must zero at start of every substep)
 } ta_contact;
 
 typedef struct ta_manifold {

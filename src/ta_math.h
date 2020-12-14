@@ -297,7 +297,8 @@ int     vec4_zero               (ta_vec4 v);
 int     vec4_tiny               (ta_vec4 v);
 int     vec4_equal              (ta_vec4 a, ta_vec4 b);
 ta_vec4 vec4_init               (float x, float y, float z, float w);
-ta_vec4 vec4_init_vw            (ta_vec3 v, float w);
+ta_vec4 vec4_init_vec3_w            (ta_vec3 v, float w);
+ta_rgba rgba_init_vec3_alpha            (ta_vec3 v, float a);
 
 void    quat_print              (FILE *file, ta_vec4 q);
 int     quat_zero               (ta_vec4 v);

@@ -206,13 +206,70 @@ void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_vec3 impu
         body->xform.orientation,
         quat_scale(
             quat_mul(
-                vec4_init_vw(mat3_mul_vec3(rigid_body_inv_tensor_world(body), vec3_cross(r_world, impulse_world)), 0),
+                vec4_init_vec3_w(mat3_mul_vec3(rigid_body_inv_tensor_world(body), vec3_cross(r_world, impulse_world)), 0),
                 body->xform.orientation
             ),
         0.5f)
     );
     body->xform.orientation = quat_normalize(new_orientation_world);
     body->aabb = ta_collider_world_bounds(&body->collider, &body->xform);
+}
+// a       : first rigid body
+// b       : second rigid body
+// ra_local: contact radius in a's local space
+// rb_local: contact radius in b's local space
+// dx_world: correction impulse in world space (delta_x)
+// alpha   : compliance of constraint (inverse of stiffness, meters/Newton)
+// lambda  : Lagrangian multiplier (will be updated)
+// dt      : delta time of substep
+void ta_physics_apply_position_correction(ta_rigid_body *a, ta_rigid_body *b, ta_vec3 ra_local, ta_vec3 rb_local,
+    ta_vec3 dx_world, float alpha, float *lambda, float dt, bool debug_render, ta_rgba debug_color)
+{
+    DLB_ASSERT(a);
+    DLB_ASSERT(b);
+    DLB_ASSERT(lambda);
+
+    //------------------------------------------------------------------------------
+    // NOTE: Everything in this function is in world space except ra_local/rb_local
+    //------------------------------------------------------------------------------
+
+    // Impulse magnitude and normal
+    const float c = vec3_len(dx_world);
+    const ta_vec3 n = vec3_scalef(dx_world, 1.0f/c);
+
+    // NOTE: Don't "optimize" this; it has to be calculated again for each correction
+    const ta_vec3 ra = rigid_body_oriented_vector(a, ra_local);
+    const ta_vec3 rb = rigid_body_oriented_vector(b, rb_local);
+
+    // Calculate generalized inverse masses
+    // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
+    const float wa = a->inv_mass +
+        vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(a), vec3_cross(ra, n)), ra), n);
+    const float wb = b->inv_mass +
+        vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(b), vec3_cross(rb, n)), rb), n);
+
+    // Update Lagrangian multiplier
+    const float alpha_wavy = alpha / (dt * dt);
+    const float delta_lambda = (-c - alpha_wavy * (*lambda)) / (wa + wb + alpha_wavy);
+    *lambda += delta_lambda;
+
+    // "p" = Impulse vectors
+    ta_vec3 p_a = vec3_scalef(n, delta_lambda);
+    ta_vec3 p_b = vec3_neg(p_a);
+    ta_rigid_body_apply_positional_correction(a, p_a, ra);
+    ta_rigid_body_apply_positional_correction(b, p_b, rb);
+
+    if (debug_render) {
+        const ta_vec3 ca_world = rigid_body_local_to_world(a, ra_local);
+        const ta_vec3 cb_world = rigid_body_local_to_world(b, rb_local);
+        ta_rgba color_a = debug_color;
+        ta_rgba color_b = debug_color;
+        color_b.r *= 0.7f;
+        color_b.g *= 0.7f;
+        color_b.b *= 0.7f;
+        ta_primitive_push_arrow(&primitive_lines_perma, ca_world, p_a, color_a);
+        ta_primitive_push_arrow(&primitive_lines_perma, cb_world, p_b, color_b);
+    }
 }
 void ta_rigid_body_apply_velocity_correction(ta_rigid_body *body, ta_vec3 impulse_world, ta_vec3 r_world)
 {

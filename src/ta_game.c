@@ -1024,80 +1024,61 @@ static void game_simulate(float dt)
                 const ta_vec3 normal_world = manifold->contacts[i].normal_world;
                 const ta_vec3 ca_world = rigid_body_local_to_world(a, manifold->contacts[i].ra_local);
                 const ta_vec3 cb_world = rigid_body_local_to_world(b, manifold->contacts[i].rb_local);
-                const ta_vec3 ra_world = rigid_body_oriented_vector(a, manifold->contacts[i].ra_local);
-                const ta_vec3 rb_world = rigid_body_oriented_vector(b, manifold->contacts[i].rb_local);
 
-                // penetration distance
+                //---------------------------------------
+                // Penetration correction
+                //---------------------------------------
                 float d = vec3_dot(vec3_sub(ca_world, cb_world), normal_world);
                 if (d <= 0.0f) {
                     continue;
                 }
 
-                //ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(a), manifold->contacts[i].ra_local, TA_COLOR_BLUE);
-                //ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(b), manifold->contacts[i].rb_local, TA_COLOR_BLUE7);
-                ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(a), ra_world, TA_COLOR_BLUE);
-                ta_primitive_push_arrow(&primitive_lines_perma, rigid_body_centroid_world(b), rb_world, TA_COLOR_BLUE7);
-
-                // TODO: This should probably be moved into a rigid_body_* method
-                // generalized inverse masses
-                // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
-                const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(a),
-                    vec3_cross(ra_world, normal_world)), ra_world), normal_world);
-                const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(b),
-                    vec3_cross(rb_world, normal_world)), rb_world), normal_world);
-
-#if 1
-                // TODO: Reincorporate lambda and alpha to allow non-infinitely stiff constraints (though not for
-                // contact resolution, which should use a = 0)
-                const float alpha = 0.0f;
-                const float alpha_wavy = alpha / (dt * dt);
-                const float lambda = manifold->contacts[i].lambda;
-
-                float delta_lambda = (-d - alpha_wavy * lambda) / (wa + wb + alpha_wavy);
-                manifold->contacts[i].lambda += delta_lambda;
-#else
-                // NOTE: Simplification for alpha = 0, which removes the need to store lambda between constraint solves
-                float delta_lambda = -manifold->depth / (wa + wb);
-#endif
                 // Apply Dx = dn with a = 0 and lambda_normal
-                ta_vec3 dx_penetration_a = vec3_scalef(normal_world, delta_lambda);
-                ta_vec3 dx_penetration_b = vec3_scalef(normal_world, -delta_lambda);
-                ta_rigid_body_apply_positional_correction(a, dx_penetration_a, ra_world);
-                ta_rigid_body_apply_positional_correction(b, dx_penetration_b, rb_world);
-                if (tg_game.debug_physics_render_penetration_vectors) {
-                    ta_primitive_push_arrow(&primitive_lines_perma, ca_world, dx_penetration_a, TA_COLOR_GREEN); //tg_game.debug_physics_color_penetration_vectors);
-                    ta_primitive_push_arrow(&primitive_lines_perma, cb_world, dx_penetration_b, TA_COLOR_GREEN7); //tg_game.debug_physics_color_penetration_vectors);
-                }
+                ta_vec3 penetration_correction_world = vec3_scalef(normal_world, d);
+                ta_physics_apply_position_correction(
+                    a,
+                    b,
+                    manifold->contacts[i].ra_local,
+                    manifold->contacts[i].rb_local,
+                    penetration_correction_world,
+                    0.0f,
+                    &manifold->contacts[i].lambda_n,
+                    dt,
+                    tg_game.debug_physics_render_penetration_vectors,
+                    tg_game.debug_physics_color_penetration_vectors
+                );
 
-                // static friction impulse
+                //---------------------------------------
+                // Static friction correction
+                //---------------------------------------
 
                 // relative motion of contacts
-                const ta_vec3 ca_local = rigid_body_world_to_centroid(a, ca_world);
-                const ta_vec3 cb_local = rigid_body_world_to_centroid(b, cb_world);
-                const ta_vec3 ca_world_prev = rigid_body_centroid_to_world_prev(a, ca_local);
-                const ta_vec3 cb_world_prev = rigid_body_centroid_to_world_prev(b, cb_local);
+                const ta_vec3 ca_world_prev = rigid_body_local_to_world_prev(a, manifold->contacts[i].ra_local);
+                const ta_vec3 cb_world_prev = rigid_body_local_to_world_prev(b, manifold->contacts[i].rb_local);
+
+                // "dp" = delta position, i.e. relative motion of contacts
                 ta_vec3 dp = vec3_sub(vec3_sub(ca_world, ca_world_prev), vec3_sub(cb_world, cb_world_prev));
                 ta_vec3 dp_normal = vec3_scalef(normal_world, vec3_dot(dp, normal_world));
                 ta_vec3 dp_tangent = vec3_sub(dp, dp_normal);
 
-                // if lambda_tangent < manifold->sf * lambda_normal
-                const float lambda_n_sq = vec3_len2(dp);
-                const float lambda_t_sq = vec3_len2(dp_tangent);
-                const float mu_static_sq = manifold->coef_static * manifold->coef_static;
-                if (lambda_t_sq > TA_EPSILON2 && lambda_t_sq < mu_static_sq * lambda_n_sq) {
+                // NOTE: There shouldn't be a fabsf() here for lambda_n according to PBDBodies.pdf, but I clearly have
+                // a sign error somewhere. Need to figure this out (I believe the worst case for the current code is
+                // a small over-correction when lambda is negative).
+                if (vec3_len2(dp_tangent) && manifold->contacts[i].lambda_t < manifold->coef_static * fabsf(manifold->contacts[i].lambda_n)) {
                     // Apply Dx = Dp_t with a = 0
-                    ta_vec3 dx_static_friction_a = vec3_scalef(dp_tangent, dt);
-                    ta_vec3 dx_static_friction_b = vec3_neg(dx_static_friction_a);
-                    //ta_rigid_body_apply_positional_correction(a, dx_static_friction_a, ra_world);
-                    //ta_rigid_body_apply_positional_correction(b, dx_static_friction_b, rb_world);
-                    // NOTE: We may need to update world space radii if we want to apply any more positional corrections
-                    // that depend on them, but it's commented as an optimization since this is currently the last one
-                    //ra_world = vec3_add(atrans->xform.position, quat_mul_vec3(atrans->xform.orientation, ra));
-                    //rb_world = vec3_add(btrans->xform.position, quat_mul_vec3(btrans->xform.orientation, rb));
-                    if (tg_game.debug_physics_render_static_friction_vectors) {
-                        ta_primitive_push_arrow(&primitive_lines_perma, ca_world, dx_static_friction_a, tg_game.debug_physics_color_static_friction_vectors);
-                        ta_primitive_push_arrow(&primitive_lines_perma, cb_world, dx_static_friction_b, tg_game.debug_physics_color_static_friction_vectors);
-                    }
+                    ta_vec3 static_friction_world = dp_tangent;
+                    ta_physics_apply_position_correction(
+                        a,
+                        b,
+                        manifold->contacts[i].ra_local,
+                        manifold->contacts[i].rb_local,
+                        static_friction_world,
+                        0.0f,
+                        &manifold->contacts[i].lambda_t,
+                        dt,
+                        tg_game.debug_physics_render_static_friction_vectors,
+                        tg_game.debug_physics_color_static_friction_vectors
+                    );
                 }
             }
         }
@@ -1220,7 +1201,7 @@ static void game_simulate(float dt)
 
                     ta_vec3 impulse_world_a = impulse_world;
                     ta_vec3 impulse_world_b = vec3_neg(impulse_world);
-#if 1
+#if 0
                     ta_rigid_body_apply_velocity_correction(a, impulse_world_a, ra_world);
                     ta_rigid_body_apply_velocity_correction(b, impulse_world_b, rb_world);
 #endif
