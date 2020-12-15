@@ -912,10 +912,6 @@ static void game_simulate(float dt)
     //     x = x + h * v;
     // end
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
-        if (body->name == tg_e_can) {
-            DLB_ASSERT(1);
-        }
-
         {
             // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should consider
             // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
@@ -947,15 +943,17 @@ static void game_simulate(float dt)
             DLB_ASSERT(1);
         }
 
-        // Update position
-        ta_vec3 acceleration = vec3_scalef(body->force_accum, body->inv_mass);
-        body->velocity = vec3_add(body->velocity, vec3_scalef(acceleration, dt));
-        body->xform.position = vec3_add(body->xform.position, vec3_scalef(body->velocity, dt));
+        // Update position (unless infinite mass)
+        if (body->inv_mass) {
+            ta_vec3 acceleration = vec3_scalef(body->force_accum, body->inv_mass);
+            body->velocity = vec3_add(body->velocity, vec3_scalef(acceleration, dt));
+            body->xform.position = vec3_add(body->xform.position, vec3_scalef(body->velocity, dt));
 
-        float dtheta_mag = vec3_len(body->ang_velocity);
-        if (dtheta_mag) {
-            ta_vec4 delta_orient = quat_from_axis_angle(vec3_normalize(body->ang_velocity), dtheta_mag * dt);
-            body->xform.orientation = quat_normalize(quat_mul(delta_orient, body->xform.orientation));
+            float dtheta_mag = vec3_len(body->ang_velocity);
+            if (dtheta_mag) {
+                ta_vec4 delta_orient = quat_from_axis_angle(vec3_normalize(body->ang_velocity), dtheta_mag * dt);
+                body->xform.orientation = quat_normalize(quat_mul(delta_orient, body->xform.orientation));
+            }
         }
 
         // TODO: This will also need to update the AABB tree
@@ -1007,9 +1005,12 @@ static void game_simulate(float dt)
 
             // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
             if (a->inv_mass == 0.0f && b->inv_mass == 0.0f) {
-                ta_log_write(&tg_debug_log, SRC_RIGID_BODY, "WARNING: Detected movement of infinite mass body\n");
+                DLB_ASSERT(0);
+                ta_log_write(&tg_debug_log, SRC_RIGID_BODY, "WARNING: Cannot resolve contact between two infinite mass bodies\n");
                 a->velocity = VEC3_ZERO;
                 b->velocity = VEC3_ZERO;
+                a->ang_velocity = VEC3_ZERO;
+                b->ang_velocity = VEC3_ZERO;
                 continue;
             }
 
@@ -1034,7 +1035,7 @@ static void game_simulate(float dt)
                 }
 
                 // Apply Dx = dn with a = 0 and lambda_normal
-                ta_vec3 penetration_correction_world = vec3_scalef(normal_world, d);
+                ta_vec3 penetration_correction_world = vec3_scalef(normal_world, -d);
                 ta_physics_apply_position_correction(
                     a,
                     b,
@@ -1057,16 +1058,19 @@ static void game_simulate(float dt)
                 const ta_vec3 cb_world_prev = rigid_body_local_to_world_prev(b, manifold->contacts[i].rb_local);
 
                 // "dp" = delta position, i.e. relative motion of contacts
-                ta_vec3 dp = vec3_sub(vec3_sub(ca_world, ca_world_prev), vec3_sub(cb_world, cb_world_prev));
+                ta_vec3 dp = vec3_sub(vec3_sub(cb_world, cb_world_prev), vec3_sub(ca_world, ca_world_prev));
                 ta_vec3 dp_normal = vec3_scalef(normal_world, vec3_dot(dp, normal_world));
                 ta_vec3 dp_tangent = vec3_sub(dp, dp_normal);
 
                 // NOTE: There shouldn't be a fabsf() here for lambda_n according to PBDBodies.pdf, but I clearly have
                 // a sign error somewhere. Need to figure this out (I believe the worst case for the current code is
                 // a small over-correction when lambda is negative).
-                if (vec3_len2(dp_tangent) && manifold->contacts[i].lambda_t < manifold->coef_static * fabsf(manifold->contacts[i].lambda_n)) {
+                if (vec3_len2(dp_tangent) &&
+                    manifold->contacts[i].lambda_t < manifold->coef_static * -manifold->contacts[i].lambda_n)
+                {
                     // Apply Dx = Dp_t with a = 0
                     ta_vec3 static_friction_world = dp_tangent;
+#if 1
                     ta_physics_apply_position_correction(
                         a,
                         b,
@@ -1079,6 +1083,7 @@ static void game_simulate(float dt)
                         tg_game.debug_physics_render_static_friction_vectors,
                         tg_game.debug_physics_color_static_friction_vectors
                     );
+#endif
                 }
             }
         }
@@ -1087,6 +1092,7 @@ static void game_simulate(float dt)
     // for n particles do
     //     v = (x − x_prev)/h;
     // end
+    const float dt_inv = 1.0f / dt;
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
         // Update world space AABB
         body->aabb = ta_collider_world_bounds(&body->collider, &body->xform);
@@ -1102,12 +1108,12 @@ static void game_simulate(float dt)
         }
 
         ta_vec3 dp = vec3_sub(body->xform.position, body->xform_prev.position);
-        body->velocity = vec3_scalef(dp, 1.0f/dt);
+        body->velocity = vec3_scalef(dp, dt_inv);
 
         ta_vec4 dq = quat_mul(body->xform.orientation, quat_inverse(body->xform_prev.orientation));
         dq = quat_normalize(dq);
         body->ang_velocity = axis_angle_from_quat(dq);
-        body->ang_velocity = vec3_scalef(body->ang_velocity, 1.0f/dt);
+        body->ang_velocity = vec3_scalef(body->ang_velocity, dt_inv);
 
         // check for NaN and infinity
         DLB_ASSERT(vec3_good(body->velocity));
@@ -1131,17 +1137,6 @@ static void game_simulate(float dt)
             continue;
         }
 
-        // https://github.com/RandyGaul/ImpulseEngine/blob/master/Manifold.cpp#L57
-        if (a->inv_mass == 0.0f && b->inv_mass == 0.0f) {
-            DLB_ASSERT(0);
-            ta_log_write(&tg_debug_log, SRC_RIGID_BODY, "WARNING: Detected movement of infinite mass body\n");
-            a->velocity = VEC3_ZERO;
-            b->velocity = VEC3_ZERO;
-            a->ang_velocity = VEC3_ZERO;
-            b->ang_velocity = VEC3_ZERO;
-            continue;
-        }
-
         const char *e_selected = 0;
         ta_editor_selected_entity(&e_selected);
         if (a->name == e_selected || b->name == e_selected) {
@@ -1149,130 +1144,93 @@ static void game_simulate(float dt)
         }
 
         for (u32 i = 0; i < manifold->contact_count; i++) {
-            // world space contact points
-            const ta_vec3 normal_world = manifold->contacts[i].normal_world;
-            const ta_vec3 ca_world = rigid_body_local_to_world(a, manifold->contacts[i].ra_local);
-            const ta_vec3 cb_world = rigid_body_local_to_world(b, manifold->contacts[i].rb_local);
-            const ta_vec3 ra_world = rigid_body_oriented_vector(a, manifold->contacts[i].ra_local);
-            const ta_vec3 rb_world = rigid_body_oriented_vector(b, manifold->contacts[i].rb_local);
-
-            // TODO: This should probably be moved into a rigid_body_* method
-            // generalized inverse masses
-            // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
-            const float wa = a->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(a),
-                vec3_cross(ra_world, normal_world)), ra_world), normal_world);
-            const float wb = b->inv_mass + vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(b),
-                vec3_cross(rb_world, normal_world)), rb_world), normal_world);
+            const ta_vec3 n = manifold->contacts[i].normal_world;
+            const ta_vec3 ra = rigid_body_oriented_vector(a, manifold->contacts[i].ra_local);
+            const ta_vec3 rb = rigid_body_oriented_vector(b, manifold->contacts[i].rb_local);
 
             // relative velocity
-            ta_vec3 va = vec3_add(a->velocity, vec3_cross(a->ang_velocity, ra_world));
-            ta_vec3 vb = vec3_add(b->velocity, vec3_cross(b->ang_velocity, rb_world));
+            ta_vec3 va = vec3_add(a->velocity, vec3_cross(a->ang_velocity, ra));
+            ta_vec3 vb = vec3_add(b->velocity, vec3_cross(b->ang_velocity, rb));
             ta_vec3 v = vec3_sub(vb, va);
 
             // normal/tangential velocity
-            float vn = vec3_dot(normal_world, v);
-            ta_vec3 n_vn = vec3_scalef(normal_world, vn);
+            float vn = vec3_dot(n, v);
+            ta_vec3 n_vn = vec3_scalef(n, vn);
             ta_vec3 vt = vec3_sub(v, n_vn);
-            float vt_mag = vec3_len(vt);
-
-            //ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_world, ra), n_vn, TA_COLOR_RED);
-            //ta_primitive_push_arrow(&primitive_lines_perma, vec3_add(a->centroid_world, ra), vt, TA_COLOR_GREEN);
 
             // dynamic friction
-            if (vt_mag) {
+            if (!vec3_zero(vt)) {
+                float vt_mag = vec3_len(vt);
+                DLB_ASSERT(vt_mag);
                 ta_vec3 vt_dir = vec3_scalef(vt, 1.0f/vt_mag);
 
                 float kd = manifold->coef_dynamic;
-                kd = 0.05f;
 
-                //// PBDBodies eq. 31 says to do this.. but the normal force calculate here is wayy too small and causes
-                //// almost no friction to be applied. What is "lambda_n" if not vn?
-                //float fn = vn / (dt * dt);
-                //
-                ////float impulse_mag = -MIN(dt * kd * fn, vt_mag);
-                //float impulse_mag = MIN(fn * kd * dt, vt_mag);
-
-                //float impulse_mag = MIN(vn * (kd * dt), vt_mag);
-                float impulse_mag = -MIN(vn * kd, vt_mag);
-
-                if (fabsf(impulse_mag) > TA_EPSILON) {
-                    ta_vec3 dv_dynamic_friction = vec3_scalef(vt_dir, impulse_mag);
-                    ta_vec3 impulse_world = vec3_scalef(dv_dynamic_friction, 1.0f/(wa + wb));
-
-                    ta_vec3 impulse_world_a = impulse_world;
-                    ta_vec3 impulse_world_b = vec3_neg(impulse_world);
-#if 0
-                    ta_rigid_body_apply_velocity_correction(a, impulse_world_a, ra_world);
-                    ta_rigid_body_apply_velocity_correction(b, impulse_world_b, rb_world);
+                // NOTE: Can simplify later by removing redundant dt's
+                // PBDBodies eq. 31
+                float fn = -manifold->contacts[i].lambda_n / (dt * dt);
+                float dv_mag = -MIN(dt * kd * fn, vt_mag);
+                ta_vec3 dv_dynamic_friction = vec3_scalef(vt_dir, dv_mag);
+#if 1
+                ta_physics_apply_velocity_correction(
+                    a,
+                    b,
+                    manifold->contacts[i].ra_local,
+                    manifold->contacts[i].rb_local,
+                    dv_dynamic_friction,
+                    tg_game.debug_physics_render_dynamic_friction_vectors,
+                    tg_game.debug_physics_color_dynamic_friction_vectors
+                );
 #endif
-                    if (tg_game.debug_physics_render_dynamic_friction_vectors) {
-                        //ta_primitive_push_arrow(&primitive_lines_perma, ca_world, dv_dynamic_friction,
-                        //    tg_game.debug_physics_color_dynamic_friction_vectors);
-                        ta_primitive_push_arrow(&primitive_lines_perma, ca_world, impulse_world_a, TA_COLOR_CYAN);
-                        ta_primitive_push_arrow(&primitive_lines_perma, cb_world, impulse_world_b, TA_COLOR_CYAN7);
-                    }
-                }
             }
 
-            // Joint damping (eq. 32 & 33 in PBDBodies)
-            // TODO: Angular damping
+            // TODO: What is "joint damping" in the context of contact constraints? (eq. 32 & 33 in PBDBodies)
             {
+                // Linear damping
                 float coef_linear_damping = 0.99f;
                 float damping_mag = MIN(coef_linear_damping, 1.0f);
-
                 ta_vec3 dv_damping = vec3_scalef(vec3_sub(b->velocity, a->velocity), damping_mag);
-
-                if (!vec3_zero(dv_damping)) {
-                    ta_vec3 impulse_world = vec3_scalef(dv_damping, 1.0f/(wa + wb));
-
-                    ta_vec3 impulse_world_a = impulse_world;
-                    ta_vec3 impulse_world_b = vec3_neg(impulse_world);
 #if 0
-                    ta_rigid_body_apply_velocity_correction(a, impulse_world_a, ra_world);
-                    ta_rigid_body_apply_velocity_correction(b, impulse_world_b, rb_world);
+                ta_physics_apply_velocity_correction(
+                    a,
+                    b,
+                    manifold->contacts[i].ra_local,
+                    manifold->contacts[i].rb_local,
+                    dv_damping,
+                    tg_game.debug_physics_render_damping_vectors,
+                    tg_game.debug_physics_color_damping_vectors
+                );
 #endif
-                    if (tg_game.debug_physics_render_damping_vectors) {
-                        ta_primitive_push_arrow(&primitive_lines_perma, ca_world, dv_damping,
-                            tg_game.debug_physics_color_damping_vectors);
-                    }
-                }
+
+                // TODO: Angular damping
             }
 
             // restitution
             {
                 // previous relative velocity (before velocity integration)
-                ta_vec3 va_prev = vec3_add(a->velocity_prev, vec3_cross(a->ang_velocity_prev, ra_world));
-                ta_vec3 vb_prev = vec3_add(b->velocity_prev, vec3_cross(b->ang_velocity_prev, rb_world));
+                ta_vec3 va_prev = vec3_add(a->velocity_prev, vec3_cross(a->ang_velocity_prev, ra));
+                ta_vec3 vb_prev = vec3_add(b->velocity_prev, vec3_cross(b->ang_velocity_prev, rb));
                 ta_vec3 v_prev = vec3_sub(vb_prev, va_prev);
                 // previous normal velocity
-                float vn_mag_prev = vec3_dot(normal_world, v_prev);
+                float vn_mag_prev = vec3_dot(n, v_prev);
                 // TODO: for small vn, |vn| <= 2|g|h, set restitution to 0 to avoid jittering
                 float e = manifold->e; // * (float)(fabs(vn) > (2.0f * fabs(GRAVITY) * dt));
-                e = 0.9f;
+                //e = 0.9f;
                 // NOTE: Using MIN instead of MAX here because my signs are reversed (opposite normal I think) vs.
                 // PBDBodies Eq. 35.
                 //float impulse_mag = -vn + MIN(-e * vn_mag_prev, 0);
                 //float impulse_mag = -vn + MAX(-e * vn_mag_prev, 0);
                 float impulse_mag = vn + e * vn_mag_prev;
-                if (fabsf(impulse_mag) > 0.0f) {
-                    ta_vec3 dv_restitution = vec3_scalef(normal_world, impulse_mag);
-                    ta_vec3 impulse_world = vec3_scalef(dv_restitution, 1.0f/(wa + wb));
-
-                    ta_vec3 impulse_world_a = impulse_world;
-                    ta_vec3 impulse_world_b = vec3_neg(impulse_world);
-
-                    if (a->name == e_selected || b->name == e_selected) {
-                        DLB_ASSERT(1);
-                    }
-
-                    ta_rigid_body_apply_velocity_correction(a, impulse_world_a, ra_world);
-                    ta_rigid_body_apply_velocity_correction(b, impulse_world_b, rb_world);
-
-                    if (tg_game.debug_physics_render_restitution_vectors) {
-                        ta_primitive_push_arrow(&primitive_lines_perma, ca_world, impulse_world_a, TA_COLOR_RED); //tg_game.debug_physics_color_restitution_vectors);
-                        ta_primitive_push_arrow(&primitive_lines_perma, cb_world, impulse_world_b, TA_COLOR_RED7); //tg_game.debug_physics_color_restitution_vectors);
-                    }
-                }
+                ta_vec3 dv_restitution = vec3_scalef(n, impulse_mag);
+                ta_physics_apply_velocity_correction(
+                    a,
+                    b,
+                    manifold->contacts[i].ra_local,
+                    manifold->contacts[i].rb_local,
+                    dv_restitution,
+                    tg_game.debug_physics_render_restitution_vectors,
+                    tg_game.debug_physics_color_restitution_vectors
+                );
             }
 
             //ta_vec3 dv_total = vec3_add3(dv_dynamic_friction, dv_damping, dv_restitution);
@@ -1361,7 +1319,7 @@ static void game_render_manifolds_debug()
             ta_primitive_push_sphere(0, sphere, TA_COLOR_GRAY6);
 
             //origin    = cb_world;
-            //direction = vec3_scalef(manifold->normal_world, 0.05f);
+            //direction = vec3_scalef(manifold->n, 0.05f);
             //ta_primitive_push_arrow(0, origin, direction, TA_COLOR_GRAY8);
         }
     }

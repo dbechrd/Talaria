@@ -249,8 +249,11 @@ void ta_physics_apply_position_correction(ta_rigid_body *a, ta_rigid_body *b, ta
         vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(b), vec3_cross(rb, n)), rb), n);
 
     // Update Lagrangian multiplier
+    // NOTE: Changed `-c` to `c` because lambda_n seemed to be pointing the wrong way and so did dx_world.. I really
+    // don't know what's going on with the signs here unless PBDBodies.pdf uses B -> A direction for contact normals?
+    // They don't seem to specify the normal direction anywhere.
     const float alpha_wavy = alpha / (dt * dt);
-    const float delta_lambda = (-c - alpha_wavy * (*lambda)) / (wa + wb + alpha_wavy);
+    const float delta_lambda = (c - alpha_wavy * (*lambda)) / (wa + wb + alpha_wavy);
     *lambda += delta_lambda;
 
     // "p" = Impulse vectors
@@ -279,33 +282,59 @@ void ta_rigid_body_apply_velocity_correction(ta_rigid_body *body, ta_vec3 impuls
     DLB_ASSERT(body->collider.type != TA_COLLIDER_PLANE);
     DLB_ASSERT(!vec3_zero(impulse_world));
 
-    const char *e_selected = 0;
-    ta_editor_selected_entity(&e_selected);
-    if (body->name == e_selected) {
-        DLB_ASSERT(1);
-    }
-
     body->velocity = vec3_add(body->velocity, vec3_scalef(impulse_world, body->inv_mass));
-    body->ang_velocity = vec3_add(body->ang_velocity, mat3_mul_vec3(rigid_body_inv_tensor_world(body),
-        vec3_cross(r_world, impulse_world)));
-
-    //ta_vec3 i_body = rigid_body_rest_vector(body, impulse_world);
-    //ta_vec3 r_body = rigid_body_rest_vector(body, r_world);
-    //ta_vec3 cross_body = vec3_cross(r_body, i_body);
-    //ta_vec3 delta_body = mat3_mul_vec3(&body->inv_tensor_local, cross_body);
-    //ta_vec3 delta_world = rigid_body_oriented_vector(body, delta_body);
-    //body->ang_velocity = vec3_add(body->ang_velocity, delta_world);
-
-    //body->velocity.x *= fabsf(body->velocity.x) > TA_EPSILON;
-    //body->velocity.y *= fabsf(body->velocity.y) > TA_EPSILON;
-    //body->velocity.z *= fabsf(body->velocity.z) > TA_EPSILON;
-    //
-    //body->ang_velocity.x *= fabsf(body->ang_velocity.x) > TA_EPSILON;
-    //body->ang_velocity.y *= fabsf(body->ang_velocity.y) > TA_EPSILON;
-    //body->ang_velocity.z *= fabsf(body->ang_velocity.z) > TA_EPSILON;
-
     DLB_ASSERT(vec3_good(body->velocity));
-    DLB_ASSERT(vec3_good(body->ang_velocity));
+
+    if (!body->no_rotation) {
+        body->ang_velocity = vec3_add(body->ang_velocity, mat3_mul_vec3(rigid_body_inv_tensor_world(body),
+            vec3_cross(r_world, impulse_world)));
+        DLB_ASSERT(vec3_good(body->ang_velocity));
+    }
+}
+void ta_physics_apply_velocity_correction(ta_rigid_body *a, ta_rigid_body *b, ta_vec3 ra_local, ta_vec3 rb_local,
+    ta_vec3 dv_world, bool debug_render, ta_rgba debug_color)
+{
+    DLB_ASSERT(a);
+    DLB_ASSERT(b);
+
+    //------------------------------------------------------------------------------
+    // NOTE: Everything in this function is in world space except ra_local/rb_local
+    //------------------------------------------------------------------------------
+
+    if (!vec3_len2(dv_world)) return;
+
+    // Impulse magnitude and normal
+    const float c = vec3_len(dv_world);
+    const ta_vec3 n = vec3_scalef(dv_world, 1.0f/c);
+
+    // NOTE: This one could be cached because velocity corrections don't change the orientation of the body
+    const ta_vec3 ra = rigid_body_oriented_vector(a, ra_local);
+    const ta_vec3 rb = rigid_body_oriented_vector(b, rb_local);
+
+    // Calculate generalized inverse masses
+    // NOTE: Using equation 42 instead of equation 43 in PBDBodies.pdf for ease (they're equivalent)
+    const float wa = a->inv_mass +
+        vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(a), vec3_cross(ra, n)), ra), n);
+    const float wb = b->inv_mass +
+        vec3_dot(vec3_cross(mat3_mul_vec3(rigid_body_inv_tensor_world(b), vec3_cross(rb, n)), rb), n);
+
+    // "p" = Impulse vectors
+    ta_vec3 p_a = vec3_scalef(dv_world, 1.0f/(wa + wb));
+    ta_vec3 p_b = vec3_neg(p_a);
+    ta_rigid_body_apply_velocity_correction(a, p_a, ra);
+    ta_rigid_body_apply_velocity_correction(b, p_b, rb);
+
+    if (debug_render) {
+        const ta_vec3 ca_world = rigid_body_local_to_world(a, ra_local);
+        const ta_vec3 cb_world = rigid_body_local_to_world(b, rb_local);
+        ta_rgba color_a = debug_color;
+        ta_rgba color_b = debug_color;
+        color_b.r *= 0.7f;
+        color_b.g *= 0.7f;
+        color_b.b *= 0.7f;
+        ta_primitive_push_arrow(&primitive_lines_perma, ca_world, p_a, color_a);
+        ta_primitive_push_arrow(&primitive_lines_perma, cb_world, p_b, color_b);
+    }
 }
 
 static bool intersector_plane_v_sphere(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)

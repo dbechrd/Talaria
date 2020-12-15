@@ -129,5 +129,7 @@ void ta_physics_apply_position_correction       (ta_rigid_body *a, ta_rigid_body
                                                  ta_vec3 dx_world, float alpha, float *lambda, float dt,
                                                  bool debug_render, ta_rgba debug_color);
 void ta_rigid_body_apply_velocity_correction    (ta_rigid_body *body, ta_vec3 impulse_world, ta_vec3 r_world);
+void ta_physics_apply_velocity_correction       (ta_rigid_body *a, ta_rigid_body *b, ta_vec3 ra_local, ta_vec3 rb_local,
+                                                 ta_vec3 dv_world, bool debug_render, ta_rgba debug_color);
 bool ta_rigid_body_intersect                    (struct ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
 void ta_rigid_body_resolve_collision            (struct ta_manifold *manifold, float dt);
