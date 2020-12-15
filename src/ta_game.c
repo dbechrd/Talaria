@@ -351,8 +351,8 @@ void ta_game_init()
         ta_audio_source_play_loop(bg_music_src);
     }
 
-    ta_audio_listener_set_volume(&tg_audio_listener, 0.2f);
-    ta_audio_listener_mute(&tg_audio_listener);
+    ta_audio_listener_set_volume(&tg_audio_listener, 0.1f);
+    //ta_audio_listener_mute(&tg_audio_listener);
 
     //--------------------------------------------------------------------------
     // Textures
@@ -707,7 +707,7 @@ static void game_hotload_textures()
         }
     }
 }
-static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_frame_delta, u64 sim_step)
+static void game_draw_frame_info(u64 frame_num, double ms_frame_logic, double ms_frame_delta, u64 sim_step)
 {
     const char *game_state = game_state_str(ta_game_state_current());
 
@@ -729,7 +729,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_
         "Frame\n"
         "  count: %08llu\n"
         "  logic: %5.2f ms\n"
-        "   swap: %5.2f ms\n"
+        "  delta: %5.2f ms\n"
         "Game\n"
         "  step:  %08llu\n"
         "  state: %s\n"
@@ -743,7 +743,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_time, double ms_
         "  win pos:  %d, %d\n"
         "  v-sync:   %s",
         frame_num,
-        ms_frame_time,
+        ms_frame_logic,
         ms_frame_delta,
         sim_step,
         game_state,
@@ -1468,14 +1468,14 @@ void ta_game_loop()
     const float ms_sim_dt = 16;             // fixed dt milliseconds
     const float sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
     const int sim_max_steps = 3;            // max simulation steps per frame (0 = unlimited; may cause spiral of death)
-    const int sim_substeps = 3;             // number of substeps to perform for each step
+    const int sim_substeps = 1;             // number of substeps to perform for each step
     double ms_sim_t = 0;                    // current simulation time
     double ms_frame_accum = 0;
 
     double ms_frame_prev = 0;  // Last frame started
     double ms_frame_start = 0; // This frame started
     double ms_frame_delta = 0; // Total delta time (including v-sync)
-    double ms_frame_time = 0;  // Actual frame time before v-sync
+    double ms_frame_logic = 0;  // Actual frame time before v-sync
 
     ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
     ta_mesh *meshes = ta_game_resource_pool(RES_MESH);
@@ -2116,20 +2116,20 @@ void ta_game_loop()
         ta_window_update_cursor(tg_window);
 
         // TODO: Add "show_fps" flag and bind to key; off by default in release
-        ms_frame_time = ta_timer_elapsed_ms() - ms_frame_start;
-        tg_game.frame_num++;
         ta_log_write(&tg_debug_log, SRC_GAME, " FPS pass...\n");
-        game_draw_frame_info(tg_game.frame_num, ms_frame_time, ms_frame_delta, tg_game.sim_step);
+        tg_game.frame_num++;
+        ms_frame_logic = ta_timer_elapsed_ms() - ms_frame_start;
+        game_draw_frame_info(tg_game.frame_num, ms_frame_logic, ms_frame_delta, tg_game.sim_step);
 
         ta_log_write(&tg_debug_log, SRC_GAME, " Swap...\n");
         ta_window_swap(tg_window);
 
         ta_log_write(&tg_debug_log, SRC_GAME,
             "Frame %llu displayed. time: %5.3f delta: %5.3f\n",
-            tg_game.frame_num, ms_frame_time, ms_frame_delta);
+            tg_game.frame_num, ms_frame_logic, ms_frame_delta);
 
         // Sob profusely when frame time goes over 16ms
-        if (ms_frame_time > 16) {
+        if (ms_frame_logic > 16) {
             ta_log_write(&tg_debug_log, SRC_GAME, "!!!!!!!! LONG_FRAME !!!!!!!!\n");
             ta_log_flush(&tg_debug_log);
             // TODO: Debug more long frames (turn on SRC_GAME logging)

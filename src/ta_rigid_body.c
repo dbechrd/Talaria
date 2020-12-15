@@ -369,10 +369,13 @@ static bool intersector_plane_v_obb(ta_manifold *manifold, const ta_rigid_body *
 
     ta_obb obb_b = b->collider.data.obb;
     obb_b.center = rigid_body_local_to_world(b, obb_b.center);
-    // TODO: Do we need to do this explicitly or is it included in local_to_world.. hurts my slightly below avg sized brain
     obb_b.orientation = rigid_body_oriented_quaternion(b, obb_b.orientation);
 
     bool collided = ta_plane_v_obb(manifold, &plane_a, &obb_b);
+    for (u32 i = 0; i < manifold->contact_count; ++i) {
+        manifold->contacts[i].ra_local = rigid_body_rest_vector(a, manifold->contacts[i].ra_local);
+        // NOTE: OBB maintains orientation so rb_local is already correct
+    }
     return collided;
 }
 static bool intersector_sphere_v_sphere(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
@@ -388,15 +391,6 @@ static bool intersector_sphere_v_sphere(ta_manifold *manifold, const ta_rigid_bo
     sphere_b.center = rigid_body_local_to_world(b, sphere_b.center);
 
     bool collided = ta_sphere_v_sphere(manifold, &sphere_a, &sphere_b);
-
-    if (collided) {
-        const char *e_selected = 0;
-        ta_editor_selected_entity(&e_selected);
-        if (a->name == e_selected || b->name == e_selected) {
-            DLB_ASSERT(1);
-        }
-    }
-
     for (u32 i = 0; i < manifold->contact_count; ++i) {
         manifold->contacts[i].ra_local = rigid_body_rest_vector(a, manifold->contacts[i].ra_local);
         manifold->contacts[i].rb_local = rigid_body_rest_vector(b, manifold->contacts[i].rb_local);
@@ -416,6 +410,10 @@ static bool intersector_sphere_v_obb(ta_manifold *manifold, const ta_rigid_body 
     obb_b.orientation = rigid_body_oriented_quaternion(b, obb_b.orientation);
 
     bool collided = ta_sphere_v_obb(manifold, &sphere_a, &obb_b);
+    for (u32 i = 0; i < manifold->contact_count; ++i) {
+        manifold->contacts[i].ra_local = rigid_body_rest_vector(a, manifold->contacts[i].ra_local);
+        // NOTE: OBB maintains orientation so rb_local is already correct
+    }
     return collided;
 }
 static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
