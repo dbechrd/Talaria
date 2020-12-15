@@ -1184,7 +1184,8 @@ static void game_simulate(float dt)
 #endif
             }
 
-            // TODO: What is "joint damping" in the context of contact constraints? (eq. 32 & 33 in PBDBodies)
+            // TODO: Is "joint damping" relevant in the context of contact constraints? (eq. 32 & 33 in PBDBodies)
+            // If so, are the contact radii the correct location to apply the impulse?
             {
                 // Linear damping
                 float coef_linear_damping = 0.99f;
@@ -1302,6 +1303,8 @@ static void game_render_manifolds_debug()
         for (u32 i = 0; i < manifold->contact_count; ++i) {
             // world space contact points
             const ta_vec3 normal_world = manifold->contacts[i].normal_world;
+            const ta_vec3 ra_world = rigid_body_oriented_vector(manifold->a, manifold->contacts[i].ra_local);
+            const ta_vec3 rb_world = rigid_body_oriented_vector(manifold->b, manifold->contacts[i].rb_local);
             const ta_vec3 ca_world = rigid_body_local_to_world(manifold->a, manifold->contacts[i].ra_local);
             const ta_vec3 cb_world = rigid_body_local_to_world(manifold->b, manifold->contacts[i].rb_local);
 
@@ -1314,13 +1317,12 @@ static void game_render_manifolds_debug()
             ta_vec3 direction = vec3_scalef(normal_world, 0.05f);
             ta_primitive_push_arrow(0, origin, direction, TA_COLOR_WHITE);
 
+            ta_primitive_push_arrow(0, manifold->a->xform.position, ra_world, TA_COLOR_BLUE5);
+            ta_primitive_push_arrow(0, manifold->b->xform.position, rb_world, TA_COLOR_YELLOW);
+
             sphere.center = cb_world;
             sphere.radius = radius;
             ta_primitive_push_sphere(0, sphere, TA_COLOR_GRAY6);
-
-            //origin    = cb_world;
-            //direction = vec3_scalef(manifold->n, 0.05f);
-            //ta_primitive_push_arrow(0, origin, direction, TA_COLOR_GRAY8);
         }
     }
 }
@@ -1466,7 +1468,7 @@ void ta_game_loop()
     const float ms_sim_dt = 16;             // fixed dt milliseconds
     const float sim_dt = ms_sim_dt / 1000;  // fixed dt seconds
     const int sim_max_steps = 3;            // max simulation steps per frame (0 = unlimited; may cause spiral of death)
-    const int sim_substeps = 1;             // number of substeps to perform for each step
+    const int sim_substeps = 3;             // number of substeps to perform for each step
     double ms_sim_t = 0;                    // current simulation time
     double ms_frame_accum = 0;
 

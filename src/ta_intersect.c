@@ -264,7 +264,6 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
     DLB_ASSERT(plane);
     DLB_ASSERT(obb);
 
-#if 0
     // Calculate the 8 corners of the OBB
     ta_vec3 p[8] = { 0 };
     p[0].x = -obb->extents.x; p[0].y = -obb->extents.y; p[0].z = -obb->extents.z;
@@ -275,19 +274,16 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
     p[5].x = +obb->extents.x; p[5].y = -obb->extents.y; p[5].z = +obb->extents.z;
     p[6].x = +obb->extents.x; p[6].y = +obb->extents.y; p[6].z = -obb->extents.z;
     p[7].x = +obb->extents.x; p[7].y = +obb->extents.y; p[7].z = +obb->extents.z;
-    for (int i = 0; i < 8; ++i) {
-        p[i] = quat_mul_vec3(obb->orientation, p[i]);
-        p[i] = vec3_add(p[i], obb->center);
-    }
 
     // TODO: This doesn't settle anything with > 1kg of mass.. so we need to do
     // a bit more work to handle sliding due to friction on heavier objects.
-    const float tolerance = 0.002f;
+    const float tolerance = 0.01f;
 
     float dists[8];
     float d_min = FLT_MAX / 2.0f;
     for (int i = 0; i < 8; ++i) {
-        ta_vec3 n = vec3_sub(p[i], plane->center);
+        ta_vec3 p_world = vec3_add(obb->center, quat_mul_vec3(obb->orientation, p[i]));
+        ta_vec3 n = vec3_sub(p_world, plane->center);
         float d = vec3_dot(n, plane->normal);
         if (d < tolerance) {
             dists[i] = d;
@@ -301,26 +297,16 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
     for (int i = 0; i < 8; ++i) {
         if (fabs(dists[i] - d_min) <= tolerance) {
             if (manifold) {
-                manifold->normal_world = plane->normal;
-                manifold->contacts[manifold->contact_count].ca_world = vec3_add(p[i], vec3_scalef(manifold->normal_world, -dists[i]));
-                manifold->contacts[manifold->contact_count].cb_world = p[i];
-                manifold->contacts[manifold->contact_count].rb_world = vec3_sub(manifold->contacts[0].cb_world, obb->center);
-                manifold->contacts[manifold->contact_count].ra_world = vec3_neg(manifold->contacts[0].rb_world);
+                manifold->contacts[manifold->contact_count].normal_world = plane->normal;
+                manifold->contacts[manifold->contact_count].ra_local = vec3_scalef(plane->normal, -dists[i]);
+                manifold->contacts[manifold->contact_count].rb_local = p[i];
                 manifold->contact_count++;
             }
             collided = true;
         }
     }
 
-    if (collided && manifold) {
-        manifold->normal_world = plane->normal;
-    }
-
     return collided;
-#else
-    UNUSED(manifold);
-    return false;
-#endif
 }
 
 bool ta_sphere_v_sphere(ta_manifold *manifold, const ta_sphere *a, const ta_sphere *b)
