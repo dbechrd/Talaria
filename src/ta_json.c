@@ -3,7 +3,8 @@
 #include "dlb/dlb_vector.h"
 #include "misc/cgltf.h"
 
-int ta_json_dump(const char *js, jsmntok_t *t, size_t count, int indent) {
+int ta_json_dump(const char *js, jsmntok_t *t, size_t count, int indent)
+{
     jsmntok_t *key;
     if (count == 0) {
         return 0;
@@ -71,8 +72,7 @@ static void json_log_jsmn_error(size_t err_code)
     }
 }
 
-ta_json_result ta_json_parse(const char *json_data, size_t json_len,
-    jsmntok_t **tokens)
+ta_json_result ta_json_parse(const char *json_data, size_t json_len, jsmntok_t **tokens)
 {
     jsmn_parser parser = { 0 };
 

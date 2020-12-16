@@ -33,7 +33,7 @@ void ta_font_init(ta_font *font)
 }
 void ta_font_init_void(void *font)
 {
-    ta_font_init(font);
+    ta_font_init((ta_font *)font);
 }
 void ta_font_load_path(ta_font *font, const char *path)
 {
@@ -48,13 +48,13 @@ void ta_font_load_path(ta_font *font, const char *path)
 
     font->tex_w = 512;
     font->tex_h = 512;
-    u8 *pixels = dlb_calloc(font->tex_w * font->tex_h, sizeof(*pixels));
+    u8 *pixels = (u8 *)dlb_calloc(font->tex_w * font->tex_h, sizeof(*pixels));
     DLB_ASSERT(pixels);
 
     font->first_char = 32;
     font->last_char = 126;
     int num_chars = (font->last_char + 1) - font->first_char;
-    font->chars = dlb_calloc(num_chars, sizeof(*font->chars));
+    font->chars = (stbtt_bakedchar *)dlb_calloc(num_chars, sizeof(*font->chars));
     DLB_ASSERT(font->chars);
 
     //float scales[32] = { 0 };
@@ -153,7 +153,7 @@ void ta_font_free(ta_font *font)
 ta_shader *ta_font_shader(ta_font *font)
 {
     // TODO: Fonts probably don't belong in the game scene..
-    ta_shader *shader = ta_game_by_sym(RES_SHADER, font->shader);
+    ta_shader *shader = (ta_shader *)ta_game_by_sym(RES_SHADER, font->shader);
     return shader;
 }
 
@@ -229,7 +229,7 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
             newlines++;
         } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
             ta_vec2i baked_pos = position;
-            ta_rect_uv *rect_uv = dlb_vec_alloc(*rects);
+            ta_rect_uv *rect_uv = (ta_rect_uv *)dlb_vec_alloc(*rects);
             ta_baked_quad(font->chars, font->tex_w, font->tex_h,
                 text[i] - 32, &baked_pos.x, &baked_pos.y, rect_uv);
             bounds.w = MAX(bounds.w, (int)baked_pos.x - bounds.x);

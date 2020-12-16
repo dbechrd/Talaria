@@ -10,18 +10,22 @@
 #undef near
 #undef far
 
-const char *ogx_result_str[OGX_RESULT_COUNT] = {
-    [OGX_SUCCESS             ] = "OGX_SUCCESS",
-    [OGX_FILE_INVALID        ] = "OGX_FILE_INVALID",
-    [OGX_SYNTAX_ERROR        ] = "OGX_SYNTAX_ERROR",
-    [OGX_UNEXPECTED_FIELD    ] = "OGX_UNEXPECTED_FIELD",
-    [OGX_EXPECTED_LITERAL    ] = "OGX_EXPECTED_LITERAL",
-    [OGX_EXPECTED_STRING     ] = "OGX_EXPECTED_STRING",
-    [OGX_EXPECTED_FLOAT      ] = "OGX_EXPECTED_FLOAT",
-    [OGX_EXPECTED_ARRAY      ] = "OGX_EXPECTED_ARRAY",
-    [OGX_EXPECTED_OBJECT     ] = "OGX_EXPECTED_OBJECT",
-    [OGX_INVALID_ARRAY_LENGTH] = "OGX_INVALID_ARRAY_LENGTH",
-    [OGX_NOT_IMPLEMENTED     ] = "OGX_NOT_IMPLEMENTED",
+const char *ogx_result_str(ogx_result result)
+{
+    switch (result) {
+        case OGX_SUCCESS             : return "OGX_SUCCESS"             ;
+        case OGX_FILE_INVALID        : return "OGX_FILE_INVALID"        ;
+        case OGX_SYNTAX_ERROR        : return "OGX_SYNTAX_ERROR"        ;
+        case OGX_UNEXPECTED_FIELD    : return "OGX_UNEXPECTED_FIELD"    ;
+        case OGX_EXPECTED_LITERAL    : return "OGX_EXPECTED_LITERAL"    ;
+        case OGX_EXPECTED_STRING     : return "OGX_EXPECTED_STRING"     ;
+        case OGX_EXPECTED_FLOAT      : return "OGX_EXPECTED_FLOAT"      ;
+        case OGX_EXPECTED_ARRAY      : return "OGX_EXPECTED_ARRAY"      ;
+        case OGX_EXPECTED_OBJECT     : return "OGX_EXPECTED_OBJECT"     ;
+        case OGX_INVALID_ARRAY_LENGTH: return "OGX_INVALID_ARRAY_LENGTH";
+        case OGX_NOT_IMPLEMENTED     : return "OGX_NOT_IMPLEMENTED"     ;
+        default: DLB_ASSERT(!"Invalid enum value"); return "<OGX_UNKNOWN>";
+    }
 };
 
 #define OGX_SYMBOL_DECLARE(e) static const char *ogxs_##e = 0;
@@ -134,13 +138,13 @@ static ogx_result ogx_load_bool(bool *boool, dml_value *value)
     if (value->type != DML_VALUE_LITERAL) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_LITERAL;
     } else if (value->data.as_literal.type != DML_LITERAL_BOOL) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected bool literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str(value->data.as_literal.type));
 #endif
         result = OGX_EXPECTED_BOOL;
     } else {
@@ -158,13 +162,13 @@ static ogx_result ogx_load_string(const char **string, dml_value *value)
     if (value->type != DML_VALUE_LITERAL) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_LITERAL;
     } else if (value->data.as_literal.type != DML_LITERAL_STRING) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected string literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str(value->data.as_literal.type));
 #endif
         result = OGX_EXPECTED_STRING;
     } else {
@@ -182,13 +186,13 @@ static ogx_result ogx_load_float(float *f, dml_value *value)
     if (value->type != DML_VALUE_LITERAL) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_LITERAL;
     } else if (value->data.as_literal.type != DML_LITERAL_FLOAT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected float literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str(value->data.as_literal.type));
 #endif
         result = OGX_EXPECTED_FLOAT;
     } else {
@@ -206,13 +210,13 @@ static ogx_result ogx_load_u16(u16 *num, dml_value *value)
     if (value->type != DML_VALUE_LITERAL) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_LITERAL;
     } else if (value->data.as_literal.type != DML_LITERAL_FLOAT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected float literal, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str(value->data.as_literal.type));
 #endif
         result = OGX_EXPECTED_FLOAT;
     } else {
@@ -230,7 +234,7 @@ static ogx_result ogx_load_vec3(dml_document *doc, ta_vec3 *vec, dml_value *valu
     if (value->type != DML_VALUE_ARRAY) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected array, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_ARRAY;
     } else if (dlb_vec_len(value->data.as_array.values) != 3) {
@@ -247,7 +251,7 @@ static ogx_result ogx_load_vec3(dml_document *doc, ta_vec3 *vec, dml_value *valu
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected literal, found %s\n",
                     value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
-                    dml_value_type_str[value->type]);
+                    dml_value_type_str(value->type));
 #endif
                 result = OGX_EXPECTED_LITERAL;
                 break;
@@ -255,7 +259,7 @@ static ogx_result ogx_load_vec3(dml_document *doc, ta_vec3 *vec, dml_value *valu
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected float literal, found %s\n",
                     value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
-                    dml_literal_type_str[value->data.as_literal.type]);
+                    dml_literal_type_str(value->data.as_literal.type));
 #endif
                 result = OGX_EXPECTED_FLOAT;
                 break;
@@ -276,7 +280,7 @@ static ogx_result ogx_load_vec4(dml_document *doc, ta_vec4 *vec, dml_value *valu
     if (value->type != DML_VALUE_ARRAY) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected array, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_ARRAY;
     } else if (dlb_vec_len(value->data.as_array.values) != 4) {
@@ -293,7 +297,7 @@ static ogx_result ogx_load_vec4(dml_document *doc, ta_vec4 *vec, dml_value *valu
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected literal, found %s\n",
                     value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
-                    dml_value_type_str[value->type]);
+                    dml_value_type_str(value->type));
 #endif
                 result = OGX_EXPECTED_LITERAL;
                 break;
@@ -301,7 +305,7 @@ static ogx_result ogx_load_vec4(dml_document *doc, ta_vec4 *vec, dml_value *valu
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected float literal, found %s\n",
                     value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
-                    dml_literal_type_str[value->data.as_literal.type]);
+                    dml_literal_type_str(value->data.as_literal.type));
 #endif
                 result = OGX_EXPECTED_FLOAT;
                 break;
@@ -322,7 +326,7 @@ static ogx_result ogx_load_mat4(dml_document *doc, ta_mat4 *matrix, dml_value *v
     if (value->type != DML_VALUE_ARRAY) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected array, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_ARRAY;
     } else if (dlb_vec_len(value->data.as_array.values) != 16) {
@@ -337,14 +341,14 @@ static ogx_result ogx_load_mat4(dml_document *doc, ta_mat4 *matrix, dml_value *v
             if (arr_value->type != DML_VALUE_LITERAL) {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected literal, found %s\n", value->dbg_symbol.filename,
-                    value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+                    value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
                 result = OGX_EXPECTED_LITERAL;
                 break;
             } else if (arr_value->data.as_literal.type != DML_LITERAL_FLOAT) {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected float literal, found %s\n", value->dbg_symbol.filename,
-                    value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str[value->data.as_literal.type]);
+                    value->dbg_symbol.line, value->dbg_symbol.column, dml_literal_type_str(value->data.as_literal.type));
 #endif
                 result = OGX_EXPECTED_FLOAT;
                 break;
@@ -669,7 +673,8 @@ static ogx_result ogx_load_time(dml_document *doc, ta_animation_track_time *time
                                 ta_log_write(&tg_debug_log, SRC_OGX,
                                     "[%s:%zu:%zu] unexpected key kind, '%s' not valid for curve type '%s'\n",
                                     value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
-                                    ta_animation_track_key_kind_str[time->key.kind], ta_animation_track_curve_type_str[time->curve]);
+                                    ta_animation_track_key_kind_str(time->key.kind),
+                                    ta_animation_track_curve_type_str(time->curve));
 #endif
                                 result = OGX_UNEXPECTED_VALUE;
                             }
@@ -739,7 +744,8 @@ static ogx_result ogx_load_value(dml_document *doc, ta_animation_track_value *va
                                 ta_log_write(&tg_debug_log, SRC_OGX,
                                     "[%s:%zu:%zu] unexpected key kind, '%s' not valid for curve type '%s'\n",
                                     value->dbg_symbol.filename, value->dbg_symbol.line, value->dbg_symbol.column,
-                                    ta_animation_track_key_kind_str[val->key.kind], ta_animation_track_curve_type_str[val->curve]);
+                                    ta_animation_track_key_kind_str(val->key.kind),
+                                    ta_animation_track_curve_type_str(val->curve));
 #endif
                                 result = OGX_UNEXPECTED_VALUE;
                             }
@@ -991,7 +997,7 @@ static ogx_result ogx_load_node(dml_document *doc, s32 node_idx, dml_value *valu
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1021,7 +1027,7 @@ static ogx_result ogx_load_node(dml_document *doc, s32 node_idx, dml_value *valu
             if (result != OGX_SUCCESS) {
 #if _DEBUG
                 ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] %s '%s'\n", field->dbg_symbol.filename,
-                    field->dbg_symbol.line, field->dbg_symbol.column, ogx_result_str[result], field->name);
+                    field->dbg_symbol.line, field->dbg_symbol.column, ogx_result_str(result), field->name);
 #endif
                 break;
             }
@@ -1039,7 +1045,7 @@ static ogx_result ogx_load_camera(dml_document *doc, ogx_camera *camera, dml_val
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1078,7 +1084,7 @@ static ogx_result ogx_load_vertex_array(dml_document *doc, ogx_vertex_array *ver
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1166,7 +1172,7 @@ static ogx_result ogx_load_index_array(dml_document *doc, ogx_index_array *index
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1202,7 +1208,7 @@ static ogx_result ogx_load_skeleton(dml_document *doc, ta_skeleton *skeleton, dm
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1242,7 +1248,7 @@ static ogx_result ogx_load_skin(dml_document *doc, ta_skin *skin, dml_value *val
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1288,7 +1294,7 @@ static ogx_result ogx_load_morph_target(dml_document *doc, ogx_morph_target *mor
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1347,7 +1353,7 @@ static ogx_result ogx_load_mesh(dml_document *doc, ogx_mesh *mesh, dml_value *va
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1391,7 +1397,7 @@ static ogx_result ogx_load_light_atten(dml_document *doc, ogx_light_atten *atten
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1454,7 +1460,7 @@ static ogx_result ogx_load_light(dml_document *doc, ogx_light *light, dml_value 
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1512,7 +1518,7 @@ static ogx_result ogx_load_texture(dml_document *doc, ogx_texture *texture, dml_
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1547,7 +1553,7 @@ static ogx_result ogx_load_material(dml_document *doc, ogx_material *material, d
     if (value->type != DML_VALUE_OBJECT) {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] expected object, found %s\n", value->dbg_symbol.filename,
-            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str[value->type]);
+            value->dbg_symbol.line, value->dbg_symbol.column, dml_value_type_str(value->type));
 #endif
         result = OGX_EXPECTED_OBJECT;
     } else {
@@ -1606,7 +1612,7 @@ static ogx_result ogx_load_scene(dml_document *doc, ogx_scene *scene)
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] unexpected root value type '%s', expected object\n",
             root_value->dbg_symbol.filename, root_value->dbg_symbol.line, root_value->dbg_symbol.column,
-            dml_value_type_str[root_value->type]);
+            dml_value_type_str(root_value->type));
 #endif
         return OGX_UNEXPECTED_VALUE;
     }
@@ -1692,7 +1698,7 @@ ogx_result ogx_scene_from_file(ogx_scene *scene, const char *filename)
     }
 
     if (result != OGX_SUCCESS) {
-        ta_log_write(&tg_debug_log, SRC_OGX, "Parse failed: %s.\n", ogx_result_str[result]);
+        ta_log_write(&tg_debug_log, SRC_OGX, "Parse failed: %s.\n", ogx_result_str(result));
         goto cleanup;
     }
 

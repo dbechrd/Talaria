@@ -88,7 +88,7 @@ void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
 
         //u32 name_len = (u32)strlen(shapes[shape_idx].name);
         //const char *name = ta_symbol_intern(shapes[shape_idx].name, name_len);
-        //ta_mesh *mesh = ta_game_alloc(RES_MESH, name, name_len);
+        //ta_mesh *mesh = (ta_mesh *)ta_game_alloc(RES_MESH, name, name_len);
 
         mesh_min = VEC3_MAX;
         mesh_max = VEC3_MIN;

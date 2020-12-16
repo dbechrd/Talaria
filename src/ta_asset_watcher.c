@@ -40,7 +40,7 @@ static ta_watcher_result ta_asset_watcher_wait_changes(ta_asset_watcher *watcher
 
     //printf("[ASSET_WATCHER] bytes_returned = %u\n", bytesReturned);
 
-    FILE_NOTIFY_INFORMATION *info = (void *)buffer;
+    FILE_NOTIFY_INFORMATION *info = (FILE_NOTIFY_INFORMATION *)buffer;
     for (;;) {
 #if 0
         const char *action_str = 0;
@@ -79,7 +79,7 @@ static ta_watcher_result ta_asset_watcher_wait_changes(ta_asset_watcher *watcher
 
                     bool is_file = false;
                     int file_len = info->FileNameLength / sizeof(wchar_t);
-                    char *file = dlb_calloc(1, file_len + 1);
+                    char *file = (char *)dlb_calloc(1, file_len + 1);
                     for (int j = 0; j < file_len; ++j) {
                         int result = wctomb(&file[j], info->FileName[j]);
                         if (result == -1) {
@@ -141,7 +141,7 @@ static ta_watcher_result ta_open_directory(const char *path, HANDLE *handle)
 static int ta_asset_watcher_watch(void *arg)
 {
     ta_watcher_result err;
-    ta_asset_watcher *watcher = arg;
+    ta_asset_watcher *watcher = (ta_asset_watcher *)arg;
 
     HANDLE handle;
     err = ta_open_directory(watcher->dir_path, &handle);

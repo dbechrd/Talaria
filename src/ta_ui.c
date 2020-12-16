@@ -833,7 +833,7 @@ bool ta_ui_image(const char *texture)
 
     if (texture) {
         if (!next_frame_size.w && !next_frame_size.h) {
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, texture);
+            ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, texture);
             ta_ui_next_size(tex->width, tex->height);
         }
     }
@@ -1628,7 +1628,7 @@ static void ui_render_toggle_button(ui_frame *frame)
 static void ui_render_image(ui_frame *frame)
 {
     if (frame->texture) {
-        ta_texture *tex = ta_game_by_sym(RES_TEXTURE, frame->texture);
+        ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, frame->texture);
         ta_rect img_rect = rect_shrink(frame->rect, frame->pad);
         DLB_ASSERT(tex->type == TA_TEXTURE_2D_ARRAY);
         ta_shader_set_uint(tg_shader_quads, SYM_U_TEXTURE_POOL_INDEX, tex->gl_texture_pool_index);
@@ -1852,7 +1852,7 @@ static void ta_ui_render_statusbar()
 {
     if (editor.status_msg) {
         static ta_rect_uv *status_rects = 0;
-        ta_font *font = ta_game_by_name(RES_FONT, tg_font);
+        ta_font *font = (ta_font *)ta_game_by_name(RES_FONT, tg_font);
         ta_rectf status_rect = ta_font_push_text(&status_rects, font,
             SYM(editor.status_msg), true, 0, 0, 0);
         dlb_vec_each(ta_rect_uv *, rect, status_rects) {

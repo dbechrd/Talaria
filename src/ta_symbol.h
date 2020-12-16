@@ -24,7 +24,7 @@ typedef struct dlb_symbol__hdr {
 // TODO: Use arena allocator for symbols (see dlb_string.h)
 static inline char *dlb_symbol__alloc(const char *buf, size_t len) {
     size_t new_size = sizeof(dlb_symbol__hdr) + len + 1;
-    dlb_symbol__hdr *sym = dlb_calloc(1, new_size);
+    dlb_symbol__hdr *sym = (dlb_symbol__hdr *)dlb_calloc(1, new_size);
     sym->len = len;
     char *str = (char *)sym + sizeof(dlb_symbol__hdr);
     dlb_memcpy(str, buf, len);

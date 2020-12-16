@@ -29,7 +29,7 @@ static bool model_find_morph_target_index(size_t *index, ta_model *model, const 
     size_t i = 0;
     bool found = false;
 
-    ta_mesh *mesh = ta_game_by_name_try(RES_MESH, SYM(model->entity));
+    ta_mesh *mesh = (ta_mesh *)ta_game_by_name_try(RES_MESH, SYM(model->entity));
     if (mesh) {
         dlb_vec_each(ta_morph_target *, morph_target, mesh->morph_targets) {
             if (morph_target->name == morph_target_name) {
@@ -92,11 +92,11 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
         return;
     }
 
-    ta_transform *transform = ta_game_component(model->entity, RES_COMP_TRANSFORM);
+    ta_transform *transform = (ta_transform *)ta_game_component(model->entity, RES_COMP_TRANSFORM);
 
     ta_mat4 light_pvm = mat4_mul(light_pv, &transform->world);
     ta_shader_set_mat4(shader, SYM_U_LIGHT_PVM, &light_pvm);
-    ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
+    ta_mesh *mesh = (ta_mesh *)ta_game_by_sym_try(RES_MESH, model->mesh);
     if (!mesh) {
         // HACK: Decide if we really want to do this here..?
         mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
@@ -125,7 +125,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         return;
     }
 
-    ta_transform *transform = ta_game_component(model->entity, RES_COMP_TRANSFORM);
+    ta_transform *transform = (ta_transform *)ta_game_component(model->entity, RES_COMP_TRANSFORM);
 
     static const char *button = 0;
     if (!button) {
@@ -141,7 +141,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_editor_selected_entity(&selected_entity);
         bool selected = model->entity == selected_entity;
 
-        ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
+        ta_mesh *mesh = (ta_mesh *)ta_game_by_sym_try(RES_MESH, model->mesh);
         if (!mesh) {
             mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
         }
@@ -157,14 +157,14 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         }
 
         // TODO: Need to group materials by shader if we allow them to start having custom shaders
-        ta_shader *shader = ta_game_by_sym(RES_SHADER, material->shader);
+        ta_shader *shader = (ta_shader *)ta_game_by_sym(RES_SHADER, material->shader);
 
         ta_shader_set_bool(shader, SYM_U_SELECTED, (GLboolean)selected);
 
-        ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+        ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
         ta_shader_set_vec3(shader, SYM_U_CAMERA_POS, &cam_trans->xform_world.position);
 
-        ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+        ta_light *lights = (ta_light *)ta_game_resource_pool(RES_COMP_LIGHT);
         size_t lights_len = dlb_vec_len(lights);
         u32 u_lights_count = 0;
         for (u32 i = 0; i < lights_len; ++i) {
@@ -189,7 +189,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     // TODO: Do this in a separate pass, after all models are rendered. One big buffer, single render call.
     if (tg_game.debug_normals) {
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->world);
-        ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
+        ta_mesh *mesh = (ta_mesh *)ta_game_by_sym_try(RES_MESH, model->mesh);
         if (!mesh) {
             mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
         }
@@ -204,13 +204,13 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
     DLB_ASSERT(camera);
     DLB_ASSERT(shader);
 
-    ta_transform *transform = ta_game_component(model->entity, RES_COMP_TRANSFORM);
+    ta_transform *transform = (ta_transform *)ta_game_component(model->entity, RES_COMP_TRANSFORM);
 
     ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
     ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
 
-    ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, model->mesh);
+    ta_mesh *mesh = (ta_mesh *)ta_game_by_sym_try(RES_MESH, model->mesh);
     if (!mesh) {
         // HACK: Decide if we really want to do this here..?
         mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);

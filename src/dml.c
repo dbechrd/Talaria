@@ -5,27 +5,45 @@
 #include "ta_file.h"
 #include "dlb/dlb_vector.h"
 
-const char *dml_result_str[DML_RESULT_COUNT] = {
-    [DML_SUCCESS     ] = "DML_SUCCESS",
-    [DML_FILE_INVALID] = "DML_FILE_INVALID",
-    [DML_SYNTAX_ERROR] = "DML_SYNTAX_ERROR",
+const char *dml_result_str(dml_result result)
+{
+    switch (result) {
+        case DML_SUCCESS     : return "DML_SUCCESS"     ;
+        case DML_FILE_INVALID: return "DML_FILE_INVALID";
+        case DML_SYNTAX_ERROR: return "DML_SYNTAX_ERROR";
+        default: DLB_ASSERT(!"Invalid enum value"); return "<DML_RESULT_UNKNOWN>";
+    }
 };
 
-const char *dml_literal_type_str[DML_LITERAL_COUNT] = {
-    [DML_LITERAL_NULL  ] = "DML_LITERAL_NULL  ",
-    [DML_LITERAL_BOOL  ] = "DML_LITERAL_BOOL  ",
-    [DML_LITERAL_FLOAT ] = "DML_LITERAL_FLOAT ",
-    [DML_LITERAL_STRING] = "DML_LITERAL_STRING",
+const char *dml_literal_type_str(dml_literal_type literal_type)
+{
+    switch (literal_type) {
+        case DML_LITERAL_NULL  : return "DML_LITERAL_NULL  ";
+        case DML_LITERAL_BOOL  : return "DML_LITERAL_BOOL  ";
+        case DML_LITERAL_FLOAT : return "DML_LITERAL_FLOAT ";
+        case DML_LITERAL_STRING: return "DML_LITERAL_STRING";
+        default: DLB_ASSERT(!"Invalid enum value"); return "<DML_LITERAL_UNKNOWN>";
+    }
 };
-const char *dml_value_type_str[DML_VALUE_COUNT] = {
-    [DML_VALUE_OBJECT ] = "DML_VALUE_OBJECT ",
-    [DML_VALUE_ARRAY  ] = "DML_VALUE_ARRAY  ",
-    [DML_VALUE_LITERAL] = "DML_VALUE_LITERAL",
+
+const char *dml_value_type_str(dml_value_type value_type)
+{
+    switch (value_type) {
+        case DML_VALUE_OBJECT : return "DML_VALUE_OBJECT ";
+        case DML_VALUE_ARRAY  : return "DML_VALUE_ARRAY  ";
+        case DML_VALUE_LITERAL: return "DML_VALUE_LITERAL";
+        default: DLB_ASSERT(!"Invalid enum value"); return "<DML_VALUE_UNKNOWN>";
+    }
 };
 
 dml_result dml_document_from_file(dml_document *document, const char *filename)
 {
     dml_result result = DML_SUCCESS;
+
+    dml_scanner scanner = { 0 };
+    dml_token *tokens = 0;
+    dml_parser parser = { 0 };
+
     ta_log_timed_region_start(&tg_debug_log, SRC_DML, CSTR("dml_load"));
     ta_log_write(&tg_debug_log, SRC_DML, "Reading file %s\n", filename);
 
@@ -45,8 +63,7 @@ dml_result dml_document_from_file(dml_document *document, const char *filename)
     }
 
     ta_log_write(&tg_debug_log, SRC_DML, "Scanning...\n");
-    dml_scanner scanner = { 0 };
-    dml_token *tokens = 0;
+
     dml_scanner_init(&scanner, source, source_len);
     if (!dml_scanner_scan_tokens(&scanner, &tokens)) {
         ta_log_write(&tg_debug_log, SRC_DML, "Scanner produced errors, skipping parse stage.\n");
@@ -68,7 +85,6 @@ dml_result dml_document_from_file(dml_document *document, const char *filename)
 
     ta_log_write(&tg_debug_log, SRC_DML, "Parsing...\n");
 
-    dml_parser parser = { 0 };
     dml_parser_init(&parser, tokens, filename, source, source_len);
     dml_parser_parse(&parser, document);
 

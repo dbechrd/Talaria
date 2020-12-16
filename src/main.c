@@ -17,6 +17,7 @@
 #include "dlb/dlb_rand.h"
 #include "misc/glad.h"
 #include "SDL/SDL.h"
+#include "tracy/TracyC.h"
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
@@ -80,8 +81,6 @@ static void window_glfw_error(int code, const char* description)
 
 #include <stdio.h>
 #include <stdlib.h>
-
-#define RAND_ELEMENTS 8
 
 int main(int argc, char *argv[])
 {

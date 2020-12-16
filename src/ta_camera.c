@@ -38,7 +38,7 @@ void ta_camera_init(ta_camera *camera)
 }
 void ta_camera_init_void(void *camera)
 {
-    ta_camera_init(camera);
+    ta_camera_init((ta_camera *)camera);
 }
 void ta_camera_set_ortho(ta_camera *camera, bool ortho)
 {
@@ -49,7 +49,7 @@ void ta_camera_set_ortho(ta_camera *camera, bool ortho)
 
 void ta_camera_set_position(ta_camera *camera, float x, float y, float z)
 {
-    ta_transform *transform = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    ta_transform *transform = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
     transform->xform.position.x = x;
     transform->xform.position.y = y;
     transform->xform.position.z = z;
@@ -160,7 +160,7 @@ void ta_camera_update(ta_camera *camera, float dt)
         camera->move_buffer = VEC3_ZERO;
     }
 
-    ta_transform *transform = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    ta_transform *transform = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
 
     // Update local position
     ta_vec3 pos_delta = vec3_sub(camera->target_xform.position, transform->xform.position);
@@ -174,7 +174,7 @@ void ta_camera_update(ta_camera *camera, float dt)
     const char *selected_entity = 0;
     ta_editor_selected_entity(&selected_entity);
     if (selected_entity) {
-        ta_transform *target_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+        ta_transform *target_transform = (ta_transform *)ta_game_component(selected_entity, RES_COMP_TRANSFORM);
         camera->focal_point = target_transform->xform.position;
     } else {
         camera->focal_point = VEC3_MIN;
@@ -222,7 +222,7 @@ void ta_camera_update(ta_camera *camera, float dt)
 
 void ta_camera_update_world_view(ta_camera *camera)
 {
-    ta_transform *transform = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    ta_transform *transform = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
 
     camera->front = quat_mul_vec3(transform->xform_world.orientation, VEC3_NZ);
     camera->right = vec3_normalize(vec3_cross(camera->front, VEC3_Y));

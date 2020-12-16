@@ -774,7 +774,7 @@ static void gltf_texture(const char **out_texture_name, cgltf_texture_view *view
     size_t texture_name_len = snprintf(texture_name, texture_name_size, "#%s", temp_name);
     DLB_ASSERT(texture_name_len < texture_name_size);
 
-    ta_resource *exists = ta_game_by_name_try(RES_TEXTURE, texture_name, texture_name_len);
+    ta_resource *exists = (ta_resource *)ta_game_by_name_try(RES_TEXTURE, texture_name, texture_name_len);
     if (exists) {
         *out_texture_name = exists->name;
         return;
@@ -813,7 +813,7 @@ static void gltf_texture(const char **out_texture_name, cgltf_texture_view *view
     DLB_ASSERT(channels);
 
     ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc TEXTURE %s\n", texture_name);
-    ta_texture *texture = ta_game_alloc(RES_TEXTURE, texture_name, texture_name_len);
+    ta_texture *texture = (ta_texture *)ta_game_alloc(RES_TEXTURE, texture_name, texture_name_len);
     texture->type = TA_TEXTURE_2D_ARRAY;
     texture->width = w;
     texture->height = h;
@@ -874,8 +874,8 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
     DLB_ASSERT(metallic_name_len < metallic_name_size);
     DLB_ASSERT(roughness_name_len < roughness_name_size);
 
-    ta_resource *metallic_exists = ta_game_by_name_try(RES_TEXTURE, metallic_name_buf, metallic_name_len);
-    ta_resource *roughness_exists = ta_game_by_name_try(RES_TEXTURE, roughness_name_buf, roughness_name_len);
+    ta_resource *metallic_exists = (ta_resource *)ta_game_by_name_try(RES_TEXTURE, metallic_name_buf, metallic_name_len);
+    ta_resource *roughness_exists = (ta_resource *)ta_game_by_name_try(RES_TEXTURE, roughness_name_buf, roughness_name_len);
     if (metallic_exists || roughness_exists) {
         DLB_ASSERT(metallic_exists && roughness_exists);  // Wtf.. how did we create one but not the other last time?
         *out_metallic = metallic_exists->name;
@@ -924,8 +924,8 @@ static void gltf_metallic_roughness(const char **out_metallic, const char **out_
     ta_game_alloc(RES_TEXTURE, SYM(roughness_name));
 
     // NOTE: Re-lookup textures in case pool resized
-    ta_texture *metallic = ta_game_by_sym(RES_TEXTURE, metallic_name);
-    ta_texture *roughness = ta_game_by_sym(RES_TEXTURE, roughness_name);
+    ta_texture *metallic = (ta_texture *)ta_game_by_sym(RES_TEXTURE, metallic_name);
+    ta_texture *roughness = (ta_texture *)ta_game_by_sym(RES_TEXTURE, roughness_name);
 
     size_t pixels_len = w * h * channels;
     metallic->width = w;
@@ -982,7 +982,7 @@ void ta_gltf_load(ta_gltf *gltf)
         DLB_ASSERT(animation_name_len < animation_name_size);
 
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc ANIMATION %s\n", animation_name);
-        ta_animation *animation = ta_game_alloc(RES_ANIMATION, animation_name, animation_name_len);
+        ta_animation *animation = (ta_animation *)ta_game_alloc(RES_ANIMATION, animation_name, animation_name_len);
 
         dlb_vec_each(cgltf_animation_sampler *, gltf_sampler, gltf_animation->samplers_v) {
             ta_animation_sampler sampler = { 0 };
@@ -1107,7 +1107,7 @@ void ta_gltf_load(ta_gltf *gltf)
         DLB_ASSERT(material_name_len < material_name_size);
 
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MATERIAL %s\n", material_name);
-        ta_material *material = ta_game_alloc(RES_MATERIAL, material_name, material_name_len);
+        ta_material *material = (ta_material *)ta_game_alloc(RES_MATERIAL, material_name, material_name_len);
 
         DLB_ASSERT(gltf_material->has_pbr_metallic_roughness);
         //DLB_ASSERT(!gltf_material->has_pbr_specular_glossiness);  // NOTE: Some files have both?? (e.g. bee.glb)
@@ -1166,7 +1166,7 @@ void ta_gltf_load(ta_gltf *gltf)
         DLB_ASSERT(model_name_len < model_name_size);
 
         ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MODEL %s\n", model_name_buf);
-        ta_model *model = ta_game_component_try(entity_name, RES_COMP_MODEL);
+        ta_model *model = (ta_model *)ta_game_component_try(entity_name, RES_COMP_MODEL);
         if (!model) {
             ta_log_write(&tg_debug_log, SRC_GLTF, "Couldn't find model '%.*s', letting GLTF loader create one\n",
                 model_name_len, model_name_buf);
@@ -1201,7 +1201,7 @@ void ta_gltf_load(ta_gltf *gltf)
             const char *material_name = ta_symbol_intern(material_name_buf, material_name_len);
 
             ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", mesh_name_buf);
-            ta_mesh *mesh = ta_game_alloc(RES_MESH, mesh_name_buf, mesh_name_len);
+            ta_mesh *mesh = (ta_mesh *)ta_game_alloc(RES_MESH, mesh_name_buf, mesh_name_len);
 
             DLB_ASSERT(gltf_prim->type == cgltf_primitive_type_triangles);
 
@@ -1289,7 +1289,7 @@ void ta_gltf_load(ta_gltf *gltf)
                 DLB_ASSERT(target_name_len < target_name_size);
 
                 ta_log_write(&tg_debug_log, SRC_GLTF, "ta_game_alloc MESH %s\n", target_name);
-                ta_mesh *target_mesh = ta_game_alloc(RES_MESH, target_name, target_name_len);
+                ta_mesh *target_mesh = (ta_mesh *)ta_game_alloc(RES_MESH, target_name, target_name_len);
 
                 ta_log_write(&tg_debug_log, SRC_GLTF, "copying attributes\n");
                 dlb_vec_each(cgltf_attribute *, attr, target->attributes_v) {

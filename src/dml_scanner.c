@@ -75,7 +75,7 @@ static bool dml_scanner_is_hex(char c)
 
 static dml_token *dml_scanner_add_token(dml_scanner *scanner, const char *text, dml_token_type type)
 {
-    dml_token *token = dlb_vec_alloc(scanner->tokens);
+    dml_token *token = (dml_token *)dlb_vec_alloc(scanner->tokens);
     size_t length = scanner->current - scanner->start;
     dml_token_init(token, type, text, scanner->start_line, scanner->start_column, scanner->start, length);
     return token;
@@ -283,7 +283,7 @@ bool dml_scanner_scan_tokens(dml_scanner *scanner, dml_token **tokens)
         }
     }
 
-    dml_token *token = dlb_vec_alloc(scanner->tokens);
+    dml_token *token = (dml_token *)dlb_vec_alloc(scanner->tokens);
     dml_token_init(token, TOK_EOF, NULL, scanner->line, 0, scanner->source_len ? scanner->source_len - 1 : 0, 1);
 
     if (tokens) {

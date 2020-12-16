@@ -90,7 +90,7 @@ void ta_editor_init()
     ta_scene_load_file(&editor.scene, "data/scene/editor.dml");
     editor.shader_editor_select = SYM_SHADER_EDITOR_SELECT;
 
-    ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
+    ta_font *font = (ta_font *)ta_game_by_sym(RES_FONT, tg_font);
     ta_log_write(&tg_debug_log, SRC_EDITOR, "Initializing UI styles\n");
     ta_ui_init(font, &editor.textbox_editing, &editor.textbox_dragging);
 
@@ -160,14 +160,14 @@ static editor_gizmo editor_gizmo_nearest(ta_ray *ray)
             for (int i = 0; i < 3; ++i) {
                 if (ta_ray_v_aabb(ray, &editor.gizmos.transform.hitbox1d[i], &t) && t < t_min) {
                     t_min = t;
-                    nearest_gizmo = GIZMO_TRANSLATE_X + i;
+                    nearest_gizmo = (editor_gizmo)((int)GIZMO_TRANSLATE_X + i);
                 }
             }
 
             for (int i = 0; i < 3; ++i) {
                 if (ta_ray_v_quad(ray, &editor.gizmos.transform.hitbox2d[i], &t) && t < t_min) {
                     t_min = t;
-                    nearest_gizmo = GIZMO_TRANSLATE_YZ + i;
+                    nearest_gizmo = (editor_gizmo)((int)GIZMO_TRANSLATE_YZ + i);
                 }
             }
 
@@ -198,7 +198,7 @@ static void editor_gizmo_end(bool keep_changes)
                 case WIDGET_TRANSLATE:
                 case WIDGET_ROTATE:
                 case WIDGET_SCALE: {
-                    ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+                    ta_transform *e_transform = (ta_transform *)ta_game_component(selected_entity, RES_COMP_TRANSFORM);
                     e_transform->xform = editor.gizmo_start_xform;
                     break;
                 }
@@ -243,7 +243,7 @@ static void editor_command_select()
             case WIDGET_TRANSLATE: {
                 editor.gizmo = editor_gizmo_nearest(&ray);
                 if (editor.gizmo) {
-                    ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+                    ta_transform *e_transform = (ta_transform *)ta_game_component(selected_entity, RES_COMP_TRANSFORM);
                     editor.gizmo_start_xform = e_transform->xform;
                 }
                 break;
@@ -260,11 +260,11 @@ static void editor_command_select()
         float t_min = FLT_MAX;
         const char *closest_entity = 0;
 
-        ta_rigid_body *bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
+        ta_rigid_body *bodies = (ta_rigid_body *)ta_game_resource_pool(RES_COMP_RIGID_BODY);
         dlb_vec_each(ta_rigid_body *, body, bodies) {
             switch (body->collider.type) {
                 case TA_COLLIDER_PLANE: {
-                    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+                    ta_transform *transform = (ta_transform *)ta_game_component(body->entity, RES_COMP_TRANSFORM);
                     ta_plane plane = body->collider.data.plane;
                     plane.center = vec3_add(plane.center, transform->xform_world.position);
                     if (ta_ray_v_plane(&ray, &plane, &t)) {
@@ -276,7 +276,7 @@ static void editor_command_select()
                     }
                     break;
                 } case TA_COLLIDER_SPHERE: {
-                    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+                    ta_transform *transform = (ta_transform *)ta_game_component(body->entity, RES_COMP_TRANSFORM);
                     ta_sphere sphere = body->collider.data.sphere;
                     sphere.center = vec3_add(sphere.center, transform->xform_world.position);
                     if (ta_ray_v_sphere(&ray, &sphere, &t)) {
@@ -288,7 +288,7 @@ static void editor_command_select()
                     }
                     break;
                 } case TA_COLLIDER_OBB: {
-                    ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+                    ta_transform *transform = (ta_transform *)ta_game_component(body->entity, RES_COMP_TRANSFORM);
                     ta_obb obb = body->collider.data.obb;
                     obb.center = quat_mul_vec3(transform->xform_world.orientation, obb.center);
                     obb.center = vec3_add(obb.center, transform->xform_world.position);
@@ -308,9 +308,9 @@ static void editor_command_select()
             }
         }
 
-        ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+        ta_light *lights = (ta_light *)ta_game_resource_pool(RES_COMP_LIGHT);
         dlb_vec_each(ta_light *, light, lights) {
-            ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
+            ta_transform *transform = (ta_transform *)ta_game_component(light->entity, RES_COMP_TRANSFORM);
             ta_sphere sphere = { 0 };
             sphere.center = transform->xform_world.position;
             sphere.radius = 0.2f;
@@ -491,9 +491,9 @@ void ta_editor_update_widgets()
         return;
     }
 
-    ta_camera *camera = ta_game_camera();
-    ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
-    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    ta_camera *camera = (ta_camera *)ta_game_camera();
+    ta_transform *e_transform = (ta_transform *)ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+    ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
     float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
     float scale = MAX(TA_EDITOR_WIDGET_MIN_SCALE, dist * 0.2f);
     float radius = scale / TA_PRIMITIVE_CONE_RADIUS_SCALE * 2.0f;
@@ -704,13 +704,13 @@ void ta_editor_draw_world()
         return;
     }
 
-    ta_camera *camera = ta_game_camera();
+    ta_camera *camera = (ta_camera *)ta_game_camera();
 
 #if 1
     // Render selected entity as yellow wireframes
-    ta_model *e_model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
+    ta_model *e_model = (ta_model *)ta_game_component_try(selected_entity, RES_COMP_MODEL);
     if (e_model) {
-        ta_shader *shader = ta_scene_find(&editor.scene, RES_SHADER, SYM(editor.shader_editor_select));
+        ta_shader *shader = (ta_shader *)ta_scene_find(&editor.scene, RES_SHADER, SYM(editor.shader_editor_select));
         ta_rgba wire_color = TA_COLOR_YELLOW;
         double seconds = ta_timer_elapsed_sec();
         double sine = sin(seconds * 4.0) * 0.5 + 0.5;
@@ -728,8 +728,8 @@ void ta_editor_draw_world()
 #endif
 
     // Render active widget's gizmos
-    ta_transform *e_transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
-    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    ta_transform *e_transform = (ta_transform *)ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+    ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
     float dist = vec3_len(vec3_sub(cam_trans->xform_world.position, e_transform->xform_world.position));
     float scale = MAX(TA_EDITOR_WIDGET_MIN_SCALE, dist * 0.2f);
 
@@ -738,8 +738,10 @@ void ta_editor_draw_world()
             //--------------------------------------------------------
             // Render passive gizmo details
             //--------------------------------------------------------
-            static const ta_rgba gizmo_color[GIZMO_COUNT][2] = {
-                // Passive gizmo colors
+            // Passive gizmo colors
+            static ta_rgba gizmo_color[GIZMO_COUNT][2] = {
+            // TODO: Get rid of this if statement by moving this lookup table into a switch statement; probably need a
+            // helper method for that.
                 [GIZMO_TRANSLATE_X]    [0] = { 0.7f, 0.0f, 0.0f, 1.0f },  // DARK_RED
                 [GIZMO_TRANSLATE_Y]    [0] = { 0.0f, 0.7f, 0.0f, 1.0f },  // DARK_GREEN
                 [GIZMO_TRANSLATE_Z]    [0] = { 0.0f, 0.0f, 0.7f, 1.0f },  // DARK_BLUE
@@ -748,6 +750,7 @@ void ta_editor_draw_world()
                 [GIZMO_TRANSLATE_XY]   [0] = { 0.0f, 0.0f, 0.7f, 0.7f },  // DARK_BLUE_ALPHA
                 //[GIZMO_TRANSLATE_VIEW] [0] = { 0.6f, 0.6f, 0.6f, 1.0f },  // TA_COLOR_GRAY6
                 [GIZMO_TRANSLATE_VIEW] [0] = { 1.0f, 1.0f, 1.0f, 1.0f },  // TA_COLOR_WHITE
+
                 // Active gizmo colors (highlights)
                 //[GIZMO_TRANSLATE_X]    [1] = { 1.0f, 0.0f, 0.0f, 1.0f },  // TA_COLOR_RED
                 //[GIZMO_TRANSLATE_Y]    [1] = { 0.0f, 1.0f, 0.0f, 1.0f },  // TA_COLOR_GREEN
@@ -979,6 +982,7 @@ static void ui_node_panel()
 
     static const char *res_type_lookup[RES_COUNT] = {
         [RES_COMP_AUDIO_SOURCE] = "audiosource",
+        [RES_COMP_BONE        ] = "bone",
         [RES_COMP_BUTTON      ] = "button",
         [RES_COMP_CAMERA      ] = "camera",
         [RES_COMP_GUN         ] = "gun",
@@ -987,14 +991,13 @@ static void ui_node_panel()
         [RES_COMP_PLAYER      ] = "player",
         [RES_COMP_TRANSFORM   ] = "transform",
         [RES_COMP_RIGID_BODY  ] = "rigidbody",
-        [RES_COMP_BONE        ] = "bone",
         //[RES_AUDIO_BUFFER     ] = "RES_AUDIO_BUFFER",
         //[RES_FONT             ] = "RES_FONT",
         //[RES_MATERIAL         ] = "RES_MATERIAL",
         //[RES_MESH             ] = "RES_MESH",
         //[RES_SHADER           ] = "RES_SHADER",
         //[RES_TEXTURE          ] = "RES_TEXTURE",
-        //[RES_ANIMATION        ] = "RES_ANIMATION"
+        //[RES_ANIMATION        ] = "RES_ANIMATION",
     };
 
     // TODO: Accelerate search (e.g. trie) if it gets slow
@@ -1009,15 +1012,15 @@ static void ui_node_panel()
                 match_all = query_len == 1;
                 break;
             case '+': case '-':
-                for (ta_res_type res_type = 0; res_type < RES_COMP_COUNT; res_type++) {
-                    if (!strncmp(search_box.buffer + 1, res_type_lookup[res_type], query_len - 1) &&
-                        query_len - 1 == strlen(res_type_lookup[res_type]))
+                for (int i = 0; i < RES_COMP_COUNT; ++i) {
+                    if (!strncmp(search_box.buffer + 1, res_type_lookup[i], query_len - 1) &&
+                        query_len - 1 == strlen(res_type_lookup[i]))
                     {
                         if (search_box.buffer[0] == '+') {
-                            res_filter_pos = res_type;
+                            res_filter_pos = (ta_res_type)i;
                             break;
                         } else if (search_box.buffer[0] == '-') {
-                            res_filter_neg = res_type;
+                            res_filter_neg = (ta_res_type)i;
                             break;
                         }
                     }
@@ -1027,7 +1030,7 @@ static void ui_node_panel()
 
         static const char **search_results = 0;
         dlb_vec_clear(search_results);
-        ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
+        ta_transform *transforms = (ta_transform *)ta_game_resource_pool(RES_COMP_TRANSFORM);
         dlb_vec_each(ta_transform *, transform, transforms) {
             //if (!strncmp(transform->entity, search_box.buffer, query_len)) {
             bool match_res_pos = false;
@@ -1057,7 +1060,7 @@ static void ui_node_panel()
 
         // Allow user to create new entity if name (in search box) is available
         size_t search_buf_len = dlb_vec_len(search_box.buffer);
-        ta_transform *exists = ta_game_by_name_try(RES_COMP_TRANSFORM, search_box.buffer, search_buf_len);
+        ta_transform *exists = (ta_transform *)ta_game_by_name_try(RES_COMP_TRANSFORM, search_box.buffer, search_buf_len);
         if (exists) {
             ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
@@ -1070,8 +1073,8 @@ static void ui_node_panel()
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
             if (ta_ui_button(CSTR("Create")) || search_box_submitted) {
                 const char *entity = ta_symbol_intern(search_box.buffer, search_buf_len);
-                ta_transform *new_transform = ta_game_component_add(entity, RES_COMP_TRANSFORM, search_box.buffer,
-                    search_buf_len);
+                ta_transform *new_transform = (ta_transform *)ta_game_component_add(entity, RES_COMP_TRANSFORM,
+                    search_box.buffer, search_buf_len);
                 ta_transform_init(new_transform);
             }
         }
@@ -1161,7 +1164,7 @@ static void ui_node_panel()
         return;
     }
 
-    ta_transform *transform = ta_game_component(selected_entity, RES_COMP_TRANSFORM);
+    ta_transform *transform = (ta_transform *)ta_game_component(selected_entity, RES_COMP_TRANSFORM);
 
     ta_ui_row_end();
     ta_ui_next_size(header_width, 0);
@@ -1258,7 +1261,7 @@ static void ui_node_panel()
     ta_ui_toggle_button(CSTR("[+] Model"), CSTR("[-] Model"), &model_expanded);
 
     if (model_expanded) {
-        ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
+        ta_model *model = (ta_model *)ta_game_component_try(selected_entity, RES_COMP_MODEL);
         if (model) {
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1345,7 +1348,9 @@ static void ui_node_panel()
             }
         } else {
             if (ta_ui_button(CSTR("Add model"))) {
-                ta_game_component_add(selected_entity, RES_COMP_MODEL, SYM(selected_entity));
+                ta_model *new_model = (ta_model *)ta_game_component_add(selected_entity, RES_COMP_MODEL,
+                    SYM(selected_entity));
+                new_model->cast_shadows = true;
             }
         }
     }
@@ -1357,7 +1362,7 @@ static void ui_node_panel()
     ta_ui_toggle_button(CSTR("[+] Rigid Body"), CSTR("[-] Rigid Body"), &rigid_body_expanded);
 
     if (rigid_body_expanded) {
-        ta_rigid_body *rigid_body = ta_game_component_try(selected_entity, RES_COMP_RIGID_BODY);
+        ta_rigid_body *rigid_body = (ta_rigid_body *)ta_game_component_try(selected_entity, RES_COMP_RIGID_BODY);
         if (rigid_body) {
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1559,7 +1564,7 @@ static void ui_node_panel()
                     size_t variable_data_offset = sizeof(rigid_body->collider.data.center);
                     memset((u8 *)&rigid_body->collider.data + variable_data_offset, 0,
                         sizeof(rigid_body->collider.data) - variable_data_offset);
-                    rigid_body->collider.type = i;
+                    rigid_body->collider.type = (ta_collider_type)i;
                     ta_collider_init(&rigid_body->collider);
                 }
             }
@@ -1621,7 +1626,8 @@ static void ui_node_panel()
             }
         } else {
             if (ta_ui_button(CSTR("Add rigid body"))) {
-                ta_rigid_body *new_body = ta_game_component_add(selected_entity, RES_COMP_RIGID_BODY, SYM(selected_entity));
+                ta_rigid_body *new_body = (ta_rigid_body *)ta_game_component_add(selected_entity, RES_COMP_RIGID_BODY,
+                    SYM(selected_entity));
                 ta_rigid_body_init(new_body);
             }
         }
@@ -1634,7 +1640,7 @@ static void ui_node_panel()
     ta_ui_toggle_button(CSTR("[+] Light"), CSTR("[-] Light"), &light_expanded);
 
     if (light_expanded) {
-        ta_light *light = ta_game_component_try(selected_entity, RES_COMP_LIGHT);
+        ta_light *light = (ta_light *)ta_game_component_try(selected_entity, RES_COMP_LIGHT);
         if (light) {
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1762,8 +1768,7 @@ static void ui_audio_panel()
     const char *audio_request_name = 0;
 
     ta_ui_row_begin();
-    dlb_vec_each(ta_audio_buffer *, audio_buffer, ta_game_resource_pool(RES_AUDIO_BUFFER))
-    {
+    dlb_vec_each(ta_audio_buffer *, audio_buffer, (ta_audio_buffer *)ta_game_resource_pool(RES_AUDIO_BUFFER)) {
 #if 0
         int node_panel_id = -1;
         ta_ui_panel_begin(&TA_SIZE(60 * buf_count, 60), &node_panel_id);
@@ -1790,7 +1795,7 @@ static void ui_audio_panel()
     }
 
     if (audio_request_name) {
-        ta_audio_source *bg_music_src = ta_game_component(tg_e_background_music,
+        ta_audio_source *bg_music_src = (ta_audio_source *)ta_game_component(tg_e_background_music,
             RES_COMP_AUDIO_SOURCE);
         ta_audio_source_stop(bg_music_src);
         if (audio_request_name != audio_playing_name) {
@@ -1812,7 +1817,7 @@ static void ui_camera_panel()
     static const char *selected_camera = 0;
 
     //ta_ui_row_begin();
-    dlb_vec_each(ta_camera *, camera, ta_game_resource_pool(RES_COMP_CAMERA)) {
+    dlb_vec_each(ta_camera *, camera, (ta_camera *)ta_game_resource_pool(RES_COMP_CAMERA)) {
         ta_ui_next_size(120, 0);
         bool selected = camera->name == selected_camera;
         ta_ui_toggle_button_begin(TA_UI_AUTOSIZE_H);
@@ -1828,7 +1833,7 @@ static void ui_camera_panel()
     }
 
     if (selected_camera) {
-        ta_camera *camera = ta_game_by_sym(RES_COMP_CAMERA, selected_camera);
+        ta_camera *camera = (ta_camera *)ta_game_by_sym(RES_COMP_CAMERA, selected_camera);
 
         ta_ui_row_begin();
         static ta_ui_panel_state selected_camera_panel = { 0 };
@@ -1871,7 +1876,7 @@ static void ui_camera_panel()
         static ta_ui_textbox_vec3_state tpos_textbox = { 0 };
         ta_ui_textbox_vec3(&camera->target_xform.position, &tpos_textbox, false, true);
 
-        ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+        ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
         static ta_ui_textbox_vec3_state pos_textbox = { 0 };
         ta_ui_textbox_vec3(&cam_trans->xform.position, &pos_textbox, false, false);
 
@@ -1964,23 +1969,23 @@ static void ui_camera_panel()
         static struct {
             const char *text;
             u32 len;
-        } dbg_modes[] = {
-            [DBG_NONE]           = { CSTR("None") },
+        } dbg_modes[DBG_CHANNEL_COUNT] = {
+            [DBG_NONE]           = { CSTR("None")         },
             [DBG_VTX_COLOR]      = { CSTR("Vertex color") },
-            [DBG_VTX_UV]         = { CSTR("UV") },
-            [DBG_VTX_NORMAL]     = { CSTR("Normal") },
-            [DBG_VTX_TANGENT]    = { CSTR("Tangent") },
-            [DBG_VTX_TBN_NORMAL] = { CSTR("TBN normal") },
-            [DBG_NORMAL_MAP]     = { CSTR("Normal map") },
-            [DBG_MTL_ALBEDO]     = { CSTR("Albedo") },
-            [DBG_MTL_EMISSION]   = { CSTR("Emission") },
-            [DBG_MTL_METALLIC]   = { CSTR("Metallic") },
-            [DBG_MTL_ROUGHNESS]  = { CSTR("Roughness") },
-            [DBG_MTL_OCCLUSION]  = { CSTR("Occlusion") },
-            [DBG_SHADOW_0]       = { CSTR("Shadow[0]") },
-            [DBG_SHADOW_1]       = { CSTR("Shadow[1]") },
-            [DBG_SHADOW_2]       = { CSTR("Shadow[2]") },
-            [DBG_SHADOW_3]       = { CSTR("Shadow[3]") },
+            [DBG_VTX_UV]         = { CSTR("UV")           },
+            [DBG_VTX_NORMAL]     = { CSTR("Normal")       },
+            [DBG_VTX_TANGENT]    = { CSTR("Tangent")      },
+            [DBG_VTX_TBN_NORMAL] = { CSTR("TBN normal")   },
+            [DBG_NORMAL_MAP]     = { CSTR("Normal map")   },
+            [DBG_MTL_ALBEDO]     = { CSTR("Albedo")       },
+            [DBG_MTL_EMISSION]   = { CSTR("Emission")     },
+            [DBG_MTL_METALLIC]   = { CSTR("Metallic")     },
+            [DBG_MTL_ROUGHNESS]  = { CSTR("Roughness")    },
+            [DBG_MTL_OCCLUSION]  = { CSTR("Occlusion")    },
+            [DBG_SHADOW_0]       = { CSTR("Shadow[0]")    },
+            [DBG_SHADOW_1]       = { CSTR("Shadow[1]")    },
+            [DBG_SHADOW_2]       = { CSTR("Shadow[2]")    },
+            [DBG_SHADOW_3]       = { CSTR("Shadow[3]")    },
         };
 
         for (size_t mode = 0; mode < ARRAY_SIZE(dbg_modes); ++mode) {
@@ -1990,7 +1995,7 @@ static void ui_camera_panel()
             ta_ui_label(dbg_modes[mode].text, dbg_modes[mode].len);
             bool checked = mode == (size_t)camera->dbg_channel;
             if (ta_ui_toggle_button_end(&checked)) {
-                camera->dbg_channel = mode;
+                camera->dbg_channel = (ta_glsl_dbg_channel)mode;
             }
         }
         ta_ui_panel_end();
@@ -2041,7 +2046,7 @@ static void ui_material_details_panel(const char *material_name)
         return;
     }
 
-    ta_material *material = ta_game_by_sym(RES_MATERIAL, material_name);
+    ta_material *material = (ta_material *)ta_game_by_sym(RES_MATERIAL, material_name);
 
     ta_ui_next_margin_top(50);
     ta_ui_window_begin(&ui.window, TA_UI_AUTOSIZE);
@@ -2149,9 +2154,9 @@ static void ui_material_details_panel(const char *material_name)
                 /* in other cases (or go farther and try to copy the file to data/texture/.. but that seems quite error  */ \
                 /* prone, hmm..)                                                                                         */ \
                 DLB_ASSERT(dlb_str_startswith(name, "data/texture/"));                                                      \
-                ta_texture *texture = ta_game_by_sym_try(RES_TEXTURE, name);                                                \
+                ta_texture *texture = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, name);                                  \
                 if (!texture) {                                                                                             \
-                    texture = ta_game_alloc(RES_TEXTURE, SYM(name));                                                        \
+                    texture = (ta_texture *)ta_game_alloc(RES_TEXTURE, SYM(name));                                                        \
                     texture->type = TA_TEXTURE_2D_ARRAY;                                                                    \
                     texture->path = name;                                                                                   \
                     ta_texture_init(texture);                                                                               \
@@ -2187,7 +2192,7 @@ static void ui_material_panel()
     //ta_ui_next_margin(2, 2, 0, 0);
     static ta_ui_panel_state material_panel = { 0 };
     ta_ui_panel_begin(&material_panel, TA_UI_AUTOSIZE);
-    dlb_vec_each(ta_material *, material, ta_game_resource_pool(RES_MATERIAL)) {
+    dlb_vec_each(ta_material *, material, (ta_material *)ta_game_resource_pool(RES_MATERIAL)) {
         ta_ui_row_begin();
         ta_ui_next_size(300, 0);
         if (ta_ui_button(SYM(material->name))) {
@@ -2232,7 +2237,7 @@ static void ui_material_panel()
             ta_ui_next_bg_color(UI_STATE_NONE, 0.7f, 0.0f, 0.0f, 0.9f);
             ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
             if (ta_ui_button(CSTR("Apply"))) {
-                ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
+                ta_model *model = (ta_model *)ta_game_component_try(selected_entity, RES_COMP_MODEL);
                 if (model) {
                     if (!model->materials) {
                         dlb_vec_alloc(model->materials);
@@ -2250,7 +2255,7 @@ static void ui_mesh_panel()
     //ta_ui_next_margin(2, 2, 0, 0);
     static ta_ui_panel_state mesh_panel = { 0 };
     ta_ui_panel_begin(&mesh_panel, TA_UI_AUTOSIZE);
-    dlb_vec_each(ta_mesh *, mesh, ta_game_resource_pool(RES_MESH)) {
+    dlb_vec_each(ta_mesh *, mesh, (ta_mesh *)ta_game_resource_pool(RES_MESH)) {
         ta_ui_row_begin();
         ta_ui_next_size(200, 0);
         ta_ui_next_margin(0, 2, 0, 0);
@@ -2260,7 +2265,7 @@ static void ui_mesh_panel()
             const char *selected_entity = 0;
             ta_editor_selected_entity(&selected_entity);
             if (selected_entity) {
-                ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
+                ta_model *model = (ta_model *)ta_game_component_try(selected_entity, RES_COMP_MODEL);
                 if (model) {
                     model->mesh = mesh->name;
                 }
@@ -2350,7 +2355,7 @@ static void ui_texture_panel()
     static ta_ui_panel_state texture_panel = { 0 };
     ta_ui_panel_begin(&texture_panel, TA_UI_AUTOSIZE_W);
     int count = 0;
-    dlb_vec_each(ta_texture *, texture, ta_game_resource_pool(RES_TEXTURE)) {
+    dlb_vec_each(ta_texture *, texture, (ta_texture *)ta_game_resource_pool(RES_TEXTURE)) {
         if (count % 5 == 0) {
             ta_ui_row_begin();
         }
@@ -2367,9 +2372,9 @@ static void ui_texture_panel()
             const char *selected_entity = 0;
             ta_editor_selected_entity(&selected_entity);
             if (selected_entity) {
-                ta_model *model = ta_game_component_try(selected_entity, RES_COMP_MODEL);
+                ta_model *model = (ta_model *)ta_game_component_try(selected_entity, RES_COMP_MODEL);
                 if (model && model->material) {
-                    ta_material *material = ta_game_by_sym(RES_MATERIAL, model->material);
+                    ta_material *material = (ta_material *)ta_game_by_sym(RES_MATERIAL, model->material);
                     material->albedo_texture = texture->name;
                 }
             }
@@ -2562,7 +2567,7 @@ void ta_editor_draw_screen()
         // Font selector (for trying a lot of fonts quickly)
         ta_ui_row_begin();
         static int cur_font_idx = 0;
-        ta_font *fonts = ta_game_resource_pool(RES_FONT);
+        ta_font *fonts = (ta_font *)ta_game_resource_pool(RES_FONT);
         int fonts_count = dlb_vec_len(fonts);
         cur_font_idx = MIN(cur_font_idx, fonts_count - 1);
 

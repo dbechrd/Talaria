@@ -50,7 +50,7 @@ static void ta_transform_update(ta_transform *transform, float alpha, bool dirty
 
     // Get parent world matrix (recursively calculate if still dirty)
     if (transform->parent) {
-        ta_transform *parent = ta_game_component(transform->parent, RES_COMP_TRANSFORM);
+        ta_transform *parent = (ta_transform *)ta_game_component(transform->parent, RES_COMP_TRANSFORM);
         if (parent->dirty_flag == dirty_flag) {
             ta_transform_update(parent, alpha, dirty_flag);
         }

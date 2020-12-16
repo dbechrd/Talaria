@@ -96,15 +96,15 @@ static console_cmd_type console_exec(ta_console *console, char *command)
         void (*handler)(ta_console *console);
         bool newline;
     } commands[CONSOLE_CMD_COUNT] = {
-        [CONSOLE_CMD_EXIT]    = { CSTR0("exit"),        console_cmd_clear,   false },
-        [CONSOLE_CMD_CLEAR]   = { CSTR0("clear"),       console_cmd_clear,   false },
-        [CONSOLE_CMD_MOTD]    = { CSTR0("motd"),        console_cmd_motd,    true },
-        [CONSOLE_CMD_LIFE]    = { CSTR0("42"),          console_cmd_42,      true },
-        [CONSOLE_CMD_PING]    = { CSTR0("ping"),        console_cmd_ping,    true },
-        [CONSOLE_CMD_CAT]     = { CSTR0("cat"),         console_cmd_cat,     true },
-        [CONSOLE_CMD_LOG]     = { CSTR0("log"),         console_cmd_log,     true },
-        [CONSOLE_CMD_LOG]     = { CSTR0("jesza.exe"),   console_cmd_jesza,   true },
-        [CONSOLE_CMD_UNKNOWN] = { 0, 0,                 console_cmd_unknown, true }
+        [CONSOLE_CMD_EXIT]    = { CSTR0("exit"),      console_cmd_clear,   false },
+        [CONSOLE_CMD_CLEAR]   = { CSTR0("clear"),     console_cmd_clear,   false },
+        [CONSOLE_CMD_MOTD]    = { CSTR0("motd"),      console_cmd_motd,    true },
+        [CONSOLE_CMD_LIFE]    = { CSTR0("42"),        console_cmd_42,      true },
+        [CONSOLE_CMD_PING]    = { CSTR0("ping"),      console_cmd_ping,    true },
+        [CONSOLE_CMD_CAT]     = { CSTR0("cat"),       console_cmd_cat,     true },
+        [CONSOLE_CMD_LOG]     = { CSTR0("log"),       console_cmd_log,     true },
+        [CONSOLE_CMD_LOG]     = { CSTR0("jesza.exe"), console_cmd_jesza,   true },
+        [CONSOLE_CMD_UNKNOWN] = { 0, 0,               console_cmd_unknown, true },
     };
 
     console_history_push(console, CSTR("\n"));
@@ -116,16 +116,16 @@ static console_cmd_type console_exec(ta_console *console, char *command)
         return cmd_type;
     }
 
-    for (cmd_type = 0; cmd_type < CONSOLE_CMD_COUNT; ++cmd_type) {
+    for (int i = 0; i < CONSOLE_CMD_COUNT; ++i) {
         // NOTE: This will many any command that doesn't have a cmd string. You
         // should ensure there's always a valid command string for all commands
         // except CONSOLE_CMD_UNKNOWN.
-        if (!strncmp(command, commands[cmd_type].cmd, commands[cmd_type].len)) {
-            if (commands[cmd_type].newline) {
+        if (!strncmp(command, commands[i].cmd, commands[i].len)) {
+            if (commands[i].newline) {
                 console_history_push(console, CSTR("\n"));
             }
-            if (commands[cmd_type].handler) {
-                commands[cmd_type].handler(console);
+            if (commands[i].handler) {
+                commands[i].handler(console);
             }
             break;
         }

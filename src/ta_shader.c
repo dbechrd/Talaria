@@ -441,7 +441,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
             u_cast_shadows->value.glbool    = (GLboolean)light->data.directional.cast_shadows;
             u_light_pv->value.mat4          = ta_light_pv(light);
 
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
+            ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
             u_shadowmap_texture_pool_index->value.gluint = tex->gl_texture_pool_index;
             dlb_vec_push(u_shadowmap_texture_array_layers->value.gluint_array, tex->gl_texture_pool_layer);
             break;
@@ -452,10 +452,10 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
             u_shadowmap_zfar->value.glfloat = light->data.point.shadow_properties.zfar;
 
             // NOTE: Assume all textures are in the same pool (asserts)
-            ta_texture *first_tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
+            ta_texture *first_tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
             u_shadowmap_texture_pool_index->value.gluint = first_tex->gl_texture_pool_index;
             for (int i = 0; i < 6; i++) {
-                ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[i]);
+                ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[i]);
                 dlb_vec_push(u_shadowmap_texture_array_layers->value.gluint_array, tex->gl_texture_pool_layer);
                 DLB_ASSERT(tex->gl_texture_pool_index == u_shadowmap_texture_pool_index->value.gluint);
             }
@@ -464,7 +464,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
             u_direction->value.vec3         = ta_light_direction(light);
             u_cast_shadows->value.glbool    = (GLboolean)light->data.spot.cast_shadows;
 
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
+            ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
             u_shadowmap_texture_pool_index->value.gluint = tex->gl_texture_pool_index;
             dlb_vec_push(u_shadowmap_texture_array_layers->value.gluint_array, tex->gl_texture_pool_layer);
             DLB_ASSERT(!"Don't handle spot lights yet");
@@ -489,13 +489,13 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
 }
 void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *material)
 {
-    ta_texture *albedo_texture    = ta_game_by_sym_try(RES_TEXTURE, material->albedo_texture);
-    ta_texture *emission_texture  = ta_game_by_sym_try(RES_TEXTURE, material->emission_texture);
-    ta_texture *height_texture    = ta_game_by_sym_try(RES_TEXTURE, material->height_texture);
-    ta_texture *metallic_texture  = ta_game_by_sym_try(RES_TEXTURE, material->metallic_texture);
-    ta_texture *normal_texture    = ta_game_by_sym_try(RES_TEXTURE, material->normal_texture);
-    ta_texture *occlusion_texture = ta_game_by_sym_try(RES_TEXTURE, material->occlusion_texture);
-    ta_texture *roughness_texture = ta_game_by_sym_try(RES_TEXTURE, material->roughness_texture);
+    ta_texture *albedo_texture    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->albedo_texture);
+    ta_texture *emission_texture  = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->emission_texture);
+    ta_texture *height_texture    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->height_texture);
+    ta_texture *metallic_texture  = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->metallic_texture);
+    ta_texture *normal_texture    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->normal_texture);
+    ta_texture *occlusion_texture = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->occlusion_texture);
+    ta_texture *roughness_texture = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->roughness_texture);
 
     // NOTE: Seems dumb to bind a texture only for the multiplication factor to be 0.0, right?
     DLB_ASSERT(material->albedo_factor.a);

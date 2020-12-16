@@ -52,7 +52,7 @@ FMOD_RESULT F_CALLBACK audio_fmod_callback(FMOD_SYSTEM *system, FMOD_SYSTEM_CALL
 
     FMOD_RESULT result = FMOD_OK;
     if (type == FMOD_SYSTEM_CALLBACK_ERROR) {
-        FMOD_ERRORCALLBACK_INFO *info = commanddata1;
+        FMOD_ERRORCALLBACK_INFO *info = (FMOD_ERRORCALLBACK_INFO *)commanddata1;
         // Ignore channels that have stopped playing or were stolen
         switch (info->instancetype) {
             case FMOD_ERRORCALLBACK_INSTANCETYPE_CHANNELCONTROL:
@@ -284,7 +284,7 @@ void ta_audio_buffer_init(ta_audio_buffer *buffer)
 }
 void ta_audio_buffer_init_void(void *buffer)
 {
-    ta_audio_buffer_init(buffer);
+    ta_audio_buffer_init((ta_audio_buffer *)buffer);
 }
 void ta_audio_buffer_load_path(ta_audio_buffer *buffer, const char *path)
 {
@@ -379,15 +379,14 @@ void ta_audio_source_init(ta_audio_source *source)
 #endif
 
     if (source->audio_buffer) {
-        ta_audio_buffer *buffer = ta_game_by_sym(RES_AUDIO_BUFFER,
-            source->audio_buffer);
+        ta_audio_buffer *buffer = (ta_audio_buffer *)ta_game_by_sym(RES_AUDIO_BUFFER, source->audio_buffer);
         DLB_ASSERT(buffer->al_buffer_id);
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
 }
 void ta_audio_source_init_void(void *source)
 {
-    ta_audio_source_init(source);
+    ta_audio_source_init((ta_audio_source *)source);
 }
 void ta_audio_source_free(ta_audio_source *source)
 {
@@ -395,7 +394,7 @@ void ta_audio_source_free(ta_audio_source *source)
 }
 void ta_audio_source_free_void(void *source)
 {
-    ta_audio_source_free(source);
+    ta_audio_source_free((ta_audio_source *)source);
 }
 void ta_audio_source_set_pitch(ta_audio_source *source, float pitch)
 {
@@ -417,14 +416,14 @@ void ta_audio_source_set_velocity(ta_audio_source *source, ta_vec3 velocity)
 }
 ta_result ta_audio_source_set_buffer(ta_audio_source *source, const char *audio_buffer)
 {
-    ta_audio_source_state state = 0;
+    ta_audio_source_state state = TA_AUDIO_UNKNOWN;
     ta_audio_source_get_state(source, &state);
     if (state != TA_AUDIO_STOPPED) {
         ta_audio_source_stop(source);
     }
     if (source->audio_buffer != audio_buffer) {
         source->audio_buffer = audio_buffer;
-        ta_audio_buffer *buffer = ta_game_by_sym_try(RES_AUDIO_BUFFER, source->audio_buffer);
+        ta_audio_buffer *buffer = (ta_audio_buffer *)ta_game_by_sym_try(RES_AUDIO_BUFFER, source->audio_buffer);
         if (buffer) {
             //alSourceQueueBuffers(audio_source, 1, &audio_buffer);
             alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);

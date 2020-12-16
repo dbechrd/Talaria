@@ -24,6 +24,7 @@ typedef struct ta_audio_buffer {
 } ta_audio_buffer;
 
 typedef enum ta_audio_source_state {
+    TA_AUDIO_UNKNOWN = 0,
     TA_AUDIO_STOPPED = AL_STOPPED,
     TA_AUDIO_PLAYING = AL_PLAYING,
     TA_AUDIO_PAUSED  = AL_PAUSED

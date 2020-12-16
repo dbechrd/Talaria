@@ -276,27 +276,27 @@ void ta_game_init()
 
     ogx_scene *scenes = 0;
     ogx_scene *scene = 0;
-    scene = dlb_vec_alloc(scenes);
+    scene = (ogx_scene *)dlb_vec_alloc(scenes);
     if (ogx_scene_from_file(scene, "data/mesh/dude.ogex") == OGX_SUCCESS) {
         ta_ogx_load(scene);
     }
-    scene = dlb_vec_alloc(scenes);
+    scene = (ogx_scene *)dlb_vec_alloc(scenes);
     if (ogx_scene_from_file(scene, "data/mesh/button.ogex") == OGX_SUCCESS) {
         ta_ogx_load(scene);
     }
-    scene = dlb_vec_alloc(scenes);
+    scene = (ogx_scene *)dlb_vec_alloc(scenes);
     if (ogx_scene_from_file(scene, "data/mesh/skeleton_test.ogex") == OGX_SUCCESS) {
         ta_ogx_load(scene);
     }
-    scene = dlb_vec_alloc(scenes);
+    scene = (ogx_scene *)dlb_vec_alloc(scenes);
     if (ogx_scene_from_file(scene, "data/mesh/test_bone_1.ogex") == OGX_SUCCESS) {
         ta_ogx_load(scene);
     }
-    scene = dlb_vec_alloc(scenes);
+    scene = (ogx_scene *)dlb_vec_alloc(scenes);
     if (ogx_scene_from_file(scene, "data/mesh/skeleton_test_skin.ogex") == OGX_SUCCESS) {
         ta_ogx_load(scene);
     }
-    //scene = dlb_vec_alloc(scenes);
+    //scene = (ogx_scene *)dlb_vec_alloc(scenes);
     //if (ogx_scene_from_file(scene, "data/mesh/sponza.ogex") == OGX_SUCCESS) {
     //    ta_ogx_load(scene);
     //}
@@ -346,7 +346,7 @@ void ta_game_init()
     tg_e_background_music = SYM_ENTITY_BACKGROUND_MUSIC;
     DLB_ASSERT(tg_e_background_music);
 
-    ta_audio_source *bg_music_src = ta_game_component_try(tg_e_background_music, RES_COMP_AUDIO_SOURCE);
+    ta_audio_source *bg_music_src = (ta_audio_source *)ta_game_component_try(tg_e_background_music, RES_COMP_AUDIO_SOURCE);
     if (bg_music_src) {
         ta_audio_source_play_loop(bg_music_src);
     }
@@ -380,14 +380,14 @@ void ta_game_init()
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_occlusion));
     ta_game_alloc(RES_TEXTURE, SYM(tg_tex_default_roughness));
 
-    ta_texture *tex_invalid_albedo    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_invalid_albedo   );
-    ta_texture *tex_default_albedo    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo   );
-    ta_texture *tex_default_emission  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission );
-    ta_texture *tex_default_height    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height   );
-    ta_texture *tex_default_metallic  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic );
-    ta_texture *tex_default_normal    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_normal   );
-    ta_texture *tex_default_occlusion = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion);
-    ta_texture *tex_default_roughness = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness);
+    ta_texture *tex_invalid_albedo    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, tg_tex_invalid_albedo   );
+    ta_texture *tex_default_albedo    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo   );
+    ta_texture *tex_default_emission  = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission );
+    ta_texture *tex_default_height    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height   );
+    ta_texture *tex_default_metallic  = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic );
+    ta_texture *tex_default_normal    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_normal   );
+    ta_texture *tex_default_occlusion = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion);
+    ta_texture *tex_default_roughness = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness);
 
     // TODO(cleanup): This isn't used anywhere. Not sure if we need it.
     // Generate magenta/white grid pattern
@@ -475,9 +475,9 @@ void ta_game_init()
     // Shaders
     //--------------------------------------------------------------------------
     // TODO: Move these to shaders.dml, they're not scene-specific
-    tg_shader_lines   = ta_game_by_sym(RES_SHADER, INTERN("lines"));
-    tg_shader_quads   = ta_game_by_sym(RES_SHADER, INTERN("quads"));
-    tg_shader_cubemap = ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
+    tg_shader_lines   = (ta_shader *)ta_game_by_sym(RES_SHADER, INTERN("lines"));
+    tg_shader_quads   = (ta_shader *)ta_game_by_sym(RES_SHADER, INTERN("quads"));
+    tg_shader_cubemap = (ta_shader *)ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)
     ta_asset_watcher_init(&tg_game.texture_watcher, SYM(tg_game.base_path));
@@ -509,21 +509,21 @@ void ta_game_state_set(ta_game_state state)
             ta_mouse_capture_set(true);
             break;
         } case TA_STATE_FREE_CAM: {
-            ta_camera *freecam = ta_game_component(tg_e_freecam, RES_COMP_CAMERA);
-            ta_transform *trans = ta_game_component(tg_e_freecam, RES_COMP_TRANSFORM);
+            ta_camera *freecam = (ta_camera *)ta_game_component(tg_e_freecam, RES_COMP_CAMERA);
+            ta_transform *trans = (ta_transform *)ta_game_component(tg_e_freecam, RES_COMP_TRANSFORM);
             // HACK: Set freecam position instantly to player cam location. This will *not* work correctly if freecam
             // has a parent. Needs to somehow use xform_world instead.
             if (vec3_zero(trans->xform.position)) {
-                ta_transform *active_cam = ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
+                ta_transform *active_cam = (ta_transform *)ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
                 freecam->target_xform.position = active_cam->xform.position;
                 trans->xform.position = freecam->target_xform.position;
             }
             tg_e_active_camera = tg_e_freecam;
             break;
         } case TA_STATE_EDITOR: {
-            ta_camera *freecam = ta_game_component(tg_e_freecam, RES_COMP_CAMERA);
-            ta_transform *trans = ta_game_component(tg_e_freecam, RES_COMP_TRANSFORM);
-            ta_transform *active_cam = ta_game_component(tg_e_active_camera, RES_COMP_TRANSFORM);
+            ta_camera *freecam = (ta_camera *)ta_game_component(tg_e_freecam, RES_COMP_CAMERA);
+            ta_transform *trans = (ta_transform *)ta_game_component(tg_e_freecam, RES_COMP_TRANSFORM);
+            ta_transform *active_cam = (ta_transform *)ta_game_component(tg_e_active_camera, RES_COMP_TRANSFORM);
             freecam->target_xform.position = active_cam->xform.position;
             trans->xform.position = freecam->target_xform.position;
             //}
@@ -609,13 +609,13 @@ void ta_game_load_gltf(const char *filename)
 }
 ta_camera *ta_game_camera()
 {
-    return ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
+    return (ta_camera *)ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
 }
 // Cast ray from camera directly forward (crosshair)
 ta_ray ta_game_camera_ray()
 {
-    ta_camera *camera = ta_game_camera();
-    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    ta_camera *camera = (ta_camera *)ta_game_camera();
+    ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
     ta_ray ray = { 0 };
     ray.origin = cam_trans->xform_world.position;
     ray.direction = camera->front;
@@ -624,9 +624,9 @@ ta_ray ta_game_camera_ray()
 // Cast ray from mouse screen position
 ta_ray ta_game_mouse_ray()
 {
-    //ta_camera *camera = ta_game_component(INTERN("player_camera"), RES_COMP_CAMERA);
-    ta_camera *camera = ta_game_camera();
-    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    //ta_camera *camera = (ta_camera *)ta_game_component(INTERN("player_camera"), RES_COMP_CAMERA);
+    ta_camera *camera = (ta_camera *)ta_game_camera();
+    ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
 
     // NOTE: Implementation based on this, but with I flipped some signs to make it more logical
     // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-generating-camera-rays/generating-camera-rays
@@ -648,7 +648,7 @@ ta_ray ta_game_mouse_ray()
 }
 ta_player *ta_game_player()
 {
-    return ta_game_component(tg_e_player_one, RES_COMP_PLAYER);
+    return (ta_player *)ta_game_component(tg_e_player_one, RES_COMP_PLAYER);
 }
 void ta_game_sim_pause()
 {
@@ -682,7 +682,7 @@ u64 ta_game_frame_num()
 void ta_game_window_resize()
 {
     // Update all cameras to new aspect ratio
-    dlb_vec_each(ta_camera *, camera, ta_game_resource_pool(RES_COMP_CAMERA)) {
+    dlb_vec_each(ta_camera *, camera, (ta_camera *)ta_game_resource_pool(RES_COMP_CAMERA)) {
         if (!camera->ortho) {
             ta_camera_recalc_projection(camera);
         }
@@ -694,7 +694,7 @@ static void game_hotload_textures()
         ta_asset_change_record *change = &tg_game.texture_watcher.changes[i];
         // NOTE: Delay change handling 60 frames
         if (change->path && (tg_game.frame_num - change->frame_num) > 60) {
-            ta_texture *tex = ta_game_by_name_try(RES_TEXTURE, change->path, strlen(change->path));
+            ta_texture *tex = (ta_texture *)ta_game_by_name_try(RES_TEXTURE, change->path, strlen(change->path));
             if (tex) {
                 printf("[GAME] hot-loading: %s\n", change->path);
                 ta_texture_reload(tex);
@@ -714,7 +714,7 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_logic, double ms
     float volume = ta_audio_listener_get_volume(&tg_audio_listener);
     bool muted = ta_audio_listener_muted(&tg_audio_listener);
 
-    ta_camera *camera = ta_game_camera();
+    ta_camera *camera = (ta_camera *)ta_game_camera();
 
     ta_size window_size = { 0 };
     ta_rect restore = { 0 };
@@ -761,14 +761,14 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_logic, double ms
     DLB_ASSERT(len < sizeof(frame_info));
 
     static ta_rect_uv *frame_time_rects = 0;
-    ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
+    ta_font *font = (ta_font *)ta_game_by_sym(RES_FONT, tg_font);
     ta_font_push_text(font, frame_info, len, true, 0, 0, 0, &frame_time_rects);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
         ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, 0, true, false);
     }
     dlb_vec_zero(frame_time_rects);
 
-    ta_shader *font_shader = ta_game_by_sym(RES_SHADER, font->shader);
+    ta_shader *font_shader = (ta_shader *)ta_game_by_sym(RES_SHADER, font->shader);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
@@ -776,8 +776,8 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_logic, double ms
 }
 static void game_draw_hud()
 {
-    ta_player *player = ta_game_player();
-    ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
+    ta_player *player = (ta_player *)ta_game_player();
+    ta_gun *gun = (ta_gun *)ta_game_component(player->e_gun, RES_COMP_GUN);
 
     ta_ui_next_bg_color_rgba(UI_STATE_ALL, TA_COLOR_INVIS);
     static ta_ui_window_state window = { 0 };
@@ -867,7 +867,7 @@ static void collision_broadphase(ta_rigid_body_pair **pairs, ta_rigid_body *rigi
                 b->collider.type == TA_COLLIDER_PLANE ||
                 ta_aabb_v_aabb(&a->aabb, &b->aabb))
             {
-                ta_rigid_body_pair *pair = dlb_vec_alloc(*pairs);
+                ta_rigid_body_pair *pair = (ta_rigid_body_pair *)dlb_vec_alloc(*pairs);
                 pair->a = a;
                 pair->b = b;
             }
@@ -904,7 +904,7 @@ static void game_simulate(float dt)
     dlb_vec_zero(tg_game.pairs);
     dlb_vec_zero(tg_game.manifolds);
 
-    ta_rigid_body *rigid_bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
+    ta_rigid_body *rigid_bodies = (ta_rigid_body *)ta_game_resource_pool(RES_COMP_RIGID_BODY);
 
     // for n particles do
     //     x_prev = x;
@@ -915,7 +915,7 @@ static void game_simulate(float dt)
         {
             // TODO: We can't simulate rigid bodies on things that have parents, that would be super complex. We should consider
             // all of the childrens' colliders though, if they have any. Let's ignore this issue for now.
-            ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+            ta_transform *transform = (ta_transform *)ta_game_component(body->entity, RES_COMP_TRANSFORM);
             DLB_ASSERT(!transform->parent);
 
             body->xform.position = transform->xform.position;
@@ -1120,7 +1120,7 @@ static void game_simulate(float dt)
         DLB_ASSERT(vec3_good(body->ang_velocity));
 
         // TODO: Allow transform to be offset from rigid body position/orientation? Or just make rigidbody the parent..
-        ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+        ta_transform *transform = (ta_transform *)ta_game_component(body->entity, RES_COMP_TRANSFORM);
         transform->xform.position = body->xform.position;
         transform->xform.orientation = body->xform.orientation;
     }
@@ -1250,20 +1250,20 @@ static void game_simulate(float dt)
 }
 static void game_render_skybox()
 {
-    //ta_cubemap *skybox = ta_game_by_name_try(RES_CUBEMAP, SYM(INTERN("miramar_skybox")));
-    ta_cubemap *skybox = ta_game_by_name_try(RES_CUBEMAP, SYM(INTERN("bad_galaxy_skybox")));
+    //ta_cubemap *skybox = (ta_cubemap *)ta_game_by_name_try(RES_CUBEMAP, SYM(INTERN("miramar_skybox")));
+    ta_cubemap *skybox = (ta_cubemap *)ta_game_by_name_try(RES_CUBEMAP, SYM(INTERN("bad_galaxy_skybox")));
     if (skybox) {
-        ta_camera *camera = ta_game_camera();
-        ta_shader *shader = ta_game_by_name(RES_SHADER, SYM(INTERN("skybox")));
-        ta_mesh *mesh = ta_game_by_name(RES_MESH, SYM(INTERN("prim_skybox")));
+        ta_camera *camera = (ta_camera *)ta_game_camera();
+        ta_shader *shader = (ta_shader *)ta_game_by_name(RES_SHADER, SYM(INTERN("skybox")));
+        ta_mesh *mesh = (ta_mesh *)ta_game_by_name(RES_MESH, SYM(INTERN("prim_skybox")));
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->frustum);
 
         // NOTE: Assume all textures are in the same pool (asserts)
-        ta_texture *first_tex = ta_game_by_sym(RES_TEXTURE, skybox->textures[0]);
+        ta_texture *first_tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, skybox->textures[0]);
         GLuint *layers = 0;
         for (int i = 0; i < 6; i++) {
-            ta_texture *tex = ta_game_by_sym(RES_TEXTURE, skybox->textures[i]);
+            ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, skybox->textures[i]);
             dlb_vec_push(layers, tex->gl_texture_pool_layer);
             DLB_ASSERT(tex->gl_texture_pool_index == first_tex->gl_texture_pool_index);
         }
@@ -1328,11 +1328,11 @@ static void game_render_manifolds_debug()
 }
 static void game_render_colliders_debug()
 {
-    ta_rigid_body *rigid_bodies = ta_game_resource_pool(RES_COMP_RIGID_BODY);
+    ta_rigid_body *rigid_bodies = (ta_rigid_body *)ta_game_resource_pool(RES_COMP_RIGID_BODY);
 
     // Local space
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
-        ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+        ta_transform *transform = (ta_transform *)ta_game_component(body->entity, RES_COMP_TRANSFORM);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &transform->world);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &transform->world);
 
@@ -1351,7 +1351,7 @@ static void game_render_colliders_debug()
 #if 0
     // World space
     dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
-        ta_transform *transform = ta_game_component(body->entity, RES_COMP_TRANSFORM);
+        ta_transform *transform = (ta_transform *)ta_game_component(body->entity, RES_COMP_TRANSFORM);
 
         //ta_sphere local_origin = { 0 };
         //local_origin.center = transform->xform_world.position;
@@ -1373,17 +1373,16 @@ static void game_render_nametags_debug(ta_camera *camera)
 {
     glClear(GL_DEPTH_BUFFER_BIT);
 
-    ta_font *font = ta_game_by_sym(RES_FONT, tg_font);
+    ta_font *font = (ta_font *)ta_game_by_sym(RES_FONT, tg_font);
     static ta_rect_uv *tag_rects = 0;
 
     ta_mat4 projection = camera->projection;
     //ta_mat4 projection = mat4_ortho(-10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 20.0f);
 
-    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
-    ta_shader *font_shader = ta_game_by_sym(RES_SHADER, font->shader);
+    ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+    ta_shader *font_shader = (ta_shader *)ta_game_by_sym(RES_SHADER, font->shader);
 
-    ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
-    dlb_vec_each(ta_transform *, transform, transforms) {
+    dlb_vec_each(ta_transform *, transform, (ta_transform *)ta_game_resource_pool(RES_COMP_TRANSFORM)) {
         ta_rect tag_rect = ta_font_push_text(font, SYM(transform->name), true, 0, 0, 0, &tag_rects);
 
         ta_vec3 tag_pos = transform->xform_world.position;
@@ -1413,7 +1412,7 @@ static void game_render_nametags_debug(ta_camera *camera)
         ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &projection);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
         ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &tag_xform_bg);
-        //ta_texture *tex_orange = ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
+        //ta_texture *tex_orange = (ta_texture *)ta_game_by_sym(RES_TEXTURE, tg_tex_orange);
         //ta_shader_set_sampler2d(tg_shader_quads, SYM_U_TEX, tex_orange->gl_id);
         ta_rect_uv tag_background = { 0 };
         tag_background.rect.x -= (int)NDC_W(5.0f);
@@ -1477,11 +1476,11 @@ void ta_game_loop()
     double ms_frame_delta = 0; // Total delta time (including v-sync)
     double ms_frame_logic = 0;  // Actual frame time before v-sync
 
-    ta_transform *transforms = ta_game_resource_pool(RES_COMP_TRANSFORM);
-    ta_mesh *meshes = ta_game_resource_pool(RES_MESH);
-    ta_model *models = ta_game_resource_pool(RES_COMP_MODEL);
-    ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
-    ta_camera *cameras = ta_game_resource_pool(RES_COMP_CAMERA);
+    ta_transform *transforms = (ta_transform *)ta_game_resource_pool(RES_COMP_TRANSFORM);
+    ta_mesh *meshes = (ta_mesh *)ta_game_resource_pool(RES_MESH);
+    ta_model *models = (ta_model *)ta_game_resource_pool(RES_COMP_MODEL);
+    ta_light *lights = (ta_light *)ta_game_resource_pool(RES_COMP_LIGHT);
+    ta_camera *cameras = (ta_camera *)ta_game_resource_pool(RES_COMP_CAMERA);
 
     while (ta_game_state_current() != TA_STATE_SHUTDOWN) {
         ms_frame_start = ta_timer_elapsed_ms();
@@ -1490,7 +1489,7 @@ void ta_game_loop()
 
         game_hotload_textures();
 
-        ta_camera *active_camera = ta_game_camera();
+        ta_camera *active_camera = (ta_camera *)ta_game_camera();
 
         //----------------------------------------------------------------------
         // Handle events
@@ -1538,7 +1537,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
 
         // TODO: Track which animations are currently playing.. do blending.
-        //ta_animation *animations = ta_game_resource_pool(RES_ANIMATION);
+        //ta_animation *animations = (ta_animation *)ta_game_resource_pool(RES_ANIMATION);
         //dlb_vec_each(ta_animation *, animation, animations) {
         //    UNUSED(animation);
         //}
@@ -1572,7 +1571,7 @@ void ta_game_loop()
         // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
 
         dlb_vec_each(const char **, animation_name, animation_names) {
-            ta_animation *animation = ta_game_by_sym_try(RES_ANIMATION, *animation_name);
+            ta_animation *animation = (ta_animation *)ta_game_by_sym_try(RES_ANIMATION, *animation_name);
             if (animation && animation->tracks) {
                 size_t animation_frames = dlb_vec_len(animation->tracks[0].time.key.values.as_float);
                 dlb_vec_each(ta_animation_track *, track, animation->tracks) {
@@ -1589,7 +1588,7 @@ void ta_game_loop()
                     DLB_ASSERT(time_count == animation_frames);  // NOTE: This is not necessary; enforces fully sampled
 
                     // Target node must have a valid transform component
-                    ta_transform *transform = ta_game_component(track->target_node, RES_COMP_TRANSFORM);
+                    ta_transform *transform = (ta_transform *)ta_game_component(track->target_node, RES_COMP_TRANSFORM);
 
                     // Times must always be floats
                     DLB_ASSERT(track->time.key.type == ATOM_FLOAT);
@@ -1661,7 +1660,7 @@ void ta_game_loop()
         // Update cameras
         // TODO: This might belong in game_simulate. It definitely needs to handle dt properly. Maybe
         // cameras should just have rigid_body components? Hmm..
-        dlb_vec_each(ta_camera *, cam, ta_game_resource_pool(RES_COMP_CAMERA)) {
+        dlb_vec_each(ta_camera *, cam, (ta_camera *)ta_game_resource_pool(RES_COMP_CAMERA)) {
             const float dt = 0.0f;
             ta_camera_update(cam, dt);
         }
@@ -1670,14 +1669,14 @@ void ta_game_loop()
         {
             // Rotate player to match player camera, camera is parented to player object
             // Calculate camera rotation in X/Z plane
-            ta_transform *camera_transform = ta_game_component(tg_e_player_camera, RES_COMP_TRANSFORM);
+            ta_transform *camera_transform = (ta_transform *)ta_game_component(tg_e_player_camera, RES_COMP_TRANSFORM);
             ta_vec3 camera_rot_vec = quat_mul_vec3(camera_transform->xform.orientation, VEC3_NZ);
             camera_rot_vec.y = 0.0f;
             // NOTE: We are negating because player mesh faces +Z in Blender
             camera_rot_vec = vec3_neg(vec3_normalize(camera_rot_vec));
             ta_vec4 camera_rot_quat = quat_from_vec_vec(VEC3_NZ, camera_rot_vec);
 
-            ta_transform *player_transform = ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
+            ta_transform *player_transform = (ta_transform *)ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
             player_transform->xform.orientation = camera_rot_quat;
 
             ta_vec3 player_cam_offset = { 0.0f, 4.0f, 0.7f };
@@ -1690,8 +1689,8 @@ void ta_game_loop()
             }
 
             // HACK: Bring can back into the world!
-            ta_transform *can_xform = ta_game_component_try(tg_e_can, RES_COMP_TRANSFORM);
-            ta_rigid_body *can_body = ta_game_component_try(tg_e_can, RES_COMP_RIGID_BODY);
+            ta_transform *can_xform = (ta_transform *)ta_game_component_try(tg_e_can, RES_COMP_TRANSFORM);
+            ta_rigid_body *can_body = (ta_rigid_body *)ta_game_component_try(tg_e_can, RES_COMP_RIGID_BODY);
             if (can_xform->xform.position.y < -10.0f) {
                 can_xform->xform.position = vec3_init(0.0f, 3.2f, -5.0f);
                 can_xform->xform.orientation = QUAT_IDENT;
@@ -1704,12 +1703,12 @@ void ta_game_loop()
         ta_transform_update_all(transforms, sim_alpha);
 
         // Update buttons
-        dlb_vec_each(ta_e_button *, button, ta_game_resource_pool(RES_COMP_BUTTON)) {
+        dlb_vec_each(ta_e_button *, button, (ta_e_button *)ta_game_resource_pool(RES_COMP_BUTTON)) {
             e_button_update(button);
         }
 
         // Update camera cached stuff
-        dlb_vec_each(ta_camera *, camera, ta_game_resource_pool(RES_COMP_CAMERA)) {
+        dlb_vec_each(ta_camera *, camera, (ta_camera *)ta_game_resource_pool(RES_COMP_CAMERA)) {
             ta_camera_update_world_view(camera);
         }
 
@@ -1741,10 +1740,10 @@ void ta_game_loop()
 
             size_t bone_idx = 0;
             dlb_vec_each(const char **, bone_name, mesh->skin.skeleton.bones) {
-                ta_transform *transform = ta_game_component(*bone_name, RES_COMP_TRANSFORM);
+                ta_transform *transform = (ta_transform *)ta_game_component(*bone_name, RES_COMP_TRANSFORM);
 
-                ta_bone *bone = ta_game_component(*bone_name, RES_COMP_BONE);
-                ta_transform *armature = ta_game_component(bone->armature, RES_COMP_TRANSFORM);
+                ta_bone *bone = (ta_bone *)ta_game_component(*bone_name, RES_COMP_BONE);
+                ta_transform *armature = (ta_transform *)ta_game_component(bone->armature, RES_COMP_TRANSFORM);
 
                 ta_mat4 armature_inv = { 0 };
                 DLB_ASSERT(mat4_inverse(&armature->world, &armature_inv));
@@ -1854,7 +1853,7 @@ void ta_game_loop()
             // Render cameras as OBBs with forward arrows
             dlb_vec_each(ta_camera *, camera, cameras) {
                 if (camera->name != tg_e_active_camera) {
-                    ta_transform *cam_trans = ta_game_component(camera->entity, RES_COMP_TRANSFORM);
+                    ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
                     ta_obb obb = { 0 };
                     obb.center = cam_trans->xform_world.position;
                     obb.extents = (ta_vec3){ 0.2f, 0.2f, 0.2f };
@@ -1870,7 +1869,7 @@ void ta_game_loop()
 
             // Render lights as colored spheres
             dlb_vec_each(ta_light *, light, lights) {
-                ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
+                ta_transform *transform = (ta_transform *)ta_game_component(light->entity, RES_COMP_TRANSFORM);
 
                 ta_sphere light_pos = { 0 };
                 light_pos.center = transform->xform_world.position;
@@ -1992,7 +1991,7 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         {
             // Target minimap camera
-            ta_transform *active_cam_trans = ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
+            ta_transform *active_cam_trans = (ta_transform *)ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
             ta_vec3 minimap_target_pos = active_cam_trans->xform_world.position;
             minimap_target_pos.y += 50.0f;
             tg_game.minimap_camera.focal_point = active_cam_trans->xform_world.position;
@@ -2093,7 +2092,7 @@ void ta_game_loop()
         // Audio
         //----------------------------------------------------------------------
         // TODO: dlb_vec_each(ta_audio_listener_update)
-        ta_transform *active_cam_trans = ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
+        ta_transform *active_cam_trans = (ta_transform *)ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
         ta_vec3 fwd_up[2] = { 0 };
         fwd_up[0] = active_camera->front;
         fwd_up[1] = active_camera->up;
@@ -2123,6 +2122,7 @@ void ta_game_loop()
 
         ta_log_write(&tg_debug_log, SRC_GAME, " Swap...\n");
         ta_window_swap(tg_window);
+        TracyCFrameMark
 
         ta_log_write(&tg_debug_log, SRC_GAME,
             "Frame %llu displayed. time: %5.3f delta: %5.3f\n",
@@ -2174,52 +2174,52 @@ void game_command_toggle_fullscreen()
 }
 void game_command_player_move_forward()
 {
-    ta_camera *camera = ta_game_camera();
+    ta_camera *camera = (ta_camera *)ta_game_camera();
     ta_vec3 dir = { 0 };
     dir.x = camera->front.x;
     dir.z = camera->front.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, player_move_impulse);
-    ta_rigid_body *player_body = ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = (ta_rigid_body *)ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_move_backward()
 {
-    ta_camera *camera = ta_game_camera();
+    ta_camera *camera = (ta_camera *)ta_game_camera();
     ta_vec3 dir = { 0 };
     dir.x = -camera->front.x;
     dir.z = -camera->front.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, player_move_impulse);
-    ta_rigid_body *player_body = ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = (ta_rigid_body *)ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_move_right()
 {
-    ta_camera *camera = ta_game_camera();
+    ta_camera *camera = (ta_camera *)ta_game_camera();
     ta_vec3 dir = { 0 };
     dir.x = camera->right.x;
     dir.z = camera->right.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, player_move_impulse);
-    ta_rigid_body *player_body = ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = (ta_rigid_body *)ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_move_left()
 {
-    ta_camera *camera = ta_game_camera();
+    ta_camera *camera = (ta_camera *)ta_game_camera();
     ta_vec3 dir = { 0 };
     dir.x = -camera->right.x;
     dir.z = -camera->right.z;
     dir = vec3_normalize(dir);
     dir = vec3_scalef(dir, player_move_impulse);
-    ta_rigid_body *player_body = ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = (ta_rigid_body *)ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 void game_command_player_jump()
 {
     ta_vec3 dir = vec3_scalef(VEC3_Y, player_jump_impulse);
-    ta_rigid_body *player_body = ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
+    ta_rigid_body *player_body = (ta_rigid_body *)ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
     ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
 }
 static void spawn_bullet(ta_vec3 position)
@@ -2241,9 +2241,9 @@ static void spawn_bullet(ta_vec3 position)
     next_idx++;
 
     UNUSED(position);
-    //ta_transform *transform = ta_game_entity_add(name, position);
-    //ta_model *model = ta_game_component_add(name, RES_COMP_MODEL, CSTR("who cares"));
-    //ta_rigid_body *body = ta_game_component_add(name, RES_COMP_RIGID_BODY, CSTR("who cares"));
+    //ta_transform *transform = (ta_transform *)ta_game_entity_add(name, position);
+    //ta_model *model = (ta_model *)ta_game_component_add(name, RES_COMP_MODEL, CSTR("who cares"));
+    //ta_rigid_body *body = (ta_rigid_body *)ta_game_component_add(name, RES_COMP_RIGID_BODY, CSTR("who cares"));
     //DLB_ASSERT(transform);
     //DLB_ASSERT(model);
     //DLB_ASSERT(body);
@@ -2259,10 +2259,10 @@ void game_command_player_shoot()
     static double last_reload_ms = 0;
     static double last_empty_ms = 0;
 
-    ta_player *player = ta_game_player();
-    ta_transform *player_xform = ta_game_component(player->entity, RES_COMP_TRANSFORM);
-    ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
-    ta_audio_source *src_gun = ta_game_component(player->e_gun, RES_COMP_AUDIO_SOURCE);
+    ta_player *player = (ta_player *)ta_game_player();
+    ta_transform *player_xform = (ta_transform *)ta_game_component(player->entity, RES_COMP_TRANSFORM);
+    ta_gun *gun = (ta_gun *)ta_game_component(player->e_gun, RES_COMP_GUN);
+    ta_audio_source *src_gun = (ta_audio_source *)ta_game_component(player->e_gun, RES_COMP_AUDIO_SOURCE);
 
     ta_audio_source_set_position(src_gun, player_xform->xform_world.position);
 
@@ -2310,8 +2310,8 @@ void game_command_player_shoot()
     }
 
     if (fired) {
-        ta_transform *can_xform = ta_game_component_try(tg_e_can, RES_COMP_TRANSFORM);
-        ta_rigid_body *can_body = ta_game_component_try(tg_e_can, RES_COMP_RIGID_BODY);
+        ta_transform *can_xform = (ta_transform *)ta_game_component_try(tg_e_can, RES_COMP_TRANSFORM);
+        ta_rigid_body *can_body = (ta_rigid_body *)ta_game_component_try(tg_e_can, RES_COMP_RIGID_BODY);
         DLB_ASSERT(can_xform && can_body);
         DLB_ASSERT(can_body->collider.type == TA_COLLIDER_OBB);
         ta_ray bullet = ta_game_camera_ray();
@@ -2333,42 +2333,42 @@ void game_command_player_shoot()
 void game_command_camera_move_forward()
 {
     if (ta_mouse_captured()) {
-        ta_camera *camera = ta_game_camera();
+        ta_camera *camera = (ta_camera *)ta_game_camera();
         camera->move_buffer = vec3_add(camera->move_buffer, camera->front);
     }
 }
 void game_command_camera_move_backward()
 {
     if (ta_mouse_captured()) {
-        ta_camera *camera = ta_game_camera();
+        ta_camera *camera = (ta_camera *)ta_game_camera();
         camera->move_buffer = vec3_sub(camera->move_buffer, camera->front);
     }
 }
 void game_command_camera_move_right()
 {
     if (ta_mouse_captured()) {
-        ta_camera *camera = ta_game_camera();
+        ta_camera *camera = (ta_camera *)ta_game_camera();
         camera->move_buffer = vec3_add(camera->move_buffer, camera->right);
     }
 }
 void game_command_camera_move_left()
 {
     if (ta_mouse_captured()) {
-        ta_camera *camera = ta_game_camera();
+        ta_camera *camera = (ta_camera *)ta_game_camera();
         camera->move_buffer = vec3_sub(camera->move_buffer, camera->right);
     }
 }
 void game_command_camera_move_up()
 {
     if (ta_mouse_captured()) {
-        ta_camera *camera = ta_game_camera();
+        ta_camera *camera = (ta_camera *)ta_game_camera();
         camera->move_buffer = vec3_add(camera->move_buffer, camera->up);
     }
 }
 void game_command_camera_move_down()
 {
     if (ta_mouse_captured()) {
-        ta_camera *camera = ta_game_camera();
+        ta_camera *camera = (ta_camera *)ta_game_camera();
         camera->move_buffer = vec3_sub(camera->move_buffer, camera->up);
     }
 }
@@ -2412,49 +2412,46 @@ void ta_game_update_keybinds()
     if (editor.textbox_editing || editor.textbox_dragging)
         return;
 
-    static void (*commands[COMMAND_COUNT])() = {
-        [COMMAND_PLAY]                    = game_command_play,
-        [COMMAND_FREE_CAM]                = game_command_free_cam,
-        [COMMAND_CONSOLE_TOGGLE]          = game_command_console_toggle,
-        [COMMAND_CONSOLE_HIDE]            = game_command_console_exit,
-        [COMMAND_EDITOR]                  = game_command_editor,
-        [COMMAND_SHUTDOWN]                = game_command_shutdown,
-        [COMMAND_TOGGLE_FULLSCREEN]       = game_command_toggle_fullscreen,
-        [COMMAND_CAMERA_MOVE_FORWARD]     = game_command_camera_move_forward,
-        [COMMAND_CAMERA_MOVE_BACKWARD]    = game_command_camera_move_backward,
-        [COMMAND_CAMERA_MOVE_RIGHT]       = game_command_camera_move_right,
-        [COMMAND_CAMERA_MOVE_LEFT]        = game_command_camera_move_left,
-        [COMMAND_CAMERA_MOVE_UP]          = game_command_camera_move_up,
-        [COMMAND_CAMERA_MOVE_DOWN]        = game_command_camera_move_down,
-        [COMMAND_PLAYER_MOVE_FORWARD]     = game_command_player_move_forward,
-        [COMMAND_PLAYER_MOVE_BACKWARD]    = game_command_player_move_backward,
-        [COMMAND_PLAYER_MOVE_RIGHT]       = game_command_player_move_right,
-        [COMMAND_PLAYER_MOVE_LEFT]        = game_command_player_move_left,
-        [COMMAND_PLAYER_JUMP]             = game_command_player_jump,
-        [COMMAND_PLAYER_SHOOT]            = game_command_player_shoot,
-        [COMMAND_DEBUG_MOUSE_LOCK]        = game_command_debug_mouse_lock,
-        [COMMAND_DEBUG_MOUSE_UNLOCK]      = game_command_debug_mouse_unlock,
-        [COMMAND_DEBUG_MOUSE_LOCK_TOGGLE] = game_command_debug_mouse_lock_toggle,
-        [COMMAND_DEBUG_TOGGLE_WIREFRAME]  = game_command_debug_toggle_wireframe,
-        [COMMAND_DEBUG_TOGGLE_MESH]       = game_command_debug_toggle_mesh,
-        [COMMAND_DEBUG_TOGGLE_COLLIDERS]  = game_command_debug_toggle_colliders,
-        [COMMAND_DEBUG_TOGGLE_NAMETAGS]   = game_command_debug_toggle_nametags,
-        [COMMAND_DEBUG_TOGGLE_NORMALS]    = game_command_debug_toggle_normals,
-
-        [COMMAND_EDITOR_SELECT]           = editor_command_select,
-        [COMMAND_EDITOR_SELECT_RELEASE]   = editor_command_select_release,
-        [COMMAND_EDITOR_CANCEL]           = editor_command_cancel,
-        [COMMAND_EDITOR_CLOSE]            = editor_command_close,
-        [COMMAND_EDITOR_SIM_PAUSE_RESUME] = editor_command_sim_pause_resume,
-        [COMMAND_EDITOR_SIM_NEXT]         = editor_command_sim_next,
-        [COMMAND_EDITOR_SIM_NEXT_10]      = editor_command_sim_next_ten,
-        [COMMAND_EDITOR_SIM_WHILE_HELD]   = editor_command_sim_while_held,
-    };
-
     dlb_vec_each(ta_keybind *, keybind, tg_game.keybinds) {
         ta_keybind_update(keybind, tg_game.state);
-        if (ta_keybind_triggered(keybind) && commands[keybind->command]) {
-            commands[keybind->command]();
+        if (ta_keybind_triggered(keybind)) {
+            switch (keybind->command) {
+                case COMMAND_PLAY                    : game_command_play();                    break;
+                case COMMAND_FREE_CAM                : game_command_free_cam();                break;
+                case COMMAND_CONSOLE_TOGGLE          : game_command_console_toggle();          break;
+                case COMMAND_CONSOLE_HIDE            : game_command_console_exit();            break;
+                case COMMAND_EDITOR                  : game_command_editor();                  break;
+                case COMMAND_SHUTDOWN                : game_command_shutdown();                break;
+                case COMMAND_TOGGLE_FULLSCREEN       : game_command_toggle_fullscreen();       break;
+                case COMMAND_CAMERA_MOVE_FORWARD     : game_command_camera_move_forward();     break;
+                case COMMAND_CAMERA_MOVE_BACKWARD    : game_command_camera_move_backward();    break;
+                case COMMAND_CAMERA_MOVE_RIGHT       : game_command_camera_move_right();       break;
+                case COMMAND_CAMERA_MOVE_LEFT        : game_command_camera_move_left();        break;
+                case COMMAND_CAMERA_MOVE_UP          : game_command_camera_move_up();          break;
+                case COMMAND_CAMERA_MOVE_DOWN        : game_command_camera_move_down();        break;
+                case COMMAND_PLAYER_MOVE_FORWARD     : game_command_player_move_forward();     break;
+                case COMMAND_PLAYER_MOVE_BACKWARD    : game_command_player_move_backward();    break;
+                case COMMAND_PLAYER_MOVE_RIGHT       : game_command_player_move_right();       break;
+                case COMMAND_PLAYER_MOVE_LEFT        : game_command_player_move_left();        break;
+                case COMMAND_PLAYER_JUMP             : game_command_player_jump();             break;
+                case COMMAND_PLAYER_SHOOT            : game_command_player_shoot();            break;
+                case COMMAND_DEBUG_MOUSE_LOCK        : game_command_debug_mouse_lock();        break;
+                case COMMAND_DEBUG_MOUSE_UNLOCK      : game_command_debug_mouse_unlock();      break;
+                case COMMAND_DEBUG_MOUSE_LOCK_TOGGLE : game_command_debug_mouse_lock_toggle(); break;
+                case COMMAND_DEBUG_TOGGLE_WIREFRAME  : game_command_debug_toggle_wireframe();  break;
+                case COMMAND_DEBUG_TOGGLE_MESH       : game_command_debug_toggle_mesh();       break;
+                case COMMAND_DEBUG_TOGGLE_COLLIDERS  : game_command_debug_toggle_colliders();  break;
+                case COMMAND_DEBUG_TOGGLE_NAMETAGS   : game_command_debug_toggle_nametags();   break;
+                case COMMAND_DEBUG_TOGGLE_NORMALS    : game_command_debug_toggle_normals();    break;
+                case COMMAND_EDITOR_SELECT           : editor_command_select();                break;
+                case COMMAND_EDITOR_SELECT_RELEASE   : editor_command_select_release();        break;
+                case COMMAND_EDITOR_CANCEL           : editor_command_cancel();                break;
+                case COMMAND_EDITOR_CLOSE            : editor_command_close();                 break;
+                case COMMAND_EDITOR_SIM_PAUSE_RESUME : editor_command_sim_pause_resume();      break;
+                case COMMAND_EDITOR_SIM_NEXT         : editor_command_sim_next();              break;
+                case COMMAND_EDITOR_SIM_NEXT_10      : editor_command_sim_next_ten();          break;
+                case COMMAND_EDITOR_SIM_WHILE_HELD   : editor_command_sim_while_held();        break;
+            }
         }
     }
 }
@@ -2485,7 +2482,7 @@ void ta_game_event(ta_event *event)
             break;
         } case INPUT_EVENT_MOUSE_SCROLL: {
             if (ta_mouse_captured() && tg_game.state == TA_STATE_EDITOR) {
-                ta_camera *camera = ta_game_camera();
+                ta_camera *camera = (ta_camera *)ta_game_camera();
                 camera->position_target_vel += 0.02f * -ta_mouse_scroll_dy();
                 camera->position_target_vel = MAX(0.02f, camera->position_target_vel);
             }
@@ -2500,7 +2497,7 @@ void ta_game_event(ta_event *event)
             break;
         } case GAME_EVENT_CAMERA_ROTATE: {
             static float sensitivity = 0.1f;
-            ta_camera *camera = ta_game_camera();
+            ta_camera *camera = (ta_camera *)ta_game_camera();
             if (event->data.camera_rotate.delta_yaw) {
                 ta_camera_yaw(camera, event->data.camera_rotate.delta_yaw * sensitivity);
             }
@@ -2513,13 +2510,13 @@ void ta_game_event(ta_event *event)
         case GAME_EVENT_BUTTON_ACTIVATED:
         case GAME_EVENT_BUTTON_DEACTIVATED:
         {
-            ta_e_button *button = ta_game_by_sym(RES_COMP_BUTTON, event->data.button.button_name);
+            ta_e_button *button = (ta_e_button *)ta_game_by_sym(RES_COMP_BUTTON, event->data.button.button_name);
             float pressed_weight = 0.0f;
             const char *sfx_name = 0;
 
             if (event->type == GAME_EVENT_BUTTON_ACTIVATED) {
-                ta_player *player = ta_game_player();
-                ta_gun *gun = ta_game_component(player->e_gun, RES_COMP_GUN);
+                ta_player *player = (ta_player *)ta_game_player();
+                ta_gun *gun = (ta_gun *)ta_game_component(player->e_gun, RES_COMP_GUN);
                 gun->carrying_ammo = gun->carrying_ammo_max;
                 pressed_weight = 1.0f;
                 sfx_name = button->sfx_activated;
@@ -2528,7 +2525,7 @@ void ta_game_event(ta_event *event)
                 sfx_name = button->sfx_deactivated;
             }
 
-            ta_model *model = ta_game_component_try(button->entity, RES_COMP_MODEL);
+            ta_model *model = (ta_model *)ta_game_component_try(button->entity, RES_COMP_MODEL);
             if (model) {
                 // TODO: Some sort of lookup table for important gameplay symbols (SYM_PRESSED?)
                 static const char *button_pressed_morph_target = 0;
@@ -2540,7 +2537,7 @@ void ta_game_event(ta_event *event)
 
             // TODO: Should audio source subscribe to this event somehow,
             //       or should the button queue the play request itself?
-            ta_audio_source *source = ta_game_by_sym_try(RES_COMP_AUDIO_SOURCE, button->entity);
+            ta_audio_source *source = (ta_audio_source *)ta_game_by_sym_try(RES_COMP_AUDIO_SOURCE, button->entity);
             if (source) {
                 float rand_pitch = 1.0f + dlb_rand_variance(0.1f);
                 ta_audio_source_set_pitch(source, rand_pitch);

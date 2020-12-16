@@ -1,16 +1,25 @@
 #include "ta_animation.h"
 #include "dlb/dlb_vector.h"
 
-const char *ta_animation_track_key_kind_str[TA_ANIMATION_TRACK_KEY_COUNT] = {
-    [TA_ANIMATION_TRACK_KEY_UNKNOWN    ] = "TA_ANIMATION_TRACK_KEY_UNKNOWN",
-    [TA_ANIMATION_TRACK_KEY_VALUE      ] = "TA_ANIMATION_TRACK_KEY_VALUE",
-    [TA_ANIMATION_TRACK_KEY_POS_CONTROL] = "TA_ANIMATION_TRACK_KEY_POS_CONTROL",
-    [TA_ANIMATION_TRACK_KEY_NEG_CONTROL] = "TA_ANIMATION_TRACK_KEY_NEG_CONTROL",
+const char *ta_animation_track_key_kind_str(ta_animation_track_key_kind kind)
+{
+    switch (kind) {
+        case TA_ANIMATION_TRACK_KEY_UNKNOWN    : return "TA_ANIMATION_TRACK_KEY_UNKNOWN"    ;
+        case TA_ANIMATION_TRACK_KEY_VALUE      : return "TA_ANIMATION_TRACK_KEY_VALUE"      ;
+        case TA_ANIMATION_TRACK_KEY_POS_CONTROL: return "TA_ANIMATION_TRACK_KEY_POS_CONTROL";
+        case TA_ANIMATION_TRACK_KEY_NEG_CONTROL: return "TA_ANIMATION_TRACK_KEY_NEG_CONTROL";
+        default: DLB_ASSERT(!"Invalid enum value"); return "<TA_ANIMATION_TRACK_KEY_UNKNOWN>";
+    }
 };
-const char *ta_animation_track_curve_type_str[TA_ANIMATION_TRACK_CURVE_COUNT] = {
-    [TA_ANIMATION_TRACK_CURVE_UNKNOWN] = "TA_ANIMATION_TRACK_CURVE_UNKNOWN",
-    [TA_ANIMATION_TRACK_CURVE_LINEAR ] = "TA_ANIMATION_TRACK_CURVE_LINEAR",
-    [TA_ANIMATION_TRACK_CURVE_BEZIER ] = "TA_ANIMATION_TRACK_CURVE_BEZIER",
+
+const char *ta_animation_track_curve_type_str(ta_animation_track_curve_type type)
+{
+    switch (type) {
+        case TA_ANIMATION_TRACK_CURVE_UNKNOWN: return "TA_ANIMATION_TRACK_CURVE_UNKNOWN";
+        case TA_ANIMATION_TRACK_CURVE_LINEAR : return "TA_ANIMATION_TRACK_CURVE_LINEAR" ;
+        case TA_ANIMATION_TRACK_CURVE_BEZIER : return "TA_ANIMATION_TRACK_CURVE_BEZIER" ;
+        default: DLB_ASSERT(!"Invalid enum value"); return "<TA_ANIMATION_TRACK_CURVE_UNKNOWN>";
+    }
 };
 
 #if 0  // GLTF Animation data

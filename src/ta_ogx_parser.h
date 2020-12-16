@@ -22,7 +22,7 @@ typedef enum ogx_result {
     OGX_RESULT_COUNT
 } ogx_result;
 
-const char *ogx_result_str[OGX_RESULT_COUNT];
+const char *ogx_result_str(ogx_result result);
 
 ogx_result ogx_scene_from_file(struct ogx_scene *scene, const char *filename);
 void ogx_free(struct dml_document *document);

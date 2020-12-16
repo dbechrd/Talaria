@@ -10,8 +10,6 @@ typedef enum ta_animation_track_key_kind {
     TA_ANIMATION_TRACK_KEY_COUNT
 } ta_animation_track_key_kind;
 
-extern const char *ta_animation_track_key_kind_str[TA_ANIMATION_TRACK_KEY_COUNT];
-
 typedef enum ta_animation_track_curve_type {
     TA_ANIMATION_TRACK_CURVE_UNKNOWN,
     //TA_ANIMATION_TRACK_CURVE_CONSTANT, // Not used by Blender exporter (only values, not time)
@@ -20,8 +18,6 @@ typedef enum ta_animation_track_curve_type {
     //TA_ANIMATION_TRACK_CURVE_TCB,      // Not used by Blender exporter (only values, not time)
     TA_ANIMATION_TRACK_CURVE_COUNT
 } ta_animation_track_curve_type;
-
-extern const char *ta_animation_track_curve_type_str[TA_ANIMATION_TRACK_CURVE_COUNT];
 
 typedef struct ta_animation_track_key {
     ta_animation_track_key_kind kind;
@@ -60,6 +56,9 @@ typedef struct ta_animation {
     float end;
     ta_animation_track *tracks;
 } ta_animation;
+
+const char *ta_animation_track_key_kind_str(ta_animation_track_key_kind kind);
+const char *ta_animation_track_curve_type_str(ta_animation_track_curve_type type);
 
 #if 0  // GLTF Animation data
 typedef enum ta_animation_interpolation_type {

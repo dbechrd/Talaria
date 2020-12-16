@@ -36,7 +36,7 @@ void ta_lighting_init(ta_lighting *lighting)
 
 void ta_lighting_bind_lights(ta_lighting *lighting)
 {
-    ta_light *lights = ta_game_resource_pool(RES_COMP_LIGHT);
+    ta_light *lights = (ta_light *)ta_game_resource_pool(RES_COMP_LIGHT);
     int light_idx = 0;
     for (size_t i = 0; i < dlb_vec_len(lights) && i < TA_LIGHTING_MAX_ACTIVE_LIGHTS; ++i) {
         ta_light *light = &lights[i];
@@ -66,7 +66,7 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
                 lighting->light_records[light_idx].light_pv = mat4_transpose(&light_pv);
                 lighting->light_records[light_idx].cast_shadows = light->data.directional.cast_shadows;
 
-                ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
+                ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
                 lighting->light_records[light_idx].shadowmap_texture_pool_index = tex->gl_texture_pool_index;
                 lighting->light_records[light_idx].shadowmap_texture_array_layer[0][0] = tex->gl_texture_pool_layer;
                 break;
@@ -75,10 +75,10 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
                 lighting->light_records[light_idx].shadowmap_zfar  = light->data.point.shadow_properties.zfar;
 
                 // NOTE: Assume all textures are in the same pool (asserts)
-                ta_texture *first_tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
+                ta_texture *first_tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
                 lighting->light_records[light_idx].shadowmap_texture_pool_index = first_tex->gl_texture_pool_index;
                 for (int layer = 0; layer < 6; layer++) {
-                    ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[layer]);
+                    ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[layer]);
                     lighting->light_records[light_idx].shadowmap_texture_array_layer[layer][0] = tex->gl_texture_pool_layer;
                     DLB_ASSERT(tex->gl_texture_pool_index == lighting->light_records[light_idx].shadowmap_texture_pool_index);
                 }
@@ -87,7 +87,7 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
                 lighting->light_records[light_idx].direction = ta_light_direction(light);
                 lighting->light_records[light_idx].cast_shadows = light->data.spot.cast_shadows;
 
-                ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
+                ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
                 lighting->light_records[light_idx].shadowmap_texture_pool_index = tex->gl_texture_pool_index;
                 lighting->light_records[light_idx].shadowmap_texture_array_layer[0][0] = tex->gl_texture_pool_layer;
 
@@ -99,7 +99,7 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
         }
 
         // HACK: xform_world isn't set yet, so we need to fix light positions until this code runs every frame
-        ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
+        ta_transform *transform = (ta_transform *)ta_game_component(light->entity, RES_COMP_TRANSFORM);
         lighting->light_records[light_idx].position = transform->xform.position;
 
         light_idx++;
@@ -198,7 +198,7 @@ static void shadowmap_directional_create(ta_light *light)
     size_t tex_name_len = 0;
     tex_name_len = snprintf(tex_name, sizeof(tex_name), "#%s_shadowmap", light->name);
 
-    ta_texture *tex = ta_game_alloc(RES_TEXTURE, tex_name, tex_name_len);
+    ta_texture *tex = (ta_texture *)ta_game_alloc(RES_TEXTURE, tex_name, tex_name_len);
     tex->res_type = RES_TEXTURE;
     tex->type = TA_TEXTURE_2D_ARRAY;
     tex->width = light->data.directional.shadow_properties.resolution;
@@ -264,7 +264,7 @@ static void shadowmap_point_create(ta_light *light)
     for (int face = 0; face < 6; ++face) {
         tex_name_len = snprintf(tex_name, sizeof(tex_name), "#%s_shadowmap%s", light->name, face_names[face]);
 
-        ta_texture *tex = ta_game_alloc(RES_TEXTURE, tex_name, tex_name_len);
+        ta_texture *tex = (ta_texture *)ta_game_alloc(RES_TEXTURE, tex_name, tex_name_len);
         tex->res_type = RES_TEXTURE;
         tex->type = TA_TEXTURE_2D_ARRAY;
         tex->width = light->data.point.shadow_properties.resolution;
@@ -280,7 +280,7 @@ static void shadowmap_point_create(ta_light *light)
         light->data.point.shadow_map.textures[face] = tex->name;
     }
 
-    ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
+    ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
     GLenum target = ta_texture_target(tex);
 
     ta_texture_pool *pool = ta_texture_texture_pool(tex);
@@ -319,12 +319,12 @@ static void shadowmap_point_create(ta_light *light)
 
 ta_vec3 ta_light_position(ta_light *light)
 {
-    ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
+    ta_transform *transform = (ta_transform *)ta_game_component(light->entity, RES_COMP_TRANSFORM);
     return transform->xform_world.position;
 }
 ta_vec3 ta_light_direction(ta_light *light)
 {
-    ta_transform *transform = ta_game_component(light->entity, RES_COMP_TRANSFORM);
+    ta_transform *transform = (ta_transform *)ta_game_component(light->entity, RES_COMP_TRANSFORM);
 
     // Lights with identity orientation don't cast shadows; give them a nudge
     if (quat_equal(transform->xform_world.orientation, QUAT_IDENT)) {
@@ -370,14 +370,14 @@ static void shadowpass_render_directional(ta_light *light, ta_model *models)
 
     DLB_ASSERT(light->data.directional.framebuffer);
 
-    //ta_texture_pool *texture_pool = ta_game_texture_pool(light->shadowmap.texture.gl_texture_pool_index);
+    //ta_texture_pool *texture_pool = (ta_texture_pool *)ta_game_texture_pool(light->shadowmap.texture.gl_texture_pool_index);
     //GLint prev_min = texture_pool->gl_filter_min;
     //GLint prev_mag = texture_pool->gl_filter_mag;
     //ta_texture_pool_bind(texture_pool);
     //ta_texture_pool_set_filter_mode(texture_pool, light->shadowmap.texture.gl_filter_min,
     //    light->shadowmap.texture.gl_filter_mag);
 
-    ta_shader *shader = ta_game_by_sym(RES_SHADER, light->data.directional.shadow_properties.shader);
+    ta_shader *shader = (ta_shader *)ta_game_by_sym(RES_SHADER, light->data.directional.shadow_properties.shader);
     ta_shader_bind(shader);
 
     // TODO: Draw into shadowmap from ortho big enough to cover camera
@@ -429,7 +429,7 @@ static void shadowpass_render_point(ta_light *light, ta_model *models)
 
     DLB_ASSERT(light->data.point.framebuffer);
 
-    //ta_texture_pool *texture_pool = ta_game_texture_pool(light->shadowmap.texture.gl_texture_pool_index);
+    //ta_texture_pool *texture_pool = (ta_texture_pool *)ta_game_texture_pool(light->shadowmap.texture.gl_texture_pool_index);
     //GLint prev_min = texture_pool->gl_filter_min;
     //GLint prev_mag = texture_pool->gl_filter_mag;
     //ta_texture_pool_bind(texture_pool);
@@ -437,7 +437,7 @@ static void shadowpass_render_point(ta_light *light, ta_model *models)
     //    light->shadowmap.texture.gl_filter_mag);
 
     ta_vec3 position = ta_light_position(light);
-    ta_shader *shader = ta_game_by_sym(RES_SHADER, light->data.point.shadow_properties.shader);
+    ta_shader *shader = (ta_shader *)ta_game_by_sym(RES_SHADER, light->data.point.shadow_properties.shader);
     ta_shader_set_vec3(shader, SYM_U_LIGHT_POS, &position);
     ta_shader_set_float(shader, SYM_U_LIGHT_ZFAR, light->data.point.shadow_properties.zfar);
 
@@ -454,7 +454,7 @@ static void shadowpass_render_point(ta_light *light, ta_model *models)
 
     static int fb_check = 0;
     for (int face = 0; face < 6; ++face) {
-        ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[face]);
+        ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[face]);
         ta_texture_pool *tex_pool = ta_texture_texture_pool(tex);
         glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex_pool->gl_id, 0, tex->gl_texture_pool_layer);
 
@@ -503,7 +503,7 @@ void ta_light_shadowpass_render(ta_light *light, ta_model *models)
 
 void render_shadowmap_debug_directional(ta_light *light, int x, int y)
 {
-    ta_texture *tex = ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
+    ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
 
     s32 resolution = (s32)(light->data.directional.shadow_properties.resolution / 10);
     ta_rect rect = { 0 };

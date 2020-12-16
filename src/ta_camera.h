@@ -35,6 +35,7 @@ typedef enum ta_glsl_dbg_channel {
     DBG_SHADOW_1        = 13,
     DBG_SHADOW_2        = 14,
     DBG_SHADOW_3        = 15,
+    DBG_CHANNEL_COUNT
 } ta_glsl_dbg_channel;
 
 typedef struct ta_camera {

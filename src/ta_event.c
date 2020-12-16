@@ -91,13 +91,12 @@ bool ta_event_peek(ta_event *event)
 static void event_sdl_poll()
 {
     // Convert SDL button code to custom scancode for mouse "keys"
-    static int mouse_scancodes[] = {
-        [SDL_BUTTON_LEFT]   = SDL_SCANCODE_MOUSE_LEFT,
-        [SDL_BUTTON_MIDDLE] = SDL_SCANCODE_MOUSE_MIDDLE,
-        [SDL_BUTTON_RIGHT]  = SDL_SCANCODE_MOUSE_RIGHT,
-        [SDL_BUTTON_X1]     = SDL_SCANCODE_MOUSE_X1,
-        [SDL_BUTTON_X2]     = SDL_SCANCODE_MOUSE_X2,
-    };
+    static int mouse_scancodes[SDL_BUTTON_X2] = { 0 };
+    mouse_scancodes[SDL_BUTTON_LEFT]   = SDL_SCANCODE_MOUSE_LEFT;
+    mouse_scancodes[SDL_BUTTON_MIDDLE] = SDL_SCANCODE_MOUSE_MIDDLE;
+    mouse_scancodes[SDL_BUTTON_RIGHT]  = SDL_SCANCODE_MOUSE_RIGHT;
+    mouse_scancodes[SDL_BUTTON_X1]     = SDL_SCANCODE_MOUSE_X1;
+    mouse_scancodes[SDL_BUTTON_X2]     = SDL_SCANCODE_MOUSE_X2;
 
     SDL_Event sdl_event;
     //while (TA_SDL_PollEvent(&sdl_event)) {

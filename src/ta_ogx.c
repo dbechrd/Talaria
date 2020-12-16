@@ -9,7 +9,7 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
 {
     // HACK: Let OGX node override DML node
     // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
-    ta_mesh *mesh = ta_game_by_sym_try(RES_MESH, o_mesh->name);
+    ta_mesh *mesh = (ta_mesh *)ta_game_by_sym_try(RES_MESH, o_mesh->name);
     if (!mesh) {
         mesh = ta_game_alloc(RES_MESH, SYM(o_mesh->name));
     } else {
@@ -98,7 +98,7 @@ static void ta_ogx_load_material(ogx_material *o_mat)
 {
     // HACK: Let OGX node override DML node
     // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
-    ta_material *mat = ta_game_by_sym_try(RES_MATERIAL, o_mat->name);
+    ta_material *mat = (ta_material *)ta_game_by_sym_try(RES_MATERIAL, o_mat->name);
     if (!mat) {
         mat = ta_game_alloc(RES_MATERIAL, SYM(o_mat->name));
     } else {
@@ -138,7 +138,7 @@ static void ta_ogx_load_material(ogx_material *o_mat)
 
 static void ta_ogx_load_texture(ogx_texture *o_tex)
 {
-    ta_texture *tex = ta_game_by_sym_try(RES_TEXTURE, o_tex->name);
+    ta_texture *tex = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, o_tex->name);
     if (tex) {
         return;
     }
@@ -191,7 +191,7 @@ static void ta_ogx_load_bone_node(ogx_node *o_node, ogx_scene *o_scene)
 
     // HACK: Let OGX node override DML node
     // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
-    ta_bone *bone = ta_game_by_sym_try(RES_COMP_BONE, o_node->name);
+    ta_bone *bone = (ta_bone *)ta_game_by_sym_try(RES_COMP_BONE, o_node->name);
     if (!bone) {
         bone = ta_game_component_add(o_node->name, RES_COMP_BONE, SYM(o_node->name));
     } else {
@@ -220,7 +220,7 @@ static void ta_ogx_load_geometry_node(ogx_node *o_node)
 
     // HACK: Let OGX node override DML node
     // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
-    ta_model *model = ta_game_by_sym_try(RES_COMP_MODEL, o_node->name);
+    ta_model *model = (ta_model *)ta_game_by_sym_try(RES_COMP_MODEL, o_node->name);
     if (!model) {
         model = ta_game_component_add(o_node->name, RES_COMP_MODEL, SYM(o_node->name));
     } else {
@@ -248,7 +248,7 @@ static void ta_ogx_load_light_node(ogx_node *o_node)
 static void ta_ogx_load_node(ogx_node *o_node, ogx_scene *o_scene)
 {
     // HACK: Let OGX transform override DML transform
-    ta_transform *transform = ta_game_by_sym_try(RES_COMP_TRANSFORM, o_node->name);
+    ta_transform *transform = (ta_transform *)ta_game_by_sym_try(RES_COMP_TRANSFORM, o_node->name);
     if (!transform) {
         transform = ta_game_component_add(o_node->name, RES_COMP_TRANSFORM, SYM(o_node->name));
         ta_transform_init(transform);
