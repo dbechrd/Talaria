@@ -126,6 +126,7 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     static const int gl_major = 3;
     static const int gl_minor = 2;
 
+    TracyCZoneN(ctxSDLAttribs, "SDL GL Attribs", true);
     ta_log_write(&tg_debug_log, SRC_WINDOW, "Setting SDL GL attributes\n");
     sdl_gl_attrib(SDL_GL_RED_SIZE, 8);
     sdl_gl_attrib(SDL_GL_GREEN_SIZE, 8);
@@ -149,16 +150,20 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 //    context_flags |= SDL_GL_CONTEXT_DEBUG_FLAG;
 //#endif
 //    sdl_gl_attrib(SDL_GL_CONTEXT_FLAGS, context_flags);
+    TracyCZoneEnd(ctxSDLAttribs);
 
 
     // TODO: Make fullscreen a borderless window because people say vsync
     //       doesn't work in fullscreen (can we confirm this?)
     // Create window
+    TracyCZoneN(ctxCreateWindow, "Create window", true);
     ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_CreateWindow...\n");
     u32 flags = SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI;
     if (fullscreen) {
         SDL_Rect rect = { 0 };
+        TracyCZoneN(ctxSDLGetDisplayBounds, "SDL_GetDisplayBounds", true);
         SDL_GetDisplayBounds(0, &rect);
+        TracyCZoneEnd(ctxSDLGetDisplayBounds);
         window->width = rect.w;
         window->height = rect.h;
 #if 0
@@ -172,50 +177,69 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
         // Allowing resizable doesn't set the resolution properly
         flags |= SDL_WINDOW_RESIZABLE;
     }
+    TracyCZoneN(ctxSDLCreateWindow, "SDL_CreateWindow", true);
     window->sdl_window = SDL_CreateWindow("Talaria", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, window->width,
         window->height, flags);
-    if (window->sdl_window == NULL) {
+    TracyCZoneEnd(ctxSDLCreateWindow);
+    if (!window->sdl_window) {
         ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_CreateWindow error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_CreateWindow failed");
         // TODO: Return error code, handle in caller
         return;
     }
+    TracyCZoneEnd(ctxCreateWindow);
 
     // Create GL context
+    TracyCZoneN(ctxSDLCreateGLContext, "SDL_GL_CreateContext", true);
     ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_GL_CreateContext...\n");
     window->sdl_gl_context = SDL_GL_CreateContext(window->sdl_window);
-    if (window->sdl_gl_context == NULL) {
+    if (!window->sdl_gl_context) {
         ta_log_write(&tg_debug_log, SRC_WINDOW, "SDL_GL_CreateContext error: %s\n", SDL_GetError());
         DLB_ASSERT(!"ta_init_sdl: SDL_GL_CreateContext failed");
         // TODO: Return error code, handle in caller
         return;
     }
+    TracyCZoneEnd(ctxSDLCreateGLContext);
 
+    TracyCZoneN(ctxGladLoadGL, "gladLoadGL", true);
     ta_log_write(&tg_debug_log, SRC_WINDOW, "gladLoadGL...\n");
     if (!gladLoadGL()) {
         ta_log_write(&tg_debug_log, SRC_WINDOW, "gladLoadGL failed\n");
         DLB_ASSERT(!"ta_window_init: failed to init GLAD");
     }
+    TracyCZoneEnd(ctxGladLoadGL);
 
     // Get actual window size
     ta_log_write(&tg_debug_log, SRC_WINDOW, "Get window size / swap interval\n");
     if (fullscreen) {
+        TracyCZoneN(ctxSDLGetWindowSize, "SDL_GetWindowSize", true);
         SDL_GetWindowSize(window->sdl_window, &window->width, &window->height);
+        TracyCZoneEnd(ctxSDLGetWindowSize);
     }
 
-    // Log default VSync state
-#if !defined(_DEBUG)
+    // Set vsync
+    TracyCZoneN(ctxVsync, "Query/set vsync", true);
+    TracyCZoneN(ctxSDLGetSwapInterval, "SDL_GL_GetSwapInterval", true);
+    window->vsync = SDL_GL_GetSwapInterval();
+    TracyCZoneEnd(ctxSDLGetSwapInterval);
+#if !_DEBUG
     ta_window_set_vsync(window, false);
 #endif
-    window->vsync = SDL_GL_GetSwapInterval();
     ta_log_write(&tg_debug_log, SRC_WINDOW, "w: %d, h: %d, vsync: %s\n", window->width, window->height,
         window->vsync ? "on" : "off");
+    TracyCZoneEnd(ctxVsync);
 
     // TODO: Separate render thread and have the data loading thread update a progress that the render thread can draw.
     // Draw something as soon as humanly possible (just a color for now to get rid of the default white)
+    TracyCZoneN(ctxClearColor, "glClearColor", true);
     //glClearColor(0.1f, 0.15f, 0.3f, 1.0f);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    TracyCZoneEnd(ctxClearColor);
+
+    TracyCZoneN(ctxClear, "glClear(GL_COLOR_BUFFER_BIT)", true);
     glClear(GL_COLOR_BUFFER_BIT);
+    TracyCZoneEnd(ctxClear);
+
     ta_window_swap(tg_window);
 
     ta_log_write(&tg_debug_log, SRC_WINDOW, "Initializing OpenGL state...\n");
@@ -234,6 +258,7 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
     //}
 #endif
 
+    TracyCZoneN(ctxLogGLInfo, "Log OpenGL Info", true);
     ta_log_write(&tg_debug_log, SRC_WINDOW, "OpenGL: %s\n", glGetString(GL_VERSION));
     ta_log_write(&tg_debug_log, SRC_WINDOW, "GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
@@ -318,7 +343,9 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 
 #undef GLGET_LOG_INT
 #endif
+    TracyCZoneEnd(ctxLogGLInfo);
 
+    TracyCZoneN(ctxInitGLStates, "Initializing GL states", true);
     //glClearColor(0.7f, 0.9f, 1.0f, 1.0f);
 
     // Stencil buffer
@@ -350,13 +377,16 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 
     // Seamless filtering across cubemap seams
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    TracyCZoneEnd(ctxInitGLStates);
 
+    TracyCZoneN(ctxLoadCursors, "Create SDL cursors", true);
     ta_log_write(&tg_debug_log, SRC_WINDOW, "Loading cursors\n");
     window_cursor_arrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
     window_cursor_hresize = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     window_cursor_ibeam = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
     window->sdl_cursor_active = window_cursor_arrow;
     window->sdl_cursor_requested = window_cursor_arrow;
+    TracyCZoneEnd(ctxLoadCursors);
 }
 
 //======================================================================================================================
@@ -417,7 +447,9 @@ void ta_window_get_vsync(ta_window *window, bool *vsync)
 void ta_window_set_vsync(ta_window *window, bool vsync)
 {
     if (window->vsync != vsync) {
+        TracyCZoneN(ctxSDLSetSwapInterval, "SDL_GL_SetSwapInterval", true);
         SDL_GL_SetSwapInterval(vsync ? 1 : 0);
+        TracyCZoneEnd(ctxSDLSetSwapInterval);
         window->vsync = vsync;
     }
 }
@@ -526,7 +558,9 @@ void ta_window_update_cursor(ta_window *window)
 }
 void ta_window_swap(ta_window *window)
 {
+    TracyCZoneN(ctxSwap, "SDL_GL_SwapWindow", true);
     SDL_GL_SwapWindow(window->sdl_window);
+    TracyCZoneEnd(ctxSwap);
 }
 int ta_window_msgbox(ta_window *window, u32 flags, const char *title, const char *message)
 {

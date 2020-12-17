@@ -38,6 +38,7 @@ const char *dml_value_type_str(dml_value_type value_type)
 
 dml_result dml_document_from_file(dml_document *document, const char *filename)
 {
+    TracyCZone(ctxMethod, true);
     dml_result result = DML_SUCCESS;
 
     dml_scanner scanner = { 0 };
@@ -98,6 +99,7 @@ cleanup:
     dlb_vec_free(source);
 
     ta_log_timed_region_end(&tg_debug_log, CSTR("dml_load"));
+    TracyCZoneEnd(ctxMethod);
     return result;
 }
 

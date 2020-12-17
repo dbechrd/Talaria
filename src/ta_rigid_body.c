@@ -17,6 +17,8 @@
 
 void ta_rigid_body_init(ta_rigid_body *body)
 {
+    TracyCZone(ctxMethod, true);
+
     ta_collider_init(&body->collider);
     if (body->mass) {
         body->inv_mass = 1.0f / body->mass;
@@ -36,6 +38,8 @@ void ta_rigid_body_init(ta_rigid_body *body)
     } else {
         body->xform.orientation = quat_normalize(body->xform.orientation);
     }
+
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_rigid_body_init_void(void *body)
 {

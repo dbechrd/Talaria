@@ -35,7 +35,9 @@ const char *ta_glsl_type_str(int type)
 
 void ta_shader_init(ta_shader *shader)
 {
+    TracyCZone(ctxMethod, true);
     ta_shader_load(shader);
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_shader_init_void(void *shader)
 {
@@ -44,6 +46,7 @@ void ta_shader_init_void(void *shader)
 
 static GLuint ta_shader_compile(GLenum type, char *buf)
 {
+    TracyCZone(ctxMethod, true);
     GLuint shader = glCreateShader(type);
 
     // Read shader source
@@ -78,24 +81,28 @@ static GLuint ta_shader_compile(GLenum type, char *buf)
         DLB_ASSERT(!"show_info_log: GL error occurred");
 
         glDeleteShader(shader);
+        TracyCZoneEnd(ctxMethod);
         return 0;
     }
 
+    TracyCZoneEnd(ctxMethod);
     return shader;
 }
 static GLuint ta_shader_compile_file(GLenum type, const char *filename)
 {
+    TracyCZone(ctxMethod, true);
     char *buf = ta_file_read_all(filename);
     GLint shader = ta_shader_compile(type, buf);
     if (!shader) {
-        ta_log_write(&tg_debug_log, SRC_SHADER, "Failed to compile shader '%s'\n",
-            filename);
+        ta_log_write(&tg_debug_log, SRC_SHADER, "Failed to compile shader '%s'\n", filename);
     }
     dlb_vec_free(buf);
+    TracyCZoneEnd(ctxMethod);
     return shader;
 }
 static void ta_shader_program_link(GLuint program)
 {
+    TracyCZone(ctxMethod, true);
     glLinkProgram(program);
 
     GLint status = 0;
@@ -126,9 +133,11 @@ static void ta_shader_program_link(GLuint program)
         glDeleteProgram(program);
         DLB_ASSERT(!"ta_shader_program_link: failed to link shader program");
     }
+    TracyCZoneEnd(ctxMethod);
 }
 static GLint ta_shader_attribute_location(ta_shader *shader, const char *name)
 {
+    TracyCZone(ctxMethod, true);
     GLint location = glGetAttribLocation(shader->program_id, name);
     if (location < 0) {
         // TODO: Log as warning
@@ -136,10 +145,12 @@ static GLint ta_shader_attribute_location(ta_shader *shader, const char *name)
             "Failed to locate attribute by '%s' in '%s'. "
             "Possibly optimized out.\n", name, shader->path_frag);
     }
+    TracyCZoneEnd(ctxMethod);
     return location;
 }
 static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
 {
+    TracyCZone(ctxMethod, true);
     GLint location = glGetUniformLocation(shader->program_id, name);
     if (location < 0) {
         // TODO: Log as warning
@@ -147,6 +158,7 @@ static GLint ta_shader_uniform_location(ta_shader *shader, const char *name)
             "Failed to locate uniform '%s' in '%s'. "
             "Possibly optimized out.\n", name, shader->path_frag);
     }
+    TracyCZoneEnd(ctxMethod);
     return location;
 }
 ta_shader_attribute *find_attribute_by_name(ta_shader *shader, const char *name, ta_glsl_type type)
@@ -180,6 +192,7 @@ ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, const char 
 }
 static void shader_print_uniforms(ta_shader *shader)
 {
+    TracyCZone(ctxMethod, true);
     GLint count = 0;
     glGetProgramiv(shader->program_id, GL_ACTIVE_UNIFORMS, &count);
     //ta_log_write(&tg_debug_log, SRC_SHADER, " Active uniforms: %d\n", count);
@@ -193,9 +206,11 @@ static void shader_print_uniforms(ta_shader *shader)
         //ta_log_write(&tg_debug_log, SRC_SHADER, "   Uniform #%d Name: %s Type: %u_light\n", i, name, type);
     }
     dlb_free(name);
+    TracyCZoneEnd(ctxMethod);
 }
 static void shader_init_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
 {
+    TracyCZone(ctxMethod, true);
     dlb_vec_each(ta_shader_uniform *, uniform, uniforms) {
         if (uniform->type == TA_GLSL_STRUCT) {
             shader_init_uniforms(shader, uniform->value.properties);
@@ -204,9 +219,11 @@ static void shader_init_uniforms(ta_shader *shader, ta_shader_uniform *uniforms)
         }
         uniform->dirty = true;
     }
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_shader_load(ta_shader *shader)
 {
+    TracyCZone(ctxMethod, true);
     DLB_ASSERT(shader->path_vert);
     DLB_ASSERT(shader->path_frag);
 
@@ -305,6 +322,7 @@ void ta_shader_load(ta_shader *shader)
     glDetachShader(program_id, fshader);
     glDeleteShader(vshader);
     glDeleteShader(fshader);
+    TracyCZoneEnd(ctxMethod);
 }
 
 void ta_shader_delete(ta_shader *shader)
@@ -407,6 +425,7 @@ void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
 }
 void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_light *light)
 {
+    TracyCZone(ctxMethod, true);
     // TODO: Use the other set calls above to eliminate duplicate sets once that's implemented for the basic types.
     ta_shader_uniform *u_light          = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
     ta_shader_uniform *u_intensity      = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_INTENSITY[index],      TA_GLSL_FLOAT);
@@ -486,9 +505,11 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
     u_shadowmap_zfar->dirty = true;
     u_shadowmap_texture_pool_index->dirty = true;
     u_shadowmap_texture_array_layers->dirty = true;
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *material)
 {
+    TracyCZone(ctxMethod, true);
     ta_texture *albedo_texture    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->albedo_texture);
     ta_texture *emission_texture  = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->emission_texture);
     ta_texture *height_texture    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->height_texture);
@@ -584,6 +605,7 @@ void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *ma
     u_material_roughness_texture_pool_index->dirty = true;
     u_material_roughness_texture_pool_layer->dirty = true;
     u_material_roughness_factor            ->dirty = true;
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_shader_reset_pvm(ta_shader *shader)
 {
@@ -686,23 +708,31 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
 
 void ta_shader_state_save(ta_shader *shader, ta_shader_uniform *store)
 {
+    TracyCZone(ctxMethod, true);
     shader_store_uniforms(store, shader->uniforms);
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_shader_state_load(ta_shader_uniform *uniforms)
 {
+    TracyCZone(ctxMethod, true);
     int tex_count = 0;
     shader_bind_uniforms(uniforms, &tex_count);
+    TracyCZoneEnd(ctxMethod);
 }
 
 static GLuint shader_bound_program_id = 0;
 void ta_shader_bind(ta_shader *shader)
 {
+    TracyCZone(ctxMethod, true);
     DLB_ASSERT(shader->program_id);
     if (shader_bound_program_id != shader->program_id) {
+        TracyCZoneN(ctxUseProgram, "glUseProgram", true);
         glUseProgram(shader->program_id);
         shader_bound_program_id = shader->program_id;
+        TracyCZoneEnd(ctxUseProgram);
     }
     ta_shader_state_load(shader->uniforms);
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_shader_unbind()
 {

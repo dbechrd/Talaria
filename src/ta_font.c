@@ -21,6 +21,8 @@
 
 void ta_font_init(ta_font *font)
 {
+    TracyCZone(ctxMethod, true);
+
     if (!font->pixel_height) {
         font->pixel_height = 16.0f;
     }
@@ -30,6 +32,8 @@ void ta_font_init(ta_font *font)
             font->name = font->path;
         }
     }
+
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_font_init_void(void *font)
 {

@@ -1603,12 +1603,61 @@ static ogx_result ogx_load_material(dml_document *doc, ogx_material *material, d
 
 static ogx_result ogx_load_scene(dml_document *doc, ogx_scene *scene)
 {
+    TracyCZone(ctxMethod, true);
+
     // One less thing to pass around everywhere (need scene pointer for allocating nodes)
     doc->scene = scene;
     scene->filename = doc->filename;
 
+    ogx_result result = OGX_EMPTY_DOCUMENT;
     dml_value *root_value = &doc->value_pool[doc->root_value_idx];
-    if (root_value->type != DML_VALUE_OBJECT) {
+    if (root_value->type == DML_VALUE_OBJECT) {
+        dml_object *root_object = &root_value->data.as_object;
+        dlb_vec_each(size_t *, field_idx, root_object->fields) {
+            dml_field *field = &doc->field_pool[*field_idx];
+            if (field->name == ogxs_bone_node) {
+                s32 node_idx = ogx_node_alloc(doc, OGX_INDEX_NULL, OGX_BONE_NODE);
+                result = ogx_load_node(doc, node_idx, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_camera_node) {
+                s32 node_idx = ogx_node_alloc(doc, OGX_INDEX_NULL, OGX_CAMERA_NODE);
+                result = ogx_load_node(doc, node_idx, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_geometry_node) {
+                s32 node_idx = ogx_node_alloc(doc, OGX_INDEX_NULL, OGX_GEOMETRY_NODE);
+                result = ogx_load_node(doc, node_idx, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_light_node) {
+                s32 node_idx = ogx_node_alloc(doc, OGX_INDEX_NULL, OGX_LIGHT_NODE);
+                result = ogx_load_node(doc, node_idx, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_node) {
+                s32 node_idx = ogx_node_alloc(doc, OGX_INDEX_NULL, OGX_BASIC_NODE);
+                result = ogx_load_node(doc, node_idx, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_camera) {
+                ogx_camera *camera = dlb_vec_alloc(doc->scene->cameras);
+                result = ogx_load_camera(doc, camera, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_mesh) {
+                ogx_mesh *mesh = dlb_vec_alloc(doc->scene->meshes);
+                result = ogx_load_mesh(doc, mesh, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_light) {
+                ogx_light *light = dlb_vec_alloc(doc->scene->lights);
+                result = ogx_load_light(doc, light, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_texture) {
+                ogx_texture *texture = dlb_vec_alloc(doc->scene->textures);
+                result = ogx_load_texture(doc, texture, &doc->value_pool[field->value_idx]);
+            } else if (field->name == ogxs_material) {
+                ogx_material *material = dlb_vec_alloc(doc->scene->materials);
+                result = ogx_load_material(doc, material, &doc->value_pool[field->value_idx]);
+            } else {
+#if _DEBUG
+                ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] unexpected field '%s'\n", field->dbg_symbol.filename,
+                    field->dbg_symbol.line, field->dbg_symbol.column, field->name);
+#endif
+                result = OGX_UNEXPECTED_FIELD;
+            }
+
+            if (result != OGX_SUCCESS) {
+                break;
+            }
+        }
+    } else {
 #if _DEBUG
         ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] unexpected root value type '%s', expected object\n",
             root_value->dbg_symbol.filename, root_value->dbg_symbol.line, root_value->dbg_symbol.column,
@@ -1617,57 +1666,14 @@ static ogx_result ogx_load_scene(dml_document *doc, ogx_scene *scene)
         return OGX_UNEXPECTED_VALUE;
     }
 
-    ogx_result result = OGX_EMPTY_DOCUMENT;
-    dml_object *root_object = &root_value->data.as_object;
-    dlb_vec_each(size_t *, field_idx, root_object->fields) {
-        dml_field *field = &doc->field_pool[*field_idx];
-        if (field->name == ogxs_bone_node) {
-            s32 node_idx = ogx_node_alloc(doc, OGX_INDEX_NULL, OGX_BONE_NODE);
-            result = ogx_load_node(doc, node_idx, &doc->value_pool[field->value_idx]);
-        } else if (field->name == ogxs_camera_node) {
-            s32 node_idx = ogx_node_alloc(doc, OGX_INDEX_NULL, OGX_CAMERA_NODE);
-            result = ogx_load_node(doc, node_idx, &doc->value_pool[field->value_idx]);
-        } else if (field->name == ogxs_geometry_node) {
-            s32 node_idx = ogx_node_alloc(doc, OGX_INDEX_NULL, OGX_GEOMETRY_NODE);
-            result = ogx_load_node(doc, node_idx, &doc->value_pool[field->value_idx]);
-        } else if (field->name == ogxs_light_node) {
-            s32 node_idx = ogx_node_alloc(doc, OGX_INDEX_NULL, OGX_LIGHT_NODE);
-            result = ogx_load_node(doc, node_idx, &doc->value_pool[field->value_idx]);
-        } else if (field->name == ogxs_node) {
-            s32 node_idx = ogx_node_alloc(doc, OGX_INDEX_NULL, OGX_BASIC_NODE);
-            result = ogx_load_node(doc, node_idx, &doc->value_pool[field->value_idx]);
-        } else if (field->name == ogxs_camera) {
-            ogx_camera *camera = dlb_vec_alloc(doc->scene->cameras);
-            result = ogx_load_camera(doc, camera, &doc->value_pool[field->value_idx]);
-        } else if (field->name == ogxs_mesh) {
-            ogx_mesh *mesh = dlb_vec_alloc(doc->scene->meshes);
-            result = ogx_load_mesh(doc, mesh, &doc->value_pool[field->value_idx]);
-        } else if (field->name == ogxs_light) {
-            ogx_light *light = dlb_vec_alloc(doc->scene->lights);
-            result = ogx_load_light(doc, light, &doc->value_pool[field->value_idx]);
-        } else if (field->name == ogxs_texture) {
-            ogx_texture *texture = dlb_vec_alloc(doc->scene->textures);
-            result = ogx_load_texture(doc, texture, &doc->value_pool[field->value_idx]);
-        } else if (field->name == ogxs_material) {
-            ogx_material *material = dlb_vec_alloc(doc->scene->materials);
-            result = ogx_load_material(doc, material, &doc->value_pool[field->value_idx]);
-        } else {
-#if _DEBUG
-            ta_log_write(&tg_debug_log, SRC_OGX, "[%s:%zu:%zu] unexpected field '%s'\n", field->dbg_symbol.filename,
-                field->dbg_symbol.line, field->dbg_symbol.column, field->name);
-#endif
-            result = OGX_UNEXPECTED_FIELD;
-        }
-
-        if (result != OGX_SUCCESS) {
-            break;
-        }
-    }
+    TracyCZoneEnd(ctxMethod);
     return result;
 }
 
 ogx_result ogx_scene_from_file(ogx_scene *scene, const char *filename)
 {
+    TracyCZone(ctxMethod, true);
+
     ogx_result result = OGX_SUCCESS;
     bool echo = tg_debug_log.echo_stdout;
     tg_debug_log.echo_stdout = true;
@@ -1707,6 +1713,7 @@ cleanup:
 
     ta_log_timed_region_end(&tg_debug_log, CSTR("ogx_parse"));
     tg_debug_log.echo_stdout = echo;
+    TracyCZoneEnd(ctxMethod);
     return result;
 }
 

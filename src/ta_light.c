@@ -20,6 +20,7 @@
 
 void ta_lighting_init(ta_lighting *lighting)
 {
+    TracyCZone(ctxMethod, true);
     // NOTE: This is necessary for std140 packing of ta_lighting_records in ubo_lights
     DLB_ASSERT(sizeof(bool) == sizeof(int));
 
@@ -32,10 +33,12 @@ void ta_lighting_init(ta_lighting *lighting)
     // TODO: If we want to use binding point 0 for other things in other shaders, then this mapping needs to be a bit
     // more abstract.
     glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_LIGHTS, lighting->gl_ubo_lights);
+    TracyCZoneEnd(ctxMethod);
 }
 
 void ta_lighting_bind_lights(ta_lighting *lighting)
 {
+    TracyCZone(ctxMethod, true);
     ta_light *lights = (ta_light *)ta_game_resource_pool(RES_COMP_LIGHT);
     int light_idx = 0;
     for (size_t i = 0; i < dlb_vec_len(lights) && i < TA_LIGHTING_MAX_ACTIVE_LIGHTS; ++i) {
@@ -108,6 +111,7 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
     glBindBuffer(GL_UNIFORM_BUFFER, lighting->gl_ubo_lights);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting->light_records), lighting->light_records, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    TracyCZoneEnd(ctxMethod);
 }
 
 static void shadowmap_directional_create(ta_light *light);
@@ -126,6 +130,8 @@ const char *ta_light_type_str(int type)
 
 void ta_light_init(ta_light *light)
 {
+    TracyCZone(ctxMethod, true);
+
     // TODO: Branchless because I felt like it.. should actually look at generated code :D
     light->intensity += !light->intensity * DEFAULT_LIGHT_INTENSITY;
 
@@ -185,6 +191,7 @@ void ta_light_init(ta_light *light)
             DLB_ASSERT(!"<UNKNOWN_TA_LIGHT_TYPE>");
         }
     }
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_light_init_void(void *light)
 {
@@ -192,6 +199,7 @@ void ta_light_init_void(void *light)
 }
 static void shadowmap_directional_create(ta_light *light)
 {
+    TracyCZone(ctxMethod, true);
     ta_log_write(&tg_debug_log, SRC_LIGHT, "shadowmap_directional_create\n");
 
     char tex_name[256] = { 0 };
@@ -233,7 +241,9 @@ static void shadowmap_directional_create(ta_light *light)
     // https://www.khronos.org/opengl/wiki/Sampler_Object#Comparison_mode
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
+    TracyCZoneN(ctxGenFramebuffers, "glGenFramebuffers", true);
     glGenFramebuffers(1, &light->data.directional.framebuffer);
+    TracyCZoneEnd(ctxGenFramebuffers);
     glBindFramebuffer(GL_FRAMEBUFFER, light->data.directional.framebuffer);
     glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, pool->gl_id, 0, tex->gl_texture_pool_layer);
     // For reflection maps
@@ -241,19 +251,25 @@ static void shadowmap_directional_create(ta_light *light)
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
+#if 1
+    TracyCZoneN(ctxCheckFramebuffer, "glCheckFramebufferStatus", true);
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glCheckFramebufferStatus\n");
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
     }
+    TracyCZoneEnd(ctxCheckFramebuffer);
+#endif
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "unbind buffer and texture\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ta_texture_pool_unbind(pool);
+    TracyCZoneEnd(ctxMethod);
 }
 
 static void shadowmap_point_create(ta_light *light)
 {
+    TracyCZone(ctxMethod, true);
     ta_log_write(&tg_debug_log, SRC_LIGHT, "shadowmap_point_create\n");
 
     // Create 6 textures of the same size/type
@@ -298,7 +314,9 @@ static void shadowmap_point_create(ta_light *light)
     //}
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glGenFramebuffers\n");
+    TracyCZoneN(ctxGenFramebuffers, "glGenFramebuffers", true);
     glGenFramebuffers(1, &light->data.point.framebuffer);
+    TracyCZoneEnd(ctxGenFramebuffers);
     glBindFramebuffer(GL_FRAMEBUFFER, light->data.point.framebuffer);
     // TODO: Set frame buffer texture 6 times during render pass, or have 6 framebuffers
     //glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, tex->gl_id, 0);
@@ -306,15 +324,20 @@ static void shadowmap_point_create(ta_light *light)
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
 
+#if 1
+    TracyCZoneN(ctxCheckFramebuffer, "glCheckFramebufferStatus", true);
     ta_log_write(&tg_debug_log, SRC_LIGHT, "glCheckFramebufferStatus\n");
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
     if (status != GL_FRAMEBUFFER_COMPLETE) {
         DLB_ASSERT(!"Failed to set up framebuffer for some reason.");
     }
+    TracyCZoneEnd(ctxCheckFramebuffer);
+#endif
 
     ta_log_write(&tg_debug_log, SRC_LIGHT, "unbind buffer and texture\n");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ta_texture_pool_unbind(pool);
+    TracyCZoneEnd(ctxMethod);
 }
 
 ta_vec3 ta_light_position(ta_light *light)
@@ -368,6 +391,7 @@ static void shadowpass_render_directional(ta_light *light, ta_model *models)
         return;
     }
 
+    TracyCZone(ctxMethod, true);
     DLB_ASSERT(light->data.directional.framebuffer);
 
     //ta_texture_pool *texture_pool = (ta_texture_pool *)ta_game_texture_pool(light->shadowmap.texture.gl_texture_pool_index);
@@ -415,6 +439,7 @@ static void shadowpass_render_directional(ta_light *light, ta_model *models)
     ta_shader_unbind();
     //ta_texture_pool_set_filter_mode(texture_pool, prev_min, prev_mag);
     //ta_texture_pool_unbind(texture_pool);
+    TracyCZoneEnd(ctxMethod);
 }
 
 // Draw into shadowmap from light perspective
@@ -427,6 +452,7 @@ static void shadowpass_render_point(ta_light *light, ta_model *models)
         return;
     }
 
+    TracyCZone(ctxMethod, true);
     DLB_ASSERT(light->data.point.framebuffer);
 
     //ta_texture_pool *texture_pool = (ta_texture_pool *)ta_game_texture_pool(light->shadowmap.texture.gl_texture_pool_index);
@@ -479,6 +505,7 @@ static void shadowpass_render_point(ta_light *light, ta_model *models)
     ta_shader_unbind();
     //ta_texture_pool_set_filter_mode(texture_pool, prev_min, prev_mag);
     //ta_texture_pool_unbind(texture_pool);
+    TracyCZoneEnd(ctxMethod);
 }
 
 void ta_light_shadowpass_render(ta_light *light, ta_model *models)
@@ -487,6 +514,7 @@ void ta_light_shadowpass_render(ta_light *light, ta_model *models)
         return;
     }
 
+    TracyCZone(ctxMethod, true);
     typedef void (* shadowpass_render)(ta_light *light, ta_model *models);
 
     static shadowpass_render shadowpass_renderers[TA_LIGHT_COUNT] = {
@@ -499,10 +527,12 @@ void ta_light_shadowpass_render(ta_light *light, ta_model *models)
     } else {
         DLB_ASSERT(!"No shadowpass renderer for this light type");
     }
+    TracyCZoneEnd(ctxMethod);
 }
 
 void render_shadowmap_debug_directional(ta_light *light, int x, int y)
 {
+    TracyCZone(ctxMethod, true);
     ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
 
     s32 resolution = (s32)(light->data.directional.shadow_properties.resolution / 10);
@@ -516,9 +546,11 @@ void render_shadowmap_debug_directional(ta_light *light, int x, int y)
     ta_primitive_push_rect(0, rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
     ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, true);
     ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
+    TracyCZoneEnd(ctxMethod);
 }
 void render_shadowmap_debug_point(ta_light *light, int x, int y)
 {
+    TracyCZone(ctxMethod, true);
     ta_texture *tex[6] = { 0 };
 
     tex[0] = ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
@@ -559,9 +591,11 @@ void render_shadowmap_debug_point(ta_light *light, int x, int y)
     }
 
     ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_light_render_shadowmap_debug(ta_light *light, int x, int y)
 {
+    TracyCZone(ctxMethod, true);
     typedef void (* shadowmap_render)(ta_light *light, int x, int y);
 
     static shadowmap_render shadowmap_renderers[TA_LIGHT_COUNT] = {
@@ -572,6 +606,7 @@ void ta_light_render_shadowmap_debug(ta_light *light, int x, int y)
     if (shadowmap_renderers[light->type]) {
         shadowmap_renderers[light->type](light, x, y);
     }
+    TracyCZoneEnd(ctxMethod);
 }
 
 #if 0

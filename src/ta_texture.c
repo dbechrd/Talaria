@@ -50,6 +50,7 @@ const char *ta_gl_pixels_type_str(GLenum type)
 
 static void ta_texture_pool_create_and_bind(ta_texture_pool *texture_pool)
 {
+    TracyCZone(ctxMethod, true);
     DLB_ASSERT(texture_pool->width);
     DLB_ASSERT(texture_pool->height);
     DLB_ASSERT(texture_pool->format);
@@ -66,11 +67,13 @@ static void ta_texture_pool_create_and_bind(ta_texture_pool *texture_pool)
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);  //GL_CLAMP_TO_EDGE
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);  //GL_CLAMP_TO_EDGE
+    TracyCZoneEnd(ctxMethod);
 }
 
 static void ta_texture_pool_init_and_bind(ta_texture_pool *texture_pool, int width, int height, size_t layers,
     GLenum format, GLenum type)
 {
+    TracyCZone(ctxMethod, true);
     texture_pool->width = width;
     texture_pool->height = height;
     dlb_vec_reserve_fixed(texture_pool->layers, layers);
@@ -78,10 +81,12 @@ static void ta_texture_pool_init_and_bind(ta_texture_pool *texture_pool, int wid
     texture_pool->format = format;
     texture_pool->type = type;
     ta_texture_pool_create_and_bind(texture_pool);
+    TracyCZoneEnd(ctxMethod);
 }
 
 void ta_texture_pool_bind(ta_texture_pool *texture_pool)
 {
+    TracyCZone(ctxMethod, true);
     DLB_ASSERT(texture_pool);
     DLB_ASSERT(texture_pool->gl_id);
 
@@ -90,36 +95,46 @@ void ta_texture_pool_bind(ta_texture_pool *texture_pool)
     DLB_ASSERT(TA_TEXTURE_POOL_MAX < 32);
     glActiveTexture(GL_TEXTURE31);
     glBindTexture(GL_TEXTURE_2D_ARRAY, texture_pool->gl_id);
+    TracyCZoneEnd(ctxMethod);
 }
 
 void ta_texture_pool_unbind()
 {
+    TracyCZone(ctxMethod, true);
     glActiveTexture(GL_TEXTURE31);
     glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+    TracyCZoneEnd(ctxMethod);
 }
 
 void ta_texture_pool_set_filter_mode(ta_texture_pool *texture_pool, GLint min, GLint mag)
 {
+    TracyCZone(ctxMethod, true);
     texture_pool->gl_filter_min = min;
     texture_pool->gl_filter_mag = mag;
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, texture_pool->gl_filter_min);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, texture_pool->gl_filter_mag);
+    TracyCZoneEnd(ctxMethod);
 }
 
 void ta_texture_pool_set_layer_texels(ta_texture_pool *texture_pool, int layer, GLenum format, GLenum type, void *texels)
 {
+    TracyCZone(ctxMethod, true);
     DLB_ASSERT(texture_pool);
     DLB_ASSERT(texture_pool->gl_id);
     DLB_ASSERT(format);
     DLB_ASSERT(type);
     DLB_ASSERT(texels);
 
+    TracyCZoneN(ctxSubImage, "glTexSubImage3D", true);
     glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, texture_pool->width, texture_pool->height, 1, format, type,
         texels);
+    TracyCZoneEnd(ctxSubImage);
+    TracyCZoneEnd(ctxMethod);
 }
 
 void ta_texturing_init(ta_texturing *texturing)
 {
+    TracyCZone(ctxMethod, true);
     UNUSED(texturing);
 
     dlb_vec_reserve_fixed(texturing->texture_pools, TA_TEXTURE_POOL_MAX);
@@ -195,10 +210,12 @@ void ta_texturing_init(ta_texturing *texturing)
 
     dlb_vec_free(rgba_pixels);
     dlb_vec_free(depth_pixels);
+    TracyCZoneEnd(ctxMethod);
 }
 
 static void ta_texturing_add_texture(ta_texturing *texturing, ta_texture *tex)
 {
+    TracyCZone(ctxMethod, true);
     DLB_ASSERT(tex->type == TA_TEXTURE_2D_ARRAY);
     DLB_ASSERT(tex->width);
     DLB_ASSERT(tex->height);
@@ -235,6 +252,7 @@ static void ta_texturing_add_texture(ta_texturing *texturing, ta_texture *tex)
     // TODO: What to do when no matching pool found? For now, just hard crash, but we could do something fancy like
     // make a new pool automatically, or even pack non power-of-two textures into atlases. Avoid complexity if possible.
     DLB_ASSERT(found);
+    TracyCZoneEnd(ctxMethod);
 }
 
 const char *ta_texture_type_str(int type)
@@ -247,6 +265,7 @@ const char *ta_texture_type_str(int type)
 
 void ta_texture_init(ta_texture *tex)
 {
+    TracyCZone(ctxMethod, true);
     // GL_NEAREST                 texel nearest
     // GL_NEAREST_MIPMAP_NEAREST  texel nearest, mipmap nearest
     // GL_NEAREST_MIPMAP_LINEAR   texel nearest, mipmap blend
@@ -259,6 +278,7 @@ void ta_texture_init(ta_texture *tex)
     tex->gl_filter_mag += !tex->gl_filter_mag * GL_NEAREST;
 
     ta_texture_load(tex);
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_texture_init_void(void *tex)
 {
@@ -332,6 +352,7 @@ static short texture_le_short(unsigned char *bytes)
 }
 static u8 *texture_read_tga(const char *path, u32 *width, u32 *height, u8 *channels)
 {
+    TracyCZone(ctxMethod, true);
     struct tga_header
     {
         unsigned char  id_length;
@@ -359,6 +380,7 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height, u8 *chann
 
     if (!f) {
         fprintf(stderr, "Unable to open %s for reading\n", path);
+        TracyCZoneEnd(ctxMethod);
         return NULL;
     }
 
@@ -367,11 +389,13 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height, u8 *chann
     if (read != sizeof(header)) {
         fprintf(stderr, "%s has incomplete tga header\n", path);
         fclose(f);
+        TracyCZoneEnd(ctxMethod);
         return NULL;
     }
     if (header.data_type_code != 2 && header.data_type_code != 3) {
         fprintf(stderr, "%s is not an uncompressed RGB tga file\n", path);
         fclose(f);
+        TracyCZoneEnd(ctxMethod);
         return NULL;
     }
     DLB_ASSERT(header.bits_per_pixel == 8 || header.bits_per_pixel == 24 || header.bits_per_pixel == 32);
@@ -380,6 +404,7 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height, u8 *chann
         if (getc(f) == EOF) {
             fprintf(stderr, "%s has incomplete id string\n", path);
             fclose(f);
+            TracyCZoneEnd(ctxMethod);
             return NULL;
         }
     }
@@ -389,6 +414,7 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height, u8 *chann
         if (getc(f) == EOF) {
             fprintf(stderr, "%s has incomplete color map\n", path);
             fclose(f);
+            TracyCZoneEnd(ctxMethod);
             return NULL;
         }
     }
@@ -406,14 +432,17 @@ static u8 *texture_read_tga(const char *path, u32 *width, u32 *height, u8 *chann
     if (read != pixels_size) {
         ta_log_write(&tg_debug_log, SRC_TEXTURE, "ERROR: TGA pixel data does not match width/height/channels\n", path);
         dlb_free(pixels);
+        TracyCZoneEnd(ctxMethod);
         return NULL;
     }
 
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "TGA read complete\n", path);
+    TracyCZoneEnd(ctxMethod);
     return pixels;
 }
 void ta_texture_upload(ta_texture *tex, u8 *pixels)
 {
+    TracyCZone(ctxMethod, true);
     DLB_ASSERT(tex->width);
     DLB_ASSERT(tex->height);
     DLB_ASSERT(tex->channels);
@@ -488,6 +517,7 @@ void ta_texture_upload(ta_texture *tex, u8 *pixels)
     // GL_COMPRESSED_SIGNED_RG_RGTC2    ("BC5")
 
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Upload complete.\n", tex->name);
+    TracyCZoneEnd(ctxMethod);
 }
 // NOTE: Assumes texture is already bound, should probably assert this
 static void texture_generate_mipmap(ta_texture *tex)
@@ -498,6 +528,7 @@ static void texture_generate_mipmap(ta_texture *tex)
         ((tex->gl_filter_min != GL_NEAREST && tex->gl_filter_min != GL_LINEAR) ||
         (tex->gl_filter_mag != GL_NEAREST && tex->gl_filter_mag != GL_LINEAR)))
     {
+        TracyCZone(ctxMethod, true);
         ta_log_write(&tg_debug_log, SRC_TEXTURE, "Generating mipmap for %s\n", tex->name);
         ta_log_timed_region_start(&tg_debug_log, SRC_TEXTURE, CSTR("texture_generate_mipmap"));
 
@@ -505,11 +536,14 @@ static void texture_generate_mipmap(ta_texture *tex)
         glGenerateMipmap(target);
 
         ta_log_timed_region_end(&tg_debug_log, CSTR("texture_generate_mipmap"));
+        TracyCZoneEnd(ctxMethod);
     }
 }
 
 void ta_texture_load(ta_texture *tex)
 {
+    TracyCZone(ctxMethod, true);
+    TracyCZoneText(ctxMethod, tex->name, dlb_symbol_len(tex->name));
     ta_log_write(&tg_debug_log, SRC_TEXTURE, "Loading texture %s\n", tex->name);
     ta_log_timed_region_start(&tg_debug_log, SRC_TEXTURE, CSTR("ta_texture_load"));
 
@@ -526,7 +560,9 @@ void ta_texture_load(ta_texture *tex)
         if (use_stb) {
             stbi_set_flip_vertically_on_load(true);
             //pixels = stbi_load(tex->path, &width, &height, &channels, tex->channels);
+            TracyCZoneN(ctxStbLoad, "stbi_load", true);
             pixels = stbi_load(tex->path, (int *)&width, (int *)&height, (int *)&channels, 4);
+            TracyCZoneEnd(ctxStbLoad);
             channels = 4;
             if (!pixels) {
                 const char *reason = stbi_failure_reason();
@@ -579,9 +615,13 @@ void ta_texture_load(ta_texture *tex)
         ta_texture_upload(tex, pixels);
 
         if (use_stb) {
+            TracyCZoneN(ctxStbLoad, "stbi_image_free", true);
             stbi_image_free(pixels);
+            TracyCZoneEnd(ctxStbLoad);
         } else {
+            TracyCZoneN(ctxStbLoad, "dlb_free", true);
             dlb_free(pixels);
+            TracyCZoneEnd(ctxStbLoad);
         }
     } else {
         ////////////////////////////////////////////////////////////////////////////////////////
@@ -620,6 +660,7 @@ void ta_texture_load(ta_texture *tex)
     texture_generate_mipmap(tex);
     ta_texture_pool_unbind();
     ta_log_timed_region_end(&tg_debug_log, CSTR("ta_texture_load"));
+    TracyCZoneEnd(ctxMethod);
 }
 
 void ta_texture_delete(ta_texture *tex)
@@ -635,8 +676,10 @@ void ta_texture_delete(ta_texture *tex)
 
 void ta_texture_reload(ta_texture *tex)
 {
+    TracyCZone(ctxMethod, true);
     //ta_texture_delete(tex);
     ta_texture_load(tex);
+    TracyCZoneEnd(ctxMethod);
 }
 
 void ta_texture_free(ta_texture *tex)

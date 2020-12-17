@@ -4,6 +4,8 @@ const char *tg_material_default;
 
 void ta_material_init(ta_material *material)
 {
+    TracyCZone(ctxMethod, true);
+
     if (!material->shader) {
         const char *sym_mesh = 0;
         if (!sym_mesh) sym_mesh = INTERN("mesh");
@@ -32,6 +34,8 @@ void ta_material_init(ta_material *material)
     if (material->height_texture && !material->height_factor) {
         material->height_factor = 0.02f;
     }
+
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_material_init_void(void *material)
 {

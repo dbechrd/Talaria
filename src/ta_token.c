@@ -109,6 +109,8 @@ void tokens_init()
 }
 void tokens_tokenize(ta_file *f, ta_token **tokens)
 {
+    TracyCZone(ctxMethod, true);
+
     DLB_ASSERT(tokens);
     while (true) {
         ta_token *tok = dlb_vec_alloc(*tokens);
@@ -296,6 +298,8 @@ void tokens_tokenize(ta_file *f, ta_token **tokens)
             }
         }
     }
+
+    TracyCZoneEnd(ctxMethod);
 }
 void tokens_print(FILE *f, ta_token *tokens)
 {
@@ -439,6 +443,8 @@ static void bad_token(ta_scene *scene, ta_token *tok, ta_schema_field_type type,
 }
 void tokens_parse(ta_scene *scene, ta_token *tokens)
 {
+    TracyCZone(ctxMethod, true);
+
     struct {
         int indent;
         u32 resource_id;    // 0 = not a resource (i.e. field)
@@ -786,5 +792,10 @@ void tokens_parse(ta_scene *scene, ta_token *tokens)
         }
     }
 
-#undef BAD_TOKEN
+    TracyCZoneEnd(ctxMethod);
 }
+
+#undef PANIC_HEADER
+#undef FILE_POS_ARGS
+#undef OPEN_VS_CODE
+#undef BAD_TOKEN

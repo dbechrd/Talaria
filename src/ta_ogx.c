@@ -305,27 +305,43 @@ static void ta_ogx_load_node(ogx_node *o_node, ogx_scene *o_scene)
 
 void ta_ogx_load(ogx_scene *scene)
 {
+    TracyCZone(ctxMethod, true);
+
+    TracyCZoneN(ctxCameras, "load cameras", true);
     dlb_vec_each(ogx_camera *, o_camera, scene->cameras) {
         ta_ogx_load_camera(o_camera);
     }
+    TracyCZoneEnd(ctxCameras);
 
+    TracyCZoneN(ctxMeshes, "load meshes", true);
     dlb_vec_each(ogx_mesh *, o_mesh, scene->meshes) {
         ta_ogx_load_mesh(o_mesh);
     }
+    TracyCZoneEnd(ctxMeshes);
 
+    TracyCZoneN(ctxLights, "load lights", true);
     dlb_vec_each(ogx_light *, o_light, scene->lights) {
         ta_ogx_load_light(o_light);
     }
+    TracyCZoneEnd(ctxLights);
 
+    TracyCZoneN(ctxMaterials, "load materials", true);
     dlb_vec_each(ogx_material *, o_mat, scene->materials) {
         ta_ogx_load_material(o_mat);
     }
+    TracyCZoneEnd(ctxMaterials);
 
+    TracyCZoneN(ctxTextures, "load textures", true);
     dlb_vec_each(ogx_texture *, o_tex, scene->textures) {
         ta_ogx_load_texture(o_tex);
     }
+    TracyCZoneEnd(ctxTextures);
 
+    TracyCZoneN(ctxNodes, "load nodes", true);
     dlb_vec_each(ogx_node *, o_node, scene->nodes) {
         ta_ogx_load_node(o_node, scene);
     }
+    TracyCZoneEnd(ctxNodes);
+
+    TracyCZoneEnd(ctxMethod);
 }

@@ -173,6 +173,8 @@ void ta_audio_init()
     // ALC_HRTF_UNSUPPORTED_FORMAT_SOFT         0x0005
     int hrtf_value = 0;
     alcGetIntegerv(audio_openal_device, ALC_HRTF_STATUS_SOFT, 1, &hrtf_value);
+
+    ta_audio_listener_init(&tg_audio_listener);
 }
 void ta_audio_update()
 {
@@ -227,10 +229,14 @@ void ta_audio_free()
 
 void ta_audio_listener_init(ta_audio_listener *listener)
 {
+    TracyCZone(ctxMethod, true);
+
     if (!listener->volume) {
         listener->volume = 1.0f;
     }
     ta_audio_listener_set_volume(listener, listener->volume);
+
+    TracyCZoneEnd(ctxMethod);
 }
 float ta_audio_listener_get_volume(ta_audio_listener *listener)
 {
@@ -276,11 +282,15 @@ void ta_audio_listener_set_position(ta_audio_listener *listener, ta_vec3 pos)
 
 void ta_audio_buffer_init(ta_audio_buffer *buffer)
 {
+    TracyCZone(ctxMethod, true);
+
     if (buffer->path) {
         ta_audio_buffer_load_path(buffer, buffer->path);
     } else if (buffer->samples) {
         ta_audio_buffer_load(buffer);
     }
+
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_audio_buffer_init_void(void *buffer)
 {
@@ -355,6 +365,8 @@ void ta_audio_buffer_free(ta_audio_buffer *buffer)
 
 void ta_audio_source_init(ta_audio_source *source)
 {
+    TracyCZone(ctxMethod, true);
+
     if (!source->pitch) {
         source->pitch = 1.0f;
     }
@@ -383,6 +395,8 @@ void ta_audio_source_init(ta_audio_source *source)
         DLB_ASSERT(buffer->al_buffer_id);
         alSourcei(source->al_source_id, AL_BUFFER, buffer->al_buffer_id);
     }
+
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_audio_source_init_void(void *source)
 {

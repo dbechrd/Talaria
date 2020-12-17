@@ -7,7 +7,9 @@
 
 void e_button_init(ta_e_button *button)
 {
+    TracyCZone(ctxMethod, true);
     UNUSED(button);
+    TracyCZoneEnd(ctxMethod);
 }
 void e_button_init_void(void *button)
 {

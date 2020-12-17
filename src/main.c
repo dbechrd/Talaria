@@ -1,4 +1,5 @@
 #define TA_FLAG_DISABLE_MIPMAPS 0
+#define TRACY_CALLSTACK_MAX 62
 
 #include "ta_audio.h"
 #include "ta_console.h"
@@ -49,16 +50,6 @@ dlb_assert_handler_def *dlb_assert_handler = handle_assert;
 #include "ta_math.h"
 #include "ta_parse.h"
 
-void debug_tests() {
-#if _DEBUG
-    parse_tests();
-    dlb_hash_test();
-    //dlb_bitset_test();
-    dlb_index_test();
-    ta_math_test();
-#endif
-}
-
 void ndc_tests() {
     DLB_ASSERT(SCREEN_WRAP_X(0) == 0);
     DLB_ASSERT(SCREEN_WRAP_X(1) == 1);
@@ -69,6 +60,15 @@ void ndc_tests() {
     DLB_ASSERT(SCREEN_WRAP_Y(1) == 1);
     DLB_ASSERT(SCREEN_WRAP_Y(WINDOW_H) == WINDOW_H);
     DLB_ASSERT(SCREEN_WRAP_Y(-1) == WINDOW_H - 1);
+}
+
+void debug_tests() {
+    parse_tests();
+    dlb_hash_test();
+    //dlb_bitset_test();
+    dlb_index_test();
+    ta_math_test();
+    ndc_tests();
 }
 
 // Random thoughts
@@ -87,6 +87,7 @@ int main(int argc, char *argv[])
     UNUSED(argc);
     UNUSED(argv);
 
+    TracyCZoneN(ctxSDLInit, "SDL_Init", true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "SDL_Init...\n");
     // TODO: SDL_INIT_AUDIO?
     if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS) != 0) {
@@ -94,45 +95,80 @@ int main(int argc, char *argv[])
         DLB_ASSERT(!"SDL_Init failed.\n");
         return 1;
     }
+    TracyCZoneEnd(ctxSDLInit);
 
     ta_timer_init();
     ta_console_init();
+
+    TracyCZoneN(ctxLogInit, "ta_log_init_file", true);
     // NOTE(hack): Filters are changed again below before the main loop starts
     ta_log_init_file(&tg_debug_log, "log.txt", false, false, true, SRC_ALL, SRC_KEYBIND);
+    TracyCZoneEnd(ctxLogInit);
+
+    TracyCZoneN(ctxRandSeed, "dlb_rand_seed", true);
     // TODO(cleanup): Make sure we're not using rand() anywhere. Use dlb_rand_u32() instead.
     //srand((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
     dlb_rand_seed((u32)ta_timer_only_ms());  // TODO: Better seed if it matters
+    TracyCZoneEnd(ctxRandSeed);
 
-    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
-    debug_tests();
+    TracyCZoneN(ctxSymbolInit, "ta_symbol_init", true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing symbols...\n");
     ta_symbol_init();
+    TracyCZoneEnd(ctxSymbolInit);
+
+    TracyCZoneN(ctxSchemaRegister, "ta_schema_register", true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Registering schema...\n");
     ta_schema_register();
+    TracyCZoneEnd(ctxSchemaRegister);
 
+    TracyCZoneN(ctxWindowInit, "ta_window_init", true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing window...\n");
     ta_window_init(tg_window, 1920, 1017, false);
     //ta_window_init(tg_window, 1920, 1080, true);
-    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running ndc_tests...\n");
-    ndc_tests();
+    TracyCZoneEnd(ctxWindowInit);
+
+    TracyCZoneN(ctxAudioInit, "ta_audio_init", true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing audio...\n");
     ta_audio_init();
-    ta_audio_listener_init(&tg_audio_listener);
+    TracyCZoneEnd(ctxAudioInit);
+
+    TracyCZoneN(ctxMouseInit, "ta_mouse_init", true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing mouse...\n");
     ta_mouse_init();
+    TracyCZoneEnd(ctxMouseInit);
+
+    TracyCZoneN(ctxPrimInit, "ta_primitive_init", true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing primitives...\n");
     ta_primitive_init();
+    TracyCZoneEnd(ctxPrimInit);
+
+    TracyCZoneN(ctxGameInit, "ta_game_init", true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing game...\n");
     ta_game_init();
+    TracyCZoneEnd(ctxGameInit);
+
+    TracyCZoneN(ctxEditorInit, "ta_editor_init", true);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Initializing editor...\n");
     ta_editor_init();
+    TracyCZoneEnd(ctxEditorInit);
+
+#if _DEBUG
+    TracyCZoneN(ctxDebugTests, "debug_tests", true);
+    ta_log_write(&tg_debug_log, SRC_SYSTEM, "Running debug_tests...\n");
+    debug_tests();
+    TracyCZoneEnd(ctxDebugTests);
+#endif
 
     // TODO: Change log_level instead once that's implemented
     // HACK: This is dumb. I just don't want debug/info.
     tg_debug_log.src_exclude |= SRC_AUDIO | SRC_CONSOLE | SRC_EVENT | SRC_EDITOR | SRC_GAME;
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Starting game loop...\n");
-    ta_game_loop();
 
+    TracyCZoneN(ctxGameLoop, "ta_game_loop", true);
+    ta_game_loop();
+    TracyCZoneEnd(ctxGameLoop);
+
+    TracyCZoneN(ctxCleanup, "Clean up", true);
     // TODO: Free *EVERYTHING* (at least in debug mode.. to check for memory leaks)
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Cleaning up...\n");
     ta_audio_free();
@@ -140,6 +176,7 @@ int main(int argc, char *argv[])
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Goodbye.\n\n");
     ta_log_free(&tg_debug_log);
     SDL_Quit();
+    TracyCZoneEnd(ctxCleanup);
     return 0;
 }
 

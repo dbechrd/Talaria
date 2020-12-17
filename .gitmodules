@@ -4,3 +4,6 @@
 [submodule "include/tinycthread"]
 	path = include/tinycthread
 	url = git@github.com:tinycthread/tinycthread.git
+[submodule "include/tracy"]
+	path = include/tracy
+	url = git@github.com:wolfpld/tracy.git

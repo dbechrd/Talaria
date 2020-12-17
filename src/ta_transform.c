@@ -2,6 +2,8 @@
 
 void ta_transform_init(ta_transform *transform)
 {
+    TracyCZone(ctxMethod, true);
+
     if (quat_zero(transform->xform.orientation)) {
         transform->xform.orientation = QUAT_IDENT;
     } else {
@@ -11,6 +13,8 @@ void ta_transform_init(ta_transform *transform)
     //    node->xform.scale = VEC3_ONE;
     //}
     //transform->xform_prev = transform->xform;
+
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_transform_init_void(void *transform)
 {

@@ -10,6 +10,8 @@
 
 void ta_scene_init(ta_scene *scene)
 {
+    TracyCZoneN(ctxMethod, "ta_scene_init", true);
+
     DLB_ASSERT(scene->filename);
     if (!scene->name) {
         scene->name = scene->filename;  // TODO: Load name from scene file
@@ -21,12 +23,15 @@ void ta_scene_init(ta_scene *scene)
         dlb_index_init(&scene->index_by_name[type], 512, 512);
         dlb_index_init(&scene->index_by_entity[type], 512, 512);
     }
+
+    TracyCZoneEnd(ctxMethod);
 }
 // TODO: This should take a ta_buffer pointer. Load entire file into memory
 //       and refactor all of the e.g. read_char and expect_char logic out from
 //       ta_file into ta_buffer.
 void ta_scene_load(ta_scene *scene, ta_file *file)
 {
+    TracyCZone(ctxMethod, true);
     scene->filename = file->filename;
     scene->name = file->filename;  // TODO: Load name from scene file
 
@@ -68,6 +73,7 @@ void ta_scene_load(ta_scene *scene, ta_file *file)
             }
         }
     }
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_scene_load_file(ta_scene *scene, const char *filename)
 {

@@ -14,6 +14,8 @@ static const char *file_mode_str(ta_file_mode mode) {
 }
 
 void ta_file_open(ta_file *file, const char *filename, ta_file_mode mode) {
+    TracyCZone(ctxFileOpen, true);
+
     if (mode == FILE_WRITE) {
         FILE *hnd = fopen(filename, file_mode_str(mode));
         if (!hnd) {
@@ -28,6 +30,8 @@ void ta_file_open(ta_file *file, const char *filename, ta_file_mode mode) {
     file->mode = mode;
     file->pos.line = 1;
     file->pos.column = 1;
+
+    TracyCZoneEnd(ctxFileOpen);
 }
 
 void ta_file_close(ta_file *f) {
@@ -261,6 +265,12 @@ int ta_file_allow_char(ta_file *f, const char *chars, int times) {
 // read file as binary, but append \0 to the end of the buffer
 char *ta_file_read_all(const char *filename)
 {
+    // TODO: This method has really inconsistent error handling.. need to make sure failures are handled gracefully in
+    // release mode as well (not just asserts everywhere). We should either verify that all callers handle a NULL return
+    // value correctly, or let this method intentionally crash the program (make sure log gets flushed before exiting!)
+
+    TracyCZone(ctxMethod, true);
+
     // Open file
     FILE *fs = fopen(filename, "rb");
     if (!fs) {
@@ -292,5 +302,7 @@ char *ta_file_read_all(const char *filename)
 
     // Close file
     fclose(fs);
+
+    TracyCZoneEnd(ctxMethod);
     return buffer;
 }

@@ -12,8 +12,8 @@ typedef struct dlb_symbol__hdr {
     size_t len;
 } dlb_symbol__hdr;
 
-#define dlb_symbol__hdr(s) ((dlb_symbol__hdr *)((char *)s - sizeof(dlb_symbol__hdr)))
-#define dlb_symbol_len(s) ((s) ? dlb_symbol__hdr(s)->len : 0)
+#define dlb_symbol__hdr(s) ((dlb_symbol__hdr *)((char *)(s) - sizeof(dlb_symbol__hdr)))
+#define dlb_symbol_len(s) ((s) ? (dlb_symbol__hdr(s)->len) : (0))
 
 //#define dlb_symbol_end(s) ((s) + dlb_symbol_len(s))
 //#define dlb_symbol_last(s) (&(s)[dlb_symbol__hdr(s)->len-1])

@@ -132,6 +132,7 @@ void ta_game_init()
     //       capture overall state as well (e.g. PLAYING, EDITING, etc.)
     ta_game_state_set(TA_STATE_STARTUP);
 
+    TracyCZoneN(ctxGetBasePath, "SDL_GetBasePath", true);
     ta_log_write(&tg_debug_log, SRC_GAME, "Determining base path...\n");
 #if _DEBUG
     char buf[512] = { 0 };
@@ -151,8 +152,10 @@ void ta_game_init()
     SDL_free(buf);
 #endif
     ta_log_write(&tg_debug_log, SRC_GAME, "Base path: %s\n", tg_game.base_path);
+    TracyCZoneEnd(ctxGetBasePath);
 
-    ta_log_write(&tg_debug_log, SRC_GAME, "Initializing key binds\n");
+    TracyCZoneN(ctxLoadKeybinds, "Loading keybinds", true);
+    ta_log_write(&tg_debug_log, SRC_GAME, "Loading keybinds\n");
 
     // TODO: Read keybinds from file
     //dlb_vec_reserve(tg_keybinds, 16);
@@ -203,6 +206,7 @@ void ta_game_init()
     ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SIM_NEXT_10     ,                                     TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_F7);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_EDITOR_SIM_WHILE_HELD  ,                                     TA_STATE_EDITOR, TA_KEYBIND_HOLD,    SDL_SCANCODE_F8);
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+    TracyCZoneEnd(ctxLoadKeybinds);
 
     //--------------------------------------------------------------------------
     // Random David shit
@@ -233,14 +237,13 @@ void ta_game_init()
     //ta_game_load_gltf("data/mesh/dude.gltf");
     //ta_game_load_gltf("data/mesh/skeleton_test.gltf");
 
-    tg_mesh_default = INTERN("prim_unknown");
-    tg_material_default = INTERN("material_unknown");
-
     if (!tg_mesh_gl_default_bone_xforms) {
+        TracyCZoneN(ctxGenDefaultBoneXforms, "Generate default_bone_xforms", true);
         glGenBuffers(1, &tg_mesh_gl_default_bone_xforms);
         glBindBuffer(GL_UNIFORM_BUFFER, tg_mesh_gl_default_bone_xforms);
         glBufferData(GL_UNIFORM_BUFFER, FIELD_SIZEOF(ta_mesh, skin.bone_xforms), 0, GL_DYNAMIC_DRAW);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        TracyCZoneEnd(ctxGenDefaultBoneXforms);
     }
 
     //--------------------------------------------------------------------------
@@ -248,23 +251,6 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     // TODO: Find closest 8 lights and store them in tg_game.lights
     ta_lighting_init(&tg_game.lighting);
-
-    // TODO(cleanup): random tests that probably didn't help me solve anything
-    // translation: [0, 0, 0]
-    // rotation: [0xbf3504f4, 0, 0, 0x3f3504f4]
-    // # ExportNodeTransform
-    // translation: [0, 0, 0x3f800000]
-    // rotation: [0xbf3504f4, 0, 0, 0x3f3504f4]
-
-    //ta_vec4 q1 = (ta_vec4){ -0.707107, 0, 0, 0.707107 };
-    //ta_mat4 m1 = mat4_rotate_quat(q1);
-    //ta_vec3 t2 = (ta_vec3){ 0, 0, 1 };
-    //ta_vec4 q2 = (ta_vec4){ -0.707107, 0, 0, 0.707107 };
-    //ta_mat4 m2t = mat4_translate(t2);
-    //ta_mat4 m2q = mat4_rotate_quat(q2);
-    //ta_mat4 m2 = mat4_mul(&m2t, &m2q);
-    //ta_mat4 r1 = mat4_mul(&m1, &m2);
-    //ta_mat4 r2 = mat4_mul(&m2, &m1);
 
     //--------------------------------------------------------------------------
     // Scene (OGX) ** MUST COME AFTER game.scene.index_by_name[*] INITIALIZED
@@ -334,10 +320,12 @@ void ta_game_init()
     DLB_ASSERT(tg_e_freecam);
     tg_e_active_camera = tg_e_freecam;
 
+    TracyCZoneN(ctxMinimapCamera, "Init minimap_camera", true);
     tg_game.minimap_camera.fov = 90.0f;
     tg_game.minimap_camera.up = VEC3_NZ;
     tg_game.minimap_camera.ortho = true;
     ta_camera_init(&tg_game.minimap_camera);
+    TracyCZoneEnd(ctxMinimapCamera);
 
     //--------------------------------------------------------------------------
     // Audio
@@ -346,17 +334,25 @@ void ta_game_init()
     tg_e_background_music = SYM_ENTITY_BACKGROUND_MUSIC;
     DLB_ASSERT(tg_e_background_music);
 
+    TracyCZoneN(ctxFindBGMusic, "Find background music", true);
     ta_audio_source *bg_music_src = (ta_audio_source *)ta_game_component_try(tg_e_background_music, RES_COMP_AUDIO_SOURCE);
+    TracyCZoneEnd(ctxFindBGMusic);
     if (bg_music_src) {
+        TracyCZoneN(ctxPlayBGMusic, "Loop background music", true);
         ta_audio_source_play_loop(bg_music_src);
+        TracyCZoneEnd(ctxPlayBGMusic);
     }
 
+    TracyCZoneN(ctxSetVolume, "Set volume", true);
     ta_audio_listener_set_volume(&tg_audio_listener, 0.1f);
+    TracyCZoneEnd(ctxSetVolume);
     //ta_audio_listener_mute(&tg_audio_listener);
 
     //--------------------------------------------------------------------------
     // Textures
     //--------------------------------------------------------------------------
+    TracyCZoneN(ctxAllocDefaultTextures, "Init default textures", true);
+
     tg_font                 = INTERN("data/font/UbuntuMono-Regular.ttf");
     tg_tex_audio_icon       = INTERN("data/texture/audio_icon.tga");
     tg_tex_bullet_icon      = INTERN("data/texture/bullet_icon.tga");
@@ -471,6 +467,8 @@ void ta_game_init()
     ta_texture_init(tex_default_occlusion);
     ta_texture_init(tex_default_roughness);
 
+    TracyCZoneEnd(ctxAllocDefaultTextures);
+
     //--------------------------------------------------------------------------
     // Shaders
     //--------------------------------------------------------------------------
@@ -480,7 +478,9 @@ void ta_game_init()
     tg_shader_cubemap = (ta_shader *)ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
 
 #if defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)
+    TracyCZoneN(ctxAssetWatcher, "Init asset watcher", true);
     ta_asset_watcher_init(&tg_game.texture_watcher, SYM(tg_game.base_path));
+    TracyCZoneEnd(ctxAssetWatcher);
 #endif
 
 #if _DEBUG
@@ -2122,7 +2122,7 @@ void ta_game_loop()
 
         ta_log_write(&tg_debug_log, SRC_GAME, " Swap...\n");
         ta_window_swap(tg_window);
-        TracyCFrameMark
+        TracyCFrameMark;
 
         ta_log_write(&tg_debug_log, SRC_GAME,
             "Frame %llu displayed. time: %5.3f delta: %5.3f\n",

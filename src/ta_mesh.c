@@ -36,9 +36,13 @@ const char *ta_vertex_attrib_type_str(int type) {
 
 void ta_mesh_init(ta_mesh *mesh)
 {
+    TracyCZone(ctxMethod, true);
+
     if (mesh->path) {
         ta_mesh_load_file(mesh, mesh->path);
     }
+
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_mesh_init_void(void *mesh)
 {

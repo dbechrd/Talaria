@@ -12,6 +12,8 @@
 
 void ta_camera_init(ta_camera *camera)
 {
+    TracyCZone(ctxMethod, true);
+
     if (!camera->position_smooth)     camera->position_smooth = 1.0f;
     if (!camera->position_target_vel) camera->position_target_vel = 0.1f;
 
@@ -35,6 +37,8 @@ void ta_camera_init(ta_camera *camera)
     camera->dirty = true;
 
     camera->focal_point = VEC3_MIN;
+
+    TracyCZoneEnd(ctxMethod);
 }
 void ta_camera_init_void(void *camera)
 {

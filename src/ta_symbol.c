@@ -113,6 +113,9 @@ void symbol_gen_array(const char **array, size_t array_len, const char *format)
 void ta_symbol_init() {
     dlb_hash_init(&symbol_table, DLB_HASH_STRING, "[symbol_table]", 2048);
 
+    tg_mesh_default     = INTERN("prim_unknown");
+    tg_material_default = INTERN("material_unknown");
+
     SYM_GLINT     = INTERN("glint");
     SYM_GLUINT    = INTERN("gluint");
     SYM_SAMPLER2D = INTERN("sampler2D");
