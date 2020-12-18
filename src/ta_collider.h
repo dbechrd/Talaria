@@ -6,6 +6,7 @@ typedef enum ta_collider_type {
     TA_COLLIDER_PLANE   = 0,
     TA_COLLIDER_SPHERE  = 1,
     TA_COLLIDER_OBB     = 2,
+    TA_COLLIDER_CAPSULE = 3,
     TA_COLLIDER_COUNT
 } ta_collider_type;
 
@@ -22,6 +23,7 @@ typedef struct ta_collider {
         ta_sphere    sphere;
         ta_obb       obb;
         ta_plane     plane;      // NOTE: This is technically a half-space, not a true plane
+        ta_capsule   capsule;
     } data;
 } ta_collider;
 

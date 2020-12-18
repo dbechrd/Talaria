@@ -6,10 +6,11 @@
 const char *ta_collider_type_str(int type)
 {
     switch(type) {
-        case TA_COLLIDER_PLANE:  return "TA_COLLIDER_PLANE";
-        case TA_COLLIDER_SPHERE: return "TA_COLLIDER_SPHERE";
-        case TA_COLLIDER_OBB:    return "TA_COLLIDER_OBB";
-        default: DLB_ASSERT(0);  return "TA_COLLIDER_???";
+        case TA_COLLIDER_PLANE:   return "TA_COLLIDER_PLANE";
+        case TA_COLLIDER_SPHERE:  return "TA_COLLIDER_SPHERE";
+        case TA_COLLIDER_OBB:     return "TA_COLLIDER_OBB";
+        case TA_COLLIDER_CAPSULE: return "TA_COLLIDER_CAPSULE";
+        default: DLB_ASSERT(0);   return "TA_COLLIDER_???";
     }
 }
 
@@ -43,6 +44,12 @@ void ta_collider_init(ta_collider *collider)
                 collider->data.obb.orientation = quat_normalize(collider->data.obb.orientation);
             }
             break;
+        } case TA_COLLIDER_CAPSULE: {
+            if (collider->data.sphere.radius == 0.0f) {
+                collider->data.sphere.radius = 1.0f;
+            }
+            collider->data.capsule.radius = MAX(TA_EPSILON, collider->data.capsule.radius);
+            break;
         } default: {
             DLB_ASSERT(!"Make sure this collider doesn't need initializer");
         }
@@ -72,6 +79,7 @@ static ta_mat3 obb_inverse_tensor(ta_obb *obb, float mass)
     // TODO: Proper OBB tensor calculation (differs along each axis)
     // https://en.wikipedia.org/wiki/List_of_moments_of_inertia
 
+#if 0
     // HACK: Cube moment of inertia: 1/6 ms^2 (where s = side length)
     float side = MAX(1.0f, obb->extents.x);
     float moment = 1.0f/6.0f * mass * (side * side);
@@ -81,7 +89,37 @@ static ta_mat3 obb_inverse_tensor(ta_obb *obb, float mass)
         0.0f,       inv_moment, 0.0f,
         0.0f,       0.0f,       inv_moment
     );
+#else
+    float mass_twelfth = mass / 12.0f;
+    float width  = 2.0f * obb->extents.x;
+    float height = 2.0f * obb->extents.y;
+    float depth  = 2.0f * obb->extents.z;
+    float moment_x = mass_twelfth * (width * width);
+    float moment_y = mass_twelfth * (height * height);
+    float moment_z = mass_twelfth * (depth * depth);
+    inv_tensor = mat3_init(
+        1.0f / moment_x,      0.0f      ,      0.0f      ,
+             0.0f      , 1.0f / moment_y,      0.0f      ,
+             0.0f      ,      0.0f      , 1.0f / moment_z
+    );
+#endif
 
+    return inv_tensor;
+}
+
+static ta_mat3 capsule_inverse_tensor(ta_capsule *capsule, float mass)
+{
+    // HACK: Use sphere inertia tensor cus I'm lazy and capsule intertia tensors are really convoluted
+    // TODO: https://www.gamedev.net/tutorials/programming/math-and-physics/capsule-inertia-tensor-r3856/
+
+    ta_vec3 a_to_b = vec3_sub(capsule->center2, capsule->center);
+    ta_vec3 half_h = vec3_scalef(a_to_b, 0.5f);
+
+    ta_sphere sphere = { 0 };
+    sphere.center = vec3_add(capsule->center, half_h);
+    sphere.radius = vec3_len(half_h) + capsule->radius;
+
+    ta_mat3 inv_tensor = sphere_inverse_tensor(&sphere, mass);
     return inv_tensor;
 }
 
@@ -99,6 +137,9 @@ ta_mat3 ta_collider_inv_tensor(ta_collider *collider, float mass)
         } case TA_COLLIDER_OBB: {
             inv_tensor = obb_inverse_tensor(&collider->data.obb, mass);
             break;
+        } case TA_COLLIDER_CAPSULE: {
+            inv_tensor = capsule_inverse_tensor(&collider->data.capsule, mass);
+            break;
         } default: {
             //DLB_ASSERT(!"You can't do that for this shape");
             break;
@@ -112,8 +153,7 @@ static ta_aabb plane_world_bounds(ta_plane *plane, const ta_xform *xform)
     // TODO: Calculate AABB for plane (add TA_EPSILON depth)
     // or .. infinite AABB??
     ta_aabb result = { 0 };
-    result.center = quat_mul_vec3(xform->orientation, plane->center);
-    result.center = vec3_add(result.center, xform->position);
+    result.center = vec3_add(xform->position, quat_mul_vec3(xform->orientation, plane->center));
     result.extents = VEC3_ONE;
     return result;
 }
@@ -123,8 +163,7 @@ static ta_aabb sphere_world_bounds(ta_sphere *sphere, const ta_xform *xform)
     DLB_ASSERT(sphere->radius >= TA_EPSILON);
 
     ta_aabb result = { 0 };
-    result.center = quat_mul_vec3(xform->orientation, sphere->center);
-    result.center = vec3_add(result.center, xform->position);
+    result.center = vec3_add(xform->position, quat_mul_vec3(xform->orientation, sphere->center));
     result.extents.x = sphere->radius;
     result.extents.y = sphere->radius;
     result.extents.z = sphere->radius;
@@ -133,9 +172,9 @@ static ta_aabb sphere_world_bounds(ta_sphere *sphere, const ta_xform *xform)
 
 static ta_aabb obb_world_bounds(ta_obb *obb, const ta_xform *xform)
 {
-    obb->extents.x = MAX(obb->extents.x, TA_EPSILON);
-    obb->extents.y = MAX(obb->extents.y, TA_EPSILON);
-    obb->extents.z = MAX(obb->extents.z, TA_EPSILON);
+    DLB_ASSERT(obb->extents.x >= TA_EPSILON);
+    DLB_ASSERT(obb->extents.y >= TA_EPSILON);
+    DLB_ASSERT(obb->extents.z >= TA_EPSILON);
 
     ta_aabb result = { 0 };
     result.center = quat_mul_vec3(xform->orientation, obb->center);
@@ -180,6 +219,24 @@ static ta_aabb obb_world_bounds(ta_obb *obb, const ta_xform *xform)
     return result;
 }
 
+static ta_aabb capsule_world_bounds(ta_capsule *capsule, const ta_xform *xform)
+{
+    DLB_ASSERT(capsule->radius >= TA_EPSILON);
+
+    ta_aabb result = { 0 };
+
+    // Calculate true center of capsule (centerpoint of capsule's two "centers")
+    ta_vec3 a_to_b = vec3_sub(capsule->center2, capsule->center);
+    ta_vec3 half_h = vec3_scalef(a_to_b, 0.5f);
+    ta_vec3 center = vec3_add(capsule->center, half_h);
+
+    result.center = vec3_add(xform->position, quat_mul_vec3(xform->orientation, center));
+    result.extents.x = vec3_dot(a_to_b, VEC3_X) + 2.0f * capsule->radius;
+    result.extents.y = vec3_dot(a_to_b, VEC3_Y) + 2.0f * capsule->radius;
+    result.extents.z = vec3_dot(a_to_b, VEC3_Z) + 2.0f * capsule->radius;
+    return result;
+}
+
 ta_aabb ta_collider_world_bounds(ta_collider *collider, const ta_xform *xform)
 {
     ta_aabb result = { 0 };
@@ -192,6 +249,9 @@ ta_aabb ta_collider_world_bounds(ta_collider *collider, const ta_xform *xform)
             break;
         } case TA_COLLIDER_OBB: {
             result = obb_world_bounds(&collider->data.obb, xform);
+            break;
+        } case TA_COLLIDER_CAPSULE: {
+            result = capsule_world_bounds(&collider->data.capsule, xform);
             break;
         } default: {
             DLB_ASSERT(!"Don't know how to bound this collider type");
@@ -214,6 +274,9 @@ void ta_collider_push(ta_collider *collider, ta_rgba color)
             break;
         } case TA_COLLIDER_OBB: {
             ta_primitive_push_obb(0, collider->data.obb, color);
+            break;
+        } case TA_COLLIDER_CAPSULE: {
+            ta_primitive_push_capsule(0, collider->data.capsule, color);
             break;
         } default: {
             DLB_ASSERT(!"Don't know how to render this collider type");

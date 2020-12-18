@@ -278,8 +278,8 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
     p[6].x = +obb->extents.x; p[6].y = +obb->extents.y; p[6].z = -obb->extents.z;
     p[7].x = +obb->extents.x; p[7].y = +obb->extents.y; p[7].z = +obb->extents.z;
 
-    // TODO: This doesn't need to be here once we expand the AABB tree search distance.. which uh.. might require
-    // actually having an AABB tree. :sweat_smile:
+    // HACK: Fudge factor to prevent jittering of multi-contact manifolds due to gravity.
+    // TODO: Figure out a better and more general solution for detecting resting contacts.
     const float tolerance = 0.01f;
 
     float dists[8];
@@ -302,7 +302,7 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
             if (manifold) {
                 manifold->normal_world = plane->normal;
                 manifold->contacts[manifold->contact_count].ra_local = vec3_scalef(plane->normal, -dists[i]);
-                manifold->contacts[manifold->contact_count].rb_local = p[i];
+                manifold->contacts[manifold->contact_count].rb_local = quat_mul_vec3(obb->orientation, p[i]);
                 manifold->contact_count++;
             }
             collided = true;
@@ -410,7 +410,7 @@ bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere, const ta_ob
         manifold->normal_world = normal;
         manifold->contacts[0].ra_local = vec3_scalef(normal, sphere->radius);
         //manifold->contacts[0].rb_local = vec3_scalef(normal, -sphere->radius - sqrtf(d2));
-        manifold->contacts[0].rb_local = closest_obb;
+        manifold->contacts[0].rb_local = closest;
         manifold->contact_count = 1;
     }
 

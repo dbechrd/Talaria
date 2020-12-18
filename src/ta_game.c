@@ -1184,14 +1184,24 @@ static void game_simulate(float dt)
 #endif
             }
 
-            // TODO: Is "joint damping" relevant in the context of contact constraints? (eq. 32 & 33 in PBDBodies)
-            // If so, are the contact radii the correct location to apply the impulse?
+            // damping
             {
-                // Linear damping
                 float coef_linear_damping = 0.99f;
-                float damping_mag = MIN(coef_linear_damping, 1.0f);
-                ta_vec3 dv_damping = vec3_scalef(vec3_sub(b->velocity, a->velocity), damping_mag);
+                float coef_angular_damping = 0.99f;
+
+                float linear_damping = MIN(coef_linear_damping, 1.0f);
+                float angular_damping = MIN(coef_angular_damping, 1.0f);
+
+                // This doesn't seem to do anything useful to prevent jittering..
+                //vec3_scalef(a->velocity, linear_damping * dt);
+                //vec3_scalef(b->velocity, linear_damping * dt);
+                //vec3_scalef(a->ang_velocity, angular_damping * dt);
+                //vec3_scalef(b->ang_velocity, angular_damping * dt);
+
 #if 0
+                // TODO: Is "joint damping" relevant in the context of contact constraints? (eq. 32 & 33 in PBDBodies)
+                // If so, are the contact radii the correct location to apply the impulse?
+                ta_vec3 dv_damping = vec3_scalef(vec3_sub(b->velocity, a->velocity), linear_damping);
                 ta_physics_apply_velocity_correction(
                     a,
                     b,
@@ -1215,7 +1225,8 @@ static void game_simulate(float dt)
                 // previous normal velocity
                 float vn_mag_prev = vec3_dot(n, v_prev);
                 // TODO: for small vn, |vn| <= 2|g|h, set restitution to 0 to avoid jittering
-                float e = manifold->e; // * (float)(fabs(vn) > (2.0f * fabs(GRAVITY) * dt));
+                //float e = manifold->e; // * (float)(fabs(vn) > (2.0f * fabs(GRAVITY) * dt));
+                float e = manifold->e * (fabsf(vn_mag_prev) > (2.0f * fabsf(GRAVITY) * dt));
                 //e = 0.9f;
                 // NOTE: Using MIN instead of MAX here because my signs are reversed (opposite normal I think) vs.
                 // PBDBodies Eq. 35.
@@ -1264,6 +1275,7 @@ static void game_render_skybox()
         GLuint *layers = 0;
         for (int i = 0; i < 6; i++) {
             ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, skybox->textures[i]);
+            // TODO: This is a stupid memory allocation, make it a static buffer and pass size explicitly
             dlb_vec_push(layers, tex->gl_texture_pool_layer);
             DLB_ASSERT(tex->gl_texture_pool_index == first_tex->gl_texture_pool_index);
         }

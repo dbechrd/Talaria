@@ -99,6 +99,8 @@ void ta_rigid_body_init_void                    (void *body);
 void ta_rigid_body_free                         (ta_rigid_body *body);
 void ta_rigid_body_free_void                    (void *body);
 
+void ta_rigid_body_set_mass                     (ta_rigid_body *body, float mass);
+
 ta_vec3 rigid_body_local_to_world               (const ta_rigid_body *body, ta_vec3 p_body);
 ta_vec3 rigid_body_local_to_world_prev          (const ta_rigid_body *body, ta_vec3 p_body);
 ta_vec3 rigid_body_world_to_local               (const ta_rigid_body *body, ta_vec3 p_world);

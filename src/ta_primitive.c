@@ -582,8 +582,16 @@ void ta_primitive_push_obb(ta_mesh *mesh, ta_obb obb, ta_rgba color)
     p[7] = vec3_add(vec3_add(vec3_add(obb.center, obb.axes[0]), obb.axes[1]), obb.axes[2]);
 #endif
 }
-void ta_primitive_push_cube(ta_mesh *mesh, ta_vec3 center, float radius,
-    ta_rgba color)
+void ta_primitive_push_capsule(ta_mesh *mesh, ta_capsule capsule, ta_rgba color)
+{
+    ta_sphere sphere = { 0 };
+    sphere.center = capsule.center;
+    sphere.radius = capsule.radius;
+    ta_primitive_push_sphere(mesh, sphere, color);
+    sphere.center = capsule.center2;
+    ta_primitive_push_sphere(mesh, sphere, color);
+}
+void ta_primitive_push_cube(ta_mesh *mesh, ta_vec3 center, float radius, ta_rgba color)
 {
     ta_vec3 pmin = center;
     pmin.x -= radius;

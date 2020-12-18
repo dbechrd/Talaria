@@ -150,6 +150,12 @@ typedef struct ta_plane {
     ta_vec3 normal;
 } ta_plane;
 
+typedef struct ta_capsule {
+    ta_vec3 center;
+    ta_vec3 center2;
+    float radius;
+} ta_capsule;
+
 typedef struct ta_quad {
     ta_vec3 center;
     ta_vec2 extents;

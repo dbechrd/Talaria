@@ -301,6 +301,9 @@ static void editor_command_select()
                         }
                     }
                     break;
+                } case TA_COLLIDER_CAPSULE: {
+                    // TODO: ta_ray_v_capsule
+                    break;
                 } default: {
                     // Ignore unsupported colliders when picking
                     continue;
@@ -1368,9 +1371,11 @@ static void ui_node_panel()
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("mass:"));
             static ta_ui_textbox_state mass_editor = { 0 };
-            ta_ui_textbox_float(&rigid_body->mass, &mass_editor, 0);
-            rigid_body->mass = MAX(0.0f, rigid_body->mass);
-            rigid_body->inv_mass = rigid_body->mass ? 1.0f / rigid_body->mass : 0.0f;
+            float new_mass = rigid_body->mass;
+            ta_ui_textbox_float(&new_mass, &mass_editor, 0);
+            if (new_mass != rigid_body->mass) {
+                ta_rigid_body_set_mass(rigid_body, new_mass);
+            }
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1553,18 +1558,20 @@ static void ui_node_panel()
             ta_ui_label(CSTR("Collider"));
 
             ta_ui_row_begin();
-            for (int i = 0; i < TA_COLLIDER_COUNT; ++i) {
+            for (int collider_type = 0; collider_type < TA_COLLIDER_COUNT; ++collider_type) {
                 const char *type = "unknown";
-                switch (i) {
-                    case TA_COLLIDER_PLANE:  type = "Plane";  break;
-                    case TA_COLLIDER_SPHERE: type = "Sphere"; break;
-                    case TA_COLLIDER_OBB:    type = "OBB";    break;
+                switch (collider_type) {
+                    case TA_COLLIDER_PLANE:   type = "Plane";   break;
+                    case TA_COLLIDER_SPHERE:  type = "Sphere";  break;
+                    case TA_COLLIDER_OBB:     type = "OBB";     break;
+                    case TA_COLLIDER_CAPSULE: type = "Capsule"; break;
                 }
                 if (ta_ui_button(type, strlen(type))) {
                     size_t variable_data_offset = sizeof(rigid_body->collider.data.center);
+                    // Re-initialize the collider by setting memory to zero, changing type and calling collider_init
                     memset((u8 *)&rigid_body->collider.data + variable_data_offset, 0,
                         sizeof(rigid_body->collider.data) - variable_data_offset);
-                    rigid_body->collider.type = (ta_collider_type)i;
+                    rigid_body->collider.type = (ta_collider_type)collider_type;
                     ta_collider_init(&rigid_body->collider);
                 }
             }
@@ -1619,6 +1626,20 @@ static void ui_node_panel()
                     ta_ui_label(CSTR("orientation:"));
                     static ta_ui_textbox_vec4_state orientation_editor = { 0 };
                     ta_ui_textbox_vec4(&rigid_body->collider.data.obb.orientation, &orientation_editor, true, true);
+                    break;
+                } case TA_COLLIDER_CAPSULE: {
+                    ta_ui_row_begin();
+                    ta_ui_next_size(label_width, 0);
+                    ta_ui_label(CSTR("center2:"));
+                    static ta_ui_textbox_vec3_state center2_editor = { 0 };
+                    ta_ui_textbox_vec3(&rigid_body->collider.data.capsule.center2, &center2_editor, false, true);
+
+                    ta_ui_row_begin();
+                    ta_ui_next_size(label_width, 0);
+                    ta_ui_label(CSTR("radius:"));
+                    static ta_ui_textbox_state radius_editor = { 0 };
+                    ta_ui_textbox_float(&rigid_body->collider.data.capsule.radius, &radius_editor, 0);
+                    rigid_body->collider.data.capsule.radius = MAX(TA_EPSILON, rigid_body->collider.data.capsule.radius);
                     break;
                 } default: {
                     break;

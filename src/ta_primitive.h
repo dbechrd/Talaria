@@ -38,6 +38,8 @@ void ta_primitive_push_cone             (struct ta_mesh *mesh, ta_cone cone, ta_
 void ta_primitive_push_arrow            (struct ta_mesh *mesh, ta_vec3 origin, ta_vec3 direction, ta_rgba color);
 void ta_primitive_push_aabb             (struct ta_mesh *mesh, ta_aabb aabb, ta_rgba color);
 void ta_primitive_push_obb              (struct ta_mesh *mesh, ta_obb obb, ta_rgba color);
+void ta_primitive_push_capsule          (struct ta_mesh *mesh, ta_capsule capsule, ta_rgba color);
+void ta_primitive_push_cube             (struct ta_mesh *mesh, ta_vec3 center, float radius, ta_rgba color);
 void ta_primitive_push_grid             (struct ta_mesh *mesh, ta_vec3 center, ta_vec3 normal, float radius, float frequency, ta_rgba color);
 void ta_primitive_push_axes_arrow_color (struct ta_mesh *mesh, ta_vec3 position, ta_vec4 orientation, float scale, ta_rgba cx, ta_rgba cy, ta_rgba cz);
 void ta_primitive_push_axes_arrow       (struct ta_mesh *mesh, ta_vec3 position, ta_vec4 orientation, float scale);

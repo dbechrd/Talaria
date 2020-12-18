@@ -53,6 +53,12 @@ void ta_rigid_body_free_void(void *body)
 {
     ta_rigid_body_free(body);
 }
+void ta_rigid_body_set_mass(ta_rigid_body *body, float mass)
+{
+    body->mass = MAX(0.0f, mass);
+    body->inv_mass = mass ? 1.0f / mass : 0.0f;
+    body->inv_tensor_local = ta_collider_inv_tensor(&body->collider, body->mass);
+}
 // Convert a point from body local space to world space
 ta_vec3 rigid_body_local_to_world(const ta_rigid_body *body, ta_vec3 p_body)
 {
@@ -287,11 +293,17 @@ void ta_rigid_body_apply_velocity_correction(ta_rigid_body *body, ta_vec3 impuls
     DLB_ASSERT(!vec3_zero(impulse_world));
 
     body->velocity = vec3_add(body->velocity, vec3_scalef(impulse_world, body->inv_mass));
+    if (vec3_tiny(body->velocity)) {
+        body->velocity = VEC3_ZERO;
+    }
     DLB_ASSERT(vec3_good(body->velocity));
 
     if (!body->no_rotation) {
         body->ang_velocity = vec3_add(body->ang_velocity, mat3_mul_vec3(rigid_body_inv_tensor_world(body),
             vec3_cross(r_world, impulse_world)));
+        if (vec3_tiny(body->ang_velocity)) {
+            body->ang_velocity = VEC3_ZERO;
+        }
         DLB_ASSERT(vec3_good(body->ang_velocity));
     }
 }
@@ -378,9 +390,18 @@ static bool intersector_plane_v_obb(ta_manifold *manifold, const ta_rigid_body *
     bool collided = ta_plane_v_obb(manifold, &plane_a, &obb_b);
     for (u32 i = 0; i < manifold->contact_count; ++i) {
         manifold->contacts[i].ra_local = rigid_body_rest_vector(a, manifold->contacts[i].ra_local);
-        // NOTE: OBB maintains orientation so rb_local is already correct
+        manifold->contacts[i].rb_local = rigid_body_rest_vector(b, manifold->contacts[i].rb_local);
     }
     return collided;
+}
+static bool intersector_plane_v_capsule(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
+{
+    DLB_ASSERT(a->collider.type == TA_COLLIDER_PLANE);
+    DLB_ASSERT(b->collider.type == TA_COLLIDER_CAPSULE);
+
+    // TODO: Plane v. Capsule collision detection
+    UNUSED(manifold);
+    return false;
 }
 static bool intersector_sphere_v_sphere(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
 {
@@ -416,9 +437,18 @@ static bool intersector_sphere_v_obb(ta_manifold *manifold, const ta_rigid_body 
     bool collided = ta_sphere_v_obb(manifold, &sphere_a, &obb_b);
     for (u32 i = 0; i < manifold->contact_count; ++i) {
         manifold->contacts[i].ra_local = rigid_body_rest_vector(a, manifold->contacts[i].ra_local);
-        // NOTE: OBB maintains orientation so rb_local is already correct
+        manifold->contacts[i].rb_local = rigid_body_rest_vector(b, manifold->contacts[i].rb_local);
     }
     return collided;
+}
+static bool intersector_sphere_v_capsule(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
+{
+    DLB_ASSERT(a->collider.type == TA_COLLIDER_SPHERE);
+    DLB_ASSERT(b->collider.type == TA_COLLIDER_CAPSULE);
+
+    // TODO: Sphere v. Capsule collision detection
+    UNUSED(manifold);
+    return false;
 }
 static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
 {
@@ -427,7 +457,24 @@ static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a,
 
     // TODO: OBB v. OBB collision detection
     UNUSED(manifold);
+    return false;
+}
+static bool intersector_obb_v_capsule(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
+{
+    DLB_ASSERT(a->collider.type == TA_COLLIDER_OBB);
+    DLB_ASSERT(b->collider.type == TA_COLLIDER_CAPSULE);
 
+    // TODO: OBB v. Capsule collision detection
+    UNUSED(manifold);
+    return false;
+}
+static bool intersector_capsule_v_capsule(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
+{
+    DLB_ASSERT(a->collider.type == TA_COLLIDER_CAPSULE);
+    DLB_ASSERT(b->collider.type == TA_COLLIDER_CAPSULE);
+
+    // TODO: Capsule v. Capsule collision detection
+    UNUSED(manifold);
     return false;
 }
 bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b)
@@ -435,11 +482,15 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
     typedef bool (intersector)(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_body *b);
 
     static intersector *intersectors[TA_COLLIDER_COUNT][TA_COLLIDER_COUNT] = {
-        [TA_COLLIDER_PLANE][TA_COLLIDER_SPHERE] = intersector_plane_v_sphere,
-        [TA_COLLIDER_PLANE][TA_COLLIDER_OBB] = intersector_plane_v_obb,
-        [TA_COLLIDER_SPHERE][TA_COLLIDER_SPHERE] = intersector_sphere_v_sphere,
-        [TA_COLLIDER_SPHERE][TA_COLLIDER_OBB] = intersector_sphere_v_obb,
-        [TA_COLLIDER_OBB][TA_COLLIDER_OBB] = intersector_obb_v_obb,
+        [TA_COLLIDER_PLANE  ][TA_COLLIDER_SPHERE ] = intersector_plane_v_sphere,
+        [TA_COLLIDER_PLANE  ][TA_COLLIDER_OBB    ] = intersector_plane_v_obb,
+        [TA_COLLIDER_PLANE  ][TA_COLLIDER_CAPSULE] = intersector_plane_v_capsule,
+        [TA_COLLIDER_SPHERE ][TA_COLLIDER_SPHERE ] = intersector_sphere_v_sphere,
+        [TA_COLLIDER_SPHERE ][TA_COLLIDER_OBB    ] = intersector_sphere_v_obb,
+        [TA_COLLIDER_SPHERE ][TA_COLLIDER_CAPSULE] = intersector_sphere_v_capsule,
+        [TA_COLLIDER_OBB    ][TA_COLLIDER_OBB    ] = intersector_obb_v_obb,
+        [TA_COLLIDER_OBB    ][TA_COLLIDER_CAPSULE] = intersector_obb_v_capsule,
+        [TA_COLLIDER_CAPSULE][TA_COLLIDER_CAPSULE] = intersector_capsule_v_capsule,
     };
 
     DLB_ASSERT(a);

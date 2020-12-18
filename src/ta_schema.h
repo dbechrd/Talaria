@@ -46,6 +46,7 @@ typedef enum ta_schema_field_type {
     TYP_SPHERE,
     TYP_AABB,
     TYP_OBB,
+    TYP_CAPSULE,
     TYP_COLLIDER,
     TYP_ANIMATION_SAMPLER,
     TYP_ANIMATION_CHANNEL,
