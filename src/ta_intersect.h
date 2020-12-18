@@ -8,7 +8,6 @@ struct ta_sphere;
 struct ta_plane;
 
 typedef struct ta_contact {
-    ta_vec3 normal_world;  // contact normal in world space
     ta_vec3 ra_local;      // contact radii for A in local space
     ta_vec3 rb_local;      // contact radii for B in local space
     float lambda_n;        // Lagrangian multiplier, normal  (must zero at start of every substep)
@@ -22,7 +21,7 @@ typedef struct ta_manifold {
     // the manifolds list.
     struct ta_rigid_body *a;  // TODO(DANGER): Storing a pointer, must guarantee no rigid bodies are created/destroyed!
     struct ta_rigid_body *b;  // TODO(DANGER): Storing a pointer, must guarantee no rigid bodies are created/destroyed!
-    //ta_vec3 normal_world;     // contact normal from a to b
+    ta_vec3 normal_world;     // contact normal (a -> b) in world space
     //float depth;              // contact magnitude in direction of normal
     u32 contact_count;
     ta_contact contacts[4]; // contact information

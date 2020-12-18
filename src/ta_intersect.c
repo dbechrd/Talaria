@@ -4,6 +4,9 @@
 #include <float.h>
 #include <math.h>
 
+// References (please note, my choice of contacts is not exactly the same as Dirk's due to PBD requirements)
+// http://media.steampowered.com/apps/valve/2015/DirkGregorius_Contacts.pdf
+
 bool ta_ray_v_sphere(const ta_ray *ray, const ta_sphere *sphere, float *t_intersect)
 {
     ta_vec3 L = vec3_sub(sphere->center, ray->origin);
@@ -248,7 +251,7 @@ bool ta_plane_v_sphere(ta_manifold *manifold, const ta_plane *plane, const ta_sp
 
     if (manifold) {
         ta_vec3 sphere_contact = vec3_sub(sphere->center, vec3_scalef(plane->normal, r));
-        manifold->contacts[0].normal_world = plane->normal;
+        manifold->normal_world = plane->normal;
         manifold->contacts[0].rb_local = vec3_sub(sphere_contact, sphere->center);
         manifold->contacts[0].ra_local = VEC3_ZERO;
         manifold->contact_count = 1;
@@ -297,7 +300,7 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
     for (int i = 0; i < 8; ++i) {
         if (fabs(dists[i] - d_min) <= tolerance) {
             if (manifold) {
-                manifold->contacts[manifold->contact_count].normal_world = plane->normal;
+                manifold->normal_world = plane->normal;
                 manifold->contacts[manifold->contact_count].ra_local = vec3_scalef(plane->normal, -dists[i]);
                 manifold->contacts[manifold->contact_count].rb_local = p[i];
                 manifold->contact_count++;
@@ -329,17 +332,17 @@ bool ta_sphere_v_sphere(ta_manifold *manifold, const ta_sphere *a, const ta_sphe
         float dist = sqrtf(dist_sq);
         if (dist) {
             // normalize delta position
-            manifold->contacts[0].normal_world = vec3_scalef(dp, 1.0f / dist);
+            manifold->normal_world = vec3_scalef(dp, 1.0f / dist);
         } else {
             // Edge case: Circles at same position, arbitrarily point normal up
-            manifold->contacts[0].normal_world = VEC3_Y;
+            manifold->normal_world = VEC3_Y;
         }
         // penetation depth
         float d = r - dist;
 
         // calculate contact points
-        manifold->contacts[0].ra_local = vec3_scalef(manifold->contacts[0].normal_world, a->radius);
-        manifold->contacts[0].rb_local = vec3_scalef(manifold->contacts[0].normal_world, -b->radius);
+        manifold->contacts[0].ra_local = vec3_scalef(manifold->normal_world, a->radius);
+        manifold->contacts[0].rb_local = vec3_scalef(manifold->normal_world, -b->radius);
         manifold->contact_count = 1;
 
         DLB_ASSERT(vec3_len(manifold->contacts[0].ra_local) < a->radius + TA_EPSILON);
@@ -404,7 +407,7 @@ bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere, const ta_ob
         } else {
             normal = vec3_normalize(normal);
         }
-        manifold->contacts[0].normal_world = normal;
+        manifold->normal_world = normal;
         manifold->contacts[0].ra_local = vec3_scalef(normal, sphere->radius);
         //manifold->contacts[0].rb_local = vec3_scalef(normal, -sphere->radius - sqrtf(d2));
         manifold->contacts[0].rb_local = closest_obb;

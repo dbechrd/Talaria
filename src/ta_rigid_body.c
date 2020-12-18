@@ -481,12 +481,8 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
             manifold->coef_static  = (body_a->ks + body_b->ks) / 2.0f;
             manifold->coef_dynamic = (body_a->kd + body_b->kd) / 2.0f;
 
+            DLB_ASSERT(!vec3_zero(manifold->normal_world));
             DLB_ASSERT(manifold->contact_count);
-            for (u32 i = 0; i < manifold->contact_count; ++i) {
-                DLB_ASSERT(!vec3_zero(manifold->contacts[i].normal_world));
-                //DLB_ASSERT(!vec3_zero(manifold->contacts[i].ra_local));
-                //DLB_ASSERT(!vec3_zero(manifold->contacts[i].rb_local));
-            }
         }
 
         // Set some handy flags for debug rendering

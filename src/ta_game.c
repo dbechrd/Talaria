@@ -164,7 +164,7 @@ void ta_game_init()
     // are active via switch in event handlers for _everything_. We can_body still have remappable keys and undoable command
     // indirection and don't have to worry about handling repeat anymore.
     //-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    //                               Command                          Game States                                          Triggers            Keys
+    //                                  Command                          Game States                                          Triggers            Keys
     ta_keybind_init1(&tg_game.keybinds, COMMAND_PLAY                   ,                 TA_STATE_FREE_CAM                  , TA_KEYBIND_PRESS,   SDL_SCANCODE_X);
     ta_keybind_init1(&tg_game.keybinds, COMMAND_FREE_CAM               , TA_STATE_PLAY                                      , TA_KEYBIND_PRESS,   SDL_SCANCODE_X);
     ta_keybind_init2(&tg_game.keybinds, COMMAND_CONSOLE_TOGGLE         , TA_STATE_PLAY | TA_STATE_FREE_CAM | TA_STATE_EDITOR, TA_KEYBIND_PRESS,   SDL_SCANCODE_GRAVE, SDL_SCANCODE_LSHIFT);
@@ -1022,7 +1022,7 @@ static void game_simulate(float dt)
 
             for (u32 i = 0; i < manifold->contact_count; i++) {
                 // world space contact points
-                const ta_vec3 normal_world = manifold->contacts[i].normal_world;
+                const ta_vec3 normal_world = manifold->normal_world;
                 const ta_vec3 ca_world = rigid_body_local_to_world(a, manifold->contacts[i].ra_local);
                 const ta_vec3 cb_world = rigid_body_local_to_world(b, manifold->contacts[i].rb_local);
 
@@ -1144,7 +1144,7 @@ static void game_simulate(float dt)
         }
 
         for (u32 i = 0; i < manifold->contact_count; i++) {
-            const ta_vec3 n = manifold->contacts[i].normal_world;
+            const ta_vec3 n = manifold->normal_world;
             const ta_vec3 ra = rigid_body_oriented_vector(a, manifold->contacts[i].ra_local);
             const ta_vec3 rb = rigid_body_oriented_vector(b, manifold->contacts[i].rb_local);
 
@@ -1302,7 +1302,7 @@ static void game_render_manifolds_debug()
     dlb_vec_each(ta_manifold *, manifold, tg_game.manifolds) {
         for (u32 i = 0; i < manifold->contact_count; ++i) {
             // world space contact points
-            const ta_vec3 normal_world = manifold->contacts[i].normal_world;
+            const ta_vec3 normal_world = manifold->normal_world;
             const ta_vec3 ra_world = rigid_body_oriented_vector(manifold->a, manifold->contacts[i].ra_local);
             const ta_vec3 rb_world = rigid_body_oriented_vector(manifold->b, manifold->contacts[i].rb_local);
             const ta_vec3 ca_world = rigid_body_local_to_world(manifold->a, manifold->contacts[i].ra_local);
