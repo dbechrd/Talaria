@@ -151,9 +151,23 @@ typedef struct ta_plane {
 } ta_plane;
 
 typedef struct ta_capsule {
-    ta_vec3 center;
-    ta_vec3 center2;
-    float radius;
+    /*
+                  |-----|  // radius
+              _________
+             /         \
+      ___   /_____h_____\  // center of base of top hemisphere
+       |    |     ^     |
+     half_h |     | up  |
+      _|_   |     c     |  // center of capsule
+            |     |     |
+            |_____v_____|
+            \           /
+             \_________/
+    */
+    ta_vec3 center;  // center of mass of capsule
+    ta_vec3 up;      // direction from capsule center toward top hemisphere
+    float half_h;    // half height of cylinder portion of capsule
+    float radius;    // radius of cylinder / hemispheres
 } ta_capsule;
 
 typedef struct ta_quad {

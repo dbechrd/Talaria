@@ -58,11 +58,12 @@ const char *tg_e_player_camera;
 const char *tg_e_player_one;
 const char *tg_e_active_camera;
 const char *tg_e_can;
+const char *tg_e_ground;
 
 ta_game tg_game;
 
 static const float player_move_impulse = 0.1f;
-static const float player_jump_impulse = 3.0f;
+static const float player_jump_impulse = 8.0f;
 
 const char *game_state_str(ta_game_state state)
 {
@@ -312,6 +313,12 @@ void ta_game_init()
     DLB_ASSERT(tg_e_player_camera);
     tg_e_player_one = SYM_ENTITY_PLAYER_ONE;
     DLB_ASSERT(tg_e_player_one);
+
+    //--------------------------------------------------------------------------
+    // World
+    //--------------------------------------------------------------------------
+    tg_e_ground = INTERN("ground");
+    DLB_ASSERT(tg_e_ground);
 
     //--------------------------------------------------------------------------
     // Cameras
@@ -1168,6 +1175,7 @@ static void game_simulate(float dt)
 
                 // NOTE: Can simplify later by removing redundant dt's
                 // PBDBodies eq. 31
+                //float fn = -manifold->contacts[i].lambda_n / (dt * dt);
                 float fn = -manifold->contacts[i].lambda_n / (dt * dt);
                 float dv_mag = -MIN(dt * kd * fn, vt_mag);
                 ta_vec3 dv_dynamic_friction = vec3_scalef(vt_dir, dv_mag);
@@ -1360,26 +1368,26 @@ static void game_render_colliders_debug()
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
 
-#if 0
     // World space
-    dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
-        ta_transform *transform = (ta_transform *)ta_game_component(body->entity, RES_COMP_TRANSFORM);
+    if (tg_game.debug_aabbs) {
+        dlb_vec_each(ta_rigid_body *, body, rigid_bodies) {
+            ta_transform *transform = (ta_transform *)ta_game_component(body->entity, RES_COMP_TRANSFORM);
 
-        //ta_sphere local_origin = { 0 };
-        //local_origin.center = transform->xform_world.position;
-        //local_origin.radius = 0.04f;
-        //ta_primitive_push_sphere(0, local_origin, TA_COLOR_PINK);
-        //
-        //ta_sphere centroid_world = { 0 };
-        //centroid_world.center = body->centroid_world;
-        //centroid_world.radius = 0.08f;
-        //ta_primitive_push_sphere(0, centroid_world, TA_COLOR_BLUE);
+            //ta_sphere local_origin = { 0 };
+            //local_origin.center = transform->xform_world.position;
+            //local_origin.radius = 0.04f;
+            //ta_primitive_push_sphere(0, local_origin, TA_COLOR_PINK);
+            //
+            //ta_sphere centroid_world = { 0 };
+            //centroid_world.center = body->centroid_world;
+            //centroid_world.radius = 0.08f;
+            //ta_primitive_push_sphere(0, centroid_world, TA_COLOR_BLUE);
 
-        ta_rgba broadphase_color = body->dbg_broadphase ? TA_COLOR_ORANGE : TA_COLOR_GRAY3;
-        ta_primitive_push_aabb(0, body->aabb, broadphase_color);
+            ta_rgba broadphase_color = body->dbg_broadphase ? TA_COLOR_ORANGE : TA_COLOR_GRAY3;
+            ta_primitive_push_aabb(0, body->aabb, broadphase_color);
+        }
+        ta_primitive_render(true, false);
     }
-    ta_primitive_render(true, false);
-#endif
 }
 static void game_render_nametags_debug(ta_camera *camera)
 {
@@ -2230,9 +2238,11 @@ void game_command_player_move_left()
 }
 void game_command_player_jump()
 {
-    ta_vec3 dir = vec3_scalef(VEC3_Y, player_jump_impulse);
     ta_rigid_body *player_body = (ta_rigid_body *)ta_game_component(tg_e_player_one, RES_COMP_RIGID_BODY);
-    ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
+    if (ta_rigid_body_colliding_with(player_body, tg_e_ground)) {
+        ta_vec3 dir = vec3_scalef(VEC3_Y, player_jump_impulse);
+        ta_rigid_body_apply_impulse(player_body, dir, VEC3_ZERO);
+    }
 }
 static void spawn_bullet(ta_vec3 position)
 {

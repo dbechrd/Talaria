@@ -96,6 +96,7 @@ typedef struct ta_game {
     bool debug_wireframe;       // [DEBUG] render everything from as wireframe when using this camera
     bool debug_normals;         // [DEBUG] render normals for every mesh in the world
     bool debug_colliders;       // [DEBUG] render colliders for every rigid_body in the world
+    bool debug_aabbs;           // [DEBUG] render AABBs for every rigid_body in the world
     bool debug_light_radii;     // [DEBUG] render light radii for every light in the world
     bool debug_nametags;        // [DEBUG] render name tags for every transform in the world
     bool debug_no_mesh;         // [DEBUG] disable mesh rendering for every mesh in the world

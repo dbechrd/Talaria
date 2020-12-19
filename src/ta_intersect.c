@@ -7,6 +7,10 @@
 // References (please note, my choice of contacts is not exactly the same as Dirk's due to PBD requirements)
 // http://media.steampowered.com/apps/valve/2015/DirkGregorius_Contacts.pdf
 
+// HACK: Fudge factor to prevent jittering of multi-contact manifolds due to gravity.
+// TODO: Figure out a better and more general solution for detecting resting contacts.
+#define MULTI_CONTACT_TOLERANCE 0.01f
+
 bool ta_ray_v_sphere(const ta_ray *ray, const ta_sphere *sphere, float *t_intersect)
 {
     ta_vec3 L = vec3_sub(sphere->center, ray->origin);
@@ -250,10 +254,9 @@ bool ta_plane_v_sphere(ta_manifold *manifold, const ta_plane *plane, const ta_sp
     }
 
     if (manifold) {
-        ta_vec3 sphere_contact = vec3_sub(sphere->center, vec3_scalef(plane->normal, r));
         manifold->normal_world = plane->normal;
-        manifold->contacts[0].rb_local = vec3_sub(sphere_contact, sphere->center);
         manifold->contacts[0].ra_local = VEC3_ZERO;
+        manifold->contacts[0].rb_local = vec3_scalef(plane->normal, -r);
         manifold->contact_count = 1;
 
         DLB_ASSERT(vec3_len(manifold->contacts[0].rb_local) < sphere->radius + TA_EPSILON);
@@ -278,17 +281,13 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
     p[6].x = +obb->extents.x; p[6].y = +obb->extents.y; p[6].z = -obb->extents.z;
     p[7].x = +obb->extents.x; p[7].y = +obb->extents.y; p[7].z = +obb->extents.z;
 
-    // HACK: Fudge factor to prevent jittering of multi-contact manifolds due to gravity.
-    // TODO: Figure out a better and more general solution for detecting resting contacts.
-    const float tolerance = 0.01f;
-
     float dists[8];
     float d_min = FLT_MAX / 2.0f;
     for (int i = 0; i < 8; ++i) {
         ta_vec3 p_world = vec3_add(obb->center, quat_mul_vec3(obb->orientation, p[i]));
         ta_vec3 n = vec3_sub(p_world, plane->center);
         float d = vec3_dot(n, plane->normal);
-        if (d < tolerance) {
+        if (d < MULTI_CONTACT_TOLERANCE) {
             dists[i] = d;
             d_min = (d < d_min) ? d : d_min;
         } else {
@@ -298,7 +297,7 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
 
     bool collided = false;
     for (int i = 0; i < 8; ++i) {
-        if (fabs(dists[i] - d_min) <= tolerance) {
+        if (fabs(dists[i] - d_min) <= MULTI_CONTACT_TOLERANCE) {
             if (manifold) {
                 manifold->normal_world = plane->normal;
                 manifold->contacts[manifold->contact_count].ra_local = vec3_scalef(plane->normal, -dists[i]);
@@ -310,6 +309,47 @@ bool ta_plane_v_obb(ta_manifold *manifold, const ta_plane *plane, const ta_obb *
     }
 
     return collided;
+}
+
+bool ta_plane_v_capsule(ta_manifold *manifold, const ta_plane *plane, const ta_capsule *capsule)
+{
+    DLB_ASSERT(plane);
+    DLB_ASSERT(capsule);
+
+    // Calculate ends of capsule's line segment
+    ta_vec3 half_h = vec3_scalef(capsule->up, capsule->half_h);
+    ta_vec3 h0 = vec3_add(capsule->center, half_h);
+    ta_vec3 h1 = vec3_sub(capsule->center, half_h);
+
+    // Project line segments ends onto plane normal (distance from plane)
+    float d0 = vec3_dot(vec3_sub(h0, plane->center), plane->normal);
+    float d1 = vec3_dot(vec3_sub(h1, plane->center), plane->normal);
+    float r = capsule->radius; // + MULTI_CONTACT_TOLERANCE;
+    if (d0 > r && d1 > r) {
+        return false;
+    }
+
+    if (manifold) {
+        int contact_count = 0;
+        if (d0 <= r) {
+            manifold->normal_world = plane->normal;
+            manifold->contacts[contact_count].ra_local = VEC3_ZERO;
+            ta_vec3 contact_world = vec3_add(h0, vec3_scalef(plane->normal, -capsule->radius));
+            manifold->contacts[contact_count].rb_local = vec3_sub(contact_world, capsule->center);
+            contact_count++;
+        }
+        if (d1 <= r) {
+            manifold->normal_world = plane->normal;
+            manifold->contacts[contact_count].ra_local = VEC3_ZERO;
+            ta_vec3 contact_world = vec3_add(h1, vec3_scalef(plane->normal, -capsule->radius));
+            manifold->contacts[contact_count].rb_local = vec3_sub(contact_world, capsule->center);
+            contact_count++;
+        }
+        //DLB_ASSERT(vec3_len(manifold->contacts[0].rb_local) < capsule->radius + TA_EPSILON);
+        manifold->contact_count = contact_count;
+    }
+
+    return true;
 }
 
 bool ta_sphere_v_sphere(ta_manifold *manifold, const ta_sphere *a, const ta_sphere *b)
@@ -412,6 +452,46 @@ bool ta_sphere_v_obb(ta_manifold *manifold, const ta_sphere *sphere, const ta_ob
         //manifold->contacts[0].rb_local = vec3_scalef(normal, -sphere->radius - sqrtf(d2));
         manifold->contacts[0].rb_local = closest;
         manifold->contact_count = 1;
+    }
+
+    return true;
+}
+
+bool ta_sphere_v_capsule(ta_manifold *manifold, const ta_sphere *sphere, const ta_capsule *capsule)
+{
+    DLB_ASSERT(sphere);
+    DLB_ASSERT(capsule);
+
+    // Project sphere center onto capsule segment
+    float segment_dist = vec3_dot(vec3_sub(sphere->center, capsule->center), capsule->up);
+
+    // Clamp projection onto the inner segment of the capsule
+    segment_dist = clampf(segment_dist, -capsule->half_h, capsule->half_h);
+
+    // Calculate closest point on capsule inner segment to the sphere
+    ta_vec3 closest_on_segment_local = vec3_scalef(capsule->up, segment_dist);
+    ta_vec3 closest_on_segment = vec3_add(capsule->center, closest_on_segment_local);
+
+    // Normal direction (from sphere center to closest point on capsule's inner segment)
+    ta_vec3 n_scaled = vec3_sub(closest_on_segment, sphere->center);
+    // Distance (squared for perf)
+    float d_sq = vec3_len2(n_scaled);
+    // Combine radii (squared for perf)
+    float r = sphere->radius + capsule->radius;
+    float r_sq = r * r;
+    if (d_sq > r_sq) {
+        return false;
+    }
+
+    if (manifold) {
+        // Normalize direction vector
+        ta_vec3 n = vec3_scalef(n_scaled, 1.0f/sqrtf(d_sq));
+        manifold->normal_world = n;
+        manifold->contacts[0].ra_local = vec3_scalef(n, sphere->radius);
+        manifold->contacts[0].rb_local = vec3_add(closest_on_segment_local, vec3_scalef(n, -capsule->radius));
+        manifold->contact_count = 1;
+
+        DLB_ASSERT(vec3_len(manifold->contacts[0].ra_local) < sphere->radius + TA_EPSILON);
     }
 
     return true;

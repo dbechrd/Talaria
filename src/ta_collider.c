@@ -45,9 +45,18 @@ void ta_collider_init(ta_collider *collider)
             }
             break;
         } case TA_COLLIDER_CAPSULE: {
-            if (collider->data.sphere.radius == 0.0f) {
-                collider->data.sphere.radius = 1.0f;
+            if (vec3_zero(collider->data.capsule.up)) {
+                collider->data.capsule.up = VEC3_Y;
+            } else {
+                collider->data.capsule.up = vec3_normalize(collider->data.capsule.up);
             }
+            if (collider->data.capsule.half_h == 0.0f) {
+                collider->data.capsule.half_h = 1.0f;
+            }
+            if (collider->data.capsule.radius == 0.0f) {
+                collider->data.capsule.radius = 1.0f;
+            }
+            collider->data.capsule.half_h = MAX(TA_EPSILON, collider->data.capsule.radius);
             collider->data.capsule.radius = MAX(TA_EPSILON, collider->data.capsule.radius);
             break;
         } default: {
@@ -109,15 +118,12 @@ static ta_mat3 obb_inverse_tensor(ta_obb *obb, float mass)
 
 static ta_mat3 capsule_inverse_tensor(ta_capsule *capsule, float mass)
 {
-    // HACK: Use sphere inertia tensor cus I'm lazy and capsule intertia tensors are really convoluted
+    // HACK: Use bounding sphere inertia tensor cus I'm lazy and capsule intertia tensors are really convoluted
     // TODO: https://www.gamedev.net/tutorials/programming/math-and-physics/capsule-inertia-tensor-r3856/
 
-    ta_vec3 a_to_b = vec3_sub(capsule->center2, capsule->center);
-    ta_vec3 half_h = vec3_scalef(a_to_b, 0.5f);
-
     ta_sphere sphere = { 0 };
-    sphere.center = vec3_add(capsule->center, half_h);
-    sphere.radius = vec3_len(half_h) + capsule->radius;
+    sphere.center = capsule->center;
+    sphere.radius = capsule->half_h + capsule->radius;
 
     ta_mat3 inv_tensor = sphere_inverse_tensor(&sphere, mass);
     return inv_tensor;
@@ -221,19 +227,20 @@ static ta_aabb obb_world_bounds(ta_obb *obb, const ta_xform *xform)
 
 static ta_aabb capsule_world_bounds(ta_capsule *capsule, const ta_xform *xform)
 {
+    DLB_ASSERT(capsule->half_h >= TA_EPSILON);
     DLB_ASSERT(capsule->radius >= TA_EPSILON);
+    DLB_ASSERT(!vec3_zero(capsule->up));
 
     ta_aabb result = { 0 };
+    result.center = vec3_add(xform->position, quat_mul_vec3(xform->orientation, capsule->center));
 
-    // Calculate true center of capsule (centerpoint of capsule's two "centers")
-    ta_vec3 a_to_b = vec3_sub(capsule->center2, capsule->center);
-    ta_vec3 half_h = vec3_scalef(a_to_b, 0.5f);
-    ta_vec3 center = vec3_add(capsule->center, half_h);
+    // Project inner segment onto primary axes then add radius of hemisphere
+    ta_vec3 h = vec3_scalef(capsule->up, capsule->half_h);
+    h = quat_mul_vec3(xform->orientation, h);
+    result.extents.x = fabsf(vec3_dot(h, VEC3_X)) + capsule->radius;
+    result.extents.y = fabsf(vec3_dot(h, VEC3_Y)) + capsule->radius;
+    result.extents.z = fabsf(vec3_dot(h, VEC3_Z)) + capsule->radius;
 
-    result.center = vec3_add(xform->position, quat_mul_vec3(xform->orientation, center));
-    result.extents.x = vec3_dot(a_to_b, VEC3_X) + 2.0f * capsule->radius;
-    result.extents.y = vec3_dot(a_to_b, VEC3_Y) + 2.0f * capsule->radius;
-    result.extents.z = vec3_dot(a_to_b, VEC3_Z) + 2.0f * capsule->radius;
     return result;
 }
 

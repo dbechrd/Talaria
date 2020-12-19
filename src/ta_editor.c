@@ -1630,9 +1630,19 @@ static void ui_node_panel()
                 } case TA_COLLIDER_CAPSULE: {
                     ta_ui_row_begin();
                     ta_ui_next_size(label_width, 0);
-                    ta_ui_label(CSTR("center2:"));
-                    static ta_ui_textbox_vec3_state center2_editor = { 0 };
-                    ta_ui_textbox_vec3(&rigid_body->collider.data.capsule.center2, &center2_editor, false, true);
+                    ta_ui_label(CSTR("up:"));
+                    static ta_ui_textbox_vec3_state up_editor = { 0 };
+                    ta_ui_textbox_vec3(&rigid_body->collider.data.capsule.up, &up_editor, true, true);
+                    if (vec3_zero(rigid_body->collider.data.capsule.up)) {
+                        rigid_body->collider.data.capsule.up = VEC3_Y;
+                    }
+
+                    ta_ui_row_begin();
+                    ta_ui_next_size(label_width, 0);
+                    ta_ui_label(CSTR("half_h:"));
+                    static ta_ui_textbox_state half_h_editor = { 0 };
+                    ta_ui_textbox_float(&rigid_body->collider.data.capsule.half_h, &half_h_editor, 0);
+                    rigid_body->collider.data.capsule.half_h = MAX(TA_EPSILON, rigid_body->collider.data.capsule.half_h);
 
                     ta_ui_row_begin();
                     ta_ui_next_size(label_width, 0);
@@ -2330,6 +2340,7 @@ static void ui_physics_panel()
     ta_ui_row_begin();
     static ta_ui_panel_state label_panel = { 0 };
     ta_ui_panel_begin(&label_panel, TA_UI_AUTOSIZE);
+    ta_ui_label(CSTR("Draw AABBs"));
     ta_ui_label(CSTR("Draw penetration vectors"));
     ta_ui_label(CSTR("Draw static friction vectors"));
     ta_ui_label(CSTR("Draw dynamic friction vectors"));
@@ -2337,14 +2348,11 @@ static void ui_physics_panel()
     ta_ui_label(CSTR("Draw restitution vectors"));
     ta_ui_panel_end();
 
-    bool debug_physics_render_penetration_vectors;
-    bool debug_physics_render_static_friction_vectors;
-    bool debug_physics_render_dynamic_friction_vectors;
-    bool debug_physics_render_damping_vectors;
-    bool debug_physics_render_restitution_vectors;
-
     static ta_ui_panel_state button_panel = { 0 };
     ta_ui_panel_begin(&button_panel, TA_UI_AUTOSIZE);
+
+    ta_ui_row_begin();
+    ta_ui_toggle_button(CSTR("Off"), CSTR("On"), &tg_game.debug_aabbs);
 
     ta_ui_row_begin();
     ta_ui_toggle_button(CSTR("Off"), CSTR("On"), &tg_game.debug_physics_render_penetration_vectors);

@@ -99,8 +99,7 @@ void ta_primitive_line3d_to_quad(ta_vert_quad *quad, ta_line_3d line3d,
 }
 #endif
 // TODO: Take p0 and p1
-void ta_primitive_push_line_2d(ta_mesh *mesh, ta_line_2d line2d, ta_rgba color0,
-    ta_rgba color1)
+void ta_primitive_push_line_2d(ta_mesh *mesh, ta_line_2d line2d, ta_rgba color0, ta_rgba color1)
 {
     ta_vec3 p0 = { 0 };
     p0.x = NDC_X(line2d.p0.x);
@@ -584,11 +583,15 @@ void ta_primitive_push_obb(ta_mesh *mesh, ta_obb obb, ta_rgba color)
 }
 void ta_primitive_push_capsule(ta_mesh *mesh, ta_capsule capsule, ta_rgba color)
 {
+    ta_vec3 half_h = vec3_scalef(capsule.up, capsule.half_h);
+
     ta_sphere sphere = { 0 };
-    sphere.center = capsule.center;
     sphere.radius = capsule.radius;
+
+    sphere.center = vec3_add(capsule.center, half_h);
     ta_primitive_push_sphere(mesh, sphere, color);
-    sphere.center = capsule.center2;
+
+    sphere.center = vec3_sub(capsule.center, half_h);
     ta_primitive_push_sphere(mesh, sphere, color);
 }
 void ta_primitive_push_cube(ta_mesh *mesh, ta_vec3 center, float radius, ta_rgba color)

@@ -379,16 +379,17 @@ void ta_schema_register()
 
     TYPE_START  (ta_capsule, TYP_CAPSULE, 0, 0);
     TYPE_FIELD  (ta_capsule, center,  TYP_VEC3);
-    TYPE_FIELD  (ta_capsule, center2, TYP_VEC3);
+    TYPE_FIELD  (ta_capsule, up,      TYP_VEC3);
+    TYPE_FIELD  (ta_capsule, half_h,  ATOM_FLOAT);
     TYPE_FIELD  (ta_capsule, radius,  ATOM_FLOAT);
     TYPE_END    (ta_capsule);
 
     TYPE_START      (ta_collider, TYP_COLLIDER, 0, 0);
-    TYPE_UNION_TYPE (ta_collider, type,   ATOM_ENUM, ta_collider_type_str);
-    TYPE_UNION_FIELD(ta_collider, plane,  TYP_PLANE,   data, TA_COLLIDER_PLANE);
-    TYPE_UNION_FIELD(ta_collider, sphere, TYP_SPHERE,  data, TA_COLLIDER_SPHERE);
-    TYPE_UNION_FIELD(ta_collider, obb,    TYP_OBB,     data, TA_COLLIDER_OBB);
-    TYPE_UNION_FIELD(ta_collider, obb,    TYP_CAPSULE, data, TA_COLLIDER_CAPSULE);
+    TYPE_UNION_TYPE (ta_collider, type,    ATOM_ENUM, ta_collider_type_str);
+    TYPE_UNION_FIELD(ta_collider, plane,   TYP_PLANE,   data, TA_COLLIDER_PLANE);
+    TYPE_UNION_FIELD(ta_collider, sphere,  TYP_SPHERE,  data, TA_COLLIDER_SPHERE);
+    TYPE_UNION_FIELD(ta_collider, obb,     TYP_OBB,     data, TA_COLLIDER_OBB);
+    TYPE_UNION_FIELD(ta_collider, capsule, TYP_CAPSULE, data, TA_COLLIDER_CAPSULE);
     TYPE_END        (ta_collider);
 
     //TYPE_START  (ta_animation_track, TYP_ANIMATION_TRACK, 0, 0);

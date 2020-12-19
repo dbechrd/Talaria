@@ -209,19 +209,22 @@ void ta_rigid_body_apply_positional_correction(ta_rigid_body *body, ta_vec3 impu
     ta_vec3 new_centroid_world = vec3_add(centroid_world, vec3_scalef(impulse_world, body->inv_mass));
     body->xform.position = vec3_sub(new_centroid_world, rigid_body_centroid_oriented(body));
 
-    // equation 8 & 9 in PBDBodies.pdf, not sure what [stuff, 0] means, or what "q1 + stuff" is.. quat_add??
-    // q = q + 1/2[I^-1(r x p), 0]q
-    // q = q - 1/2[I^-1(r x p), 0]q
-    ta_vec4 new_orientation_world = quat_add(
-        body->xform.orientation,
-        quat_scale(
-            quat_mul(
-                vec4_init_vec3_w(mat3_mul_vec3(rigid_body_inv_tensor_world(body), vec3_cross(r_world, impulse_world)), 0),
-                body->xform.orientation
-            ),
-        0.5f)
-    );
-    body->xform.orientation = quat_normalize(new_orientation_world);
+    if (!body->no_rotation) {
+        // equation 8 & 9 in PBDBodies.pdf, not sure what [stuff, 0] means, or what "q1 + stuff" is.. quat_add??
+        // q = q + 1/2[I^-1(r x p), 0]q
+        // q = q - 1/2[I^-1(r x p), 0]q
+        ta_vec4 new_orientation_world = quat_add(
+            body->xform.orientation,
+            quat_scale(
+                quat_mul(
+                    vec4_init_vec3_w(mat3_mul_vec3(rigid_body_inv_tensor_world(body), vec3_cross(r_world, impulse_world)), 0),
+                    body->xform.orientation
+                ),
+            0.5f)
+        );
+        body->xform.orientation = quat_normalize(new_orientation_world);
+    }
+
     body->aabb = ta_collider_world_bounds(&body->collider, &body->xform);
 }
 // a       : first rigid body
@@ -399,9 +402,19 @@ static bool intersector_plane_v_capsule(ta_manifold *manifold, const ta_rigid_bo
     DLB_ASSERT(a->collider.type == TA_COLLIDER_PLANE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_CAPSULE);
 
-    // TODO: Plane v. Capsule collision detection
-    UNUSED(manifold);
-    return false;
+    ta_plane plane_a = a->collider.data.plane;
+    plane_a.center = rigid_body_local_to_world(a, plane_a.center);
+
+    ta_capsule capsule_b = b->collider.data.capsule;
+    capsule_b.center = rigid_body_local_to_world(b, capsule_b.center);
+    capsule_b.up = rigid_body_oriented_vector(b, capsule_b.up);
+
+    bool collided = ta_plane_v_capsule(manifold, &plane_a, &capsule_b);
+    for (u32 i = 0; i < manifold->contact_count; ++i) {
+        manifold->contacts[i].ra_local = rigid_body_rest_vector(a, manifold->contacts[i].ra_local);
+        manifold->contacts[i].rb_local = rigid_body_rest_vector(b, manifold->contacts[i].rb_local);
+    }
+    return collided;
 }
 static bool intersector_sphere_v_sphere(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
 {
@@ -446,9 +459,19 @@ static bool intersector_sphere_v_capsule(ta_manifold *manifold, const ta_rigid_b
     DLB_ASSERT(a->collider.type == TA_COLLIDER_SPHERE);
     DLB_ASSERT(b->collider.type == TA_COLLIDER_CAPSULE);
 
-    // TODO: Sphere v. Capsule collision detection
-    UNUSED(manifold);
-    return false;
+    ta_sphere sphere_a = a->collider.data.sphere;
+    sphere_a.center = rigid_body_local_to_world(a, sphere_a.center);
+
+    ta_capsule capsule_b = b->collider.data.capsule;
+    capsule_b.center = rigid_body_local_to_world(b, capsule_b.center);
+    capsule_b.up = rigid_body_oriented_vector(b, capsule_b.up);
+
+    bool collided = ta_sphere_v_capsule(manifold, &sphere_a, &capsule_b);
+    for (u32 i = 0; i < manifold->contact_count; ++i) {
+        manifold->contacts[i].ra_local = rigid_body_rest_vector(a, manifold->contacts[i].ra_local);
+        manifold->contacts[i].rb_local = rigid_body_rest_vector(b, manifold->contacts[i].rb_local);
+    }
+    return collided;
 }
 static bool intersector_obb_v_obb(ta_manifold *manifold, const ta_rigid_body *a, const ta_rigid_body *b)
 {
@@ -542,6 +565,17 @@ bool ta_rigid_body_intersect(ta_manifold *manifold, ta_rigid_body *a, ta_rigid_b
     }
 
     return collided;
+}
+bool ta_rigid_body_colliding_with(const ta_rigid_body *body, const char *entity)
+{
+    bool found = false;
+    dlb_vec_each(const char **, entry, body->colliding_with) {
+        if (*entry == entity) {
+            found = true;
+            break;
+        }
+    }
+    return found;
 }
 #if 0
 void ta_rigid_body_resolve_collision(ta_manifold *manifold, float dt)
