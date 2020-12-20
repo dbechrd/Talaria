@@ -8,18 +8,21 @@
 // TODO: This could be named ta_geometry_instance, this comes from geometry_node in OGX file
 typedef struct ta_model {
     TA_COMPONENT_HEADER
-    const char *mesh;
+    ta_xform   xform;                  // Visual transform
+    const char *mesh;                  // Mesh name
     const char **materials;            // Vector of material names
     float      *morph_target_weights;  // Vector of morph target weights
-    bool       invisible;              // If true, model is not rendered
-    bool       cast_shadows;           // If true, allows model to cast real-time shadows
-    bool       receive_shadows;        // If true, model will use shadow maps                      // TODO: Pass as flag to PBR shader, skip shadows if false
+    bool       no_render;              // If true, model is not rendered
+    bool       no_shadow_cast;         // If true, model will not cast real-time shadows
+    bool       no_shadow_receive;      // If true, model will not use shadow maps                    // TODO: Pass as flag to PBR shader, skip shadows if false
     //bool       no_serialize;           // If true, do not serialize this model to the scene file   // HACK: Exclude GLTF models from scene file
 } ta_model;
 
 struct ta_camera;
 struct ta_shader;
 
+void ta_model_init                      (ta_model *model);
+void ta_model_init_void                 (void *model);
 void ta_model_free                      (ta_model *model);
 void ta_model_free_void                 (void *model);
 float ta_model_get_morph_target_weight  (ta_model *model, const char *morph_target_name);

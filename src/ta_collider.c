@@ -56,7 +56,7 @@ void ta_collider_init(ta_collider *collider)
             if (collider->data.capsule.radius == 0.0f) {
                 collider->data.capsule.radius = 1.0f;
             }
-            collider->data.capsule.half_h = MAX(TA_EPSILON, collider->data.capsule.radius);
+            collider->data.capsule.half_h = MAX(TA_EPSILON, collider->data.capsule.half_h);
             collider->data.capsule.radius = MAX(TA_EPSILON, collider->data.capsule.radius);
             break;
         } default: {

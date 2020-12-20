@@ -1273,6 +1273,19 @@ static void ui_node_panel()
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("xform.position:"));
+            static ta_ui_textbox_vec3_state model_xform_pos_editor = { 0 };
+            ta_ui_textbox_vec3(&model->xform.position, &model_xform_pos_editor, false, true);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
+            ta_ui_label(CSTR("xform.orientation:"));
+            // TODO: Allow editing rotations as Euler XYZ.
+            static ta_ui_textbox_vec4_state model_xform_orient_editor = { 0 };
+            ta_ui_textbox_vec4(&model->xform.orientation, &model_xform_orient_editor, true, true);
+
+            ta_ui_row_begin();
+            ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("mesh:"));
             ta_ui_label(SYM(model->mesh));
 
@@ -1311,7 +1324,7 @@ static void ui_node_panel()
             ta_ui_label(CSTR("visible:"));
             ta_ui_next_pad(0, 0, 0, 0);
             ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
-            if (!model->invisible) {
+            if (!model->no_render) {
                 ta_ui_next_margin(0, 0, 0, 0);
                 ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
@@ -1322,15 +1335,15 @@ static void ui_node_panel()
                 ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
                 ta_ui_label(CSTR("False"));
             }
-            ta_ui_toggle_button_end(&model->invisible);
+            ta_ui_toggle_button_end(&model->no_render);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("cast shadows:"));
-            if (!model->invisible) {
+            if (!model->no_render) {
                 ta_ui_next_pad(0, 0, 0, 0);
                 ta_ui_toggle_button_begin(TA_UI_AUTOSIZE);
-                if (model->cast_shadows) {
+                if (!model->no_shadow_cast) {
                     ta_ui_next_margin(0, 0, 0, 0);
                     ta_ui_next_bg_color(UI_STATE_NONE, 0.0f, 0.5f, 0.0f, 0.9f);
                     ta_ui_next_bg_color(UI_STATE_INTERACT, 0.0f, 0.7f, 0.0f, 0.9f);
@@ -1341,7 +1354,7 @@ static void ui_node_panel()
                     ta_ui_next_bg_color(UI_STATE_INTERACT, 0.9f, 0.0f, 0.0f, 0.9f);
                     ta_ui_label(CSTR("False"));
                 }
-                ta_ui_toggle_button_end(&model->cast_shadows);
+                ta_ui_toggle_button_end(&model->no_shadow_cast);
             } else {
                 ta_ui_label(CSTR("n/a"));
                 ta_ui_label(CSTR("[?]"));
@@ -1353,7 +1366,7 @@ static void ui_node_panel()
             if (ta_ui_button(CSTR("Add model"))) {
                 ta_model *new_model = (ta_model *)ta_game_component_add(selected_entity, RES_COMP_MODEL,
                     SYM(selected_entity));
-                new_model->cast_shadows = true;
+                ta_model_init(new_model);
             }
         }
     }
@@ -1676,7 +1689,7 @@ static void ui_node_panel()
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
             ta_ui_label(CSTR("enabled:"));
-            ta_ui_toggle_button(CSTR("False"), CSTR("True"), &light->enabled);
+            ta_ui_toggle_button(CSTR("On"), CSTR("Off"), &light->disabled);
 
             ta_ui_row_begin();
             ta_ui_next_size(label_width, 0);
@@ -1695,87 +1708,102 @@ static void ui_node_panel()
             light->color.b = clampf(light->color.b, 0.0f, 1.0f);
             ui_color_rgb(light->color);
 
+            bool *no_shadow_cast = NULL;
             switch (light->type) {
                 case TA_LIGHT_DIRECTIONAL: {
-                    ta_ui_row_begin();
-                    ta_ui_next_size(label_width, 0);
-                    ta_ui_label(CSTR("cast shadows:"));
-                    ta_ui_toggle_button(CSTR("False"), CSTR("True"), &light->data.directional.cast_shadows);
-
-                    ta_ui_row_begin();
-                    ta_ui_next_size(label_width, 0);
-                    static bool show_shadow_map = true;
-                    ta_ui_toggle_button(CSTR("[+] Shadow map"), CSTR("[-] Shadow map"), &show_shadow_map);
-
-                    if (show_shadow_map) {
-                        ta_ui_row_begin();
-                        ta_ui_next_pad(1, 1, 1, 1);
-                        static ta_ui_panel_state shadowmap_panel = { 0 };
-                        ta_ui_panel_begin(&shadowmap_panel, TA_UI_AUTOSIZE);
-                        s32 resolution = (s32)(light->data.directional.shadow_properties.resolution / 10);
-                        ui_texture(light->data.directional.shadow_map, resolution);
-                        ta_ui_panel_end();
-                    }
+                    no_shadow_cast = &light->data.directional.no_shadow_cast;
                     break;
                 } case TA_LIGHT_POINT: {
-                    ta_ui_row_begin();
-                    ta_ui_next_size(label_width, 0);
-                    ta_ui_label(CSTR("cast shadows:"));
-                    ta_ui_toggle_button(CSTR("False"), CSTR("True"), &light->data.point.cast_shadows);
-
-                    ta_ui_row_begin();
-                    //ta_ui_next_size(label_width, 0);
-                    static bool show_shadow_map = true;
-                    ta_ui_toggle_button(CSTR("[+] Shadow map"), CSTR("[-] Shadow map"), &show_shadow_map);
-
-                    if (show_shadow_map) {
-                        ta_ui_row_begin();
-                        ta_ui_next_pad(1, 1, 1, 1);
-                        static ta_ui_panel_state shadowmap_panel = { 0 };
-                        ta_ui_panel_begin(&shadowmap_panel, TA_UI_AUTOSIZE);
-                        s32 resolution = (s32)(light->data.point.shadow_properties.resolution / 10);
-                        // Render cubemap with the following layout:
-                        //       ┌────┐
-                        //       | +Y |
-                        //  ┌────┼────┼────┬────┐
-                        //  | -X | -Z | +X | +Z |
-                        //  └────┼────┼────┴────┘
-                        //       | -Y |
-                        //       └────┘
-                        ta_ui_row_begin();
-                        ta_ui_spacer(resolution, 0);
-                        ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_POSITIVE_Y], resolution);
-                        ta_ui_row_begin();
-                        ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_NEGATIVE_X], resolution);
-                        ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_NEGATIVE_Z], resolution);
-                        ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_POSITIVE_X], resolution);
-                        ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_POSITIVE_Z], resolution);
-                        ta_ui_row_begin();
-                        ta_ui_spacer(resolution, 0);
-                        ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_NEGATIVE_Y], resolution);
-                        ta_ui_panel_end();
-                    }
+                    no_shadow_cast = &light->data.point.no_shadow_cast;
                     break;
                 } case TA_LIGHT_SPOT: {
-                    ta_ui_row_begin();
-                    //ta_ui_next_size(label_width, 0);
-                    ta_ui_toggle_button(CSTR("Shadows: Off"), CSTR("Shadows: On"), &light->data.spot.cast_shadows);
-
-                    ta_ui_row_begin();
-                    //ta_ui_next_size(label_width, 0);
-                    static bool show_shadow_map = true;
-                    ta_ui_toggle_button(CSTR("[+] Shadow map"), CSTR("[-] Shadow map"), &show_shadow_map);
-
-                    if (show_shadow_map) {
-                        ta_ui_row_begin();
-                        ta_ui_next_pad(1, 1, 1, 1);
-                        static ta_ui_panel_state shadowmap_panel = { 0 };
-                        ta_ui_panel_begin(&shadowmap_panel, TA_UI_AUTOSIZE);
-                        s32 resolution = (s32)(light->data.spot.shadow_properties.resolution / 10);
-                        ui_texture(light->data.spot.shadow_map, resolution);
-                        ta_ui_panel_end();
-                    }
+                    no_shadow_cast = &light->data.spot.no_shadow_cast;
                     break;
+                }
+            }
+
+            if (no_shadow_cast != NULL) {
+                ta_ui_row_begin();
+                ta_ui_next_size(label_width, 0);
+                ta_ui_label(CSTR("cast shadows:"));
+                if (light->disabled) {
+                    ta_ui_next_bg_color_rgba(UI_STATE_ALL, TA_COLOR_GRAY4);
+                    ta_ui_button(CSTR("False"));
+                    if (ta_ui_last_state().hover) {
+                        ta_ui_tooltip(CSTR("Light must be enabled to cast shadows"));
+                    }
+                } else {
+                    ta_ui_toggle_button(CSTR("True"), CSTR("False"), no_shadow_cast);
+                }
+            }
+
+            if (light->disabled) {
+                ta_ui_row_begin();
+                ta_ui_next_bg_color_rgba(UI_STATE_ALL, TA_COLOR_GRAY4);
+                ta_ui_button(CSTR("[+] Shadow map"));
+                if (ta_ui_last_state().hover) {
+                    ta_ui_tooltip(CSTR("Light must be enabled to see shadow map"));
+                }
+            } else if (no_shadow_cast != NULL && *no_shadow_cast) {
+                ta_ui_row_begin();
+                ta_ui_next_bg_color_rgba(UI_STATE_ALL, TA_COLOR_GRAY4);
+                ta_ui_button(CSTR("[+] Shadow map"));
+                if (ta_ui_last_state().hover) {
+                    ta_ui_tooltip(CSTR("Light must cast shadows to see shadow map"));
+                }
+            } else {
+                ta_ui_row_begin();
+                static bool show_shadow_map = true;
+                ta_ui_toggle_button(CSTR("[+] Shadow map"), CSTR("[-] Shadow map"), &show_shadow_map);
+                if (show_shadow_map) {
+                    switch (light->type) {
+                        case TA_LIGHT_DIRECTIONAL: {
+                            ta_ui_row_begin();
+                            ta_ui_next_pad(1, 1, 1, 1);
+                            static ta_ui_panel_state shadowmap_panel = { 0 };
+                            ta_ui_panel_begin(&shadowmap_panel, TA_UI_AUTOSIZE);
+                            s32 resolution = (s32)(light->data.directional.shadow_properties.resolution / 10);
+                            ui_texture(light->data.directional.shadow_map, resolution);
+                            ta_ui_panel_end();
+                            break;
+                        } case TA_LIGHT_POINT: {
+                            ta_ui_row_begin();
+                            ta_ui_next_pad(1, 1, 1, 1);
+                            static ta_ui_panel_state shadowmap_panel = { 0 };
+                            ta_ui_panel_begin(&shadowmap_panel, TA_UI_AUTOSIZE);
+                            s32 resolution = (s32)(light->data.point.shadow_properties.resolution / 10);
+                            // Render cubemap with the following layout:
+                            //       ┌────┐
+                            //       | +Y |
+                            //  ┌────┼────┼────┬────┐
+                            //  | -X | -Z | +X | +Z |
+                            //  └────┼────┼────┴────┘
+                            //       | -Y |
+                            //       └────┘
+                            ta_ui_row_begin();
+                            ta_ui_spacer(resolution, 0);
+                            ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_POSITIVE_Y], resolution);
+                            ta_ui_row_begin();
+                            ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_NEGATIVE_X], resolution);
+                            ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_NEGATIVE_Z], resolution);
+                            ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_POSITIVE_X], resolution);
+                            ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_POSITIVE_Z], resolution);
+                            ta_ui_row_begin();
+                            ta_ui_spacer(resolution, 0);
+                            ui_texture(light->data.point.shadow_map.textures[TA_CUBEMAP_FACE_NEGATIVE_Y], resolution);
+                            ta_ui_panel_end();
+                            break;
+                        } case TA_LIGHT_SPOT: {
+                            ta_ui_row_begin();
+                            ta_ui_next_pad(1, 1, 1, 1);
+                            static ta_ui_panel_state shadowmap_panel = { 0 };
+                            ta_ui_panel_begin(&shadowmap_panel, TA_UI_AUTOSIZE);
+                            s32 resolution = (s32)(light->data.spot.shadow_properties.resolution / 10);
+                            ui_texture(light->data.spot.shadow_map, resolution);
+                            ta_ui_panel_end();
+                            break;
+                        }
+                    }
                 }
             }
         } else {

@@ -14,6 +14,22 @@
 #include "ta_editor.h"
 #include "dlb/dlb_vector.h"
 
+void ta_model_init(ta_model *model)
+{
+    TracyCZone(ctxMethod, true);
+
+    if (quat_zero(model->xform.orientation)) {
+        model->xform.orientation = QUAT_IDENT;
+    } else {
+        model->xform.orientation = quat_normalize(model->xform.orientation);
+    }
+
+    TracyCZoneEnd(ctxMethod);
+}
+void ta_model_init_void(void *model)
+{
+    ta_model_init(model);
+}
 void ta_model_free(ta_model *model)
 {
     dlb_vec_free(model->materials);
@@ -88,7 +104,7 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
     DLB_ASSERT(shader);
     DLB_ASSERT(light_pv);
 
-    if (model->invisible || !model->cast_shadows) {
+    if (model->no_render || model->no_shadow_cast) {
         return;
     }
 
@@ -117,7 +133,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
     DLB_ASSERT(model);
     DLB_ASSERT(camera);
 
-    if (model->invisible) {
+    if (model->no_render) {
         return;
     }
     // If debug flags set such that there's nothing to render
@@ -168,7 +184,7 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         size_t lights_len = dlb_vec_len(lights);
         u32 u_lights_count = 0;
         for (u32 i = 0; i < lights_len; ++i) {
-            if (lights[i].enabled) {
+            if (!lights[i].disabled) {
                 //ta_shader_set_light(shader, SYM_U_LIGHTS, u_lights_count, &lights[i]);
                 u_lights_count++;
             }
@@ -176,9 +192,17 @@ void ta_model_render(ta_model *model, ta_camera *camera)
         ta_shader_set_int(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
         ta_shader_set_material(shader, SYM_U_MATERIAL, material);
         ta_shader_set_int(shader, SYM_U_DEBUG_CHANNEL, camera->dbg_channel);
+
+        // TODO: Cache this? Is it worth the space?
+        // Calculate visual offset matrix
+        ta_mat4 trans = mat4_translate(model->xform.position);
+        ta_mat4 rot = mat4_rotate_quat(model->xform.orientation);
+        ta_mat4 visual = mat4_mul(&trans, &rot);
+        visual = mat4_mul(&transform->world, &visual);
+
         ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
         ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
-        ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
+        ta_shader_set_mat4(shader, SYM_U_MODEL, &visual);
 
         model_set_shader_morph_weights(model, shader);
         ta_shader_bind(shader);
@@ -206,9 +230,16 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
 
     ta_transform *transform = (ta_transform *)ta_game_component(model->entity, RES_COMP_TRANSFORM);
 
+    // TODO: Cache this? Is it worth the space?
+    // Calculate visual offset matrix
+    ta_mat4 trans = mat4_translate(model->xform.position);
+    ta_mat4 rot = mat4_rotate_quat(model->xform.orientation);
+    ta_mat4 visual = mat4_mul(&trans, &rot);
+    visual = mat4_mul(&transform->world, &visual);
+
     ta_shader_set_mat4(shader, SYM_U_PROJ, &camera->projection);
     ta_shader_set_mat4(shader, SYM_U_VIEW, &camera->look_at);
-    ta_shader_set_mat4(shader, SYM_U_MODEL, &transform->world);
+    ta_shader_set_mat4(shader, SYM_U_MODEL, &visual);
 
     ta_mesh *mesh = (ta_mesh *)ta_game_by_sym_try(RES_MESH, model->mesh);
     if (!mesh) {

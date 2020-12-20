@@ -69,14 +69,14 @@ typedef struct ta_shadow_map_properties {
 } ta_shadow_map_properties;
 
 typedef struct ta_light_directional {
-    bool                     cast_shadows;
+    bool                     no_shadow_cast;
     ta_shadow_map_properties shadow_properties;
     const char               *shadow_map;
     GLuint                   framebuffer;       // shadowmap framebuffer
 } ta_light_directional;
 
 typedef struct ta_light_point {
-    bool                     cast_shadows;
+    bool                     no_shadow_cast;
     ta_shadow_map_properties shadow_properties;
     ta_cubemap               shadow_map;
     GLuint                   framebuffer;       // shadowmap framebuffer
@@ -85,7 +85,7 @@ typedef struct ta_light_point {
 typedef struct ta_light_spot {
     float                    theta_cone;
     float                    theta_falloff;
-    bool                     cast_shadows;
+    bool                     no_shadow_cast;
     ta_shadow_map_properties shadow_properties;
     const char               *shadow_map;
     GLuint                   framebuffer;       // shadowmap framebuffer
@@ -95,7 +95,7 @@ typedef struct ta_light {
     TA_COMPONENT_HEADER
     float         intensity;
     ta_rgb        color;
-    bool          enabled;
+    bool          disabled;
     ta_light_type type;
     union {
         ta_light_ambient     ambient;

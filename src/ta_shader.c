@@ -457,7 +457,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
             break;
         } case TA_LIGHT_DIRECTIONAL: {
             u_direction->value.vec3         = ta_light_direction(light);
-            u_cast_shadows->value.glbool    = (GLboolean)light->data.directional.cast_shadows;
+            u_cast_shadows->value.glbool    = (GLboolean)!light->data.directional.no_shadow_cast;
             u_light_pv->value.mat4          = ta_light_pv(light);
 
             ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
@@ -467,7 +467,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
         } case TA_LIGHT_POINT: {
             // NOTE: Use sampler_2d and assume that all 6 cubemap face textures are contiguous in the texture pool
             // TODO: We probably need to store pool index and layer rather than just gl_id to figure out "contiguous"
-            u_cast_shadows->value.glbool    = (GLboolean)light->data.point.cast_shadows;
+            u_cast_shadows->value.glbool    = (GLboolean)!light->data.point.no_shadow_cast;
             u_shadowmap_zfar->value.glfloat = light->data.point.shadow_properties.zfar;
 
             // NOTE: Assume all textures are in the same pool (asserts)
@@ -481,7 +481,7 @@ void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_ligh
             break;
         } case TA_LIGHT_SPOT: {
             u_direction->value.vec3         = ta_light_direction(light);
-            u_cast_shadows->value.glbool    = (GLboolean)light->data.spot.cast_shadows;
+            u_cast_shadows->value.glbool    = (GLboolean)!light->data.spot.no_shadow_cast;
 
             ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
             u_shadowmap_texture_pool_index->value.gluint = tex->gl_texture_pool_index;

@@ -321,19 +321,19 @@ void ta_schema_register()
     TYPE_END    (ta_shadow_map_properties);
 
     TYPE_START  (ta_light_directional, TYP_LIGHT_DIRECTIONAL, 0, 0);
-    TYPE_FIELD  (ta_light_directional, cast_shadows,      ATOM_BOOL);
+    TYPE_FIELD  (ta_light_directional, no_shadow_cast,    ATOM_BOOL);
     TYPE_FIELD  (ta_light_directional, shadow_properties, TYP_SHADOW_MAP_PROPERTIES);
     TYPE_END    (ta_light_directional);
 
     TYPE_START  (ta_light_point, TYP_LIGHT_POINT, 0, 0);
-    TYPE_FIELD  (ta_light_point, cast_shadows,      ATOM_BOOL);
+    TYPE_FIELD  (ta_light_point, no_shadow_cast,    ATOM_BOOL);
     TYPE_FIELD  (ta_light_point, shadow_properties, TYP_SHADOW_MAP_PROPERTIES);
     TYPE_END    (ta_light_point);
 
     TYPE_START  (ta_light_spot, TYP_LIGHT_SPOT, 0, 0);
     TYPE_FIELD  (ta_light_spot, theta_cone,        ATOM_FLOAT);
     TYPE_FIELD  (ta_light_spot, theta_falloff,     ATOM_FLOAT);
-    TYPE_FIELD  (ta_light_spot, cast_shadows,      ATOM_BOOL);
+    TYPE_FIELD  (ta_light_spot, no_shadow_cast,    ATOM_BOOL);
     TYPE_FIELD  (ta_light_spot, shadow_properties, TYP_SHADOW_MAP_PROPERTIES);
     TYPE_END    (ta_light_spot);
 
@@ -497,18 +497,19 @@ void ta_schema_register()
     TYPE_UNION_FIELD(ta_light, directional, TYP_LIGHT_DIRECTIONAL, data, TA_LIGHT_DIRECTIONAL);
     TYPE_UNION_FIELD(ta_light, point,       TYP_LIGHT_POINT,       data, TA_LIGHT_POINT);
     TYPE_UNION_FIELD(ta_light, spot,        TYP_LIGHT_SPOT,        data, TA_LIGHT_SPOT);
-    TYPE_FIELD      (ta_light, enabled,     ATOM_BOOL);
+    TYPE_FIELD      (ta_light, disabled,    ATOM_BOOL);
     TYPE_END        (ta_light);
 
-    TYPE_START  (ta_model, TYP_MODEL, 0, ta_model_free_void);
+    TYPE_START  (ta_model, TYP_MODEL, ta_model_init_void, ta_model_free_void);
     TYPE_FIELD  (ta_model, name,                 ATOM_STRING);
     TYPE_FIELD  (ta_model, entity,               ATOM_STRING);
+    TYPE_FIELD  (ta_model, xform,                TYP_XFORM);
     TYPE_FIELD  (ta_model, mesh,                 ATOM_STRING);
     TYPE_VECTOR (ta_model, materials,            ATOM_STRING);
     TYPE_VECTOR (ta_model, morph_target_weights, ATOM_FLOAT);
-    TYPE_FIELD  (ta_model, invisible,            ATOM_BOOL);
-    TYPE_FIELD  (ta_model, cast_shadows,         ATOM_BOOL);
-    TYPE_FIELD  (ta_model, receive_shadows,      ATOM_BOOL);
+    TYPE_FIELD  (ta_model, no_render,            ATOM_BOOL);
+    TYPE_FIELD  (ta_model, no_shadow_cast,       ATOM_BOOL);
+    TYPE_FIELD  (ta_model, no_shadow_receive,    ATOM_BOOL);
     TYPE_END    (ta_model);
 
     TYPE_START  (ta_player, TYP_PLAYER, 0, ta_player_free_void);

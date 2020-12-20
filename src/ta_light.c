@@ -43,7 +43,7 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
     int light_idx = 0;
     for (size_t i = 0; i < dlb_vec_len(lights) && i < TA_LIGHTING_MAX_ACTIVE_LIGHTS; ++i) {
         ta_light *light = &lights[i];
-        if (!light->enabled) {
+        if (light->disabled) {
             continue;
         }
 
@@ -67,14 +67,14 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
                 lighting->light_records[light_idx].direction = ta_light_direction(light);
                 ta_mat4 light_pv = ta_light_pv(light);
                 lighting->light_records[light_idx].light_pv = mat4_transpose(&light_pv);
-                lighting->light_records[light_idx].cast_shadows = light->data.directional.cast_shadows;
+                lighting->light_records[light_idx].cast_shadows = !light->data.directional.no_shadow_cast;
 
                 ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
                 lighting->light_records[light_idx].shadowmap_texture_pool_index = tex->gl_texture_pool_index;
                 lighting->light_records[light_idx].shadowmap_texture_array_layer[0][0] = tex->gl_texture_pool_layer;
                 break;
             } case TA_LIGHT_POINT: {
-                lighting->light_records[light_idx].cast_shadows = light->data.point.cast_shadows;
+                lighting->light_records[light_idx].cast_shadows = !light->data.point.no_shadow_cast;
                 lighting->light_records[light_idx].shadowmap_zfar  = light->data.point.shadow_properties.zfar;
 
                 // NOTE: Assume all textures are in the same pool (asserts)
@@ -88,7 +88,7 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
                 break;
             } case TA_LIGHT_SPOT: {
                 lighting->light_records[light_idx].direction = ta_light_direction(light);
-                lighting->light_records[light_idx].cast_shadows = light->data.spot.cast_shadows;
+                lighting->light_records[light_idx].cast_shadows = !light->data.spot.no_shadow_cast;
 
                 ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
                 lighting->light_records[light_idx].shadowmap_texture_pool_index = tex->gl_texture_pool_index;
@@ -387,7 +387,7 @@ ta_mat4 ta_light_pv(ta_light *light)
 // Use texture2Dproj to account for perspective-divide
 static void shadowpass_render_directional(ta_light *light, ta_model *models)
 {
-    if (!light->data.directional.cast_shadows) {
+    if (light->data.directional.no_shadow_cast) {
         return;
     }
 
@@ -448,7 +448,7 @@ static void shadowpass_render_directional(ta_light *light, ta_model *models)
 // https://gamedev.stackexchange.com/questions/19461/opengl-glsl-render-to-cube-map
 static void shadowpass_render_point(ta_light *light, ta_model *models)
 {
-    if (!light->data.point.cast_shadows) {
+    if (light->data.point.no_shadow_cast) {
         return;
     }
 
@@ -510,7 +510,7 @@ static void shadowpass_render_point(ta_light *light, ta_model *models)
 
 void ta_light_shadowpass_render(ta_light *light, ta_model *models)
 {
-    if (!light->enabled) {
+    if (light->disabled) {
         return;
     }
 

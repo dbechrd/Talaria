@@ -1699,7 +1699,8 @@ void ta_game_loop()
             ta_transform *player_transform = (ta_transform *)ta_game_component(tg_e_player_one, RES_COMP_TRANSFORM);
             player_transform->xform.orientation = camera_rot_quat;
 
-            ta_vec3 player_cam_offset = { 0.0f, 4.0f, 0.7f };
+            //ta_vec3 player_cam_offset = { 0.0f, 4.0f, 0.7f };
+            ta_vec3 player_cam_offset = { 0.0f, 1.7f, 0.7f };
             player_cam_offset = quat_mul_vec3(camera_rot_quat, player_cam_offset);
             camera_transform->xform.position = vec3_add(player_transform->xform.position, player_cam_offset);
 
@@ -1895,7 +1896,7 @@ void ta_game_loop()
                 light_pos.center = transform->xform_world.position;
                 light_pos.radius = 0.2f;
                 ta_rgba color = { 0 };
-                if (light->enabled) {
+                if (!light->disabled) {
                     color.r = light->color.r;
                     color.g = light->color.g;
                     color.b = light->color.b;

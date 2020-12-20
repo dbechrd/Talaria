@@ -223,6 +223,7 @@ static void ta_ogx_load_geometry_node(ogx_node *o_node)
     ta_model *model = (ta_model *)ta_game_by_sym_try(RES_COMP_MODEL, o_node->name);
     if (!model) {
         model = ta_game_component_add(o_node->name, RES_COMP_MODEL, SYM(o_node->name));
+        ta_model_init(model);
     } else {
         ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting model for %s\n", o_node->name);
         dlb_vec_zero((void *)model->materials);
@@ -235,9 +236,6 @@ static void ta_ogx_load_geometry_node(ogx_node *o_node)
     dlb_vec_each(float *, weight, o_geom->morph_weights) {
         dlb_vec_push(model->morph_target_weights, *weight);
     }
-
-    model->cast_shadows = true;
-    model->receive_shadows = true;
 }
 
 static void ta_ogx_load_light_node(ogx_node *o_node)
