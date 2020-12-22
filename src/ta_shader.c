@@ -73,6 +73,7 @@ static GLuint ta_shader_compile(GLenum type, char *buf)
             ta_log_write(&tg_debug_log, SRC_SHADER,
                 "\n---[OpenGL Shader Info Log - %d]------------------------------------------------------------\n"
                 "%s\n", gl_err, log);
+            dlb_vec_free(log);
         } else {
             ta_log_write(&tg_debug_log, SRC_SHADER,
                 "\n---[OpenGL Shader Info Log - %d]------------------------------------------------------------\n"

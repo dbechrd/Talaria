@@ -122,10 +122,10 @@ out vs_out {
 
 void main()
 {
+#if 0
     //----------------------------------
     // Morph target blending
     //----------------------------------
-#if 0
     // http://antongerdelan.net/opengl/blend_shapes.html
     // if other weights add up to less than 1, use neutral target
     float neutral_w = 1.0 - u_morph_weights[0];  // - u_morph_weights[1]
@@ -137,37 +137,43 @@ void main()
     float morph1_f = u_morph_weights[0] / sum_w;
 
     // interpolate targets to give us current pose
-    vec3 morphed_position =
+    vec4 position_morphed = vec4(
         neutral_f * attr_position +
-        morph1_f * attr_morph1_position;
+        morph1_f * attr_morph1_position
+    , 1.0);
 
-    vec3 morphed_normal =
+    vec4 normal_morphed = vec4(
         neutral_f * attr_normal +
-        morph1_f * attr_morph1_normal;
+        morph1_f * attr_morph1_normal
+     , 0.0);
 #else
-    // add weighted morph targets to give us current pose
-    vec3 morphed_position = attr_position;// + u_morph_weights[0] * attr_morph1_position;
-    vec3 morphed_normal = attr_normal;// + u_morph_weights[0] * attr_morph1_normal;
+    vec4 position_morphed = vec4(attr_position, 1.0);
+    vec4 normal_morphed   = vec4(attr_normal  , 0.0);
 #endif
 
-    //----------------------------------
-    // Skinning
+#if 1
     // TODO: Should this happen before or after morph target blending? Should we even mix those?
     //----------------------------------
-    vec4 position_skinned = (attr_bone_weights.x * vec4(morphed_position, 1.0) * bone_xforms[int(attr_bone_indices.x)]) +
-                            (attr_bone_weights.y * vec4(morphed_position, 1.0) * bone_xforms[int(attr_bone_indices.y)]) +
-                            (attr_bone_weights.z * vec4(morphed_position, 1.0) * bone_xforms[int(attr_bone_indices.z)]) +
-                            (attr_bone_weights.w * vec4(morphed_position, 1.0) * bone_xforms[int(attr_bone_indices.w)]) +
-                            (float(attr_bone_weights.x == 0.0) * vec4(morphed_position, 1.0));
+    // Skinning
+    //----------------------------------
+    vec4 position_skinned = (attr_bone_weights.x * position_morphed * bone_xforms[int(attr_bone_indices.x)]) +
+                            (attr_bone_weights.y * position_morphed * bone_xforms[int(attr_bone_indices.y)]) +
+                            (attr_bone_weights.z * position_morphed * bone_xforms[int(attr_bone_indices.z)]) +
+                            (attr_bone_weights.w * position_morphed * bone_xforms[int(attr_bone_indices.w)]) +
+                            (float(attr_bone_weights.x == 0.0) * position_morphed);
 
-    vec4 normal_skinned = (attr_bone_weights[0] * vec4(morphed_normal, 0.0) * bone_normal_xforms[int(attr_bone_indices.x)]) +
-                          (attr_bone_weights[1] * vec4(morphed_normal, 0.0) * bone_normal_xforms[int(attr_bone_indices.y)]) +
-                          (attr_bone_weights[2] * vec4(morphed_normal, 0.0) * bone_normal_xforms[int(attr_bone_indices.z)]) +
-                          (attr_bone_weights[3] * vec4(morphed_normal, 0.0) * bone_normal_xforms[int(attr_bone_indices.w)]) +
-                          (float(attr_bone_weights.x == 0.0) * vec4(morphed_normal, 1.0));
+    vec4 normal_skinned = (attr_bone_weights[0] * normal_morphed * bone_normal_xforms[int(attr_bone_indices.x)]) +
+                          (attr_bone_weights[1] * normal_morphed * bone_normal_xforms[int(attr_bone_indices.y)]) +
+                          (attr_bone_weights[2] * normal_morphed * bone_normal_xforms[int(attr_bone_indices.z)]) +
+                          (attr_bone_weights[3] * normal_morphed * bone_normal_xforms[int(attr_bone_indices.w)]) +
+                          (float(attr_bone_weights.x == 0.0) * normal_morphed);
+#else
+    vec4 position_skinned = position_morphed;
+    vec4 normal_skinned = normal_morphed;
+#endif
 
-    vec4 position = u_model * vec4(position_skinned);
-    vec4 normal = u_model * vec4(normal_skinned);
+    vec4 position = u_model * position_skinned;
+    vec4 normal = u_model * normal_skinned;
 
     vertex.position = vec3(position);
 	vertex.color = attr_color;

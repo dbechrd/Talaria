@@ -14,6 +14,8 @@ typedef enum ta_event_queue_type {
 
 // TODO: Add TA_ prefix
 typedef enum ta_event_type {
+    TA_EVENT_UNKNOWN = 0,
+
     // Window events
     WINDOW_EVENT_RESIZE,
 

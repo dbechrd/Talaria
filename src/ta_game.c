@@ -1575,21 +1575,23 @@ void ta_game_loop()
 
         static float animation_time_sec = 0.0f;
         animation_time_sec += (float)(ms_frame_delta / 1000.0);
+        printf("animation_time_sec: %f\n", animation_time_sec);
         while (animation_time_sec > 2.0f) {
             animation_time_sec -= 2.0f;
-            //if (*dlb_vec_last(animation_names) == dude_wave) {
-            //    dlb_vec_pop(animation_names);
-            //    dlb_vec_push(animation_names, dude_squat);
-            //} else if (*dlb_vec_last(animation_names) == dude_squat) {
-            //    dlb_vec_pop(animation_names);
-            //    dlb_vec_push(animation_names, dude_wave);
-            //}
+            if (*dlb_vec_last(animation_names) == dude_wave) {
+                dlb_vec_pop(animation_names);
+                dlb_vec_push(animation_names, dude_squat);
+            } else if (*dlb_vec_last(animation_names) == dude_squat) {
+                dlb_vec_pop(animation_names);
+                dlb_vec_push(animation_names, dude_wave);
+            }
         }
 
         // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
         //animation_time_sec = 0.0f;
         // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
 
+#if 0
         dlb_vec_each(const char **, animation_name, animation_names) {
             ta_animation *animation = (ta_animation *)ta_game_by_sym_try(RES_ANIMATION, *animation_name);
             if (animation && animation->tracks) {
@@ -1672,6 +1674,7 @@ void ta_game_loop()
                 }
             }
         }
+#endif
 
         //----------------------------------------------------------------------
         // Post-simulation updates (e.g. recalculate cached transform matrices)

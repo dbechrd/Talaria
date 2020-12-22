@@ -90,14 +90,6 @@ bool ta_event_peek(ta_event *event)
 }
 static void event_sdl_poll()
 {
-    // Convert SDL button code to custom scancode for mouse "keys"
-    static int mouse_scancodes[SDL_BUTTON_X2] = { 0 };
-    mouse_scancodes[SDL_BUTTON_LEFT]   = SDL_SCANCODE_MOUSE_LEFT;
-    mouse_scancodes[SDL_BUTTON_MIDDLE] = SDL_SCANCODE_MOUSE_MIDDLE;
-    mouse_scancodes[SDL_BUTTON_RIGHT]  = SDL_SCANCODE_MOUSE_RIGHT;
-    mouse_scancodes[SDL_BUTTON_X1]     = SDL_SCANCODE_MOUSE_X1;
-    mouse_scancodes[SDL_BUTTON_X2]     = SDL_SCANCODE_MOUSE_X2;
-
     SDL_Event sdl_event;
     //while (TA_SDL_PollEvent(&sdl_event)) {
     while (SDL_PollEvent(&sdl_event)) {
@@ -161,21 +153,23 @@ static void event_sdl_poll()
                 event.data.mouse_move.dy = sdl_event.motion.yrel;
                 handled = true;
                 break;
-            } case SDL_MOUSEBUTTONDOWN: {
-                if (sdl_event.button.button < ARRAY_SIZE(mouse_scancodes)) {
-                    event.type = INPUT_EVENT_KEY_PRESS;
-                    event.data.key_event.key = 0;
-                    event.data.key_event.scancode = mouse_scancodes[sdl_event.button.button];
-                    // TODO: Get modifier keys for mouse button events
-                    //event.data.key.mods = ???
-                    handled = true;
+            } case SDL_MOUSEBUTTONDOWN: case SDL_MOUSEBUTTONUP: {
+                switch (sdl_event.type) {
+                    case SDL_MOUSEBUTTONDOWN: event.type = INPUT_EVENT_KEY_PRESS;   break;
+                    case SDL_MOUSEBUTTONUP  : event.type = INPUT_EVENT_KEY_RELEASE; break;
+                    default: DLB_ASSERT(!"Unknown event.type for this case!");
                 }
-                break;
-            } case SDL_MOUSEBUTTONUP: {
-                if (sdl_event.button.button < ARRAY_SIZE(mouse_scancodes)) {
-                    event.type = INPUT_EVENT_KEY_RELEASE;
+                // Convert SDL button code to custom scancode for mouse "keys"
+                switch (sdl_event.button.button) {
+                    case SDL_BUTTON_LEFT  : event.data.key_event.scancode = SDL_SCANCODE_MOUSE_LEFT;   break;
+                    case SDL_BUTTON_MIDDLE: event.data.key_event.scancode = SDL_SCANCODE_MOUSE_MIDDLE; break;
+                    case SDL_BUTTON_RIGHT : event.data.key_event.scancode = SDL_SCANCODE_MOUSE_RIGHT;  break;
+                    case SDL_BUTTON_X1    : event.data.key_event.scancode = SDL_SCANCODE_MOUSE_X1;     break;
+                    case SDL_BUTTON_X2    : event.data.key_event.scancode = SDL_SCANCODE_MOUSE_X2;     break;
+                }
+
+                if (event.type && event.data.key_event.scancode) {
                     event.data.key_event.key = 0;
-                    event.data.key_event.scancode = mouse_scancodes[sdl_event.button.button];
                     // TODO: Get modifier keys for mouse button events
                     //event.data.key.mods = ???
                     handled = true;
