@@ -174,12 +174,13 @@ ta_shader_attribute *find_attribute_by_name(ta_shader *shader, const char *name,
     DLB_ASSERT(!result || result->type == type);
     return result;
 }
-ta_shader_uniform *find_uniform_by_name_try(ta_shader_uniform *uniforms, const char *name)
+ta_shader_uniform *find_uniform_by_name_try(ta_shader_uniform *uniforms, const char *name, ta_glsl_type type)
 {
     ta_shader_uniform *result = 0;
     dlb_vec_each(ta_shader_uniform *, uniform, uniforms) {
         if (uniform->name == name) {
             result = uniform;
+            DLB_ASSERT(result && result->type == type);
             break;
         }
     }
@@ -187,7 +188,7 @@ ta_shader_uniform *find_uniform_by_name_try(ta_shader_uniform *uniforms, const c
 }
 ta_shader_uniform *find_uniform_by_name(ta_shader_uniform *uniforms, const char *name, ta_glsl_type type)
 {
-    ta_shader_uniform *result = find_uniform_by_name_try(uniforms, name);
+    ta_shader_uniform *result = find_uniform_by_name_try(uniforms, name, type);
     DLB_ASSERT(result && result->type == type);
     return result;
 }
@@ -308,7 +309,7 @@ void ta_shader_load(ta_shader *shader)
         glUniformBlockBinding(shader->program_id, ubo_bone_normal_xforms_index, TA_GLSL_UBO_BONE_NORMAL_XFORMS);
     }
 
-    if (find_uniform_by_name_try(shader->uniforms, SYM_U_TEXTURES[0])) {
+    if (find_uniform_by_name_try(shader->uniforms, SYM_U_TEXTURES[0], TA_GLSL_SAMPLER2DARRAY)) {
         size_t texture_pool_count = dlb_vec_len(tg_game.texturing.texture_pools);
         for (size_t i = 0; i < texture_pool_count; ++i) {
             ta_shader_set_sampler_2d_array(shader, SYM_U_TEXTURES[i], tg_game.texturing.texture_pools[i].gl_id);
@@ -356,6 +357,14 @@ void ta_shader_set_int(ta_shader *shader, const char *name, GLint value)
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_INT);
     u->value.glint = value;
     u->dirty = true;
+}
+void ta_shader_set_int_try(ta_shader *shader, const char *name, GLint value)
+{
+    ta_shader_uniform *u = find_uniform_by_name_try(shader->uniforms, name, TA_GLSL_INT);
+    if (u) {
+        u->value.glint = value;
+        u->dirty = true;
+    }
 }
 void ta_shader_set_uint(ta_shader *shader, const char *name, GLuint value)
 {
@@ -406,6 +415,14 @@ void ta_shader_set_vec3(ta_shader *shader, const char *name, const ta_vec3 *v)
     u->value.vec3 = *v;
     u->dirty = true;
 }
+void ta_shader_set_vec3_try(ta_shader *shader, const char *name, const ta_vec3 *v)
+{
+    ta_shader_uniform *u = find_uniform_by_name_try(shader->uniforms, name, TA_GLSL_VEC3);
+    if (u) {
+        u->value.vec3 = *v;
+        u->dirty = true;
+    }
+}
 void ta_shader_set_vec4(ta_shader *shader, const char *name, const ta_vec4 *v)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_VEC4);
@@ -423,6 +440,14 @@ void ta_shader_set_mat4(ta_shader *shader, const char *name, const ta_mat4 *m)
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_MAT4);
     u->value.mat4 = *m;
     u->dirty = true;
+}
+void ta_shader_set_mat4_try(ta_shader *shader, const char *name, const ta_mat4 *m)
+{
+    ta_shader_uniform *u = find_uniform_by_name_try(shader->uniforms, name, TA_GLSL_MAT4);
+    if (u) {
+        u->value.mat4 = *m;
+        u->dirty = true;
+    }
 }
 void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_light *light)
 {

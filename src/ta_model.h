@@ -28,5 +28,5 @@ void ta_model_free_void                 (void *model);
 float ta_model_get_morph_target_weight  (ta_model *model, const char *morph_target_name);
 void ta_model_set_morph_target_weight   (ta_model *model, const char *morph_target_name, float weight);
 void ta_model_shadow_pass               (ta_model *model, struct ta_shader *shader, ta_mat4 *light_pv);
-void ta_model_render                    (ta_model *model, struct ta_camera *camera);
+void ta_model_render                    (ta_model *model);
 void ta_model_render_shader             (ta_model *model, struct ta_camera *camera, struct ta_shader *shader);

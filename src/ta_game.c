@@ -1501,6 +1501,7 @@ void ta_game_loop()
     ta_model *models = (ta_model *)ta_game_resource_pool(RES_COMP_MODEL);
     ta_light *lights = (ta_light *)ta_game_resource_pool(RES_COMP_LIGHT);
     ta_camera *cameras = (ta_camera *)ta_game_resource_pool(RES_COMP_CAMERA);
+    ta_shader *shaders = (ta_shader *)ta_game_resource_pool(RES_SHADER);
 
     while (ta_game_state_current() != TA_STATE_SHUTDOWN) {
         ms_frame_start = ta_timer_elapsed_ms();
@@ -1510,6 +1511,7 @@ void ta_game_loop()
         game_hotload_textures();
 
         ta_camera *active_camera = (ta_camera *)ta_game_camera();
+        ta_transform *active_camera_trans = (ta_transform *)ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);
 
         //----------------------------------------------------------------------
         // Handle events
@@ -1591,7 +1593,7 @@ void ta_game_loop()
         //animation_time_sec = 0.0f;
         // DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG DEBUG
 
-#if 0
+#if 1
         dlb_vec_each(const char **, animation_name, animation_names) {
             ta_animation *animation = (ta_animation *)ta_game_by_sym_try(RES_ANIMATION, *animation_name);
             if (animation && animation->tracks) {
@@ -1762,15 +1764,15 @@ void ta_game_loop()
             DLB_ASSERT(dlb_vec_len(mesh->skin.skeleton.bind_pose_positions) == bone_count);
             DLB_ASSERT(dlb_vec_len(mesh->skin.skeleton.bind_pose_orientations) == bone_count);
 
+            ta_bone *bone = (ta_bone *)ta_game_component(mesh->skin.skeleton.bones[0], RES_COMP_BONE);
+            ta_transform *armature = (ta_transform *)ta_game_component(bone->armature, RES_COMP_TRANSFORM);
+
+            ta_mat4 armature_inv = { 0 };
+            DLB_ASSERT(mat4_inverse(&armature->world, &armature_inv));
+
             size_t bone_idx = 0;
             dlb_vec_each(const char **, bone_name, mesh->skin.skeleton.bones) {
                 ta_transform *transform = (ta_transform *)ta_game_component(*bone_name, RES_COMP_TRANSFORM);
-
-                ta_bone *bone = (ta_bone *)ta_game_component(*bone_name, RES_COMP_BONE);
-                ta_transform *armature = (ta_transform *)ta_game_component(bone->armature, RES_COMP_TRANSFORM);
-
-                ta_mat4 armature_inv = { 0 };
-                DLB_ASSERT(mat4_inverse(&armature->world, &armature_inv));
 
                 ta_mat4 bone_bind_pos = mat4_translate(mesh->skin.skeleton.bind_pose_positions[bone_idx]);
                 ta_mat4 bone_bind_rot = mat4_rotate_quat(mesh->skin.skeleton.bind_pose_orientations[bone_idx]);
@@ -1821,10 +1823,24 @@ void ta_game_loop()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glStencilMask(0x00);
 
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &active_camera->projection);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &active_camera->look_at);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &active_camera->projection);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &active_camera->look_at);
+        size_t lights_len = dlb_vec_len(lights);
+        u32 u_lights_count = 0;
+        for (u32 i = 0; i < lights_len; ++i) {
+            if (!lights[i].disabled) {
+                //ta_shader_set_light(shader, SYM_U_LIGHTS, u_lights_count, &lights[i]);
+                u_lights_count++;
+            }
+        }
+
+        // TODO: Use a UBO? or whatever it's called when you share uniforms between multiple shaders
+        dlb_vec_each(ta_shader *, shader, shaders) {
+            ta_shader_set_mat4_try(shader, SYM_U_PROJ, &active_camera->projection);
+            ta_shader_set_mat4_try(shader, SYM_U_VIEW, &active_camera->look_at);
+            // NOTE: These only happen for "mesh" shader atm but wutevs..
+            ta_shader_set_vec3_try(shader, SYM_U_CAMERA_POS, &active_camera_trans->xform_world.position);
+            ta_shader_set_int_try(shader, SYM_U_DEBUG_CHANNEL, active_camera->dbg_channel);
+            ta_shader_set_int_try(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
+        }
 
         // Dump any prims from the collision pass
         game_render_manifolds_debug();
@@ -1839,7 +1855,7 @@ void ta_game_loop()
         }
 
         dlb_vec_each(ta_model *, model, models) {
-            ta_model_render(model, active_camera);
+            ta_model_render(model);
         }
 
         if (tg_game.debug_wireframe) {
@@ -1995,6 +2011,13 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Transition boundary from world rendering to screen rendering
         //----------------------------------------------------------------------
+        // TODO: Use a UBO? or whatever it's called when you share uniforms between multiple shaders
+        dlb_vec_each(ta_shader *, shader, shaders) {
+            ta_shader_set_mat4_try(shader, SYM_U_PROJ, &MAT4_IDENT);
+            ta_shader_set_mat4_try(shader, SYM_U_VIEW, &MAT4_IDENT);
+            ta_shader_set_mat4_try(shader, SYM_U_MODEL, &MAT4_IDENT);
+        }
+
         // NOTE: We have to do this after editor_draw_world because that method
         // is using the last frame's hover flag to determine whether or not an
         // uncaptured mouse can_body interact with the editor widgets.
