@@ -247,7 +247,7 @@ void main()
                 attenuation = lights[i].intensity;
 
                 if (lights[i].cast_shadows) {
-                    shadow_bias = 0.0001;
+                    shadow_bias = 0.0002;
 #if 0
                     shadow_map_depth = texture(u_textures[lights[i].shadowmap_texture_pool_index],
                         vec3(projCoords.st, lights[i].shadowmap_texture_array_layers[0])).r;
@@ -256,13 +256,14 @@ void main()
                     // https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
                     //shadow_bias = max(0.05 * (1.0 - dot(N, lights[i].direction)), 0.001);
 		            shadow = step(shadow_map_depth, dist - shadow_bias);
+		            shadow = smoothstep(0.01, 1.0, shadow);
 #else
                     // Soft shadows
                     // TODO: Clean this crap up!
                     float ss_count = 0.0;
 				    for (float x = -1.0; x <= 1.0; x += 1.0) {
 					    for (float y = -1.0; y <= 1.0; y += 1.0) {
-							vec2 ss_offset = vec2(x, y) * 0.0005;
+							vec2 ss_offset = vec2(x, y) * 0.0002;
                             float ss_depth = texture(u_textures[lights[i].shadowmap_texture_pool_index],
                                 vec3(projCoords.st + ss_offset, lights[i].shadowmap_texture_array_layers[0])).r;
 			                shadow += step(ss_depth, dist - shadow_bias);
@@ -270,6 +271,7 @@ void main()
 					    }
 				    }
                     shadow /= ss_count;
+		            shadow = smoothstep(0.01, 1.0, shadow);
 #endif
 
                     if (projCoords.z > 1.0) {

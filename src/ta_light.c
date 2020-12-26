@@ -431,9 +431,11 @@ static void shadowpass_render_directional(ta_light *light, ta_model *models)
     ta_mat4 view = mat4_lookat(inv_dir, VEC3_ZERO, VEC3_Y);
     ta_mat4 light_pv = mat4_mul(&light->data.directional.shadow_properties.projection, &view);
 #endif
+    glCullFace(GL_FRONT);
     dlb_vec_each(ta_model *, model, models) {
         ta_model_shadow_pass(model, shader, &light_pv);
     }
+    glCullFace(GL_BACK);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     ta_shader_unbind();

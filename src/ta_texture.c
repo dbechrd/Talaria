@@ -148,7 +148,7 @@ void ta_texturing_init(ta_texturing *texturing)
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 2048, 2048,  8, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 4096, 4096,  1, GL_RGBA, GL_UNSIGNED_BYTE);
     ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 1024, 1024, 18, GL_DEPTH_COMPONENT, GL_FLOAT);
-    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 4096, 4096,  1, GL_DEPTH_COMPONENT, GL_FLOAT);
+    ta_texture_pool_init_and_bind(dlb_vec_alloc(texturing->texture_pools), 8192, 8192,  1, GL_DEPTH_COMPONENT, GL_FLOAT);
     ta_texture_pool_unbind();
 
     // TODO: Fill unused textures with some default texture data to make it obvious when we accidentally use the wrong
@@ -174,8 +174,8 @@ void ta_texturing_init(ta_texturing *texturing)
     DLB_ASSERT(rgba_pixels_len == rgba_bytes);
 
     // Generate depth texture placeholder
-    const size_t depth_max_width = 4096;
-    const size_t depth_max_height = 4096;
+    const size_t depth_max_width = 8192;
+    const size_t depth_max_height = 8192;
     float *depth_pixels = 0;
     size_t depth_elements = depth_max_width * depth_max_height;
     dlb_vec_alloc_count(depth_pixels, depth_elements);
