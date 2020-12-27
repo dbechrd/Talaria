@@ -23,6 +23,7 @@
 DLB_ASSERT_HANDLER(handle_assert)
 {
     tg_debug_log.flush = true;
+    tg_debug_log.echo_stdout = true;
     ta_log_write(&tg_debug_log, SRC_ASSERT,
         "\n---[DLB_ASSERT_HANDLER]-----------------\n"
         "Source file: %s:%d\n\n"

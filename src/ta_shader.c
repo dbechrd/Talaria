@@ -59,6 +59,7 @@ static GLuint ta_shader_compile(GLenum type, char *buf)
     glCompileShader(shader);
     glGetShaderiv(shader, GL_COMPILE_STATUS, &status);
     if (!status) {
+        tg_debug_log.echo_stdout = true;
         ta_log_write(&tg_debug_log, SRC_SHADER, "Trying to show_info_log\n");
 
         GLint length = 0;
@@ -108,8 +109,9 @@ static void ta_shader_program_link(GLuint program)
 
     GLint status = 0;
     glGetProgramiv(program, GL_LINK_STATUS, &status);
-    if (status == GL_FALSE)
+    if (!status)
     {
+        tg_debug_log.echo_stdout = true;
         ta_log_write(&tg_debug_log, SRC_SHADER, "Trying to show_info_log\n");
 
         GLint length = 0;
