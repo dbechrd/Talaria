@@ -4,3 +4,6 @@
 # Blacklist
 bin/log.txt
 clang/
+
+# Temporary ignore (big file size, only used for testing)
+_ignore
