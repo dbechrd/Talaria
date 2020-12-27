@@ -183,24 +183,13 @@ vec3 convert_xyz_to_cube_uv(vec3 uvw);
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// http://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
 #define BLOCKER_SEARCH_NUM_SAMPLES  16
 #define PCF_NUM_SAMPLES             16
-#define NEAR_PLANE                  -40
-#define LIGHT_WORLD_SIZE            .5
+#define NEAR_PLANE                  abs(-40) // -40
+#define LIGHT_WORLD_SIZE            0.002    // .002
+#define MIN_PCF_FILTER_RADIUS       0.0002
+#define MAX_PCF_FILTER_RADIUS       0.002
 #define LIGHT_FRUSTUM_WIDTH         40
 // Assuming that LIGHT_FRUSTUM_WIDTH == LIGHT_FRUSTUM_HEIGHT
 #define LIGHT_SIZE_UV               (LIGHT_WORLD_SIZE / LIGHT_FRUSTUM_WIDTH)
@@ -248,7 +237,7 @@ void FindBlocker(out float avgBlockerDepth, out float numBlockers, uint mapPool,
 
 float PCF_Filter(uint mapPool, uint mapLayer, vec2 uv, float zReceiver, float filterRadiusUV) {
     float sum = 0.0;
-    float shadow_bias = 0.0002;
+    float shadow_bias = 0.005;
     for (int i = 0; i < PCF_NUM_SAMPLES; ++i) {
         vec2 offset = poissonDisk[i] * filterRadiusUV;
         float shadowMapDepth = texture(u_textures[mapPool], vec3(uv + offset, mapLayer)).r;
@@ -273,26 +262,12 @@ float PCSS(uint mapPool, uint mapLayer, vec3 coords) {
     // STEP 2: penumbra size
     float penumbraRatio = PenumbraSize(zReceiver, avgBlockerDepth);
     float filterRadiusUV = penumbraRatio * LIGHT_SIZE_UV * NEAR_PLANE / coords.z;
+    filterRadiusUV = clamp(filterRadiusUV, MIN_PCF_FILTER_RADIUS, MAX_PCF_FILTER_RADIUS);
 
     // STEP 3: filtering
     return PCF_Filter(mapPool, mapLayer, uv, zReceiver, filterRadiusUV);
-    //return PCF_Filter(mapPool, mapLayer, uv, zReceiver, 1);
+    //return PCF_Filter(mapPool, mapLayer, uv, zReceiver, 0);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -402,7 +377,7 @@ void main()
 				    }
                     shadow /= ss_count;
 		            shadow = smoothstep(0.01, 1.0, shadow);
-#elif 1
+#elif 0
                     //--------------------------------------------------
                     // PCF, irregular sampling w/ Poisson disk (noise)
                     //--------------------------------------------------
