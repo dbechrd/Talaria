@@ -138,9 +138,9 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 
     // TODO: Find a way to do this without making the font look like shit
     // Anti-aliasing
-    //sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 16);
-    //sdl_gl_attrib(SDL_GL_MULTISAMPLEBUFFERS, 1);
-    //sdl_gl_attrib(SDL_GL_ACCELERATED_VISUAL, 1);  // NOTE: Set to 1 to force hardware acceleration
+    sdl_gl_attrib(SDL_GL_MULTISAMPLESAMPLES, 16);
+    sdl_gl_attrib(SDL_GL_MULTISAMPLEBUFFERS, 1);
+    sdl_gl_attrib(SDL_GL_ACCELERATED_VISUAL, 1);  // NOTE: Set to 1 to force hardware acceleration
 
     sdl_gl_attrib(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     sdl_gl_attrib(SDL_GL_CONTEXT_MAJOR_VERSION, gl_major);

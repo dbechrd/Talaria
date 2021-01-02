@@ -177,17 +177,36 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0);
 vec3 convert_xyz_to_cube_uv(vec3 uvw);
 
 
-
-
-
-
+// Code for swr@discord's "RNG" GLSL function
+//float rand(vec2 co){
+//    // original rand() function
+//    return fract(sin(dot(co.xy, vec2(12.9898, 78.233))) * 43758.5453);
+//}
+//float rand2(vec2 co){
+//    // display sin pattern directly without mapping to large range and back
+//    // (this should've been mapped to 0-1, it's [-1, 1], oops, but it's a regular wave
+//    // pattern so it would just change the period of the wave)
+//    return sin(dot(co.xy, vec2(12.9898, 78.233)));
+//}
+//float rand3(vec2 co){
+//    // dot product of UV with vec2(1.0, 1.0) (simplified), mapped into 0-1 range
+//    return (co.x + co.y) * 0.5;
+//}
+//float rand4(vec2 co){
+//    // scale directly back to 0-1 range without sin/fract
+//    return (dot(co.xy, vec2(12.9898, 78.233))) / 78.233;
+//}
+//float rand5(vec2 co){
+//    // remove dot product magic numbers
+//    return fract(sin(dot(co.xy, vec2(1.0, 1.0))) * 43758.5453);
+//}
 
 
 // http://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf
 #define BLOCKER_SEARCH_NUM_SAMPLES  16
 #define PCF_NUM_SAMPLES             16
-#define NEAR_PLANE                  abs(-40) // -40
-#define LIGHT_WORLD_SIZE            0.002    // .002
+#define NEAR_PLANE                  abs(-40)
+#define LIGHT_WORLD_SIZE            0.002
 #define MIN_PCF_FILTER_RADIUS       0.0002
 #define MAX_PCF_FILTER_RADIUS       0.002
 #define LIGHT_FRUSTUM_WIDTH         40
@@ -238,12 +257,18 @@ void FindBlocker(out float avgBlockerDepth, out float numBlockers, uint mapPool,
 float PCF_Filter(uint mapPool, uint mapLayer, vec2 uv, float zReceiver, float filterRadiusUV) {
     float sum = 0.0;
     float shadow_bias = 0.005;
+
+    //float unfilteredDepth = texture(u_textures[mapPool], vec3(uv, mapLayer)).r;
+    //float unfilteredShadow = float(unfilteredDepth < zReceiver - shadow_bias);
+
     for (int i = 0; i < PCF_NUM_SAMPLES; ++i) {
         vec2 offset = poissonDisk[i] * filterRadiusUV;
         float shadowMapDepth = texture(u_textures[mapPool], vec3(uv + offset, mapLayer)).r;
         sum += float(shadowMapDepth < zReceiver - shadow_bias);
     }
+
     return sum / PCF_NUM_SAMPLES;
+    //return max(unfilteredShadow, sum / PCF_NUM_SAMPLES);
 }
 
 float PCSS(uint mapPool, uint mapLayer, vec3 coords) {
@@ -573,6 +598,12 @@ void main()
     //                 int(vertex.bone_weights.w > 0.0);
     //vec3 bone_count_thing = vec3(bone_count * 0.2);
     //final_color = vec4(bone_count_thing, 1.0);
+
+    //final_color = vec4(vec3(rand1(vertex.uv)), 1.0);
+    //final_color = vec4(vec3(rand2(vertex.uv)), 1.0);
+    //final_color = vec4(vec3(rand3(vertex.uv)), 1.0);
+    //final_color = vec4(vec3(rand4(vertex.uv)), 1.0);
+    //final_color = vec4(vec3(rand5(vertex.uv)), 1.0);
 
     switch (u_debug_channel) {
         case DBG_VTX_COLOR:

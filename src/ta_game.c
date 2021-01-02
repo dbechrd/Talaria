@@ -23,6 +23,7 @@
 #include "ta_rigid_body.h"
 #include "ta_scene.h"
 #include "ta_shader.h"
+#include "ta_support.h"
 #include "ta_symbol.h"
 #include "ta_timer.h"
 #include "ta_transform.h"
@@ -283,6 +284,10 @@ void ta_game_init()
     if (ogx_scene_from_file(scene, "data/mesh/skeleton_test_skin.ogex") == OGX_SUCCESS) {
         ta_ogx_load(scene);
     }
+    //scene = (ogx_scene *)dlb_vec_alloc(scenes);
+    //if (ogx_scene_from_file(scene, "data/mesh/chamber_0002.ogex") == OGX_SUCCESS) {
+    //    ta_ogx_load(scene);
+    //}
     //scene = (ogx_scene *)dlb_vec_alloc(scenes);
     //if (ogx_scene_from_file(scene, "data/mesh/sponza.ogex") == OGX_SUCCESS) {
     //    ta_ogx_load(scene);
@@ -1577,7 +1582,6 @@ void ta_game_loop()
 
         static float animation_time_sec = 0.0f;
         animation_time_sec += (float)(ms_frame_delta / 1000.0);
-        printf("animation_time_sec: %f\n", animation_time_sec);
         while (animation_time_sec > 2.0f) {
             animation_time_sec -= 2.0f;
             if (*dlb_vec_last(animation_names) == dude_wave) {
@@ -1818,7 +1822,9 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         ta_log_write(&tg_debug_log, SRC_GAME, " Render pass...\n");
 
+        // TODO: Render into post-process framebuffer, then apply FXAA or MSAA before rendering HUD/UI
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glEnable(GL_MULTISAMPLE);
         glStencilMask(0xFF);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
         glStencilMask(0x00);
@@ -1832,7 +1838,7 @@ void ta_game_loop()
             }
         }
 
-        // TODO: Use a UBO? or whatever it's called when you share uniforms between multiple shaders
+        // TODO: Use a UBO?
         dlb_vec_each(ta_shader *, shader, shaders) {
             ta_shader_set_mat4_try(shader, SYM_U_PROJ, &active_camera->projection);
             ta_shader_set_mat4_try(shader, SYM_U_VIEW, &active_camera->look_at);
@@ -1880,6 +1886,22 @@ void ta_game_loop()
         if (tg_game.debug_nametags) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug nametags pass...\n");
             game_render_nametags_debug(active_camera);
+        }
+
+        // TODO(cleanup): Temporarily render support point of OBB
+        ta_rigid_body *can_body = ta_game_by_sym(RES_COMP_RIGID_BODY, tg_e_can);
+        if (can_body) {
+            DLB_ASSERT(can_body->collider.type == TA_COLLIDER_OBB);
+            ta_obb world_obb = can_body->collider.data.obb;
+            world_obb.center = rigid_body_local_to_world(can_body, world_obb.center);
+            world_obb.orientation = rigid_body_oriented_quaternion(can_body, world_obb.orientation);
+            ta_vec3 camera_back = vec3_neg(active_camera->front);
+            ta_vec3 sup = ta_support_obb(&world_obb, camera_back);
+            ta_sphere sphere = { 0 };
+            sphere.center = sup;
+            sphere.radius = 0.01f;
+            ta_primitive_push_sphere(0, sphere, TA_COLOR_RED);
+            ta_primitive_render(true, false);
         }
 
         //----------------------------------------------------------------------
@@ -2011,6 +2033,8 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         // Transition boundary from world rendering to screen rendering
         //----------------------------------------------------------------------
+        glDisable(GL_MULTISAMPLE);
+
         // TODO: Use a UBO? or whatever it's called when you share uniforms between multiple shaders
         dlb_vec_each(ta_shader *, shader, shaders) {
             ta_shader_set_mat4_try(shader, SYM_U_PROJ, &MAT4_IDENT);
