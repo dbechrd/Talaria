@@ -16,6 +16,8 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
         ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting mesh for %s\n", o_mesh->name);
     }
 
+    mesh->mode = TA_PRIMITIVE_MODE_TRIANGLES;
+
     dlb_vec_each(ogx_morph_target *, o_morph_target, o_mesh->morph_targets) {
         // TODO: Load morph targets
         UNUSED(o_morph_target);
@@ -63,6 +65,7 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
 
     dlb_vec_each(ogx_index_array *, o_index_array, o_mesh->index_arrays) {
         ta_index_array *index_array = dlb_vec_alloc(mesh->index_arrays);
+        index_array->mode = TA_PRIMITIVE_MODE_TRIANGLES;
         index_array->material_slot = o_index_array->material_slot;
         index_array->values = o_index_array->values;
     }

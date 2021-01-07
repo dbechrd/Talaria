@@ -29,10 +29,24 @@ typedef struct ta_morph_target {
     u32 base_morph_target_index;  // Index of parent (for relative morph targets)... idk if I need this but OGX has it.
 } ta_morph_target;
 
+// NOTE: These are purposely not the same order as the GL_ variations
+typedef enum ta_primitive_mode {
+    TA_PRIMITIVE_MODE_UNKNOWN       ,
+    TA_PRIMITIVE_MODE_TRIANGLES     ,
+    TA_PRIMITIVE_MODE_TRIANGLE_STRIP,
+    TA_PRIMITIVE_MODE_TRIANGLE_FAN  ,
+    TA_PRIMITIVE_MODE_LINES         ,
+    TA_PRIMITIVE_MODE_LINE_LOOP     ,
+    TA_PRIMITIVE_MODE_LINE_STRIP    ,
+    TA_PRIMITIVE_MODE_POINTS        ,
+    TA_PRIMITIVE_MODE_COUNT
+} ta_primitive_mode;
+
 typedef struct ta_index_array {
-    size_t offset_bytes; // offset in gl_index_buffer where this array starts
-    u32 material_slot;   // material id
-    u16 *values;         // vector of index values
+    ta_primitive_mode mode;  // type of primitives to draw
+    size_t offset_bytes;     // offset in gl_index_buffer where this array starts
+    u32 material_slot;       // material id
+    u16 *values;             // vector of index values
 } ta_index_array;
 
 typedef struct ta_skeleton {
@@ -62,6 +76,8 @@ typedef struct ta_skin {
 typedef struct ta_mesh {
     TA_RESOURCE_HEADER
     const char *path;
+    ta_primitive_mode mode;  // type of primitives to draw (note: overriden by index_array->mode)
+    bool dynamic_draw;
     ta_morph_target *morph_targets; // Array of morph targets
     //ta_vertex_array vertex_arrays[TA_VERTEX_ATTR_COUNT];
     union {
@@ -103,6 +119,8 @@ extern const char *tg_mesh_default;
 extern GLuint tg_mesh_gl_default_bone_xforms;
 
 const char *ta_vertex_attrib_type_str       (int type);
+GLenum ta_mesh_gl_primitive_mode            (ta_primitive_mode mode);
+
 void ta_mesh_init                           (ta_mesh *mesh);
 void ta_mesh_init_void                      (void *mesh);
 void ta_mesh_load_file                      (ta_mesh *mesh, const char *filename);
@@ -112,6 +130,6 @@ void ta_mesh_update_buffers                 (ta_mesh *mesh);
 void ta_mesh_clear_buffers                  (ta_mesh *mesh);
 void ta_mesh_update_debug_lines             (ta_mesh *mesh, float scale);
 void ta_mesh_render_debug_lines             (ta_mesh *mesh);
-void ta_mesh_render                         (ta_mesh *mesh, struct ta_shader *shader);
+void ta_mesh_render                         (ta_mesh *mesh);
 void ta_mesh_free                           (ta_mesh *mesh);
 void ta_mesh_free_void                      (void *mesh);

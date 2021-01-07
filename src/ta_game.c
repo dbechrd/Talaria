@@ -57,9 +57,10 @@ const char *tg_e_background_music;
 const char *tg_e_freecam;
 const char *tg_e_player_camera;
 const char *tg_e_player_one;
-const char *tg_e_active_camera;
 const char *tg_e_can;
 const char *tg_e_ground;
+
+const char *tg_mesh_prim_sphere;
 
 ta_game tg_game;
 
@@ -330,7 +331,7 @@ void ta_game_init()
     //--------------------------------------------------------------------------
     tg_e_freecam = SYM_ENTITY_FREECAM;
     DLB_ASSERT(tg_e_freecam);
-    tg_e_active_camera = tg_e_freecam;
+    tg_game.active_camera = tg_e_freecam;
 
     TracyCZoneN(ctxMinimapCamera, "Init minimap_camera", true);
     tg_game.minimap_camera.fov = 90.0f;
@@ -500,8 +501,8 @@ void ta_game_init()
 #else
     ta_game_state_set(TA_STATE_PLAY);
 #endif
-    ta_log_write(&tg_debug_log, SRC_GAME, "Active camera: %s\n", tg_e_active_camera);
-    DLB_ASSERT(tg_e_active_camera);
+    ta_log_write(&tg_debug_log, SRC_GAME, "Active camera: %s\n", tg_game.active_camera);
+    DLB_ASSERT(tg_game.active_camera);
 }
 ta_game_state ta_game_state_current()
 {
@@ -517,7 +518,7 @@ void ta_game_state_set(ta_game_state state)
     ta_log_write(&tg_debug_log, SRC_GAME, "State = %s\n", game_state_str(state));
     switch (tg_game.state) {
         case TA_STATE_PLAY: {
-            tg_e_active_camera = tg_e_player_camera;
+            tg_game.active_camera = tg_e_player_camera;
             ta_mouse_capture_set(true);
             break;
         } case TA_STATE_FREE_CAM: {
@@ -526,20 +527,20 @@ void ta_game_state_set(ta_game_state state)
             // HACK: Set freecam position instantly to player cam location. This will *not* work correctly if freecam
             // has a parent. Needs to somehow use xform_world instead.
             if (vec3_zero(trans->xform.position)) {
-                ta_transform *active_cam = (ta_transform *)ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
+                ta_transform *active_cam = (ta_transform *)ta_game_component(tg_game.active_camera, RES_COMP_CAMERA);
                 freecam->target_xform.position = active_cam->xform.position;
                 trans->xform.position = freecam->target_xform.position;
             }
-            tg_e_active_camera = tg_e_freecam;
+            tg_game.active_camera = tg_e_freecam;
             break;
         } case TA_STATE_EDITOR: {
             ta_camera *freecam = (ta_camera *)ta_game_component(tg_e_freecam, RES_COMP_CAMERA);
             ta_transform *trans = (ta_transform *)ta_game_component(tg_e_freecam, RES_COMP_TRANSFORM);
-            ta_transform *active_cam = (ta_transform *)ta_game_component(tg_e_active_camera, RES_COMP_TRANSFORM);
+            ta_transform *active_cam = (ta_transform *)ta_game_component(tg_game.active_camera, RES_COMP_TRANSFORM);
             freecam->target_xform.position = active_cam->xform.position;
             trans->xform.position = freecam->target_xform.position;
             //}
-            tg_e_active_camera = tg_e_freecam;
+            tg_game.active_camera = tg_e_freecam;
             break;
         } default: {
             break;
@@ -621,7 +622,7 @@ void ta_game_load_gltf(const char *filename)
 }
 ta_camera *ta_game_camera()
 {
-    return (ta_camera *)ta_game_component(tg_e_active_camera, RES_COMP_CAMERA);
+    return (ta_camera *)ta_game_component(tg_game.active_camera, RES_COMP_CAMERA);
 }
 // Cast ray from camera directly forward (crosshair)
 ta_ray ta_game_camera_ray()
@@ -776,15 +777,15 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_logic, double ms
     ta_font *font = (ta_font *)ta_game_by_sym(RES_FONT, tg_font);
     ta_font_push_text(font, frame_info, len, true, 0, 0, 0, &frame_time_rects);
     dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
-        ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, 0, true, false);
+        ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, 0, true);
     }
     dlb_vec_zero(frame_time_rects);
 
-    ta_shader *font_shader = (ta_shader *)ta_game_by_sym(RES_SHADER, font->shader);
+    ta_shader *font_shader = ta_font_shader(font);
     ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
     ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-    ta_font_render(font, SCREEN_WRAP_X(-220.0f), 12, UI_LAYER_HUD, true, false, &primitive_quads);
+    ta_font_render(font, SCREEN_WRAP_X(-220.0f), 12, UI_LAYER_HUD, true, &primitive_quads);
 }
 static void game_draw_hud()
 {
@@ -1308,7 +1309,7 @@ static void game_render_skybox()
         glDisable(GL_CULL_FACE);
         glDepthMask(GL_FALSE);
         ta_shader_bind(shader);
-        ta_mesh_render(mesh, shader);
+        ta_mesh_render(mesh);
         ta_shader_unbind();
         glDepthMask(GL_TRUE);
         glEnable(GL_CULL_FACE);
@@ -1368,7 +1369,7 @@ static void game_render_colliders_debug()
 
         ta_rgba narrowphase_color = body->dbg_narrowphase ? TA_COLOR_RED : TA_COLOR_GRAY6;
         ta_collider_push(&body->collider, narrowphase_color);
-        ta_primitive_render(true, false);
+        ta_primitive_dump(true);
     }
     ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
     ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
@@ -1391,35 +1392,47 @@ static void game_render_colliders_debug()
             ta_rgba broadphase_color = body->dbg_broadphase ? TA_COLOR_ORANGE : TA_COLOR_GRAY3;
             ta_primitive_push_aabb(0, body->aabb, broadphase_color);
         }
-        ta_primitive_render(true, false);
+        ta_primitive_dump(true);
     }
 }
 static void game_render_nametags_debug(ta_camera *camera)
 {
-    glClear(GL_DEPTH_BUFFER_BIT);
-
     ta_font *font = (ta_font *)ta_game_by_sym(RES_FONT, tg_font);
     static ta_rect_uv *tag_rects = 0;
 
-    ta_mat4 projection = camera->projection;
-    //ta_mat4 projection = mat4_ortho(-10.0f, 10.0f, -10.0f, 10.0f, -10.0f, 20.0f);
-
     ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
-    ta_shader *font_shader = (ta_shader *)ta_game_by_sym(RES_SHADER, font->shader);
+    ta_shader *font_shader = ta_font_shader(font);
+
+    const float max_render_distance = 10.0f;
 
     dlb_vec_each(ta_transform *, transform, (ta_transform *)ta_game_resource_pool(RES_COMP_TRANSFORM)) {
-        ta_rect tag_rect = ta_font_push_text(font, SYM(transform->name), true, 0, 0, 0, &tag_rects);
+        // Don't render nametag for the camera, heh
+        if (transform->entity == tg_game.active_camera) {
+            continue;
+        }
 
         ta_vec3 tag_pos = transform->xform_world.position;
         ta_vec3 tag_to_cam = vec3_sub(cam_trans->xform_world.position, tag_pos);
+
+        // TODO: Use AABB tree to find N closest transforms to the camera
+        if (vec3_len2(tag_to_cam) > max_render_distance * max_render_distance) {
+            continue;
+        }
+
+#if 0
         tag_to_cam.z *= -1.0f;
         tag_to_cam.y *= 0.0f;
-        float tag_scalef = MAX(vec3_len(tag_to_cam), 4.0f);
+        float tag_scalef = 1.0f; //MAX(vec3_len(tag_to_cam), 4.0f);
 
-        ta_vec3 tag_offset = tag_offset = vec3_scalef(camera->right, NDC_W(tag_rect.w) / 2.0f * tag_scalef);
+        ta_rect tag_rect = ta_font_push_text(font, SYM(transform->name), true, 0, 0, 0, &tag_rects);
+        ta_vec3 tag_offset = vec3_scalef(camera->right, NDC_W(tag_rect.w) / 2.0f * tag_scalef);
         ta_vec3 tag_pos_off = vec3_sub(tag_pos, tag_offset);
 
-        ta_mat4 tag_rot = mat4_lookat(VEC3_ZERO, tag_to_cam, VEC3_Y);
+        ta_mat4 tag_rot_x = mat4_rotate_x(camera->pitch);
+        float yaw = camera->yaw - 90.0f;
+        if (yaw < 0.0f) yaw += 360.0f;
+        ta_mat4 tag_rot_y = mat4_rotate_y(yaw);
+        ta_mat4 tag_rot = mat4_mul(&tag_rot_y, &tag_rot_x);
 
         ta_mat4 tag_trans_bg = mat4_translate(tag_pos_off);
         ta_mat4 tag_xform_bg = mat4_scalef(tag_scalef);
@@ -1443,8 +1456,8 @@ static void game_render_nametags_debug(ta_camera *camera)
         tag_background.rect.x -= (int)NDC_W(5.0f);
         tag_background.rect.w = (int)(NDC_W(tag_rect.w) + NDC_W(10.0f));
         tag_background.rect.h = (int)NDC_H(tag_rect.h); //tg_game.font->pixel_height * 1.5f;
-        ta_primitive_push_rect_uv(0, tag_background, TA_COLOR_DARK_RED, UI_LAYER_HUD_BG, false, false);
-        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, false);
+        ta_primitive_push_rect_uv(0, tag_background, TA_COLOR_DARK_RED, UI_LAYER_HUD_BG, true, true);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, true);
         //ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
 
         // Name tag text
@@ -1459,8 +1472,64 @@ static void game_render_nametags_debug(ta_camera *camera)
             ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, UI_LAYER_HUD, true, true);
         }
         dlb_vec_zero(tag_rects);
-        ta_font_render(font, 0, 0, 0, true, false, &primitive_quads);
+        ta_font_render(font, 0, 0, 0, true, &primitive_quads);
         ta_shader_reset_pvm(font_shader);
+#else
+        ta_shader_reset_pvm(font_shader);
+
+        ta_vec4 p_world = vec4_init_vec3_w(transform->xform_world.position, 1.0f);
+        ta_mat4 proj = camera->projection;
+        ta_mat4 view = camera->look_at;
+        ta_mat4 pv = mat4_mul(&proj, &view);
+        ta_vec4 p_screen = mat4_mul_vec4(&pv, p_world);
+
+        // Behind camera
+        if (p_screen.z < 0.0f) {
+            continue;
+        }
+        // Degenerate case, can't perform divide
+        if (p_screen.w == 0.0f) {
+            continue;
+        }
+
+        ta_vec3 p_ndc = vec3_init(p_screen.x, p_screen.y, p_screen.z);
+        if (p_screen.w != 0.0f) {
+            p_ndc = vec3_scalef(p_ndc, 1.0f / p_screen.w);
+        } else {
+            DLB_ASSERT(!"U wot mate?");
+        }
+
+        //if (fabsf(p_ndc.x) > 1.0f || fabsf(p_ndc.y) > 1.0f) {
+        //    continue;
+        //}
+
+        float x = NDC_TO_SCREEN_X(p_ndc.x / p_ndc.z);
+        float y = NDC_TO_SCREEN_Y(p_ndc.y / p_ndc.z);
+
+
+        //ta_shader_set_mat4(font_shader, SYM_U_PROJ, &projection);
+        //ta_shader_set_mat4(font_shader, SYM_U_VIEW, &camera->look_at);
+
+        //ta_mat4 trans = mat4_translate(vec3_init(x, y, 0.0f));
+        //ta_shader_set_mat4(font_shader, SYM_U_MODEL, &trans);
+        //ta_shader_set_mat4(font_shader, SYM_U_MODEL, &c);
+
+        ta_rect tag_rect = ta_font_push_text(font, SYM(transform->name), true, 0, 0, 0, &tag_rects);
+        x -= tag_rect.w / 2.0f;
+        y -= tag_rect.h / 2.0f;
+
+        dlb_vec_each(ta_rect_uv *, rect, tag_rects) {
+            ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, UI_LAYER_HUD, true);
+        }
+        dlb_vec_zero(tag_rects);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+        ta_font_render(font, x, y, 0, true, &primitive_quads);
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+
+        ta_shader_reset_pvm(font_shader);
+#endif
     }
 
     ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
@@ -1850,8 +1919,8 @@ void ta_game_loop()
 
         // Dump any prims from the collision pass
         game_render_manifolds_debug();
-        ta_primitive_render_mesh(&primitive_lines_perma, tg_shader_lines, TA_LINES, false, false);
-        ta_primitive_render(true, false);
+        ta_primitive_render_mesh(&primitive_lines_perma, tg_shader_lines, false);
+        ta_primitive_dump(true);
 
         //----------------------------------------------------------------------
         // Render models
@@ -1868,11 +1937,12 @@ void ta_game_loop()
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         }
 
+        ta_primitive_dump(true);
+
         //----------------------------------------------------------------------
         // Render skybox
         //----------------------------------------------------------------------
         game_render_skybox();
-        ta_primitive_render(true, false);
 
         //----------------------------------------------------------------------
         // Debug rendering
@@ -1901,20 +1971,73 @@ void ta_game_loop()
             sphere.center = sup;
             sphere.radius = 0.01f;
             ta_primitive_push_sphere(0, sphere, TA_COLOR_RED);
-            ta_primitive_render(true, false);
+            ta_primitive_render_mesh(&primitive_lines, tg_shader_lines, true);
         }
+
+#if 0
+        // TODO(cleanup): Temporary sphere benchmark shenanigans to compare to instanced rendering later
+        {
+            float sphere_hell_radius = 16.0f;  // note: cubed radius = # of spheres
+            ta_vec3 sphere_pos = { 0 };
+            ta_sphere sphere = { 0 };
+            for (float x = 0.0f; x < sphere_hell_radius; x += 1.0f) {
+                for (float y = 0.0f; y < sphere_hell_radius; y += 1.0f) {
+                    for (float z = 0.0f; z < sphere_hell_radius; z += 1.0f) {
+                        sphere.center = vec3_init(x, y, z);
+                        sphere.radius = 0.4f;
+                        ta_primitive_push_sphere(0, sphere, TA_COLOR_RED);
+                    }
+                }
+            }
+            ta_primitive_dump(true);
+        }
+#endif
+#if 0
+        // TODO(cleanup): Temporary sphere benchmark shenanigans to compare to instanced rendering later
+        ta_model *sphere_model = ta_game_by_sym_try(RES_COMP_MODEL, INTERN("ball2"));
+        if (sphere_model) {
+            ta_transform *sphere_transform = ta_game_by_sym(RES_COMP_TRANSFORM, sphere_model->entity);
+            ta_vec3 pos_orig = sphere_transform->xform.position;
+
+            float sphere_hell_radius = 16.0f;  // note: cubed radius = # of spheres
+            ta_vec3 sphere_pos = { 0 };
+            for (float x = 0.0f; x < sphere_hell_radius; x += 1.0f) {
+                for (float y = 0.0f; y < sphere_hell_radius; y += 1.0f) {
+                    for (float z = 0.0f; z < sphere_hell_radius; z += 1.0f) {
+                        sphere_transform->xform.position = vec3_init(x, y, z);
+                        sphere_transform->dirty_flag = ta_transform_dirty_flag;
+                        ta_transform_update(sphere_transform, 1.0f, ta_transform_dirty_flag);
+                        ta_model_render(sphere_model);
+                    }
+                }
+            }
+
+            sphere_transform->xform.position = pos_orig;
+            sphere_transform->dirty_flag = ta_transform_dirty_flag;
+            ta_transform_update(sphere_transform, 1.0f, ta_transform_dirty_flag);
+        }
+#endif
+#if 0
+        ta_primitive_render_mesh(&primitive_sphere, tg_shader_lines, false);
+#endif
 
         //----------------------------------------------------------------------
         // Editor UI (world)
         //----------------------------------------------------------------------
+        const char *editor_closest_entity = 0;
+
         if (tg_game.state == TA_STATE_EDITOR) {
+            ta_log_write(&tg_debug_log, SRC_GAME, " Editor world UI pass...\n");
+
+            ta_editor_update_widgets();
+
             // Grid and world axes
             //ta_primitive_push_grid(0, VEC3_ZERO, VEC3_Y, 1000.0f, 1.0f, TA_COLOR_GRAY3);
             ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.3f);
 
             // Render cameras as OBBs with forward arrows
             dlb_vec_each(ta_camera *, camera, cameras) {
-                if (camera->name != tg_e_active_camera) {
+                if (camera->name != tg_game.active_camera) {
                     ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
                     ta_obb obb = { 0 };
                     obb.center = cam_trans->xform_world.position;
@@ -1966,29 +2089,45 @@ void ta_game_loop()
                     ta_primitive_push_sphere(0, light_aoe, color);
                 }
             }
-            ta_primitive_render(true, false);
+            ta_primitive_render_mesh(&primitive_lines, tg_shader_lines, true);
 
-            ta_log_write(&tg_debug_log, SRC_GAME, " Editor world UI pass...\n");
-            ta_editor_update_widgets();
+            editor_closest_entity = ta_editor_closest_entity();
+            if (editor_closest_entity && editor_closest_entity != editor.selected_entity) {
+                glEnable(GL_POLYGON_OFFSET_LINE);
+                glPolygonOffset(-0.2f, -10.0f);
+                ta_editor_draw_entity_wireframe(editor_closest_entity, TA_COLOR_GRAY8, false);
+                glDisable(GL_POLYGON_OFFSET_LINE);
+            }
+
             ta_editor_draw_world();
         }
 
         //----------------------------------------------------------------------
-        // Crosshair
+        // Transition boundary from world rendering to screen rendering
         //----------------------------------------------------------------------
         glClear(GL_DEPTH_BUFFER_BIT);
-        if (ta_mouse_captured()) {
-            ta_primitive_push_crosshair(0, 10, 2);
-            ta_primitive_render(true, true);
+
+        // TODO: Implement my own AA as a post-process step (*before* rendering UI/font) because
+        // this flag has no effect on my NVIDIA card (nor, apparently, does the GL spec require it to).
+        //glDisable(GL_MULTISAMPLE);
+
+        // TODO: Use a UBO? or whatever it's called when you share uniforms between multiple shaders
+        dlb_vec_each(ta_shader *, shader, shaders) {
+            ta_shader_reset_pvm(shader);
         }
+
+        // NOTE: We have to do this after editor_draw_world because that method
+        // is using the last frame's hover flag to determine whether or not an
+        // uncaptured mouse can interact with the editor widgets.
+        ta_ui_flags_reset();
 
 #if 0
         //----------------------------------------------------------------------
         // Crazy bone debug viz; temporary
         //----------------------------------------------------------------------
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &active_camera->projection);
-        ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &active_camera->look_at);
-        ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &active_camera->projection);
+        //ta_shader_set_mat4(tg_shader_lines, SYM_U_PROJ, &active_camera->projection);
+        //ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &active_camera->look_at);
+        //ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &active_camera->projection);
 
         static ta_ui_panel_state bone_labels = { 0 };
         if (ta_mouse_captured()) {
@@ -2026,26 +2165,50 @@ void ta_game_loop()
 
         ta_ui_panel_end();
 
-        ta_primitive_render(true, false);
+        ta_primitive_dump(true, false);
         ta_ui_render();
+#endif
+#if 1
+        // HACK: This probably should go in the editor or something..
+        //----------------------------------------------------------------------
+        // Screen space tooltips
+        //----------------------------------------------------------------------
+        if (editor_closest_entity) {
+            ta_transform *transform = ta_game_component(editor_closest_entity, RES_COMP_TRANSFORM);
+
+            // TODO: Component-specific tooltip data could be cool
+            //if (ta_game_component_try(editor_closest_entity, RES_COMP_CAMERA)) {
+            //    continue;
+            //}
+
+            static ta_ui_panel_state hover_tooltip = { 0 };
+            if (ta_mouse_captured()) {
+                ta_ui_next_offset(WINDOW_W / 2, WINDOW_H / 2);
+            } else {
+                ta_ui_next_offset(ta_mouse_x(), ta_mouse_y() + 20);
+            }
+            ta_ui_next_pad(0, 0, 0, 0);
+            ta_ui_panel_begin(&hover_tooltip, TA_UI_AUTOSIZE);
+            ta_ui_label(SYM(transform->name));
+            //ta_ui_row_begin();
+            //static ta_ui_textbox_vec3_state tx_pos = { 0 };
+            //ta_ui_textbox_vec3(&transform->xform_world.position, &tx_pos, false, false);
+            //ta_ui_row_begin();
+            //static ta_ui_textbox_vec4_state tx_rot = { 0 };
+            //ta_ui_textbox_vec4(&transform->xform_world.orientation, &tx_rot, false, false);
+            ta_ui_panel_end();
+
+            ta_ui_render();
+        }
 #endif
 
         //----------------------------------------------------------------------
-        // Transition boundary from world rendering to screen rendering
+        // Crosshair
         //----------------------------------------------------------------------
-        glDisable(GL_MULTISAMPLE);
-
-        // TODO: Use a UBO? or whatever it's called when you share uniforms between multiple shaders
-        dlb_vec_each(ta_shader *, shader, shaders) {
-            ta_shader_set_mat4_try(shader, SYM_U_PROJ, &MAT4_IDENT);
-            ta_shader_set_mat4_try(shader, SYM_U_VIEW, &MAT4_IDENT);
-            ta_shader_set_mat4_try(shader, SYM_U_MODEL, &MAT4_IDENT);
+        if (ta_mouse_captured()) {
+            ta_primitive_push_crosshair(0, 10, 2);
+            ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, true);
         }
-
-        // NOTE: We have to do this after editor_draw_world because that method
-        // is using the last frame's hover flag to determine whether or not an
-        // uncaptured mouse can_body interact with the editor widgets.
-        ta_ui_flags_reset();
 
         //----------------------------------------------------------------------
         // Game HUD
@@ -2073,7 +2236,7 @@ void ta_game_loop()
             ta_viewport_bind(map_rect, TA_COLOR_GRAY7, true);
             ta_scene_render(&tg_game.scene, &minimap_camera, sim_alpha);
             ta_viewport_unbind();
-            ta_primitive_render(true, true);
+            ta_primitive_dump(true, true);
 
             // Red dot on map
             int dot_radius = 2;
@@ -2083,7 +2246,7 @@ void ta_game_loop()
             dot_rect.w = dot_radius * 2;
             dot_rect.h = dot_radius * 2;
             ta_primitive_push_rect(dot_rect, TA_COLOR_RED, UI_LAYER_HUD);
-            ta_primitive_render(true, true);
+            ta_primitive_dump(true, true);
         }
 #endif
 
@@ -2097,7 +2260,7 @@ void ta_game_loop()
         ta_shader_set_mat4(tg_shader_lines, SYM_U_VIEW, &MAT4_IDENT);
         ta_shader_set_mat4(tg_shader_lines, SYM_U_MODEL, &MAT4_IDENT);
         ta_ui_barchart_draw(&chart, 0, 0);
-        ta_primitive_render(true, true);
+        ta_primitive_dump(true, true);
 #endif
 
         //----------------------------------------------------------------------

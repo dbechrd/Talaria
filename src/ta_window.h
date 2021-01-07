@@ -28,6 +28,10 @@ struct ta_event;
 // e.g. [0, 0]     -> [-1.0f, 1.0f]
 // e.g. [800, 450] -> [0.0f, 0.0f]
 
+// Converts normalized device coordinates to top-left screen x/y:
+#define NDC_TO_SCREEN_X(x) ((((x) + 1.0f) / 2.0f) * WINDOW_W)
+#define NDC_TO_SCREEN_Y(y) (((1.0f - (y)) / 2.0f) * WINDOW_H)
+
 // Calculate relative x/y in pixels (negative values are relative to right and
 // bottom edges of screen)
 #define SCREEN_WRAP_X(x) ((x) >= 0 ? (x) : (float)((x) + WINDOW_W))

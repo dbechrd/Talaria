@@ -134,7 +134,7 @@ void ta_symbol_init() {
     SYM_ATTR_MORPH1_POSITION = INTERN("attr_morph1_position");
     SYM_ATTR_MORPH1_NORMAL   = INTERN("attr_morph1_normal");
     SYM_ATTR_MORPH1_TANGENT  = INTERN("attr_morph1_tangent");
-    SYM_ATTR_BONES          = INTERN("attr_bones");
+    SYM_ATTR_BONES           = INTERN("attr_bones");
     SYM_ATTR_WEIGHTS         = INTERN("attr_weights");
 
     SYM_U_CAMERA_POS               = INTERN("u_camera_pos");

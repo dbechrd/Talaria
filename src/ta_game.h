@@ -18,7 +18,6 @@ extern const char *tg_tex_audio_icon;
 extern const char *tg_e_background_music;
 extern const char *tg_e_freecam;
 extern const char *tg_e_player_one;
-extern const char *tg_e_active_camera;
 extern float tg_hard_morph;
 
 typedef enum ta_game_state {
@@ -88,6 +87,7 @@ typedef struct ta_game {
     ta_texturing texturing;     // texture manager
     ta_lighting lighting;       // active lighting
     ta_camera minimap_camera;   // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
+    const char *active_camera;  // currently active camera for main viewport
     struct ta_keybind *keybinds;
     bool console_visible;
     const char *base_path;      // symbol (working dir in debug mode, otherwise the .exe directory)

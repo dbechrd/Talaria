@@ -30,7 +30,7 @@ void ta_transform_free_void(void *transform)
     ta_transform_free(transform);
 }
 
-static void ta_transform_update(ta_transform *transform, float alpha, bool dirty_flag)
+void ta_transform_update(ta_transform *transform, float alpha, bool dirty_flag)
 {
     DLB_ASSERT(transform->dirty_flag == dirty_flag);
 
@@ -69,17 +69,17 @@ static void ta_transform_update(ta_transform *transform, float alpha, bool dirty
     transform->dirty_flag = !dirty_flag;
 }
 
+// Represents the value that means "dirty" this frame. Flip-flops between true and false to prevent having to clear
+// every transform's dirty_flag.
+bool ta_transform_dirty_flag = false;
+
 void ta_transform_update_all(ta_transform *transforms, float alpha)
 {
-    // Represents the value that means "dirty" this frame. Flip-flops between true and false to prevent having to clear
-    // every transform's dirty_flag.
-    static bool dirty_flag = false;
-
     dlb_vec_each(ta_transform *, transform, transforms) {
-        if (transform->dirty_flag == dirty_flag) {
-            ta_transform_update(transform, alpha, dirty_flag);
+        if (transform->dirty_flag == ta_transform_dirty_flag) {
+            ta_transform_update(transform, alpha, ta_transform_dirty_flag);
         }
     }
 
-    dirty_flag = !dirty_flag;
+    ta_transform_dirty_flag = !ta_transform_dirty_flag;
 }

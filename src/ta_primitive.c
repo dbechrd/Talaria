@@ -1,4 +1,4 @@
-#include "ta_primitive.h"
+﻿#include "ta_primitive.h"
 #include "ta_game.h"
 #include "ta_log.h"
 #include "ta_mesh.h"
@@ -18,18 +18,37 @@ ta_mesh primitive_quads;
 ta_mesh primitive_quads_tooltip_bg;
 ta_mesh primitive_quads_tooltip_fg;
 
+ta_mesh primitive_sphere;
+
 void ta_primitive_init()
 {
-    ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing lines...\n");
+    ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing primitives...\n");
+
+    primitive_lines             .mode = TA_PRIMITIVE_MODE_LINES;
+    primitive_lines_perma       .mode = TA_PRIMITIVE_MODE_LINES;
+    primitive_quads             .mode = TA_PRIMITIVE_MODE_TRIANGLES;
+    primitive_quads_tooltip_bg  .mode = TA_PRIMITIVE_MODE_TRIANGLES;
+    primitive_quads_tooltip_fg  .mode = TA_PRIMITIVE_MODE_TRIANGLES;
+
+    // These meshes are constantly modified and drawn multiple times each frame
+    primitive_lines             .dynamic_draw = true;
+    primitive_lines_perma       .dynamic_draw = true;
+    primitive_quads             .dynamic_draw = true;
+    primitive_quads_tooltip_bg  .dynamic_draw = true;
+    primitive_quads_tooltip_fg  .dynamic_draw = true;
+
     ta_mesh_create(&primitive_lines);
     ta_mesh_create(&primitive_lines_perma);
-
-    ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing quads...\n");
     ta_mesh_create(&primitive_quads);
-
-    ta_log_write(&tg_debug_log, SRC_PRIMITIVE, "Initializing tooltips...\n");
     ta_mesh_create(&primitive_quads_tooltip_bg);
     ta_mesh_create(&primitive_quads_tooltip_fg);
+
+    //--------------------------------------------------------------------------
+    // Static primitive meshes
+    //--------------------------------------------------------------------------
+    ta_primitive_generate_sphere(&primitive_sphere);
+    ta_mesh_create(&primitive_sphere);
+    ta_mesh_update_buffers(&primitive_sphere);
 }
 
 #if 0
@@ -183,8 +202,8 @@ void ta_primitive_push_rect(ta_mesh *mesh, ta_rect rect, ta_rgba color, float z)
 
     float x0 = NDC_X(rect.x);
     float x1 = NDC_X(rect.x + rect.w);
-    float y1 = NDC_Y(rect.y);
     float y0 = NDC_Y(rect.y + rect.h);
+    float y1 = NDC_Y(rect.y);
 
     ta_vec3 p[6];
     ta_vec2 uv[6];
@@ -201,8 +220,7 @@ void ta_primitive_push_rect(ta_mesh *mesh, ta_rect rect, ta_rgba color, float z)
         dlb_vec_push(mesh->colors, color);
     }
 }
-void ta_primitive_push_rect_uv(ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color,
-    float z, bool screen, bool top_left)
+void ta_primitive_push_rect_uv(ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color, float z, bool screen)
 {
     if (!mesh) mesh = &primitive_quads;
     // v3 _______ v2
@@ -217,20 +235,14 @@ void ta_primitive_push_rect_uv(ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color,
     if (screen) {
         x0 = NDC_X(rect_uv.rect.x);
         x1 = NDC_X(rect_uv.rect.x + rect_uv.rect.w);
-        y0 = NDC_Y(rect_uv.rect.y);
-        y1 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
-        if (top_left) {
-            x0 += 1.0f;
-            x1 += 1.0f;
-            y0 -= 1.0f;
-            y1 -= 1.0f;
-        }
+        y0 = NDC_Y(rect_uv.rect.y + rect_uv.rect.h);
+        y1 = NDC_Y(rect_uv.rect.y);
     } else {
         // NOTE: This is only used for nametags atm.
         x0 = (float)(rect_uv.rect.x);
         x1 = (float)(rect_uv.rect.x + rect_uv.rect.w);
-        y0 = (float)(rect_uv.rect.y);
-        y1 = (float)(rect_uv.rect.y + rect_uv.rect.h);
+        y0 = (float)(rect_uv.rect.y + rect_uv.rect.h);
+        y1 = (float)(rect_uv.rect.y);
     }
 
     ta_vec3 p[6];
@@ -717,31 +729,18 @@ void ta_primitive_push_axes_cube(ta_mesh *mesh, ta_vec3 position, float scale)
     ta_primitive_push_cube(mesh, cube_center, cube_radius, TA_COLOR_BLUE);
 }
 
-void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
-    bool clear_buffers, bool reset_uniforms)
+void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, bool clear_buffers)
 {
-    // TODO: Move this out into its own explicit call, it's more confusing here
-    if (reset_uniforms) {
-        ta_shader_reset_pvm(shader);
-    }
-
-    //ta_mesh_render(mesh, shader);
-    size_t positions_count = dlb_vec_len(mesh->positions);
-    if (positions_count) {
+    // TODO: Might be useful to have some sort of dirty flag to prevent lots of duplicate writes for data
+    // that hasn't changed this frame but a) I'm sure that's a real use-case yet and b) it's error prone
+    // to keep track of since CPU-side mesh buffers can be written from anywhere in the code at the moment.
+    if (mesh->dynamic_draw) {
         ta_mesh_update_buffers(mesh);
-
-        // HACK: Some quads are backwards (probably because the texture is flipped), so we have to disable CULLING -_-
-        glDisable(GL_CULL_FACE);
-
-        // Draw the primitives
-        ta_shader_bind(shader);
-        glBindVertexArray(mesh->gl_vao);
-        glDrawArrays(mode, 0, (GLsizei)positions_count);
-        glBindVertexArray(0);
-        ta_shader_unbind();
-
-        glEnable(GL_CULL_FACE);
     }
+
+    ta_shader_bind(shader);
+    ta_mesh_render(mesh);
+    ta_shader_unbind();
 
     // TODO: Move this out into its own explicit call, it's more confusing here
     // ta_mesh_clear_buffers();
@@ -751,8 +750,107 @@ void ta_primitive_render_mesh(ta_mesh *mesh, ta_shader *shader, int mode,
         }
     }
 }
-void ta_primitive_render(bool clear_buffers, bool reset_uniforms)
+void ta_primitive_dump(bool clear_buffers)
 {
-    ta_primitive_render_mesh(&primitive_lines, tg_shader_lines, TA_LINES, clear_buffers, reset_uniforms);
-    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, clear_buffers, reset_uniforms);
+    ta_primitive_render_mesh(&primitive_lines, tg_shader_lines, clear_buffers);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, clear_buffers);
+}
+
+
+
+
+
+
+
+
+
+
+//-------------------------------------------------------------------------------------------------
+// ♪ It's a new dawn, it's a new day, it's a new life, for meeeeee. And I'm feeeeelin' goood. ♫
+//-------------------------------------------------------------------------------------------------
+
+typedef struct ta_primitive_batch {
+    const char *mesh;
+    ta_vec4 *colors;        // color per instance
+    ta_mat4 *transforms;    // transform matrix per instance
+} ta_primitive_batch;
+
+#if 0
+void ta_primitive_generate_sphere(ta_mesh *mesh)
+{
+    const u16 SPHERE_SEGMENTS = 32;
+    const float SPHERE_SEG_RAD = DEG_TO_RADF(360.f / SPHERE_SEGMENTS);
+
+    ta_index_array *index_array = dlb_vec_alloc(mesh->index_arrays);
+    index_array->mode = TA_PRIMITIVE_MODE_LINES;
+
+    float cosr = 0.0f;
+    float sinr = 0.0f;
+    u16 index = 0;
+    for (u16 i = 0; i < SPHERE_SEGMENTS; i++) {
+        cosr += cosf(SPHERE_SEG_RAD * i);
+        sinr += sinf(SPHERE_SEG_RAD * i);
+
+        dlb_vec_push(mesh->positions, vec3_init(0.0f, cosr, sinr));
+        dlb_vec_push(mesh->colors, TA_COLOR_RED);
+        dlb_vec_push(index_array->values, index);
+        dlb_vec_push(index_array->values, index + 3);
+        index++;
+
+        dlb_vec_push(mesh->positions, vec3_init(cosr, 0.0, sinr));
+        dlb_vec_push(mesh->colors, TA_COLOR_GREEN);
+        dlb_vec_push(index_array->values, index);
+        dlb_vec_push(index_array->values, index + 3);
+        index++;
+
+        dlb_vec_push(mesh->positions, vec3_init(cosr, sinr, 0.0f));
+        dlb_vec_push(mesh->colors, TA_COLOR_BLUE);
+        dlb_vec_push(index_array->values, index);
+        dlb_vec_push(index_array->values, index + 3);
+        index++;
+    }
+
+    // Fixup last 3 line indices to point back to first vertex
+    size_t len = dlb_vec_len(index_array->values);
+    DLB_ASSERT(len > 3);
+    index_array->values[len - 3] = 0;
+    index_array->values[len - 2] = 1;
+    index_array->values[len - 1] = 2;
+}
+#endif
+
+void ta_primitive_generate_sphere(ta_mesh *mesh)
+{
+    const u16 SPHERE_SEGMENTS = 32;
+    const float SPHERE_SEG_RAD = DEG_TO_RADF(360.f / SPHERE_SEGMENTS);
+
+    dlb_vec_alloc(mesh->index_arrays);
+    dlb_vec_alloc(mesh->index_arrays);
+    dlb_vec_alloc(mesh->index_arrays);
+    ta_index_array *x = &mesh->index_arrays[0];
+    ta_index_array *y = &mesh->index_arrays[1];
+    ta_index_array *z = &mesh->index_arrays[2];
+    x->mode = TA_PRIMITIVE_MODE_LINE_LOOP;
+    y->mode = TA_PRIMITIVE_MODE_LINE_LOOP;
+    z->mode = TA_PRIMITIVE_MODE_LINE_LOOP;
+
+    float cosr = 0.0f;
+    float sinr = 0.0f;
+    u16 index = 0;
+    for (u16 i = 0; i < SPHERE_SEGMENTS; i++) {
+        cosr = cosf(SPHERE_SEG_RAD * (float)i);
+        sinr = sinf(SPHERE_SEG_RAD * (float)i);
+
+        dlb_vec_push(mesh->positions, vec3_init(0.0f, cosr, sinr));
+        dlb_vec_push(mesh->colors, TA_COLOR_RED);
+        dlb_vec_push(x->values, i * 3 + 0);
+
+        dlb_vec_push(mesh->positions, vec3_init(cosr, 0.0, sinr));
+        dlb_vec_push(mesh->colors, TA_COLOR_GREEN);
+        dlb_vec_push(y->values, i * 3 + 1);
+
+        dlb_vec_push(mesh->positions, vec3_init(cosr, sinr, 0.0f));
+        dlb_vec_push(mesh->colors, TA_COLOR_BLUE);
+        dlb_vec_push(z->values, i * 3 + 2);
+    }
 }

@@ -11,7 +11,7 @@ typedef struct ta_font {
     TA_RESOURCE_HEADER
     const char  *path;          // relative path to font file
     float       pixel_height;   // height of bitmap font to generate, in pixels
-    const char  *shader;        // shader to use to render this font                //TODO: This doesn't belong here
+    const char  *shader;        // shader to use to render this font
 
     int first_char;             // first ASCII code to start generating bitmaps from (inclusive)
     int last_char;              // last ASCII code generate bitmap for (inclusive)
@@ -36,5 +36,4 @@ void ta_font_delete         (ta_font *font);
 void ta_font_free           (ta_font *font);
 ta_rect ta_font_push_text   (ta_font *font, const char *text, size_t text_len, bool screen, size_t *cursor_idx,
                              ta_vec2i *cursor_offset, const ta_vec2i *mouse_coords, ta_rect_uv **rects);
-void ta_font_render         (ta_font *font, float x, float y, float z, bool clear_buffers, bool reset_uniforms,
-                             struct ta_mesh *mesh);
+void ta_font_render         (ta_font *font, float x, float y, float z, bool clear_buffers, struct ta_mesh *mesh);

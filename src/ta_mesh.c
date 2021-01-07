@@ -34,6 +34,20 @@ const char *ta_vertex_attrib_type_str(int type) {
     }
 }
 
+GLenum ta_mesh_gl_primitive_mode(ta_primitive_mode mode)
+{
+    switch (mode) {
+        case TA_PRIMITIVE_MODE_TRIANGLES      : return GL_TRIANGLES     ;
+        case TA_PRIMITIVE_MODE_TRIANGLE_STRIP : return GL_TRIANGLE_STRIP;
+        case TA_PRIMITIVE_MODE_TRIANGLE_FAN   : return GL_TRIANGLE_FAN  ;
+        case TA_PRIMITIVE_MODE_LINES          : return GL_LINES         ;
+        case TA_PRIMITIVE_MODE_LINE_LOOP      : return GL_LINE_LOOP     ;
+        case TA_PRIMITIVE_MODE_LINE_STRIP     : return GL_LINE_STRIP    ;
+        case TA_PRIMITIVE_MODE_POINTS         : return GL_POINTS        ;
+        default: DLB_ASSERT(0);                 return GL_TRIANGLES     ;
+    }
+}
+
 void ta_mesh_init(ta_mesh *mesh)
 {
     TracyCZone(ctxMethod, true);
@@ -51,6 +65,7 @@ void ta_mesh_init_void(void *mesh)
 void ta_mesh_load_file(ta_mesh *mesh, const char *filename)
 {
     mesh->path = filename;
+    mesh->mode = TA_PRIMITIVE_MODE_TRIANGLES;
 
     // Load OBJ file
     // =========================================================================
@@ -274,6 +289,10 @@ void ta_mesh_calculate_joints_and_weights(ta_mesh *mesh)
 
 void ta_mesh_update_buffers(ta_mesh *mesh)
 {
+    if (dlb_vec_empty(mesh->positions)) {
+        return;
+    }
+
     DLB_ASSERT(mesh->gl_vao);
     glBindVertexArray(mesh->gl_vao);
 
@@ -287,7 +306,7 @@ void ta_mesh_update_buffers(ta_mesh *mesh)
     // Create/fill vertex attribute buffer
     DLB_ASSERT(mesh->gl_vertex_buffer);
     glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vertex_buffer);
-    glBufferData(GL_ARRAY_BUFFER, vertex_size_total, 0, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertex_size_total, 0, mesh->dynamic_draw ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
 #define FILL_BUFFER(shader_attr, data, c_type, gl_type)                                       \
     if (data) {                                                                               \
@@ -325,7 +344,7 @@ void ta_mesh_update_buffers(ta_mesh *mesh)
     if (index_size_total) {
         DLB_ASSERT(mesh->gl_index_buffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_index_buffer);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_size_total, 0, GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_size_total, 0, mesh->dynamic_draw ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 
         size_t byte_offset = 0;
         dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
@@ -478,7 +497,7 @@ void ta_mesh_render_debug_lines(ta_mesh *mesh)
     glBindVertexArray(0);
     ta_shader_unbind();
 }
-void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
+void ta_mesh_render(ta_mesh *mesh)
 {
     // TODO: If we want to use binding point 1 for other things in other shaders, then this mapping needs to be a
     // bit more abstract.
@@ -510,16 +529,16 @@ void ta_mesh_render(ta_mesh *mesh, ta_shader *shader)
             // TODO: Material slots
             // TODO: Bind all needed materials at once via a UBO? Pass material indices as uniform/attrib?
             // https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object
-            UNUSED(shader);
             //ta_shader_set_uint(shader, SYM_U_MATERIAL_SLOT, index_array->material_slot);
 
             size_t index_count = dlb_vec_len(index_array->values);
             DLB_ASSERT(index_count);
-            glDrawElements(GL_TRIANGLES, (GLsizei)index_count, GL_UNSIGNED_SHORT, (void *)index_array->offset_bytes);
+            glDrawElements(ta_mesh_gl_primitive_mode(index_array->mode), (GLsizei)index_count, GL_UNSIGNED_SHORT,
+                (void *)index_array->offset_bytes);
         }
     } else {
         size_t positions_count = dlb_vec_len(mesh->positions);
-        glDrawArrays(GL_TRIANGLES, 0, (GLsizei)positions_count);
+        glDrawArrays(ta_mesh_gl_primitive_mode(mesh->mode), 0, (GLsizei)positions_count);
     }
 
     glBindVertexArray(0);

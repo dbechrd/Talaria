@@ -546,7 +546,8 @@ void render_shadowmap_debug_directional(ta_light *light, int x, int y)
 
     ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, tex->gl_id);
     ta_primitive_push_rect(0, rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, true);
+    ta_shader_reset_pvm(tg_shader_quads);
+    ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, true);
     ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);
     TracyCZoneEnd(ctxMethod);
 }
@@ -589,7 +590,8 @@ void render_shadowmap_debug_point(ta_light *light, int x, int y)
 
         ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, tex[face]->gl_id);
         ta_primitive_push_rect(0, rect, TA_COLOR_INVIS, UI_LAYER_EDIT_1);
-        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, TA_TRIANGLES, true, true);
+        ta_shader_reset_pvm(tg_shader_quads);
+        ta_primitive_render_mesh(&primitive_quads, tg_shader_quads, true);
     }
 
     ta_shader_set_sampler_2d(tg_shader_quads, SYM_U_TEX, 0);

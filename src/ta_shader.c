@@ -637,9 +637,9 @@ void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *ma
 }
 void ta_shader_reset_pvm(ta_shader *shader)
 {
-    ta_shader_set_mat4(shader, SYM_U_PROJ, &MAT4_IDENT);
-    ta_shader_set_mat4(shader, SYM_U_VIEW, &MAT4_IDENT);
-    ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
+    ta_shader_set_mat4_try(shader, SYM_U_PROJ, &MAT4_IDENT);
+    ta_shader_set_mat4_try(shader, SYM_U_VIEW, &MAT4_IDENT);
+    ta_shader_set_mat4_try(shader, SYM_U_MODEL, &MAT4_IDENT);
 }
 
 static void shader_store_uniforms(ta_shader_uniform *store,

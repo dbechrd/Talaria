@@ -14,8 +14,11 @@ typedef struct ta_transform {
     bool dirty_flag;        // double-buffered dirty flag (flip-flops between true and false meaning dirty)
 } ta_transform;
 
+extern bool ta_transform_dirty_flag;
+
 void ta_transform_init          (ta_transform *transform);
 void ta_transform_init_void     (void *transform);
 void ta_transform_free          (ta_transform *transform);
 void ta_transform_free_void     (void *transform);
+void ta_transform_update        (ta_transform *transform, float alpha, bool dirty_flag);
 void ta_transform_update_all    (ta_transform *transforms, float alpha);

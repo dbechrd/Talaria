@@ -408,6 +408,15 @@ ta_vec4 vec4_init_vec3_w(ta_vec3 v, float w)
     result.w = w;
     return result;
 }
+ta_rgba rgba_init(float r, float g, float b, float a)
+{
+    ta_rgba result;
+    result.r = r;
+    result.g = g;
+    result.b = b;
+    result.a = a;
+    return result;
+}
 ta_rgba rgba_init_vec3_alpha(ta_vec3 v, float a)
 {
     ta_rgba result;

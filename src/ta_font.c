@@ -100,6 +100,7 @@ void ta_font_load_path(ta_font *font, const char *path)
         stbtt_MakeGlyphBitmap(&font->font_info, pixels + x + y * font->tex_w, gw,
             gh, font->tex_w, font->scale, font->scale, g);
         //----------------------------------------------------------------------
+#if 0
         int padding = 5;
         u8 onedge_value = 180;
         float pixel_dist_scale = 180 / 5.0;
@@ -107,9 +108,11 @@ void ta_font_load_path(ta_font *font, const char *path)
         int sdf_gh;
         int sdf_gx_off;
         int sdf_gy_off;
-        stbtt_GetGlyphSDF(&font->font_info, font->scale, g, padding, onedge_value,
+        u8 *sdf = stbtt_GetGlyphSDF(&font->font_info, font->scale, g, padding, onedge_value,
             pixel_dist_scale, &sdf_gw, &sdf_gh, &sdf_gx_off, &sdf_gy_off);
         // TODO: memcpy into pixels buffer, dunno about size of buf
+        stbtt_FreeSDF(sdf, 0);
+#endif
         //----------------------------------------------------------------------
         font->chars[i].x0 = (s16)x;
         font->chars[i].y0 = (s16)y;
@@ -156,7 +159,6 @@ void ta_font_free(ta_font *font)
 
 ta_shader *ta_font_shader(ta_font *font)
 {
-    // TODO: Fonts probably don't belong in the game scene..
     ta_shader *shader = (ta_shader *)ta_game_by_sym(RES_SHADER, font->shader);
     return shader;
 }
@@ -172,7 +174,7 @@ static inline int ta_iceil(double x)
 }
 
 static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
-    int char_index, int *xpos, int *ypos, ta_rect_uv *rect)
+    int char_index, int *xpos, int *ypos, ta_rect_uv *rect, bool flip_y)
 {
     float ipw = 1.0f / pw, iph = 1.0f / ph;
     const stbtt_bakedchar *b = chardata + char_index;
@@ -187,6 +189,10 @@ static void ta_baked_quad(const stbtt_bakedchar *chardata, int pw, int ph,
     rect->uv0.v = b->y0 * iph;
     rect->uv1.u = b->x1 * ipw;
     rect->uv1.v = b->y1 * iph;
+
+    if (flip_y) {
+        swap_r32(&rect->uv0.v, &rect->uv1.v);
+    }
 
     *xpos += (int)b->xadvance;
 
@@ -235,17 +241,8 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
             ta_vec2i baked_pos = position;
             ta_rect_uv *rect_uv = (ta_rect_uv *)dlb_vec_alloc(*rects);
             ta_baked_quad(font->chars, font->tex_w, font->tex_h,
-                text[i] - 32, &baked_pos.x, &baked_pos.y, rect_uv);
+                text[i] - 32, &baked_pos.x, &baked_pos.y, rect_uv, screen);
             bounds.w = MAX(bounds.w, (int)baked_pos.x - bounds.x);
-
-            // HACK: Flip world text upside down.. this is super gross,
-            //       surely there's a better way?
-            if (!screen) {
-                rect_uv->rect.y = font->line_height - (rect_uv->rect.y + rect_uv->rect.h);
-                float v = rect_uv->uv0.v;
-                rect_uv->uv0.v = rect_uv->uv1.v;
-                rect_uv->uv1.v = v;
-            }
 
             if (!cursor_set && mouse_coords && screen) {
                 int x_advance = baked_pos.x - position.x;
@@ -295,10 +292,12 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
     return bounds;
 }
 
-// z postiive for screen, negative for world
-void ta_font_render(ta_font *font, float x, float y, float z, bool clear_buffers, bool reset_uniforms, ta_mesh *mesh)
+// z positive for screen, negative for world
+void ta_font_render(ta_font *font, float x, float y, float z, bool clear_buffers, ta_mesh *mesh)
 {
     //glDisable(GL_DEPTH_TEST);
+    //if (tg_game.debug_colliders) glDisable(GL_CULL_FACE);
+    // HACK: For some reason some text quads are backwards?? (nametags and screen space tooltips)
 
     ta_shader *shader = ta_font_shader(font);
     if (x || y || z) {
@@ -310,8 +309,9 @@ void ta_font_render(ta_font *font, float x, float y, float z, bool clear_buffers
         ta_shader_set_mat4(shader, SYM_U_MODEL, &xform);
     }
     ta_shader_set_sampler_2d(shader, SYM_U_TEX, font->gl_id);
-    ta_primitive_render_mesh(mesh, shader, TA_TRIANGLES, clear_buffers, reset_uniforms);
+    ta_primitive_render_mesh(mesh, shader, clear_buffers);
     ta_shader_set_sampler_2d(shader, SYM_U_TEX, 0);
 
+    //if (tg_game.debug_colliders) glEnable(GL_CULL_FACE);
     //glEnable(GL_DEPTH_TEST);
 }

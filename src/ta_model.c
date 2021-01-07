@@ -132,7 +132,8 @@ void ta_model_shadow_pass(ta_model *model, ta_shader *shader, ta_mat4 *light_pv)
     model_set_shader_morph_weights(model, shader);
 
     ta_shader_bind(shader);
-    ta_mesh_render(mesh, shader);
+    ta_mesh_render(mesh);
+    ta_shader_unbind(shader);
 }
 
 void ta_model_render(ta_model *model)
@@ -194,7 +195,7 @@ void ta_model_render(ta_model *model)
 
         model_set_shader_morph_weights(model, shader);
         ta_shader_bind(shader);
-        ta_mesh_render(mesh, shader);
+        ta_mesh_render(mesh);
         ta_shader_unbind();
     }
 
@@ -238,6 +239,6 @@ void ta_model_render_shader(ta_model *model, ta_camera *camera, ta_shader *shade
     // TODO: Fix this for editor_select (either make it a set_try or don't do it at all in this function)
     //model_set_shader_morph_weights(model, piece, shader);
     ta_shader_bind(shader);
-    ta_mesh_render(mesh, shader);
+    ta_mesh_render(mesh);
     ta_shader_unbind();
 }
