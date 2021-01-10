@@ -547,19 +547,40 @@ void ta_mesh_render(ta_mesh *mesh)
 
 void ta_mesh_free(ta_mesh *mesh)
 {
-    for (int i = 0; i < TA_VERTEX_ATTR_COUNT; ++i) {
+
+    // CPU vertex/index buffers
+    for (size_t i = 0; i < TA_VERTEX_ATTR_COUNT; ++i) {
         dlb_vec_free(mesh->buffers[i]);
     }
     dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
         dlb_vec_free(index_array->values);
     }
-    dlb_vec_free(mesh->debug_lines.colors);
-    dlb_vec_free(mesh->debug_lines.positions);
-
+    // GPU vertex/index buffers
     glDeleteVertexArrays(1, &mesh->gl_vao);
-    glDeleteVertexArrays(1, &mesh->debug_lines.gl_vao);
     glDeleteBuffers(1, &mesh->gl_vertex_buffer);
     glDeleteBuffers(1, &mesh->gl_index_buffer);
+
+    // Morph targets
+    dlb_vec_free(mesh->morph_targets);
+
+    // Skeleton
+    dlb_vec_free(mesh->skin.skeleton.bones);
+    dlb_vec_free(mesh->skin.skeleton.bind_pose_positions);
+    dlb_vec_free(mesh->skin.skeleton.bind_pose_orientations);
+
+    // Skin
+    dlb_vec_free(mesh->skin.bone_count_array);
+    dlb_vec_free(mesh->skin.bone_index_array);
+    dlb_vec_free(mesh->skin.bone_weight_array);
+    // GPU UBO buffers
+    glDeleteBuffers(1, &mesh->skin.gl_ubo_bone_xforms);
+    glDeleteBuffers(1, &mesh->skin.gl_ubo_bone_normal_xforms);
+
+    // CPU debug buffers
+    dlb_vec_free(mesh->debug_lines.colors);
+    dlb_vec_free(mesh->debug_lines.positions);
+    // GPU debug VAO, vertex buffer
+    glDeleteVertexArrays(1, &mesh->debug_lines.gl_vao);
     glDeleteBuffers(1, &mesh->debug_lines.gl_vertex_buffer);
 }
 void ta_mesh_free_void(void *mesh)

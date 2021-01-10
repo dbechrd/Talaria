@@ -710,7 +710,7 @@ static void game_hotload_textures()
             ta_texture *tex = (ta_texture *)ta_game_by_name_try(RES_TEXTURE, change->path, strlen(change->path));
             if (tex) {
                 printf("[GAME] hot-loading: %s\n", change->path);
-                ta_texture_reload(tex);
+                ta_texture_hot_reload(tex);
             } else {
                 //printf("[GAME] not found: %s\n", filename);
             }
@@ -1402,8 +1402,9 @@ static void game_render_nametags_debug(ta_camera *camera)
 
     ta_transform *cam_trans = (ta_transform *)ta_game_component(camera->entity, RES_COMP_TRANSFORM);
     ta_shader *font_shader = ta_font_shader(font);
+    ta_shader_reset_pvm(font_shader);
 
-    const float max_render_distance = 10.0f;
+    const float max_render_distance = 15.0f;
 
     dlb_vec_each(ta_transform *, transform, (ta_transform *)ta_game_resource_pool(RES_COMP_TRANSFORM)) {
         // Don't render nametag for the camera, heh
@@ -1475,8 +1476,6 @@ static void game_render_nametags_debug(ta_camera *camera)
         ta_font_render(font, 0, 0, 0, true, &primitive_quads);
         ta_shader_reset_pvm(font_shader);
 #else
-        ta_shader_reset_pvm(font_shader);
-
         ta_vec4 p_world = vec4_init_vec3_w(transform->xform_world.position, 1.0f);
         ta_mat4 proj = camera->projection;
         ta_mat4 view = camera->look_at;
@@ -1527,18 +1526,11 @@ static void game_render_nametags_debug(ta_camera *camera)
         ta_font_render(font, x, y, 0, true, &primitive_quads);
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
-
-        ta_shader_reset_pvm(font_shader);
 #endif
     }
 
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &MAT4_IDENT);
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &MAT4_IDENT);
-    ta_shader_set_mat4(tg_shader_quads, SYM_U_MODEL, &MAT4_IDENT);
-
-    ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
-    ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
-    ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
+    ta_shader_reset_pvm(font_shader);
+    ta_shader_reset_pvm(tg_shader_quads);
 }
 void ta_game_loop()
 {
@@ -1949,9 +1941,11 @@ void ta_game_loop()
         //----------------------------------------------------------------------
         if (tg_game.debug_colliders) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug colliders pass...\n");
+            glDisable(GL_CULL_FACE);
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             game_render_colliders_debug();
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glEnable(GL_CULL_FACE);
         }
         if (tg_game.debug_nametags) {
             ta_log_write(&tg_debug_log, SRC_GAME, " Debug nametags pass...\n");

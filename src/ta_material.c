@@ -41,3 +41,11 @@ void ta_material_init_void(void *material)
 {
     ta_material_init(material);
 }
+void ta_material_free(ta_material *material)
+{
+    UNUSED(material);
+}
+void ta_material_free_void(void *material)
+{
+    ta_material_free(material);
+}

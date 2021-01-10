@@ -38,3 +38,5 @@ extern const char *tg_material_default;
 
 void ta_material_init       (ta_material *material);
 void ta_material_init_void  (void *material);
+void ta_material_free       (ta_material *material);
+void ta_material_free_void  (void *material);

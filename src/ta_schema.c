@@ -442,7 +442,7 @@ void ta_schema_register()
     TYPE_FIELD  (ta_audio_source, loop,         ATOM_BOOL);
     TYPE_END    (ta_audio_source);
 
-    TYPE_START  (ta_bone, TYP_BONE, 0, 0);
+    TYPE_START  (ta_bone, TYP_BONE, ta_bone_init_void, ta_bone_free_void);
     TYPE_FIELD  (ta_bone, name,            ATOM_STRING);
     TYPE_FIELD  (ta_bone, entity,          ATOM_STRING);
     TYPE_FIELD  (ta_bone, armature,        ATOM_STRING);
@@ -573,7 +573,7 @@ void ta_schema_register()
     TYPE_FIELD  (ta_font, shader,       ATOM_STRING);
     TYPE_END    (ta_font);
 
-    TYPE_START  (ta_material, TYP_MATERIAL, ta_material_init_void, 0);
+    TYPE_START  (ta_material, TYP_MATERIAL, ta_material_init_void, ta_material_free_void);
     TYPE_FIELD  (ta_material, name,              ATOM_STRING);
     TYPE_FIELD  (ta_material, shader,            ATOM_STRING);
     TYPE_FIELD  (ta_material, albedo_texture,    ATOM_STRING);

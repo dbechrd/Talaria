@@ -30,6 +30,10 @@ ta_audio_source:
 # TYP_BONE
 #-------------------------------------------------------------------------------
 ta_bone:
+  name: "skeleton_test_skin.bone.body"
+  entity: "skeleton_test_skin.bone.body"
+  armature: "skeleton_test_skin.node.armature"
+ta_bone:
   name: "dude.bone.lumbar"
   entity: "dude.bone.lumbar"
   armature: "dude.node.armature"
@@ -190,10 +194,6 @@ ta_bone:
   entity: "test_bone_1.bone.base"
   armature: "test_bone_1.node.armature"
 ta_bone:
-  name: "skeleton_test_skin.bone.body"
-  entity: "skeleton_test_skin.bone.body"
-  armature: "skeleton_test_skin.node.armature"
-ta_bone:
   name: "skeleton_test_skin.bone.head"
   entity: "skeleton_test_skin.bone.head"
   armature: "skeleton_test_skin.node.armature"
@@ -215,17 +215,17 @@ ta_camera:
   position_target_vel: 0x3E19999A (0.150000)
   target_xform:
     position:
-      x: 0xBE33E7A4 (-0.175688)
-      y: 0x40E10090 (7.031319)
-      z: 0xC08CEB31 (-4.403710)
+      x: 0x406C48F6 (3.691953)
+      y: 0x40E7B960 (7.241379)
+      z: 0xC028E76C (-2.639125)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  yaw: 0x438773D5 (270.904938)
+  yaw: 0x4350347A (208.204987)
   yaw_smooth: 0x3F333333 (0.700000)
-  pitch: 0xC23B3F21 (-46.811649)
+  pitch: 0xC1E8E4EE (-29.111782)
   pitch_smooth: 0x3F333333 (0.700000)
   pitch_min: 0xC2B3FAE1 (-89.989998)
   pitch_max: 0x42B3FAE1 (89.989998)
@@ -236,9 +236,9 @@ ta_camera:
     y: 0x00800000 (0.000000)
     z: 0x00800000 (0.000000)
   up:
-    x: 0x3C3CAA80 (0.011515)
-    y: 0x3F2F34C4 (0.684399)
-    z: 0x3F3AA0D9 (0.729017)
+    x: 0xBEDB84C4 (-0.428747)
+    y: 0x3F5FA8FB (0.873672)
+    z: 0x3E6B7583 (0.229940)
 ta_camera:
   name: "player_camera"
   entity: "player_camera"
@@ -507,8 +507,8 @@ ta_model:
   mesh: "#rock_0001.prim000"
   materials: ["#rock_0001", ]
 ta_model:
-  name: "dude.node.dude"
-  entity: "dude.node.dude"
+  name: "can"
+  entity: "can"
   xform:
     position:
       x: 0x00000000 (0.000000)
@@ -519,8 +519,24 @@ ta_model:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  mesh: "dude.mesh.dude"
-  materials: ["dude.material.albedo", ]
+  mesh: "prim_cube"
+  materials: ["metal_plate_019", ]
+ta_model:
+  name: "button.node.button"
+  entity: "button.node.button"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+  mesh: "button.mesh.button"
+  materials: ["button.material.grid", "button.material.rainbow", ]
+  morph_target_weights: [0x3F800000 (1.000000), 0x00000000 (0.000000), ]
 ta_model:
   name: "skeleton_test.node.head"
   entity: "skeleton_test.node.head"
@@ -582,8 +598,8 @@ ta_model:
   mesh: "test_bone_1.mesh.child"
   materials: ["test_bone_1.material.green", ]
 ta_model:
-  name: "skeleton_test_skin.node.body"
-  entity: "skeleton_test_skin.node.body"
+  name: "dude.node.dude"
+  entity: "dude.node.dude"
   xform:
     position:
       x: 0x00000000 (0.000000)
@@ -594,24 +610,8 @@ ta_model:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  mesh: "skeleton_test_skin.mesh.body"
-  materials: ["skeleton_test_skin.material.body", "skeleton_test_skin.material.head", ]
-ta_model:
-  name: "button.node.button"
-  entity: "button.node.button"
-  xform:
-    position:
-      x: 0x00000000 (0.000000)
-      y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
-    orientation:
-      x: 0x00000000 (0.000000)
-      y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
-  mesh: "button.mesh.button"
-  materials: ["button.material.grid", "button.material.rainbow", ]
-  morph_target_weights: [0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), 0x3F800000 (1.000000), 0x00000000 (0.000000), ]
+  mesh: "dude.mesh.dude"
+  materials: ["dude.material.albedo", ]
 ta_model:
   name: "button_0001"
   entity: "button_0001"
@@ -671,7 +671,7 @@ ta_model:
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
   mesh: "prim_sphere"
-  materials: ["button.material.grid", ]
+  materials: ["button.material.rainbow", ]
 ta_model:
   name: "ball4"
   entity: "ball4"
@@ -688,8 +688,8 @@ ta_model:
   mesh: "prim_sphere"
   materials: ["dude.material.albedo", ]
 ta_model:
-  name: "can"
-  entity: "can"
+  name: "skeleton_test_skin.node.body"
+  entity: "skeleton_test_skin.node.body"
   xform:
     position:
       x: 0x00000000 (0.000000)
@@ -700,8 +700,8 @@ ta_model:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  mesh: "prim_cube"
-  materials: ["metal_plate_019", ]
+  mesh: "skeleton_test_skin.mesh.body"
+  materials: ["skeleton_test_skin.material.body", "skeleton_test_skin.material.head", ]
 #-------------------------------------------------------------------------------
 # TYP_PLAYER
 #-------------------------------------------------------------------------------
@@ -758,9 +758,9 @@ ta_transform:
   entity: "light_point_0004"
   xform:
     position:
-      x: 0xC0B4FEBA (-5.656095)
-      y: 0x40E38CB2 (7.110925)
-      z: 0xBECF7E00 (-0.405258)
+      x: 0x40901FFC (4.503904)
+      y: 0x40D48269 (6.640919)
+      z: 0xBF915027 (-1.135259)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -836,9 +836,9 @@ ta_transform:
   entity: "button_0001"
   xform:
     position:
-      x: 0xC02FFC4A (-2.749774)
+      x: 0x400611C1 (2.094834)
       y: 0x00000000 (0.000000)
-      z: 0xC0F8B874 (-7.772516)
+      z: 0x3FFCE25A (1.975658)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -850,14 +850,14 @@ ta_transform:
   entity: "freecam"
   xform:
     position:
-      x: 0xBE33E7A0 (-0.175688)
-      y: 0x40E1008C (7.031317)
-      z: 0xC08CEB2C (-4.403708)
+      x: 0x406C48F6 (3.691953)
+      y: 0x40E7B960 (7.241379)
+      z: 0xC028E76C (-2.639125)
     orientation:
-      x: 0xBF6AE731 (-0.917590)
-      y: 0xBC5EE0E9 (-0.013603)
-      z: 0x80000000 (-0.000000)
-      w: 0x3ECB6A3C (0.397295)
+      x: 0xBEE5E18E (-0.448986)
+      y: 0x3F35E62D (0.710543)
+      z: 0x00000000 (0.000000)
+      w: 0x3F0AB2EB (0.541793)
 ta_transform:
   name: "player_one"
   entity: "player_one"
@@ -902,9 +902,9 @@ ta_transform:
   entity: "capsule"
   xform:
     position:
-      x: 0x404DA09C (3.212928)
+      x: 0xBF674D80 (-0.903526)
       y: 0x40000000 (2.000000)
-      z: 0x401A3B43 (2.409867)
+      z: 0x4094928C (4.642889)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
@@ -976,6 +976,19 @@ ta_transform:
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
 ta_transform:
+  name: "dude.node.front"
+  entity: "dude.node.front"
+  xform:
+    position:
+      x: 0xC0CF0A3E (-6.470000)
+      y: 0x401DB698 (2.464270)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x3F3504F4 (0.707107)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F3504F2 (0.707107)
+ta_transform:
   name: "dude.node.armature"
   entity: "dude.node.armature"
   xform:
@@ -995,8 +1008,8 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3F2FCD91 (0.686730)
-      z: 0xBC5EAA9B (-0.013590)
+      y: 0x3E8A31B2 (0.269910)
+      z: 0xBC3D9A14 (-0.011572)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x3F800000 (1.000000)
@@ -1040,7 +1053,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3D6DA047 (0.058014)
+      y: 0x3D6DA039 (0.058014)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -1055,7 +1068,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3ED60B80 (0.418056)
+      y: 0x3ED60B81 (0.418057)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x3BD790A0 (0.006579)
@@ -1069,8 +1082,8 @@ ta_transform:
   xform:
     position:
       x: 0xBE2541F5 (-0.161384)
-      y: 0x3E822391 (0.254178)
-      z: 0x3C7B7831 (0.015348)
+      y: 0x3E822390 (0.254178)
+      z: 0x3C7B7826 (0.015348)
     orientation:
       x: 0xBF208BF0 (-0.627135)
       y: 0x3E7E60CE (0.248416)
@@ -1084,7 +1097,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3EBA2552 (0.363566)
+      y: 0x3EBA2550 (0.363566)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0xBCC98A5C (-0.024602)
@@ -1099,7 +1112,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3E890ED9 (0.267691)
+      y: 0x3E890ED8 (0.267691)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0xBD34FFB3 (-0.044189)
@@ -1114,7 +1127,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3DC4EF8D (0.096160)
+      y: 0x3DC4EF93 (0.096160)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0xBDDEE9E6 (-0.108845)
@@ -1129,7 +1142,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3D0CFF2F (0.034423)
+      y: 0x3D0CFF32 (0.034423)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0xBC958F8E (-0.018257)
@@ -1142,9 +1155,9 @@ ta_transform:
   entity: "dude.bone.thumb_proximal.l"
   xform:
     position:
-      x: 0x3D0C8623 (0.034308)
-      y: 0x3D42FA3E (0.047602)
-      z: 0x3B17089B (0.002305)
+      x: 0x3D0C862B (0.034308)
+      y: 0x3D42FA40 (0.047602)
+      z: 0x3B170870 (0.002305)
     orientation:
       x: 0x3EBC3B28 (0.367639)
       y: 0x3E9F40D4 (0.311041)
@@ -1172,8 +1185,8 @@ ta_transform:
   xform:
     position:
       x: 0x3E2541F3 (0.161384)
-      y: 0x3E822391 (0.254178)
-      z: 0x3C7B795E (0.015349)
+      y: 0x3E822390 (0.254178)
+      z: 0x3C7B7953 (0.015349)
     orientation:
       x: 0xBF1DB554 (-0.616048)
       y: 0xBE7A8B40 (-0.244672)
@@ -1202,7 +1215,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3E890EDB (0.267691)
+      y: 0x3E890EDA (0.267691)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0xBD34FFB7 (-0.044189)
@@ -1217,7 +1230,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3DC4EF97 (0.096160)
+      y: 0x3DC4EF9C (0.096160)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0xBDDEE9E4 (-0.108845)
@@ -1232,7 +1245,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3D0CFF3A (0.034423)
+      y: 0x3D0CFF32 (0.034423)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0xBC958F7E (-0.018257)
@@ -1245,8 +1258,8 @@ ta_transform:
   entity: "dude.bone.thumb_proximal.r"
   xform:
     position:
-      x: 0xBD0C861E (-0.034308)
-      y: 0x3D42FA40 (0.047602)
+      x: 0xBD0C8623 (-0.034308)
+      y: 0x3D42FA4E (0.047602)
       z: 0x3B1707EF (0.002305)
     orientation:
       x: 0x3EBC3B24 (0.367639)
@@ -1261,7 +1274,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3C99B553 (0.018763)
+      y: 0x3C99B55E (0.018763)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0xBD07D980 (-0.033166)
@@ -1278,10 +1291,10 @@ ta_transform:
       y: 0xBC808480 (-0.015688)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBF7A2767 (-0.977164)
-      y: 0xB92A9513 (-0.000163)
-      z: 0x392CB600 (0.000165)
-      w: 0x3E599658 (0.212488)
+      x: 0xBF41A038 (-0.756351)
+      y: 0xBA74E316 (-0.000934)
+      z: 0x39737807 (0.000232)
+      w: 0x3F277760 (0.654165)
   parent: "dude.bone.lumbar"
   children: ["dude.bone.leg.l", ]
 ta_transform:
@@ -1290,12 +1303,12 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3E94B382 (0.290432)
+      y: 0x3E94B381 (0.290432)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
-      y: 0x3F680D6C (0.906455)
-      z: 0xBED83815 (-0.422303)
+      y: 0xBE630D71 (-0.221731)
+      z: 0x3F79A0AC (0.975108)
       w: 0x00000000 (0.000000)
   parent: "dude.bone.thigh.l"
 ta_transform:
@@ -1307,10 +1320,10 @@ ta_transform:
       y: 0xBC808480 (-0.015688)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0xBF7A2767 (-0.977164)
-      y: 0x392AD82F (0.000163)
-      z: 0xB92B5E67 (-0.000163)
-      w: 0x3E599658 (0.212488)
+      x: 0xBF41A038 (-0.756351)
+      y: 0x3A7516C3 (0.000935)
+      z: 0xB9726B98 (-0.000231)
+      w: 0x3F277760 (0.654165)
   parent: "dude.bone.lumbar"
   children: ["dude.bone.leg.r", ]
 ta_transform:
@@ -1319,12 +1332,12 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3E94B382 (0.290432)
+      y: 0x3E94B381 (0.290432)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
-      y: 0x3F680D6C (0.906455)
-      z: 0xBED83815 (-0.422303)
+      y: 0xBE630D71 (-0.221731)
+      z: 0x3F79A0AC (0.975108)
       w: 0x00000000 (0.000000)
   parent: "dude.bone.thigh.r"
 ta_transform:
@@ -1361,14 +1374,14 @@ ta_transform:
   entity: "dude.bone.foot.l"
   xform:
     position:
-      x: 0xBA750149 (-0.000935)
-      y: 0x3D6473B5 (0.055774)
-      z: 0x3DEEED6B (0.116664)
+      x: 0xBA7506A8 (-0.000935)
+      y: 0x3D649C3A (0.055813)
+      z: 0x3DEF06D4 (0.116712)
     orientation:
-      x: 0xBECDCFD8 (-0.401976)
+      x: 0xBECDF3E4 (-0.402251)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F6A680B (0.915650)
+      w: 0x3F6A6020 (0.915529)
   parent: "dude.bone.leg_control.l"
   children: ["dude.bone.toes.l", ]
 ta_transform:
@@ -1377,13 +1390,13 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3DD0BF00 (0.101927)
+      y: 0x3DD0BF01 (0.101927)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EB3A757 (0.350886)
+      x: 0x3EB3CC35 (0.351167)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F6FB91A (0.936418)
+      w: 0x3F6FB231 (0.936313)
   parent: "dude.bone.foot.l"
 ta_transform:
   name: "dude.bone.foot_roll.l"
@@ -1462,14 +1475,14 @@ ta_transform:
   entity: "dude.bone.foot.r"
   xform:
     position:
-      x: 0x3A7506A8 (0.000935)
-      y: 0x3D6473B5 (0.055774)
-      z: 0x3DEEED6B (0.116664)
+      x: 0x3A750CB2 (0.000935)
+      y: 0x3D649C3A (0.055813)
+      z: 0x3DEF06D2 (0.116712)
     orientation:
-      x: 0xBECDCFD5 (-0.401976)
+      x: 0xBECDF3E3 (-0.402251)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F6A680B (0.915650)
+      w: 0x3F6A6020 (0.915529)
   parent: "dude.bone.leg_control.r"
   children: ["dude.bone.toes.r", ]
 ta_transform:
@@ -1478,13 +1491,13 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3DD0BF01 (0.101927)
+      y: 0x3DD0BF00 (0.101927)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3EB3A757 (0.350886)
+      x: 0x3EB3CC35 (0.351167)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F6FB91A (0.936418)
+      w: 0x3F6FB231 (0.936313)
   parent: "dude.bone.foot.r"
 ta_transform:
   name: "dude.bone.foot_roll.r"
@@ -1530,19 +1543,18 @@ ta_transform:
       w: 0x3F7F9C56 (0.998479)
   parent: "dude.bone.leg_control.r"
 ta_transform:
-  name: "dude.node.dude"
-  entity: "dude.node.dude"
+  name: "button.node.button"
+  entity: "button.node.button"
   xform:
     position:
-      x: 0x00000000 (0.000000)
+      x: 0xC1124348 (-9.141426)
       y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
+      z: 0xC032E3EE (-2.795162)
     orientation:
       x: 0x00000000 (0.000000)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
-  parent: "dude.node.armature"
 ta_transform:
   name: "skeleton_test.node.armature"
   entity: "skeleton_test.node.armature"
@@ -1566,10 +1578,10 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3D90BD6A (0.070674)
+      x: 0x3EA700F4 (0.326179)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F7F5C20 (0.997499)
+      w: 0x3F71FFB4 (0.945308)
   parent: "skeleton_test.node.armature"
   children: ["skeleton_test.bone.head", "skeleton_test.node.body", ]
 ta_transform:
@@ -1581,10 +1593,10 @@ ta_transform:
       y: 0x3F000000 (0.500000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3D90BD69 (0.070674)
+      x: 0x3EA700F5 (0.326179)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F7F5C20 (0.997499)
+      w: 0x3F71FFB4 (0.945308)
   parent: "skeleton_test.bone.body"
   children: ["skeleton_test.node.head", ]
 ta_transform:
@@ -1635,7 +1647,7 @@ ta_transform:
   xform:
     position:
       x: 0x00000000 (0.000000)
-      y: 0x3F2EBCDF (0.682569)
+      y: 0x3FAC0000 (1.343750)
       z: 0x00000000 (0.000000)
     orientation:
       x: 0x00000000 (0.000000)
@@ -1696,10 +1708,10 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3D02267A (0.031775)
+      x: 0x3E165559 (0.146810)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F7FDEE8 (0.999495)
+      w: 0x3F7D39E6 (0.989165)
   parent: "skeleton_test_skin.node.armature"
   children: ["skeleton_test_skin.bone.head", ]
 ta_transform:
@@ -1711,38 +1723,24 @@ ta_transform:
       y: 0x3F000000 (0.500000)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x3D810C80 (0.063012)
+      x: 0x3E94F10F (0.290902)
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
-      w: 0x3F7F7DC4 (0.998013)
+      w: 0x3F74EDC3 (0.956753)
   parent: "skeleton_test_skin.bone.body"
 ta_transform:
-  name: "skeleton_test_skin.node.body"
-  entity: "skeleton_test_skin.node.body"
+  name: "dude.node.side"
+  entity: "dude.node.side"
   xform:
     position:
-      x: 0x00000000 (0.000000)
-      y: 0x00000000 (0.000000)
+      x: 0xC0666665 (-3.600000)
+      y: 0x401DB698 (2.464270)
       z: 0x00000000 (0.000000)
     orientation:
-      x: 0x00000000 (0.000000)
-      y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
-  parent: "skeleton_test_skin.node.armature"
-ta_transform:
-  name: "button.node.button"
-  entity: "button.node.button"
-  xform:
-    position:
-      x: 0xC1124348 (-9.141426)
-      y: 0x00000000 (0.000000)
-      z: 0xC032E3EE (-2.795162)
-    orientation:
-      x: 0x00000000 (0.000000)
-      y: 0x00000000 (0.000000)
-      z: 0x00000000 (0.000000)
-      w: 0x3F800000 (1.000000)
+      x: 0x3F000000 (0.500000)
+      y: 0x3F000000 (0.500000)
+      z: 0xBF000000 (-0.500000)
+      w: 0x3F000000 (0.500000)
 ta_transform:
   name: "table"
   entity: "table"
@@ -1886,6 +1884,34 @@ ta_transform:
       y: 0x00000000 (0.000000)
       z: 0x00000000 (0.000000)
       w: 0x3F800000 (1.000000)
+ta_transform:
+  name: "dude.node.dude"
+  entity: "dude.node.dude"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+  parent: "dude.node.armature"
+ta_transform:
+  name: "skeleton_test_skin.node.body"
+  entity: "skeleton_test_skin.node.body"
+  xform:
+    position:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+    orientation:
+      x: 0x00000000 (0.000000)
+      y: 0x00000000 (0.000000)
+      z: 0x00000000 (0.000000)
+      w: 0x3F800000 (1.000000)
+  parent: "skeleton_test_skin.node.armature"
 #-------------------------------------------------------------------------------
 # TYP_RIGID_BODY
 #-------------------------------------------------------------------------------
@@ -2526,9 +2552,9 @@ ta_material:
     b: 0x00000000 (0.000000)
   roughness_factor: 0x3F000000 (0.500000)
 ta_material:
-  name: "dude.material.albedo"
+  name: "button.material.grid"
   shader: "mesh"
-  albedo_texture: "dude.texture.dude_albedo"
+  albedo_texture: "button.texture.tex_grid"
   albedo_factor:
     r: 0x3F800000 (1.000000)
     g: 0x3F800000 (1.000000)
@@ -2538,7 +2564,21 @@ ta_material:
     r: 0x00000000 (0.000000)
     g: 0x00000000 (0.000000)
     b: 0x00000000 (0.000000)
-  roughness_factor: 0x3F800000 (1.000000)
+  roughness_factor: 0x3F000000 (0.500000)
+ta_material:
+  name: "button.material.rainbow"
+  shader: "mesh"
+  albedo_texture: "button.texture.tex_rainbow"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  roughness_factor: 0x3F000000 (0.500000)
 ta_material:
   name: "skeleton_test.material.head"
   shader: "mesh"
@@ -2605,6 +2645,20 @@ ta_material:
     b: 0x00000000 (0.000000)
   roughness_factor: 0x3F4CCCCD (0.800000)
 ta_material:
+  name: "dude.material.albedo"
+  shader: "mesh"
+  albedo_texture: "dude.texture.dude_albedo"
+  albedo_factor:
+    r: 0x3F800000 (1.000000)
+    g: 0x3F800000 (1.000000)
+    b: 0x3F800000 (1.000000)
+    a: 0x3F800000 (1.000000)
+  emission_factor:
+    r: 0x00000000 (0.000000)
+    g: 0x00000000 (0.000000)
+    b: 0x00000000 (0.000000)
+  roughness_factor: 0x3F800000 (1.000000)
+ta_material:
   name: "skeleton_test_skin.material.head"
   shader: "mesh"
   albedo_factor:
@@ -2617,34 +2671,6 @@ ta_material:
     g: 0x00000000 (0.000000)
     b: 0x00000000 (0.000000)
   roughness_factor: 0x3F4CCCCD (0.800000)
-ta_material:
-  name: "button.material.grid"
-  shader: "mesh"
-  albedo_texture: "button.texture.tex_grid"
-  albedo_factor:
-    r: 0x3F800000 (1.000000)
-    g: 0x3F800000 (1.000000)
-    b: 0x3F800000 (1.000000)
-    a: 0x3F800000 (1.000000)
-  emission_factor:
-    r: 0x00000000 (0.000000)
-    g: 0x00000000 (0.000000)
-    b: 0x00000000 (0.000000)
-  roughness_factor: 0x3F000000 (0.500000)
-ta_material:
-  name: "button.material.rainbow"
-  shader: "mesh"
-  albedo_texture: "button.texture.tex_rainbow"
-  albedo_factor:
-    r: 0x3F800000 (1.000000)
-    g: 0x3F800000 (1.000000)
-    b: 0x3F800000 (1.000000)
-    a: 0x3F800000 (1.000000)
-  emission_factor:
-    r: 0x00000000 (0.000000)
-    g: 0x00000000 (0.000000)
-    b: 0x00000000 (0.000000)
-  roughness_factor: 0x3F000000 (0.500000)
 #-------------------------------------------------------------------------------
 # TYP_MESH
 #-------------------------------------------------------------------------------
@@ -2681,6 +2707,8 @@ ta_mesh:
 ta_mesh:
   name: "dude.mesh.dude"
 ta_mesh:
+  name: "button.mesh.button"
+ta_mesh:
   name: "skeleton_test.mesh.head"
 ta_mesh:
   name: "skeleton_test.mesh.body"
@@ -2690,8 +2718,6 @@ ta_mesh:
   name: "test_bone_1.mesh.child"
 ta_mesh:
   name: "skeleton_test_skin.mesh.body"
-ta_mesh:
-  name: "button.mesh.button"
 #-------------------------------------------------------------------------------
 # TYP_SHADER
 #-------------------------------------------------------------------------------
@@ -4053,7 +4079,6 @@ ta_texture:
 ta_texture:
   name: "dude.texture.dude_albedo"
   type: 0  # TA_TEXTURE_2D_ARRAY
-  path: "data/texture/dude_albedo.tga"
   width: 1024
   height: 1024
   channels: 4
@@ -4074,10 +4099,11 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "button.texture.tex_rainbow"
+  name: "data/texture/bad_galaxy.png"
   type: 0  # TA_TEXTURE_2D_ARRAY
-  width: 1024
-  height: 1024
+  path: "data/texture/bad_galaxy.png"
+  width: 2048
+  height: 2048
   channels: 4
   pixels_format: 6408
   pixels_type: 5121
@@ -4085,11 +4111,10 @@ ta_texture:
   gl_filter_min: 9987
   gl_filter_mag: 9728
 ta_texture:
-  name: "data/texture/bad_galaxy.png"
+  name: "button.texture.tex_rainbow"
   type: 0  # TA_TEXTURE_2D_ARRAY
-  path: "data/texture/bad_galaxy.png"
-  width: 2048
-  height: 2048
+  width: 1024
+  height: 1024
   channels: 4
   pixels_format: 6408
   pixels_type: 5121

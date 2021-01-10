@@ -5,16 +5,15 @@ static void ta_ogx_load_camera(ogx_camera *o_cam)
     UNUSED(o_cam);
 }
 
-static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
+static void ta_ogx_load_mesh(ogx_mesh *o_mesh)
 {
     // HACK: Let OGX node override DML node
-    // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
     ta_mesh *mesh = (ta_mesh *)ta_game_by_sym_try(RES_MESH, o_mesh->name);
-    if (!mesh) {
-        mesh = ta_game_alloc(RES_MESH, SYM(o_mesh->name));
-    } else {
+    if (mesh) {
         ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting mesh for %s\n", o_mesh->name);
+        ta_scene_destroy(&tg_game.scene, RES_MESH, SYM(o_mesh->name));
     }
+    mesh = ta_game_alloc(RES_MESH, SYM(o_mesh->name));
 
     mesh->mode = TA_PRIMITIVE_MODE_TRIANGLES;
 
@@ -82,14 +81,13 @@ static const char *ta_ogx_load_mesh(ogx_mesh *o_mesh)
         mesh->skin.skeleton.bind_pose_orientations = (ta_vec4 *)o_mesh->skin.skeleton.bind_pose_orientations;
     }
 
+    ta_mesh_init(mesh);
     ta_mesh_create(mesh);
     ta_mesh_calculate_joints_and_weights(mesh);
     ta_mesh_update_buffers(mesh);
     ta_mesh_update_debug_lines(mesh, 0.1f);
 
     // TODO: Calculate mesh AABB (or better, precalculate it and store it in the file)
-
-    return mesh->name;
 }
 
 static void ta_ogx_load_light(ogx_light *o_light)
@@ -100,13 +98,12 @@ static void ta_ogx_load_light(ogx_light *o_light)
 static void ta_ogx_load_material(ogx_material *o_mat)
 {
     // HACK: Let OGX node override DML node
-    // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
     ta_material *mat = (ta_material *)ta_game_by_sym_try(RES_MATERIAL, o_mat->name);
-    if (!mat) {
-        mat = ta_game_alloc(RES_MATERIAL, SYM(o_mat->name));
-    } else {
+    if (mat) {
         ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting material for %s\n", o_mat->name);
+        ta_scene_destroy(&tg_game.scene, RES_MATERIAL, SYM(o_mat->name));
     }
+    mat = ta_game_alloc(RES_MATERIAL, SYM(o_mat->name));
 
     mat->albedo_texture     = o_mat->albedo_texture;
     mat->albedo_factor.r    = o_mat->albedo_factor.x;
@@ -141,10 +138,13 @@ static void ta_ogx_load_material(ogx_material *o_mat)
 
 static void ta_ogx_load_texture(ogx_texture *o_tex)
 {
+    // HACK: Let OGX node override DML node
     ta_texture *tex = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, o_tex->name);
     if (tex) {
-        return;
+        ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting texture for %s\n", o_tex->name);
+        ta_scene_destroy(&tg_game.scene, RES_TEXTURE, SYM(o_tex->name));
     }
+    tex = ta_game_alloc(RES_TEXTURE, SYM(o_tex->name));
 
     char filepath[1024] = { 0 };
     snprintf(filepath, sizeof(filepath) - 1, "data/mesh/%s", o_tex->path);
@@ -174,7 +174,6 @@ static void ta_ogx_load_texture(ogx_texture *o_tex)
     DLB_ASSERT(h);
     DLB_ASSERT(channels);
 
-    tex = ta_game_alloc(RES_TEXTURE, SYM(o_tex->name));
     tex->type = TA_TEXTURE_2D_ARRAY;
     tex->width = w;
     tex->height = h;
@@ -193,13 +192,12 @@ static void ta_ogx_load_bone_node(ogx_node *o_node, ogx_scene *o_scene)
     UNUSED(o_bone);
 
     // HACK: Let OGX node override DML node
-    // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
     ta_bone *bone = (ta_bone *)ta_game_by_sym_try(RES_COMP_BONE, o_node->name);
-    if (!bone) {
-        bone = ta_game_component_add(o_node->name, RES_COMP_BONE, SYM(o_node->name));
-    } else {
+    if (bone) {
         ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting bone for %s\n", o_node->name);
+        ta_scene_destroy(&tg_game.scene, RES_COMP_BONE, SYM(o_node->name));
     }
+    bone = ta_game_component_add(o_node->name, RES_COMP_BONE, SYM(o_node->name));
 
     // Find the bone's armature (first parent that isn't a bone)
     ogx_node *armature = &o_scene->nodes[o_node->parent];
@@ -210,6 +208,7 @@ static void ta_ogx_load_bone_node(ogx_node *o_node, ogx_scene *o_scene)
     DLB_ASSERT(armature);
     DLB_ASSERT(armature->type == OGX_BASIC_NODE);
     bone->armature = armature->name;
+    ta_bone_init(bone);
 }
 
 static void ta_ogx_load_camera_node(ogx_node *o_node)
@@ -222,15 +221,12 @@ static void ta_ogx_load_geometry_node(ogx_node *o_node)
     ogx_geometry_node *o_geom = &o_node->properties.geometry;
 
     // HACK: Let OGX node override DML node
-    // TODO: This is potentially a memory leak, need to unify DML and OGEX to prevent resource stomping
     ta_model *model = (ta_model *)ta_game_by_sym_try(RES_COMP_MODEL, o_node->name);
-    if (!model) {
-        model = ta_game_component_add(o_node->name, RES_COMP_MODEL, SYM(o_node->name));
-        ta_model_init(model);
-    } else {
+    if (model) {
         ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting model for %s\n", o_node->name);
-        dlb_vec_zero((void *)model->materials);
+        ta_scene_destroy(&tg_game.scene, RES_COMP_MODEL, SYM(o_node->name));
     }
+    model = ta_game_component_add(o_node->name, RES_COMP_MODEL, SYM(o_node->name));
 
     model->mesh = o_geom->mesh;
     dlb_vec_each(const char **, material, o_geom->materials) {
@@ -239,6 +235,8 @@ static void ta_ogx_load_geometry_node(ogx_node *o_node)
     dlb_vec_each(float *, weight, o_geom->morph_weights) {
         dlb_vec_push(model->morph_target_weights, *weight);
     }
+
+    ta_model_init(model);
 }
 
 static void ta_ogx_load_light_node(ogx_node *o_node)
@@ -248,28 +246,39 @@ static void ta_ogx_load_light_node(ogx_node *o_node)
 
 static void ta_ogx_load_node(ogx_node *o_node, ogx_scene *o_scene)
 {
+    // NOTE: Preserve existing transform when overwriting. This means every file must have meshes positioned
+    // relative to the origin, so you can't e.g. build a whole scene in Blender with translated meshes unless
+    // they're all going to be static meshes. I think that's fine?
+    bool has_saved_xform = false;
+    ta_xform saved_xform = { 0 };
+
     // HACK: Let OGX transform override DML transform
     ta_transform *transform = (ta_transform *)ta_game_by_sym_try(RES_COMP_TRANSFORM, o_node->name);
-    if (!transform) {
-        transform = ta_game_component_add(o_node->name, RES_COMP_TRANSFORM, SYM(o_node->name));
-        ta_transform_init(transform);
-        transform->xform.position = o_node->transform.position;
-        transform->xform.orientation = quat_normalize(o_node->transform.orientation);
-    } else {
-        if (!vec3_equal(o_node->transform.position, transform->xform.position)) {
-            ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Transform already exists; ignoring non-zero position for %s\n", o_node->name);
-        }
-        if (!quat_equal(o_node->transform.orientation, transform->xform.orientation)) {
-            ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Transform already exists; ignoring non-identify orientation for %s\n", o_node->name);
-        }
+    if (transform) {
+        // NOTE: Preserve existing transform when overwriting. This means every file must have meshes positioned
+        // relative to the origin, so you can't e.g. build a whole scene in Blender with translated meshes unless
+        // they're all going to be static meshes. I think that's fine?
+        saved_xform = transform->xform;
+        has_saved_xform = true;
+
+        ta_log_write(&tg_debug_log, SRC_OGX, "WARNING: Overwriting transform for %s\n", o_node->name);
+        ta_scene_destroy(&tg_game.scene, RES_COMP_TRANSFORM, SYM(o_node->name));
     }
+
+    transform = ta_game_component_add(o_node->name, RES_COMP_TRANSFORM, SYM(o_node->name));
+    ta_transform_init(transform);
+    transform->xform.position = o_node->transform.position;
+    transform->xform.orientation = quat_normalize(o_node->transform.orientation);
+    if (has_saved_xform) {
+        transform->xform = saved_xform;
+    }
+    transform->dirty_flag = ta_transform_dirty_flag;
 
     if (o_node->parent != OGX_INDEX_NULL) {
         transform->parent = o_scene->nodes[o_node->parent].name;
     }
     size_t children_count = dlb_vec_len(o_node->children);
     if (children_count) {
-        dlb_vec_zero((void *)transform->children);
         dlb_vec_reserve(transform->children, children_count);
         dlb_vec_each(s32 *, node_idx, o_node->children) {
             dlb_vec_push(transform->children, o_scene->nodes[*node_idx].name);

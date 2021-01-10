@@ -78,8 +78,7 @@ typedef struct ta_mesh {
     const char *path;
     ta_primitive_mode mode;  // type of primitives to draw (note: overriden by index_array->mode)
     bool dynamic_draw;
-    ta_morph_target *morph_targets; // Array of morph targets
-    //ta_vertex_array vertex_arrays[TA_VERTEX_ATTR_COUNT];
+
     union {
         struct {
             ta_rgba *colors;
@@ -96,15 +95,15 @@ typedef struct ta_mesh {
         void *buffers[TA_VERTEX_ATTR_COUNT];
     };
     ta_index_array *index_arrays;
-    //ta_line_3d *vertex_normals;
-    //ta_line_3d *face_normals;
-    //ta_line_3d *tangent_lines;
-    ta_skin skin;
-    ta_aabb aabb;
+
     GLuint gl_vao;
-    //GLuint gl_buffers[TA_VERTEX_ATTRIB_COUNT];
     GLuint gl_vertex_buffer;
     GLuint gl_index_buffer;
+
+    ta_morph_target *morph_targets; // Array of morph targets
+
+    ta_skin skin;
+
     struct {
         ta_rgba *colors;
         ta_vec3 *positions;
@@ -112,6 +111,8 @@ typedef struct ta_mesh {
         GLuint gl_vao;
         GLuint gl_vertex_buffer;
     } debug_lines;
+
+    ta_aabb aabb;
 } ta_mesh;
 #pragma warning(pop)
 

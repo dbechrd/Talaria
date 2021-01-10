@@ -665,20 +665,22 @@ void ta_texture_load(ta_texture *tex)
 
 void ta_texture_delete(ta_texture *tex)
 {
-    // TODO: Need to fix this for texture pools.. hmm :(
-    DLB_ASSERT(tex->gl_id);
-    GLuint id = tex->gl_id;
-    tex->gl_id = 0;
-    if (id) {
-        glDeleteTextures(1, &id);
+    if (tex->gl_id) {
+        glDeleteTextures(1, &tex->gl_id);
+        tex->gl_id = 0;
+    } else {
+        // TODO: Remove texture from pool (if no other refs to it?) (reset to GPU buffer to placeholder pixels?)
+        ta_log_write(&tg_debug_log, SRC_TEXTURE, "WARNING: Delete requested for pooled texture %s. No action taken.\n",
+            tex->name);
     }
 }
 
-void ta_texture_reload(ta_texture *tex)
+void ta_texture_hot_reload(ta_texture *tex)
 {
     TracyCZone(ctxMethod, true);
-    //ta_texture_delete(tex);
-    ta_texture_load(tex);
+    DLB_ASSERT(tex->path);  // If a texture doesn't have a path, how did it get hot reloaded!?
+    ta_texture_free(tex);
+    ta_texture_init(tex);
     TracyCZoneEnd(ctxMethod);
 }
 
@@ -686,12 +688,6 @@ void ta_texture_free(ta_texture *tex)
 {
     dlb_vec_free(tex->pixels);
     ta_texture_delete(tex);
-
-    // TODO(perf): Delete all scene textures in a single GL call by aggregating
-    //             gl_ids during texture initialization.
-    //glDeleteTextures(dlb_vec_len(gl_ids[queue]), gl_ids[queue]);
-    //dlb_vec_clear(tex[queue]);
-    //dlb_vec_clear(gl_ids[queue]);
 }
 void ta_texture_free_void(void *tex)
 {

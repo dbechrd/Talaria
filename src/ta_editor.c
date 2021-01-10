@@ -343,7 +343,6 @@ const char *ta_editor_closest_entity()
 static void editor_command_select()
 {
     if (!ta_editor_allow_entity_raycast()) {
-        DLB_ASSERT(!editor.gizmo && "Wtf.. how did you select something *while* using a gizmo??");
         return;
     }
 
@@ -890,7 +889,10 @@ void ta_editor_draw_world()
 
     glDisable(GL_DEPTH_TEST);
     glDisable(GL_CULL_FACE);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_PROJ, &camera->projection);
+    ta_shader_set_mat4(tg_shader_quads, SYM_U_VIEW, &camera->look_at);
     ta_primitive_dump(true);
+    ta_shader_reset_pvm(tg_shader_quads);
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 }

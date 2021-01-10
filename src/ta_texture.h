@@ -108,6 +108,6 @@ ta_texture_pool *ta_texture_texture_pool(ta_texture *tex);
 void ta_texture_upload              (ta_texture *tex, u8 *pixels);
 void ta_texture_load                (ta_texture *tex);
 void ta_texture_delete              (ta_texture *tex);
-void ta_texture_reload              (ta_texture *tex);
+void ta_texture_hot_reload              (ta_texture *tex);
 void ta_texture_free                (ta_texture *tex);
 void ta_texture_free_void           (void *tex);

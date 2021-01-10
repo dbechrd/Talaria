@@ -312,6 +312,10 @@ void ta_font_render(ta_font *font, float x, float y, float z, bool clear_buffers
     ta_primitive_render_mesh(mesh, shader, clear_buffers);
     ta_shader_set_sampler_2d(shader, SYM_U_TEX, 0);
 
+    if (x || y || z) {
+        ta_shader_set_mat4(shader, SYM_U_MODEL, &MAT4_IDENT);
+    }
+
     //if (tg_game.debug_colliders) glEnable(GL_CULL_FACE);
     //glEnable(GL_DEPTH_TEST);
 }
