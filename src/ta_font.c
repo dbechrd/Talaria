@@ -223,7 +223,7 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
     bool cursor_set = false;
 
     // Loop until i == text_len or, if text_len is 0, we hit a nil character
-    size_t newlines = 0;
+    size_t chars = 0;
     size_t i = 0;
     for (; ((text_len) ? i < text_len : text[i]); i++) {
         if (!cursor_set && !mouse_coords && cursor_idx && *cursor_idx == i) {
@@ -236,12 +236,12 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
             position.x = bounds.x;
             position.y += font->line_height;
             bounds.h += font->line_height;
-            newlines++;
         } else if (text[i] >= font->first_char && text[i] <= font->last_char) {
             ta_vec2i baked_pos = position;
-            ta_rect_uv *rect_uv = (ta_rect_uv *)dlb_vec_alloc(*rects);
+            ta_rect_uv baked_rect = { 0 };
             ta_baked_quad(font->chars, font->tex_w, font->tex_h,
-                text[i] - 32, &baked_pos.x, &baked_pos.y, rect_uv, screen);
+                text[i] - 32, &baked_pos.x, &baked_pos.y, &baked_rect, screen);
+            dlb_vec_push(*rects, baked_rect);
             bounds.w = MAX(bounds.w, (int)baked_pos.x - bounds.x);
 
             if (!cursor_set && mouse_coords && screen) {
@@ -272,12 +272,12 @@ ta_rect ta_font_push_text(ta_font *font, const char *text, size_t text_len, bool
             }
 
             position = baked_pos;
+            chars++;
+        } else {
+            DLB_ASSERT(!"This character is not supported by this font");
         }
     }
     bounds.h += font->line_height;
-
-    size_t rects_len = dlb_vec_len(*rects) - orig_rects_len;
-    DLB_ASSERT(rects_len + newlines == text_len);
 
     if (cursor_offset) {
         if (!cursor_set) {

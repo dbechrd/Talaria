@@ -260,6 +260,37 @@ void ta_primitive_push_rect_uv(ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color,
         dlb_vec_push(mesh->colors, color);
     }
 }
+static ta_vec2i tg_prim_text_shadow_offset = { 0 };
+void ta_primitive_text_shadow_offset(int x, int y)
+{
+    tg_prim_text_shadow_offset.x = x;
+    tg_prim_text_shadow_offset.y = y;
+}
+void ta_primitive_push_rect_uv_shadowed(ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color, float z,
+    bool screen)
+{
+    ta_rect_uv drop_shadow = rect_uv;
+    drop_shadow.rect.x += tg_prim_text_shadow_offset.x;
+    drop_shadow.rect.y += tg_prim_text_shadow_offset.y;
+    ta_rgba shadow_color = color;
+    shadow_color.r *= 0.2f;
+    shadow_color.g *= 0.2f;
+    shadow_color.b *= 0.2f;
+    ta_primitive_push_rect_uv(mesh, drop_shadow, shadow_color, z, screen);
+    ta_primitive_push_rect_uv(mesh, rect_uv, color, z, screen);
+}
+void ta_primitive_push_text(ta_mesh *mesh, ta_rect_uv *rects, ta_rgba color, float z, bool screen)
+{
+    dlb_vec_each(ta_rect_uv *, rect, rects) {
+        ta_primitive_push_rect_uv(mesh, *rect, color, z, screen);
+    }
+}
+void ta_primitive_push_text_shadowed(ta_mesh *mesh, ta_rect_uv *rects, ta_rgba color, float z, bool screen)
+{
+    dlb_vec_each(ta_rect_uv *, rect, rects) {
+        ta_primitive_push_rect_uv_shadowed(mesh, *rect, color, z, screen);
+    }
+}
 void ta_primitive_push_plane(ta_mesh *mesh, ta_plane plane, float radius, ta_rgba color)
 {
     if (!mesh) mesh = &primitive_quads;

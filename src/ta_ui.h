@@ -70,6 +70,7 @@ typedef struct ta_ui_textbox_state {
     double last_clicked_ms;
     bool focus_changed;     // HACK: Don't render cursor first frame, wrong index
     bool focused;           // has focus
+    bool received_event;      // input event has modified the buffer this frame
     bool submit;            // user requested save
     ta_textbox_filter *filter;
     ta_ui_scroll_state scroll;

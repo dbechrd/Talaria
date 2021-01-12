@@ -258,10 +258,6 @@ void ta_scene_destroy(ta_scene *scene, ta_res_type type, const char *name, size_
         ta_resource *move_res = dlb_vec_index_size(dense_array, old_index, schema_size);
         u32 move_name_hash = dlb_murmur3(SYM(move_res->name));
 
-        if (move_res->name == INTERN("dude.node.side")) {
-            DLB_ASSERT(1);
-        }
-
         // Move last record into newly empty slot, pop last record from dense array
         dlb_memcpy(delete_res, move_res, schema_size);
         move_res = delete_res;

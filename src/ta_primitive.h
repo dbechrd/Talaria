@@ -32,6 +32,10 @@ void ta_primitive_push_line_3d          (struct ta_mesh *mesh, ta_line_3d line_3
 void ta_primitive_push_quad             (struct ta_mesh *mesh, ta_quad quad, ta_rgba color);
 void ta_primitive_push_rect             (struct ta_mesh *mesh, ta_rect rect, ta_rgba color, float z);
 void ta_primitive_push_rect_uv          (struct ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color, float z, bool screen);
+void ta_primitive_push_rect_uv_shadowed (struct ta_mesh *mesh, ta_rect_uv rect_uv, ta_rgba color, float z, bool screen);
+void ta_primitive_push_text             (struct ta_mesh *mesh, ta_rect_uv *rects, ta_rgba color, float z, bool screen);
+void ta_primitive_text_shadow_offset    (int x, int y);
+void ta_primitive_push_text_shadowed    (struct ta_mesh *mesh, ta_rect_uv *rects, ta_rgba color, float z, bool screen);
 void ta_primitive_push_plane            (struct ta_mesh *mesh, struct ta_plane plane, float radius, ta_rgba color);
 void ta_primitive_push_crosshair        (struct ta_mesh *mesh, s32 length, s32 thickness);
 void ta_primitive_push_sphere           (struct ta_mesh *mesh, ta_sphere sphere, ta_rgba color);

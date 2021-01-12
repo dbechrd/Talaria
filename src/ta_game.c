@@ -775,17 +775,30 @@ static void game_draw_frame_info(u64 frame_num, double ms_frame_logic, double ms
 
     static ta_rect_uv *frame_time_rects = 0;
     ta_font *font = (ta_font *)ta_game_by_sym(RES_FONT, tg_font);
-    ta_font_push_text(font, frame_info, len, true, 0, 0, 0, &frame_time_rects);
-    dlb_vec_each(ta_rect_uv *, rect, frame_time_rects) {
-        ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, 0, true);
+    ta_rect font_rect = ta_font_push_text(font, frame_info, len, true, 0, 0, 0, &frame_time_rects);
+
+#if 0
+    for (int x = 0; x <= 3; x++) {
+        for (int y = 0; y <= 3; y++) {
+            ta_primitive_text_shadow_offset(x, y);
+            ta_primitive_push_text_shadowed(0, frame_time_rects, TA_COLOR_WHITE, 0.0f, true);
+            ta_font_render(font,
+                500.0f + x * 10.0f + font_rect.w * x,
+                10.0f + y * 10.0f + font_rect.h * y,
+                UI_LAYER_HUD, true, &primitive_quads
+            );
+        }
     }
+#else
+    ta_primitive_text_shadow_offset(1, 1);
+    ta_primitive_push_text_shadowed(0, frame_time_rects, TA_COLOR_WHITE, 0.0f, true);
+    ta_font_render(font, SCREEN_WRAP_X(-220.0f), 12, UI_LAYER_HUD, true, &primitive_quads);
+#endif
     dlb_vec_zero(frame_time_rects);
 
+    // TODO: Idk why this is here.. do I need it?
     ta_shader *font_shader = ta_font_shader(font);
-    ta_shader_set_mat4(font_shader, SYM_U_PROJ, &MAT4_IDENT);
-    ta_shader_set_mat4(font_shader, SYM_U_VIEW, &MAT4_IDENT);
-    ta_shader_set_mat4(font_shader, SYM_U_MODEL, &MAT4_IDENT);
-    ta_font_render(font, SCREEN_WRAP_X(-220.0f), 12, UI_LAYER_HUD, true, &primitive_quads);
+    ta_shader_reset_pvm(font_shader);
 }
 static void game_draw_hud()
 {
@@ -1517,9 +1530,9 @@ static void game_render_nametags_debug(ta_camera *camera)
         x -= tag_rect.w / 2.0f;
         y -= tag_rect.h / 2.0f;
 
-        dlb_vec_each(ta_rect_uv *, rect, tag_rects) {
-            ta_primitive_push_rect_uv(0, *rect, TA_COLOR_WHITE, UI_LAYER_HUD, true);
-        }
+        ta_primitive_text_shadow_offset(1, 1);
+        ta_primitive_push_text_shadowed(0, tag_rects, TA_COLOR_WHITE, UI_LAYER_HUD, true);
+
         dlb_vec_zero(tag_rects);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);

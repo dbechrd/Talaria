@@ -146,17 +146,25 @@ void ta_console_draw_screen()
 {
     ta_log_write(&tg_debug_log, SRC_CONSOLE, "UI layout end\n");
 
-    int offset = 20;
-    int window_w = 1300;
-    ta_ui_next_offset(offset, 20);
-    ta_ui_next_size(window_w, WINDOW_H - 60);
-    ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);
+    ta_rgba bg = TA_COLOR_BLACK;
+    ta_rgba fg = TA_COLOR_GREEN;
+    int console_width = 1300;
+
+    ta_ui_next_offset(10, WINDOW_H / 2 - 40);
+    ta_ui_next_size(console_width, WINDOW_H / 2);
+    ta_ui_next_bg_color_rgba(UI_STATE_ALL, bg);
+    ta_ui_next_fg_color_rgba(UI_STATE_ALL, fg);
     static ta_ui_window_state console_window = { 0 };
     ta_ui_window_begin(&console_window, 0);
 
+#if 0
+    // DEBUG(cleanup): Display console buffer length at top of console window
     char buflen[10] = { 0 };
     size_t buflen_len = snprintf(buflen, sizeof(buflen), "%zu", dlb_vec_len(tg_console.buffer));
+    ta_ui_next_bg_color_rgba(UI_STATE_ALL, bg);
+    ta_ui_next_fg_color_rgba(UI_STATE_ALL, fg);
     ta_ui_label(buflen, buflen_len);
+#endif
 
 #if 1
     static bool auto_scroll_init = false;
@@ -165,9 +173,12 @@ void ta_console_draw_screen()
     bool auto_scroll_clicked = ta_ui_toggle_button(CSTR("Auto scroll"), &auto_scroll);
 #endif
 
+
     static ta_ui_panel_state scroll_panel = { 0 };
-    ta_ui_next_size(window_w - 18, WINDOW_H - 102);
-    ta_ui_panel_begin(&scroll_panel, 0);
+    //ta_ui_next_size(console_width, WINDOW_H / 2);
+    ta_ui_next_bg_color_rgba(UI_STATE_ALL, bg);
+    ta_ui_next_fg_color_rgba(UI_STATE_ALL, fg);
+    ta_ui_panel_begin(&scroll_panel, TA_UI_AUTOSIZE);
 
 #if 1
     if (!auto_scroll_init) {
@@ -194,17 +205,22 @@ void ta_console_draw_screen()
     }
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_next_bg_color_rgba(UI_STATE_ALL, bg);
+    ta_ui_next_fg_color_rgba(UI_STATE_ALL, fg);
     ta_ui_label(tg_console.buffer, dlb_vec_len(tg_console.buffer));
 
     ta_ui_row_begin();
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_pad(0, 0, 0, 0);
+    ta_ui_next_bg_color_rgba(UI_STATE_ALL, bg);
+    ta_ui_next_fg_color_rgba(UI_STATE_ALL, fg);
     ta_ui_label(tg_console.prompt, tg_console.prompt_len);
 
-    ta_ui_next_size(window_w - 40, 15);
+    ta_ui_next_size(console_width - 40, 15);
     ta_ui_next_margin(0, 0, 0, 0);
     ta_ui_next_pad(0, 0, 0, 0);
-    ta_ui_next_bg_color(UI_STATE_ALL, 0, 0, 0, 1.0f);
+    ta_ui_next_bg_color_rgba(UI_STATE_ALL, bg);
+    ta_ui_next_fg_color_rgba(UI_STATE_ALL, fg);
     static ta_ui_textbox_state console_textbox = { 0 };
     if (ta_ui_textbox(0, 0, &console_textbox, TA_UI_AUTOSIZE)) {
         console_cmd_type cmd_type = console_exec(&tg_console, console_textbox.buffer);
@@ -218,6 +234,16 @@ void ta_console_draw_screen()
     }
 
     ta_ui_panel_end();
+    if (ta_ui_last_state().pressed && !console_textbox.focused) {
+        // Focus textbox and scroll into view if it isn't already active when console window is clicked
+        ta_ui_textbox_focus(&console_textbox);
+        console_window.scroll.percent.y = 1.0f;
+    }
+    if (console_textbox.received_event) {
+        // Scroll textbox into view when any event occurs (e.g. input, moving cursor, etc.)
+        console_window.scroll.percent.y = 1.0f;
+    }
+
     ta_ui_window_end();
     ta_log_write(&tg_debug_log, SRC_CONSOLE, "UI layout end\n");
 

@@ -498,6 +498,10 @@ void ta_editor_textbox_event(ta_event *event)
             break;
         }
     }
+
+    if (ta_editor_textbox_editing()) {
+        editor.textbox_editing->received_event = event->handled;
+    }
 }
 
 void ta_editor_update_widgets()

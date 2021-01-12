@@ -1019,9 +1019,6 @@ static void textbox_unfocus(ta_ui_textbox_state *textbox)
     }
     textbox->focus_changed = textbox->focused;
     textbox->focused = false;  // User clicked elsewhere
-    textbox->cursor = 0;
-    textbox->selection_start = 0;
-    textbox->selection_len = 0;
 }
 static void textbox_clear(ta_ui_textbox_state *textbox)
 {
@@ -1458,7 +1455,7 @@ void ta_ui_textbox_vec4(ta_vec4 *vec, ta_ui_textbox_vec4_state* vec_state, bool 
 void ta_ui_textbox_focus(ta_ui_textbox_state *textbox)
 {
     // TODO: Would be nice to focus console textbox when console is clicked
-    DLB_ASSERT(!"Doesn't work for some reason, probably related to mouse_down");
+    //DLB_ASSERT(!"Doesn't work for some reason, probably related to mouse_down");
     DLB_ASSERT(textbox);
     textbox_focus(textbox);
 }
@@ -1570,11 +1567,11 @@ void ta_ui_tooltip(const char *text, size_t text_len)
     ta_primitive_push_rect_uv(&primitive_quads_tooltip_bg, tooltip_bg, TA_COLOR_GRAY3A, UI_LAYER_TIP_BG, true);
 
     dlb_vec_each(ta_rect_uv *, rect, text_rects) {
-        ta_rect_uv offset_rect = *rect;
-        offset_rect.rect.x += x;
-        offset_rect.rect.y += y;
-        ta_primitive_push_rect_uv(&primitive_quads_tooltip_fg, offset_rect, TA_COLOR_WHITE, UI_LAYER_TIP, true);
+        rect->rect.x += x;
+        rect->rect.y += y;
     }
+    ta_primitive_text_shadow_offset(1, 1);
+    ta_primitive_push_text_shadowed(&primitive_quads_tooltip_fg, text_rects, TA_COLOR_WHITE, UI_LAYER_TIP, true);
     dlb_vec_zero(text_rects);
 }
 #if 0
@@ -1590,6 +1587,8 @@ void ta_ui_statusbar()
     status_bg.rect.h = (float)ui_font->line_height;
     ta_primitive_push_rect_uv(&primitive_quads_tooltip_bg, status_bg, TA_COLOR_GRAY3A,
         UI_LAYER_TIP_BG, true, false);
+    //ta_primitive_text_shadow_offset(1, 1);
+    //ta_primitive_push_text_shadowed(&primitive_quads_tooltip_fg, text_rects, TA_COLOR_WHITE, UI_LAYER_TIP, true);
 }
 #endif
 
@@ -1689,8 +1688,10 @@ static void ui_render_text(int x, int y, ta_rect_uv *text_rects, size_t text_rec
     dlb_vec_reserve(primitive_quads.uvs, push_count);
     dlb_vec_reserve(primitive_quads.colors, push_count);
 
+    ta_primitive_text_shadow_offset(1, 1);
     for (size_t i = first_in_bounds; i <= last_in_bounds; ++i) {
-        ta_primitive_push_rect_uv(&primitive_quads, text_rects[i], color, 0, true);
+        //ta_primitive_push_rect_uv(&primitive_quads, text_rects[i], color, 0.0f, true);
+        ta_primitive_push_rect_uv_shadowed(&primitive_quads, text_rects[i], color, 0.0f, true);
     }
 
     ta_font_render(ui_font, (float)x, (float)y, UI_LAYER_EDIT_1, true, &primitive_quads);
@@ -1855,10 +1856,8 @@ static void ta_ui_render_statusbar()
         ta_font *font = (ta_font *)ta_game_by_name(RES_FONT, tg_font);
         ta_rectf status_rect = ta_font_push_text(&status_rects, font,
             SYM(editor.status_msg), true, 0, 0, 0);
-        dlb_vec_each(ta_rect_uv *, rect, status_rects) {
-            ta_primitive_push_rect_uv(&&primitive_quads, *rect, TA_COLOR_WHITE, 0,
-                true, false);
-        }
+        ta_primitive_text_shadow_offset(1, 1);
+        ta_primitive_push_text_shadowed(&primitive_quads, status_rects, TA_COLOR_WHITE, 0.0f, true);
         dlb_vec_zero(status_rects);
 
         int status_halfw = WINDOW_W / 2 - (int)status_rect.w / 2;

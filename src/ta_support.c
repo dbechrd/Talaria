@@ -18,13 +18,13 @@ ta_vec3 ta_support_obb(ta_obb *obb, ta_vec3 d)
     return support;
 }
 
-bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *d)
+bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *dir)
 {
     DLB_ASSERT(simplex);
     DLB_ASSERT(simplex->count);
     DLB_ASSERT(simplex->count >= 2);
     DLB_ASSERT(simplex->count <= 4);
-    DLB_ASSERT(d);
+    DLB_ASSERT(dir);
 
     bool simplex_contains_origin = false;
 
@@ -51,7 +51,7 @@ bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *d)
             // Case 2: Origin in voronoi region AB (on either side of line AB)
             ta_vec3 ab = vec3_sub(b, a);
             ta_vec3 ao = vec3_neg(a);
-            *d = vec3_cross(vec3_cross(ab, ao), ab);
+            *dir = vec3_cross(vec3_cross(ab, ao), ab);
 
             // Case 3: Origin in voronoi region A
             // Optimized out because if A exists (i.e. a point beyond the origin), then
@@ -95,10 +95,10 @@ bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *d)
             ta_vec3 ab_perp = vec3_cross(ab, abc);
             if (vec3_dot(ab_perp, ao) > 0.0f) {
                 // New direction is from AB -> O
-                *d = vec3_cross(vec3_cross(ab, ao), ab);
+                *dir = vec3_cross(vec3_cross(ab, ao), ab);
                 // New simplex is AB: [C, B, A] -> [B, A]
-                simplex->vertices[0] = simplex->vertices[1];
-                simplex->vertices[1] = simplex->vertices[2];
+                simplex->vertices[0] = b;
+                simplex->vertices[1] = a;
                 simplex->vertices[2] = VEC3_ZERO;  // TODO(perf): Could omit zeroing, but makes it harder to debug
                 simplex->count = 2;
                 break;
@@ -108,9 +108,10 @@ bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *d)
             ta_vec3 ac_perp = vec3_cross(abc, ac);
             if (vec3_dot(ac_perp, ao) > 0.0f) {
                 // New direction is from AC -> O
-                *d = vec3_cross(vec3_cross(ac, ao), ac);
+                *dir = vec3_cross(vec3_cross(ac, ao), ac);
                 // New simplex is AC: [C, B, A] -> [C, A]
-                simplex->vertices[1] = simplex->vertices[2];
+              /*simplex->vertices[0] = c;*/
+                simplex->vertices[1] = a;
                 simplex->vertices[2] = VEC3_ZERO;  // TODO(perf): Could omit zeroing, but makes it harder to debug
                 simplex->count = 2;
                 break;
@@ -119,11 +120,11 @@ bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *d)
             // Origin somewhere in ABC (above or below)
             if (vec3_dot(abc, ao) > 0.0f) {
                 // New direction is abc
-                *d = abc;
+                *dir = abc;
                 // Simplex stays the same
             } else {
                 // New direction is -abc
-                *d = vec3_neg(abc);
+                *dir = vec3_neg(abc);
 #if 1
                 // Simplex stays the same
 #else
@@ -140,10 +141,71 @@ bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *d)
             break;
         } case 4: {
 
-            // Contains origin
-            //simplex_contains_origin = true;
+            // D _________________ C
+            //   \ .           . /
+            //    \  .   ?   .  /
+            //     \   .   .   /
+            //      \    A    /
+            //       \ ? . ? /
+            //        \  .  /
+            //         \ . /
+            //          \./
+            //           B
 
+            const ta_vec3 d = simplex->vertices[0];
+            const ta_vec3 c = simplex->vertices[1];
+            const ta_vec3 b = simplex->vertices[2];
+            const ta_vec3 a = simplex->vertices[3];
 
+            ta_vec3 ab = vec3_sub(b, a);
+            ta_vec3 ac = vec3_sub(c, a);
+            ta_vec3 ad = vec3_sub(d, a);
+            ta_vec3 ao = vec3_neg(a);
+
+            // Test triangle ABC
+            ta_vec3 abc = vec3_cross(ab, ac);
+            if (vec3_dot(abc, ao) > 0.0f) {
+                // New direction is from ABC -> O
+                *dir = vec3_cross(vec3_cross(abc, ao), abc);
+                // New simplex is AB: [D, C, B, A] -> [C, B, A]
+                simplex->vertices[0] = c;
+                simplex->vertices[1] = b;
+                simplex->vertices[2] = a;
+                simplex->vertices[3] = VEC3_ZERO;  // TODO(perf): Could omit zeroing, but makes it harder to debug
+                simplex->count = 3;
+                break;
+            }
+
+            // Test triangle ABD
+            ta_vec3 abd = vec3_cross(ad, ab);
+            if (vec3_dot(abd, ao) > 0.0f) {
+                // New direction is from ABD -> O
+                *dir = vec3_cross(vec3_cross(abd, ao), abd);
+                // New simplex is AB: [D, C, B, A] -> [D, B, A]
+              /*simplex->vertices[0] = d;*/
+                simplex->vertices[1] = b;
+                simplex->vertices[2] = a;
+                simplex->vertices[3] = VEC3_ZERO;  // TODO(perf): Could omit zeroing, but makes it harder to debug
+                simplex->count = 3;
+                break;
+            }
+
+            // Test triangle ACD
+            ta_vec3 acd = vec3_cross(ac, ad);
+            if (vec3_dot(acd, ao) > 0.0f) {
+                // New direction is from acd -> O
+                *dir = vec3_cross(vec3_cross(acd, ao), acd);
+                // New simplex is AB: [D, C, B, A] -> [D, C, A]
+              /*simplex->vertices[0] = d;*/
+              /*simplex->vertices[1] = c;*/
+                simplex->vertices[2] = a;
+                simplex->vertices[3] = VEC3_ZERO;  // TODO(perf): Could omit zeroing, but makes it harder to debug
+                simplex->count = 3;
+                break;
+            }
+
+            // If origin is not outside of the tetrahedron, it must be inside!
+            simplex_contains_origin = true;
             break;
         }
     }
