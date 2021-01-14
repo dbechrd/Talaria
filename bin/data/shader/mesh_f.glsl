@@ -33,30 +33,6 @@ const float GAMMA = 2.2;  // TODO: Make this a user-configurable uniform
 
 // TODO: Premultiplied alpha?
 // TODO: Combine channels for performance
-struct Material {
-    vec4    albedo_factor;
-    vec3    emission_factor;
-    float   height_factor;
-    float   metallic_factor;
-    float   roughness_factor;
-
-    uint    albedo_texture_pool_index;
-    uint    albedo_texture_pool_layer;
-    uint    emission_texture_pool_index;
-    uint    emission_texture_pool_layer;
-    uint    height_texture_pool_index;
-    uint    height_texture_pool_layer;
-    uint    metallic_texture_pool_index;
-    uint    metallic_texture_pool_layer;
-    uint    normal_texture_pool_index;
-    uint    normal_texture_pool_layer;
-    uint    occlusion_texture_pool_index;
-    uint    occlusion_texture_pool_layer;
-    uint    roughness_texture_pool_index;
-    uint    roughness_texture_pool_layer;
-};
-uniform Material u_material;
-
 struct UboMaterial {
     vec4    albedo_factor;
     vec3    emission_factor;
@@ -93,28 +69,6 @@ uniform uint u_material_index;
 #define LIGHT_DIRECTIONAL   1
 #define LIGHT_POINT         2
 #define LIGHT_SPOT          3
-struct Light {
-    // Common
-    float intensity;
-    vec3 position;
-    vec3 color;
-    int type;
-
-    // Directional / Point / Spot
-    bool cast_shadows;
-
-    // Directional / Spot
-    vec3 direction;
-    mat4 light_pv;
-
-    // Shadow mapping
-    float shadowmap_zfar;                   // Point
-    uint shadowmap_texture_pool_index;
-    uint shadowmap_texture_array_layers[6]; // Point light "cubemaps" require 6 layers, other lights only use index 0
-};
-uniform int u_lights_count;
-uniform Light u_lights[TA_LIGHT_MAX_ACTIVE_LIGHTS];
-
 struct UboLight {
     int type;                                // ta_light_type: type of light
     float intensity;                         // light intensity [0.0, +INF]
@@ -131,11 +85,13 @@ struct UboLight {
     float pad4;
     float pad5;
 
+    // NOTE: Only the first layer is used for non-cubemaps
     uint shadowmap_texture_array_layers[6];  // array texture layer (determines which texture in the pool to use, where "pool" is an array texture)
 };
 layout (std140) uniform ubo_lights {
     UboLight lights[TA_LIGHT_MAX_ACTIVE_LIGHTS];
 };
+uniform uint u_lights_count;
 
 //------------------------------------------------------
 // Textures
@@ -387,7 +343,7 @@ void main()
     vec3 debug;
 
     vec3 L0 = vec3(0.0);
-    for (int i = 0; i < u_lights_count; ++i) {
+    for (uint i = uint(0); i < u_lights_count; ++i) {
         vec3 fragToLight = vec3(0.0);
         float shadow_map_depth = 0.0;
         float shadow_bias = 0.0;

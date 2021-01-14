@@ -383,6 +383,14 @@ void ta_shader_set_uint(ta_shader *shader, const char *name, GLuint value)
     u->value.gluint = value;
     u->dirty = true;
 }
+void ta_shader_set_uint_try(ta_shader *shader, const char *name, GLuint value)
+{
+    ta_shader_uniform *u = find_uniform_by_name_try(shader->uniforms, name, TA_GLSL_UINT);
+    if (u) {
+        u->value.gluint = value;
+        u->dirty = true;
+    }
+}
 void ta_shader_set_uint_array(ta_shader *shader, const char *name, GLuint *values)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_UINT_ARRAY);
@@ -459,190 +467,6 @@ void ta_shader_set_mat4_try(ta_shader *shader, const char *name, const ta_mat4 *
         u->value.mat4 = *m;
         u->dirty = true;
     }
-}
-void ta_shader_set_light(ta_shader *shader, const char *name, int index, ta_light *light)
-{
-    TracyCZone(ctxMethod, true);
-    // TODO: Use the other set calls above to eliminate duplicate sets once that's implemented for the basic types.
-    ta_shader_uniform *u_light          = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
-    ta_shader_uniform *u_intensity      = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_INTENSITY[index],      TA_GLSL_FLOAT);
-    ta_shader_uniform *u_position       = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_POSITION[index],       TA_GLSL_VEC3);
-    ta_shader_uniform *u_color          = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_COLOR[index],          TA_GLSL_VEC3);
-    ta_shader_uniform *u_type           = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_TYPE[index],           TA_GLSL_INT);
-    ta_shader_uniform *u_direction      = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_DIRECTION[index],      TA_GLSL_VEC3);
-    ta_shader_uniform *u_cast_shadows   = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_CAST_SHADOWS[index],   TA_GLSL_BOOL);
-    ta_shader_uniform *u_light_pv       = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_LIGHT_PV[index],       TA_GLSL_MAT4);
-    ta_shader_uniform *u_shadowmap_zfar = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP_ZFAR[index], TA_GLSL_FLOAT);
-    ta_shader_uniform *u_shadowmap_texture_pool_index   = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP_TEXTURE_POOL_INDEX[index],   TA_GLSL_UINT);
-    ta_shader_uniform *u_shadowmap_texture_array_layers = find_uniform_by_name(u_light->value.properties, SYM_U_LIGHTS_SHADOWMAP_TEXTURE_ARRAY_LAYERS[index], TA_GLSL_UINT_ARRAY);
-
-    // Set default values (some are overridden for specific light types below)
-    u_intensity->value.glfloat        = light->intensity;
-    u_color->value.rgb                = light->color;
-    u_position->value.vec3            = ta_light_position(light);
-    u_type->value.glint               = light->type;
-    u_direction->value.vec3           = VEC3_ZERO;
-    u_cast_shadows->value.glbool      = false;
-    u_light_pv->value.mat4            = MAT4_IDENT;
-    u_shadowmap_zfar->value.glfloat   = 0;
-    u_shadowmap_texture_pool_index->value.gluint         = 0;
-    u_shadowmap_texture_array_layers->value.gluint_array = 0;
-
-    // Light type-dependent properties
-    switch (light->type) {
-        case TA_LIGHT_AMBIENT: {
-            break;
-        } case TA_LIGHT_DIRECTIONAL: {
-            u_direction->value.vec3         = ta_light_direction(light);
-            u_cast_shadows->value.glbool    = (GLboolean)!light->data.directional.no_shadow_cast;
-            u_light_pv->value.mat4          = ta_light_pv(light);
-
-            ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
-            u_shadowmap_texture_pool_index->value.gluint = tex->gl_texture_pool_index;
-            dlb_vec_push(u_shadowmap_texture_array_layers->value.gluint_array, tex->gl_texture_pool_layer);
-            break;
-        } case TA_LIGHT_POINT: {
-            // NOTE: Use sampler_2d and assume that all 6 cubemap face textures are contiguous in the texture pool
-            // TODO: We probably need to store pool index and layer rather than just gl_id to figure out "contiguous"
-            u_cast_shadows->value.glbool    = (GLboolean)!light->data.point.no_shadow_cast;
-            u_shadowmap_zfar->value.glfloat = light->data.point.shadow_properties.zfar;
-
-            // NOTE: Assume all textures are in the same pool (asserts)
-            ta_texture *first_tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
-            u_shadowmap_texture_pool_index->value.gluint = first_tex->gl_texture_pool_index;
-            for (int i = 0; i < 6; i++) {
-                ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[i]);
-                dlb_vec_push(u_shadowmap_texture_array_layers->value.gluint_array, tex->gl_texture_pool_layer);
-                DLB_ASSERT(tex->gl_texture_pool_index == u_shadowmap_texture_pool_index->value.gluint);
-            }
-            break;
-        } case TA_LIGHT_SPOT: {
-            u_direction->value.vec3         = ta_light_direction(light);
-            u_cast_shadows->value.glbool    = (GLboolean)!light->data.spot.no_shadow_cast;
-
-            ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
-            u_shadowmap_texture_pool_index->value.gluint = tex->gl_texture_pool_index;
-            dlb_vec_push(u_shadowmap_texture_array_layers->value.gluint_array, tex->gl_texture_pool_layer);
-            DLB_ASSERT(!"Don't handle spot lights yet");
-            break;
-        } default: {
-            DLB_ASSERT(!"Don't know how to initialize this type of light");
-        }
-    }
-
-    // Mark all light uniforms as dirty
-    u_light->dirty = true;
-    u_intensity->dirty = true;
-    u_color->dirty = true;
-    u_position->dirty = true;
-    u_type->dirty = true;
-    u_direction->dirty = true;
-    u_cast_shadows->dirty = true;
-    u_light_pv->dirty = true;
-    u_shadowmap_zfar->dirty = true;
-    u_shadowmap_texture_pool_index->dirty = true;
-    u_shadowmap_texture_array_layers->dirty = true;
-    TracyCZoneEnd(ctxMethod);
-}
-void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *material)
-{
-    TracyCZone(ctxMethod, true);
-    ta_texture *albedo_texture    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->albedo_texture);
-    ta_texture *emission_texture  = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->emission_texture);
-    ta_texture *height_texture    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->height_texture);
-    ta_texture *metallic_texture  = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->metallic_texture);
-    ta_texture *normal_texture    = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->normal_texture);
-    ta_texture *occlusion_texture = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->occlusion_texture);
-    ta_texture *roughness_texture = (ta_texture *)ta_game_by_sym_try(RES_TEXTURE, material->roughness_texture);
-
-    // NOTE: Seems dumb to bind a texture only for the multiplication factor to be 0.0, right?
-    DLB_ASSERT(material->albedo_factor.a);
-    if (emission_texture)  { DLB_ASSERT(material->emission_factor.r || material->emission_factor.g || material->emission_factor.b); }
-    if (height_texture)    { DLB_ASSERT(material->height_factor); }
-    if (metallic_texture)  { DLB_ASSERT(material->metallic_factor); }
-    if (roughness_texture) { DLB_ASSERT(material->roughness_factor); }
-
-    if (!albedo_texture   ) { albedo_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_albedo); }
-    if (!emission_texture ) { emission_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_emission); }
-    if (!height_texture   ) { height_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_height); }
-    if (!metallic_texture ) { metallic_texture  = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_metallic); }
-    if (!normal_texture   ) { normal_texture    = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_normal); }
-    if (!occlusion_texture) { occlusion_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_occlusion); }
-    if (!roughness_texture) { roughness_texture = ta_game_by_sym_try(RES_TEXTURE, tg_tex_default_roughness); }
-
-    DLB_ASSERT(albedo_texture    && albedo_texture   ->type == TA_TEXTURE_2D_ARRAY);
-    DLB_ASSERT(emission_texture  && emission_texture ->type == TA_TEXTURE_2D_ARRAY);
-    DLB_ASSERT(height_texture    && height_texture   ->type == TA_TEXTURE_2D_ARRAY);
-    DLB_ASSERT(metallic_texture  && metallic_texture ->type == TA_TEXTURE_2D_ARRAY);
-    DLB_ASSERT(normal_texture    && normal_texture   ->type == TA_TEXTURE_2D_ARRAY);
-    DLB_ASSERT(occlusion_texture && occlusion_texture->type == TA_TEXTURE_2D_ARRAY);
-    DLB_ASSERT(roughness_texture && roughness_texture->type == TA_TEXTURE_2D_ARRAY);
-
-    // TODO: Use material UBO
-    ta_shader_uniform *u_material                              = find_uniform_by_name(shader->uniforms, name, TA_GLSL_STRUCT);
-    ta_shader_uniform *u_material_albedo_texture_pool_index    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ALBEDO_TEXTURE_POOL_INDEX,    TA_GLSL_UINT);
-    ta_shader_uniform *u_material_albedo_texture_pool_layer    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ALBEDO_TEXTURE_POOL_LAYER,    TA_GLSL_UINT);
-    ta_shader_uniform *u_material_albedo_factor                = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ALBEDO_FACTOR,                TA_GLSL_VEC4);
-    ta_shader_uniform *u_material_emission_texture_pool_index  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_EMISSION_TEXTURE_POOL_INDEX,  TA_GLSL_UINT);
-    ta_shader_uniform *u_material_emission_texture_pool_layer  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_EMISSION_TEXTURE_POOL_LAYER,  TA_GLSL_UINT);
-    ta_shader_uniform *u_material_emission_factor              = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_EMISSION_FACTOR,              TA_GLSL_VEC3);
-    ta_shader_uniform *u_material_height_texture_pool_index    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_HEIGHT_TEXTURE_POOL_INDEX,    TA_GLSL_UINT);
-    ta_shader_uniform *u_material_height_texture_pool_layer    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_HEIGHT_TEXTURE_POOL_LAYER,    TA_GLSL_UINT);
-    ta_shader_uniform *u_material_height_factor                = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_HEIGHT_FACTOR,                TA_GLSL_FLOAT);
-    ta_shader_uniform *u_material_metallic_texture_pool_index  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_METALLIC_TEXTURE_POOL_INDEX,  TA_GLSL_UINT);
-    ta_shader_uniform *u_material_metallic_texture_pool_layer  = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_METALLIC_TEXTURE_POOL_LAYER,  TA_GLSL_UINT);
-    ta_shader_uniform *u_material_metallic_factor              = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_METALLIC_FACTOR,              TA_GLSL_FLOAT);
-    ta_shader_uniform *u_material_normal_texture_pool_index    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_NORMAL_TEXTURE_POOL_INDEX,    TA_GLSL_UINT);
-    ta_shader_uniform *u_material_normal_texture_pool_layer    = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_NORMAL_TEXTURE_POOL_LAYER,    TA_GLSL_UINT);
-    ta_shader_uniform *u_material_occlusion_texture_pool_index = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_OCCLUSION_TEXTURE_POOL_INDEX, TA_GLSL_UINT);
-    ta_shader_uniform *u_material_occlusion_texture_pool_layer = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_OCCLUSION_TEXTURE_POOL_LAYER, TA_GLSL_UINT);
-    ta_shader_uniform *u_material_roughness_texture_pool_index = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_INDEX, TA_GLSL_UINT);
-    ta_shader_uniform *u_material_roughness_texture_pool_layer = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_LAYER, TA_GLSL_UINT);
-    ta_shader_uniform *u_material_roughness_factor             = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_FACTOR,             TA_GLSL_FLOAT);
-
-    // Set uniform values
-    u_material_albedo_texture_pool_index    ->value.gluint  = albedo_texture->gl_texture_pool_index;
-    u_material_albedo_texture_pool_layer    ->value.gluint  = albedo_texture->gl_texture_pool_layer;
-    u_material_albedo_factor                ->value.vec4    = *(ta_vec4 *)&material->albedo_factor;
-    u_material_emission_texture_pool_index  ->value.gluint  = emission_texture->gl_texture_pool_index;
-    u_material_emission_texture_pool_layer  ->value.gluint  = emission_texture->gl_texture_pool_layer;
-    u_material_emission_factor              ->value.vec3    = *(ta_vec3 *)&material->emission_factor;
-    u_material_height_texture_pool_index    ->value.gluint  = height_texture->gl_texture_pool_index;
-    u_material_height_texture_pool_layer    ->value.gluint  = height_texture->gl_texture_pool_layer;
-    u_material_height_factor                ->value.glfloat = material->height_factor;
-    u_material_metallic_texture_pool_index  ->value.gluint  = metallic_texture->gl_texture_pool_index;
-    u_material_metallic_texture_pool_layer  ->value.gluint  = metallic_texture->gl_texture_pool_layer;
-    u_material_metallic_factor              ->value.glfloat = material->metallic_factor;
-    u_material_normal_texture_pool_index    ->value.gluint  = normal_texture->gl_texture_pool_index;
-    u_material_normal_texture_pool_layer    ->value.gluint  = normal_texture->gl_texture_pool_layer;
-    u_material_occlusion_texture_pool_index ->value.gluint  = occlusion_texture->gl_texture_pool_index;
-    u_material_occlusion_texture_pool_layer ->value.gluint  = occlusion_texture->gl_texture_pool_layer;
-    u_material_roughness_texture_pool_index ->value.gluint  = roughness_texture->gl_texture_pool_index;
-    u_material_roughness_texture_pool_layer ->value.gluint  = roughness_texture->gl_texture_pool_layer;
-    u_material_roughness_factor             ->value.glfloat = material->roughness_factor;
-
-    // Mark all material uniforms as dirty
-    u_material                             ->dirty = true;
-    u_material_albedo_texture_pool_index   ->dirty = true;
-    u_material_albedo_texture_pool_layer   ->dirty = true;
-    u_material_albedo_factor               ->dirty = true;
-    u_material_emission_texture_pool_index ->dirty = true;
-    u_material_emission_texture_pool_layer ->dirty = true;
-    u_material_emission_factor             ->dirty = true;
-    u_material_height_texture_pool_index   ->dirty = true;
-    u_material_height_texture_pool_layer   ->dirty = true;
-    u_material_height_factor               ->dirty = true;
-    u_material_metallic_texture_pool_index ->dirty = true;
-    u_material_metallic_texture_pool_layer ->dirty = true;
-    u_material_metallic_factor             ->dirty = true;
-    u_material_normal_texture_pool_index   ->dirty = true;
-    u_material_normal_texture_pool_layer   ->dirty = true;
-    u_material_occlusion_texture_pool_index->dirty = true;
-    u_material_occlusion_texture_pool_layer->dirty = true;
-    u_material_roughness_texture_pool_index->dirty = true;
-    u_material_roughness_texture_pool_layer->dirty = true;
-    u_material_roughness_factor            ->dirty = true;
-    TracyCZoneEnd(ctxMethod);
 }
 void ta_shader_reset_pvm(ta_shader *shader)
 {

@@ -54,28 +54,6 @@ layout (std140) uniform ubo_bone_normal_xforms {
 //------------------------------------------------------
 #define TA_LIGHT_MAX_ACTIVE_LIGHTS 4
 
-struct Light {
-    // Common
-    float intensity;
-    vec3 position;
-    vec3 color;
-    int type;
-
-    // Directional / Point / Spot
-    bool cast_shadows;
-
-    // Directional / Spot
-    vec3 direction;
-    mat4 light_pv;
-
-    // Shadow mapping
-    float shadowmap_zfar;                   // Point
-    uint shadowmap_texture_pool_index;
-    uint shadowmap_texture_array_layers[6]; // Point light "cubemaps" require 6 layers, other lights only use index 0
-};
-uniform int u_lights_count;
-uniform Light u_lights[TA_LIGHT_MAX_ACTIVE_LIGHTS];
-
 struct UboLight {
     int type;                                // ta_light_type: type of light
     float intensity;                         // light intensity [0.0, +INF]
@@ -97,6 +75,7 @@ struct UboLight {
 layout (std140) uniform ubo_lights {
     UboLight lights[TA_LIGHT_MAX_ACTIVE_LIGHTS];
 };
+uniform uint u_lights_count;
 //------------------------------------------------------
 
 out vs_out {
@@ -193,7 +172,7 @@ void main()
     vertex.tbn_position = TBN * vertex.position;
     vertex.tbn_camera_pos = TBN * u_camera_pos;
 
-    for (int i = 0; i < u_lights_count; i++) {
+    for (uint i = uint(0); i < u_lights_count; i++) {
         vertex.tbn_light_pos[i] = TBN * lights[i].position;
         vertex.tbn_light_dir[i] = TBN * lights[i].direction;
         vertex.light_pvm[i] = lights[i].light_pv * position;

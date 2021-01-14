@@ -185,22 +185,18 @@ void ta_model_render(ta_model *model)
             }
         }
 
-        // HACK: We need to assign all of the materials in model->materials to the material slots
-        // TODO: Upload all materials in material UBO, use ta_shader_set_int to set material slots as index into
-        // the material UBO.
-        ta_material *material_old = 0;
+        // TODO: Need to group materials by shader if we allow them to start having custom shaders
+        ta_material *first_material = 0;
         if (model->materials) {
-            material_old = ta_game_by_sym_try(RES_MATERIAL, model->materials[0]);
+            first_material = ta_game_by_sym_try(RES_MATERIAL, model->materials[0]);
         }
-        if (!material_old) {
-            material_old = ta_game_by_sym(RES_MATERIAL, tg_material_default);
+        if (!first_material) {
+            first_material = ta_game_by_sym(RES_MATERIAL, tg_material_default);
         }
 
-        // TODO: Need to group materials by shader if we allow them to start having custom shaders
-        ta_shader *shader = (ta_shader *)ta_game_by_sym(RES_SHADER, material_old->shader);
+        ta_shader *shader = (ta_shader *)ta_game_by_sym(RES_SHADER, first_material->shader);
 
         ta_shader_set_bool(shader, SYM_U_SELECTED, (GLboolean)selected);
-        ta_shader_set_material(shader, SYM_U_MATERIAL, material_old);
 
         // TODO: Cache this? Is it worth the space?
         // Calculate visual offset matrix
@@ -234,6 +230,10 @@ void ta_model_render(ta_model *model)
                 }
                 if (!material) {
                     material = ta_game_by_sym(RES_MATERIAL, tg_material_default);
+                }
+
+                if (material->shader != shader->name) {
+                    DLB_ASSERT(!"We don't currently support materials for the same model having different shaders.");
                 }
 
                 // HACK: Assumes that *all* materials are always bound in the same order as they exist in the densea

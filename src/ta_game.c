@@ -1940,7 +1940,7 @@ void ta_game_loop()
             // NOTE: These only happen for "mesh" shader atm but wutevs..
             ta_shader_set_vec3_try(shader, SYM_U_CAMERA_POS, &active_camera_trans->xform_world.position);
             ta_shader_set_int_try(shader, SYM_U_DEBUG_CHANNEL, active_camera->dbg_channel);
-            ta_shader_set_int_try(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
+            ta_shader_set_uint_try(shader, SYM_U_LIGHTS_COUNT, u_lights_count);
         }
 
         // Dump any prims from the collision pass
