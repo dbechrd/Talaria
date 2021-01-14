@@ -2589,12 +2589,6 @@ static void ui_editor_sidebar()
 }
 void ta_editor_draw_screen()
 {
-    if (editor.textbox_editing) {
-        ta_ui_set_cursor(TA_CURSOR_IBEAM);
-    } else {
-        ta_ui_set_cursor(TA_CURSOR_ARROW);
-    }
-
     ta_log_write(&tg_debug_log, SRC_EDITOR, "UI editor main window layout begin\n");
 
     // HACK: I want windows to be independent of each other, but currently UI_ROOT is doing flow. This lets the

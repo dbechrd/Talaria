@@ -6,7 +6,7 @@
 #include "misc/glad.h"
 
 // NOTE: Has to match shader definition
-#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 4
+#define TA_LIGHT_MAX_ACTIVE_LIGHTS 4
 
 struct ta_model;
 struct ta_shader;
@@ -15,7 +15,7 @@ struct ta_transform;
 // NOTE: This must match the GLSL ubo_lights structure byte-for-byte (including padding!)
 // https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL
 // NOTE: This could obviously be packed tighter, but there are only 8 dynamic lights so it's not a priority
-typedef struct ta_lighting_record {
+typedef struct ta_light_ubo_entry {
     int type;                                 // ta_light_type: type of light
     float intensity;                          // light intensity [0.0, +INF]
     bool cast_shadows;                        // bool: light casts dynamic shadows if true
@@ -32,21 +32,23 @@ typedef struct ta_lighting_record {
     float ___pad5;
 
     // NOTE: A LOT OF WASTED MEMORY, ME CRIES HARD. :'(
+    // TODO: We could get rid of pad4 and pad5, and expand this array to separate u32s to save ~80 bytes per light, but
+    // considering we have 4 active lights I doubt it's relevant in the slighest for performance.
     // https://learnopengl.com/Advanced-OpenGL/Advanced-GLSL
     // "Array of scalars or vectors: Each element has a base alignment equal to that of a vec4."
     u32 shadowmap_texture_array_layer[6][4];  // array texture layer (determines which texture in the pool to use, where "pool" is an array texture)
-} ta_lighting_record;
+} ta_light_ubo_entry;
 
-typedef struct ta_lighting {
-    ta_lighting_record light_records[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-    GLuint gl_ubo_lights;
+typedef struct ta_light_ubo {
+    ta_light_ubo_entry lights[TA_LIGHT_MAX_ACTIVE_LIGHTS];
+    GLuint gl_ubo_id;
 
     // TODO(cleanup): We probably don't need shadowmap UBOs if we're using the texture pool info in ta_lighting_record?
-    //u32 shadowmap2d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];  // NOTE: sampler2D
-    //u32 shadowmap3d[TA_LIGHTING_MAX_ACTIVE_LIGHTS];  // NOTE: samplerCube
+    //u32 shadowmap2d[TA_LIGHT_MAX_ACTIVE_LIGHTS];  // NOTE: sampler2D
+    //u32 shadowmap3d[TA_LIGHT_MAX_ACTIVE_LIGHTS];  // NOTE: samplerCube
     //GLuint gl_ubo_shadowmap2d;
     //GLuint gl_ubo_shadowmap3d;
-} ta_lighting;
+} ta_light_ubo;
 
 typedef enum ta_light_type {
     TA_LIGHT_AMBIENT      = 0,  // @Name("Ambient")
@@ -105,14 +107,14 @@ typedef struct ta_light {
     } data;
 } ta_light;
 
-void ta_lighting_init                   (ta_lighting *lighting);
-void ta_lighting_bind_lights            (ta_lighting *lighting);
+void ta_light_ubo_init                  (ta_light_ubo *light_ubo);
+void ta_light_ubo_bind                  (ta_light_ubo *light_ubo);
 
 const char *ta_light_type_str           (int type);
 void ta_light_init                      (ta_light *light);
 void ta_light_init_void                 (void *light);
-ta_vec3 ta_light_position               (ta_light *light);
-ta_vec3 ta_light_direction              (ta_light *light);
-ta_mat4 ta_light_pv                     (ta_light *light);
+ta_vec3 ta_light_position               (const ta_light *light);
+ta_vec3 ta_light_direction              (const ta_light *light);
+ta_mat4 ta_light_pv                     (const ta_light *light);
 void ta_light_shadowpass_render         (ta_light *light, struct ta_model *models);
 void ta_light_render_shadowmap_debug    (ta_light *light, int x, int y);

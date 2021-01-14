@@ -2,6 +2,7 @@
 #include "ta_asset_watcher.h"
 #include "ta_camera.h"
 #include "ta_light.h"
+#include "ta_material.h"
 #include "ta_scene.h"
 #include "ta_texture.h"
 #include "dlb/dlb_types.h"
@@ -79,27 +80,29 @@ typedef enum ta_command {
 } ta_command;
 
 typedef struct ta_game {
-    ta_game_state state;        // current game state
-    u64 frame_num;              // current frame number
-    int simulate;               // physics sim: -1 = on, 0 = off, 1+ = simulate N frames
-    u64 sim_step;               // current simulation step
-    ta_scene scene;             // active scene
-    ta_texturing texturing;     // texture manager
-    ta_lighting lighting;       // active lighting
-    ta_camera minimap_camera;   // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
-    const char *active_camera;  // currently active camera for main viewport
+    ta_game_state state;    // current game state
+    u64 frame_num;          // current frame number
+    int simulate;           // physics sim: -1 = on, 0 = off, 1+ = simulate N frames
+    u64 sim_step;           // current simulation step
+
+    ta_scene scene;                 // active scene
+    ta_texturing texturing;         // texture manager
+    ta_light_ubo light_ubo;         // active lighting
+    ta_material_ubo material_ubo;   // active materials
+    ta_camera minimap_camera;       // HACK: Just having fun..     // TODO(cleanup): Move this to DML?
+    const char *active_camera;      // currently active camera for main viewport
     struct ta_keybind *keybinds;
     bool console_visible;
-    const char *base_path;      // symbol (working dir in debug mode, otherwise the .exe directory)
+    const char *base_path;          // symbol (working dir in debug mode, otherwise the .exe directory)
     ta_asset_watcher texture_watcher;
 
-    bool debug_wireframe;       // [DEBUG] render everything from as wireframe when using this camera
-    bool debug_normals;         // [DEBUG] render normals for every mesh in the world
-    bool debug_colliders;       // [DEBUG] render colliders for every rigid_body in the world
-    bool debug_aabbs;           // [DEBUG] render AABBs for every rigid_body in the world
-    bool debug_light_radii;     // [DEBUG] render light radii for every light in the world
-    bool debug_nametags;        // [DEBUG] render name tags for every transform in the world
-    bool debug_no_mesh;         // [DEBUG] disable mesh rendering for every mesh in the world
+    bool debug_wireframe;   // [DEBUG] render everything from as wireframe when using this camera
+    bool debug_normals;     // [DEBUG] render normals for every mesh in the world
+    bool debug_colliders;   // [DEBUG] render colliders for every rigid_body in the world
+    bool debug_aabbs;       // [DEBUG] render AABBs for every rigid_body in the world
+    bool debug_light_radii; // [DEBUG] render light radii for every light in the world
+    bool debug_nametags;    // [DEBUG] render name tags for every transform in the world
+    bool debug_no_mesh;     // [DEBUG] disable mesh rendering for every mesh in the world
 
     bool debug_physics_render_penetration_vectors;
     bool debug_physics_render_static_friction_vectors;

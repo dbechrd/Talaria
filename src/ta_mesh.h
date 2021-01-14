@@ -118,6 +118,7 @@ typedef struct ta_mesh {
 
 extern const char *tg_mesh_default;
 extern GLuint tg_mesh_gl_default_bone_xforms;
+extern GLuint tg_mesh_gl_default_bone_normal_xforms;
 
 const char *ta_vertex_attrib_type_str       (int type);
 GLenum ta_mesh_gl_primitive_mode            (ta_primitive_mode mode);

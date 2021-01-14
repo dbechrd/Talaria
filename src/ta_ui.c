@@ -1135,6 +1135,10 @@ bool ta_ui_textbox(const char *text, size_t text_len, ta_ui_textbox_state *textb
     ui_frame_begin(UI_TEXTBOX, textbox, flags);
     ui_frame *frame = ui_frame_end(UI_TEXTBOX);
 
+    if (frame->state.hover) {
+        ta_ui_set_cursor(TA_CURSOR_IBEAM);
+    }
+
     if (textbox->focused) {
         frame->state_type = UI_STATE_ACTIVE;
         textbox->focus_changed = false;
@@ -1254,6 +1258,10 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
 
     ui_frame_begin(UI_TEXTBOX, textbox, flags);
     ui_frame *frame = ui_frame_end(UI_TEXTBOX);
+
+    if (frame->state.hover) {
+        ta_ui_set_cursor(TA_CURSOR_IBEAM);
+    }
 
     if (textbox->focused) {
         frame->state_type = UI_STATE_ACTIVE;

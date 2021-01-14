@@ -168,22 +168,39 @@ void ta_model_render(ta_model *model)
         if (!mesh) {
             mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
         }
+
+        // Bind bone UBOs
+        if (mesh->skin.gl_ubo_bone_xforms) {
+            glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, mesh->skin.gl_ubo_bone_xforms);
+            if (mesh->skin.bone_xforms_dirty) {
+                glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh->skin.bone_xforms), mesh->skin.bone_xforms, GL_DYNAMIC_DRAW);
+                mesh->skin.bone_xforms_dirty = false;
+            }
+        }
+        if (mesh->skin.gl_ubo_bone_normal_xforms) {
+            glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_NORMAL_XFORMS, mesh->skin.gl_ubo_bone_normal_xforms);
+            if (mesh->skin.bone_normal_xforms_dirty) {
+                glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh->skin.bone_normal_xforms), mesh->skin.bone_normal_xforms, GL_DYNAMIC_DRAW);
+                mesh->skin.bone_normal_xforms_dirty = false;
+            }
+        }
+
         // HACK: We need to assign all of the materials in model->materials to the material slots
         // TODO: Upload all materials in material UBO, use ta_shader_set_int to set material slots as index into
         // the material UBO.
-        ta_material *material = 0;
+        ta_material *material_old = 0;
         if (model->materials) {
-            material = ta_game_by_sym_try(RES_MATERIAL, model->materials[0]);
+            material_old = ta_game_by_sym_try(RES_MATERIAL, model->materials[0]);
         }
-        if (!material) {
-            material = ta_game_by_sym(RES_MATERIAL, tg_material_default);
+        if (!material_old) {
+            material_old = ta_game_by_sym(RES_MATERIAL, tg_material_default);
         }
 
         // TODO: Need to group materials by shader if we allow them to start having custom shaders
-        ta_shader *shader = (ta_shader *)ta_game_by_sym(RES_SHADER, material->shader);
+        ta_shader *shader = (ta_shader *)ta_game_by_sym(RES_SHADER, material_old->shader);
 
         ta_shader_set_bool(shader, SYM_U_SELECTED, (GLboolean)selected);
-        ta_shader_set_material(shader, SYM_U_MATERIAL, material);
+        ta_shader_set_material(shader, SYM_U_MATERIAL, material_old);
 
         // TODO: Cache this? Is it worth the space?
         // Calculate visual offset matrix
@@ -195,7 +212,74 @@ void ta_model_render(ta_model *model)
 
         model_set_shader_morph_weights(model, shader);
         ta_shader_bind(shader);
-        ta_mesh_render(mesh);
+
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // ta_mesh_render() doesn't have access to the shader or model->materials, so i'm duplicating this here
+        // for the case of rendering meshes for now
+        if (!mesh->gl_vao) {
+            mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
+        }
+
+        // HACK: Need to manually set material index uniform because shader has already been bound
+        ta_shader_uniform *u_material_index = find_uniform_by_name_try(shader->uniforms, SYM_U_MATERIAL_INDEX,
+            TA_GLSL_UINT);
+
+        glBindVertexArray(mesh->gl_vao);
+        if (mesh->index_arrays) {
+            dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
+                // Find material (if slot out of range or material doesn't exist, fallback on default material)
+                ta_material *material = 0;
+                if (index_array->material_slot < dlb_vec_len(model->materials)) {
+                    material = ta_game_by_sym_try(RES_MATERIAL, model->materials[index_array->material_slot]);
+                }
+                if (!material) {
+                    material = ta_game_by_sym(RES_MATERIAL, tg_material_default);
+                }
+
+                // HACK: Assumes that *all* materials are always bound in the same order as they exist in the densea
+                // resource array. This is fine for now, but may need to be further abstracted if we only want to bind
+                // a subset of loaded materials later on.
+                ta_shader_set_uint(shader, SYM_U_MATERIAL_INDEX, (u32)material->index);
+
+                // HACK: Need to manually set material index uniform because shader has already been bound
+                glUniform1ui(u_material_index->location, u_material_index->value.gluint);
+
+                size_t index_count = dlb_vec_len(index_array->values);
+                DLB_ASSERT(index_count);
+                glDrawElements(ta_mesh_gl_primitive_mode(index_array->mode), (GLsizei)index_count, GL_UNSIGNED_SHORT,
+                    (void *)index_array->offset_bytes);
+            }
+        } else {
+            size_t materials_count = dlb_vec_len(model->materials);
+            if (materials_count > 1) {
+                DLB_ASSERT(!"Models must use index arrays in order to support multiple materials");
+            }
+
+            ta_material *material = ta_game_by_sym_try(RES_MATERIAL, model->materials[0]);
+            if (!material) {
+                material = ta_game_by_sym(RES_MATERIAL, tg_material_default);
+            }
+            ta_shader_set_uint(shader, SYM_U_MATERIAL_INDEX, (u32)material->index);
+
+            // HACK: Need to manually set material index uniform because shader has already been bound
+            glUniform1ui(u_material_index->location, u_material_index->value.gluint);
+
+            size_t positions_count = dlb_vec_len(mesh->positions);
+            glDrawArrays(ta_mesh_gl_primitive_mode(mesh->mode), 0, (GLsizei)positions_count);
+        }
+
+        glBindVertexArray(0);
+        //glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+        // Reset bone UBOs
+        if (mesh->skin.gl_ubo_bone_xforms) {
+            glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, tg_mesh_gl_default_bone_xforms);
+        }
+        if (mesh->skin.gl_ubo_bone_normal_xforms) {
+            glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_NORMAL_XFORMS, tg_mesh_gl_default_bone_normal_xforms);
+        }
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         ta_shader_unbind();
     }
 

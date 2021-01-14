@@ -1,4 +1,5 @@
 #include "ta_support.h"
+#include "ta_primitive.h"
 
 typedef struct ta_gjk_simplex {
     ta_vec3 vertices[4];
@@ -18,7 +19,7 @@ ta_vec3 ta_support_obb(ta_obb *obb, ta_vec3 d)
     return support;
 }
 
-bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *dir)
+static bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *dir)
 {
     DLB_ASSERT(simplex);
     DLB_ASSERT(simplex->count);
@@ -227,11 +228,35 @@ bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b)
     ta_vec3 s = vec3_sub(sa, sb);
     simplex.vertices[simplex.count++] = s;
 
+    //--------------------------------------------
+    const float hue_inc = 360.0f / 8.0f;
+    //--------------------------------------------
+
     // Start looking in opposite direction of first support point
     d = vec3_neg(s);
 
+    int i = 1;
     for (;;) {
         sa = ta_support_obb(a, d);
+
+        //--------------------------------------------
+        // DEBUG(cleanup): Debug rendering
+        ta_mat3 hue_rot = mat3_hue_rotation(i * 360.0f / 8.0f);
+        ta_rgb red = { 1.0f, 0.0f, 0.0f };
+        ta_rgb red_shift = mat3_mul_rgb(&hue_rot, red);
+        ta_rgba color = rgba_init(red_shift.r, red_shift.g, red_shift.b, 1.0f);
+        ta_sphere dbg_sphere = { 0 };
+        dbg_sphere.center = sa;
+        dbg_sphere.radius = 0.02f * i;
+        ta_primitive_push_sphere(0, dbg_sphere, color);
+        dbg_sphere.center = sb;
+        ta_primitive_push_sphere(0, dbg_sphere, color);
+        ta_line_3d line = { 0 };
+        line.p0 = a->center;
+        line.p1 = vec3_add(a->center, vec3_scalef(d, 0.2f * i));
+        ta_primitive_push_line_3d(0, line, TA_COLOR_WHITE, color);
+        //--------------------------------------------
+
         sb = ta_support_obb(b, vec3_neg(d));
         s = vec3_sub(sa, sb);
         if (vec3_dot(s, d) < 0) {
@@ -245,5 +270,6 @@ bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b)
             // Simplex contains origin, shapes are intersecting
             return true;
         }
+        i++;
     }
 }

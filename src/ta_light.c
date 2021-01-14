@@ -18,44 +18,43 @@
 #define DEFAULT_SHADOWMAP_ZNEAR         0.1f
 #define DEFAULT_SHADOWMAP_ZFAR          100.0f
 
-void ta_lighting_init(ta_lighting *lighting)
+void ta_light_ubo_init(ta_light_ubo *light_ubo)
 {
     TracyCZone(ctxMethod, true);
     // NOTE: This is necessary for std140 packing of ta_lighting_records in ubo_lights
     DLB_ASSERT(sizeof(bool) == sizeof(int));
 
-    glGenBuffers(1, &lighting->gl_ubo_lights);
-    glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_LIGHTS, lighting->gl_ubo_lights);
-    glBindBuffer(GL_UNIFORM_BUFFER, lighting->gl_ubo_lights);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(ta_lighting_record) * TA_LIGHTING_MAX_ACTIVE_LIGHTS, 0, GL_DYNAMIC_DRAW);
+    glGenBuffers(1, &light_ubo->gl_ubo_id);
+    glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_LIGHTS, light_ubo->gl_ubo_id);
+    glBindBuffer(GL_UNIFORM_BUFFER, light_ubo->gl_ubo_id);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(ta_light_ubo_entry) * TA_LIGHT_MAX_ACTIVE_LIGHTS, 0, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // TODO: If we want to use binding point 0 for other things in other shaders, then this mapping needs to be a bit
-    // more abstract.
-    glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_LIGHTS, lighting->gl_ubo_lights);
+    // more abstract. This should only ever matter if we end up with > GL_MAX_UNIFORM_BUFFER_BINDINGS (36+) UBOs.
+    glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_LIGHTS, light_ubo->gl_ubo_id);
     TracyCZoneEnd(ctxMethod);
 }
-
-void ta_lighting_bind_lights(ta_lighting *lighting)
+void ta_light_ubo_bind(ta_light_ubo *light_ubo)
 {
     TracyCZone(ctxMethod, true);
     ta_light *lights = (ta_light *)ta_game_resource_pool(RES_COMP_LIGHT);
     int light_idx = 0;
-    for (size_t i = 0; i < dlb_vec_len(lights) && i < TA_LIGHTING_MAX_ACTIVE_LIGHTS; ++i) {
-        ta_light *light = &lights[i];
+    for (size_t i = 0; i < dlb_vec_len(lights) && i < TA_LIGHT_MAX_ACTIVE_LIGHTS; ++i) {
+        const ta_light *light = &lights[i];
         if (light->disabled) {
             continue;
         }
 
         // Set default values (some are overridden for specific light types below)
-        lighting->light_records[light_idx].type            = light->type;
-        lighting->light_records[light_idx].intensity       = light->intensity;
-        lighting->light_records[light_idx].cast_shadows    = false;
-        lighting->light_records[light_idx].position        = ta_light_position(light);
-        lighting->light_records[light_idx].color           = *(ta_vec3 *)&light->color;
-        lighting->light_records[light_idx].direction       = VEC3_ZERO;
-        lighting->light_records[light_idx].light_pv        = MAT4_IDENT;
-        lighting->light_records[light_idx].shadowmap_zfar  = 0.0f;
+        light_ubo->lights[light_idx].type            = light->type;
+        light_ubo->lights[light_idx].intensity       = light->intensity;
+        light_ubo->lights[light_idx].cast_shadows    = false;
+        light_ubo->lights[light_idx].position        = ta_light_position(light);
+        light_ubo->lights[light_idx].color           = *(ta_vec3 *)&light->color;
+        light_ubo->lights[light_idx].direction       = VEC3_ZERO;
+        light_ubo->lights[light_idx].light_pv        = MAT4_IDENT;
+        light_ubo->lights[light_idx].shadowmap_zfar  = 0.0f;
         //u_shadowmap2d->value.sampler_2d   = 0;
         //u_shadowmap3d->value.sampler_cube = 0;
 
@@ -64,35 +63,35 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
             case TA_LIGHT_AMBIENT: {
                 break;
             } case TA_LIGHT_DIRECTIONAL: {
-                lighting->light_records[light_idx].direction = ta_light_direction(light);
+                light_ubo->lights[light_idx].direction = ta_light_direction(light);
                 ta_mat4 light_pv = ta_light_pv(light);
-                lighting->light_records[light_idx].light_pv = mat4_transpose(&light_pv);
-                lighting->light_records[light_idx].cast_shadows = !light->data.directional.no_shadow_cast;
+                light_ubo->lights[light_idx].light_pv = mat4_transpose(&light_pv);
+                light_ubo->lights[light_idx].cast_shadows = !light->data.directional.no_shadow_cast;
 
                 ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.directional.shadow_map);
-                lighting->light_records[light_idx].shadowmap_texture_pool_index = tex->gl_texture_pool_index;
-                lighting->light_records[light_idx].shadowmap_texture_array_layer[0][0] = tex->gl_texture_pool_layer;
+                light_ubo->lights[light_idx].shadowmap_texture_pool_index = tex->gl_texture_pool_index;
+                light_ubo->lights[light_idx].shadowmap_texture_array_layer[0][0] = tex->gl_texture_pool_layer;
                 break;
             } case TA_LIGHT_POINT: {
-                lighting->light_records[light_idx].cast_shadows = !light->data.point.no_shadow_cast;
-                lighting->light_records[light_idx].shadowmap_zfar  = light->data.point.shadow_properties.zfar;
+                light_ubo->lights[light_idx].cast_shadows = !light->data.point.no_shadow_cast;
+                light_ubo->lights[light_idx].shadowmap_zfar  = light->data.point.shadow_properties.zfar;
 
                 // NOTE: Assume all textures are in the same pool (asserts)
                 ta_texture *first_tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[0]);
-                lighting->light_records[light_idx].shadowmap_texture_pool_index = first_tex->gl_texture_pool_index;
+                light_ubo->lights[light_idx].shadowmap_texture_pool_index = first_tex->gl_texture_pool_index;
                 for (int layer = 0; layer < 6; layer++) {
                     ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.point.shadow_map.textures[layer]);
-                    lighting->light_records[light_idx].shadowmap_texture_array_layer[layer][0] = tex->gl_texture_pool_layer;
-                    DLB_ASSERT(tex->gl_texture_pool_index == lighting->light_records[light_idx].shadowmap_texture_pool_index);
+                    light_ubo->lights[light_idx].shadowmap_texture_array_layer[layer][0] = tex->gl_texture_pool_layer;
+                    DLB_ASSERT(tex->gl_texture_pool_index == light_ubo->lights[light_idx].shadowmap_texture_pool_index);
                 }
                 break;
             } case TA_LIGHT_SPOT: {
-                lighting->light_records[light_idx].direction = ta_light_direction(light);
-                lighting->light_records[light_idx].cast_shadows = !light->data.spot.no_shadow_cast;
+                light_ubo->lights[light_idx].direction = ta_light_direction(light);
+                light_ubo->lights[light_idx].cast_shadows = !light->data.spot.no_shadow_cast;
 
                 ta_texture *tex = (ta_texture *)ta_game_by_sym(RES_TEXTURE, light->data.spot.shadow_map);
-                lighting->light_records[light_idx].shadowmap_texture_pool_index = tex->gl_texture_pool_index;
-                lighting->light_records[light_idx].shadowmap_texture_array_layer[0][0] = tex->gl_texture_pool_layer;
+                light_ubo->lights[light_idx].shadowmap_texture_pool_index = tex->gl_texture_pool_index;
+                light_ubo->lights[light_idx].shadowmap_texture_array_layer[0][0] = tex->gl_texture_pool_layer;
 
                 DLB_ASSERT(!"Don't handle spot lights yet");
                 break;
@@ -103,13 +102,13 @@ void ta_lighting_bind_lights(ta_lighting *lighting)
 
         // HACK: xform_world isn't set yet, so we need to fix light positions until this code runs every frame
         ta_transform *transform = (ta_transform *)ta_game_component(light->entity, RES_COMP_TRANSFORM);
-        lighting->light_records[light_idx].position = transform->xform.position;
+        light_ubo->lights[light_idx].position = transform->xform.position;
 
         light_idx++;
     }
 
-    glBindBuffer(GL_UNIFORM_BUFFER, lighting->gl_ubo_lights);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting->light_records), lighting->light_records, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, light_ubo->gl_ubo_id);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(light_ubo->lights), light_ubo->lights, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
     TracyCZoneEnd(ctxMethod);
 }
@@ -340,12 +339,12 @@ static void shadowmap_point_create(ta_light *light)
     TracyCZoneEnd(ctxMethod);
 }
 
-ta_vec3 ta_light_position(ta_light *light)
+ta_vec3 ta_light_position(const ta_light *light)
 {
     ta_transform *transform = (ta_transform *)ta_game_component(light->entity, RES_COMP_TRANSFORM);
     return transform->xform_world.position;
 }
-ta_vec3 ta_light_direction(ta_light *light)
+ta_vec3 ta_light_direction(const ta_light *light)
 {
     ta_transform *transform = (ta_transform *)ta_game_component(light->entity, RES_COMP_TRANSFORM);
 
@@ -359,7 +358,7 @@ ta_vec3 ta_light_direction(ta_light *light)
     direction = vec3_normalize(direction);
     return direction;
 }
-ta_mat4 ta_light_pv(ta_light *light)
+ta_mat4 ta_light_pv(const ta_light *light)
 {
     ta_vec3 inv_dir = vec3_neg(ta_light_direction(light));
     ta_mat4 view = mat4_lookat(inv_dir, VEC3_ZERO, VEC3_Y);

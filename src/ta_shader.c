@@ -35,6 +35,10 @@ const char *ta_glsl_type_str(int type)
 
 void ta_shader_init(ta_shader *shader)
 {
+    // TODO: Idk where to put this sanity check, so just let it run per shader cus who cares for now
+    // NOTE: Docs say GL_MAX_UNIFORM_BUFFER_BINDINGS must be at least 36
+    DLB_ASSERT(TA_GLSL_UBO_COUNT <= 36);
+
     TracyCZone(ctxMethod, true);
     ta_shader_load(shader);
     TracyCZoneEnd(ctxMethod);
@@ -289,16 +293,21 @@ void ta_shader_load(ta_shader *shader)
     DLB_ASSERT(!attr_morph1_pos  || attr_morph1_pos->location  < 0 || attr_morph1_pos->location  == TA_VERTEX_ATTR_MORPH1_POSITION);
     DLB_ASSERT(!attr_morph1_norm || attr_morph1_norm->location < 0 || attr_morph1_norm->location == TA_VERTEX_ATTR_MORPH1_NORMAL);
     DLB_ASSERT(!attr_morph1_tang || attr_morph1_tang->location < 0 || attr_morph1_tang->location == TA_VERTEX_ATTR_MORPH1_TANGENT);
-    DLB_ASSERT(!attr_bones      || attr_bones->location      < 0 || attr_bones->location      == TA_VERTEX_ATTR_BONE_INDICES);
+    DLB_ASSERT(!attr_bones       || attr_bones->location       < 0 || attr_bones->location       == TA_VERTEX_ATTR_BONE_INDICES);
     DLB_ASSERT(!attr_weights     || attr_weights->location     < 0 || attr_weights->location     == TA_VERTEX_ATTR_BONE_WEIGHTS);
 
     shader_init_uniforms(shader, shader->uniforms);
 
-    // HACK: Test every shader for Lights UBO, and bind to point 0 if present
+    // HACK: Test every shader for Lights UBO, and bind if present
     // TODO: This is bad if it fails for a shader that actually needs the Lights UBO :/
     GLuint ubo_lights_index = glGetUniformBlockIndex(shader->program_id, "ubo_lights");
     if (ubo_lights_index != GL_INVALID_INDEX) {
         glUniformBlockBinding(shader->program_id, ubo_lights_index, TA_GLSL_UBO_LIGHTS);
+    }
+
+    GLuint ubo_materials_index = glGetUniformBlockIndex(shader->program_id, "ubo_materials");
+    if (ubo_materials_index != GL_INVALID_INDEX) {
+        glUniformBlockBinding(shader->program_id, ubo_materials_index, TA_GLSL_UBO_MATERIALS);
     }
 
     GLuint ubo_bone_xforms_index = glGetUniformBlockIndex(shader->program_id, "ubo_bone_xforms");
@@ -591,7 +600,7 @@ void ta_shader_set_material(ta_shader *shader, const char *name, ta_material *ma
     ta_shader_uniform *u_material_roughness_texture_pool_layer = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_TEXTURE_POOL_LAYER, TA_GLSL_UINT);
     ta_shader_uniform *u_material_roughness_factor             = find_uniform_by_name(u_material->value.properties, SYM_U_MATERIAL_ROUGHNESS_FACTOR,             TA_GLSL_FLOAT);
 
-    // Set default values (some are overridden for specific light types below)
+    // Set uniform values
     u_material_albedo_texture_pool_index    ->value.gluint  = albedo_texture->gl_texture_pool_index;
     u_material_albedo_texture_pool_layer    ->value.gluint  = albedo_texture->gl_texture_pool_layer;
     u_material_albedo_factor                ->value.vec4    = *(ta_vec4 *)&material->albedo_factor;
@@ -661,6 +670,9 @@ static void shader_bind_uniforms(ta_shader_uniform *uniforms, int *tex_count)
 {
     dlb_vec_each(ta_shader_uniform *, u, uniforms) {
         if ((u->location < 0 && u->type != TA_GLSL_STRUCT)) {
+            continue;
+        }
+        if (!u->dirty) {
             continue;
         }
 

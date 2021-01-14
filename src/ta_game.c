@@ -13,6 +13,7 @@
 #include "ta_keybind.h"
 #include "ta_light.h"
 #include "ta_log.h"
+#include "ta_material.h"
 #include "ta_mesh.h"
 #include "ta_model.h"
 #include "ta_mouse.h"
@@ -240,20 +241,31 @@ void ta_game_init()
     //ta_game_load_gltf("data/mesh/dude.gltf");
     //ta_game_load_gltf("data/mesh/skeleton_test.gltf");
 
-    if (!tg_mesh_gl_default_bone_xforms) {
-        TracyCZoneN(ctxGenDefaultBoneXforms, "Generate default_bone_xforms", true);
-        glGenBuffers(1, &tg_mesh_gl_default_bone_xforms);
-        glBindBuffer(GL_UNIFORM_BUFFER, tg_mesh_gl_default_bone_xforms);
-        glBufferData(GL_UNIFORM_BUFFER, FIELD_SIZEOF(ta_mesh, skin.bone_xforms), 0, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-        TracyCZoneEnd(ctxGenDefaultBoneXforms);
-    }
+    TracyCZoneN(ctxGenDefaultBoneXforms, "Generate default bone xforms", true);
+
+    DLB_ASSERT(!tg_mesh_gl_default_bone_xforms);
+    DLB_ASSERT(!tg_mesh_gl_default_bone_normal_xforms);
+
+    glGenBuffers(1, &tg_mesh_gl_default_bone_xforms);
+    glBindBuffer(GL_UNIFORM_BUFFER, tg_mesh_gl_default_bone_xforms);
+    glBufferData(GL_UNIFORM_BUFFER, FIELD_SIZEOF(ta_mesh, skin.bone_xforms), 0, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, tg_mesh_gl_default_bone_xforms);
+
+    glGenBuffers(1, &tg_mesh_gl_default_bone_normal_xforms);
+    glBindBuffer(GL_UNIFORM_BUFFER, tg_mesh_gl_default_bone_normal_xforms);
+    glBufferData(GL_UNIFORM_BUFFER, FIELD_SIZEOF(ta_mesh, skin.bone_xforms), 0, GL_DYNAMIC_DRAW);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_NORMAL_XFORMS, tg_mesh_gl_default_bone_normal_xforms);
+
+    TracyCZoneEnd(ctxGenDefaultBoneXforms);
 
     //--------------------------------------------------------------------------
     // Lighting
     //--------------------------------------------------------------------------
     // TODO: Find closest 8 lights and store them in tg_game.lights
-    ta_lighting_init(&tg_game.lighting);
+    ta_light_ubo_init(&tg_game.light_ubo);
+    ta_material_ubo_init(&tg_game.material_ubo);
 
     //--------------------------------------------------------------------------
     // Scene (OGX) ** MUST COME AFTER game.scene.index_by_name[*] INITIALIZED
@@ -1816,8 +1828,13 @@ void ta_game_loop()
             ta_camera_update_world_view(camera);
         }
 
+        // TODO: Only do this if the lights are dirty? Tracking that might not be worth the effort..
         // Update light data UBO
-        ta_lighting_bind_lights(&tg_game.lighting);
+        ta_light_ubo_bind(&tg_game.light_ubo);
+
+        // TODO: Only do this if the materials are dirty? Tracking that might not be worth the effort..
+        // Update material UBO
+        ta_material_ubo_bind(&tg_game.material_ubo);
 
         //----------------------------------------------------------------------
         // Skinning
@@ -1845,6 +1862,8 @@ void ta_game_loop()
             ta_bone *bone = (ta_bone *)ta_game_component(mesh->skin.skeleton.bones[0], RES_COMP_BONE);
             ta_transform *armature = (ta_transform *)ta_game_component(bone->armature, RES_COMP_TRANSFORM);
 
+            // TODO: Could cache this, but I'm not sure how much duplication there is here (seems like an armature
+            // would only ever be used by one mesh at a time, right?)
             ta_mat4 armature_inv = { 0 };
             DLB_ASSERT(mat4_inverse(&armature->world, &armature_inv));
 
@@ -1852,14 +1871,16 @@ void ta_game_loop()
             dlb_vec_each(const char **, bone_name, mesh->skin.skeleton.bones) {
                 ta_transform *transform = (ta_transform *)ta_game_component(*bone_name, RES_COMP_TRANSFORM);
 
+                // TODO: Pre-calculate inverse bind poses as mat4 to avoid duplicating this work every frame
                 ta_mat4 bone_bind_pos = mat4_translate(mesh->skin.skeleton.bind_pose_positions[bone_idx]);
                 ta_mat4 bone_bind_rot = mat4_rotate_quat(mesh->skin.skeleton.bind_pose_orientations[bone_idx]);
                 ta_mat4 bone_bind_pose = mat4_mul(&bone_bind_pos, &bone_bind_rot);
-
                 ta_mat4 bone_bind_pose_inv = { 0 };
                 DLB_ASSERT(mat4_inverse(&bone_bind_pose, &bone_bind_pose_inv));
 
+                // TODO: This could also be cached
                 ta_mat4 skinned = mat4_mul(&bone_bind_pose_inv, &skin_pose);
+
                 skinned = mat4_mul(&transform->world, &skinned);
                 skinned = mat4_mul(&armature_inv, &skinned);
                 mesh->skin.bone_xforms[bone_idx] = skinned;
@@ -1965,6 +1986,7 @@ void ta_game_loop()
             game_render_nametags_debug(active_camera);
         }
 
+#if 0
         // TODO(cleanup): Temporarily render support point of OBB
         ta_rigid_body *can_body = ta_game_by_sym(RES_COMP_RIGID_BODY, tg_e_can);
         if (can_body) {
@@ -1980,7 +2002,7 @@ void ta_game_loop()
             ta_primitive_push_sphere(0, sphere, TA_COLOR_RED);
             ta_primitive_render_mesh(&primitive_lines, tg_shader_lines, true);
         }
-
+#endif
 #if 0
         // TODO(cleanup): Temporary sphere benchmark shenanigans to compare to instanced rendering later
         {
@@ -2027,6 +2049,33 @@ void ta_game_loop()
 #if 0
         ta_primitive_render_mesh(&primitive_sphere, tg_shader_lines, false);
 #endif
+
+        //----------------------------------------------------------------------
+        // GJK Debug Shapes
+        //----------------------------------------------------------------------
+#if 0
+        static ta_obb gjk_obb_a = {
+            { 0.0f, 0.0f, 0.0f },       // center
+            { 0.5f, 0.5f, 0.5f },       // extents
+            { 0.0f, 0.0f, 0.0f, 1.0f }  // orientation
+        };
+#else
+        static ta_obb gjk_obb_a = {
+            { 1.35f, 0.0f, 0.0f },       // center
+            { 0.5f, 0.5f, 0.5f },       // extents
+            { 0.0f, 0.444f, 0.0f, 0.896f }  // orientation
+        };
+#endif
+        static ta_obb gjk_obb_b = {
+            { 0.0f, 0.0f, 0.0f },       // center
+            { 0.5f, 0.5f, 0.5f },       // extents
+            { 0.0f, 0.0f, 0.0f, 1.0f }  // orientation
+        };
+        gjk_obb_a.orientation = quat_normalize(gjk_obb_a.orientation);
+        bool intersect = ta_gjk_intersect_obb(&gjk_obb_a, &gjk_obb_b);
+        ta_primitive_push_obb(0, gjk_obb_a, intersect ? TA_COLOR_RED : TA_COLOR_GREEN);
+        ta_primitive_push_obb(0, gjk_obb_b, intersect ? TA_COLOR_RED : TA_COLOR_GREEN);
+        ta_primitive_dump(true);
 
         //----------------------------------------------------------------------
         // Editor UI (world)
@@ -2286,6 +2335,46 @@ void ta_game_loop()
             ta_console_draw_screen();
         }
 
+#if 1
+        static ta_ui_window_state window = { 0 };
+        ta_ui_window_begin(&window, TA_UI_AUTOSIZE);
+
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("obb_a.center     "));
+        static ta_ui_textbox_vec3_state gjk_center_a = { 0 };
+        ta_ui_textbox_vec3(&gjk_obb_a.center, &gjk_center_a, false, true);
+
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("obb_a.extents    "));
+        static ta_ui_textbox_vec3_state gjk_extents_a = { 0 };
+        ta_ui_textbox_vec3(&gjk_obb_a.extents, &gjk_extents_a, false, false);
+
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("obb_a.orientation"));
+        static ta_ui_textbox_vec4_state gjk_orient_a = { 0 };
+        ta_ui_textbox_vec4(&gjk_obb_a.orientation, &gjk_orient_a, true, true);
+
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("obb_b.center     "));
+        static ta_ui_textbox_vec3_state gjk_center_b = { 0 };
+        ta_ui_textbox_vec3(&gjk_obb_b.center, &gjk_center_b, false, true);
+
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("obb_b.extents    "));
+        static ta_ui_textbox_vec3_state gjk_extents_b = { 0 };
+        ta_ui_textbox_vec3(&gjk_obb_b.extents, &gjk_extents_b, false, false);
+
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("obb_b.orientation"));
+        static ta_ui_textbox_vec4_state gjk_orient_b = { 0 };
+        ta_ui_textbox_vec4(&gjk_obb_b.orientation, &gjk_orient_b, true, true);
+
+        ta_ui_window_end();
+        glDisable(GL_DEPTH_TEST);
+        ta_ui_render();
+        glEnable(GL_DEPTH_TEST);
+#endif
+
 #if 0
         static ta_ui_window_state window = { 0 };
         u32 flags = TA_UI_AUTOSIZE;
@@ -2317,6 +2406,7 @@ void ta_game_loop()
         ta_ui_render();
 #endif
 
+#if 0
         static ta_ui_window_state window = { 0 };
         u32 flags = TA_UI_AUTOSIZE;
         ta_ui_window_begin(&window, flags);
@@ -2328,6 +2418,7 @@ void ta_game_loop()
         ta_ui_window_end();
         glClear(GL_DEPTH_BUFFER_BIT);
         ta_ui_render();
+#endif
 
         //----------------------------------------------------------------------
         // Audio
@@ -2344,16 +2435,9 @@ void ta_game_loop()
         ta_log_write(&tg_debug_log, SRC_GAME, " Audio update...\n");
         ta_audio_update();
 
-        //----------------------------------------------------------------------
-        // BOOM! It's swap time, baby! Show the player all of our hard work.
-        //----------------------------------------------------------------------
-        // NOTE: This confirms rendering is being deferred until swap buffers,
-        // but it's much slower (~5ms), so don't actually use it.
-        //ta_log_write(&tg_debug_log, SRC_GAME, " glFinish...\n");
-        //glFinish();
-
         ta_log_write(&tg_debug_log, SRC_GAME, " Update cursor...\n");
         ta_window_update_cursor(tg_window);
+        ta_ui_set_cursor(TA_CURSOR_ARROW);
 
         // TODO: Add "show_fps" flag and bind to key; off by default in release
         ta_log_write(&tg_debug_log, SRC_GAME, " FPS pass...\n");
@@ -2361,6 +2445,13 @@ void ta_game_loop()
         ms_frame_logic = ta_timer_elapsed_ms() - ms_frame_start;
         game_draw_frame_info(tg_game.frame_num, ms_frame_logic, ms_frame_delta, tg_game.sim_step);
 
+        //----------------------------------------------------------------------
+        // BOOM! It's swap time, baby! Show the player all of our hard work.
+        //----------------------------------------------------------------------
+        // NOTE: This confirms rendering is being deferred until swap buffers,
+        // but it's much slower (~5ms), so don't actually use it.
+        //ta_log_write(&tg_debug_log, SRC_GAME, " glFinish...\n");
+        //glFinish();
         ta_log_write(&tg_debug_log, SRC_GAME, " Swap...\n");
         ta_window_swap(tg_window);
         TracyCFrameMark;

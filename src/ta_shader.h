@@ -21,9 +21,11 @@ typedef enum ta_glsl_type {
 } ta_glsl_type;
 
 typedef enum ta_glsl_ubo_type {
-    TA_GLSL_UBO_LIGHTS = 0,
-    TA_GLSL_UBO_BONE_XFORMS = 1,
-    TA_GLSL_UBO_BONE_NORMAL_XFORMS = 2
+    TA_GLSL_UBO_LIGHTS,
+    TA_GLSL_UBO_MATERIALS,
+    TA_GLSL_UBO_BONE_XFORMS,
+    TA_GLSL_UBO_BONE_NORMAL_XFORMS,
+    TA_GLSL_UBO_COUNT
 } ta_glsl_ubo_type;
 
 typedef struct ta_shader_attribute {

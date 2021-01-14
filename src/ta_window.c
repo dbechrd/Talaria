@@ -297,6 +297,7 @@ void ta_window_init(ta_window *window, int w, int h, bool fullscreen)
 
     // The maximum number of uniform buffer binding points on the context, which must be at least 36.
     GLGET_LOG_INT(GL_MAX_UNIFORM_BUFFER_BINDINGS);
+    DLB_ASSERT(data_int >= TA_GLSL_UBO_COUNT);
 
     // The maximum size in basic machine units of a uniform block, which must be at least 16384.
     GLGET_LOG_INT(GL_MAX_UNIFORM_BLOCK_SIZE);

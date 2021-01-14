@@ -52,7 +52,7 @@ layout (std140) uniform ubo_bone_normal_xforms {
 //------------------------------------------------------
 // Lights
 //------------------------------------------------------
-#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 4
+#define TA_LIGHT_MAX_ACTIVE_LIGHTS 4
 
 struct Light {
     // Common
@@ -74,7 +74,7 @@ struct Light {
     uint shadowmap_texture_array_layers[6]; // Point light "cubemaps" require 6 layers, other lights only use index 0
 };
 uniform int u_lights_count;
-uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+uniform Light u_lights[TA_LIGHT_MAX_ACTIVE_LIGHTS];
 
 struct UboLight {
     int type;                                // ta_light_type: type of light
@@ -95,7 +95,7 @@ struct UboLight {
     uint shadowmap_texture_array_layers[6];  // array texture layer (determines which texture in the pool to use, where "pool" is an array texture)
 } ta_lighting_record;
 layout (std140) uniform ubo_lights {
-    UboLight lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    UboLight lights[TA_LIGHT_MAX_ACTIVE_LIGHTS];
 };
 //------------------------------------------------------
 
@@ -104,9 +104,9 @@ out vs_out {
     vec3 position;
     vec3 tbn_position;
     vec3 tbn_camera_pos;
-    vec3 tbn_light_pos[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-    vec3 tbn_light_dir[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-    vec4 light_pvm[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    vec3 tbn_light_pos[TA_LIGHT_MAX_ACTIVE_LIGHTS];
+    vec3 tbn_light_dir[TA_LIGHT_MAX_ACTIVE_LIGHTS];
+    vec4 light_pvm[TA_LIGHT_MAX_ACTIVE_LIGHTS];
 
     // NOTE: These are just passed to allow debug channels to display them
     // TODO: Use a separate shader for each debug channel? Would simplify this shader and reduce interface block size

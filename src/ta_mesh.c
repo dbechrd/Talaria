@@ -17,6 +17,7 @@
 
 const char *tg_mesh_default;
 GLuint tg_mesh_gl_default_bone_xforms;
+GLuint tg_mesh_gl_default_bone_normal_xforms;
 
 const char *ta_vertex_attrib_type_str(int type) {
     switch (type) {
@@ -499,38 +500,16 @@ void ta_mesh_render_debug_lines(ta_mesh *mesh)
 }
 void ta_mesh_render(ta_mesh *mesh)
 {
-    // TODO: If we want to use binding point 1 for other things in other shaders, then this mapping needs to be a
-    // bit more abstract.
-    if (mesh->skin.gl_ubo_bone_xforms) {
-        glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, mesh->skin.gl_ubo_bone_xforms);
-        if (mesh->skin.bone_xforms_dirty) {
-            glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh->skin.bone_xforms), mesh->skin.bone_xforms, GL_DYNAMIC_DRAW);
-        }
-    } else {
-        glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_XFORMS, tg_mesh_gl_default_bone_xforms);
-    }
-
-    if (mesh->skin.gl_ubo_bone_normal_xforms) {
-        glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_NORMAL_XFORMS, mesh->skin.gl_ubo_bone_normal_xforms);
-        if (mesh->skin.bone_normal_xforms_dirty) {
-            glBufferData(GL_UNIFORM_BUFFER, sizeof(mesh->skin.bone_normal_xforms), mesh->skin.bone_normal_xforms, GL_DYNAMIC_DRAW);
-        }
-    } else {
-        glBindBufferBase(GL_UNIFORM_BUFFER, TA_GLSL_UBO_BONE_NORMAL_XFORMS, tg_mesh_gl_default_bone_xforms);
-    }
-
     if (!mesh->gl_vao) {
         mesh = ta_game_by_sym(RES_MESH, tg_mesh_default);
     }
 
     glBindVertexArray(mesh->gl_vao);
     if (mesh->index_arrays) {
+        if (dlb_vec_len(mesh->index_arrays) > 1) {
+            DLB_ASSERT(1);
+        }
         dlb_vec_each(ta_index_array *, index_array, mesh->index_arrays) {
-            // TODO: Material slots
-            // TODO: Bind all needed materials at once via a UBO? Pass material indices as uniform/attrib?
-            // https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object
-            //ta_shader_set_uint(shader, SYM_U_MATERIAL_SLOT, index_array->material_slot);
-
             size_t index_count = dlb_vec_len(index_array->values);
             DLB_ASSERT(index_count);
             glDrawElements(ta_mesh_gl_primitive_mode(index_array->mode), (GLsizei)index_count, GL_UNSIGNED_SHORT,

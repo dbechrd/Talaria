@@ -29,35 +29,65 @@ const float GAMMA = 2.2;  // TODO: Make this a user-configurable uniform
 // Non-metal = 0.0, metal = 1.0. There can be transitional gray values that
 // indicate something covering the raw metal such as dirt.
 
+#define TA_MATERIAL_MAX_ACTIVE_MATERIALS 64
+
 // TODO: Premultiplied alpha?
 // TODO: Combine channels for performance
 struct Material {
+    vec4    albedo_factor;
+    vec3    emission_factor;
+    float   height_factor;
+    float   metallic_factor;
+    float   roughness_factor;
+
     uint    albedo_texture_pool_index;
     uint    albedo_texture_pool_layer;
-    vec4    albedo_factor;
     uint    emission_texture_pool_index;
     uint    emission_texture_pool_layer;
-    vec3    emission_factor;
-    uint    metallic_texture_pool_index;
-    uint    metallic_texture_pool_layer;
-    float   metallic_factor;
-    uint    roughness_texture_pool_index;
-    uint    roughness_texture_pool_layer;
-    float   roughness_factor;
     uint    height_texture_pool_index;
     uint    height_texture_pool_layer;
-    float   height_factor;   // 0.02
+    uint    metallic_texture_pool_index;
+    uint    metallic_texture_pool_layer;
     uint    normal_texture_pool_index;
     uint    normal_texture_pool_layer;
     uint    occlusion_texture_pool_index;
     uint    occlusion_texture_pool_layer;
+    uint    roughness_texture_pool_index;
+    uint    roughness_texture_pool_layer;
 };
 uniform Material u_material;
+
+struct UboMaterial {
+    vec4    albedo_factor;
+    vec3    emission_factor;
+    float   height_factor;
+    float   metallic_factor;
+    float   roughness_factor;
+
+    uint    albedo_texture_pool_index;
+    uint    albedo_texture_pool_layer;
+    uint    emission_texture_pool_index;
+    uint    emission_texture_pool_layer;
+    uint    height_texture_pool_index;
+    uint    height_texture_pool_layer;
+    uint    metallic_texture_pool_index;
+    uint    metallic_texture_pool_layer;
+    uint    normal_texture_pool_index;
+    uint    normal_texture_pool_layer;
+    uint    occlusion_texture_pool_index;
+    uint    occlusion_texture_pool_layer;
+    uint    roughness_texture_pool_index;
+    uint    roughness_texture_pool_layer;
+};
+layout (std140) uniform ubo_materials {
+    UboMaterial materials[TA_MATERIAL_MAX_ACTIVE_MATERIALS];
+};
+uniform uint u_material_index;
 
 //------------------------------------------------------
 // Lights
 //------------------------------------------------------
-#define TA_LIGHTING_MAX_ACTIVE_LIGHTS 4
+#define TA_LIGHT_MAX_ACTIVE_LIGHTS 4
 
 #define LIGHT_AMBIENT       0
 #define LIGHT_DIRECTIONAL   1
@@ -83,7 +113,7 @@ struct Light {
     uint shadowmap_texture_array_layers[6]; // Point light "cubemaps" require 6 layers, other lights only use index 0
 };
 uniform int u_lights_count;
-uniform Light u_lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+uniform Light u_lights[TA_LIGHT_MAX_ACTIVE_LIGHTS];
 
 struct UboLight {
     int type;                                // ta_light_type: type of light
@@ -102,9 +132,9 @@ struct UboLight {
     float pad5;
 
     uint shadowmap_texture_array_layers[6];  // array texture layer (determines which texture in the pool to use, where "pool" is an array texture)
-} ta_lighting_record;
+};
 layout (std140) uniform ubo_lights {
-    UboLight lights[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    UboLight lights[TA_LIGHT_MAX_ACTIVE_LIGHTS];
 };
 
 //------------------------------------------------------
@@ -116,7 +146,7 @@ layout (std140) uniform ubo_lights {
 uniform sampler2DArray u_textures[TA_TEXTURE_POOL_MAX];
 // TODO: Should we just use regular cubemaps? Idk what overhead of the xyz -> cube_uv mapping function is, or what
 // trade-offs there are. If performance is similiar, I'd much rather have just pools of sampler2Ds for simplicity.
-//uniform samplerCube u_cubemaps[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+//uniform samplerCube u_cubemaps[TA_LIGHT_MAX_ACTIVE_LIGHTS];
 
 //------------------------------------------------------
 // Camera
@@ -154,9 +184,9 @@ in vs_out {
     vec3 position;
     vec3 tbn_position;
     vec3 tbn_camera_pos;
-    vec3 tbn_light_pos[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-    vec3 tbn_light_dir[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-    vec4 light_pvm[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    vec3 tbn_light_pos[TA_LIGHT_MAX_ACTIVE_LIGHTS];
+    vec3 tbn_light_dir[TA_LIGHT_MAX_ACTIVE_LIGHTS];
+    vec4 light_pvm[TA_LIGHT_MAX_ACTIVE_LIGHTS];
 
     // NOTE: These are just passed to allow debug channels to display them
     // TODO: Use a separate shader for each debug channel? Would simplify this shader and reduce interface block size
@@ -308,11 +338,13 @@ void main()
     vec3 V = normalize(vertex.tbn_camera_pos - vertex.tbn_position);
     vec2 scaled_uv = vertex.uv;// * 8.0;
 
+    UboMaterial material = materials[u_material_index];
+
     // TODO: Don't pass height 0.0 into shader
     // https://learnopengl.com/Advanced-Lighting/Parallax-Mapping
 #if 0
-    float height_factor = u_material.height_factor;
-    float mtl_height = texture(u_textures[u_material.height_texture_pool_index], vec3(scaled_uv, u_material.height_texture_pool_layer)).r  * u_material.height_factor;
+    float height_factor = material.height_factor;
+    float mtl_height = texture(u_textures[material.height_texture_pool_index], vec3(scaled_uv, material.height_texture_pool_layer)).r  * material.height_factor;
     vec2 displacement = V.xy / V.z * (height_factor - mtl_height);  // NOTE: Invert to get depth instead of height
     vec2 displaced_uv = scaled_uv - displacement;
     // Edge artifacts can sometimes be cleaned up like so, but I don't like this idea since it disallows UVs > 1.0
@@ -321,12 +353,12 @@ void main()
 #else
     vec2 displaced_uv = scaled_uv;
 #endif
-    vec4  mtl_albedo    = texture(u_textures[u_material.albedo_texture_pool_index   ], vec3(displaced_uv, u_material.albedo_texture_pool_layer   )).rgba * u_material.albedo_factor;
-    vec3  mtl_emission  = texture(u_textures[u_material.emission_texture_pool_index ], vec3(displaced_uv, u_material.emission_texture_pool_layer )).rgb  * u_material.emission_factor;
-    float mtl_metallic  = texture(u_textures[u_material.metallic_texture_pool_index ], vec3(displaced_uv, u_material.metallic_texture_pool_layer )).r    * u_material.metallic_factor;
-    float mtl_roughness = texture(u_textures[u_material.roughness_texture_pool_index], vec3(displaced_uv, u_material.roughness_texture_pool_layer)).r    * u_material.roughness_factor;
-    vec3  mtl_normal    = texture(u_textures[u_material.normal_texture_pool_index   ], vec3(displaced_uv, u_material.normal_texture_pool_layer   )).rgb;
-    float mtl_occlusion = texture(u_textures[u_material.occlusion_texture_pool_index], vec3(displaced_uv, u_material.occlusion_texture_pool_layer)).r;
+    vec4  mtl_albedo    = texture(u_textures[material.albedo_texture_pool_index   ], vec3(displaced_uv, material.albedo_texture_pool_layer   )).rgba * material.albedo_factor;
+    vec3  mtl_emission  = texture(u_textures[material.emission_texture_pool_index ], vec3(displaced_uv, material.emission_texture_pool_layer )).rgb  * material.emission_factor;
+    float mtl_metallic  = texture(u_textures[material.metallic_texture_pool_index ], vec3(displaced_uv, material.metallic_texture_pool_layer )).r    * material.metallic_factor;
+    float mtl_roughness = texture(u_textures[material.roughness_texture_pool_index], vec3(displaced_uv, material.roughness_texture_pool_layer)).r    * material.roughness_factor;
+    vec3  mtl_normal    = texture(u_textures[material.normal_texture_pool_index   ], vec3(displaced_uv, material.normal_texture_pool_layer   )).rgb;
+    float mtl_occlusion = texture(u_textures[material.occlusion_texture_pool_index], vec3(displaced_uv, material.occlusion_texture_pool_layer)).r;
 
     // NOTE(debug): Override material with safe defaults
     //mtl_albedo = vec4(1.0);
@@ -349,9 +381,9 @@ void main()
     const vec3 dielectricSpecular = vec3(0.04);
     vec3 F0 = mix(dielectricSpecular, mtl_albedo.rgb, mtl_metallic);
 
-    float shadows[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-    float shadow_map_depths[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
-    float shadow_dists[TA_LIGHTING_MAX_ACTIVE_LIGHTS];
+    float shadows[TA_LIGHT_MAX_ACTIVE_LIGHTS];
+    float shadow_map_depths[TA_LIGHT_MAX_ACTIVE_LIGHTS];
+    float shadow_dists[TA_LIGHT_MAX_ACTIVE_LIGHTS];
     vec3 debug;
 
     vec3 L0 = vec3(0.0);
