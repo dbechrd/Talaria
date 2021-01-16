@@ -29,8 +29,9 @@ void ta_camera_init(ta_camera *camera)
     if (!camera->pitch_max)           camera->pitch_max = CAMERA_PITCH_MAX;
     camera->pitch_target =            camera->pitch;
 
-    if (!camera->fov)                 camera->fov = 90.0f;
-    if (!camera->znear)               camera->znear = 0.1f;
+    if (!camera->fov)                 camera->fov = CAMERA_FOV_DEFAULT;
+    if (!camera->znear)               camera->znear = CAMERA_ZNEAR_DEFAULT;
+    if (!camera->exposure)            camera->exposure = CAMERA_EXPOSURE_DEFAULT;
     ta_camera_recalc_projection(camera);
 
     if (vec3_zero(camera->up))        camera->up = VEC3_Y;

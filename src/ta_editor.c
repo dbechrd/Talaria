@@ -1949,6 +1949,7 @@ static void ui_camera_panel()
         ta_ui_label(CSTR("Pitch target"));
         ta_ui_label(CSTR("FOV"));
         ta_ui_label(CSTR("Z near"));
+        ta_ui_label(CSTR("Exposure"));
         ta_ui_label(CSTR("Ortho"));
         ta_ui_label(CSTR("Debug channel"));
         ta_ui_panel_end();
@@ -2040,11 +2041,16 @@ static void ui_camera_panel()
 
         static ta_ui_textbox_state znear_textbox = { 0 };
         float znear = camera->znear;
-        ta_ui_textbox_float(&camera->znear, &znear_textbox, 0);
+        ta_ui_textbox_float_reset(&camera->znear, &znear_textbox, 0, CAMERA_ZNEAR_DEFAULT);
         camera->znear = MAX(0.0f, camera->znear);
         if (camera->znear != znear) {
             ta_camera_recalc_projection(camera);
         }
+
+        static ta_ui_textbox_state exposure_textbox = { 0 };
+        float exposure = camera->exposure;
+        ta_ui_textbox_float_reset(&camera->exposure, &exposure_textbox, 0, CAMERA_EXPOSURE_DEFAULT);
+        camera->exposure = MAX(0.0f, camera->exposure);
 
         static ta_ui_textbox_state ortho_textbox = { 0 };
         if (ta_ui_toggle_button(CSTR("Perspective"), CSTR("Orthographic"), &camera->ortho)) {

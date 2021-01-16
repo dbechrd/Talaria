@@ -92,6 +92,7 @@ layout (std140) uniform ubo_lights {
     UboLight lights[TA_LIGHT_MAX_ACTIVE_LIGHTS];
 };
 uniform uint u_lights_count;
+uniform float u_exposure;
 
 //------------------------------------------------------
 // Textures
@@ -530,7 +531,9 @@ void main()
     vec3 color = ambient + L0 + mtl_emission.rgb;
 
     // Tone mapping (Reinhard operator)
-    color /= color + vec3(1.0);
+    //color /= color + vec3(1.0);
+    // exposure tone mapping
+    color = vec3(1.0) - exp(-color * u_exposure);
     // Gamma correction
     color = pow(color, vec3(1.0 / 2.2));
 

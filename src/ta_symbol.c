@@ -38,6 +38,7 @@ const char *SYM_U_LIGHT_POS;
 const char *SYM_U_LIGHT_PVM;
 const char *SYM_U_LIGHT_ZFAR;
 const char *SYM_U_LIGHTS_COUNT;
+const char *SYM_U_EXPOSURE;
 const char *SYM_U_MATERIAL_INDEX;
 const char *SYM_U_MODEL;
 const char *SYM_U_MORPH_WEIGHTS[TA_MODEL_MAX_MORPHS];
@@ -115,6 +116,7 @@ void ta_symbol_init() {
     SYM_U_LIGHT_PVM             = INTERN("u_light_pvm");
     SYM_U_LIGHT_ZFAR            = INTERN("u_light_zfar");
     SYM_U_LIGHTS_COUNT          = INTERN("u_lights_count");
+    SYM_U_EXPOSURE              = INTERN("u_exposure");
 
     SYM_U_MATERIAL_INDEX        = INTERN("u_material_index");
 

@@ -17,6 +17,8 @@ struct ta_event;
 #define CAMERA_PITCH_SMOOTH_DEFAULT 1.0f
 
 #define CAMERA_FOV_DEFAULT 90.0f
+#define CAMERA_ZNEAR_DEFAULT 0.1f
+#define CAMERA_EXPOSURE_DEFAULT 1.0f
 
 typedef enum ta_glsl_dbg_channel {
     DBG_NONE            = 0,
@@ -56,6 +58,7 @@ typedef struct ta_camera {
     float    pitch_target;            // desired pitch
     float    fov;                     // field of view (degrees)
     float    znear;                   // near clip distance
+    float    exposure;                // tonemapping exposure value
     bool     ortho;                   // true if orthographic, else perspective
     ta_vec3  focal_point;             // camera look target in world space
     ta_vec3  up;                      // camera up vector    (world space)

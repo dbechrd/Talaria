@@ -94,6 +94,7 @@ void ta_shader_set_uint                     (ta_shader *shader, const char *name
 void ta_shader_set_uint_try                 (ta_shader *shader, const char *name, GLuint value);
 void ta_shader_set_uint_array               (ta_shader *shader, const char *name, GLuint *values);
 void ta_shader_set_float                    (ta_shader *shader, const char *name, GLfloat value);
+void ta_shader_set_float_try                (ta_shader *shader, const char *name, GLfloat value);
 void ta_shader_set_sampler_2d               (ta_shader *shader, const char *name, GLuint tex_id);
 void ta_shader_set_sampler_2d_array         (ta_shader *shader, const char *name, GLuint tex_id);
 void ta_shader_set_sampler_cube             (ta_shader *shader, const char *name, GLuint tex_id);

@@ -127,6 +127,7 @@ extern ta_game tg_game;
 const char *ta_command_str(ta_command cmd);
 
 void ta_game_init                           ();
+void ta_game_free                           ();
 ta_game_state ta_game_state_current         ();
 void ta_game_state_set                      (ta_game_state state);
 void *ta_game_alloc                         (enum ta_res_type type, const char *name, size_t name_len);

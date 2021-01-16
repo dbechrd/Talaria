@@ -68,6 +68,7 @@ extern const char *SYM_U_LIGHT_POS;
 extern const char *SYM_U_LIGHT_PVM;
 extern const char *SYM_U_LIGHT_ZFAR;
 extern const char *SYM_U_LIGHTS_COUNT;
+extern const char *SYM_U_EXPOSURE;
 extern const char *SYM_U_MATERIAL_INDEX;
 extern const char *SYM_U_MODEL;
 extern const char *SYM_U_MORPH_WEIGHTS[TA_MODEL_MAX_MORPHS];

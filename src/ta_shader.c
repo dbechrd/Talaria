@@ -404,6 +404,14 @@ void ta_shader_set_float(ta_shader *shader, const char *name, GLfloat value)
     u->value.glfloat = value;
     u->dirty = true;
 }
+void ta_shader_set_float_try(ta_shader *shader, const char *name, GLfloat value)
+{
+    ta_shader_uniform *u = find_uniform_by_name_try(shader->uniforms, name, TA_GLSL_FLOAT);
+    if (u) {
+        u->value.glfloat = value;
+        u->dirty = true;
+    }
+}
 void ta_shader_set_sampler_2d(ta_shader *shader, const char *name, GLuint tex_id)
 {
     ta_shader_uniform *u = find_uniform_by_name(shader->uniforms, name, TA_GLSL_SAMPLER2D);

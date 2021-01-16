@@ -502,9 +502,9 @@ void ta_game_init()
     tg_shader_quads   = (ta_shader *)ta_game_by_sym(RES_SHADER, INTERN("quads"));
     tg_shader_cubemap = (ta_shader *)ta_game_by_sym(RES_SHADER, INTERN("cubemap"));
 
-#if defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__)
+#if _DEBUG && (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     TracyCZoneN(ctxAssetWatcher, "Init asset watcher", true);
-    ta_asset_watcher_init(&tg_game.texture_watcher, SYM(tg_game.base_path));
+    ta_asset_watcher_start(&tg_game.texture_watcher, SYM(tg_game.base_path));
     TracyCZoneEnd(ctxAssetWatcher);
 #endif
 
@@ -515,6 +515,14 @@ void ta_game_init()
 #endif
     ta_log_write(&tg_debug_log, SRC_GAME, "Active camera: %s\n", tg_game.active_camera);
     DLB_ASSERT(tg_game.active_camera);
+}
+void ta_game_free()
+{
+#if _DEBUG && (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
+    TracyCZoneN(ctxAssetWatcher, "Init asset watcher", true);
+    ta_asset_watcher_stop(&tg_game.texture_watcher);
+    TracyCZoneEnd(ctxAssetWatcher);
+#endif
 }
 ta_game_state ta_game_state_current()
 {
@@ -715,21 +723,34 @@ void ta_game_window_resize()
 }
 static void game_hotload_textures()
 {
-    for (size_t i = 0; i < ARRAY_SIZE(tg_game.texture_watcher.changes); ++i) {
-        ta_asset_change_record *change = &tg_game.texture_watcher.changes[i];
-        // NOTE: Delay change handling 60 frames
-        if (change->path && (tg_game.frame_num - change->frame_num) > 60) {
-            ta_texture *tex = (ta_texture *)ta_game_by_name_try(RES_TEXTURE, change->path, strlen(change->path));
-            if (tex) {
-                printf("[GAME] hot-loading: %s\n", change->path);
-                ta_texture_hot_reload(tex);
-            } else {
-                //printf("[GAME] not found: %s\n", filename);
+    // NOTE: Hot reload at most 1 texture per frame
+    int lock_status = SDL_TryLockMutex(tg_game.texture_watcher.mutex);
+    if (lock_status == 0) {
+        if (dlb_vec_len(tg_game.texture_watcher.changes)) {
+            ta_asset_change_record *change = dlb_vec_last(tg_game.texture_watcher.changes);
+            // NOTE: Wait for Paint.NET to finalize it's weird copy/rename nonsense and let go of the file handle
+            if (ta_timer_elapsed_ms() > change->changed_at_ms + 500) {
+                DLB_ASSERT(change);
+                DLB_ASSERT(change->path);
+                ta_texture *tex = (ta_texture *)ta_game_by_name_try(RES_TEXTURE, change->path, strlen(change->path));
+                if (tex) {
+                    printf("[GAME] hot-loading: %s\n", change->path);
+                    ta_texture_hot_reload(tex);
+                } else {
+                    printf("[GAME] hot-load requested but texture not found: %s\n", change->path);
+                }
+                dlb_free(change->path);
+                dlb_vec_popz(tg_game.texture_watcher.changes);
             }
-            dlb_free(change->path);
-            change->path = 0;
-            change->frame_num = 0;
         }
+        // NOTE: This should only fail if the mutex was locked by another thread, which shouldn't be possible
+        DLB_ASSERT(SDL_UnlockMutex(tg_game.texture_watcher.mutex) == 0);
+    } else if (lock_status == SDL_MUTEX_TIMEDOUT) {
+        // Wait until next frame
+    } else {
+        DLB_ASSERT(lock_status < 0);
+        printf("SDL_TryLockMutex failed in game_hotload_textures: %s\n", SDL_GetError());
+        DLB_ASSERT(!"Failed to lock mutex due to error!");
     }
 }
 static void game_draw_frame_info(u64 frame_num, double ms_frame_logic, double ms_frame_delta, u64 sim_step)
@@ -1935,6 +1956,7 @@ void ta_game_loop()
 
         // TODO: Use a UBO?
         dlb_vec_each(ta_shader *, shader, shaders) {
+            ta_shader_set_float_try(shader, SYM_U_EXPOSURE, active_camera->exposure);
             ta_shader_set_mat4_try(shader, SYM_U_PROJ, &active_camera->projection);
             ta_shader_set_mat4_try(shader, SYM_U_VIEW, &active_camera->look_at);
             // NOTE: These only happen for "mesh" shader atm but wutevs..

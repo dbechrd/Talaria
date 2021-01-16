@@ -172,6 +172,7 @@ int main(int argc, char *argv[])
     TracyCZoneN(ctxCleanup, "Clean up", true);
     // TODO: Free *EVERYTHING* (at least in debug mode.. to check for memory leaks)
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Cleaning up...\n");
+    ta_game_free();
     ta_audio_free();
     ta_window_free(tg_window);
     ta_log_write(&tg_debug_log, SRC_SYSTEM, "Goodbye.\n\n");

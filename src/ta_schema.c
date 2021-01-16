@@ -470,6 +470,7 @@ void ta_schema_register()
     TYPE_FIELD  (ta_camera, pitch_max,           ATOM_FLOAT);
     TYPE_FIELD  (ta_camera, fov,                 ATOM_FLOAT);
     TYPE_FIELD  (ta_camera, znear,               ATOM_FLOAT);
+    TYPE_FIELD  (ta_camera, exposure,            ATOM_FLOAT);
     TYPE_FIELD  (ta_camera, ortho,               ATOM_BOOL);
     TYPE_FIELD  (ta_camera, focal_point,         TYP_VEC3);
     TYPE_FIELD  (ta_camera, up,                  TYP_VEC3);

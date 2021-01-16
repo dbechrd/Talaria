@@ -5,10 +5,31 @@
 #include <stdio.h>
 #include <tchar.h>
 
+static ta_watcher_result ta_open_directory(const char *path, HANDLE *handle)
+{
+    // Open directory handle
+    HANDLE hnd = CreateFile(
+        path,
+        FILE_LIST_DIRECTORY,
+        FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS,
+        NULL
+    );
+    if (hnd == INVALID_HANDLE_VALUE) {
+        return TA_WATCHER_ERR_INVALID_HANDLE;
+    }
+    *handle = hnd;
+    return TA_WATCHER_SUCCESS;
+}
+
 static ta_watcher_result ta_asset_watcher_wait_changes(ta_asset_watcher *watcher, HANDLE handle)
 {
     DWORD bytesReturned = 0;
     char *buffer[1024] = { 0 };
+
+    // NOTE: Blocking call, waits for directory changes
     DWORD success = ReadDirectoryChangesW(
         handle,
         buffer,
@@ -70,44 +91,37 @@ static ta_watcher_result ta_asset_watcher_wait_changes(ta_asset_watcher *watcher
             // If multi-bype size of locale is > 1, the file buffer below could overflow
             DLB_ASSERT(MB_CUR_MAX == 1);
 
-            // NOTE: If not empty slot is found, we simply discard the change notification. I don't know how to resize
-            // the buffer in a thread-safe way, and this isn't a vital thing to detect.
-            bool found_slot = false;
-            for (size_t i = 0; i < ARRAY_SIZE(watcher->changes); ++i) {
-                if (watcher->changes[i].path == 0) {
-                    found_slot = true;
-
-                    bool is_file = false;
-                    int file_len = info->FileNameLength / sizeof(wchar_t);
-                    char *file = (char *)dlb_calloc(1, file_len + 1);
-                    for (int j = 0; j < file_len; ++j) {
-                        int result = wctomb(&file[j], info->FileName[j]);
-                        if (result == -1) {
-                            file[j] = '?';
-                        } else if (file[j] == '\\') {
-                            file[j] = '/';
-                        }
-                        if (file[j] == '.') {
-                            is_file = true;
-                        }
-                    }
-
-                    //size_t dir_len = strlen(watcher->dir_path);
-                    //size_t path_len = dir_len + file_len + 1;
-                    //char *path = dlb_calloc(1, path_len);
-                    //snprintf(path, path_len, "%s%.*s", watcher->dir_path, (int)file_len, file);
-                    //watcher->changed_files[i] = path;
-
-                    if (is_file) {
-                        watcher->changes[i].path = file;
-                        watcher->changes[i].frame_num = tg_game.frame_num;
-                    }
-                    break;
+            bool is_file = false;
+            int file_len = info->FileNameLength / sizeof(wchar_t);
+            char *file = (char *)dlb_calloc(1, file_len + 1);
+            for (int j = 0; j < file_len; ++j) {
+                int result = wctomb(&file[j], info->FileName[j]);
+                if (result == -1) {
+                    file[j] = '?';
+                } else if (file[j] == '\\') {
+                    file[j] = '/';
+                }
+                if (file[j] == '.') {
+                    is_file = true;
                 }
             }
 
-            if (!found_slot) {
-                printf("[ASSET_WATCHER] WARNING: buffer full, discarding change notification\n");
+            // NOTE: If not empty slot is found, we simply discard the change notification. I don't know how to resize
+            // the buffer in a thread-safe way, and this isn't a vital thing to detect.
+            if (is_file) {
+                // Block until mutex available
+                int lock_status = SDL_LockMutex(watcher->mutex);
+                if (lock_status == 0) {
+                    ta_asset_change_record *record = dlb_vec_alloc(watcher->changes);
+                    record->path = file;
+                    record->changed_at_ms = ta_timer_elapsed_ms();;
+                    DLB_ASSERT(SDL_UnlockMutex(watcher->mutex) == 0);
+                } else {
+                    DLB_ASSERT(lock_status < 0);
+                    printf("SDL_LockMutex failed in ta_asset_watcher_wait_changes: %s\n", SDL_GetError());
+                    DLB_ASSERT(!"Failed to lock mutex due to error!");
+                }
+
             }
         }
 
@@ -119,35 +133,33 @@ static ta_watcher_result ta_asset_watcher_wait_changes(ta_asset_watcher *watcher
     return TA_WATCHER_SUCCESS;
 }
 
-static ta_watcher_result ta_open_directory(const char *path, HANDLE *handle)
-{
-    // Open directory handle
-    HANDLE hnd = CreateFile(
-        path,
-        FILE_LIST_DIRECTORY,
-        FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-        NULL,
-        OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS,
-        NULL
-    );
-    if (hnd == INVALID_HANDLE_VALUE) {
-        return TA_WATCHER_ERR_INVALID_HANDLE;
-    }
-    *handle = hnd;
-    return TA_WATCHER_SUCCESS;
-}
-
-static int ta_asset_watcher_watch(void *arg)
+static int ta_asset_watcher_watch(void *data)
 {
     ta_watcher_result err;
-    ta_asset_watcher *watcher = (ta_asset_watcher *)arg;
+    ta_asset_watcher *watcher = (ta_asset_watcher *)data;
 
     HANDLE handle;
     err = ta_open_directory(watcher->dir_path, &handle);
 
     // Watch the directory for file changes
     while (!err) {
+        // Block until mutex available
+        int lock_status = SDL_LockMutex(watcher->mutex);
+        if (lock_status == 0) {
+            if (watcher->signal_exit) {
+                // NOTE: This should only fail if the mutex was locked by another thread, which shouldn't be possible
+                DLB_ASSERT(SDL_UnlockMutex(watcher->mutex) == 0);
+                break;
+            }
+            // NOTE: This should only fail if the mutex was locked by another thread, which shouldn't be possible
+            DLB_ASSERT(SDL_UnlockMutex(watcher->mutex) == 0);
+        } else {
+            DLB_ASSERT(lock_status < 0);
+            printf("SDL_LockMutex failed in ta_asset_watcher_watch: %s\n", SDL_GetError());
+            DLB_ASSERT(!"Failed to lock mutex due to error!");
+        }
+
+        printf("[ASSET_WATCHER] Querying changes...\n");
         err = ta_asset_watcher_wait_changes(watcher, handle);
     }
 
@@ -165,17 +177,44 @@ static int ta_asset_watcher_watch(void *arg)
             break;
     }
 
+    // Clean up
+    DLB_ASSERT(SDL_UnlockMutex(watcher->mutex) == 0);
+    SDL_DestroyMutex(watcher->mutex);
+    dlb_vec_free(watcher->changes);
+    CloseHandle(handle);
+
     return (int)err;
 }
 
-void ta_asset_watcher_init(ta_asset_watcher *watcher, const char *directory, size_t directory_len)
+///////////////////////////////////////////////////////
+// NOTE: This section is executing in the main thread
+///////////////////////////////////////////////////////
+
+void ta_asset_watcher_start(ta_asset_watcher *watcher, const char *directory, size_t directory_len)
 {
     DLB_ASSERT(directory);
     DLB_ASSERT(directory_len);
+
     watcher->dir_path = directory;
     DLB_ASSERT(watcher->dir_path[directory_len - 1] == '/');  // Directory must end with slash
 
-    thrd_t asset_watcher_thread = { 0 };
-    int result = thrd_create(&asset_watcher_thread, ta_asset_watcher_watch, watcher);
-    UNUSED(result);
+    SDL_Thread *thread = SDL_CreateThread(&ta_asset_watcher_watch, "ta_asset_watcher_watch", watcher);
+    if (!thread) {
+        printf("SDL_CreateThread failed: %s\n", SDL_GetError());
+        DLB_ASSERT(!"Failed to create asset watcher thread");
+        return;
+    }
+
+    watcher->mutex = SDL_CreateMutex();
+    SDL_DetachThread(thread);
 }
+
+void ta_asset_watcher_stop(ta_asset_watcher *watcher)
+{
+    DLB_ASSERT(SDL_LockMutex(watcher->mutex) == 0);
+    printf("[ASSET_WATCHER] Stop requested, signaling exit...\n");
+    watcher->signal_exit = true;
+    DLB_ASSERT(SDL_UnlockMutex(watcher->mutex) == 0);
+}
+
+///////////////////////////////////////////////////////
