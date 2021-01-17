@@ -206,7 +206,6 @@ void ta_asset_watcher_start(ta_asset_watcher *watcher, const char *directory, si
     }
 
     watcher->mutex = SDL_CreateMutex();
-    SDL_DetachThread(thread);
 }
 
 void ta_asset_watcher_stop(ta_asset_watcher *watcher)
@@ -215,6 +214,8 @@ void ta_asset_watcher_stop(ta_asset_watcher *watcher)
     printf("[ASSET_WATCHER] Stop requested, signaling exit...\n");
     watcher->signal_exit = true;
     DLB_ASSERT(SDL_UnlockMutex(watcher->mutex) == 0);
+    int status = 0;
+    SDL_WaitThread(watcher->thread, &status);
 }
 
 ///////////////////////////////////////////////////////
