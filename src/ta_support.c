@@ -213,8 +213,79 @@ static bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *dir)
     return simplex_contains_origin;
 }
 
-bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b)
+bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b, int gjk_step, int *max_gjk_step)
 {
+    ta_vec3 verts_a[8] = { 0 };
+    verts_a[0].x = -a->extents.x;
+    verts_a[0].y = -a->extents.y;
+    verts_a[0].z = -a->extents.z;
+    verts_a[1].x = -a->extents.x;
+    verts_a[1].y = -a->extents.y;
+    verts_a[1].z = +a->extents.z;
+    verts_a[2].x = -a->extents.x;
+    verts_a[2].y = +a->extents.y;
+    verts_a[2].z = -a->extents.z;
+    verts_a[3].x = -a->extents.x;
+    verts_a[3].y = +a->extents.y;
+    verts_a[3].z = +a->extents.z;
+    verts_a[4].x = +a->extents.x;
+    verts_a[4].y = -a->extents.y;
+    verts_a[4].z = -a->extents.z;
+    verts_a[5].x = +a->extents.x;
+    verts_a[5].y = -a->extents.y;
+    verts_a[5].z = +a->extents.z;
+    verts_a[6].x = +a->extents.x;
+    verts_a[6].y = +a->extents.y;
+    verts_a[6].z = -a->extents.z;
+    verts_a[7].x = +a->extents.x;
+    verts_a[7].y = +a->extents.y;
+    verts_a[7].z = +a->extents.z;
+    for (int i = 0; i < 8; ++i) {
+        verts_a[i] = quat_mul_vec3(a->orientation, verts_a[i]);
+        verts_a[i] = vec3_add(verts_a[i], a->center);
+    }
+
+    ta_vec3 verts_b[8] = { 0 };
+    verts_b[0].x = -b->extents.x;
+    verts_b[0].y = -b->extents.y;
+    verts_b[0].z = -b->extents.z;
+    verts_b[1].x = -b->extents.x;
+    verts_b[1].y = -b->extents.y;
+    verts_b[1].z = +b->extents.z;
+    verts_b[2].x = -b->extents.x;
+    verts_b[2].y = +b->extents.y;
+    verts_b[2].z = -b->extents.z;
+    verts_b[3].x = -b->extents.x;
+    verts_b[3].y = +b->extents.y;
+    verts_b[3].z = +b->extents.z;
+    verts_b[4].x = +b->extents.x;
+    verts_b[4].y = -b->extents.y;
+    verts_b[4].z = -b->extents.z;
+    verts_b[5].x = +b->extents.x;
+    verts_b[5].y = -b->extents.y;
+    verts_b[5].z = +b->extents.z;
+    verts_b[6].x = +b->extents.x;
+    verts_b[6].y = +b->extents.y;
+    verts_b[6].z = -b->extents.z;
+    verts_b[7].x = +b->extents.x;
+    verts_b[7].y = +b->extents.y;
+    verts_b[7].z = +b->extents.z;
+    for (int i = 0; i < 8; ++i) {
+        verts_b[i] = quat_mul_vec3(b->orientation, verts_b[i]);
+        verts_b[i] = vec3_add(verts_b[i], b->center);
+    }
+
+
+
+    for (int i = 0; i < 8; ++i) {
+        for (int j = 0; j < 8; ++j) {
+            ta_sphere simplex_sphere = { 0 };
+            simplex_sphere.center = vec3_sub(verts_a[i], verts_b[j]);
+            simplex_sphere.radius = 0.03f;
+            ta_primitive_push_sphere(0, simplex_sphere, TA_COLOR_WHITE);
+        }
+    }
+
     // NOTE: The last vertex in the simplex array is always called "A" and is the most recently
     // added support point (see Casey's explanation: https://www.youtube.com/watch?v=Qupqu1xe7Io)
     ta_gjk_simplex simplex = { 0 };
@@ -235,41 +306,95 @@ bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b)
     // Start looking in opposite direction of first support point
     d = vec3_neg(s);
 
-    int i = 1;
+    bool colliding = false;
+    int step = 1;
     for (;;) {
         sa = ta_support_obb(a, d);
+        sb = ta_support_obb(b, vec3_neg(d));
+        s = vec3_sub(sa, sb);
 
+#if 0
         //--------------------------------------------
         // DEBUG(cleanup): Debug rendering
-        ta_mat3 hue_rot = mat3_hue_rotation(i * 360.0f / 8.0f);
+        ta_mat3 hue_rot = mat3_hue_rotation(step * 360.0f / 8.0f);
         ta_rgb red = { 1.0f, 0.0f, 0.0f };
         ta_rgb red_shift = mat3_mul_rgb(&hue_rot, red);
         ta_rgba color = rgba_init(red_shift.r, red_shift.g, red_shift.b, 1.0f);
         ta_sphere dbg_sphere = { 0 };
         dbg_sphere.center = sa;
-        dbg_sphere.radius = 0.02f * i;
+        dbg_sphere.radius = 0.02f * step;
         ta_primitive_push_sphere(0, dbg_sphere, color);
         dbg_sphere.center = sb;
         ta_primitive_push_sphere(0, dbg_sphere, color);
         ta_line_3d line = { 0 };
         line.p0 = a->center;
-        line.p1 = vec3_add(a->center, vec3_scalef(d, 0.2f * i));
+        line.p1 = vec3_add(a->center, vec3_scalef(d, 0.2f * step));
         ta_primitive_push_line_3d(0, line, TA_COLOR_WHITE, color);
         //--------------------------------------------
+#endif
+#if 1
+        // DEBUG(cleanup): Debug rendering
+        if (step == gjk_step) {
+            ta_sphere dbg_sphere = { 0 };
+            dbg_sphere.center = sa;
+            dbg_sphere.radius = 0.04f;
+            ta_primitive_push_sphere(0, dbg_sphere, TA_COLOR_RED);
+            dbg_sphere.center = sb;
+            ta_primitive_push_sphere(0, dbg_sphere, TA_COLOR_GREEN);
+            ta_line_3d line = { 0 };
+            line.p0 = a->center;
+            line.p1 = vec3_add(a->center, d);
+            ta_primitive_push_line_3d(0, line, TA_COLOR_WHITE, TA_COLOR_CYAN);
 
-        sb = ta_support_obb(b, vec3_neg(d));
-        s = vec3_sub(sa, sb);
+            if (simplex.count == 1) {
+                ta_sphere simplex_sphere = { 0 };
+                simplex_sphere.center = vec3_add(a->center, simplex.vertices[0]);
+                simplex_sphere.radius = 0.04f;
+                ta_primitive_push_sphere(0, simplex_sphere, TA_COLOR_PINK);
+            } else {
+                for (int i = 0; i < simplex.count; ++i) {
+                    for (int j = i + 1; j < simplex.count; ++j) {
+                        ta_line_3d simplex_line = { 0 };
+                        simplex_line.p0 = vec3_add(a->center, simplex.vertices[i]);
+                        simplex_line.p1 = vec3_add(a->center, simplex.vertices[j]);
+                        ta_primitive_push_line_3d(0, simplex_line, TA_COLOR_PINK, TA_COLOR_PINK);
+                    }
+                }
+            }
+        }
+#endif
+
         if (vec3_dot(s, d) < 0) {
             // Failed to find support point closer to origin
-            return false;
+            break;
         }
         // Add new support point to simplex and update simplex
         DLB_ASSERT(simplex.count < ARRAY_SIZE(simplex.vertices));
         simplex.vertices[simplex.count++] = s;
         if (ta_gjk_do_simplex(&simplex, &d)) {
             // Simplex contains origin, shapes are intersecting
-            return true;
+            colliding = true;
+            break;
         }
-        i++;
+        step++;
     }
+
+#if 1
+    // DEBUG(cleanup): Debug rendering
+    if (step < gjk_step) {
+        ta_sphere dbg_sphere = { 0 };
+        dbg_sphere.center = sa;
+        dbg_sphere.radius = 0.04f;
+        ta_primitive_push_sphere(0, dbg_sphere, TA_COLOR_RED);
+        dbg_sphere.center = sb;
+        ta_primitive_push_sphere(0, dbg_sphere, TA_COLOR_GREEN);
+        ta_line_3d line = { 0 };
+        line.p0 = a->center;
+        line.p1 = vec3_add(a->center, d);
+        ta_primitive_push_line_3d(0, line, TA_COLOR_WHITE, TA_COLOR_CYAN);
+    }
+#endif
+
+    if (max_gjk_step) *max_gjk_step = step;
+    return colliding;
 }

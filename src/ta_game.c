@@ -2094,7 +2094,9 @@ void ta_game_loop()
             { 0.0f, 0.0f, 0.0f, 1.0f }  // orientation
         };
         gjk_obb_a.orientation = quat_normalize(gjk_obb_a.orientation);
-        bool intersect = ta_gjk_intersect_obb(&gjk_obb_a, &gjk_obb_b);
+        static int gjk_step = 1;
+        int gjk_step_max = 0;
+        bool intersect = ta_gjk_intersect_obb(&gjk_obb_a, &gjk_obb_b, gjk_step, &gjk_step_max);
         ta_primitive_push_obb(0, gjk_obb_a, intersect ? TA_COLOR_RED : TA_COLOR_GREEN);
         ta_primitive_push_obb(0, gjk_obb_b, intersect ? TA_COLOR_RED : TA_COLOR_GREEN);
         ta_primitive_dump(true);
@@ -2390,6 +2392,18 @@ void ta_game_loop()
         ta_ui_label(CSTR("obb_b.orientation"));
         static ta_ui_textbox_vec4_state gjk_orient_b = { 0 };
         ta_ui_textbox_vec4(&gjk_obb_b.orientation, &gjk_orient_b, true, true);
+
+        ta_ui_row_begin();
+        ta_ui_label(CSTR("gjk_step         "));
+        if (ta_ui_button(CSTR("-"))) {
+            gjk_step = MAX(1, gjk_step - 1);
+        }
+        char gjk_max_buf[16] = { 0 };
+        size_t gjk_max_buf_len = snprintf(gjk_max_buf, sizeof(gjk_max_buf), "%d of %d", gjk_step, gjk_step_max);
+        ta_ui_label(gjk_max_buf, gjk_max_buf_len);
+        if (ta_ui_button(CSTR("+"))) {
+            gjk_step = MIN(gjk_step + 1, gjk_step_max);
+        }
 
         ta_ui_window_end();
         glDisable(GL_DEPTH_TEST);

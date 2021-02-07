@@ -64,6 +64,7 @@ typedef struct ta_ui_textbox_state {
     size_t selection_start;
     size_t selection_len;
     //bool multiline;
+    float drag_increment;
     bool mouse_down;
     bool double_clicked;
     ta_vec2i mouse_coords;
@@ -155,6 +156,7 @@ void ta_ui_textbox_set_text         (ta_ui_textbox_state *textbox, const char *t
 
 bool ta_ui_textbox                      (const char *text, size_t text_len, ta_ui_textbox_state *textbox, u32 flags);
 bool ta_ui_textbox_float                (float *value, ta_ui_textbox_state *textbox, u32 flags);
+bool ta_ui_textbox_float_increment      (float *value, ta_ui_textbox_state *textbox, u32 flags, float drag_increment);
 bool ta_ui_textbox_float_reset          (float *value, ta_ui_textbox_state *textbox, u32 flags, float reset_value);
 void ta_ui_textbox_vec2                 (ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state);
 void ta_ui_textbox_vec2_normalize       (ta_vec2 *vec, ta_ui_textbox_vec2_state* vec_state);

@@ -36,6 +36,7 @@
 #define TA_UI_CONTAINER_SCROLLING_CHILD_H 0x08000000  // [internal] will be set when container has horizontal scrolling child
 
 #define UI_TEXTBOX_MIN_BUFFER_LEN 128  // minimum buffer to reserve for text editing (to avoid frequent resizes)
+#define TA_UI_DEFAULT_DRAG_INCREMENT 0.01f;
 
 static const double key_repeat_delay_ms = 300;
 static const double key_repeat_interval_ms = 40;
@@ -141,10 +142,10 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing, ta_ui_text
 
     //ui_default_style[UI_WINDOW].margin                      = TA_RECT_ZERO;
     ui_default_style[UI_WINDOW].pad                         = TA_RECT(4, 4, 4, 4);
-    ui_default_style[UI_WINDOW].bg_color[UI_STATE_NONE]     = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_WINDOW].bg_color[UI_STATE_HOVER]    = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_WINDOW].bg_color[UI_STATE_DOWN]     = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_WINDOW].bg_color[UI_STATE_ACTIVE]   = TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_WINDOW].bg_color[UI_STATE_NONE]     = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_WINDOW].bg_color[UI_STATE_HOVER]    = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_WINDOW].bg_color[UI_STATE_DOWN]     = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_WINDOW].bg_color[UI_STATE_ACTIVE]   = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
     //ui_default_style[UI_WINDOW].fg_color[UI_STATE_NONE]     = TA_COLOR_INVIS;
     //ui_default_style[UI_WINDOW].fg_color[UI_STATE_HOVER]    = TA_COLOR_INVIS;
     //ui_default_style[UI_WINDOW].fg_color[UI_STATE_DOWN]     = TA_COLOR_INVIS;
@@ -152,10 +153,10 @@ void ta_ui_init(ta_font *font, ta_ui_textbox_state **textbox_editing, ta_ui_text
 
     //ui_default_style[UI_PANEL].margin                     = TA_RECT(0, 0, 0, 0);
     ui_default_style[UI_PANEL].pad                          = TA_RECT(4, 4, 4, 4);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_NONE]      = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_DOWN]      = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
-    ui_default_style[UI_PANEL].bg_color[UI_STATE_ACTIVE]    = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_COLOR_GRAY2; //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_NONE]      = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_HOVER]     = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_DOWN]      = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
+    ui_default_style[UI_PANEL].bg_color[UI_STATE_ACTIVE]    = TA_RGBA(0.15f, 0.15f, 0.15f, 1.0f); //TA_RGBA(0.7f, 0.7f, 0.7f, 0.4f);
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_NONE]      = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_HOVER]     = TA_COLOR_INVIS;
     //ui_default_style[UI_PANEL].fg_color[UI_STATE_DOWN]      = TA_COLOR_INVIS;
@@ -1193,6 +1194,8 @@ static void drag_float_update(float delta)
 {
     if (!drag_float.value) return;
 
+    delta = delta ? delta : TA_UI_DEFAULT_DRAG_INCREMENT;
+
     int mouse_dx = ta_mouse_dx();
     if (mouse_dx) {
         *drag_float.value += mouse_dx * delta;
@@ -1285,7 +1288,7 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
         if (frame->state.pressed) {
             drag_float_begin(frame->rect.x, frame->rect.y, textbox, value);
         } else if (drag_float.value == value) {
-            drag_float_update(0.01f);
+            drag_float_update(textbox->drag_increment);
             if (ta_key_released(SDL_SCANCODE_MOUSE_LEFT)) {
                 // If drag ended and value didn't change, start edit mode
                 if (!drag_float_end(frame->rect.x, frame->rect.y)) {
@@ -1325,6 +1328,12 @@ bool ta_ui_textbox_float(float *value, ta_ui_textbox_state *textbox, u32 flags)
 
     frame->cursor = cursor;
     return frame->data.textbox->submit;
+}
+bool ta_ui_textbox_float_increment(float *value, ta_ui_textbox_state *textbox, u32 flags, float drag_increment)
+{
+    textbox->drag_increment = drag_increment;
+    bool result = ta_ui_textbox_float(value, textbox, flags);
+    return result;
 }
 bool ta_ui_textbox_float_reset(float *value, ta_ui_textbox_state *textbox, u32 flags, float reset_value)
 {
