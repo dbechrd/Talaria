@@ -1323,7 +1323,7 @@ static void game_render_skybox()
 {
     //ta_cubemap *skybox = (ta_cubemap *)ta_game_by_name_try(RES_CUBEMAP, SYM(INTERN("miramar_skybox")));
     ta_cubemap *skybox = (ta_cubemap *)ta_game_by_name_try(RES_CUBEMAP, SYM(INTERN("bad_galaxy_skybox")));
-    if (skybox) {
+    if (0 && skybox) {
         ta_camera *camera = (ta_camera *)ta_game_camera();
         ta_shader *shader = (ta_shader *)ta_game_by_name(RES_SHADER, SYM(INTERN("skybox")));
         ta_mesh *mesh = (ta_mesh *)ta_game_by_name(RES_MESH, SYM(INTERN("prim_skybox")));
@@ -2083,20 +2083,20 @@ void ta_game_loop()
         };
 #else
         static ta_obb gjk_obb_a = {
-            { 1.35f, 0.0f, 0.0f },       // center
-            { 0.5f, 0.5f, 0.5f },       // extents
-            { 0.0f, 0.444f, 0.0f, 0.896f }  // orientation
+            { 0.0f, 0.0f, 0.0f },       // center
+            { 1.5f, 1.5f, 1.5f },       // extents
+            { 0.0f, 0.0f, 0.0f, 1.0f }  // orientation
         };
 #endif
         static ta_obb gjk_obb_b = {
-            { 0.0f, 0.0f, 0.0f },       // center
+            { 1.5f, 1.5f, 1.5f },       // center
             { 0.5f, 0.5f, 0.5f },       // extents
             { 0.0f, 0.0f, 0.0f, 1.0f }  // orientation
         };
         gjk_obb_a.orientation = quat_normalize(gjk_obb_a.orientation);
-        static int gjk_step = 1;
-        int gjk_step_max = 0;
-        bool intersect = ta_gjk_intersect_obb(&gjk_obb_a, &gjk_obb_b, gjk_step, &gjk_step_max);
+        static int gjk_step = 0;
+        int gjk_steps = 0;
+        bool intersect = ta_gjk_intersect_obb(&gjk_obb_a, &gjk_obb_b, &gjk_step, &gjk_steps);
         ta_primitive_push_obb(0, gjk_obb_a, intersect ? TA_COLOR_RED : TA_COLOR_GREEN);
         ta_primitive_push_obb(0, gjk_obb_b, intersect ? TA_COLOR_RED : TA_COLOR_GREEN);
         ta_primitive_dump(true);
@@ -2395,15 +2395,19 @@ void ta_game_loop()
 
         ta_ui_row_begin();
         ta_ui_label(CSTR("gjk_step         "));
+
+        int inc = 0;
         if (ta_ui_button(CSTR("-"))) {
-            gjk_step = MAX(1, gjk_step - 1);
+            inc--;
         }
         char gjk_max_buf[16] = { 0 };
-        size_t gjk_max_buf_len = snprintf(gjk_max_buf, sizeof(gjk_max_buf), "%d of %d", gjk_step, gjk_step_max);
+        size_t gjk_max_buf_len = snprintf(gjk_max_buf, sizeof(gjk_max_buf), "%d of %d", gjk_step, gjk_steps);
         ta_ui_label(gjk_max_buf, gjk_max_buf_len);
         if (ta_ui_button(CSTR("+"))) {
-            gjk_step = MIN(gjk_step + 1, gjk_step_max);
+            inc++;
         }
+
+        gjk_step = clamp(gjk_step + inc, 1, gjk_steps);
 
         ta_ui_window_end();
         glDisable(GL_DEPTH_TEST);

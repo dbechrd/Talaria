@@ -213,8 +213,41 @@ static bool ta_gjk_do_simplex(ta_gjk_simplex *simplex, ta_vec3 *dir)
     return simplex_contains_origin;
 }
 
-bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b, int gjk_step, int *max_gjk_step)
+void gjk_debug_draw(ta_vec3 sa, ta_vec3 sb, ta_vec3 dir, ta_gjk_simplex *simplex)
 {
+    // Origin
+    ta_primitive_push_axes_arrow(0, VEC3_ZERO, QUAT_IDENT, 0.04f);
+
+    ta_sphere dbg_sphere = { 0 };
+    dbg_sphere.center = sa;
+    dbg_sphere.radius = 0.04f;
+    ta_primitive_push_sphere(0, dbg_sphere, TA_COLOR_RED);
+    dbg_sphere.center = sb;
+    ta_primitive_push_sphere(0, dbg_sphere, TA_COLOR_GREEN);
+    ta_primitive_push_arrow(0, VEC3_ZERO, vec3_normalize(dir), TA_COLOR_BLUE);
+
+    if (simplex->count == 1) {
+        ta_sphere simplex_sphere = { 0 };
+        simplex_sphere.center = vec3_add(VEC3_ZERO, simplex->vertices[0]);
+        simplex_sphere.radius = 0.04f;
+        ta_primitive_push_sphere(0, simplex_sphere, TA_COLOR_PINK);
+    } else {
+        for (int i = 0; i < simplex->count; ++i) {
+            for (int j = i + 1; j < simplex->count; ++j) {
+                ta_line_3d simplex_line = { 0 };
+                simplex_line.p0 = vec3_add(VEC3_ZERO, simplex->vertices[i]);
+                simplex_line.p1 = vec3_add(VEC3_ZERO, simplex->vertices[j]);
+                ta_primitive_push_line_3d(0, simplex_line, TA_COLOR_PINK, TA_COLOR_PINK);
+            }
+        }
+    }
+}
+
+bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b, int *gjk_step, int *gjk_steps)
+{
+    DLB_ASSERT(gjk_step);
+    DLB_ASSERT(gjk_steps);
+
     ta_vec3 verts_a[8] = { 0 };
     verts_a[0].x = -a->extents.x;
     verts_a[0].y = -a->extents.y;
@@ -281,7 +314,7 @@ bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b, int gjk_step, int *max_gjk_step)
         for (int j = 0; j < 8; ++j) {
             ta_sphere simplex_sphere = { 0 };
             simplex_sphere.center = vec3_sub(verts_a[i], verts_b[j]);
-            simplex_sphere.radius = 0.03f;
+            simplex_sphere.radius = 0.01f;
             ta_primitive_push_sphere(0, simplex_sphere, TA_COLOR_WHITE);
         }
     }
@@ -290,14 +323,20 @@ bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b, int gjk_step, int *max_gjk_step)
     // added support point (see Casey's explanation: https://www.youtube.com/watch?v=Qupqu1xe7Io)
     ta_gjk_simplex simplex = { 0 };
 
-    // Seed with some direction (difference between center points chosen arbitrarily)
+    // Seed with some direction (difference between center points, or +Y if center points are the same)
     ta_vec3 d = vec3_sub(b->center, a->center);
+    if (vec3_zero(d)) {
+        d = VEC3_Y;
+    }
+
+    int step = 0;
 
     // Find support point on "Minkowski difference"
     ta_vec3 sa = ta_support_obb(a, d);
     ta_vec3 sb = ta_support_obb(b, vec3_neg(d));
     ta_vec3 s = vec3_sub(sa, sb);
     simplex.vertices[simplex.count++] = s;
+    step++;
 
     //--------------------------------------------
     const float hue_inc = 360.0f / 8.0f;
@@ -306,13 +345,21 @@ bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b, int gjk_step, int *max_gjk_step)
     // Start looking in opposite direction of first support point
     d = vec3_neg(s);
 
+#if 1
+    // DEBUG(cleanup): Debug rendering
+    if (step == *gjk_step) {
+        gjk_debug_draw(sa, sb, d, &simplex);
+    }
+#endif
+
     bool colliding = false;
-    int step = 1;
     for (;;) {
         sa = ta_support_obb(a, d);
         sb = ta_support_obb(b, vec3_neg(d));
         s = vec3_sub(sa, sb);
-
+        DLB_ASSERT(simplex.count < ARRAY_SIZE(simplex.vertices));
+        simplex.vertices[simplex.count++] = s;
+        step++;
 #if 0
         //--------------------------------------------
         // DEBUG(cleanup): Debug rendering
@@ -332,69 +379,41 @@ bool ta_gjk_intersect_obb(ta_obb *a, ta_obb *b, int gjk_step, int *max_gjk_step)
         ta_primitive_push_line_3d(0, line, TA_COLOR_WHITE, color);
         //--------------------------------------------
 #endif
-#if 1
-        // DEBUG(cleanup): Debug rendering
-        if (step == gjk_step) {
-            ta_sphere dbg_sphere = { 0 };
-            dbg_sphere.center = sa;
-            dbg_sphere.radius = 0.04f;
-            ta_primitive_push_sphere(0, dbg_sphere, TA_COLOR_RED);
-            dbg_sphere.center = sb;
-            ta_primitive_push_sphere(0, dbg_sphere, TA_COLOR_GREEN);
-            ta_line_3d line = { 0 };
-            line.p0 = a->center;
-            line.p1 = vec3_add(a->center, d);
-            ta_primitive_push_line_3d(0, line, TA_COLOR_WHITE, TA_COLOR_CYAN);
-
-            if (simplex.count == 1) {
-                ta_sphere simplex_sphere = { 0 };
-                simplex_sphere.center = vec3_add(a->center, simplex.vertices[0]);
-                simplex_sphere.radius = 0.04f;
-                ta_primitive_push_sphere(0, simplex_sphere, TA_COLOR_PINK);
-            } else {
-                for (int i = 0; i < simplex.count; ++i) {
-                    for (int j = i + 1; j < simplex.count; ++j) {
-                        ta_line_3d simplex_line = { 0 };
-                        simplex_line.p0 = vec3_add(a->center, simplex.vertices[i]);
-                        simplex_line.p1 = vec3_add(a->center, simplex.vertices[j]);
-                        ta_primitive_push_line_3d(0, simplex_line, TA_COLOR_PINK, TA_COLOR_PINK);
-                    }
-                }
-            }
-        }
-#endif
 
         if (vec3_dot(s, d) < 0) {
             // Failed to find support point closer to origin
             break;
         }
-        // Add new support point to simplex and update simplex
-        DLB_ASSERT(simplex.count < ARRAY_SIZE(simplex.vertices));
-        simplex.vertices[simplex.count++] = s;
-        if (ta_gjk_do_simplex(&simplex, &d)) {
-            // Simplex contains origin, shapes are intersecting
+
+        colliding = ta_gjk_do_simplex(&simplex, &d);
+
+#if 1
+        // DEBUG(cleanup): Debug rendering
+        if (step == *gjk_step) {
+            gjk_debug_draw(sa, sb, d, &simplex);
+        }
+#endif
+
+        if (vec3_zero(d)) {
+            // Origin lies on the simplex exactly, not sure how to pick a new search direction, so let's
+            // just return true. May need to handle this differently when we start generating manifolds.
             colliding = true;
+        }
+
+        if (colliding) {
+            // Simplex contains origin, shapes are intersecting
             break;
         }
-        step++;
     }
+
+    *gjk_steps = step;
 
 #if 1
     // DEBUG(cleanup): Debug rendering
-    if (step < gjk_step) {
-        ta_sphere dbg_sphere = { 0 };
-        dbg_sphere.center = sa;
-        dbg_sphere.radius = 0.04f;
-        ta_primitive_push_sphere(0, dbg_sphere, TA_COLOR_RED);
-        dbg_sphere.center = sb;
-        ta_primitive_push_sphere(0, dbg_sphere, TA_COLOR_GREEN);
-        ta_line_3d line = { 0 };
-        line.p0 = a->center;
-        line.p1 = vec3_add(a->center, d);
-        ta_primitive_push_line_3d(0, line, TA_COLOR_WHITE, TA_COLOR_CYAN);
+    if (step == *gjk_step) {
+        gjk_debug_draw(sa, sb, d, &simplex);
     }
 #endif
 
-    if (max_gjk_step) *max_gjk_step = step;
     return colliding;
 }
