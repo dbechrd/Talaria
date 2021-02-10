@@ -2708,42 +2708,42 @@ void game_command_camera_move_forward()
 {
     if (ta_mouse_captured()) {
         ta_camera *camera = (ta_camera *)ta_game_camera();
-        camera->move_buffer = vec3_add(camera->move_buffer, camera->front);
+        ta_camera_move(camera, camera->front);
     }
 }
 void game_command_camera_move_backward()
 {
     if (ta_mouse_captured()) {
         ta_camera *camera = (ta_camera *)ta_game_camera();
-        camera->move_buffer = vec3_sub(camera->move_buffer, camera->front);
+        ta_camera_move(camera, vec3_neg(camera->front));
     }
 }
 void game_command_camera_move_right()
 {
     if (ta_mouse_captured()) {
         ta_camera *camera = (ta_camera *)ta_game_camera();
-        camera->move_buffer = vec3_add(camera->move_buffer, camera->right);
+        ta_camera_move(camera, camera->right);
     }
 }
 void game_command_camera_move_left()
 {
     if (ta_mouse_captured()) {
         ta_camera *camera = (ta_camera *)ta_game_camera();
-        camera->move_buffer = vec3_sub(camera->move_buffer, camera->right);
+        ta_camera_move(camera, vec3_neg(camera->right));
     }
 }
 void game_command_camera_move_up()
 {
     if (ta_mouse_captured()) {
         ta_camera *camera = (ta_camera *)ta_game_camera();
-        camera->move_buffer = vec3_add(camera->move_buffer, camera->up);
+        ta_camera_move(camera, camera->up);
     }
 }
 void game_command_camera_move_down()
 {
     if (ta_mouse_captured()) {
         ta_camera *camera = (ta_camera *)ta_game_camera();
-        camera->move_buffer = vec3_sub(camera->move_buffer, camera->up);
+        ta_camera_move(camera, vec3_neg(camera->up));
     }
 }
 void game_command_debug_mouse_lock()
@@ -2873,10 +2873,10 @@ void ta_game_event(ta_event *event)
             static float sensitivity = 0.1f;
             ta_camera *camera = (ta_camera *)ta_game_camera();
             if (event->data.camera_rotate.delta_yaw) {
-                ta_camera_yaw(camera, event->data.camera_rotate.delta_yaw * sensitivity);
+                ta_camera_set_target_yaw(camera, event->data.camera_rotate.delta_yaw * sensitivity);
             }
             if (event->data.camera_rotate.delta_pitch) {
-                ta_camera_pitch(camera, event->data.camera_rotate.delta_pitch * sensitivity);
+                ta_camera_set_target_pitch(camera, event->data.camera_rotate.delta_pitch * sensitivity);
             }
             event->handled = true;
             break;

@@ -103,7 +103,7 @@ void ta_camera_set_target_rotation(ta_camera *camera, float yaw, float pitch)
     camera->dirty = true;
 }
 
-void ta_camera_yaw(ta_camera *camera, float delta)
+void ta_camera_set_target_yaw(ta_camera *camera, float delta)
 {
     camera->yaw_target += delta;
     while (camera->yaw_target < 0.0f)    { camera->yaw_target += 360.0f; }
@@ -112,7 +112,7 @@ void ta_camera_yaw(ta_camera *camera, float delta)
     camera->dirty = true;
 }
 
-void ta_camera_pitch(ta_camera *camera, float delta)
+void ta_camera_set_target_pitch(ta_camera *camera, float delta)
 {
     camera->pitch_target += delta;
     camera->pitch_target = clampf(camera->pitch_target, camera->pitch_min, camera->pitch_max);

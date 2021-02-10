@@ -81,8 +81,8 @@ void ta_camera_set_rotation             (ta_camera *camera, float yaw, float pit
 void ta_camera_set_target_pos_absolute  (ta_camera *camera, ta_vec3 target_pos);
 void ta_camera_set_target_pos_relative  (ta_camera *camera, ta_vec3 delta);
 void ta_camera_set_target_rotation      (ta_camera *camera, float yaw, float pitch);
-void ta_camera_yaw                      (ta_camera *camera, float delta);
-void ta_camera_pitch                    (ta_camera *camera, float delta);
+void ta_camera_set_target_yaw           (ta_camera *camera, float delta);
+void ta_camera_set_target_pitch         (ta_camera *camera, float delta);
 void ta_camera_move                     (ta_camera *camera, ta_vec3 v);
 void ta_camera_recalc_projection        (ta_camera *camera);
 void ta_camera_update                   (ta_camera *camera, float dt);
