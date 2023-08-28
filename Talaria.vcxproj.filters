@@ -167,9 +167,6 @@
     <ClCompile Include="src\ta_bone.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="include\tracy\TracyClient.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\ta_support.c">
       <Filter>Source Files</Filter>
     </ClCompile>

@@ -1,4 +1,5 @@
 #pragma once
+#include "dlb/dlb_types.h"
 #include "SDL/SDL_thread.h"
 #include "SDL/SDL_mutex.h"
 

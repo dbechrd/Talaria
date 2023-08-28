@@ -140,7 +140,7 @@ void ta_game_init()
     ta_log_write(&tg_debug_log, SRC_GAME, "Determining base path...\n");
 #if _DEBUG
     char buf[512] = { 0 };
-    DWORD len = GetCurrentDirectoryA(sizeof(buf), buf);
+    int len = GetCurrentDirectoryA(sizeof(buf), buf);
     DLB_ASSERT(len < sizeof(buf) - 2);
     buf[len] = '\\';
     len++;
@@ -504,7 +504,7 @@ void ta_game_init()
 
 #if _DEBUG && (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     TracyCZoneN(ctxAssetWatcher, "Init asset watcher", true);
-    ta_asset_watcher_start(&tg_game.texture_watcher, SYM(tg_game.base_path));
+    //ta_asset_watcher_start(&tg_game.texture_watcher, SYM(tg_game.base_path));
     TracyCZoneEnd(ctxAssetWatcher);
 #endif
 
@@ -520,7 +520,7 @@ void ta_game_free()
 {
 #if _DEBUG && (defined(_WIN32) || defined(__WIN32__) || defined(__WINDOWS__))
     TracyCZoneN(ctxAssetWatcher, "Init asset watcher", true);
-    ta_asset_watcher_stop(&tg_game.texture_watcher);
+    //ta_asset_watcher_stop(&tg_game.texture_watcher);
     TracyCZoneEnd(ctxAssetWatcher);
 #endif
 }
@@ -674,7 +674,7 @@ ta_ray ta_game_mouse_ray()
     dir.z = x * camera->right.z + -y * camera->up.z + camera->screen_to_world.z;
     dir = vec3_normalize(dir);
 
-    ta_ray ray;
+    ta_ray ray = { 0 };
     ray.origin = cam_trans->xform_world.position;
     ray.direction = dir;
     return ray;
@@ -1620,7 +1620,7 @@ void ta_game_loop()
         ms_frame_delta = ms_frame_start - ms_frame_prev;
         ms_frame_prev = ms_frame_start;
 
-        game_hotload_textures();
+        //game_hotload_textures();
 
         ta_camera *active_camera = (ta_camera *)ta_game_camera();
         ta_transform *active_camera_trans = (ta_transform *)ta_game_component(active_camera->entity, RES_COMP_TRANSFORM);

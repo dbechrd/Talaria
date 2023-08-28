@@ -1,6 +1,14 @@
 #define TA_FLAG_DISABLE_MIPMAPS 0
 #define TRACY_CALLSTACK_MAX 62
 
+#if NO_TRACY_ENABLE
+#define TracyCZone(...)
+#define TracyCZoneN(...)
+#define TracyCZoneText(...)
+#define TracyCZoneEnd(...)
+#define TracyCFrameMark
+#endif
+
 #include "ta_audio.h"
 #include "ta_console.h"
 #include "ta_editor.h"
@@ -18,7 +26,9 @@
 #include "dlb/dlb_rand.h"
 #include "misc/glad.h"
 #include "SDL/SDL.h"
+#if (!NO_TRACY_ENABLE)
 #include "tracy/TracyC.h"
+#endif
 
 DLB_ASSERT_HANDLER(handle_assert)
 {
